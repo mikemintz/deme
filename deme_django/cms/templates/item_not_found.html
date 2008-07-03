@@ -1,0 +1,12 @@
+{% extends layout %}
+{% block title %}{{ item_type }} Not Found{% endblock %}
+{% block content %}
+
+{% if item %}
+We could not find any {{ item_type }} matching your URL, but perhaps you were looking for the {{ item.item_type }}.
+{% else %}
+We could not find any {{ item_type }} matching your URL.
+{% endif %}
+
+{% endblock content %}
+

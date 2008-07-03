@@ -1,0 +1,57 @@
+{% extends layout %}
+{% load resource_extras %}
+{% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
+{% block content %}
+
+<div class="crumbs">
+    {% for inherited_item_type in item_type_inheritance %}
+    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
+    &raquo;
+    {% endfor %}
+    <a href="{% show_resource_url item %}">{{ item }}</a>
+    &raquo;
+    Version {{ itemrev.version }}
+</div>
+
+<div style="margin-bottom: 10px;">
+    <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit">[Edit This ItemSet]</a>
+    <a href="/resource/itemtoitemsetrelationship/new?item2={{ item.pk }}&description=An+ItemToItemSetRelationship&redirect={{ full_path|urlencode }}">[Add Item]</a>
+</div>
+
+{% if item.itemset_relationships_as_itemset.all %}
+<table class="list">
+    <tr>
+        <th>Name</th>
+    </tr>
+    {% for itemset_relationship in item.itemset_relationships_as_itemset.all %}
+    <tr class="{% cycle 'even' 'odd' %}">
+        <td><a href="{% show_resource_url itemset_relationship.item1 %}">{{ itemset_relationship.item1 }}</a> (added {{ itemset_relationship.updated_at }}) with <a href="{% show_resource_url itemset_relationship %}">{{ itemset_relationship }}</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+    No Items In This ItemSet
+{% endif %}
+
+<h2>Comments</h2>
+<div>
+    <a href="/resource/comment/new?commented_item={{ item.pk }}&commented_item_version={{ itemrev.pk }}&redirect={{ full_path|urlencode }}">Add Comment</a>
+</div>
+<div>
+    {% for comment_info in comments %}
+    <div style="margin-bottom: 5px; border: 1px solid #666; padding: 15px;">
+        <div style="border-bottom: 1px solid #888;">
+            <a href="/resource/{{ comment_info.comment.item_type|lower }}/{{ comment_info.comment.pk }}">{{ comment_info.comment }}</a>
+            by <a href="{% show_resource_url comment_info.comment.last_author %}">{{ comment_info.comment.last_author }}</a>
+            for <a href="{% show_resource_url comment_info.comment.commented_item_version %}">version {{ comment_info.comment.commented_item_version.version }}</a>
+        </div>
+        <div>
+            {{ comment_info.comment.body }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock content %}
+

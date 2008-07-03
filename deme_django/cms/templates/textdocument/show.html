@@ -1,0 +1,73 @@
+{% extends layout %}
+{% load resource_extras %}
+{% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
+{% block content %}
+
+<script type="text/javascript" src="/static/javascripts/prototype.js"></script>
+<script type="text/javascript" src="/static/javascripts/class_improved.js"></script>
+<script type="text/javascript" src="/static/javascripts/ref.js"></script>
+<script type="text/javascript" src="/static/javascripts/ref_deme.js"></script>
+
+<div class="crumbs">
+    <div style="float: right;">
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit?version={{ itemrev.version }}">Edit</a>
+    </div>
+    {% for inherited_item_type in item_type_inheritance %}
+    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
+    &raquo;
+    {% endfor %}
+    <a href="{% show_resource_url item %}">{{ item }}</a>
+    &raquo;
+    Version {{ itemrev.version }}
+</div>
+
+<div style="background: #ccf; padding: 10px; margin-bottom: 10px;">
+    Versions:
+    {% for other_itemrev in item.revisions.all %}
+    <span style="margin-left: 10px;">
+        {% ifequal other_itemrev.version itemrev.version %}
+        <b>{{ other_itemrev.version }}</b>
+        {% else %}
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}?version={{ other_itemrev.version }}">{{ other_itemrev.version }}</a>
+        {% endifequal %}
+    </span>
+    {% endfor %}
+</div>
+
+<div style="padding: 10px; border: 3px solid #000; border-bottom: none; background: #ccc; text-align: center; font-size: larger; font-weight: bold;">
+    {{ itemrev.description }}
+</div>
+<div id="docbody" style="padding: 10px; border: 3px solid #000; background: #f8f8f8;">
+    {{ itemrev.body }}
+</div>
+<div style="padding: 10px; border: 3px solid #000; border-top: none; background: #ccc; text-align: center; font-size: smaller;">
+    Last modified by <a href="{% show_resource_url itemrev.last_author %}">{{ itemrev.last_author }}</a> on {{ itemrev.updated_at }}.
+</div>
+<script type="text/javascript">
+    //ref_bless('docbody', '123');
+    //gRegMgr.hl('123');
+</script>
+<!--<button onclick="gRegMgr.transmit();">Transmit Highlights</button>-->
+
+<h2>Comments</h2>
+<div>
+    <a href="/resource/comment/new?commented_item={{ item.pk }}&commented_item_version={{ itemrev.pk }}&redirect={{ full_path|urlencode }}">Add Comment</a>
+</div>
+<div>
+    {% for comment_info in comments %}
+    <div style="margin-bottom: 5px; border: 1px solid #666; padding: 15px;">
+        <div style="border-bottom: 1px solid #888;">
+            <a href="/resource/{{ comment_info.comment.item_type|lower }}/{{ comment_info.comment.pk }}">{{ comment_info.comment }}</a>
+            by <a href="{% show_resource_url comment_info.comment.last_author %}">{{ comment_info.comment.last_author }}</a>
+            for <a href="{% show_resource_url comment_info.comment.commented_item_version %}">version {{ comment_info.comment.commented_item_version.version }}</a>
+        </div>
+        <div>
+            {{ comment_info.comment.body }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock content %}
+

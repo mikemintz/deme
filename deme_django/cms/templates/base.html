@@ -1,0 +1,59 @@
+{% autoescape off %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Deme</title>
+<link href="/static/stylesheets/base.css" media="all" rel="Stylesheet" type="text/css" />
+<link rel="shortcut icon" href="{% block favicon %}/static/favicon.png{% endblock %}" type="image/x-icon">
+</head>
+<body>
+
+<div style="position: absolute; right: 3px; top: 3px;">
+    {% if cur_account %}
+    You are logged in as:
+    {% else %}
+    You are not logged in
+    {% endif %}
+    <select onchange="window.location = this.value;">
+        {% if cur_account %}
+        <option value="/meta/logout?redirect={{ full_path|urlencode }}">[NOBODY]</option>
+        {% else %}
+        <option value="/meta/logout?redirect={{ full_path|urlencode }}" selected="selected"></option>
+        {% endif %}
+        {% for account in all_accounts %}
+        {% ifequal account cur_account %}
+        <option value="/meta/login?account={{ account.pk }}&redirect={{ full_path|urlencode }}" selected="selected">{{ account.agent }} / {{ account }}</option>
+        {% else %}
+        <option value="/meta/login?account={{ account.pk }}&redirect={{ full_path|urlencode }}">{{ account.agent }} / {{ account }}</option>
+        {% endifequal %}
+        {% endfor %}
+    </select>
+</div>
+    
+<h1 style="border-bottom: 3px solid #246; color: #369; margin-bottom: 10px;">{% block title %}{% endblock %}</h1>
+
+<div style="width: 100px; float: left;">
+    <div style="background: #ddd; border: 1px solid #aaa; padding: 10px;">
+        <div>
+            <a href="/">Home</a>
+        </div>
+        <div>
+            <a href="/resource/item">Items</a>
+        </div>
+    </div>
+</div>
+
+<div style="margin-bottom: 10px; border: 1px solid #aaa; padding: 15px; margin-left: 110px;">
+{% block content %}
+{% endblock %}
+</div>
+
+<div style="border: 1px solid #aaa; background: #ddd; padding: 10px; text-align: center;">
+    Copyright &copy;2008 to Deme
+</div>
+
+</body>
+</html>
+{% endautoescape %}
+

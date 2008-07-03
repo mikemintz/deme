@@ -1,0 +1,53 @@
+{% extends layout %}
+{% load resource_extras %}
+{% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Edit {{ itemrev }}{% endblock %}
+{% block content %}
+
+<script type="text/javascript" src="/static/javascripts/tinymce/jscripts/tiny_mce/tiny_mce.js"></script>
+<script type="text/javascript">
+tinyMCE.init({
+  mode: "textareas",
+  theme: "simple"
+});
+</script>    
+
+<div class="crumbs">
+    {% for inherited_item_type in item_type_inheritance %}
+    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
+    &raquo;
+    {% endfor %}
+    <a href="{% show_resource_url item %}">{{ item }}</a>
+    &raquo;
+    <a href="{% show_resource_url itemrev %}">Version {{ itemrev.version }}</a>
+    &raquo;
+    Edit
+</div>
+
+<div>
+    <form method="post" enctype="multipart/form-data" action="/resource/{{ item_type|lower }}/{{ itemrev.current_item_id }}/update?version={{ itemrev.version }}" class="item_form">
+        <table>
+            <tr>
+                <th>
+                    <label for="id_item_type">Item Type:</label>
+                </th>
+                <td>
+                    <select id="id_item_type" name="item_type" onchange="window.location = this.value;">
+                        {% for model_name in model_names %}
+                        {% ifequal model_name item_type %}
+                        <option value="/resource/{{ model_name|lower }}/{{ itemrev.current_item_id }}/edit?{{ query_string }}" selected="selected">{{ model_name }}</option>
+                        {% else %}
+                        <option value="/resource/{{ model_name|lower }}/{{ itemrev.current_item_id }}/edit?{{ query_string }}">{{ model_name }}</option>
+                        {% endifequal %}
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            {{ form.as_table }}
+        </table>
+    <input type="submit" />
+    </form>
+</div>
+
+{% endblock content %}
+

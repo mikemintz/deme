@@ -1,0 +1,48 @@
+{% extends layout %}
+{% load resource_extras %}
+{% block favicon %}{{ item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ item_type|icon_url:48 }}" /> List {{ item_type }}s{% endblock %}
+{% block content %}
+
+<div class="crumbs">
+    <div style="float: right;">
+        [+] <a href="/resource/{{ item_type|lower}}/new">New {{ item_type }}</a>
+    </div>
+    {% for inherited_item_type in item_type_inheritance %}
+    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
+    &raquo;
+    {% endfor %}
+    List
+</div>
+
+<div style="margin-bottom: 10px;">
+    Filter:
+    <select onchange="window.location = this.value;">
+        {% for model_name in model_names %}
+        {% ifequal model_name item_type %}
+        <option value="/resource/{{ model_name|lower }}" selected="selected">{{ model_name }}</option>
+        {% else %}
+        <option value="/resource/{{ model_name|lower }}">{{ model_name }}</option>
+        {% endifequal %}
+        {% endfor %}
+    </select>
+</div>
+
+
+{% if items %}
+<table class="list">
+    <tr>
+        <th>Name</th>
+    </tr>
+    {% for item in items %}
+    <tr class="{% cycle 'even' 'odd' %}">
+        <td><img src="{{ item.item_type|icon_url:16 }}" /> <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}">{{ item }}</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+    No {{ item_type }}s Found
+{% endif %}
+
+{% endblock content %}
+

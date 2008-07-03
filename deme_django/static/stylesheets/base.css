@@ -1,0 +1,57 @@
+body {
+    font-family: helvetica, arial, sans;
+}
+
+div.crumbs {
+    font-size: smaller;
+    border-bottom: 1px solid #888;
+    padding-bottom: 3px;
+    margin-bottom: 15px;
+}
+
+table.list {
+    border-collapse: collapse;
+}
+table.list tr th {
+    border: 1px solid #cccccc;
+    padding: 3px;
+    background: #000066;
+    color: #ffffff;
+    font-size: smaller;
+}
+table.list tr td {
+    border: 1px solid #cccccc;
+    padding: 3px;
+    font-size: smaller;
+}
+table.list tr.even td {
+    background: #ccccff;
+}
+table.list tr.odd td {
+    background: #ffffff;
+}
+
+form.item_form table tr {
+    /*vertical-align: top;*/
+}
+form.item_form table tr th {
+    text-align: right;
+    color: #666666;
+    padding-right: 10px;
+    padding-bottom: 10px;
+}
+form.item_form table tr td {
+    padding-bottom: 10px;
+}
+form.item_form ul.errorlist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    color: #cc0000;
+}
+form.item_form ul.errorlist li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+

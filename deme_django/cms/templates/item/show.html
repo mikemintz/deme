@@ -1,0 +1,301 @@
+{% extends layout %}
+{% load resource_extras %}
+{% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
+{% block content %}
+
+<div class="crumbs">
+    <div style="float: right;">
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit?version={{ itemrev.version }}">Edit</a>
+    </div>
+    {% for inherited_item_type in item_type_inheritance %}
+    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
+    &raquo;
+    {% endfor %}
+    <a href="{% show_resource_url item %}">{{ item }}</a>
+    &raquo;
+    Version {{ itemrev.version }}
+</div>
+
+<div style="background: #ccf; padding: 10px; margin-bottom: 10px;">
+    Versions:
+    {% for other_itemrev in item.revisions.all %}
+    <span style="margin-left: 10px;">
+        {% ifequal other_itemrev.version itemrev.version %}
+        <b>{{ other_itemrev.version }}</b>
+        {% else %}
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}?version={{ other_itemrev.version }}">{{ other_itemrev.version }}</a>
+        {% endifequal %}
+    </span>
+    {% endfor %}
+</div>
+
+<!--
+<div style="margin-bottom: 10px;">
+    <form method="post" action="/resource/{{ item.item_type|lower }}/{{ item.pk }}/delete">
+        <input type="submit" value="Delete" onclick="return confirm('Are you sure?');" />
+    </form>
+</div>
+-->
+
+<h2 style="border-bottom: 3px solid #000;">Your Permissions To This {{ item.item_type }}</h2>
+<div style="margin-left: 30px;">
+    <table class="list">
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+        </tr>
+        <tr class="{% cycle 'even' 'odd' as permissions_cycle %}">
+            <td>Direct Roles</td>
+            <td>
+                {% for role in direct_roles %}
+                <div><a href="{% show_resource_url role %}">{{ role }}</a></div>
+                {% endfor %}
+            </td>
+        </tr>
+        <tr class="{% cycle permissions_cycle %}">
+            <td>Groupwide Roles</td>
+            <td>
+                {% for role in groupwide_roles %}
+                <div><a href="{% show_resource_url role %}">{{ role }}</a></div>
+                {% endfor %}
+            </td>
+        </tr>
+        <tr class="{% cycle permissions_cycle %}">
+            <td>Default Roles</td>
+            <td>
+                {% for role in default_roles %}
+                <div><a href="{% show_resource_url role %}">{{ role }}</a></div>
+                {% endfor %}
+            </td>
+        </tr>
+        <tr class="{% cycle permissions_cycle %}">
+            <td>Abilities</td>
+            <td>
+                {% for ability in abilities %}
+                <div>{{ ability }}</div>
+                {% endfor %}
+            </td>
+        </tr>
+    </table>
+</div>
+
+<h2 style="border-bottom: 3px solid #000;">Version {{ itemrev.version }} Details</h2>
+
+<div style="margin-left: 30px;">
+    <h3>Fields</h3>
+
+    <table class="list">
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Defined In</th>
+        </tr>
+        {% for model_name in inheritance %}
+        {% for field in itemrev_fields %}
+        {% ifequal field.model_name model_name %}
+        {% ifequal field.field_type 'collection' %}
+        {% else %}
+        <tr class="{% cycle 'even' 'odd' %}">
+            <td>{{ field.name|title }}</td>
+            <td>
+
+                {% ifequal field.field_type 'regular' %}
+                {{ field.obj }}
+                {% endifequal %}
+
+                {% ifequal field.field_type 'entry' %}
+                {% if field.obj %}
+                <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                {% else %}
+                NULL
+                {% endif %}
+                {% endifequal %}
+
+                {% ifequal field.field_type 'collection' %}
+                {% if field.obj %}
+                {% for obj in field.obj %}
+                <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
+                {% endfor %}
+                {% else %}
+
+                {% endif %}
+                {% endifequal %}
+
+            </td>
+            <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
+        </tr>
+        {% endifequal %}
+        {% endifequal %}
+        {% endfor %}
+        {% endfor %}
+    </table>
+
+    <h3>Collections</h3>
+
+    <table class="list">
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Defined In</th>
+        </tr>
+        {% for model_name in inheritance %}
+        {% for field in itemrev_fields %}
+        {% ifequal field.model_name model_name %}
+        {% ifequal field.field_type 'collection' %}
+        <tr class="{% cycle 'even' 'odd' %}">
+            <td>{{ field.name|title }}</td>
+            <td>
+
+                {% ifequal field.field_type 'regular' %}
+                {{ field.obj }}
+                {% endifequal %}
+
+                {% ifequal field.field_type 'entry' %}
+                {% if field.obj %}
+                <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                {% else %}
+                NULL
+                {% endif %}
+                {% endifequal %}
+
+                {% ifequal field.field_type 'collection' %}
+                {% if field.obj %}
+                {% for obj in field.obj %}
+                <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
+                {% endfor %}
+                {% else %}
+
+                {% endif %}
+                {% endifequal %}
+
+            </td>
+            <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
+        </tr>
+        {% endifequal %}
+        {% endifequal %}
+        {% endfor %}
+        {% endfor %}
+    </table>
+</div>
+
+<h2 style="border-bottom: 3px solid #000;">Current Details</h2>
+
+<div style="margin-left: 30px;">
+    <h3>Fields</h3>
+
+    <table class="list">
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Defined In</th>
+        </tr>
+        {% for model_name in inheritance %}
+        {% for field in item_fields %}
+        {% ifequal field.model_name model_name %}
+        {% ifequal field.field_type 'collection' %}
+        {% else %}
+        <tr class="{% cycle 'even' 'odd' %}">
+            <td>{{ field.name|title }}</td>
+            <td>
+
+                {% ifequal field.field_type 'regular' %}
+                {{ field.obj }}
+                {% endifequal %}
+
+                {% ifequal field.field_type 'entry' %}
+                {% if field.obj %}
+                <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                {% else %}
+                NULL
+                {% endif %}
+                {% endifequal %}
+
+                {% ifequal field.field_type 'collection' %}
+                {% if field.obj %}
+                {% for obj in field.obj %}
+                <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
+                {% endfor %}
+                {% else %}
+
+                {% endif %}
+                {% endifequal %}
+
+            </td>
+            <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
+        </tr>
+        {% endifequal %}
+        {% endifequal %}
+        {% endfor %}
+        {% endfor %}
+    </table>
+
+    <h3>Collections</h3>
+
+    <table class="list">
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Defined In</th>
+        </tr>
+        {% for model_name in inheritance %}
+        {% for field in item_fields %}
+        {% ifequal field.model_name model_name %}
+        {% ifequal field.field_type 'collection' %}
+        <tr class="{% cycle 'even' 'odd' %}">
+            <td>{{ field.name|title }}</td>
+            <td>
+
+                {% ifequal field.field_type 'regular' %}
+                {{ field.obj }}
+                {% endifequal %}
+
+                {% ifequal field.field_type 'entry' %}
+                {% if field.obj %}
+                <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                {% else %}
+                NULL
+                {% endif %}
+                {% endifequal %}
+
+                {% ifequal field.field_type 'collection' %}
+                {% if field.obj %}
+                {% for obj in field.obj %}
+                <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
+                {% endfor %}
+                {% else %}
+
+                {% endif %}
+                {% endifequal %}
+
+            </td>
+            <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
+        </tr>
+        {% endifequal %}
+        {% endifequal %}
+        {% endfor %}
+        {% endfor %}
+    </table>
+</div>
+
+<h2>Comments</h2>
+<div>
+    <a href="/resource/comment/new?commented_item={{ item.pk }}&commented_item_version={{ itemrev.pk }}&redirect={{ full_path|urlencode }}">Add Comment</a>
+</div>
+<div>
+    {% for comment_info in comments %}
+    <div style="margin-bottom: 5px; border: 1px solid #666; padding: 15px;">
+        <div style="border-bottom: 1px solid #888;">
+            <a href="/resource/{{ comment_info.comment.item_type|lower }}/{{ comment_info.comment.pk }}">{{ comment_info.comment }}</a>
+            by <a href="{% show_resource_url comment_info.comment.last_author %}">{{ comment_info.comment.last_author }}</a>
+            for <a href="{% show_resource_url comment_info.comment.commented_item_version %}">version {{ comment_info.comment.commented_item_version.version }}</a>
+        </div>
+        <div>
+            {{ comment_info.comment.body }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock content %}
+
