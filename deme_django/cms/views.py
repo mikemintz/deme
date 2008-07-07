@@ -32,8 +32,10 @@ def get_form_class_for_item_type(item_type):
             continue
         return form_class
 
-# return a triple (user_role_list, group_role_list, default_role_list)
 def get_roles_for_agent_and_item(agent, item):
+    """
+    Return a triple (user_role_list, group_role_list, default_role_list)
+    """
     if item:
         agent_role_with_item_filter = cms.models.Role.objects.filter(agent_item_relationships_as_role__item2=item)
         group_role_with_item_filter = cms.models.Role.objects.filter(group_item_relationships_as_role__item2=item)
@@ -127,25 +129,35 @@ def logout(request, *args, **kwargs):
     return HttpResponseRedirect(redirect_url)
 
 def alias(request, *args, **kwargs):
-    alias_url = cms.models.AliasUrl.objects.filter(site=settings.SITE_ID, path=request.path)[0:1]
+    path_parts = [x for x in request.path.split('/') if x]
+    parent_url = None
+    alias_url = None
+    for path_part in path_parts:
+        try:
+            alias_url = cms.models.AliasUrl.objects.filter(site=settings.SITE_ID, path=path_part, parent_url=parent_url)[0:1].get()
+            parent_url = alias_url
+        except ObjectDoesNotExist:
+            template = loader.get_template('alias_not_found.html')
+            context = Context()
+            context['layout'] = 'base.html'
+            context['path'] = request.path
+            return HttpResponseNotFound(template.render(context))
     if alias_url:
-        alias_url = alias_url[0]
         item = alias_url.aliased_item
         kwargs = {}
-        kwargs['item_type'] = item.item_type.lower()
+        kwargs['item_type'] = alias_url.viewer
         kwargs['format'] = 'html'
-        kwargs['noun'] = str(item.pk)
-        kwargs['collection_action'] = None
-        kwargs['entry_action'] = 'show'
+        if item:
+            kwargs['noun'] = str(item.pk)
+            kwargs['collection_action'] = None
+            kwargs['entry_action'] = alias_url.action
+        else:
+            kwargs['noun'] = None
+            kwargs['collection_action'] = alias_url.action
+            kwargs['entry_action'] = None
         return resource(request, **kwargs)
     else:
-        template = loader.get_template('alias_not_found.html')
-        context = Context()
-        context['layout'] = 'base.html'
-        context['path'] = request.path
-        return HttpResponseNotFound(template.render(context))
-    return HttpResponse(current_site.domain)
-    return HttpResponse("alias")
+        return index(request)
 
 ### FORMS ###
 
@@ -183,9 +195,12 @@ def comment_dicts_for_item(item):
         result.append(comment_info)
     return result
 
+
 class ItemViewer(object):
+
     def __init__(self):
         pass
+
     def init_from_http(self, request, url_info):
         self.layout = 'base.html'
         self.item_type = resource_name_dict.get(url_info['item_type'], None)
@@ -238,6 +253,7 @@ class ItemViewer(object):
         else:
             self.context['cur_agent'] = None
         self.context['all_accounts'] = cms.models.Account.objects.all()
+
     def init_show_from_div(self, original_request, item_type, item, itemrev):
         self.layout = 'blank.html'
         self.request = original_request
@@ -266,6 +282,7 @@ class ItemViewer(object):
         else:
             self.context['cur_agent'] = None
         self.context['all_accounts'] = cms.models.Account.objects.all()
+
     def dispatch(self):
         if self.noun == None:
             action_method = getattr(self, 'collection_%s' % self.action, None)
@@ -282,19 +299,37 @@ class ItemViewer(object):
             return action_method()
         else:
             return None
+
     def render_item_not_found(self):
         template = loader.get_template('item_not_found.html')
         self.context['item'] = self.item
         return HttpResponseNotFound(template.render(self.context))
+
     def collection_list(self):
         #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
-        items = self.item_type.objects.all()
+        if 'q' in self.request:
+            items = self.item_type.objects.filter(description__contains=self.request['q'])
+            self.context['search_query'] = self.request['q']
+        else:
+            items = self.item_type.objects.all()
+            self.context['search_query'] = ''
         template = loader.get_template('item/list.html')
         self.context['model_names'] = model_names
         self.context['items'] = items
         return HttpResponse(template.render(self.context))
+
+    def collection_search(self):
+        #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+        model_names.sort()
+        items = self.item_type.objects.filter(description__contains=self.request['q'])
+        template = loader.get_template('item/list.html')
+        self.context['model_names'] = model_names
+        self.context['items'] = items
+        return HttpResponse(template.render(self.context))
+
     def collection_new(self):
         #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
@@ -309,6 +344,7 @@ class ItemViewer(object):
         if 'redirect' in self.request.GET:
             self.context['redirect'] = self.request.GET['redirect']
         return HttpResponse(template.render(self.context))
+
     def collection_create(self):
         form = self.form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
@@ -324,6 +360,7 @@ class ItemViewer(object):
             self.context['model_names'] = model_names
             self.context['form'] = form
             return HttpResponse(template.render(self.context))
+
     def entry_show(self):
         comments = comment_dicts_for_item(self.item)
         def get_fields_for_item(item):
@@ -386,6 +423,7 @@ class ItemViewer(object):
         self.context['default_roles'] = roles[2].all()
         self.context['abilities'] = get_abilities_for_roles(roles)
         return HttpResponse(template.render(self.context))
+
     def entry_edit(self):
         if self.context['cur_account']:
             self.itemrev.last_author = self.context['cur_account'].agent
@@ -399,6 +437,7 @@ class ItemViewer(object):
         model_names.sort()
         self.context['model_names'] = model_names
         return HttpResponse(template.render(self.context))
+
     def entry_update(self):
         #TODO if specified specific version and uploaded file blank, it would revert to newest version uploaded file
         if issubclass(self.item_type, type(self.item)):
@@ -422,14 +461,17 @@ class ItemViewer(object):
             model_names.sort()
             self.context['model_names'] = model_names
             return HttpResponse(template.render(self.context))
+
     def entry_delete(self):
         #TODO this doesn't really work
         cms.models.Item.objects.get(pk=self.item.pk).delete()
         return HttpResponseRedirect('/resource/%s' % (self.item_type.__name__.lower(),))
 
+
 class GroupViewer(ItemViewer):
-    #TODO if you update an Item into a Group, it doesn't make a Folio
+
     def collection_create(self):
+        #TODO if you update an Item into a Group, it doesn't make a Folio
         form = self.form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             new_item = form.save(commit=False)
@@ -442,6 +484,7 @@ class GroupViewer(ItemViewer):
             template = loader.get_template('item/new.html')
             self.context['form'] = form
             return HttpResponse(template.render(self.context))
+
     def entry_show(self):
         comments = comment_dicts_for_item(self.item)
         folio = self.item.folio.downcast()
@@ -455,7 +498,9 @@ class GroupViewer(ItemViewer):
         self.context['folio_html'] = folio_html
         return HttpResponse(template.render(self.context))
 
+
 class ItemSetViewer(ItemViewer):
+
     def entry_show(self):
         comments = comment_dicts_for_item(self.item)
         template = loader.get_template('itemset/show.html')
@@ -464,7 +509,9 @@ class ItemSetViewer(ItemViewer):
         self.context['comments'] = comments
         return HttpResponse(template.render(self.context))
 
+
 class TextDocumentViewer(ItemViewer):
+
     def entry_show(self):
         comments = comment_dicts_for_item(self.item)
         template = loader.get_template('textdocument/show.html')
@@ -472,8 +519,17 @@ class TextDocumentViewer(ItemViewer):
         self.context['itemrev'] = self.itemrev
         self.context['comments'] = comments
         return HttpResponse(template.render(self.context))
+
     def collection_getregions(self):
         data = '[["refbase_123::14", "refbase_123::18"]]'
         return HttpResponse(data)
+
+
+class DynamicPageViewer(ItemViewer):
+
+    def entry_run(self):
+        code = self.itemrev.code
+        template = loader.get_template_from_string(code)
+        return HttpResponse(template.render(self.context))
 
 

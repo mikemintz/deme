@@ -1,0 +1,2 @@
+* We're going to have to integrate permissions into binary files (e.g., MediaDocument)
+  so that users can't bypass Deme and download things from Apache directly.

@@ -7,8 +7,10 @@ register = template.Library()
 def show_resource_url(item):
     if isinstance(item, cms.models.ItemRev):
         return '/resource/%s/%s?version=%s' % (item.item_type.lower(), item.current_item_id, item.version)
-    else:
+    elif isinstance(item, cms.models.Item):
         return '/resource/%s/%s' % (item.item_type.lower(), item.pk)
+    else:
+        return ''
 
 @register.filter
 def icon_url(item_type, size=32):
@@ -27,13 +29,15 @@ def icon_url(item_type, size=32):
     elif item_type == cms.models.AgentToGroupRelationship:
         icon = 'apps/katomic'
     elif item_type == cms.models.AliasUrl:
-        icon = 'mimetypes/messages'
+        icon = 'mimetypes/message'
     elif item_type == cms.models.BinaryRelationship:
         icon = 'actions/run'
     elif item_type == cms.models.Comment:
         icon = 'apps/filetypes'
     elif item_type == cms.models.Document:
         icon = 'mimetypes/empty'
+    elif item_type == cms.models.DynamicPage:
+        icon = 'mimetypes/html'
     elif item_type == cms.models.Folio:
         icon = 'apps/kfm'
     elif item_type == cms.models.Group:
