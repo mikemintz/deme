@@ -6,6 +6,8 @@ from django import newforms as forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.http import QueryDict
+from django.utils import datastructures
 import logging
 
 ### MODELS ###
@@ -155,6 +157,11 @@ def alias(request, *args, **kwargs):
             kwargs['noun'] = None
             kwargs['collection_action'] = alias_url.action
             kwargs['entry_action'] = None
+        query_dict = QueryDict(alias_url.query_string).copy()
+        #TODO this is quite hacky, let's fix this when we finalize sites and stuff
+        query_dict.update(request.GET)
+        request.GET = query_dict
+        request._request = datastructures.MergeDict(request.POST, request.GET)
         return resource(request, **kwargs)
     else:
         return index(request)

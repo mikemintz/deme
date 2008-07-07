@@ -161,7 +161,8 @@ class GroupItemRoleRelationship(BinaryRelationship):
 class AliasUrl(Item):
     aliased_item = models.ForeignKey(Item, related_name='alias_urls_as_item', null=True, blank=True) #null should be collection
     viewer = models.CharField(max_length=100, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('dynamicpage', 'DynamicPage')])
-    action = models.CharField(max_length=100)
+    action = models.CharField(max_length=256)
+    query_string = models.CharField(max_length=1024, null=True, blank=True)
     site = models.ForeignKey(Site)
     parent_url = models.ForeignKey('AliasUrl', related_name='child_urls', null=True, blank=True)
     path = models.CharField(max_length=1024)
