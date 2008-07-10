@@ -5,7 +5,6 @@ import cms.models
 from django import newforms as forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.http import QueryDict
 from django.utils import datastructures
 import logging
@@ -131,17 +130,26 @@ def logout(request, *args, **kwargs):
     return HttpResponseRedirect(redirect_url)
 
 def alias(request, *args, **kwargs):
+    hostname = request.META['HTTP_HOST'].split(':')[0]
+    try:
+        current_site = cms.models.Site.objects.filter(site_domains_as_site__hostname=hostname)[0:1].get()
+    except ObjectDoesNotExist:
+        try:
+            current_site = cms.models.Site.objects.filter(is_default_site=True)[0:1].get()
+        except ObjectDoesNotExist:
+            current_site = None
     path_parts = [x for x in request.path.split('/') if x]
     parent_url = None
     alias_url = None
     for path_part in path_parts:
         try:
-            alias_url = cms.models.AliasUrl.objects.filter(site=settings.SITE_ID, path=path_part, parent_url=parent_url)[0:1].get()
+            alias_url = cms.models.AliasUrl.objects.filter(site=current_site, path=path_part, parent_url=parent_url)[0:1].get()
             parent_url = alias_url
         except ObjectDoesNotExist:
             template = loader.get_template('alias_not_found.html')
             context = Context()
             context['layout'] = 'base.html'
+            context['hostname'] = request.META['HTTP_HOST']
             context['path'] = request.path
             return HttpResponseNotFound(template.render(context))
     if alias_url:
