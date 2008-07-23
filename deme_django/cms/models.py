@@ -1,4 +1,6 @@
 from django.db import models
+from django import forms
+from django.utils.translation import ugettext_lazy as _
 from django.db import transaction
 from django.db import connection
 import datetime
@@ -6,6 +8,38 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from django.db.models.base import ModelBase
 from copy import deepcopy
+
+
+class IsDefaultFormField(forms.BooleanField):
+    widget = forms.CheckboxInput
+    def clean(self, value):
+        if value == 'False':
+            return None
+        if value:
+            return True
+        return None
+
+
+class IsDefaultField(models.NullBooleanField):
+    def __init__(self, *args, **kwargs):
+        kwargs['unique'] = True
+        models.NullBooleanField.__init__(self, *args, **kwargs)
+
+    def get_internal_type(self):
+        return "NullBooleanField"
+
+    def to_python(self, value):
+        if value in (None, True): return value
+        if value in (False,): return None
+        if value in ('None'): return None
+        if value in ('t', 'True', '1'): return True
+        raise validators.ValidationError, _("This value must be either None or True.")
+
+    def formfield(self, **kwargs):
+        defaults = {'form_class': IsDefaultFormField}
+        defaults.update(kwargs)
+        return super(IsDefaultField, self).formfield(**defaults)
+
 
 class ItemMetaClass(ModelBase):
     def __new__(cls, name, bases, attrs):
@@ -17,11 +51,22 @@ class ItemMetaClass(ModelBase):
             return result
         rev_name = "%sRev" % name
         rev_bases = tuple([x.REV for x in bases])
-        rev_attrs = deepcopy(attrs)
-        for field_name, field in rev_attrs.iteritems():
-            if isinstance(field, models.Field):
-                if field.rel and field.rel.related_name:
-                    field.rel.related_name = 'REV_' + field.rel.related_name
+        def convert_to_rev(key, value):
+            #TODO do we need to remove uniqueness of related_field?
+            #TODO do we need to deepcopy the key?
+            value = deepcopy(value)
+            if isinstance(value, models.Field):
+                if value.rel and value.rel.related_name:
+                    value.rel.related_name = 'REV_' + value.rel.related_name
+                value._unique = False
+            return key, value
+        def is_valid_in_rev(key, value):
+            if key == '__module__':
+                return True
+            if isinstance(value, models.Field):
+                return True
+            return False
+        rev_attrs = dict([convert_to_rev(k,v) for k,v in attrs.iteritems() if is_valid_in_rev(k,v)])
         rev_result = super(ItemMetaClass, cls).__new__(cls, rev_name, rev_bases, rev_attrs)
         result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
         #exec('global %s;%s = rev_result'%(rev_name, rev_name))
@@ -83,10 +128,13 @@ class Item(models.Model):
         new_rev.save()
 
 class Agent(Item):
-    is_anonymous = models.BooleanField()
+    pass
 
 class Account(Item):
     agent = models.ForeignKey(Agent, related_name='accounts_as_agent')
+
+class AnonymousAccount(Account):
+    pass
 
 class Person(Agent):
     first_name = models.CharField(max_length=100)
@@ -102,7 +150,7 @@ class Folio(ItemSet):
 class Group(Agent):
     #folio = models.OneToOneField(Item, related_name='group_as_folio')
     # can't be onetoone because lots of versions pointing to folio
-    folio = models.ForeignKey(Folio, related_name='groups_as_folio')
+    folio = models.ForeignKey(Folio, related_name='groups_as_folio', unique=True)
 
 class Document(Item):
     last_author = models.ForeignKey(Agent, related_name='documents_as_last_author')
@@ -120,20 +168,26 @@ class Comment(Item):
     body = models.TextField()
 
 class BinaryRelationship(Item):
-    item1 = models.ForeignKey(Item, related_name='relationships_as_item1', null=True, blank=True)
-    item2 = models.ForeignKey(Item, related_name='relationships_as_item2', null=True, blank=True)
+    pass
+    #TODO we can't define item1 and item2 here or else we won't be able to unique_together it in subclasses
+    #item1 = models.ForeignKey(Item, related_name='relationships_as_item1', null=True, blank=True)
+    #item2 = models.ForeignKey(Item, related_name='relationships_as_item2', null=True, blank=True)
 
 class AgentToGroupRelationship(BinaryRelationship):
     # item1 is agent
     # item2 is group
     item1 = models.ForeignKey(Agent, related_name='group_relationships')
     item2 = models.ForeignKey(Group, related_name='agent_relationships')
+    class Meta:
+        unique_together = (('item1', 'item2'),)
 
 class ItemToItemSetRelationship(BinaryRelationship):
     # item1 is item
     # item2 is itemset
     item1 = models.ForeignKey(Item, related_name='itemset_relationships_as_item')
     item2 = models.ForeignKey(ItemSet, related_name='itemset_relationships_as_itemset')
+    class Meta:
+        unique_together = (('item1', 'item2'),)
 
 class Role(Item):
     pass
@@ -149,6 +203,8 @@ class AgentItemRoleRelationship(BinaryRelationship):
     item1 = models.ForeignKey(Agent, related_name='item_role_relationships_as_agent', null=True, blank=True)
     item2 = models.ForeignKey(Item, related_name='agent_role_relationships_as_item', null=True, blank=True)
     role = models.ForeignKey(Role, related_name='agent_item_relationships_as_role')
+    class Meta:
+        unique_together = (('item1', 'item2', 'role'),)
 
 class GroupItemRoleRelationship(BinaryRelationship):
     # item1 is group
@@ -156,22 +212,33 @@ class GroupItemRoleRelationship(BinaryRelationship):
     item1 = models.ForeignKey(Group, related_name='item_role_relationships_as_group', null=True, blank=True)
     item2 = models.ForeignKey(Item, related_name='group_role_relationships_as_item', null=True, blank=True)
     role = models.ForeignKey(Role, related_name='group_item_relationships_as_role')
+    class Meta:
+        unique_together = (('item1', 'item2', 'role'),)
 
-class Site(Item):
-    is_default_site = models.BooleanField(default=False)
-
-class SiteDomain(Item):
-    hostname = models.CharField(max_length=256)
-    site = models.ForeignKey(Site, related_name='site_domains_as_site')
-
-class AliasUrl(Item):
+class LocalUrl(Item):
     aliased_item = models.ForeignKey(Item, related_name='alias_urls_as_item', null=True, blank=True) #null should be collection
     viewer = models.CharField(max_length=100, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('dynamicpage', 'DynamicPage')])
     action = models.CharField(max_length=256)
     query_string = models.CharField(max_length=1024, null=True, blank=True)
-    site = models.ForeignKey(Site, related_name='alias_urls_as_site')
-    parent_url = models.ForeignKey('AliasUrl', related_name='child_urls', null=True, blank=True)
-    path = models.CharField(max_length=1024)
+
+class Site(LocalUrl):
+    is_default_site = IsDefaultField(default=None)
+
+class SiteDomain(Item):
+    hostname = models.CharField(max_length=256)
+    site = models.ForeignKey(Site, related_name='site_domains_as_site')
+    class Meta:
+        unique_together = (('site', 'hostname'),)
+
+#TODO figure out unique base url
+# for now we allow blank path
+#TODO we should rename aliasurl and friends
+#TODO we should prevent top level names like 'static' and 'resource', although not a big deal since it doesn't overwrite
+class AliasUrl(LocalUrl):
+    parent_url = models.ForeignKey('LocalUrl', related_name='child_urls')
+    path = models.CharField(max_length=256)
+    class Meta:
+        unique_together = (('parent_url', 'path'),)
 
 class DynamicPage(Item):
     code = models.TextField()

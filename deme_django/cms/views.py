@@ -1,8 +1,9 @@
 # Create your views here.
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
 from django.template import Context, loader
+from django.db.models import Q
 import cms.models
-from django import newforms as forms
+from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.http import QueryDict
@@ -37,19 +38,15 @@ def get_roles_for_agent_and_item(agent, item):
     """
     Return a triple (user_role_list, group_role_list, default_role_list)
     """
-    if item:
-        agent_role_with_item_filter = cms.models.Role.objects.filter(agent_item_relationships_as_role__item2=item)
-        group_role_with_item_filter = cms.models.Role.objects.filter(group_item_relationships_as_role__item2=item)
-    else:
-        agent_role_with_item_filter = cms.models.Role.objects.filter(agent_item_relationships_as_role__item2__isnull=True)
-        group_role_with_item_filter = cms.models.Role.objects.filter(group_item_relationships_as_role__item2__isnull=True)
-    default_roles = agent_role_with_item_filter.filter(agent_item_relationships_as_role__item1__isnull=True)
-    if agent:
-        direct_roles = agent_role_with_item_filter.filter(agent_item_relationships_as_role__item1=agent)
-        groupwide_roles = group_role_with_item_filter.filter(group_item_relationships_as_role__item1__agent_relationships__item1=agent)
-    else:
-        direct_roles = agent_role_with_item_filter.filter(agent_item_relationships_as_role__item1__is_anonymous=True)
-        groupwide_roles = group_role_with_item_filter.filter(group_item_relationships_as_role__item1__agent_relationships__item1__is_anonymous=True)
+    if not agent:
+        raise Exception("You must create an anonymous user")
+    role_manager = cms.models.Role.objects
+    direct_roles = role_manager.filter(agent_item_relationships_as_role__item2__exact=item,
+                                       agent_item_relationships_as_role__item1=agent)
+    groupwide_roles = role_manager.filter(group_item_relationships_as_role__item2__exact=item,
+                                          group_item_relationships_as_role__item1__agent_relationships__item1=agent)
+    default_roles = role_manager.filter(agent_item_relationships_as_role__item2__exact=item,
+                                        agent_item_relationships_as_role__item1__isnull=True)
     return (direct_roles, groupwide_roles, default_roles)
 
 def get_abilities_for_roles(roles_triple, possible_abilities=None):
@@ -78,8 +75,33 @@ def get_abilities_for_roles(roles_triple, possible_abilities=None):
     # anything left over in abilities_unset is effectively "no"
     return abilities_yes
 
+def filter_for_agent_and_ability(agent, ability):
+    direct_yes_q = Q(agent_role_relationships_as_item__item1=agent,
+                     agent_role_relationships_as_item__role__permissions_as_role__ability=ability,
+                     agent_role_relationships_as_item__role__permissions_as_role__is_allowed=True)
+    direct_no_q = Q(agent_role_relationships_as_item__item1=agent,
+                    agent_role_relationships_as_item__role__permissions_as_role__ability=ability,
+                    agent_role_relationships_as_item__role__permissions_as_role__is_allowed=False)
+    group_yes_q = Q(group_role_relationships_as_item__item1__agent_relationships__item1=agent,
+                    group_role_relationships_as_item__role__permissions_as_role__ability=ability,
+                    group_role_relationships_as_item__role__permissions_as_role__is_allowed=True)
+    group_no_q = Q(group_role_relationships_as_item__item1__agent_relationships__item1=agent,
+                   group_role_relationships_as_item__role__permissions_as_role__ability=ability,
+                   group_role_relationships_as_item__role__permissions_as_role__is_allowed=False)
+    default_yes_q = Q(agent_role_relationships_as_item__item1__isnull=True,
+                      agent_role_relationships_as_item__role__permissions_as_role__ability=ability,
+                      agent_role_relationships_as_item__role__permissions_as_role__is_allowed=True)
+    default_no_q = Q(agent_role_relationships_as_item__item1__isnull=True,
+                     agent_role_relationships_as_item__role__permissions_as_role__ability=ability,
+                     agent_role_relationships_as_item__role__permissions_as_role__is_allowed=False)
+    #TODO this does not work yet. why not?
+    #return direct_yes_q | (~direct_no_q & group_yes_q) | (~direct_no_q & ~group_no_q & default_yes_q)
+    #return direct_yes_q | (~direct_no_q & group_yes_q)
+    return direct_yes_q
+
 ### VIEWS ###
 
+#TODO get rid of this view, it will be replaced by a default dynamicpage
 def index(request):
     template = loader.get_template('index.html')
     context = Context()
@@ -137,42 +159,40 @@ def alias(request, *args, **kwargs):
         try:
             current_site = cms.models.Site.objects.filter(is_default_site=True)[0:1].get()
         except ObjectDoesNotExist:
+            raise Exception("You must create a default Site")
             current_site = None
     path_parts = [x for x in request.path.split('/') if x]
-    parent_url = None
-    alias_url = None
-    for path_part in path_parts:
-        try:
-            alias_url = cms.models.AliasUrl.objects.filter(site=current_site, path=path_part, parent_url=parent_url)[0:1].get()
-            parent_url = alias_url
-        except ObjectDoesNotExist:
-            template = loader.get_template('alias_not_found.html')
-            context = Context()
-            context['layout'] = 'base.html'
-            context['hostname'] = request.META['HTTP_HOST']
-            context['path'] = request.path
-            return HttpResponseNotFound(template.render(context))
-    if alias_url:
-        item = alias_url.aliased_item
-        kwargs = {}
-        kwargs['item_type'] = alias_url.viewer
-        kwargs['format'] = 'html'
-        if item:
-            kwargs['noun'] = str(item.pk)
-            kwargs['collection_action'] = None
-            kwargs['entry_action'] = alias_url.action
-        else:
-            kwargs['noun'] = None
-            kwargs['collection_action'] = alias_url.action
-            kwargs['entry_action'] = None
-        query_dict = QueryDict(alias_url.query_string).copy()
-        #TODO this is quite hacky, let's fix this when we finalize sites and stuff
-        query_dict.update(request.GET)
-        request.GET = query_dict
-        request._request = datastructures.MergeDict(request.POST, request.GET)
-        return resource(request, **kwargs)
+    alias_url = current_site
+    try:
+        for path_part in path_parts:
+            alias_url = cms.models.AliasUrl.objects.filter(path=path_part, parent_url=alias_url)[0:1].get()
+    except ObjectDoesNotExist:
+        template = loader.get_template('alias_not_found.html')
+        context = Context()
+        context['layout'] = 'base.html'
+        context['hostname'] = request.META['HTTP_HOST']
+        context['path'] = request.path
+        return HttpResponseNotFound(template.render(context))
+    if not alias_url:
+        raise Exception("we should never get here 23942934")
+    item = alias_url.aliased_item
+    kwargs = {}
+    kwargs['item_type'] = alias_url.viewer
+    kwargs['format'] = 'html'
+    if item:
+        kwargs['noun'] = str(item.pk)
+        kwargs['collection_action'] = None
+        kwargs['entry_action'] = alias_url.action
     else:
-        return index(request)
+        kwargs['noun'] = None
+        kwargs['collection_action'] = alias_url.action
+        kwargs['entry_action'] = None
+    query_dict = QueryDict(alias_url.query_string).copy()
+    #TODO this is quite hacky, let's fix this when we finalize sites and stuff
+    query_dict.update(request.GET)
+    request.GET = query_dict
+    request._request = datastructures.MergeDict(request.POST, request.GET)
+    return resource(request, **kwargs)
 
 ### FORMS ###
 
@@ -260,14 +280,19 @@ class ItemViewer(object):
             self.context['cur_account'] = None
         if not self.context['cur_account']:
             try:
-                self.context['cur_account'] = cms.models.Account.objects.filter(agent__is_anonymous=True)[0:1].get()
+                self.context['cur_account'] = cms.models.AnonymousAccount.objects.all()[0:1].get()
             except ObjectDoesNotExist:
+                raise Exception("You must create an anonymous account")
                 pass
         if self.context['cur_account']:
             self.context['cur_agent'] = self.context['cur_account'].agent
         else:
             self.context['cur_agent'] = None
         self.context['all_accounts'] = cms.models.Account.objects.all()
+        #TODO delete next lines
+        logging.debug("calculating accessible items")
+        accessible = cms.models.Item.objects.filter(filter_for_agent_and_ability(self.context['cur_agent'], 'this')).all()
+        logging.debug(accessible)
 
     def init_show_from_div(self, original_request, item_type, item, itemrev):
         self.layout = 'blank.html'
@@ -325,21 +350,11 @@ class ItemViewer(object):
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
         if 'q' in self.request:
-            items = self.item_type.objects.filter(description__contains=self.request['q'])
+            items = self.item_type.objects.filter(description__icontains=self.request['q'])
             self.context['search_query'] = self.request['q']
         else:
             items = self.item_type.objects.all()
             self.context['search_query'] = ''
-        template = loader.get_template('item/list.html')
-        self.context['model_names'] = model_names
-        self.context['items'] = items
-        return HttpResponse(template.render(self.context))
-
-    def collection_search(self):
-        #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
-        model_names.sort()
-        items = self.item_type.objects.filter(description__contains=self.request['q'])
         template = loader.get_template('item/list.html')
         self.context['model_names'] = model_names
         self.context['items'] = items

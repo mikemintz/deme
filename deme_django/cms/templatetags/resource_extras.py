@@ -25,13 +25,13 @@ def icon_url(item_type, size=32):
     elif item_type == cms.models.Agent:
         icon = 'apps/personal'
     elif item_type == cms.models.AgentItemRoleRelationship:
-        icon = 'actions/run'
+        icon = 'apps/proxy'
     elif item_type == cms.models.AgentToGroupRelationship:
         icon = 'apps/katomic'
     elif item_type == cms.models.AliasUrl:
         icon = 'mimetypes/message'
     elif item_type == cms.models.BinaryRelationship:
-        icon = 'actions/run'
+        icon = 'apps/proxy'
     elif item_type == cms.models.Comment:
         icon = 'apps/filetypes'
     elif item_type == cms.models.Document:
@@ -43,21 +43,27 @@ def icon_url(item_type, size=32):
     elif item_type == cms.models.Group:
         icon = 'apps/Login Manager'
     elif item_type == cms.models.GroupItemRoleRelationship:
-        icon = 'actions/run'
+        icon = 'apps/proxy'
     elif item_type == cms.models.Item:
         icon = 'apps/kblackbox'
     elif item_type == cms.models.ItemSet:
         icon = 'filesystems/folder_blue'
     elif item_type == cms.models.ItemToItemSetRelationship:
         icon = 'filesystems/folder_documents'
+    elif item_type == cms.models.LocalUrl:
+        icon = 'mimetypes/message'
     elif item_type == cms.models.MediaDocument:
         icon = 'mimetypes/misc'
     elif item_type == cms.models.Person:
-        icon = 'apps/kuser'
+        icon = 'apps/access'
     elif item_type == cms.models.Role:
         icon = 'apps/lassist'
     elif item_type == cms.models.RolePermission:
         icon = 'apps/ksysv'
+    elif item_type == cms.models.Site:
+        icon = 'devices/nfs_unmount'
+    elif item_type == cms.models.SiteDomain:
+        icon = 'devices/modem'
     elif item_type == cms.models.TextDocument:
         icon = 'mimetypes/txt'
     elif issubclass(item_type, cms.models.Item):

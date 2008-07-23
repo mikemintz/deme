@@ -1,3 +1,8 @@
 Deme is licensed under the GNU Affero General Public License version 3.
 <http://www.fsf.org/licensing/licenses/agpl-3.0.html>
 
+We currently run with Django from SVN:
+http://code.djangoproject.com/svn/django/trunk/django
+r7602
+
+Currently upgrading to work with r8055

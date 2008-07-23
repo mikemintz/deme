@@ -17,12 +17,12 @@
     {% endif %}
     <select onchange="window.location = this.value;">
         {% if cur_account %}
-        <option value="/meta/logout?redirect={{ full_path|urlencode }}">[NOBODY]</option>
+        <option value="/meta/logout?redirect={{ full_path|urlencode }}">[Logout]</option>
         {% else %}
         <option value="/meta/logout?redirect={{ full_path|urlencode }}" selected="selected"></option>
         {% endif %}
         {% for account in all_accounts %}
-        {% ifequal account cur_account %}
+        {% ifequal account.pk cur_account.pk %}
         <option value="/meta/login?account={{ account.pk }}&redirect={{ full_path|urlencode }}" selected="selected">{{ account.agent }} / {{ account }}</option>
         {% else %}
         <option value="/meta/login?account={{ account.pk }}&redirect={{ full_path|urlencode }}">{{ account.agent }} / {{ account }}</option>
