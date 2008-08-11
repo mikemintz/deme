@@ -6,3 +6,7 @@ http://code.djangoproject.com/svn/django/trunk/django
 r7602
 
 Currently upgrading to work with r8055
+
+Download tinymce and extract it into a directory called trunk/deme_django/static/javascripts/tinymce
+Download an iconset called crystal project (at everaldo) and extract the size folders to a folder called trunk/deme_django/static/crystal_project
+
