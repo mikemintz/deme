@@ -2,6 +2,8 @@ import os.path
 
 # Django settings for deme_django project.
 
+DJANGO_SERVES_STATIC_FILES = True
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
