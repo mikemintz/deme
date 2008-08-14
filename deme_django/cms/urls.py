@@ -6,6 +6,7 @@ urlpatterns = patterns('',
     (r'^resource($|/)', 'deme_django.cms.views.invalidresource'),
     (r'^meta/login($|/)', 'deme_django.cms.views.login'),
     (r'^meta/logout($|/)', 'deme_django.cms.views.logout'),
+    (r'^meta/codegraph($|/)', 'deme_django.cms.views.codegraph'),
     (r'', 'deme_django.cms.views.alias'),
 )
 

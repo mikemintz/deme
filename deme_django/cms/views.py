@@ -151,6 +151,20 @@ def logout(request, *args, **kwargs):
         del request.session['account_unique_id']
     return HttpResponseRedirect(redirect_url)
 
+def codegraph(request, *args, **kwargs):
+    import os
+    import subprocess
+    models_filename = os.path.join(os.path.dirname(__file__), 'models.py')
+    codegraph_filename = os.path.join(os.path.dirname(__file__), '..', 'static', 'codegraph.png')
+    models_mtime = os.stat(models_filename)[8]
+    try:
+        codegraph_mtime = os.stat(codegraph_filename)[8]
+    except OSError, e:
+        codegraph_mtime = 0
+    if models_mtime > codegraph_mtime:
+        subprocess.call(os.path.join(os.path.dirname(__file__), '..', 'gen_graph.py'), shell=True)
+    return HttpResponseRedirect('/static/codegraph.png?%d' % models_mtime)
+
 def alias(request, *args, **kwargs):
     hostname = request.META['HTTP_HOST'].split(':')[0]
     try:

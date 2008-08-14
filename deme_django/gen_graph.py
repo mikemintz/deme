@@ -10,9 +10,9 @@ import subprocess
 import itertools
 from deme_django.cms import models
 
-#GRAPHVIZ_PATH = '/usr/local/graphviz-2.14/bin'
-#DOT_PATH = os.path.join(GRAPHVIZ_PATH, 'dot')
-DOT_PATH = 'dot'
+GRAPHVIZ_PATH = '/usr/local/graphviz-2.14/bin'
+DOT_PATH = os.path.join(GRAPHVIZ_PATH, 'dot')
+#DOT_PATH = 'dot'
 
 field_name_map = {
     'ForeignKey': '',
@@ -62,7 +62,7 @@ dotcode = '\n'.join(dotcode)
 p = subprocess.Popen([DOT_PATH, '-Tpng'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
 p.stdin.write(dotcode)
 p.stdin.close()
-f = file(os.path.join(os.path.dirname(__file__), 'static', 'code_graph.png'), 'wb')
+f = file(os.path.join(os.path.dirname(__file__), 'static', 'codegraph.png'), 'wb')
 f.write(p.stdout.read())
 f.close()
 #os.system("open graph.png")
