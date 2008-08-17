@@ -102,7 +102,7 @@ class Item(models.Model):
     @transaction.commit_on_success
     def save_versioned(self):
         self.item_type = type(self).__name__
-        self.created_at = datetime.datetime.now()
+        self.created_at = datetime.datetime.now() #TODO what is this doing here? i'm confused!
         fields = {}
         for field in self._meta.fields:
             if field.primary_key:
@@ -196,6 +196,7 @@ class RolePermission(Item):
     role = models.ForeignKey(Role, related_name='permissions_as_role')
     ability = models.CharField(max_length=100, choices=[('this', 'do this'), ('that', 'do that')])
     is_allowed = models.BooleanField()
+    #TODO add unique_together?
 
 class AgentItemRoleRelationship(BinaryRelationship):
     # item1 is agent
@@ -229,6 +230,7 @@ class SiteDomain(Item):
     site = models.ForeignKey(Site, related_name='site_domains_as_site')
     class Meta:
         unique_together = (('site', 'hostname'),)
+#TODO match iteratively until all subdomains are gone
 
 #TODO figure out unique base url
 # for now we allow blank path

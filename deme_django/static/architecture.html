@@ -1,0 +1,170 @@
+<html>
+  <head>
+    <title>Deme Architecture</title>
+    <style type="text/css">
+      body {
+        font-family: helvetica, arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      div.outer {
+        background: #678;
+        padding: 10px;
+      }
+      div.inner {
+        width: 760px;
+        margin: auto;
+        background: #fff;
+        border: thin solid #248;
+        padding: 15px;
+      }
+      h1 {
+        background: #eef;
+        border: 5px solid #226;
+        color: #226;
+        padding: 10px;
+        text-align: center;
+        margin-top: 0;
+      }
+      h2 {
+        border-bottom: 3px solid #266;
+        color: #266;
+      }
+      h3 {
+        border-bottom: thin solid #369;
+        color: #369;
+        margin-top: 0;
+      }
+      h4 {
+        color: #468;
+        margin: 0 20px 5px 20px;
+      }
+      div.section {
+        border: thin solid #bbb;
+        padding: 20px;
+        padding-bottom: 0;
+        margin: 0 40px 40px 40px;
+      }
+      p {
+        margin: 0 20px 20px 20px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="outer">
+      <div class="inner">
+
+        <h1>Deme Architecture</h1>
+
+        <h2>Back-end (items)</h2>
+
+        <div class="section">
+          <h3>Items</h3>
+          <h4>Overview</h4>
+          <p>Most persistent data in Deme is stored in "items". An item is an instance of a particular "item type". This is in parallel to object-oriented programming where instances (items) are defined by classes (item types). The Deme item types form a hierarchy through inheritance, so if the Person item type is a subclass of the Agent item type, then any item that is a person is also an agent. Every item type inherits from the Item item type (which corresponds to the Object class in many programming languages). In theory, we allow multiple inheritance, but we have not yet had the need to use it, and we plan to avoid using it (e.g., the hypothetical HtmlComment item type could inherit from the HtmlDocument and Comment item types, even though HtmlDocument and Comment are not related).</p>
+          <h4>Database</h4>
+          <p>We use ORM with multi-table inheritance. There is a database table for every item type, and a row in that table for every item of that item type. For example, if our entire item type hierarchy is Item -&gt; Agent -&gt; Person, and our items are Mike[Person] and Robot[Agent], then there will be one row in the Person table (for Mike), two rows in the Agent table (for Mike and Robot), and two rows in the Item table (for Mike and Robot).</p>
+          <h4>Fields</h4>
+          <p>Every item type defines the "fields" relevant for its items, and item types inherit fields from their parents. As a simple example, Item might define the "description" field, Agent might define no new fields, and Person might define the "email" field. Then every person has a description and a email. The columns in each table correspond to the fields in its item type. So if the Mike item has description="Mike Mintz" and email="mike@example.com", then his row in the Item table will just have description="Mike Mintz", his row in the Agent table will have no fields (because Agent did not define any new fields), and his row in the Person table will have email="mike@example.com".</p>
+          <h4>Field types</h4>
+          <p>Every field has a type that corresponds to the types we can store in our database. The basic types are things like String, Integer, and Boolean. It is important to realize that fields are <em>not</em> items. So if Mike's email field is of type String, it cannot be referred to as an item itself. You cannot store entire items as fields, but you can have fields that are pointers to other items (foreign keys in database-speak). If we wanted to "itemize" the email field, we could make a new Email item type and have the Person's email field be a pointer to an email item. In the case of email, however, this is not particularly useful, and it just adds more overhead (and makes versioning difficult, as we'll see later on). Pointer fields are more useful for defining relationships between legitimate items. For example, the Document item type should have an "author" field pointing to the agent that created the document.</p>
+          <p>Pointers do not represent an exclusive "ownership" relationship. So just because a document pointed to the person that wrote it, it doesn't prevent other documents from pointing to that person. Multiple items can point to a common item.</p>
+          <p>Fields cannot store data structures like lists. If you want to express X has many Y's, then rather than storing all the Y's in the X row, you should itemize the Y's, and have each Y point to the X that created it. For example, an Agent has many Accounts. So rather than storing the Accounts as fields inside each Agent, we make Account an item type, and give it an "Agent pointer" field. So the accounts for agent X are represented by all of the Accounts that have agent_pointer=X.</p>
+          <p>The most important field is the id field (primary key in database-speak). Every item has a unique id, an auto-incrementing integer starting at 1. Items share the same id with their parent-item-type versions (so Mike's row in the Person table has the same id as Mike's row in the Agent table and Item table). Pointer fields are effectively references to the id of the pointee. It is important that the id field never change so that there is always a single reliable way to refer to a particular item. No other field is guaranteed to be unique among all items (although for the sake of the user interface, it might be worthwhile considering making a unique string field, so the url /resource/person/5 can be /resource/person/mikemintz).</p>
+          <h4>Versioning</h4>
+          <p>For every item type table, there is a dual "revisions" table. So in our previous example, in addition to the Item, Agent, and Person tables, we now have ItemRev, AgentRev, and PersonRev tables. These tables store the exact same fields as their original non-versioned tables, with a few exceptions:
+          <ul>
+            <li>Each itemrev has a pointer to the item it is a revision of.</li>
+            <li>Each itemrev has a unique id within the list of revisions, which does not correspond to the unique id of its regular self. So if there are 3 items, and each item has 2 revisions, then the rows in the revision table will have ids 1, 2, 3, 4, 5, and 6. This revision id field is necessary if someone wants to add a pointer to a specific revision (rather than the item as a whole), which comes up when you want to create comments about specific versions. Pointers by default refer to regular items, but you can always create pointers to specific itemrevs.</li>
+            <li>Each itemrev has a version field, an integer starting at 1 and incrementing each time a new revision is made. The largest version number always corresponds to the latest revision.</li>
+            <li>Uniqueness constraints are not propagated from the regular table to the revision table. For example, if we have the constraint that there can only be one Person for every email address (i.e., email addresses are unique), then it wouldn't make sense to enforce that in the revisions table, since version 1 and version 2 of Mike might have the same email address.</li>
+          </ul>
+          <p>So apart from these differences, each itemrev stores the exact same fields as the regular item. Every time a change is made to the regular item, a snapshot is taken and a new itemrev is created. So when the Mike item is changed, Mike's rows in the Item, Agent, and Person table are updated, and those updates are copied over to the ItemRev, AgentRev, and PersonRev tables, so that we can refer to the past.</p>
+          <p>Here is the major caveat. Imagine there is a student and a class. We must represent their relationship with a third item type, the ClassMembership, since classes cannot store arrays of students, and students cannot store arrays of classes. If the student joins the class, a ClassMembership is created. Ideally, we'd like to be look at the previous roster of the class, but since the class roster is just composed of ClassMemberships that point to the class, there is no way to refer to a previous version. A possible solution is to refer to the entire state of items at a particular time step, but that gets convoluted. For now, just assume that versioning only plays well with regular fields, and does not work on data structures created via relationship tables.</p>
+          <p>To be decided: how to delete things!</p>
+          <h4>Things stored outside the database</h4>
+          <p>Not every bit of persistent data is stored in the database in item fields. Here are the exceptions so far:</p>
+          <ul>
+            <li>Uploaded files (like the files corresponding to MediaDocuments) are stored on the filesystem in the static files folder so they can be stored more efficiently (databases are not good for binary data) and so they can be served quickly by the webserver without going through Deme.</li>
+            <li>Item type definitions are stored as code, not in the database. The fact that Person is a subtype of Agent and defines the email field is inferred from the Deme code, and should not be read from the database. In the future, we might want to consider creating a "ItemTypes" table that stores one row per item type (the size would remain fixed as long as the code does not change), and this way, we could refer to item types (one good example is an admin might want to create a permission for another user to create new items of a specified type). Since the item type definitions are static, it seems like we never need this ability, and can always emulate it with more code.</li>
+          </ul>
+          <h4>Core item types</h4>
+          <p>Below are the core item types and the role they play (see the full ontology at <a href="http://deme.stanford.edu/meta/codegraph">http://deme.stanford.edu/meta/codegraph</a>).</p>
+          <ul>
+            <li><strong>Item:</strong> Everything is an item. It gives us a completely unique id across all items, and defines some fields common to all items, such as updated_at and description. I'm not sure if description is a good idea though... I'm troubled by the fact that we must come up with a description for every GroupMembership.</li>
+            <li><strong>Agent:</strong> An Agent is an Item that can "do" things. This is important for authentication (only agents can log in), and permissions (agents are the entities we assign permissions to). Also, if there is an author pointer for an item, it should point to an agent. Not all agents are people: agents could be bots or groups too. An example of using a group as an agent is when you want to act on behalf of an organization. For example, imagine we have a group called Alaska Democratic Party. It might create a document called "Party Platform", and it would be desirable to show that the document was authored by Alaska Democratic Party, rather than some random guy who wrote the prose. Also, we might want to use permissions to give this group the ability to cast one vote in the national convention. Later on, when we work more on authentication, we will give particular persons the ability to authenticate on behalf of the group and do these sorts of actions.</li>
+            <li><strong>Account:</strong> An Account is an Item that represents some credentials to login. For example, there might be an account representing my Facebook login, an account representing my WebAuth login, and an account representing Todd's OpenID login. Every Account points to the Agent it belongs to. Rather than storing the login credentials in a particular Agent, we allow agents to have multiple accounts, so that they can login different ways. Accounts can also be used to sync profile information through APIs. There will be subclasses of Account for each different way of logging in (WebAuthAccount, FacebookAccount, etc.)</li>
+            <li><strong>AnonymousAccount:</strong> An AnonymousAccount is an Account that is used whenever someone has not authenticated yet. There should be exactly one AnonymousAccount, which corresponds to a single anonymous agent. Thus, whenever someone is not logged in, they are effectively this one anonymous agent. Thus, everywhere in Deme, the website visitor is always represented by an Agent, whether it is the actual person or just the anonymous agent.</li>
+            <li><strong>Person:</strong> A Person is an Agent that has fields like first name, last name, email address, etc. Depending on how we sync with other profiles, we might want to extract a lot of this to a new Profile class.</li>
+            <li><strong>ItemSet:</strong> An ItemSet is an Item that represents a set of other items. ItemSets just use pointers to represent their contents, so multiple ItemSets can point to the same contained items. Since fields cannot store arrays, ItemSet contents are represented by ItemToItemSetRelationships.</li>
+            <li><strong>Folio:</strong> A Folio is an ItemSet that belongs to a Group.</li>
+            <li><strong>Group:</strong> A Group is an Agent that has a folio and a list of member Agents (through the AgentToGroupRelationship item type).</li>
+            <li><strong>Document:</strong> A Document is an Item that is meant to be a collaborative work. It is abstract in practice (you should always use a subclass), and it just defines the last_author field (although I wonder if we should define last_author at the Item level to show who last edited a particular Item regardless of whether its a Document ).</li>
+            <li><strong>TextDocument:</strong> A TextDocument is a Document that has a text field (that stores HTML right now).</li>
+            <li><strong>MediaDocument:</strong> A MediaDocument is a Document that stores a file on the filesystem (could be an MP3 or a Microsoft Word Document).</li>
+            <li><strong>Comment:</strong> A Comment is an Item that represents discussion about a particular version of a particular item. A reply to a comment is represented by another comment commenting on the original comment.</li>
+            <li><strong>DynamicPage:</strong> A DynamicPage is an Item that stores Django template code that can display a fully customized page on Deme. Use this for static content, although it can be dynamic since it's a Django template.</li>
+            <li><strong>BinaryRelationship:</strong> A BinaryRelationship is an Item that represents a relationship between two Items. It has a pointer to the first item and a pointer to the second item (although we're still deciding on where these pointers will be stored).</li>
+            <li><strong>AgentToGroupRelationship:</strong> A AgentToGroupRelationship is a BinaryRelationship between an Agent and a Group representing the agent's membership in the group.</li>
+            <li><strong>ItemToItemSet:</strong> A ItemToItemSet is a BinaryRelationship between an Item and the ItemSet representing the face that the ItemSet contains the Item.</li>
+          </ul>
+          <p>There are also item types defined for permissions and URL aliasing described in the next two sections (they are still full item types, but they require much more explanation).</p>
+          <h4>Permissions</h4>
+          <p>Permissions define what Agents can and cannot do, both in general, and with respect to specific Items. Hard-coded into Deme will be a list of abilities (as strings), such as CanCreateGroup and CanRenameThisGroup. Using the item types described below, Deme will take the currently authenticated Agent (anonymous or not), and decide whether it has the required ability to complete the requested action. Abilities are not just checked before doing actions, but they can also be used to filter out items on database lookups. For example, if my viewer is supposed to display a list of items I am allowed to see (because I have the CanSeeItem ability), it will need to use permissions to filter out inappropriate results.</p>
+          <p>Below are the item types relevant to permissions.</p>
+          <ul>
+            <li><strong>Role:</strong> A Role is an Item that has a list of abilities (encapsulated in RolePermissions) associated with it. This allows us to dynamically define new Roles. Roles do not refer to specific items, but just specific abilities. One example might be a "site admin" Role which has every ability turned on. Another example might be "banned user" which has every ability turned off. We don't need roles, but they prevent users from having to manually configure each ability they want to assign between an agent and an item.</li>
+            <li><strong>RolePermission:</strong> A RolePermission is an Item that belongs to a Role (i.e., it has a Role pointer). It specifies an ability string, and a boolean of whether this ability is granted or denied.</li>
+            <li><strong>AgentItemRoleRelationship:</strong> An AgentItemRoleRelationship is a BinaryRelationship between an Agent and an Item, specifying a particular Role that holds between them. For example, one might create an AgentItemRoleRelationship between Mike and Mike's Diary with the Role "creator", which would give me all the abilities I need to manage this item. If the item field is left blank (i.e., a BinaryRelationship between Mike and nothing), then it represents a global role assignment. For example, you might create an AgentItemRoleRelationship between Mike and nothing with Role "site admin" to make Mike the admin of the entire Deme installation.</li>
+            <li><strong>GroupItemRoleRelationship:</strong> An GroupItemRoleRelationship is a BinaryRelationship between a Group and an Item, specifying a particular Role that holds between the users of that group and the Item. It works the same exact way as AgentItemRoleRelationship, except that the abilities are not given to the Group agent, but instead to all of the agents in the Group. So if the Alaska Democratic Party is given a GroupItemRoleRelationship in order to vote, all of the members get that ability, but not the group as an agent. In contrast, if the Alaska Democratic Party is given an <em>AgentItemRoleRelationship</em>, the group gets the ability and none of the members do.</li>
+          </ul>
+          <p>Abilities between an Agent and an Item (or "nothing" for global abilities) are decided with the following rules, executed in order:</p>
+          <ol>
+            <li>Look at all of the AgentItemRoleRelationships that hold between this Agent and this Item. If any of them have ability X granted, then grant ability X. If none of them have ability X granted, and any of them have ability X denied, then deny ability X. Otherwise, continue at the next step.</li>
+            <li>Look at all of the GroupItemRoleRelationships that hold between any of this Agent's groups and this Item. If any of them have ability X granted, then grant ability X. If none of them have ability X granted, and any of them have ability X denied, then deny ability X. Otherwise, continue at the next step.</li>
+            <li>Look at all of the AgentItemRoleRelationships that hold between agent=null and this Item (this represents default permissions for this Item). If any of them have ability X granted, then grant ability X. If none of them have ability X granted, and any of them have ability X denied, then deny ability X. Otherwise, deny ability X.</li>
+          </ol>
+          <h4>URL Aliases</h4>
+          <p>In order to allow vanity URLs (i.e., things other than /resource/item/5), we have a system of hierarchical URLs. In the future, we'll need to make sure URL aliases cannot start with /resource/ (our base URL for viewers), /static/ (our base URL for static content like stylesheets), or /meta/ (our base URL for Deme framework things like authentication). Right now, if someone makes a URL with one of those prefixes, you just cannot reach it (it does not shadow the important URLs).</p>
+          <ul>
+            <li><strong>LocalUrl:</strong> A LocalUrl is an Item that represents a particular action at a particular viewer (basically a URL, although its stored more explicitly). It specifies a viewer (just a string, since viewers are not Items), an action (like "view" or "edit"), an item that is referred to (or null for the entire collection), and a query_string if you want to pass parameters to the viewer.</li>
+            <li><strong>Site:</strong> A Site is a LocalUrl that represents a logical website with URLs. A Site can have multiple SiteDomains, but ordinarily it would just have one (multiple domains are useful if you want to enable www.example.com and example.com). Multiple Sites on the same Deme installation share the same Items with the same unique ids, but they resolve URLs differently so each Site can have a different page for /mike. If you go to the base URL of a site (like http://example.com/), you see the LocalUrl that this Site inherits from.</li>
+            <li><strong>SiteDomain:</strong> A SiteDomain is an Item that represents a hostname for a Site.</li>
+            <li><strong>AliasUrl:</strong> An AliasUrl is a LocalUrl that represents a specific path. Each AliasUrl has a parent LocalUrl (it will be the Site if this AliasUrl is the first path component) and a string for the path component. So when a user visits http://example.com/mike/is/great, Deme looks for an AliasUrl with name "great" with a parent with name "is" with a parent with name "mike" with a parent Site with a SiteDomain "example.com".</li>
+          </ul>
+        </div>
+
+        <h2>Front-end (viewers)</h2>
+        <div class="section">
+          <h4>Overview</h4>
+          <p>A viewer is Django class that processes browser or API requests. Any URL that starts with /resource/ is routed to a viewer. Each viewer defines the item type it can handle, although multiple viewers could theoretically handle the same item type (you could have ItemViewer and SuperItemViewer which both handle items). There should be a default viewer for every item type, and if there is none, then the default viewer of the superclass will be used. Note: right now the code only allows one viewer per item type, but I plan on changing that. Viewers that handle item type X always handle items that are in subclasses of X (except in the case of editing/updating, in which case they can only handle superclasses, although we still need to fix some behavior for this "downcasting" ability).</p>
+          <h4>URLs</h4>
+          <p>Our URLs are restful. Every URL defines a viewer, an action, a noun (or none for actions on the collection), a format, an optional parameters in the query string. Here are some example URLs:
+          <ul>
+            <li>/resource/item (item viewer, default "list" action, default "html" format)</li>
+            <li>/resource/person/new.xml (person viewer, new action, xml format)</li>
+            <li>/resource/person/1 (person viewer, default "show" action, person with id=1 is the noun, default "html" format)</li>
+            <li>/resource/person/1/edit.json?version=5 (same as above, but json format, edit action, and version 5)</li>
+          </ul>
+          <h4>Actions</h4>
+          <p>Every viewer URL defines a set of actions it responds to. The basic actions that most viewers should respond to are list, show, edit, and delete (when we figure out deleting things, which we still need to discuss). Actions are divided into two groups: those that take nouns (which are always item ids) called "entry" actions, and those that do not take nouns called "collection" actions. In order to make URLs unambiguous, item ids must be numbers, and action names can only be letters (although we can decide what other characters to allow, such as underscores and dashes).</p>
+          <p>An action corrsponds to a single Python function. If you visit /resource/item/list, Deme will call the collection_list method of the ItemViewer class. If you visit /resource/person/5/show, Deme will call the entry_show method of the PersonViewer class. Actions return the HTTP response to go back to the browser. Actions can call other actions from other viewers to embed views in other views (for example, the DocumentViewer might want to embed a view from the PersonViewer to show a little profile of the author at the top).</p>
+          <h4>Nouns</h4>
+          <p>Entry actions take in a noun in the URL, which is the unique id of the item it acts upon. If viewers need more information (say I submitted a form that specified multiple people I wanted to add to a group), the data is passed in the query string (or the HTTP post data), and the data required is up to the specific viewer. The only query string parameter that is reserved right now is "version" which specifies a specific version of the item the viewer is acting on.</p>
+          <h4>Formats</h4>
+          <p>An additional parameter is passed in defining the response format, like HTML or XML. The default is HTML. Viewers ignore this now, but it's easy to act upon it. I might add something where viewers have to register which formats they respond to, so that we can display error messages when you type the wrong format rather than ignoring it. Note that the format only specifies the response format. The request format (what the browser sends to the server) is always the same: all parameters encoded in the URL or the HTTP post data. We will only be using HTTP as the transport for viewers (although we can define things that accept emails and SSH and other protocols, they just won't be called viewers).</p>
+          <h4>Authentication</h4>
+          <p>Whenever a visitor (or another web service or bot) is at an action of a viewer, he has an authenticated account, and through that account, is an Agent. If a visitor has not authenticated, they'll be using the AnonymousAccount, and will be the anonymous agent. We will support various ways of authenticating via the different subclasses of Account.</p>
+          <h4>DynamicPages</h4>
+          <p>There is a DynamicPage viewer right now, which accepts DynamicPages, and when viewed with a certain action, it renders the DynamicPage as HTML (or whatever format) straight back to the browser. This allows users to add web content that is not really used by a viewer, so they can fully customize the user experience. By using DynamicPages and alias URLs, a webmaster can use Deme to create a completely customized site that has no sign of Deme (unless a visitor specifically types in a /resource/ or /meta/ URL).</p>
+          <p>However, DynamicPages only allow the content to be customized, and not the things that a view does. For example, one cannot write a DynamicPage to create a new record in the database, or to send out an email when visited, or more importantly, to do unauthorized things like execute UNIX commands.</p>
+          <h4>Layouts</h4>
+          <p>In the future, we might have custom layouts. Let's think about that.</p>
+        </div>
+
+      </div>
+    </div>
+
+  </body>
+</html>
