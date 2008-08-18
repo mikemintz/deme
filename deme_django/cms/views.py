@@ -163,7 +163,16 @@ def codegraph(request, *args, **kwargs):
         codegraph_mtime = 0
     if models_mtime > codegraph_mtime:
         subprocess.call(os.path.join(os.path.dirname(__file__), '..', 'gen_graph.py'), shell=True)
-    return HttpResponseRedirect('/static/codegraph.png?%d' % models_mtime)
+    template = loader.get_template_from_string("""
+        {%% extends 'base.html' %%}
+        {%% block title %%}Deme Code Graphs{%% endblock %%}
+        {%% block content %%}
+        <div><a href="/static/codegraph.png?%d">Code graph</a></div>
+        <div><a href="/static/codegraph_basic.png?%d">Code graph (basic)</a></div>
+        {%% endblock %%}
+    """ % (models_mtime, models_mtime))
+    context = Context()
+    return HttpResponse(template.render(context))
 
 def alias(request, *args, **kwargs):
     hostname = request.META['HTTP_HOST'].split(':')[0]

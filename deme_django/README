@@ -9,4 +9,4 @@ Currently upgrading to work with r8055
 
 Download tinymce and extract it into a directory called trunk/deme_django/static/javascripts/tinymce
 Download an iconset called crystal project (at everaldo) and extract the size folders to a folder called trunk/deme_django/static/crystal_project
-
+sudo apt-get install graphviz (for gen_graph.py support)
