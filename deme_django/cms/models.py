@@ -221,28 +221,22 @@ class Relationship(Item):
     def get_name(self):
         return 'Generic Relationship'
     #TODO we can't define item1 and item2 here or else we won't be able to unique_together it in subclasses
-    #item1 = models.ForeignKey(Item, related_name='relationships_as_item1', null=True, blank=True)
-    #item2 = models.ForeignKey(Item, related_name='relationships_as_item2', null=True, blank=True)
 
 class GroupMembership(Relationship):
-    # item1 is agent
-    # item2 is group
-    item1 = models.ForeignKey(Agent, related_name='group_memberships_as_agent')
-    item2 = models.ForeignKey(Group, related_name='group_memberships_as_group')
+    agent = models.ForeignKey(Agent, related_name='group_memberships_as_agent')
+    group = models.ForeignKey(Group, related_name='group_memberships_as_group')
     class Meta:
-        unique_together = (('item1', 'item2'),)
+        unique_together = (('agent', 'group'),)
     def get_name(self):
-        return 'Membership of %s in %s' % (self.item1.downcast().get_name(), self.item2.downcast().get_name())
+        return 'Membership of %s in %s' % (self.agent.downcast().get_name(), self.group.downcast().get_name())
 
 class ItemSetMembership(Relationship):
-    # item1 is item
-    # item2 is itemset
-    item1 = models.ForeignKey(Item, related_name='itemset_memberships_as_item')
-    item2 = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
+    item = models.ForeignKey(Item, related_name='itemset_memberships_as_item')
+    itemset = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
     class Meta:
-        unique_together = (('item1', 'item2'),)
+        unique_together = (('item', 'itemset'),)
     def get_name(self):
-        return 'Membership of %s in %s' % (self.item1.downcast().get_name(), self.item2.downcast().get_name())
+        return 'Membership of %s in %s' % (self.item.downcast().get_name(), self.itemset.downcast().get_name())
 
 class Role(Item):
     name = models.CharField(max_length=100)
@@ -253,41 +247,38 @@ class RoleAbility(Item):
     role = models.ForeignKey(Role, related_name='abilities_as_role')
     ability = models.CharField(max_length=100, choices=[('this', 'do this'), ('that', 'do that')])
     is_allowed = models.BooleanField()
-    #TODO add unique_together?
+    class Meta:
+        unique_together = (('role', 'ability'),)
     def get_name(self):
         return 'Ability to %s %s for %s' % ('do' if self.is_allowed else 'not do', self.ability, self.role.downcast().get_name())
 
 class AgentPermission(Relationship):
-    # item1 is agent
-    # item2 is item
-    item1 = models.ForeignKey(Agent, related_name='agent_permissions_as_agent', null=True, blank=True)
-    item2 = models.ForeignKey(Item, related_name='agent_permissions_as_item', null=True, blank=True)
+    agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent', null=True, blank=True)
+    item = models.ForeignKey(Item, related_name='agent_permissions_as_item', null=True, blank=True)
     role = models.ForeignKey(Role, related_name='agent_permissions_as_role')
     class Meta:
-        unique_together = (('item1', 'item2', 'role'),)
+        unique_together = (('agent', 'item', 'role'),)
     def get_name(self):
-        if self.item1:
-            item1_name = self.item1.downcast().get_name()
+        if self.agent:
+            agent_name = self.agent.downcast().get_name()
         else:
-            item1_name = 'Default Agent'
-        if self.item2:
-            return '%s Role for %s with %s' % (self.role.downcast().get_name(), item1_name, self.item2.downcast().get_name())
+            agent_name = 'Default Agent'
+        if self.item:
+            return '%s Role for %s with %s' % (self.role.downcast().get_name(), agent_name, self.item.downcast().get_name())
         else:
-            return '%s Role for %s' % (self.role.downcast().get_name(), item1_name)
+            return '%s Role for %s' % (self.role.downcast().get_name(), agent_name)
 
 class GroupPermission(Relationship):
-    # item1 is group
-    # item2 is item
-    item1 = models.ForeignKey(Group, related_name='group_permissions_as_group', null=True, blank=True)
-    item2 = models.ForeignKey(Item, related_name='group_permissions_as_item', null=True, blank=True)
+    group = models.ForeignKey(Group, related_name='group_permissions_as_group', null=True, blank=True)
+    item = models.ForeignKey(Item, related_name='group_permissions_as_item', null=True, blank=True)
     role = models.ForeignKey(Role, related_name='group_permissions_as_role')
     class Meta:
-        unique_together = (('item1', 'item2', 'role'),)
+        unique_together = (('group', 'item', 'role'),)
     def get_name(self):
-        if self.item2:
-            return '%s Role for %s with %s' % (self.role.downcast().get_name(), self.item1.downcast().get_name(), self.item2.downcast().get_name())
+        if self.item:
+            return '%s Role for %s with %s' % (self.role.downcast().get_name(), self.group.downcast().get_name(), self.item.downcast().get_name())
         else:
-            return '%s Role for %s' % (self.role.downcast().get_name(), self.item1.downcast().get_name())
+            return '%s Role for %s' % (self.role.downcast().get_name(), self.group.downcast().get_name())
 
 class ViewerRequest(Item):
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection

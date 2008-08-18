@@ -16,14 +16,14 @@
 
 <div style="margin-bottom: 10px;">
     <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit">[Edit This Group]</a>
-    <a href="/resource/groupmembership/new?item2={{ item.pk }}&redirect={{ full_path|urlencode }}">[Add Agent]</a>
+    <a href="/resource/groupmembership/new?group={{ item.pk }}&redirect={{ full_path|urlencode }}">[Add Agent]</a>
 </div>
 
 <h2>Group Agents</h2>
 <div style="border: 1px solid #666; padding: 15px;">
     <ul>
     {% for agent_relationship in item.group_memberships_as_group.all %}
-    <li><a href="{% show_resource_url agent_relationship.item1 %}">{{ agent_relationship.item1 }}</a> (joined {{ agent_relationship.updated_at }}) with <a href="{% show_resource_url agent_relationship %}">{{ agent_relationship }}</a></li>
+    <li><a href="{% show_resource_url agent_relationship.agent %}">{{ agent_relationship.agent }}</a> (joined {{ agent_relationship.updated_at }}) with <a href="{% show_resource_url agent_relationship %}">{{ agent_relationship }}</a></li>
     {% endfor %}
     </ul>
 </div>
