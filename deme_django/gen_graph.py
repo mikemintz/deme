@@ -10,8 +10,6 @@ import subprocess
 import itertools
 from deme_django.cms import models
 
-#GRAPHVIZ_PATH = '/usr/local/graphviz-2.14/bin'
-#DOT_PATH = os.path.join(GRAPHVIZ_PATH, 'dot')
 DOT_PATH = 'dot'
 
 field_name_map = {

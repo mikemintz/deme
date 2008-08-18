@@ -1,5 +1,34 @@
+rename
+------
+DynamicPage => DjangoTemplateDocument (subclass TextDocument)
+TextDocument just has uninterpreted text (Unicode/Ascii)
+HtmlDocument subclasses TextDocument
+Comment subclasses TextDocument
+
+Add Location class, Add LocationContains relationship
+Event? Multiple locations and times?
+
+Symsys things
+-------------
+
+NewsRoll 
+has many NewsItems
+
+SymsysAffiliate subclasses Person
+
+regular events (copy symsys website)
+
+custom layouts for sure
+
+PhotoDocument subclasses FileDocument
+
+* rename Rev to Version, and version becomes version_number
+* add created_at field for Item
+* add creator and updater to Item
+* every item will now have a name method, that is dynamic, and display that instead of description. description can now be blank.
 * We're going to have to integrate permissions into binary files (e.g., MediaDocument) so that users can't bypass Deme and download things from Apache directly.
 * make uniqueness work in models with revisions
 * nicer form error handling on IntegrityError (like unique validation failed)
 * figure out import deal on deme_django.cms and just cms
 * don't forget to the field length hack for 64-bit machines i made in the django trunk
+* update django version

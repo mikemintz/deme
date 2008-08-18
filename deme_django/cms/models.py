@@ -158,8 +158,8 @@ class Document(Item):
 class TextDocument(Document):
     body = models.TextField()
 
-class MediaDocument(Document):
-    datafile = models.FileField(upload_to='mediadocument/%Y/%m/%d')
+class FileDocument(Document):
+    datafile = models.FileField(upload_to='filedocument/%Y/%m/%d')
 
 class Comment(Item):
     last_author = models.ForeignKey(Agent, related_name='comments_as_last_author')
@@ -167,62 +167,62 @@ class Comment(Item):
     commented_item_version = models.ForeignKey(Item.REV, related_name='comments_as_item_version')
     body = models.TextField()
 
-class BinaryRelationship(Item):
+class Relationship(Item):
     pass
     #TODO we can't define item1 and item2 here or else we won't be able to unique_together it in subclasses
     #item1 = models.ForeignKey(Item, related_name='relationships_as_item1', null=True, blank=True)
     #item2 = models.ForeignKey(Item, related_name='relationships_as_item2', null=True, blank=True)
 
-class AgentToGroupRelationship(BinaryRelationship):
+class GroupMembership(Relationship):
     # item1 is agent
     # item2 is group
-    item1 = models.ForeignKey(Agent, related_name='group_relationships')
-    item2 = models.ForeignKey(Group, related_name='agent_relationships')
+    item1 = models.ForeignKey(Agent, related_name='group_memberships_as_agent')
+    item2 = models.ForeignKey(Group, related_name='group_memberships_as_group')
     class Meta:
         unique_together = (('item1', 'item2'),)
 
-class ItemToItemSetRelationship(BinaryRelationship):
+class ItemSetMembership(Relationship):
     # item1 is item
     # item2 is itemset
-    item1 = models.ForeignKey(Item, related_name='itemset_relationships_as_item')
-    item2 = models.ForeignKey(ItemSet, related_name='itemset_relationships_as_itemset')
+    item1 = models.ForeignKey(Item, related_name='itemset_memberships_as_item')
+    item2 = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
     class Meta:
         unique_together = (('item1', 'item2'),)
 
 class Role(Item):
     pass
 
-class RolePermission(Item):
-    role = models.ForeignKey(Role, related_name='permissions_as_role')
+class RoleAbility(Item):
+    role = models.ForeignKey(Role, related_name='abilities_as_role')
     ability = models.CharField(max_length=100, choices=[('this', 'do this'), ('that', 'do that')])
     is_allowed = models.BooleanField()
     #TODO add unique_together?
 
-class AgentItemRoleRelationship(BinaryRelationship):
+class AgentPermission(Relationship):
     # item1 is agent
     # item2 is item
-    item1 = models.ForeignKey(Agent, related_name='item_role_relationships_as_agent', null=True, blank=True)
-    item2 = models.ForeignKey(Item, related_name='agent_role_relationships_as_item', null=True, blank=True)
-    role = models.ForeignKey(Role, related_name='agent_item_relationships_as_role')
+    item1 = models.ForeignKey(Agent, related_name='agent_permissions_as_agent', null=True, blank=True)
+    item2 = models.ForeignKey(Item, related_name='agent_permissions_as_item', null=True, blank=True)
+    role = models.ForeignKey(Role, related_name='agent_permissions_as_role')
     class Meta:
         unique_together = (('item1', 'item2', 'role'),)
 
-class GroupItemRoleRelationship(BinaryRelationship):
+class GroupPermission(Relationship):
     # item1 is group
     # item2 is item
-    item1 = models.ForeignKey(Group, related_name='item_role_relationships_as_group', null=True, blank=True)
-    item2 = models.ForeignKey(Item, related_name='group_role_relationships_as_item', null=True, blank=True)
-    role = models.ForeignKey(Role, related_name='group_item_relationships_as_role')
+    item1 = models.ForeignKey(Group, related_name='group_permissions_as_group', null=True, blank=True)
+    item2 = models.ForeignKey(Item, related_name='group_permissions_as_item', null=True, blank=True)
+    role = models.ForeignKey(Role, related_name='group_permissions_as_role')
     class Meta:
         unique_together = (('item1', 'item2', 'role'),)
 
-class LocalUrl(Item):
-    aliased_item = models.ForeignKey(Item, related_name='alias_urls_as_item', null=True, blank=True) #null should be collection
+class ViewerRequest(Item):
+    aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
     viewer = models.CharField(max_length=100, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('dynamicpage', 'DynamicPage')])
     action = models.CharField(max_length=256)
     query_string = models.CharField(max_length=1024, null=True, blank=True)
 
-class Site(LocalUrl):
+class Site(ViewerRequest):
     is_default_site = IsDefaultField(default=None)
 
 class SiteDomain(Item):
@@ -230,14 +230,11 @@ class SiteDomain(Item):
     site = models.ForeignKey(Site, related_name='site_domains_as_site')
     class Meta:
         unique_together = (('site', 'hostname'),)
-#TODO match iteratively until all subdomains are gone
+#TODO match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
 
-#TODO figure out unique base url
-# for now we allow blank path
-#TODO we should rename aliasurl and friends
 #TODO we should prevent top level names like 'static' and 'resource', although not a big deal since it doesn't overwrite
-class AliasUrl(LocalUrl):
-    parent_url = models.ForeignKey('LocalUrl', related_name='child_urls')
+class CustomUrl(ViewerRequest):
+    parent_url = models.ForeignKey('ViewerRequest', related_name='child_urls')
     path = models.CharField(max_length=256)
     class Meta:
         unique_together = (('parent_url', 'path'),)

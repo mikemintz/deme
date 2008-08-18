@@ -41,12 +41,12 @@ def get_roles_for_agent_and_item(agent, item):
     if not agent:
         raise Exception("You must create an anonymous user")
     role_manager = cms.models.Role.objects
-    direct_roles = role_manager.filter(agent_item_relationships_as_role__item2__exact=item,
-                                       agent_item_relationships_as_role__item1=agent)
-    groupwide_roles = role_manager.filter(group_item_relationships_as_role__item2__exact=item,
-                                          group_item_relationships_as_role__item1__agent_relationships__item1=agent)
-    default_roles = role_manager.filter(agent_item_relationships_as_role__item2__exact=item,
-                                        agent_item_relationships_as_role__item1__isnull=True)
+    direct_roles = role_manager.filter(agent_permissions_as_role__item2__exact=item,
+                                       agent_permissions_as_role__item1=agent)
+    groupwide_roles = role_manager.filter(group_permissions_as_role__item2__exact=item,
+                                          group_permissions_as_role__item1__group_memberships_as_group__item1=agent)
+    default_roles = role_manager.filter(agent_permissions_as_role__item2__exact=item,
+                                        agent_permissions_as_role__item1__isnull=True)
     return (direct_roles, groupwide_roles, default_roles)
 
 def get_abilities_for_roles(roles_triple, possible_abilities=None):
@@ -55,17 +55,17 @@ def get_abilities_for_roles(roles_triple, possible_abilities=None):
     if possible_abilities:
         abilities_unset = set(possible_abilities)
     else:
-        abilities_unset = set([x[0] for x in cms.models.RolePermission._meta.get_field('ability').choices])
+        abilities_unset = set([x[0] for x in cms.models.RoleAbility._meta.get_field('ability').choices])
     for role_list in roles_triple:
         if possible_abilities:
-            role_permissions = cms.models.RolePermission.objects.filter(role__in=role_list, ability_in=possible_abilities).all()
+            role_abilities = cms.models.RoleAbility.objects.filter(role__in=role_list, ability_in=possible_abilities).all()
         else:
-            role_permissions = cms.models.RolePermission.objects.filter(role__in=role_list).all()
-        for role_permission in role_permissions:
-            ability = role_permission.ability
+            role_abilities = cms.models.RoleAbility.objects.filter(role__in=role_list).all()
+        for role_ability in role_abilities:
+            ability = role_ability.ability
             if ability in abilities_unset:
                 # yes takes precedence over no
-                if role_permission.is_allowed:
+                if role_ability.is_allowed:
                     abilities_yes.add(ability)
                     abilities_no.discard(ability)
                 else:
@@ -76,24 +76,24 @@ def get_abilities_for_roles(roles_triple, possible_abilities=None):
     return abilities_yes
 
 def filter_for_agent_and_ability(agent, ability):
-    direct_yes_q = Q(agent_role_relationships_as_item__item1=agent,
-                     agent_role_relationships_as_item__role__permissions_as_role__ability=ability,
-                     agent_role_relationships_as_item__role__permissions_as_role__is_allowed=True)
-    direct_no_q = Q(agent_role_relationships_as_item__item1=agent,
-                    agent_role_relationships_as_item__role__permissions_as_role__ability=ability,
-                    agent_role_relationships_as_item__role__permissions_as_role__is_allowed=False)
-    group_yes_q = Q(group_role_relationships_as_item__item1__agent_relationships__item1=agent,
-                    group_role_relationships_as_item__role__permissions_as_role__ability=ability,
-                    group_role_relationships_as_item__role__permissions_as_role__is_allowed=True)
-    group_no_q = Q(group_role_relationships_as_item__item1__agent_relationships__item1=agent,
-                   group_role_relationships_as_item__role__permissions_as_role__ability=ability,
-                   group_role_relationships_as_item__role__permissions_as_role__is_allowed=False)
-    default_yes_q = Q(agent_role_relationships_as_item__item1__isnull=True,
-                      agent_role_relationships_as_item__role__permissions_as_role__ability=ability,
-                      agent_role_relationships_as_item__role__permissions_as_role__is_allowed=True)
-    default_no_q = Q(agent_role_relationships_as_item__item1__isnull=True,
-                     agent_role_relationships_as_item__role__permissions_as_role__ability=ability,
-                     agent_role_relationships_as_item__role__permissions_as_role__is_allowed=False)
+    direct_yes_q = Q(agent_permissions_as_item__item1=agent,
+                     agent_permissions_as_item__role__abilities_as_role__ability=ability,
+                     agent_permissions_as_item__role__abilities_as_role__is_allowed=True)
+    direct_no_q = Q(agent_permissions_as_item__item1=agent,
+                    agent_permissions_as_item__role__abilities_as_role__ability=ability,
+                    agent_permissions_as_item__role__abilities_as_role__is_allowed=False)
+    group_yes_q = Q(group_permissions_as_item__item1__group_memberships_as_group__item1=agent,
+                    group_permissions_as_item__role__abilities_as_role__ability=ability,
+                    group_permissions_as_item__role__abilities_as_role__is_allowed=True)
+    group_no_q = Q(group_permissions_as_item__item1__group_memberships_as_group__item1=agent,
+                   group_permissions_as_item__role__abilities_as_role__ability=ability,
+                   group_permissions_as_item__role__abilities_as_role__is_allowed=False)
+    default_yes_q = Q(agent_permissions_as_item__item1__isnull=True,
+                      agent_permissions_as_item__role__abilities_as_role__ability=ability,
+                      agent_permissions_as_item__role__abilities_as_role__is_allowed=True)
+    default_no_q = Q(agent_permissions_as_item__item1__isnull=True,
+                     agent_permissions_as_item__role__abilities_as_role__ability=ability,
+                     agent_permissions_as_item__role__abilities_as_role__is_allowed=False)
     #TODO this does not work yet. why not?
     #return direct_yes_q | (~direct_no_q & group_yes_q) | (~direct_no_q & ~group_no_q & default_yes_q)
     #return direct_yes_q | (~direct_no_q & group_yes_q)
@@ -185,10 +185,10 @@ def alias(request, *args, **kwargs):
             raise Exception("You must create a default Site")
             current_site = None
     path_parts = [x for x in request.path.split('/') if x]
-    alias_url = current_site
+    custom_url = current_site
     try:
         for path_part in path_parts:
-            alias_url = cms.models.AliasUrl.objects.filter(path=path_part, parent_url=alias_url)[0:1].get()
+            custom_url = cms.models.CustomUrl.objects.filter(path=path_part, parent_url=custom_url)[0:1].get()
     except ObjectDoesNotExist:
         template = loader.get_template('alias_not_found.html')
         context = Context()
@@ -196,21 +196,21 @@ def alias(request, *args, **kwargs):
         context['hostname'] = request.META['HTTP_HOST']
         context['path'] = request.path
         return HttpResponseNotFound(template.render(context))
-    if not alias_url:
+    if not custom_url:
         raise Exception("we should never get here 23942934")
-    item = alias_url.aliased_item
+    item = custom_url.aliased_item
     kwargs = {}
-    kwargs['item_type'] = alias_url.viewer
+    kwargs['item_type'] = custom_url.viewer
     kwargs['format'] = 'html'
     if item:
         kwargs['noun'] = str(item.pk)
         kwargs['collection_action'] = None
-        kwargs['entry_action'] = alias_url.action
+        kwargs['entry_action'] = custom_url.action
     else:
         kwargs['noun'] = None
-        kwargs['collection_action'] = alias_url.action
+        kwargs['collection_action'] = custom_url.action
         kwargs['entry_action'] = None
-    query_dict = QueryDict(alias_url.query_string).copy()
+    query_dict = QueryDict(custom_url.query_string).copy()
     #TODO this is quite hacky, let's fix this when we finalize sites and stuff
     query_dict.update(request.GET)
     request.GET = query_dict
