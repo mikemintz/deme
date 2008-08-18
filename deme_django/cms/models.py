@@ -84,9 +84,12 @@ class ItemVersion(models.Model):
     version_number = models.IntegerField(default=1, editable=False)
     item_type = models.CharField(max_length=100, default='Item', editable=False)
     description = models.CharField(max_length=100, blank=True)
+    updater = models.ForeignKey('Agent', related_name='item_versions_as_updater')
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     class Meta:
         unique_together = (('current_item', 'version_number'),)
+        ordering = ['version_number']
+        get_latest_by = "version_number"
     def __unicode__(self):
         return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.get_name())
     def get_name(self):
@@ -97,8 +100,11 @@ class ItemVersion(models.Model):
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
     item_type = models.CharField(max_length=100, default='Item', editable=False)
-    description = models.CharField(max_length=100)
+    description = models.CharField(max_length=100, blank=True)
+    updater = models.ForeignKey('Agent', related_name='items_as_updater', editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    creator = models.ForeignKey('Agent', related_name='items_as_creator', editable=False)
+    created_at = models.DateTimeField(editable=False)
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.get_name())
     def get_name(self):
@@ -106,9 +112,17 @@ class Item(models.Model):
     def downcast(self):
         return eval(self.item_type).objects.get(id=self.id)
     @transaction.commit_on_success
-    def save_versioned(self):
+    def save_versioned(self, updater=None, first_agent=False):
         self.item_type = type(self).__name__
-        self.created_at = datetime.datetime.now() #TODO what is this doing here? i'm confused!
+        if first_agent:
+            self.creator = self
+            self.creator_id = 1
+            self.updater = self
+            self.updater_id = 1
+        if updater:
+            self.updater = updater
+            if not self.pk:
+                self.creator = updater
         fields = {}
         for field in self._meta.fields:
             if field.primary_key:
@@ -122,16 +136,23 @@ class Item(models.Model):
             except ObjectDoesNotExist:
                 fields[field.name] = None
         new_version = self.__class__.VERSION()
+        if first_agent:
+            new_version.updater = self
+            new_version.updater_id = 1
         for key, val in fields.iteritems():
             setattr(new_version, key, val)
         if self.pk:
             latest_version_number = ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
         else:
             latest_version_number = 0
+            self.created_at = datetime.datetime.now()
         new_version.version_number = latest_version_number + 1
+        if first_agent:
+            new_version.updater_id = 1
         self.save()
         new_version.current_item_id = self.pk
         new_version.save()
+        #TODO the times might be slightly off (ms) between version.updated_at and self.updated_at and self.created_at
 
 class Agent(Item):
     def get_name(self):

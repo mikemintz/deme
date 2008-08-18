@@ -269,7 +269,7 @@ class ItemViewer(object):
                 if self.request.has_key('version'):
                     self.itemversion = cms.models.Item.VERSION.objects.get(current_item=self.noun, version_number=self.request['version'])
                 else:
-                    self.itemversion = cms.models.Item.VERSION.objects.filter(current_item=self.noun).order_by('-version_number')[0]
+                    self.itemversion = cms.models.Item.VERSION.objects.filter(current_item=self.noun).latest()
             except ObjectDoesNotExist:
                 self.item = None
                 self.itemversion = None
@@ -393,7 +393,7 @@ class ItemViewer(object):
         form = self.form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            item.save_versioned()
+            item.save_versioned(updater=self.context['cur_agent'])
             redirect = self.request.GET.get('redirect', '/resource/%s/%d' % (item.item_type.lower(), item.pk))
             return HttpResponseRedirect(redirect)
         else:
@@ -495,7 +495,7 @@ class ItemViewer(object):
         form = self.form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
             new_item = form.save(commit=False)
-            new_item.save_versioned()
+            new_item.save_versioned(updater=self.context['cur_agent'])
             return HttpResponseRedirect('/resource/%s/%d' % (new_item.item_type.lower(), new_item.pk))
         else:
             template = loader.get_template('item/edit.html')
@@ -522,9 +522,9 @@ class GroupViewer(ItemViewer):
         if form.is_valid():
             new_item = form.save(commit=False)
             folio = cms.models.Folio(name="Group Folio")
-            folio.save_versioned()
+            folio.save_versioned(updater=self.context['cur_agent'])
             new_item.folio = folio
-            new_item.save_versioned()
+            new_item.save_versioned(updater=self.context['cur_agent'])
             return HttpResponseRedirect('/resource/%s/%d' % (new_item.item_type.lower(), new_item.pk))
         else:
             template = loader.get_template('item/new.html')
@@ -536,7 +536,7 @@ class GroupViewer(ItemViewer):
         folio = self.item.folio.downcast()
         folio_viewer_class = get_viewer_class_for_item_type(type(folio))
         folio_viewer = folio_viewer_class()
-        folio_viewer.init_show_from_div(self.request, type(folio), folio, folio.versions.order_by('-version_number').get())
+        folio_viewer.init_show_from_div(self.request, type(folio), folio, folio.versions.latest())
         folio_html = folio_viewer.dispatch().content
         template = loader.get_template('group/show.html')
         self.context['item'] = self.item
