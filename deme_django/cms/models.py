@@ -85,7 +85,7 @@ class ItemVersion(models.Model):
     item_type = models.CharField(max_length=100, default='Item', editable=False)
     description = models.CharField(max_length=100, blank=True)
     updater = models.ForeignKey('Agent', related_name='item_versions_as_updater')
-    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    updated_at = models.DateTimeField(editable=False)
     class Meta:
         unique_together = (('current_item', 'version_number'),)
         ordering = ['version_number']
@@ -102,7 +102,7 @@ class Item(models.Model):
     item_type = models.CharField(max_length=100, default='Item', editable=False)
     description = models.CharField(max_length=100, blank=True)
     updater = models.ForeignKey('Agent', related_name='items_as_updater', editable=False)
-    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    updated_at = models.DateTimeField(editable=False)
     creator = models.ForeignKey('Agent', related_name='items_as_creator', editable=False)
     created_at = models.DateTimeField(editable=False)
     def __unicode__(self):
@@ -113,6 +113,7 @@ class Item(models.Model):
         return eval(self.item_type).objects.get(id=self.id)
     @transaction.commit_on_success
     def save_versioned(self, updater=None, first_agent=False):
+        save_time = datetime.datetime.now()
         self.item_type = type(self).__name__
         if first_agent:
             self.creator = self
@@ -145,14 +146,15 @@ class Item(models.Model):
             latest_version_number = ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
         else:
             latest_version_number = 0
-            self.created_at = datetime.datetime.now()
+            self.created_at = save_time
+            self.updated_at = save_time
+            new_version.updated_at = save_time
         new_version.version_number = latest_version_number + 1
         if first_agent:
             new_version.updater_id = 1
         self.save()
         new_version.current_item_id = self.pk
         new_version.save()
-        #TODO the times might be slightly off (ms) between version.updated_at and self.updated_at and self.created_at
 
 class Agent(Item):
     def get_name(self):
