@@ -16,7 +16,7 @@
 
 <div style="margin-bottom: 10px;">
     <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit">[Edit This ItemSet]</a>
-    <a href="/resource/itemsetmembership/new?item2={{ item.pk }}&description=An+ItemSetMembership&redirect={{ full_path|urlencode }}">[Add Item]</a>
+    <a href="/resource/itemsetmembership/new?item2={{ item.pk }}&redirect={{ full_path|urlencode }}">[Add Item]</a>
 </div>
 
 {% if item.itemset_memberships_as_itemset.all %}

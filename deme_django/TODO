@@ -15,9 +15,10 @@ custom layouts for sure
 
 PhotoDocument subclasses FileDocument
 
+* deleting items
+* different kinds of viewers for a specific item
 * add created_at field for Item
 * add creator and updater to Item
-* every item will now have a name method, that is dynamic, and display that instead of description. description can now be blank.
 * We're going to have to integrate permissions into binary files (e.g., MediaDocument) so that users can't bypass Deme and download things from Apache directly.
 * make constraints other than uniqueness work in models with revisions (are there any issues?)
 * nicer form error handling on IntegrityError (like unique validation failed)

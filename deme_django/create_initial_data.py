@@ -8,14 +8,26 @@ from cms.models import *
 
 # Necessary items
 
-default_site = Site(description="Default Site", is_default_site=True, viewer='item', action='list', aliased_item=None, query_string='q=mike')
-default_site.save_versioned()
+admin = Agent(description="Admin")
+admin.save_versioned()
 
 anonymous_agent = Agent(description="Anonymous")
 anonymous_agent.save_versioned()
 
 anonymous_account = AnonymousAccount(description="Anonymous Account", agent=anonymous_agent)
 anonymous_account.save_versioned()
+
+home_page = DjangoTemplateDocument(body="""
+{% extends 'base.html' %}
+{% block title %}Welcome to Deme!{% endblock %}
+{% block content %}
+Welcome to Deme!
+{% endblock content %}
+""", last_author=admin)
+home_page.save_versioned()
+
+default_site = Site(name="Default Site", is_default_site=True, viewer='djangotemplatedocument', action='show', aliased_item=home_page, query_string='')
+default_site.save_versioned()
 
 
 # Just testing here:

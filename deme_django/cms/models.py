@@ -67,6 +67,8 @@ class ItemMetaClass(ModelBase):
                 return True
             return False
         version_attrs = dict([convert_to_version(k,v) for k,v in attrs.iteritems() if is_valid_in_version(k,v)])
+        if 'get_name' in attrs:
+            version_attrs['get_name'] = attrs['get_name']
         version_result = super(ItemMetaClass, cls).__new__(cls, version_name, version_bases, version_attrs)
         result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
         #exec('global %s;%s = version_result'%(version_name, version_name))
@@ -81,12 +83,14 @@ class ItemVersion(models.Model):
     current_item = models.ForeignKey('Item', related_name='versions', editable=False)
     version_number = models.IntegerField(default=1, editable=False)
     item_type = models.CharField(max_length=100, default='Item', editable=False)
-    description = models.CharField(max_length=100)
+    description = models.CharField(max_length=100, blank=True)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     class Meta:
         unique_together = (('current_item', 'version_number'),)
     def __unicode__(self):
-        return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.description)
+        return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.get_name())
+    def get_name(self):
+        return 'Generic Item'
     def downcast(self):
         return eval(self.item_type).VERSION.objects.get(id=self.id)
 
@@ -96,7 +100,9 @@ class Item(models.Model):
     description = models.CharField(max_length=100)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     def __unicode__(self):
-        return u'%s[%s] "%s"' % (self.item_type, self.pk, self.description)
+        return u'%s[%s] "%s"' % (self.item_type, self.pk, self.get_name())
+    def get_name(self):
+        return 'Generic Item'
     def downcast(self):
         return eval(self.item_type).objects.get(id=self.id)
     @transaction.commit_on_success
@@ -128,21 +134,29 @@ class Item(models.Model):
         new_version.save()
 
 class Agent(Item):
-    pass
+    def get_name(self):
+        return 'Generic Agent'
 
 class Account(Item):
     agent = models.ForeignKey(Agent, related_name='accounts_as_agent')
+    def get_name(self):
+        return 'Generic Account'
 
 class AnonymousAccount(Account):
-    pass
+    def get_name(self):
+        return 'Anonymous Account'
 
 class Person(Agent):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(max_length=320)
+    def get_name(self):
+        return '%s %s' % (self.first_name, self.last_name)
 
 class ItemSet(Item):
-    pass
+    name = models.CharField(max_length=100)
+    def get_name(self):
+        return self.name
 
 class Folio(ItemSet):
     pass
@@ -151,9 +165,15 @@ class Group(Agent):
     #folio = models.OneToOneField(Item, related_name='group_as_folio')
     # can't be onetoone because lots of versions pointing to folio
     folio = models.ForeignKey(Folio, related_name='groups_as_folio', unique=True)
+    name = models.CharField(max_length=100)
+    def get_name(self):
+        return self.name
 
 class Document(Item):
     last_author = models.ForeignKey(Agent, related_name='documents_as_last_author')
+    name = models.CharField(max_length=100)
+    def get_name(self):
+        return self.name
 
 class TextDocument(Document):
     body = models.TextField()
@@ -170,9 +190,13 @@ class FileDocument(Document):
 class Comment(TextDocument):
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
     commented_item_version = models.ForeignKey(Item.VERSION, related_name='comments_as_item_version')
+    name = models.CharField(max_length=100)
+    def get_name(self):
+        return self.name
 
 class Relationship(Item):
-    pass
+    def get_name(self):
+        return 'Generic Relationship'
     #TODO we can't define item1 and item2 here or else we won't be able to unique_together it in subclasses
     #item1 = models.ForeignKey(Item, related_name='relationships_as_item1', null=True, blank=True)
     #item2 = models.ForeignKey(Item, related_name='relationships_as_item2', null=True, blank=True)
@@ -184,6 +208,8 @@ class GroupMembership(Relationship):
     item2 = models.ForeignKey(Group, related_name='group_memberships_as_group')
     class Meta:
         unique_together = (('item1', 'item2'),)
+    def get_name(self):
+        return 'Membership of %s in %s' % (self.item1.downcast().get_name(), self.item2.downcast().get_name())
 
 class ItemSetMembership(Relationship):
     # item1 is item
@@ -192,15 +218,21 @@ class ItemSetMembership(Relationship):
     item2 = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
     class Meta:
         unique_together = (('item1', 'item2'),)
+    def get_name(self):
+        return 'Membership of %s in %s' % (self.item1.downcast().get_name(), self.item2.downcast().get_name())
 
 class Role(Item):
-    pass
+    name = models.CharField(max_length=100)
+    def get_name(self):
+        return self.name
 
 class RoleAbility(Item):
     role = models.ForeignKey(Role, related_name='abilities_as_role')
     ability = models.CharField(max_length=100, choices=[('this', 'do this'), ('that', 'do that')])
     is_allowed = models.BooleanField()
     #TODO add unique_together?
+    def get_name(self):
+        return 'Ability to %s %s for %s' % ('do' if self.is_allowed else 'not do', self.ability, self.role.downcast().get_name())
 
 class AgentPermission(Relationship):
     # item1 is agent
@@ -210,6 +242,15 @@ class AgentPermission(Relationship):
     role = models.ForeignKey(Role, related_name='agent_permissions_as_role')
     class Meta:
         unique_together = (('item1', 'item2', 'role'),)
+    def get_name(self):
+        if self.item1:
+            item1_name = self.item1.downcast().get_name()
+        else:
+            item1_name = 'Default Agent'
+        if self.item2:
+            return '%s Role for %s with %s' % (self.role.downcast().get_name(), item1_name, self.item2.downcast().get_name())
+        else:
+            return '%s Role for %s' % (self.role.downcast().get_name(), item1_name)
 
 class GroupPermission(Relationship):
     # item1 is group
@@ -219,21 +260,40 @@ class GroupPermission(Relationship):
     role = models.ForeignKey(Role, related_name='group_permissions_as_role')
     class Meta:
         unique_together = (('item1', 'item2', 'role'),)
+    def get_name(self):
+        if self.item2:
+            return '%s Role for %s with %s' % (self.role.downcast().get_name(), self.item1.downcast().get_name(), self.item2.downcast().get_name())
+        else:
+            return '%s Role for %s' % (self.role.downcast().get_name(), self.item1.downcast().get_name())
 
 class ViewerRequest(Item):
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
     viewer = models.CharField(max_length=100, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('djangotemplatedocument', 'DjangoTemplateDocument')])
     action = models.CharField(max_length=256)
     query_string = models.CharField(max_length=1024, null=True, blank=True)
+    def get_name(self):
+        if self.aliased_item:
+            return 'View %s in %s.%s' % (self.aliased_item.downcast().get_name(), self.viewer, self.action)
+        else:
+            return 'View %s.%s' % (self.viewer, self.action)
 
 class Site(ViewerRequest):
     is_default_site = IsDefaultField(default=None)
+    name = models.CharField(max_length=100)
+    def get_name(self):
+        url_name = self.name
+        if self.aliased_item:
+            return 'View %s in %s.%s at %s' % (self.aliased_item.downcast().get_name(), self.viewer, self.action, url_name)
+        else:
+            return 'View %s.%s at %s' % (self.viewer, self.action, url_name)
 
 class SiteDomain(Item):
     hostname = models.CharField(max_length=256)
     site = models.ForeignKey(Site, related_name='site_domains_as_site')
     class Meta:
         unique_together = (('site', 'hostname'),)
+    def get_name(self):
+        return hostname
 #TODO match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
 
 #TODO we should prevent top level names like 'static' and 'resource', although not a big deal since it doesn't overwrite
@@ -242,6 +302,19 @@ class CustomUrl(ViewerRequest):
     path = models.CharField(max_length=256)
     class Meta:
         unique_together = (('parent_url', 'path'),)
+    def get_name(self):
+        url_name = ''
+        cur = self
+        while True:
+            url_name = '/%s%s' % (cur.path, url_name)
+            cur = cur.parent_url.downcast()
+            if cur.item_type == 'Site':
+                url_name = '%s %s' % (cur.name, url_name)
+                break
+        if self.aliased_item:
+            return 'View %s in %s.%s at %s' % (self.aliased_item.downcast().get_name(), self.viewer, self.action, url_name)
+        else:
+            return 'View %s.%s at %s' % (self.viewer, self.action, url_name)
 
 all_models = []
 

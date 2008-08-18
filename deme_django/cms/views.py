@@ -368,6 +368,7 @@ class ItemViewer(object):
         else:
             items = self.item_type.objects.all()
             self.context['search_query'] = ''
+        items = [item.downcast() for item in items]
         template = loader.get_template('item/list.html')
         self.context['model_names'] = model_names
         self.context['items'] = items
@@ -446,6 +447,8 @@ class ItemViewer(object):
                         obj = getattr(item, name)
                     except ObjectDoesNotExist:
                         obj = None
+                    if obj:
+                        obj = obj.downcast() #TODO uncomment
                     info['field_type'] = 'entry'
                 else:
                     obj = getattr(item, name)
@@ -518,7 +521,7 @@ class GroupViewer(ItemViewer):
         form = self.form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             new_item = form.save(commit=False)
-            folio = cms.models.Folio(description='Group Folio')
+            folio = cms.models.Folio(name="Group Folio")
             folio.save_versioned()
             new_item.folio = folio
             new_item.save_versioned()

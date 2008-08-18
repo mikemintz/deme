@@ -30,7 +30,7 @@ def gen_dotcode(show_fields):
     dotcode.append('  ranksep=1.5; nodesep=1.5;')
     all_models = models.all_models
     if show_fields:
-        all_models = all_models + [models.Item.REV]
+        all_models = all_models + [models.Item.VERSION]
     for model in all_models:
         field_names = []
         field_types = []
@@ -57,7 +57,7 @@ def gen_dotcode(show_fields):
         else:
             label = model.__name__
             dotcode.append('  %s [shape=box,style=rounded,label="%s "];' % (model.__name__, label))
-        bases = [x for x in model.__bases__ if (issubclass(x, models.Item) or issubclass(x, models.Item.REV))]
+        bases = [x for x in model.__bases__ if (issubclass(x, models.Item) or issubclass(x, models.Item.VERSION))]
         for base in bases:
             dotcode.append('  %s -> %s [color=blue,style=solid,weight=1,constraint=true,tailport=s,headport=n,arrowtail=inv,arrowhead=none];' % (base.__name__, model.__name__))
     dotcode.append('}')

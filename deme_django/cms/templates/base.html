@@ -23,9 +23,9 @@
         {% endif %}
         {% for account in all_accounts %}
         {% ifequal account.pk cur_account.pk %}
-        <option value="/meta/login?account={{ account.pk }}&redirect={{ full_path|urlencode }}" selected="selected">{{ account.agent }} / {{ account }}</option>
+        <option value="/meta/login?account={{ account.pk }}&redirect={{ full_path|urlencode }}" selected="selected">{{ account.agent.downcast }} / {{ account.downcast }}</option>
         {% else %}
-        <option value="/meta/login?account={{ account.pk }}&redirect={{ full_path|urlencode }}">{{ account.agent }} / {{ account }}</option>
+        <option value="/meta/login?account={{ account.pk }}&redirect={{ full_path|urlencode }}">{{ account.agent.downcast }} / {{ account.downcast }}</option>
         {% endifequal %}
         {% endfor %}
     </select>
@@ -50,12 +50,15 @@
     </div>
 </div>
 
-<div style="margin-bottom: 10px; border: 1px solid #aaa; padding: 15px; margin-left: 160px;">
+<div style="border: 1px solid #aaa; padding: 15px; margin-left: 160px;">
 {% block content %}
 {% endblock %}
 </div>
 
-<div style="border: 1px solid #aaa; background: #ddd; padding: 10px; text-align: center;">
+<div style="clear: both;">
+</div>
+
+<div style="margin-top: 10px; border: 1px solid #aaa; background: #ddd; padding: 10px; text-align: center;">
     Copyright &copy;2008 to Deme
 </div>
 
