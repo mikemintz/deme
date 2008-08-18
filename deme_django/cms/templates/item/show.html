@@ -6,7 +6,7 @@
 
 <div class="crumbs">
     <div style="float: right;">
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit?version={{ itemrev.version }}">Edit</a>
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit?version={{ itemversion.version_number }}">Edit</a>
     </div>
     {% for inherited_item_type in item_type_inheritance %}
     <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
@@ -14,17 +14,17 @@
     {% endfor %}
     <a href="{% show_resource_url item %}">{{ item }}</a>
     &raquo;
-    Version {{ itemrev.version }}
+    Version {{ itemversion.version_number }}
 </div>
 
 <div style="background: #ccf; padding: 10px; margin-bottom: 10px;">
     Versions:
-    {% for other_itemrev in item.revisions.all %}
+    {% for other_itemversion in item.versions.all %}
     <span style="margin-left: 10px;">
-        {% ifequal other_itemrev.version itemrev.version %}
-        <b>{{ other_itemrev.version }}</b>
+        {% ifequal other_itemversion.version_number itemversion.version_number %}
+        <b>{{ other_itemversion.version_number }}</b>
         {% else %}
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}?version={{ other_itemrev.version }}">{{ other_itemrev.version }}</a>
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}?version={{ other_itemversion.version_number }}">{{ other_itemversion.version_number }}</a>
         {% endifequal %}
     </span>
     {% endfor %}
@@ -80,7 +80,7 @@
     </table>
 </div>
 
-<h2 style="border-bottom: 3px solid #000;">Version {{ itemrev.version }} Details</h2>
+<h2 style="border-bottom: 3px solid #000;">Version {{ itemversion.version_number }} Details</h2>
 
 <div style="margin-left: 30px;">
     <h3>Fields</h3>
@@ -92,7 +92,7 @@
             <th>Defined In</th>
         </tr>
         {% for model_name in inheritance %}
-        {% for field in itemrev_fields %}
+        {% for field in itemversion_fields %}
         {% ifequal field.model_name model_name %}
         {% ifequal field.field_type 'collection' %}
         {% else %}
@@ -140,7 +140,7 @@
             <th>Defined In</th>
         </tr>
         {% for model_name in inheritance %}
-        {% for field in itemrev_fields %}
+        {% for field in itemversion_fields %}
         {% ifequal field.model_name model_name %}
         {% ifequal field.field_type 'collection' %}
         <tr class="{% cycle 'even' 'odd' %}">
@@ -280,7 +280,7 @@
 
 <h2>Comments</h2>
 <div>
-    <a href="/resource/comment/new?commented_item={{ item.pk }}&commented_item_version={{ itemrev.pk }}&redirect={{ full_path|urlencode }}">Add Comment</a>
+    <a href="/resource/comment/new?commented_item={{ item.pk }}&commented_item_version={{ itemversion.pk }}&redirect={{ full_path|urlencode }}">Add Comment</a>
 </div>
 <div>
     {% for comment_info in comments %}
@@ -288,7 +288,7 @@
         <div style="border-bottom: 1px solid #888;">
             <a href="/resource/{{ comment_info.comment.item_type|lower }}/{{ comment_info.comment.pk }}">{{ comment_info.comment }}</a>
             by <a href="{% show_resource_url comment_info.comment.last_author %}">{{ comment_info.comment.last_author }}</a>
-            for <a href="{% show_resource_url comment_info.comment.commented_item_version %}">version {{ comment_info.comment.commented_item_version.version }}</a>
+            for <a href="{% show_resource_url comment_info.comment.commented_item_version %}">version {{ comment_info.comment.commented_item_version.version_number }}</a>
         </div>
         <div>
             {{ comment_info.comment.body }}

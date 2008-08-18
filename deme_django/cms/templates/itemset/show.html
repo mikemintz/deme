@@ -11,7 +11,7 @@
     {% endfor %}
     <a href="{% show_resource_url item %}">{{ item }}</a>
     &raquo;
-    Version {{ itemrev.version }}
+    Version {{ itemversion.version_number }}
 </div>
 
 <div style="margin-bottom: 10px;">
@@ -36,7 +36,7 @@
 
 <h2>Comments</h2>
 <div>
-    <a href="/resource/comment/new?commented_item={{ item.pk }}&commented_item_version={{ itemrev.pk }}&redirect={{ full_path|urlencode }}">Add Comment</a>
+    <a href="/resource/comment/new?commented_item={{ item.pk }}&commented_item_version={{ itemversion.pk }}&redirect={{ full_path|urlencode }}">Add Comment</a>
 </div>
 <div>
     {% for comment_info in comments %}
@@ -44,7 +44,7 @@
         <div style="border-bottom: 1px solid #888;">
             <a href="/resource/{{ comment_info.comment.item_type|lower }}/{{ comment_info.comment.pk }}">{{ comment_info.comment }}</a>
             by <a href="{% show_resource_url comment_info.comment.last_author %}">{{ comment_info.comment.last_author }}</a>
-            for <a href="{% show_resource_url comment_info.comment.commented_item_version %}">version {{ comment_info.comment.commented_item_version.version }}</a>
+            for <a href="{% show_resource_url comment_info.comment.commented_item_version %}">version {{ comment_info.comment.commented_item_version.version_number }}</a>
         </div>
         <div>
             {{ comment_info.comment.body }}

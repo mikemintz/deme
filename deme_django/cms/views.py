@@ -101,16 +101,6 @@ def filter_for_agent_and_ability(agent, ability):
 
 ### VIEWS ###
 
-#TODO get rid of this view, it will be replaced by a default dynamicpage
-def index(request):
-    template = loader.get_template('index.html')
-    context = Context()
-    context['layout'] = 'base.html'
-    context['full_path'] = request.get_full_path()
-    context['recent_items'] = [x.downcast() for x in cms.models.Item.objects.order_by('-updated_at').all()[0:10]]
-    #TODO add versions here
-    return HttpResponse(template.render(context))
-
 def resource(request, *args, **kwargs):
     item_type = resource_name_dict.get(kwargs['item_type'], None)
     if item_type:
@@ -277,15 +267,15 @@ class ItemViewer(object):
             try:
                 self.item = cms.models.Item.objects.get(pk=self.noun)
                 if self.request.has_key('version'):
-                    self.itemrev = cms.models.Item.REV.objects.get(current_item=self.noun, version=self.request['version'])
+                    self.itemversion = cms.models.Item.VERSION.objects.get(current_item=self.noun, version_number=self.request['version'])
                 else:
-                    self.itemrev = cms.models.Item.REV.objects.filter(current_item=self.noun).order_by('-version')[0]
+                    self.itemversion = cms.models.Item.VERSION.objects.filter(current_item=self.noun).order_by('-version_number')[0]
             except ObjectDoesNotExist:
                 self.item = None
-                self.itemrev = None
+                self.itemversion = None
             if self.item:
                 self.item = self.item.downcast()
-                self.itemrev = self.itemrev.downcast()
+                self.itemversion = self.itemversion.downcast()
         self.form_class = get_form_class_for_item_type(self.item_type)
         self.context = Context()
         self.context['layout'] = self.layout
@@ -317,7 +307,7 @@ class ItemViewer(object):
         accessible = cms.models.Item.objects.filter(filter_for_agent_and_ability(self.context['cur_agent'], 'this')).all()
         logging.debug(accessible)
 
-    def init_show_from_div(self, original_request, item_type, item, itemrev):
+    def init_show_from_div(self, original_request, item_type, item, itemversion):
         self.layout = 'blank.html'
         self.request = original_request
         self.item_type = item_type
@@ -325,7 +315,7 @@ class ItemViewer(object):
         self.method = 'GET'
         self.noun = item.pk
         self.item = item
-        self.itemrev = itemrev
+        self.itemversion = itemversion
         self.action = 'show'
         self.context = Context()
         self.context['layout'] = self.layout
@@ -421,7 +411,7 @@ class ItemViewer(object):
             for name in item._meta.get_all_field_names():
                 field, model, direct, m2m = item._meta.get_field_by_name(name)
                 model_class = type(item) if model == None else model
-                model_class = model_class.NOTREV if issubclass(model_class, cms.models.Item.REV) else model_class
+                model_class = model_class.NOTVERSION if issubclass(model_class, cms.models.Item.VERSION) else model_class
                 model_name = model_class.__name__
                 info = {'model_name': model_name, 'name': name, 'format': type(field).__name__}
                 if type(field).__name__ == 'RelatedObject':
@@ -467,10 +457,10 @@ class ItemViewer(object):
         template = loader.get_template('item/show.html')
         self.context['inheritance'] = [x.__name__ for x in reversed(type(self.item).mro()) if issubclass(x, cms.models.Item)]
         self.context['item'] = self.item
-        self.context['itemrev'] = self.itemrev
+        self.context['itemversion'] = self.itemversion
         self.context['comments'] = comments
         self.context['item_fields'] = get_fields_for_item(self.item)
-        self.context['itemrev_fields'] = get_fields_for_item(self.itemrev)
+        self.context['itemversion_fields'] = get_fields_for_item(self.itemversion)
         self.context['direct_roles'] = roles[0].all()
         self.context['groupwide_roles'] = roles[1].all()
         self.context['default_roles'] = roles[2].all()
@@ -479,11 +469,11 @@ class ItemViewer(object):
 
     def entry_edit(self):
         if self.context['cur_account']:
-            self.itemrev.last_author = self.context['cur_account'].agent
-        form = self.form_class(instance=self.itemrev)
+            self.itemversion.last_author = self.context['cur_account'].agent
+        form = self.form_class(instance=self.itemversion)
         template = loader.get_template('item/edit.html')
         self.context['item'] = self.item
-        self.context['itemrev'] = self.itemrev
+        self.context['itemversion'] = self.itemversion
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, type(self.item))]
@@ -507,7 +497,7 @@ class ItemViewer(object):
         else:
             template = loader.get_template('item/edit.html')
             self.context['item'] = self.item
-            self.context['itemrev'] = self.itemrev
+            self.context['itemversion'] = self.itemversion
             self.context['form'] = form
             self.context['query_string'] = self.request.META['QUERY_STRING']
             model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, type(self.item))]
@@ -543,7 +533,7 @@ class GroupViewer(ItemViewer):
         folio = self.item.folio.downcast()
         folio_viewer_class = get_viewer_class_for_item_type(type(folio))
         folio_viewer = folio_viewer_class()
-        folio_viewer.init_show_from_div(self.request, type(folio), folio, folio.revisions.order_by('-version').get())
+        folio_viewer.init_show_from_div(self.request, type(folio), folio, folio.versions.order_by('-version_number').get())
         folio_html = folio_viewer.dispatch().content
         template = loader.get_template('group/show.html')
         self.context['item'] = self.item
@@ -558,7 +548,7 @@ class ItemSetViewer(ItemViewer):
         comments = comment_dicts_for_item(self.item)
         template = loader.get_template('itemset/show.html')
         self.context['item'] = self.item
-        self.context['itemrev'] = self.itemrev
+        self.context['itemversion'] = self.itemversion
         self.context['comments'] = comments
         return HttpResponse(template.render(self.context))
 
@@ -569,7 +559,7 @@ class TextDocumentViewer(ItemViewer):
         comments = comment_dicts_for_item(self.item)
         template = loader.get_template('textdocument/show.html')
         self.context['item'] = self.item
-        self.context['itemrev'] = self.itemrev
+        self.context['itemversion'] = self.itemversion
         self.context['comments'] = comments
         return HttpResponse(template.render(self.context))
 
@@ -578,10 +568,25 @@ class TextDocumentViewer(ItemViewer):
         return HttpResponse(data)
 
 
-class DynamicPageViewer(ItemViewer):
+class HtmlDocumentViewer(TextDocumentViewer):
 
-    def entry_run(self):
-        code = self.itemrev.code
+    def entry_show(self):
+        comments = comment_dicts_for_item(self.item)
+        template = loader.get_template('htmldocument/show.html')
+        self.context['item'] = self.item
+        self.context['itemversion'] = self.itemversion
+        self.context['comments'] = comments
+        return HttpResponse(template.render(self.context))
+
+    def collection_getregions(self):
+        data = '[["refbase_123::14", "refbase_123::18"]]'
+        return HttpResponse(data)
+
+
+class DjangoTemplateDocumentViewer(TextDocumentViewer):
+
+    def entry_show(self):
+        code = self.itemversion.body
         template = loader.get_template_from_string(code)
         return HttpResponse(template.render(self.context))
 

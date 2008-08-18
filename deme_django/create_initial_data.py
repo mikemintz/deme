@@ -35,7 +35,7 @@ reid_person.save_versioned()
 reid_account = Account(description="Reid Chandler's Account", agent=reid_person)
 reid_account.save_versioned()
 
-hello_page = DynamicPage(description="Front Page", code="""
+hello_page = DjangoTemplateDocument(description="Front Page", last_author=mike_person, body="""
 {% extends layout %}
 {% load resource_extras %}
 {% block title %}Sample Home Page{% endblock %}

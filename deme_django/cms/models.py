@@ -43,52 +43,52 @@ class IsDefaultField(models.NullBooleanField):
 
 class ItemMetaClass(ModelBase):
     def __new__(cls, name, bases, attrs):
-        if name in ['Item', 'ItemRev']:
+        if name in ['Item', 'ItemVersion']:
             result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
             if name == 'Item':
-                result.REV = eval('ItemRev')
-                eval('ItemRev').NOTREV = result
+                result.VERSION = eval('ItemVersion')
+                eval('ItemVersion').NOTVERSION = result
             return result
-        rev_name = "%sRev" % name
-        rev_bases = tuple([x.REV for x in bases])
-        def convert_to_rev(key, value):
+        version_name = "%sVersion" % name
+        version_bases = tuple([x.VERSION for x in bases])
+        def convert_to_version(key, value):
             #TODO do we need to remove uniqueness of related_field?
             #TODO do we need to deepcopy the key?
             value = deepcopy(value)
             if isinstance(value, models.Field):
                 if value.rel and value.rel.related_name:
-                    value.rel.related_name = 'REV_' + value.rel.related_name
+                    value.rel.related_name = 'version_' + value.rel.related_name
                 value._unique = False
             return key, value
-        def is_valid_in_rev(key, value):
+        def is_valid_in_version(key, value):
             if key == '__module__':
                 return True
             if isinstance(value, models.Field):
                 return True
             return False
-        rev_attrs = dict([convert_to_rev(k,v) for k,v in attrs.iteritems() if is_valid_in_rev(k,v)])
-        rev_result = super(ItemMetaClass, cls).__new__(cls, rev_name, rev_bases, rev_attrs)
+        version_attrs = dict([convert_to_version(k,v) for k,v in attrs.iteritems() if is_valid_in_version(k,v)])
+        version_result = super(ItemMetaClass, cls).__new__(cls, version_name, version_bases, version_attrs)
         result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
-        #exec('global %s;%s = rev_result'%(rev_name, rev_name))
+        #exec('global %s;%s = version_result'%(version_name, version_name))
         #this_module = sys.modules[__name__]
-        #setattr(this_module, rev_name, rev_result)
-        result.REV = rev_result
-        rev_result.NOTREV = result
+        #setattr(this_module, version_name, version_result)
+        result.VERSION = version_result
+        version_result.NOTVERSION = result
         return result
 
-class ItemRev(models.Model):
+class ItemVersion(models.Model):
     __metaclass__ = ItemMetaClass
-    current_item = models.ForeignKey('Item', related_name='revisions', editable=False)
-    version = models.IntegerField(default=1, editable=False)
+    current_item = models.ForeignKey('Item', related_name='versions', editable=False)
+    version_number = models.IntegerField(default=1, editable=False)
     item_type = models.CharField(max_length=100, default='Item', editable=False)
     description = models.CharField(max_length=100)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     class Meta:
-        unique_together = (('current_item', 'version'),)
+        unique_together = (('current_item', 'version_number'),)
     def __unicode__(self):
-        return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version, self.description)
+        return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.description)
     def downcast(self):
-        return eval(self.item_type).REV.objects.get(id=self.id)
+        return eval(self.item_type).VERSION.objects.get(id=self.id)
 
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
@@ -115,17 +115,17 @@ class Item(models.Model):
                 fields[field.name] = getattr(self, field.name)
             except ObjectDoesNotExist:
                 fields[field.name] = None
-        new_rev = self.__class__.REV()
+        new_version = self.__class__.VERSION()
         for key, val in fields.iteritems():
-            setattr(new_rev, key, val)
+            setattr(new_version, key, val)
         if self.pk:
-            latest_version = ItemRev.objects.filter(current_item__pk=self.pk).order_by('-version')[0].version
+            latest_version_number = ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
         else:
-            latest_version = 0
-        new_rev.version = latest_version + 1
+            latest_version_number = 0
+        new_version.version_number = latest_version_number + 1
         self.save()
-        new_rev.current_item_id = self.pk
-        new_rev.save()
+        new_version.current_item_id = self.pk
+        new_version.save()
 
 class Agent(Item):
     pass
@@ -158,14 +158,18 @@ class Document(Item):
 class TextDocument(Document):
     body = models.TextField()
 
+class DjangoTemplateDocument(TextDocument):
+    pass
+
+class HtmlDocument(TextDocument):
+    pass
+
 class FileDocument(Document):
     datafile = models.FileField(upload_to='filedocument/%Y/%m/%d')
 
-class Comment(Item):
-    last_author = models.ForeignKey(Agent, related_name='comments_as_last_author')
+class Comment(TextDocument):
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
-    commented_item_version = models.ForeignKey(Item.REV, related_name='comments_as_item_version')
-    body = models.TextField()
+    commented_item_version = models.ForeignKey(Item.VERSION, related_name='comments_as_item_version')
 
 class Relationship(Item):
     pass
@@ -218,7 +222,7 @@ class GroupPermission(Relationship):
 
 class ViewerRequest(Item):
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
-    viewer = models.CharField(max_length=100, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('dynamicpage', 'DynamicPage')])
+    viewer = models.CharField(max_length=100, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('djangotemplatedocument', 'DjangoTemplateDocument')])
     action = models.CharField(max_length=256)
     query_string = models.CharField(max_length=1024, null=True, blank=True)
 
@@ -238,9 +242,6 @@ class CustomUrl(ViewerRequest):
     path = models.CharField(max_length=256)
     class Meta:
         unique_together = (('parent_url', 'path'),)
-
-class DynamicPage(Item):
-    code = models.TextField()
 
 all_models = []
 

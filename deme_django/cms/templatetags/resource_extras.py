@@ -5,8 +5,8 @@ register = template.Library()
 
 @register.simple_tag
 def show_resource_url(item):
-    if isinstance(item, cms.models.ItemRev):
-        return '/resource/%s/%s?version=%s' % (item.item_type.lower(), item.current_item_id, item.version)
+    if isinstance(item, cms.models.ItemVersion):
+        return '/resource/%s/%s?version=%s' % (item.item_type.lower(), item.current_item_id, item.version_number)
     elif isinstance(item, cms.models.Item):
         return '/resource/%s/%s' % (item.item_type.lower(), item.pk)
     else:
@@ -18,8 +18,8 @@ def icon_url(item_type, size=32):
         item_type = getattr(cms.models, item_type, None)
     if not isinstance(item_type, type):
         return icon_url(type(item_type), size)
-    if issubclass(item_type, cms.models.Item.REV):
-        return icon_url(item_type.NOTREV, size)
+    if issubclass(item_type, cms.models.Item.VERSION):
+        return icon_url(item_type.NOTVERSION, size)
     elif item_type == cms.models.Account:
         icon = 'apps/password'
     elif item_type == cms.models.Agent:
@@ -36,7 +36,7 @@ def icon_url(item_type, size=32):
         icon = 'apps/filetypes'
     elif item_type == cms.models.Document:
         icon = 'mimetypes/empty'
-    elif item_type == cms.models.DynamicPage:
+    elif item_type == cms.models.DjangoTemplateDocument:
         icon = 'mimetypes/html'
     elif item_type == cms.models.Folio:
         icon = 'apps/kfm'
