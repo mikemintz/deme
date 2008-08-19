@@ -105,7 +105,7 @@
             <li><strong>ItemSet:</strong> An ItemSet is an Item that represents a set of other items. ItemSets just use pointers to represent their contents, so multiple ItemSets can point to the same contained items. Since fields cannot store arrays, ItemSet contents are represented by ItemToItemSetRelationships.</li>
             <li><strong>Folio:</strong> A Folio is an ItemSet that belongs to a Group.</li>
             <li><strong>Group:</strong> A Group is an Agent that has a folio and a list of member Agents (through the GroupMemebership item type).</li>
-            <li><strong>Document:</strong> A Document is an Item that is meant to be a collaborative work. It is abstract in practice (you should always use a subclass), and it just defines the last_author field (although I wonder if we should define last_author at the Item level to show who last edited a particular Item regardless of whether its a Document ).</li>
+            <li><strong>Document:</strong> A Document is an Item that is meant to be a collaborative work. It is abstract in practice (you should always use a subclass).
             <li><strong>TextDocument:</strong> A TextDocument is a Document that has a text field (that stores any unicode or ascii text right now).</li>
             <li><strong>FileDocument:</strong> A FileDocument is a Document that stores a file on the filesystem (could be an MP3 or a Microsoft Word Document).</li>
             <li><strong>Comment:</strong> A Comment is a TextDocument that represents discussion about a particular version of a particular item. A reply to a comment is represented by another comment commenting on the original comment.</li>
@@ -144,7 +144,7 @@
         <h2>Front-end (viewers)</h2>
         <div class="section">
           <h4>Overview</h4>
-          <p>A viewer is Django class that processes browser or API requests. Any URL that starts with /resource/ is routed to a viewer. Each viewer defines the item type it can handle, although multiple viewers could theoretically handle the same item type (you could have ItemViewer and SuperItemViewer which both handle items). There should be a default viewer for every item type, and if there is none, then the default viewer of the superclass will be used. Note: right now the code only allows one viewer per item type, but I plan on changing that. Viewers that handle item type X always handle items that are in subclasses of X (except in the case of editing/updating, in which case they can only handle superclasses, although we still need to fix some behavior for this "downcasting" ability).</p>
+          <p>A viewer is Django class that processes browser or API requests. Any URL that starts with /resource/ is routed to a viewer. Each viewer defines the item type it can handle, although multiple viewers could theoretically handle the same item type (you could have ItemViewer and SuperItemViewer which both handle items). There should be a default viewer for every item type, and if there is none, then the default viewer of the superclass should be used. Viewers that handle item type X always handle items that are in subclasses of X (except in the case of editing/updating, in which case they can only handle superclasses, although we still need to fix some behavior for this "downcasting" ability).</p>
           <h4>URLs</h4>
           <p>Our URLs are restful. Every URL defines a viewer, an action, a noun (or none for actions on the collection), a format, an optional parameters in the query string. Here are some example URLs:
           <ul>

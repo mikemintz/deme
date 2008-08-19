@@ -16,7 +16,6 @@ custom layouts for sure
 PhotoDocument subclasses FileDocument
 
 * deleting items
-* different kinds of viewers for a specific item
 * We're going to have to integrate permissions into binary files (e.g., MediaDocument) so that users can't bypass Deme and download things from Apache directly.
 * make constraints other than uniqueness work in models with revisions (are there any issues?)
 * nicer form error handling on IntegrityError (like unique validation failed)
@@ -25,5 +24,4 @@ PhotoDocument subclasses FileDocument
 * update django version
 * make it work better when you downcast an item in the editor, with versioning backward, and calling actions that should be called on create
 * after you comment, and there's a validation error, and you fix it, it doesn't take you back to the original item
-* maybe make it so editable=False fields don't get transferred to VERSIONS since you can't edit them!
 * start using verbose_name to have nice displays of item type names

@@ -43,7 +43,7 @@
     <div style="margin-bottom: 5px; border: 1px solid #666; padding: 15px;">
         <div style="border-bottom: 1px solid #888;">
             <a href="/resource/{{ comment_info.comment.item_type|lower }}/{{ comment_info.comment.pk }}">{{ comment_info.comment }}</a>
-            by <a href="{% show_resource_url comment_info.comment.last_author %}">{{ comment_info.comment.last_author }}</a>
+            by <a href="{% show_resource_url comment_info.comment.creator %}">{{ comment_info.comment.creator }}</a>
             for <a href="{% show_resource_url comment_info.comment.commented_item_version %}">version {{ comment_info.comment.commented_item_version.version_number }}</a>
         </div>
         <div>

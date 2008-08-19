@@ -63,7 +63,7 @@ class ItemMetaClass(ModelBase):
         def is_valid_in_version(key, value):
             if key == '__module__':
                 return True
-            if isinstance(value, models.Field):
+            if isinstance(value, models.Field) and value.editable:
                 return True
             return False
         version_attrs = dict([convert_to_version(k,v) for k,v in attrs.iteritems() if is_valid_in_version(k,v)])
@@ -187,13 +187,12 @@ class Folio(ItemSet):
 class Group(Agent):
     #folio = models.OneToOneField(Item, related_name='group_as_folio')
     # can't be onetoone because lots of versions pointing to folio
-    folio = models.ForeignKey(Folio, related_name='groups_as_folio', unique=True)
+    folio = models.ForeignKey(Folio, related_name='groups_as_folio', unique=True, editable=False)
     name = models.CharField(max_length=100)
     def get_name(self):
         return self.name
 
 class Document(Item):
-    last_author = models.ForeignKey(Agent, related_name='documents_as_last_author')
     name = models.CharField(max_length=100)
     def get_name(self):
         return self.name
@@ -220,7 +219,6 @@ class Comment(TextDocument):
 class Relationship(Item):
     def get_name(self):
         return 'Generic Relationship'
-    #TODO we can't define item1 and item2 here or else we won't be able to unique_together it in subclasses
 
 class GroupMembership(Relationship):
     agent = models.ForeignKey(Agent, related_name='group_memberships_as_agent')

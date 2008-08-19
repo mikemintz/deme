@@ -16,14 +16,9 @@ resource_name_dict = {}
 for model in cms.models.all_models:
     resource_name_dict[model.__name__.lower()] = model
 
-def get_viewer_class_for_item_type(item_type):
-    while issubclass(item_type, cms.models.Item):
-        try:
-            viewer_class = eval("%sViewer" % item_type.__name__)
-        except NameError:
-            item_type = item_type.__base__
-            continue
-        return viewer_class
+viewer_name_dict = {}
+def get_viewer_class_for_viewer_name(viewer_name):
+    return viewer_name_dict.get(viewer_name, None)
 
 def get_form_class_for_item_type(item_type):
     while issubclass(item_type, cms.models.Item):
@@ -102,9 +97,9 @@ def filter_for_agent_and_ability(agent, ability):
 ### VIEWS ###
 
 def resource(request, *args, **kwargs):
-    item_type = resource_name_dict.get(kwargs['item_type'], None)
-    if item_type:
-        viewer_class = get_viewer_class_for_item_type(item_type)
+    viewer_name = kwargs['viewer']
+    viewer_class = get_viewer_class_for_viewer_name(viewer_name)
+    if viewer_class:
         viewer = viewer_class()
         viewer.init_from_http(request, kwargs)
         response = viewer.dispatch()
@@ -116,7 +111,7 @@ def resource(request, *args, **kwargs):
         else:
             return response
     else:
-        template = loader.get_template('item_type_not_found.html')
+        template = loader.get_template('viewer_not_found.html')
         context = Context()
         context['layout'] = 'base.html'
         return HttpResponseNotFound(template.render(context))
@@ -190,7 +185,7 @@ def alias(request, *args, **kwargs):
         raise Exception("we should never get here 23942934")
     item = custom_url.aliased_item
     kwargs = {}
-    kwargs['item_type'] = custom_url.viewer
+    kwargs['viewer'] = custom_url.viewer
     kwargs['format'] = 'html'
     if item:
         kwargs['noun'] = str(item.pk)
@@ -245,13 +240,15 @@ def comment_dicts_for_item(item):
 
 
 class ItemViewer(object):
+    item_type = cms.models.Item
+    viewer_name = 'item'
 
     def __init__(self):
         pass
 
     def init_from_http(self, request, url_info):
         self.layout = 'base.html'
-        self.item_type = resource_name_dict.get(url_info['item_type'], None)
+        self.viewer_name = url_info['viewer']
         self.format = url_info['format'] or 'html'
         self.method = (request.REQUEST.get('_method', None) or request.method).upper()
         self.request = request # FOR NOW
@@ -307,10 +304,10 @@ class ItemViewer(object):
         accessible = cms.models.Item.objects.filter(filter_for_agent_and_ability(self.context['cur_agent'], 'this')).all()
         logging.debug(accessible)
 
-    def init_show_from_div(self, original_request, item_type, item, itemversion):
+    def init_show_from_div(self, original_request, viewer_name, item, itemversion):
         self.layout = 'blank.html'
         self.request = original_request
-        self.item_type = item_type
+        self.viewer_name = viewer_name
         self.format = 'html'
         self.method = 'GET'
         self.noun = item.pk
@@ -356,6 +353,8 @@ class ItemViewer(object):
     def render_item_not_found(self):
         template = loader.get_template('item_not_found.html')
         self.context['item'] = self.item
+        self.context['noun'] = self.noun
+        self.context['viewer'] = self.viewer_name
         return HttpResponseNotFound(template.render(self.context))
 
     def collection_list(self):
@@ -379,8 +378,6 @@ class ItemViewer(object):
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
-        if self.context['cur_account']:
-            form_initial['last_author'] = self.context['cur_account'].agent.pk
         form = self.form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['model_names'] = model_names
@@ -394,7 +391,7 @@ class ItemViewer(object):
         if form.is_valid():
             item = form.save(commit=False)
             item.save_versioned(updater=self.context['cur_agent'])
-            redirect = self.request.GET.get('redirect', '/resource/%s/%d' % (item.item_type.lower(), item.pk))
+            redirect = self.request.GET.get('redirect', '/resource/%s/%d' % (self.viewer_name, item.pk))
             return HttpResponseRedirect(redirect)
         else:
             #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
@@ -471,8 +468,6 @@ class ItemViewer(object):
         return HttpResponse(template.render(self.context))
 
     def entry_edit(self):
-        if self.context['cur_account']:
-            self.itemversion.last_author = self.context['cur_account'].agent
         form = self.form_class(instance=self.itemversion)
         template = loader.get_template('item/edit.html')
         self.context['item'] = self.item
@@ -496,7 +491,7 @@ class ItemViewer(object):
         if form.is_valid():
             new_item = form.save(commit=False)
             new_item.save_versioned(updater=self.context['cur_agent'])
-            return HttpResponseRedirect('/resource/%s/%d' % (new_item.item_type.lower(), new_item.pk))
+            return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name, new_item.pk))
         else:
             template = loader.get_template('item/edit.html')
             self.context['item'] = self.item
@@ -511,10 +506,12 @@ class ItemViewer(object):
     def entry_delete(self):
         #TODO this doesn't really work
         cms.models.Item.objects.get(pk=self.item.pk).delete()
-        return HttpResponseRedirect('/resource/%s' % (self.item_type.__name__.lower(),))
+        return HttpResponseRedirect('/resource/%s' % (self.viewer_name,))
 
 
 class GroupViewer(ItemViewer):
+    item_type = cms.models.Group
+    viewer_name = 'group'
 
     def collection_create(self):
         #TODO if you update an Item into a Group, it doesn't make a Folio
@@ -525,7 +522,7 @@ class GroupViewer(ItemViewer):
             folio.save_versioned(updater=self.context['cur_agent'])
             new_item.folio = folio
             new_item.save_versioned(updater=self.context['cur_agent'])
-            return HttpResponseRedirect('/resource/%s/%d' % (new_item.item_type.lower(), new_item.pk))
+            return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name, new_item.pk))
         else:
             template = loader.get_template('item/new.html')
             self.context['form'] = form
@@ -534,9 +531,9 @@ class GroupViewer(ItemViewer):
     def entry_show(self):
         comments = comment_dicts_for_item(self.item)
         folio = self.item.folio.downcast()
-        folio_viewer_class = get_viewer_class_for_item_type(type(folio))
+        folio_viewer_class = get_viewer_class_for_viewer_name('itemset')
         folio_viewer = folio_viewer_class()
-        folio_viewer.init_show_from_div(self.request, type(folio), folio, folio.versions.latest())
+        folio_viewer.init_show_from_div(self.request, 'itemset', folio, folio.versions.latest())
         folio_html = folio_viewer.dispatch().content
         template = loader.get_template('group/show.html')
         self.context['item'] = self.item
@@ -546,6 +543,8 @@ class GroupViewer(ItemViewer):
 
 
 class ItemSetViewer(ItemViewer):
+    item_type = cms.models.ItemSet
+    viewer_name = 'itemset'
 
     def entry_show(self):
         comments = comment_dicts_for_item(self.item)
@@ -557,6 +556,8 @@ class ItemSetViewer(ItemViewer):
 
 
 class TextDocumentViewer(ItemViewer):
+    item_type = cms.models.TextDocument
+    viewer_name = 'textdocument'
 
     def entry_show(self):
         comments = comment_dicts_for_item(self.item)
@@ -572,6 +573,8 @@ class TextDocumentViewer(ItemViewer):
 
 
 class HtmlDocumentViewer(TextDocumentViewer):
+    item_type = cms.models.HtmlDocument
+    viewer_name = 'htmldocument'
 
     def entry_show(self):
         comments = comment_dicts_for_item(self.item)
@@ -587,10 +590,44 @@ class HtmlDocumentViewer(TextDocumentViewer):
 
 
 class DjangoTemplateDocumentViewer(TextDocumentViewer):
+    item_type = cms.models.DjangoTemplateDocument
+    viewer_name = 'djangotemplatedocument'
 
     def entry_show(self):
         code = self.itemversion.body
         template = loader.get_template_from_string(code)
         return HttpResponse(template.render(self.context))
 
+
+class MagicViewer(ItemViewer):
+    item_type = cms.models.Item
+    viewer_name = 'blam'
+
+    def entry_show(self):
+        return HttpResponse('ka BLAM!')
+
+
+# let's dynamically make our lists of viewers
+for global_value in globals().values()[:]:
+    if isinstance(global_value, type) and issubclass(global_value, ItemViewer):
+        viewer_name_dict[global_value.viewer_name] = global_value
+
+# let's dynamically create default viewers for the ones we don't have
+for item_type in cms.models.all_models:
+    viewer_name = item_type.__name__.lower()
+    if viewer_name not in viewer_name_dict:
+        parent_item_type_with_viewer = item_type
+        while issubclass(parent_item_type_with_viewer, cms.models.Item):
+            print parent_item_type_with_viewer.__name__.lower()
+            parent_viewer_class = viewer_name_dict.get(parent_item_type_with_viewer.__name__.lower(), None)
+            if parent_viewer_class:
+                break
+            parent_item_type_with_viewer = parent_item_type_with_viewer.__base__
+        if parent_viewer_class:
+            viewer_class_name = '%sViewer' % item_type.__name__
+            viewer_class_def = new.classobj(viewer_class_name, (parent_viewer_class,), {'item_type': item_type, 'viewer_name': viewer_name})
+            exec('global %s;%s = viewer_class_def'%(viewer_class_name, viewer_class_name))
+            viewer_name_dict[viewer_name] = viewer_class_def
+        else:
+            pass
 

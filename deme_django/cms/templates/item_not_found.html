@@ -1,11 +1,12 @@
 {% extends layout %}
+{% load resource_extras %}
 {% block title %}{{ item_type }} Not Found{% endblock %}
 {% block content %}
 
 {% if item %}
-We could not find any {{ item_type }} matching your URL, but perhaps you were looking for the {{ item.item_type }}.
+You cannot view item {{ noun }} in this viewer. Try viewing it in the <a href="{% show_resource_url item %}">{{ item.item_type }} viewer</a>.
 {% else %}
-We could not find any {{ item_type }} matching your URL.
+There is no item {{ noun }}.
 {% endif %}
 
 {% endblock content %}

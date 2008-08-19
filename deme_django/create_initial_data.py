@@ -23,7 +23,7 @@ home_page = DjangoTemplateDocument(body="""
 {% block content %}
 Welcome to Deme!
 {% endblock content %}
-""", last_author=admin)
+""")
 home_page.save_versioned(updater=admin)
 
 default_site = Site(name="Default Site", is_default_site=True, viewer='djangotemplatedocument', action='show', aliased_item=home_page, query_string='')
@@ -47,7 +47,7 @@ reid_person.save_versioned(updater=admin)
 reid_account = Account(agent=reid_person)
 reid_account.save_versioned(updater=admin)
 
-hello_page = DjangoTemplateDocument(name="Front Page", last_author=mike_person, body="""
+hello_page = DjangoTemplateDocument(name="Front Page", body="""
 {% extends layout %}
 {% load resource_extras %}
 {% block title %}Sample Home Page{% endblock %}
