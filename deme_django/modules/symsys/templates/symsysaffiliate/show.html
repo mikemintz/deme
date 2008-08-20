@@ -1,0 +1,46 @@
+{% extends layout %}
+{% load resource_extras %}
+{% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
+{% block content %}
+
+<div class="crumbs">
+    <div style="float: right;">
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit?version={{ itemversion.version_number }}">Edit</a>
+        {% if item.trashed %}
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/untrash">Untrash</a>
+        {% else %}
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/trash">Trash</a>
+        {% endif %}
+        {% if itemversion.trashed %}
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/untrash?version={{ itemversion.version_number }}">Untrash Version</a>
+        {% else %}
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/trash?version={{ itemversion.version_number }}">Trash Version</a>
+        {% endif %}
+    </div>
+    {% for inherited_item_type in item_type_inheritance %}
+    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
+    &raquo;
+    {% endfor %}
+    <a href="{% show_resource_url item %}">{{ item }}</a>
+    &raquo;
+    Version {{ itemversion.version_number }}
+</div>
+
+<div style="background: #ccf; padding: 10px; margin-bottom: 10px;">
+    Versions:
+    {% for other_itemversion in item.versions.all %}
+    <span style="margin-left: 10px;">
+        {% ifequal other_itemversion.version_number itemversion.version_number %}
+        <b>{{ other_itemversion.version_number }}</b>
+        {% else %}
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}?version={{ other_itemversion.version_number }}">{{ other_itemversion.version_number }}</a>
+        {% endifequal %}
+    </span>
+    {% endfor %}
+</div>
+
+This is the symsysaffiliate viewer looking at {{ item }}!
+
+{% endblock content %}
+

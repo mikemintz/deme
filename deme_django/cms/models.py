@@ -498,6 +498,8 @@ class CustomUrl(ViewerRequest):
 import os
 modules_dir = os.path.join(os.path.dirname(__file__), '..', 'modules')
 for module_name in os.listdir(modules_dir):
+    if module_name.startswith('.'):
+        continue
     viewer_filename = os.path.join(modules_dir, module_name, 'models.py')
     execfile(viewer_filename)
 
