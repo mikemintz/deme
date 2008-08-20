@@ -263,8 +263,8 @@ class ItemViewer(object):
                 self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'delete'}.get(self.method, 'show')
             try:
                 self.item = cms.models.Item.objects.get(pk=self.noun)
-                if self.request.has_key('version'):
-                    self.itemversion = cms.models.Item.VERSION.objects.get(current_item=self.noun, version_number=self.request['version'])
+                if 'version' in self.request.REQUEST:
+                    self.itemversion = cms.models.Item.VERSION.objects.get(current_item=self.noun, version_number=self.request.REQUEST['version'])
                 else:
                     try:
                         self.itemversion = cms.models.Item.VERSION.objects.filter(current_item=self.noun, trashed=False).latest()
@@ -364,9 +364,9 @@ class ItemViewer(object):
         #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
-        if 'q' in self.request:
-            items = self.item_type.objects.filter(description__icontains=self.request['q'])
-            self.context['search_query'] = self.request['q']
+        if 'q' in self.request.GET:
+            items = self.item_type.objects.filter(description__icontains=self.request.GET['q'])
+            self.context['search_query'] = self.request.GET['q']
         else:
             items = self.item_type.objects.all()
             self.context['search_query'] = ''
@@ -507,14 +507,14 @@ class ItemViewer(object):
             return HttpResponse(template.render(self.context))
 
     def entry_trash(self):
-        if 'version' in self.request:
+        if 'version' in self.request.GET:
             self.itemversion.trash()
         else:
             self.item.trash()
         return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name,self.item.pk))
 
     def entry_untrash(self):
-        if 'version' in self.request:
+        if 'version' in self.request.GET:
             self.itemversion.untrash()
         else:
             self.item.untrash()

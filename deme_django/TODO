@@ -17,7 +17,7 @@ PhotoDocument subclasses FileDocument
 
 * deleting items
 * We're going to have to integrate permissions into binary files (e.g., MediaDocument) so that users can't bypass Deme and download things from Apache directly.
-* make constraints other than uniqueness work in models with revisions (are there any issues?)
+* make constraints (validations?) other than uniqueness work in models with revisions (are there any issues?)
 * nicer form error handling on IntegrityError (like unique validation failed)
 * figure out import deal on deme_django.cms and just cms
 * don't forget to the field length hack for 64-bit machines i made in the django trunk
