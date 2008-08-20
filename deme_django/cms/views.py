@@ -266,7 +266,10 @@ class ItemViewer(object):
                 if self.request.has_key('version'):
                     self.itemversion = cms.models.Item.VERSION.objects.get(current_item=self.noun, version_number=self.request['version'])
                 else:
-                    self.itemversion = cms.models.Item.VERSION.objects.filter(current_item=self.noun).latest()
+                    try:
+                        self.itemversion = cms.models.Item.VERSION.objects.filter(current_item=self.noun, trashed=False).latest()
+                    except ObjectDoesNotExist:
+                        self.itemversion = cms.models.Item.VERSION.objects.filter(current_item=self.noun).latest()
             except ObjectDoesNotExist:
                 self.item = None
                 self.itemversion = None
@@ -503,6 +506,20 @@ class ItemViewer(object):
             self.context['model_names'] = model_names
             return HttpResponse(template.render(self.context))
 
+    def entry_trash(self):
+        if 'version' in self.request:
+            self.itemversion.trash()
+        else:
+            self.item.trash()
+        return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name,self.item.pk))
+
+    def entry_untrash(self):
+        if 'version' in self.request:
+            self.itemversion.untrash()
+        else:
+            self.item.untrash()
+        return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name,self.item.pk))
+
     def entry_delete(self):
         #TODO this doesn't really work
         cms.models.Item.objects.get(pk=self.item.pk).delete()
@@ -618,7 +635,6 @@ for item_type in cms.models.all_models:
     if viewer_name not in viewer_name_dict:
         parent_item_type_with_viewer = item_type
         while issubclass(parent_item_type_with_viewer, cms.models.Item):
-            print parent_item_type_with_viewer.__name__.lower()
             parent_viewer_class = viewer_name_dict.get(parent_item_type_with_viewer.__name__.lower(), None)
             if parent_viewer_class:
                 break

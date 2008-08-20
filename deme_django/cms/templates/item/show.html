@@ -7,6 +7,16 @@
 <div class="crumbs">
     <div style="float: right;">
         <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit?version={{ itemversion.version_number }}">Edit</a>
+        {% if item.trashed %}
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/untrash">Untrash</a>
+        {% else %}
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/trash">Trash</a>
+        {% endif %}
+        {% if itemversion.trashed %}
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/untrash?version={{ itemversion.version_number }}">Untrash Version</a>
+        {% else %}
+        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/trash?version={{ itemversion.version_number }}">Trash Version</a>
+        {% endif %}
     </div>
     {% for inherited_item_type in item_type_inheritance %}
     <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>

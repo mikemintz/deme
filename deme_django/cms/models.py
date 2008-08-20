@@ -78,6 +78,7 @@ class ItemMetaClass(ModelBase):
         version_result.NOTVERSION = result
         return result
 
+
 class ItemVersion(models.Model):
     __metaclass__ = ItemMetaClass
     current_item = models.ForeignKey('Item', related_name='versions', editable=False)
@@ -86,16 +87,81 @@ class ItemVersion(models.Model):
     description = models.CharField(max_length=100, blank=True)
     updater = models.ForeignKey('Agent', related_name='item_versions_as_updater')
     updated_at = models.DateTimeField(editable=False)
+    trashed = models.BooleanField(default=False, editable=False)
+
     class Meta:
         unique_together = (('current_item', 'version_number'),)
         ordering = ['version_number']
         get_latest_by = "version_number"
+
     def __unicode__(self):
         return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.get_name())
+
     def get_name(self):
         return 'Generic Item'
+
     def downcast(self):
         return eval(self.item_type).VERSION.objects.get(id=self.id)
+
+    @transaction.commit_on_success
+    def trash(self):
+        try:
+            latest_untrashed_version = self.current_item.versions.filter(trashed=False).latest()
+        except ObjectDoesNotExist:
+            latest_untrashed_version = None
+        self.trashed = True
+        self.save()
+        if latest_untrashed_version == self:
+            try:
+                new_latest_untrashed_version = self.current_item.versions.filter(trashed=False).latest()
+            except ObjectDoesNotExist:
+                new_latest_untrashed_version = None
+            if new_latest_untrashed_version:
+                fields = {}
+                for field in new_latest_untrashed_version._meta.fields:
+                    if field.primary_key:
+                        continue
+                    if field.name in []:
+                        continue
+                    if type(field).__name__ == 'OneToOneField':
+                        continue
+                    try:
+                        fields[field.name] = getattr(new_latest_untrashed_version, field.name)
+                    except ObjectDoesNotExist:
+                        fields[field.name] = None
+                for key, val in fields.iteritems():
+                    setattr(new_latest_untrashed_version.current_item, key, val)
+                self.current_item.save()
+            else:
+                self.current_item.trashed = True
+                self.current_item.save()
+
+    @transaction.commit_on_success
+    def untrash(self):
+        try:
+            latest_untrashed_version = self.current_item.versions.filter(trashed=False).latest()
+        except ObjectDoesNotExist:
+            latest_untrashed_version = None
+        self.trashed = False
+        self.save()
+        if not latest_untrashed_version or self.version_number > latest_untrashed_version.version_number:
+            self.current_item.trashed = True
+            fields = {}
+            for field in self._meta.fields:
+                if field.primary_key:
+                    continue
+                if field.name in []:
+                    continue
+                if type(field).__name__ == 'OneToOneField':
+                    continue
+                try:
+                    fields[field.name] = getattr(self, field.name)
+                except ObjectDoesNotExist:
+                    fields[field.name] = None
+            for key, val in fields.iteritems():
+                setattr(self.current_item, key, val)
+            self.current_item.save()
+
 
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
@@ -105,12 +171,29 @@ class Item(models.Model):
     updated_at = models.DateTimeField(editable=False)
     creator = models.ForeignKey('Agent', related_name='items_as_creator', editable=False)
     created_at = models.DateTimeField(editable=False)
+    trashed = models.BooleanField(default=False, editable=False)
+
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.get_name())
+
     def get_name(self):
         return 'Generic Item'
+
     def downcast(self):
         return eval(self.item_type).objects.get(id=self.id)
+
+    @transaction.commit_on_success
+    def trash(self):
+        self.trashed = True
+        self.save()
+        self.versions.all().update(trashed=True)
+
+    @transaction.commit_on_success
+    def untrash(self):
+        self.trashed = False
+        self.save()
+        self.versions.all().update(trashed=False)
+
     @transaction.commit_on_success
     def save_versioned(self, updater=None, first_agent=False):
         save_time = datetime.datetime.now()
@@ -156,14 +239,17 @@ class Item(models.Model):
         new_version.current_item_id = self.pk
         new_version.save()
 
+
 class Agent(Item):
     def get_name(self):
         return 'Generic Agent'
+
 
 class Account(Item):
     agent = models.ForeignKey(Agent, related_name='accounts_as_agent')
     def get_name(self):
         return 'Generic Account'
+
 
 class AnonymousAccount(Account):
     def get_name(self):
@@ -176,13 +262,16 @@ class Person(Agent):
     def get_name(self):
         return '%s %s' % (self.first_name, self.last_name)
 
+
 class ItemSet(Item):
     name = models.CharField(max_length=100)
     def get_name(self):
         return self.name
 
+
 class Folio(ItemSet):
     pass
+
 
 class Group(Agent):
     #folio = models.OneToOneField(Item, related_name='group_as_folio')
@@ -192,22 +281,28 @@ class Group(Agent):
     def get_name(self):
         return self.name
 
+
 class Document(Item):
     name = models.CharField(max_length=100)
     def get_name(self):
         return self.name
 
+
 class TextDocument(Document):
     body = models.TextField()
+
 
 class DjangoTemplateDocument(TextDocument):
     pass
 
+
 class HtmlDocument(TextDocument):
     pass
 
+
 class FileDocument(Document):
     datafile = models.FileField(upload_to='filedocument/%Y/%m/%d')
+
 
 class Comment(TextDocument):
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
@@ -216,9 +311,11 @@ class Comment(TextDocument):
     def get_name(self):
         return self.name
 
+
 class Relationship(Item):
     def get_name(self):
         return 'Generic Relationship'
+
 
 class GroupMembership(Relationship):
     agent = models.ForeignKey(Agent, related_name='group_memberships_as_agent')
@@ -228,6 +325,7 @@ class GroupMembership(Relationship):
     def get_name(self):
         return 'Membership of %s in %s' % (self.agent.downcast().get_name(), self.group.downcast().get_name())
 
+
 class ItemSetMembership(Relationship):
     item = models.ForeignKey(Item, related_name='itemset_memberships_as_item')
     itemset = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
@@ -236,10 +334,12 @@ class ItemSetMembership(Relationship):
     def get_name(self):
         return 'Membership of %s in %s' % (self.item.downcast().get_name(), self.itemset.downcast().get_name())
 
+
 class Role(Item):
     name = models.CharField(max_length=100)
     def get_name(self):
         return self.name
+
 
 class RoleAbility(Item):
     role = models.ForeignKey(Role, related_name='abilities_as_role')
@@ -249,6 +349,7 @@ class RoleAbility(Item):
         unique_together = (('role', 'ability'),)
     def get_name(self):
         return 'Ability to %s %s for %s' % ('do' if self.is_allowed else 'not do', self.ability, self.role.downcast().get_name())
+
 
 class AgentPermission(Relationship):
     agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent', null=True, blank=True)
@@ -266,6 +367,7 @@ class AgentPermission(Relationship):
         else:
             return '%s Role for %s' % (self.role.downcast().get_name(), agent_name)
 
+
 class GroupPermission(Relationship):
     group = models.ForeignKey(Group, related_name='group_permissions_as_group', null=True, blank=True)
     item = models.ForeignKey(Item, related_name='group_permissions_as_item', null=True, blank=True)
@@ -278,6 +380,7 @@ class GroupPermission(Relationship):
         else:
             return '%s Role for %s' % (self.role.downcast().get_name(), self.group.downcast().get_name())
 
+
 class ViewerRequest(Item):
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
     viewer = models.CharField(max_length=100, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('djangotemplatedocument', 'DjangoTemplateDocument')])
@@ -289,6 +392,7 @@ class ViewerRequest(Item):
         else:
             return 'View %s.%s' % (self.viewer, self.action)
 
+
 class Site(ViewerRequest):
     is_default_site = IsDefaultField(default=None)
     name = models.CharField(max_length=100)
@@ -299,6 +403,7 @@ class Site(ViewerRequest):
         else:
             return 'View %s.%s at %s' % (self.viewer, self.action, url_name)
 
+
 class SiteDomain(Item):
     hostname = models.CharField(max_length=256)
     site = models.ForeignKey(Site, related_name='site_domains_as_site')
@@ -307,6 +412,7 @@ class SiteDomain(Item):
     def get_name(self):
         return hostname
 #TODO match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
+
 
 #TODO we should prevent top level names like 'static' and 'resource', although not a big deal since it doesn't overwrite
 class CustomUrl(ViewerRequest):
@@ -327,6 +433,7 @@ class CustomUrl(ViewerRequest):
             return 'View %s in %s.%s at %s' % (self.aliased_item.downcast().get_name(), self.viewer, self.action, url_name)
         else:
             return 'View %s.%s at %s' % (self.viewer, self.action, url_name)
+
 
 all_models = []
 
