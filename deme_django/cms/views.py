@@ -624,6 +624,14 @@ class MagicViewer(ItemViewer):
         return HttpResponse('ka BLAM!')
 
 
+#insert module viewers here
+import os
+modules_dir = os.path.join(os.path.dirname(__file__), '..', 'modules')
+for module_name in os.listdir(modules_dir):
+    viewer_filename = os.path.join(modules_dir, module_name, 'views.py')
+    execfile(viewer_filename)
+
+
 # let's dynamically make our lists of viewers
 for global_value in globals().values()[:]:
     if isinstance(global_value, type) and issubclass(global_value, ItemViewer):

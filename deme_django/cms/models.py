@@ -10,6 +10,26 @@ from django.db.models.base import ModelBase
 from copy import deepcopy
 
 
+class Enemy(models.Model):
+    pass
+
+class Troop(models.Model):
+    pass
+
+class Soldier(models.Model):
+    troop = models.ForeignKey(Troop)
+
+class TroopKill(models.Model):
+    enemy = models.ForeignKey(Enemy)
+    troop = models.ForeignKey(Troop)
+
+class SoldierKill(models.Model):
+    enemy = models.ForeignKey(Enemy)
+    soldier = models.ForeignKey(Soldier)
+    grenade = models.BooleanField()
+
+
+
 class IsDefaultFormField(forms.BooleanField):
     widget = forms.CheckboxInput
     def clean(self, value):
@@ -83,8 +103,8 @@ class ItemVersion(models.Model):
     __metaclass__ = ItemMetaClass
     current_item = models.ForeignKey('Item', related_name='versions', editable=False)
     version_number = models.IntegerField(default=1, editable=False)
-    item_type = models.CharField(max_length=100, default='Item', editable=False)
-    description = models.CharField(max_length=100, blank=True)
+    item_type = models.CharField(max_length=255, default='Item', editable=False)
+    description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='item_versions_as_updater')
     updated_at = models.DateTimeField(editable=False)
     trashed = models.BooleanField(default=False, editable=False)
@@ -165,8 +185,8 @@ class ItemVersion(models.Model):
 
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
-    item_type = models.CharField(max_length=100, default='Item', editable=False)
-    description = models.CharField(max_length=100, blank=True)
+    item_type = models.CharField(max_length=255, default='Item', editable=False)
+    description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='items_as_updater', editable=False)
     updated_at = models.DateTimeField(editable=False)
     creator = models.ForeignKey('Agent', related_name='items_as_creator', editable=False)
@@ -251,20 +271,59 @@ class Account(Item):
         return 'Generic Account'
 
 
+def get_hexdigest(algorithm, salt, raw_password):
+    from django.utils.encoding import smart_str
+    raw_password, salt = smart_str(raw_password), smart_str(salt)
+    if algorithm == 'crypt':
+        try:
+            import crypt
+        except ImportError:
+            raise ValueError('"crypt" password algorithm not supported in this environment')
+        return crypt.crypt(raw_password, salt)
+    if algorithm == 'md5':
+        return hashlib.md5(salt + raw_password).hexdigest()
+    elif algorithm == 'sha1':
+        return hashlib.sha1(salt + raw_password).hexdigest()
+    raise ValueError("Got unknown password algorithm type in password.")
+
+
+class PasswordAccount(Account):
+    password = models.CharField(max_length=128)
+
+    def set_password(self, raw_password):
+        import random
+        algo = 'sha1'
+        salt = get_hexdigest(algo, str(random.random()), str(random.random()))[:5]
+        hsh = get_hexdigest(algo, salt, raw_password)
+        self.password = '%s$%s$%s' % (algo, salt, hsh)
+
+    def check_password(self, raw_password):
+        algo, salt, hsh = self.password.split('$')
+        return hsh == get_hexdigest(algo, salt, raw_password)
+    
+    def get_name(self):
+        return 'Password Account'
+
+
 class AnonymousAccount(Account):
     def get_name(self):
         return 'Anonymous Account'
 
+
 class Person(Agent):
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    first_name = models.CharField(max_length=255)
+    middle_names = models.CharField(max_length=255, blank=True)
+    last_name = models.CharField(max_length=255)
+    suffix = models.CharField(max_length=255, blank=True)
     email = models.EmailField(max_length=320)
+    password_question = models.CharField(max_length=255, blank=True)
+    password_answer = models.CharField(max_length=255, blank=True)
     def get_name(self):
         return '%s %s' % (self.first_name, self.last_name)
 
 
 class ItemSet(Item):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     def get_name(self):
         return self.name
 
@@ -277,13 +336,13 @@ class Group(Agent):
     #folio = models.OneToOneField(Item, related_name='group_as_folio')
     # can't be onetoone because lots of versions pointing to folio
     folio = models.ForeignKey(Folio, related_name='groups_as_folio', unique=True, editable=False)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     def get_name(self):
         return self.name
 
 
 class Document(Item):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     def get_name(self):
         return self.name
 
@@ -307,7 +366,7 @@ class FileDocument(Document):
 class Comment(TextDocument):
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
     commented_item_version = models.ForeignKey(Item.VERSION, related_name='comments_as_item_version')
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     def get_name(self):
         return self.name
 
@@ -336,14 +395,14 @@ class ItemSetMembership(Relationship):
 
 
 class Role(Item):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     def get_name(self):
         return self.name
 
 
 class RoleAbility(Item):
     role = models.ForeignKey(Role, related_name='abilities_as_role')
-    ability = models.CharField(max_length=100, choices=[('this', 'do this'), ('that', 'do that')])
+    ability = models.CharField(max_length=255, choices=[('this', 'do this'), ('that', 'do that')])
     is_allowed = models.BooleanField()
     class Meta:
         unique_together = (('role', 'ability'),)
@@ -383,7 +442,7 @@ class GroupPermission(Relationship):
 
 class ViewerRequest(Item):
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
-    viewer = models.CharField(max_length=100, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('djangotemplatedocument', 'DjangoTemplateDocument')])
+    viewer = models.CharField(max_length=255, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('djangotemplatedocument', 'DjangoTemplateDocument')])
     action = models.CharField(max_length=256)
     query_string = models.CharField(max_length=1024, null=True, blank=True)
     def get_name(self):
@@ -395,7 +454,7 @@ class ViewerRequest(Item):
 
 class Site(ViewerRequest):
     is_default_site = IsDefaultField(default=None)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     def get_name(self):
         url_name = self.name
         if self.aliased_item:
@@ -433,6 +492,15 @@ class CustomUrl(ViewerRequest):
             return 'View %s in %s.%s at %s' % (self.aliased_item.downcast().get_name(), self.viewer, self.action, url_name)
         else:
             return 'View %s.%s at %s' % (self.viewer, self.action, url_name)
+
+
+#insert module viewers here
+import os
+modules_dir = os.path.join(os.path.dirname(__file__), '..', 'modules')
+for module_name in os.listdir(modules_dir):
+    viewer_filename = os.path.join(modules_dir, module_name, 'models.py')
+    execfile(viewer_filename)
+
 
 
 all_models = []
