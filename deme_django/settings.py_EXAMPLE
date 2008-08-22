@@ -91,7 +91,16 @@ INSTALLED_APPS = (
     # 'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.sites',
+    # 'django.contrib.sites',
     'deme_django.cms',
 )
+
+import os
+modules_dir = os.path.join(os.path.dirname(__file__), 'modules')
+for module_name in os.listdir(modules_dir):
+    if module_name.startswith('.'):
+        continue
+    if module_name.startswith('_'):
+        continue
+    INSTALLED_APPS += ('deme_django.modules.%s' % module_name,)
 

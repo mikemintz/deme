@@ -28,7 +28,7 @@ def gen_dotcode(show_fields):
     dotcode = []
     dotcode.append('digraph structs {')
     dotcode.append('  ranksep=1.5; nodesep=1.5;')
-    all_models = models.all_models
+    all_models = models.all_models()
     if show_fields:
         all_models = all_models + [models.Item.VERSION]
     for model in all_models:

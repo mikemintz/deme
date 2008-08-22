@@ -186,7 +186,7 @@ class ItemVersion(models.Model):
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
     item_type = models.CharField(max_length=255, default='Item', editable=False)
-    description = models.CharField(max_length=255, blank=True)
+    description = models.TextField(blank=True)
     updater = models.ForeignKey('Agent', related_name='items_as_updater', editable=False)
     updated_at = models.DateTimeField(editable=False)
     creator = models.ForeignKey('Agent', related_name='items_as_creator', editable=False)
@@ -494,23 +494,8 @@ class CustomUrl(ViewerRequest):
             return 'View %s.%s at %s' % (self.viewer, self.action, url_name)
 
 
-#insert module viewers here
-import os
-modules_dir = os.path.join(os.path.dirname(__file__), '..', 'modules')
-for module_name in os.listdir(modules_dir):
-    if module_name.startswith('.'):
-        continue
-    viewer_filename = os.path.join(modules_dir, module_name, 'models.py')
-    execfile(viewer_filename)
-
-
-
-all_models = []
-
-for var_name in dir():
-    var = eval(var_name)
-    if isinstance(var, type) and issubclass(var, Item):
-        all_models.append(var)
-
-#print sorted([x.__name__ for x in all_models])
+def all_models():
+    import django.db.models.loading
+    result = [x for x in django.db.models.loading.get_models() if issubclass(x, Item)]
+    return result
 

@@ -6,19 +6,13 @@ import cms.models
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
-from django.http import QueryDict
-from django.utils import datastructures
 import logging
 
 ### MODELS ###
 
 resource_name_dict = {}
-for model in cms.models.all_models:
+for model in cms.models.all_models():
     resource_name_dict[model.__name__.lower()] = model
-
-viewer_name_dict = {}
-def get_viewer_class_for_viewer_name(viewer_name):
-    return viewer_name_dict.get(viewer_name, None)
 
 def get_form_class_for_item_type(item_type):
     while issubclass(item_type, cms.models.Item):
@@ -94,118 +88,10 @@ def filter_for_agent_and_ability(agent, ability):
     #return direct_yes_q | (~direct_no_q & group_yes_q)
     return direct_yes_q
 
-### VIEWS ###
-
-def resource(request, *args, **kwargs):
-    viewer_name = kwargs['viewer']
-    viewer_class = get_viewer_class_for_viewer_name(viewer_name)
-    if viewer_class:
-        viewer = viewer_class()
-        viewer.init_from_http(request, kwargs)
-        response = viewer.dispatch()
-        if response == None:
-            template = loader.get_template('action_not_found.html')
-            context = Context()
-            context['layout'] = 'base.html'
-            return HttpResponseNotFound(template.render(context))
-        else:
-            return response
-    else:
-        template = loader.get_template('viewer_not_found.html')
-        context = Context()
-        context['layout'] = 'base.html'
-        return HttpResponseNotFound(template.render(context))
-
-
-def invalidresource(request, *args, **kwargs):
-    template = loader.get_template('invalid_resource_url.html')
-    context = Context()
-    context['layout'] = 'base.html'
-    return HttpResponseNotFound(template.render(context))
-
-def login(request, *args, **kwargs):
-    redirect_url = request.GET['redirect']
-    account_unique_id = request.GET['account']
-    account = cms.models.Account.objects.get(pk=account_unique_id)
-    request.session['account_unique_id'] = account.pk
-    return HttpResponseRedirect(redirect_url)
-
-def logout(request, *args, **kwargs):
-    redirect_url = request.GET['redirect']
-    if 'account_unique_id' in request.session:
-        del request.session['account_unique_id']
-    return HttpResponseRedirect(redirect_url)
-
-def codegraph(request, *args, **kwargs):
-    import os
-    import subprocess
-    models_filename = os.path.join(os.path.dirname(__file__), 'models.py')
-    codegraph_filename = os.path.join(os.path.dirname(__file__), '..', 'static', 'codegraph.png')
-    models_mtime = os.stat(models_filename)[8]
-    try:
-        codegraph_mtime = os.stat(codegraph_filename)[8]
-    except OSError, e:
-        codegraph_mtime = 0
-    if models_mtime > codegraph_mtime:
-        subprocess.call(os.path.join(os.path.dirname(__file__), '..', 'gen_graph.py'), shell=True)
-    template = loader.get_template_from_string("""
-        {%% extends 'base.html' %%}
-        {%% block title %%}Deme Code Graphs{%% endblock %%}
-        {%% block content %%}
-        <div><a href="/static/codegraph.png?%d">Code graph</a></div>
-        <div><a href="/static/codegraph_basic.png?%d">Code graph (basic)</a></div>
-        {%% endblock %%}
-    """ % (models_mtime, models_mtime))
-    context = Context()
-    return HttpResponse(template.render(context))
-
-def alias(request, *args, **kwargs):
-    hostname = request.META['HTTP_HOST'].split(':')[0]
-    try:
-        current_site = cms.models.Site.objects.filter(site_domains_as_site__hostname=hostname)[0:1].get()
-    except ObjectDoesNotExist:
-        try:
-            current_site = cms.models.Site.objects.filter(is_default_site=True)[0:1].get()
-        except ObjectDoesNotExist:
-            raise Exception("You must create a default Site")
-            current_site = None
-    path_parts = [x for x in request.path.split('/') if x]
-    custom_url = current_site
-    try:
-        for path_part in path_parts:
-            custom_url = cms.models.CustomUrl.objects.filter(path=path_part, parent_url=custom_url)[0:1].get()
-    except ObjectDoesNotExist:
-        template = loader.get_template('alias_not_found.html')
-        context = Context()
-        context['layout'] = 'base.html'
-        context['hostname'] = request.META['HTTP_HOST']
-        context['path'] = request.path
-        return HttpResponseNotFound(template.render(context))
-    if not custom_url:
-        raise Exception("we should never get here 23942934")
-    item = custom_url.aliased_item
-    kwargs = {}
-    kwargs['viewer'] = custom_url.viewer
-    kwargs['format'] = 'html'
-    if item:
-        kwargs['noun'] = str(item.pk)
-        kwargs['collection_action'] = None
-        kwargs['entry_action'] = custom_url.action
-    else:
-        kwargs['noun'] = None
-        kwargs['collection_action'] = custom_url.action
-        kwargs['entry_action'] = None
-    query_dict = QueryDict(custom_url.query_string).copy()
-    #TODO this is quite hacky, let's fix this when we finalize sites and stuff
-    query_dict.update(request.GET)
-    request.GET = query_dict
-    request._request = datastructures.MergeDict(request.POST, request.GET)
-    return resource(request, **kwargs)
-
 ### FORMS ###
 
 import new
-for model in cms.models.all_models:
+for model in cms.models.all_models():
     meta_class_dict = {}
     meta_class_dict['model'] = model
     meta_class_dict['exclude'] = ()
@@ -239,7 +125,19 @@ def comment_dicts_for_item(item):
     return result
 
 
+class ViewerMetaClass(type):
+    viewer_name_dict = {}
+    def __new__(cls, name, bases, attrs):
+        result = super(ViewerMetaClass, cls).__new__(cls, name, bases, attrs)
+        ViewerMetaClass.viewer_name_dict[attrs['viewer_name']] = result
+        return result
+
+def get_viewer_class_for_viewer_name(viewer_name):
+    return ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
+
 class ItemViewer(object):
+    __metaclass__ = ViewerMetaClass
+
     item_type = cms.models.Item
     viewer_name = 'item'
 
@@ -620,33 +518,20 @@ class MagicViewer(ItemViewer):
     item_type = cms.models.Item
     viewer_name = 'blam'
 
+    def collection_list(self):
+        return HttpResponse('ka BLAM!')
+
     def entry_show(self):
         return HttpResponse('ka BLAM!')
 
 
-#insert module viewers here
-import os
-modules_dir = os.path.join(os.path.dirname(__file__), '..', 'modules')
-for module_name in os.listdir(modules_dir):
-    if module_name.startswith('.'):
-        continue
-    viewer_filename = os.path.join(modules_dir, module_name, 'views.py')
-    execfile(viewer_filename)
-    settings.TEMPLATE_DIRS += (os.path.join(modules_dir, module_name, 'templates'),)
-
-
-# let's dynamically make our lists of viewers
-for global_value in globals().values()[:]:
-    if isinstance(global_value, type) and issubclass(global_value, ItemViewer):
-        viewer_name_dict[global_value.viewer_name] = global_value
-
 # let's dynamically create default viewers for the ones we don't have
-for item_type in cms.models.all_models:
+for item_type in cms.models.all_models():
     viewer_name = item_type.__name__.lower()
-    if viewer_name not in viewer_name_dict:
+    if viewer_name not in ViewerMetaClass.viewer_name_dict:
         parent_item_type_with_viewer = item_type
         while issubclass(parent_item_type_with_viewer, cms.models.Item):
-            parent_viewer_class = viewer_name_dict.get(parent_item_type_with_viewer.__name__.lower(), None)
+            parent_viewer_class = ViewerMetaClass.viewer_name_dict.get(parent_item_type_with_viewer.__name__.lower(), None)
             if parent_viewer_class:
                 break
             parent_item_type_with_viewer = parent_item_type_with_viewer.__base__
@@ -654,7 +539,6 @@ for item_type in cms.models.all_models:
             viewer_class_name = '%sViewer' % item_type.__name__
             viewer_class_def = new.classobj(viewer_class_name, (parent_viewer_class,), {'item_type': item_type, 'viewer_name': viewer_name})
             exec('global %s;%s = viewer_class_def'%(viewer_class_name, viewer_class_name))
-            viewer_name_dict[viewer_name] = viewer_class_def
         else:
             pass
 
