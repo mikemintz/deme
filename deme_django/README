@@ -9,3 +9,24 @@ Download tinymce and extract it into a directory called trunk/deme_django/static
 Download an iconset called crystal project (at everaldo) and extract the size folders to a folder called trunk/deme_django/static/crystal_project
 sudo apt-get install graphviz (for gen_graph.py support)
 sudo apt-get install postgresql python-psycopg2
+
+Here's what I have in my apache sites-available/deme config file:
+
+<Location "/">
+    SetHandler python-program
+    PythonHandler django.core.handlers.modpython
+    PythonDebug On
+    PythonPath "['/var/www/deme', '/var/www/deme/deme_django'] + sys.path"
+    SetEnv DJANGO_SETTINGS_MODULE deme_django.settings
+</Location>
+
+Alias /static /var/www/deme/deme_django
+<Location "/static">
+    SetHandler None
+</Location>
+
+Options -indexes
+RewriteEngine On
+RewriteRule   ^/static/modules/([^/]*)/(.*)  /static/modules/$1/static/$2  [QSA,L,PT]
+RewriteRule   ^/static/(.*)  /static/static/$1  [QSA,L,PT]
+
