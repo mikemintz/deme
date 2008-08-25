@@ -99,6 +99,8 @@ class SymsysAffiliate(Person):
     then_image = models.ForeignKey(FileDocument, related_name='symsysaffiliates_with_then_image')
     now_image = models.ForeignKey(FileDocument, related_name='symsysaffiliates_with_now_image')
 
+    def get_name(self):
+        return '%s %s' % (self.first_name, self.last_name)
 
 class Event(Item):
     event_time = models.DateTimeField()
@@ -107,3 +109,5 @@ class Event(Item):
     location = models.TextField(blank=True)
     url = models.TextField(blank=True)
 
+    def get_name(self):
+        return self.event_name

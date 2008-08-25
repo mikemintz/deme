@@ -22,12 +22,9 @@ class SymsysAffiliateViewer(ItemViewer):
 
 
 class SuperViewer(ItemViewer):
-    item_type = cms.models.Item
+    item_type = cms.models.Account
     viewer_name = 'blarg'
 
     def collection_list(self):
-        return HttpResponse('ka BLAM!')
-
-    def entry_show(self):
         return HttpResponse('ka BLAM!')
 

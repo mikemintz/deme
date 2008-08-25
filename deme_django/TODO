@@ -28,3 +28,6 @@ PhotoDocument subclasses FileDocument
 * edit locks
 * anonymous agent actually seems like better idea now than anonymous account
 * don't forget to update icons for new models
+* what happens when viewer2 inherits from viewer1, and viewer2 item type subclasses viewer1 item type, and viewer2 inherits the edit/update functionality?
+
+* ask for wildcard dns

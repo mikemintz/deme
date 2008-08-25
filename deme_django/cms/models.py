@@ -121,7 +121,9 @@ class ItemVersion(models.Model):
         return 'Generic Item'
 
     def downcast(self):
-        return eval(self.item_type).VERSION.objects.get(id=self.id)
+        #TODO make more efficient
+        item_type = [x for x in all_models() if x.__name__ == self.item_type][0]
+        return item_type.VERSION.objects.get(id=self.id)
 
     @transaction.commit_on_success
     def trash(self):
@@ -200,7 +202,9 @@ class Item(models.Model):
         return 'Generic Item'
 
     def downcast(self):
-        return eval(self.item_type).objects.get(id=self.id)
+        #TODO make more efficient
+        item_type = [x for x in all_models() if x.__name__ == self.item_type][0]
+        return item_type.objects.get(id=self.id)
 
     @transaction.commit_on_success
     def trash(self):
@@ -215,7 +219,7 @@ class Item(models.Model):
         self.versions.all().update(trashed=False)
 
     @transaction.commit_on_success
-    def save_versioned(self, updater=None, first_agent=False):
+    def save_versioned(self, updater=None, first_agent=False, created_at=None, updated_at=None):
         save_time = datetime.datetime.now()
         self.item_type = type(self).__name__
         if first_agent:
@@ -249,9 +253,15 @@ class Item(models.Model):
             latest_version_number = ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
         else:
             latest_version_number = 0
-            self.created_at = save_time
-            self.updated_at = save_time
-            new_version.updated_at = save_time
+            if created_at:
+                self.created_at = created_at
+            else:
+                self.created_at = save_time
+            if updated_at:
+                self.updated_at = updated_at
+            else:
+                self.updated_at = save_time
+            new_version.updated_at = self.updated_at
         new_version.version_number = latest_version_number + 1
         if first_agent:
             new_version.updater_id = 1
