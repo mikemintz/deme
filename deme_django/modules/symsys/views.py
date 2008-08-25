@@ -15,7 +15,7 @@ class SymsysAffiliateViewer(ItemViewer):
 
     def entry_show(self):
         template = loader.get_template('symsysaffiliate/show.html')
-        context['layout'] = 'base_symsys.html'
+        self.context['layout'] = 'base_symsys.html'
         self.context['item'] = self.item
         self.context['itemversion'] = self.itemversion
         return HttpResponse(template.render(self.context))

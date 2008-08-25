@@ -271,6 +271,7 @@ class Item(models.Model):
 
 
 class Agent(Item):
+    last_online_at = models.DateTimeField(null=True, blank=True) #TODO make this get set in the viewer
     def get_name(self):
         return 'Generic Agent'
 
@@ -280,6 +281,22 @@ class Account(Item):
     def get_name(self):
         return 'Generic Account'
 
+
+# ported to python from http://packages.debian.org/lenny/libcrypt-mysql-perl
+def mysql_pre41_password(raw_password):
+    nr = 1345345333L
+    add = 7
+    nr2 = 0x12345671L
+    for ch in raw_password:
+        if ch == ' ' or ch == '\t':
+            continue # skip spaces in raw_password
+        tmp = ord(ch)
+        nr ^= (((nr & 63) + add) * tmp) + (nr << 8)
+        nr2 += (nr2 << 8) ^ nr
+        add += tmp
+    result1 = nr & ((1L << 31) - 1L) # Don't use sign bit (str2int)
+    result2 = nr2 & ((1L << 31) - 1L)
+    return "%08lx%08lx" % (result1, result2)
 
 def get_hexdigest(algorithm, salt, raw_password):
     from django.utils.encoding import smart_str
@@ -294,6 +311,8 @@ def get_hexdigest(algorithm, salt, raw_password):
         return hashlib.md5(salt + raw_password).hexdigest()
     elif algorithm == 'sha1':
         return hashlib.sha1(salt + raw_password).hexdigest()
+    elif algorithm == 'mysql_pre41_password':
+        return mysql_pre41_password(raw_password)
     raise ValueError("Got unknown password algorithm type in password.")
 
 
@@ -370,7 +389,7 @@ class HtmlDocument(TextDocument):
 
 
 class FileDocument(Document):
-    datafile = models.FileField(upload_to='filedocument/%Y/%m/%d')
+    datafile = models.FileField(upload_to='filedocument/%Y/%m/%d', max_length=255)
 
 
 class Comment(TextDocument):

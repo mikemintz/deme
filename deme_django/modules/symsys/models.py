@@ -1,7 +1,6 @@
 from cms.models import *
 from django.db import models
 
-#TODO last_login
 #TODO permissions for who can view which fields (staff, symsysaffiliates, or everyone)
 #TODO here are some general privs
 # if (flag.equals("GENERAL")) return hasFlag(FLAGS_ADMIN_GENERAL);
@@ -22,13 +21,13 @@ class SymsysAffiliate(Person):
     original_middle_names = models.CharField(max_length=255, blank=True)
     original_last_name = models.CharField(max_length=255)
 
-    class_year = models.CharField(max_length=255, blank=True)
+    class_year = models.IntegerField(null=True, blank=True)
     first_affiliation_year = models.IntegerField(null=True, blank=True)
+    graduation_year = models.IntegerField(null=True, blank=True)
 
     title = models.CharField(max_length=255, blank=True)
     admin_title = models.CharField(max_length=255, blank=True)
     department = models.CharField(max_length=255, blank=True)
-    graduation = models.CharField(max_length=255, blank=True)
     concentration = models.CharField(max_length=255, blank=True)
     advisor = models.CharField(max_length=255, blank=True)
 
@@ -96,8 +95,8 @@ class SymsysAffiliate(Person):
     honors_advisor = models.CharField(max_length=255, blank=True)
     honors_second_reader = models.CharField(max_length=255, blank=True)
 
-    then_image = models.ForeignKey(FileDocument, related_name='symsysaffiliates_with_then_image')
-    now_image = models.ForeignKey(FileDocument, related_name='symsysaffiliates_with_now_image')
+    then_image = models.ForeignKey(FileDocument, related_name='symsysaffiliates_with_then_image', blank=True, null=True)
+    now_image = models.ForeignKey(FileDocument, related_name='symsysaffiliates_with_now_image', blank=True, null=True)
 
     def get_name(self):
         return '%s %s' % (self.first_name, self.last_name)
