@@ -121,7 +121,8 @@ class NewsRoll(Item):
 
 
 #TODO add newsitemmembership so that newsitems can be in multiple newsrolls
-class NewsItem(HtmlDocument):
+#TODO maybe it just points to a Document, rather than subclassing. that way it can be interpretted in any way
+class NewsItem(TextDocument):
     news_roll = models.ForeignKey(NewsRoll, related_name='newsitems_as_newsroll')
 
 

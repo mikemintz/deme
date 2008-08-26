@@ -306,6 +306,7 @@ class ItemViewer(object):
     def entry_show(self):
         comments = comment_dicts_for_item(self.item)
         def get_fields_for_item(item):
+            #TODO we ignore OneToOneFields and ManyToManyFields
             fields = []
             for name in item._meta.get_all_field_names():
                 field, model, direct, m2m = item._meta.get_field_by_name(name)
@@ -315,38 +316,24 @@ class ItemViewer(object):
                 info = {'model_name': model_name, 'name': name, 'format': type(field).__name__}
                 if type(field).__name__ == 'RelatedObject':
                     forward_field = field.field
-                    if type(forward_field).__name__ == 'OneToOneField':
-                        continue # ignore onetoonefields
-                        try:
-                            obj = getattr(item, name)
-                        except ObjectDoesNotExist:
-                            obj = None
-                        info['field_type'] = 'entry'
-                    elif type(forward_field).__name__ == 'ForeignKey':
+                    if type(forward_field).__name__ == 'ForeignKey':
                         try:
                             obj = getattr(item, name)
                         except ObjectDoesNotExist:
                             obj = None
                         if obj:
-                            obj = obj.all()
+                            obj = [x.downcast() for x in obj.all()]
                         info['field_type'] = 'collection'
                     else:
                         obj = None
                         info['field_type'] = 'unknown'
-                elif type(field).__name__ == 'OneToOneField':
-                    continue # ignore onetoonefields
-                    try:
-                        obj = getattr(item, name)
-                    except ObjectDoesNotExist:
-                        obj = None
-                    info['field_type'] = 'entry'
                 elif type(field).__name__ == 'ForeignKey':
                     try:
                         obj = getattr(item, name)
                     except ObjectDoesNotExist:
                         obj = None
                     if obj:
-                        obj = obj.downcast() #TODO uncomment
+                        obj = obj.downcast()
                     info['field_type'] = 'entry'
                 else:
                     obj = getattr(item, name)
