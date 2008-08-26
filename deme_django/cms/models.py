@@ -257,11 +257,11 @@ class Item(models.Model):
                 self.created_at = created_at
             else:
                 self.created_at = save_time
-            if updated_at:
-                self.updated_at = updated_at
-            else:
-                self.updated_at = save_time
-            new_version.updated_at = self.updated_at
+        if updated_at:
+            self.updated_at = updated_at
+        else:
+            self.updated_at = save_time
+        new_version.updated_at = self.updated_at
         new_version.version_number = latest_version_number + 1
         if first_agent:
             new_version.updater_id = 1

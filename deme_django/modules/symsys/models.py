@@ -101,6 +101,7 @@ class SymsysAffiliate(Person):
     def get_name(self):
         return '%s %s' % (self.first_name, self.last_name)
 
+
 class Event(Item):
     event_time = models.DateTimeField()
     event_name = models.CharField(max_length=255)
@@ -110,3 +111,21 @@ class Event(Item):
 
     def get_name(self):
         return self.event_name
+
+
+class NewsRoll(Item):
+    name = models.CharField(max_length=255)
+
+    def get_name(self):
+        return self.name
+
+
+#TODO add newsitemmembership so that newsitems can be in multiple newsrolls
+class NewsItem(HtmlDocument):
+    news_roll = models.ForeignKey(NewsRoll, related_name='newsitems_as_newsroll')
+
+
+class Advertisement(NewsItem):
+    contact_info = models.TextField()
+    expires_at = models.DateTimeField(blank=True, null=True)
+
