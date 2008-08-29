@@ -47,11 +47,30 @@ def invalidresource(request, *args, **kwargs):
     return HttpResponseNotFound(template.render(context))
 
 def login(request, *args, **kwargs):
-    redirect_url = request.GET['redirect']
-    account_unique_id = request.GET['account']
-    account = cms.models.Account.objects.get(pk=account_unique_id)
-    request.session['account_unique_id'] = account.pk
-    return HttpResponseRedirect(redirect_url)
+    if request.method == 'GET':
+        template = loader.get_template('login.html')
+        context = Context()
+        context['layout'] = 'base.html'
+        context['redirect_url'] = request.GET['redirect']
+        return HttpResponse(template.render(context))
+    else:
+        redirect_url = request.GET['redirect']
+        email = request.POST['email']
+        password = request.POST['password']
+        try:
+            person = cms.models.Person.objects.get(email=email)
+        except ObjectDoesNotExist:
+            return HttpResponse('no person has that email')
+        new_account = None
+        for password_account in cms.models.PasswordAccount.objects.filter(agent=person).all():
+            if password_account.check_password(password):
+                new_account = password_account
+                break
+        if new_account:
+            request.session['account_unique_id'] = new_account.pk
+            return HttpResponseRedirect(redirect_url)
+        else:
+            return HttpResponse('no account for that person has that password')
 
 def logout(request, *args, **kwargs):
     redirect_url = request.GET['redirect']

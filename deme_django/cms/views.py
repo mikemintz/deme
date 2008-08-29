@@ -199,11 +199,10 @@ class ItemViewer(object):
             self.context['cur_agent'] = self.context['cur_account'].agent
         else:
             self.context['cur_agent'] = None
-        self.context['all_accounts'] = cms.models.Account.objects.all()
         #TODO delete next lines
-        logging.debug("calculating accessible items")
-        accessible = cms.models.Item.objects.filter(filter_for_agent_and_ability(self.context['cur_agent'], 'this')).all()
-        logging.debug(accessible)
+        #logging.debug("calculating accessible items")
+        #accessible = cms.models.Item.objects.filter(filter_for_agent_and_ability(self.context['cur_agent'], 'this')).all()
+        #logging.debug(accessible)
 
     def init_show_from_div(self, original_request, viewer_name, item, itemversion):
         self.layout = 'blank.html'
@@ -232,7 +231,6 @@ class ItemViewer(object):
             self.context['cur_agent'] = self.context['cur_account'].agent
         else:
             self.context['cur_agent'] = None
-        self.context['all_accounts'] = cms.models.Account.objects.all()
 
     def dispatch(self):
         if self.noun == None:
@@ -438,6 +436,7 @@ class GroupViewer(ItemViewer):
         folio_html = folio_viewer.dispatch().content
         template = loader.get_template('group/show.html')
         self.context['item'] = self.item
+        self.context['itemversion'] = self.itemversion
         self.context['comments'] = comments
         self.context['folio_html'] = folio_html
         return HttpResponse(template.render(self.context))

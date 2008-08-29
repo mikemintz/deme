@@ -10,25 +10,13 @@
 <body>
 
 <div style="position: absolute; right: 3px; top: 3px;">
-    {% if cur_account %}
-    You are logged in as:
-    {% else %}
+    {% ifequal cur_account.item_type 'AnonymousAccount' %}
     You are not logged in
-    {% endif %}
-    <select onchange="window.location = this.value;">
-        {% if cur_account %}
-        <option value="/meta/logout?redirect={{ full_path|urlencode }}">[Logout]</option>
-        {% else %}
-        <option value="/meta/logout?redirect={{ full_path|urlencode }}" selected="selected"></option>
-        {% endif %}
-        {% for account in all_accounts %}
-        {% ifequal account.pk cur_account.pk %}
-        <option value="/meta/login?account={{ account.pk }}&redirect={{ full_path|urlencode }}" selected="selected">{{ account.agent.downcast }} / {{ account.downcast }}</option>
-        {% else %}
-        <option value="/meta/login?account={{ account.pk }}&redirect={{ full_path|urlencode }}">{{ account.agent.downcast }} / {{ account.downcast }}</option>
-        {% endifequal %}
-        {% endfor %}
-    </select>
+    [<a href="/meta/login?redirect={{ full_path|urlencode }}">Login</a>]
+    {% else %}
+    You are logged in as: {{ cur_agent.downcast }} / {{ cur_account.downcast }}
+    [<a href="/meta/logout?redirect={{ full_path|urlencode }}">Logout</a>]
+    {% endifequal %}
 </div>
     
 <h1 style="border-bottom: 3px solid #246; color: #369; margin-bottom: 10px;">{% block title %}{% endblock %}</h1>
