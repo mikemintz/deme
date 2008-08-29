@@ -420,10 +420,9 @@ class GroupViewer(ItemViewer):
         form = self.form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             new_item = form.save(commit=False)
-            folio = cms.models.Folio(name="Group Folio")
-            folio.save_versioned(updater=self.context['cur_agent'])
-            new_item.folio = folio
             new_item.save_versioned(updater=self.context['cur_agent'])
+            folio = cms.models.Folio(name="Group Folio", group=new_item)
+            folio.save_versioned(updater=self.context['cur_agent'])
             return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name, new_item.pk))
         else:
             template = loader.get_template('item/new.html')
@@ -432,7 +431,7 @@ class GroupViewer(ItemViewer):
 
     def entry_show(self):
         comments = comment_dicts_for_item(self.item)
-        folio = self.item.folio.downcast()
+        folio = self.item.folios_as_group.get()
         folio_viewer_class = get_viewer_class_for_viewer_name('itemset')
         folio_viewer = folio_viewer_class()
         folio_viewer.init_show_from_div(self.request, 'itemset', folio, folio.versions.latest())

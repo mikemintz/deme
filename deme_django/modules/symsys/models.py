@@ -2,18 +2,6 @@ from cms.models import *
 from django.db import models
 
 #TODO permissions for who can view which fields (staff, symsysaffiliates, or everyone)
-#TODO here are some general privs
-# if (flag.equals("GENERAL")) return hasFlag(FLAGS_ADMIN_GENERAL);
-# if (flag.equals("CREATE")) return hasFlag(FLAGS_ADMIN_CREATE);
-# if (flag.equals("MESSAGE")) return hasFlag(FLAGS_ADMIN_MESSAGE);
-# if (flag.equals("EVENTS")) return hasFlag(FLAGS_ADMIN_EVENTS);
-# if (flag.equals("ACCOUNTS")) return hasFlag(FLAGS_ADMIN_ACCOUNTS);
-# if (flag.equals("BOOKLET")) return hasFlag(FLAGS_ADMIN_BOOKLET);
-# if (flag.equals("RESEARCH")) return hasFlag(FLAGS_ADMIN_RESEARCH);
-# if (flag.equals("JOBS")) return hasFlag(FLAGS_ADMIN_JOBS);
-# if (flag.equals("COURSES")) return hasFlag(FLAGS_ADMIN_COURSES);
-# if (flag.equals("TASKS")) return hasFlag(FLAGS_ADMIN_TASKS);
-
 class SymsysAffiliate(Person):
     suid = models.IntegerField(default=0)
 
@@ -70,9 +58,6 @@ class SymsysAffiliate(Person):
     other_degrees = models.CharField(max_length=255, blank=True)
     indivdesignedconc = models.CharField(max_length=255, blank=True)
     department2 = models.CharField(max_length=255, blank=True)
-    bs = models.CharField(max_length=20, blank=True)
-    ms = models.CharField(max_length=20, blank=True)
-    minor = models.CharField(max_length=20, blank=True)
     ms_track = models.CharField(max_length=255, blank=True)
     ms_graduation = models.IntegerField(blank=True, null=True)
 
@@ -85,10 +70,6 @@ class SymsysAffiliate(Person):
     ms_thesis_url = models.CharField(max_length=255, blank=True)
     ms_idt = models.CharField(max_length=255, blank=True)
 
-    faculty = models.CharField(max_length=20, blank=True)
-    af = models.CharField(max_length=20, blank=True)
-    progadmin = models.CharField(max_length=20, blank=True)
-    siteadmin = models.CharField(max_length=20, blank=True)
     respos_job_email_subscribe = models.CharField(max_length=20, blank=True)
 
     honors_status = models.IntegerField(blank=True, null=True)

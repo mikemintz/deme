@@ -188,7 +188,7 @@ class ItemVersion(models.Model):
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
     item_type = models.CharField(max_length=255, default='Item', editable=False)
-    description = models.TextField(blank=True)
+    description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='items_as_updater', editable=False)
     updated_at = models.DateTimeField(editable=False)
     creator = models.ForeignKey('Agent', related_name='items_as_creator', editable=False)
@@ -357,17 +357,16 @@ class ItemSet(Item):
         return self.name
 
 
-class Folio(ItemSet):
-    pass
-
-
 class Group(Agent):
     #folio = models.OneToOneField(Item, related_name='group_as_folio')
     # can't be onetoone because lots of versions pointing to folio
-    folio = models.ForeignKey(Folio, related_name='groups_as_folio', unique=True, editable=False)
     name = models.CharField(max_length=255)
     def get_name(self):
         return self.name
+
+
+class Folio(ItemSet):
+    group = models.ForeignKey(Group, related_name='folios_as_group', unique=True, editable=False)
 
 
 class Document(Item):
