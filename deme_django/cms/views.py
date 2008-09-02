@@ -221,14 +221,14 @@ class ItemViewer(object):
         account_unique_id = self.request.session.get('account_unique_id', None)
         if account_unique_id != None:
             try:
-                self.context['cur_account'] = cms.models.Account.objects.get(pk=account_unique_id)
+                self.context['cur_account'] = cms.models.Account.objects.get(pk=account_unique_id).downcast()
             except ObjectDoesNotExist:
                 self.context['cur_account'] = None
                 del self.request.session['account_unique_id']
         else:
             self.context['cur_account'] = None
         if self.context['cur_account']:
-            self.context['cur_agent'] = self.context['cur_account'].agent
+            self.context['cur_agent'] = self.context['cur_account'].agent.downcast()
         else:
             self.context['cur_agent'] = None
 
@@ -290,6 +290,20 @@ class ItemViewer(object):
         if form.is_valid():
             item = form.save(commit=False)
             item.save_versioned(updater=self.context['cur_agent'])
+	    
+	    # hacky email sender for comments
+	    if isinstance(item, cms.models.Comment):
+	        commented_item = item.commented_item.downcast()
+		if isinstance(commented_item, cms.models.Group):
+		    persons_in_group = cms.models.Person.objects.filter(group_memberships_as_agent__group=commented_item).all()
+		    recipient_list = [x.email for x in persons_in_group]
+		    if recipient_list:
+		        from django.core.mail import send_mail
+			subject = '[%s] %s' % (commented_item.get_name(), item.get_name())
+			message = '%s wrote a comment in %s\n%s\n\n%s' % (self.context['cur_agent'].get_name(), commented_item.get_name(), 'http://deme.stanford.edu/resource/group/%d' % commented_item.pk, item.body)
+			from_email = 'noreply@deme.stanford.edu'
+			send_mail(subject, message, from_email, recipient_list)
+
             redirect = self.request.GET.get('redirect', '/resource/%s/%d' % (self.viewer_name, item.pk))
             return HttpResponseRedirect(redirect)
         else:

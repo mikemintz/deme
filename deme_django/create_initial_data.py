@@ -32,19 +32,22 @@ default_site.save_versioned(updater=admin)
 
 # Just testing here:
 
-mike_person = Person(first_name="Mike", last_name="Mintz", email="mike@example.com")
+mike_person = Person(first_name="Mike", last_name="Mintz", email="mikemintz@cs.stanford.edu")
 mike_person.save_versioned(updater=admin)
-mike_account = Account(agent=mike_person)
+mike_account = PasswordAccount(agent=mike_person)
+mike_account.set_password('')
 mike_account.save_versioned(updater=admin)
 
-todd_person = Person(first_name="Todd", last_name="Davies", email="todd@example.com")
+todd_person = Person(first_name="Todd", last_name="Davies", email="davies@csli.stanford.edu")
 todd_person.save_versioned(updater=admin)
-todd_account = Account(agent=todd_person)
+todd_account = PasswordAccount(agent=todd_person)
+todd_account.set_password('')
 todd_account.save_versioned(updater=admin)
 
-reid_person = Person(first_name="Reid", last_name="Chandler", email="reid@example.com")
+reid_person = Person(first_name="Reid", last_name="Chandler", email="reidc@stanford.edu")
 reid_person.save_versioned(updater=admin)
-reid_account = Account(agent=reid_person)
+reid_account = PasswordAccount(agent=reid_person)
+reid_account.set_password('')
 reid_account.save_versioned(updater=admin)
 
 hello_page = DjangoTemplateDocument(name="Front Page", body="""
@@ -66,6 +69,13 @@ symsys_folio.save_versioned(updater=admin)
 GroupMembership(agent=mike_person, group=symsys_group).save_versioned(updater=admin)
 GroupMembership(agent=todd_person, group=symsys_group).save_versioned(updater=admin)
 GroupMembership(agent=reid_person, group=symsys_group).save_versioned(updater=admin)
+
+discuss_group = Group(name="Deme Dev Discussion")
+discuss_group.save_versioned(updater=admin)
+discuss_folio = Folio(name="Deme Dev Discussion Folio", group=discuss_group)
+discuss_folio.save_versioned(updater=admin)
+GroupMembership(agent=mike_person, group=discuss_group).save_versioned(updater=admin)
+GroupMembership(agent=todd_person, group=discuss_group).save_versioned(updater=admin)
 
 role1 = Role(name="Role1")
 role1.save_versioned(updater=admin)

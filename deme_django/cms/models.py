@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from django.db.models.base import ModelBase
 from copy import deepcopy
+import hashlib
 
 
 class Enemy(models.Model):
