@@ -11,26 +11,6 @@ from copy import deepcopy
 import hashlib
 
 
-class Enemy(models.Model):
-    pass
-
-class Troop(models.Model):
-    pass
-
-class Soldier(models.Model):
-    troop = models.ForeignKey(Troop)
-
-class TroopKill(models.Model):
-    enemy = models.ForeignKey(Enemy)
-    troop = models.ForeignKey(Troop)
-
-class SoldierKill(models.Model):
-    enemy = models.ForeignKey(Enemy)
-    soldier = models.ForeignKey(Soldier)
-    grenade = models.BooleanField()
-
-
-
 class IsDefaultFormField(forms.BooleanField):
     widget = forms.CheckboxInput
     def clean(self, value):

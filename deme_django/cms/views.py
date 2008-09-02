@@ -83,10 +83,7 @@ def filter_for_agent_and_ability(agent, ability):
     default_no_q = Q(agent_permissions_as_item__agent__isnull=True,
                      agent_permissions_as_item__role__abilities_as_role__ability=ability,
                      agent_permissions_as_item__role__abilities_as_role__is_allowed=False)
-    #TODO this does not work yet. why not?
-    #return direct_yes_q | (~direct_no_q & group_yes_q) | (~direct_no_q & ~group_no_q & default_yes_q)
-    #return direct_yes_q | (~direct_no_q & group_yes_q)
-    return direct_yes_q
+    return direct_yes_q | (~direct_no_q & group_yes_q) | (~direct_no_q & ~group_no_q & default_yes_q)
 
 ### FORMS ###
 
@@ -217,6 +214,7 @@ class ItemViewer(object):
         self.context = Context()
         self.context['layout'] = self.layout
         self.context['item_type'] = self.item_type.__name__
+        self.context['item_type_inheritance'] = [x.__name__ for x in reversed(self.item_type.mro()) if issubclass(x, cms.models.Item)]
         self.context['full_path'] = self.request.get_full_path()
         account_unique_id = self.request.session.get('account_unique_id', None)
         if account_unique_id != None:
