@@ -420,16 +420,13 @@ class RoleAbility(Item):
 
 
 class AgentPermission(Relationship):
-    agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent', null=True, blank=True)
+    agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent')
     item = models.ForeignKey(Item, related_name='agent_permissions_as_item', null=True, blank=True)
     role = models.ForeignKey(Role, related_name='agent_permissions_as_role')
     class Meta:
         unique_together = (('agent', 'item', 'role'),)
     def get_name(self):
-        if self.agent:
-            agent_name = self.agent.downcast().get_name()
-        else:
-            agent_name = 'Default Agent'
+        agent_name = self.agent.downcast().get_name()
         if self.item:
             return '%s Role for %s with %s' % (self.role.downcast().get_name(), agent_name, self.item.downcast().get_name())
         else:
@@ -437,7 +434,7 @@ class AgentPermission(Relationship):
 
 
 class GroupPermission(Relationship):
-    group = models.ForeignKey(Group, related_name='group_permissions_as_group', null=True, blank=True)
+    group = models.ForeignKey(Group, related_name='group_permissions_as_group')
     item = models.ForeignKey(Item, related_name='group_permissions_as_item', null=True, blank=True)
     role = models.ForeignKey(Role, related_name='group_permissions_as_role')
     class Meta:
@@ -447,6 +444,19 @@ class GroupPermission(Relationship):
             return '%s Role for %s with %s' % (self.role.downcast().get_name(), self.group.downcast().get_name(), self.item.downcast().get_name())
         else:
             return '%s Role for %s' % (self.role.downcast().get_name(), self.group.downcast().get_name())
+
+
+class DefaultPermission(Relationship):
+    item = models.ForeignKey(Item, related_name='default_permissions_as_item', null=True, blank=True)
+    role = models.ForeignKey(Role, related_name='default_permissions_as_role')
+    class Meta:
+        unique_together = (('item', 'role'),)
+    def get_name(self):
+        agent_name = 'Default Agent'
+        if self.item:
+            return '%s Role for %s with %s' % (self.role.downcast().get_name(), agent_name, self.item.downcast().get_name())
+        else:
+            return '%s Role for %s' % (self.role.downcast().get_name(), agent_name)
 
 
 class ViewerRequest(Item):

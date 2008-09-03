@@ -34,8 +34,7 @@ def get_roles_for_agent_and_item(agent, item):
                                        agent_permissions_as_role__agent=agent)
     groupwide_roles = role_manager.filter(group_permissions_as_role__item__exact=item,
                                           group_permissions_as_role__group__group_memberships_as_group__agent=agent)
-    default_roles = role_manager.filter(agent_permissions_as_role__item__exact=item,
-                                        agent_permissions_as_role__agent__isnull=True)
+    default_roles = role_manager.filter(default_permissions_as_role__item__exact=item)
     return (direct_roles, groupwide_roles, default_roles)
 
 def get_abilities_for_roles(roles_triple, possible_abilities=None):
@@ -77,12 +76,10 @@ def filter_for_agent_and_ability(agent, ability):
     group_no_q = Q(group_permissions_as_item__group__group_memberships_as_group__agent=agent,
                    group_permissions_as_item__role__abilities_as_role__ability=ability,
                    group_permissions_as_item__role__abilities_as_role__is_allowed=False)
-    default_yes_q = Q(agent_permissions_as_item__agent__isnull=True,
-                      agent_permissions_as_item__role__abilities_as_role__ability=ability,
-                      agent_permissions_as_item__role__abilities_as_role__is_allowed=True)
-    default_no_q = Q(agent_permissions_as_item__agent__isnull=True,
-                     agent_permissions_as_item__role__abilities_as_role__ability=ability,
-                     agent_permissions_as_item__role__abilities_as_role__is_allowed=False)
+    default_yes_q = Q(default_permissions_as_item__role__abilities_as_role__ability=ability,
+                      default_permissions_as_item__role__abilities_as_role__is_allowed=True)
+    default_no_q = Q(default_permissions_as_item__role__abilities_as_role__ability=ability,
+                     default_permissions_as_item__role__abilities_as_role__is_allowed=False)
     return direct_yes_q | (~direct_no_q & group_yes_q) | (~direct_no_q & ~group_no_q & default_yes_q)
 
 ### FORMS ###
