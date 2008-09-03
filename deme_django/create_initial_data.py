@@ -99,14 +99,14 @@ default_role1_item.save_versioned(updater=admin)
 default_role2_item = Item(description="default_role2_item")
 default_role2_item.save_versioned(updater=admin)
 
-AgentPermission(agent=mike_person, item=mike_role1_item, role=role1).save_versioned(updater=admin)
-AgentPermission(agent=mike_person, item=mike_role2_item, role=role2).save_versioned(updater=admin)
-GroupPermission(group=symsys_group, item=symsys_role1_item, role=role1).save_versioned(updater=admin)
-GroupPermission(group=symsys_group, item=symsys_role2_item, role=role2).save_versioned(updater=admin)
-DefaultPermission(item=default_role1_item, role=role1).save_versioned(updater=admin)
-DefaultPermission(item=default_role2_item, role=role2).save_versioned(updater=admin)
+AgentRolePermission(agent=mike_person, item=mike_role1_item, role=role1).save_versioned(updater=admin)
+AgentRolePermission(agent=mike_person, item=mike_role2_item, role=role2).save_versioned(updater=admin)
+GroupRolePermission(group=symsys_group, item=symsys_role1_item, role=role1).save_versioned(updater=admin)
+GroupRolePermission(group=symsys_group, item=symsys_role2_item, role=role2).save_versioned(updater=admin)
+DefaultRolePermission(item=default_role1_item, role=role1).save_versioned(updater=admin)
+DefaultRolePermission(item=default_role2_item, role=role2).save_versioned(updater=admin)
 
-DefaultPermission(item=None, role=role1).save_versioned(updater=admin) # everybody gets role1 w.r.t. whole site
+DefaultRoleGlobalPermission(role=role1).save_versioned(updater=admin) # everybody gets role1 w.r.t. whole site
 
 itemset = ItemSet(name="Fun ItemSet")
 itemset.save_versioned(updater=admin)

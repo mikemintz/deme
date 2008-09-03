@@ -24,7 +24,7 @@ def icon_url(item_type, size=32):
         icon = 'apps/password'
     elif item_type == cms.models.Agent:
         icon = 'apps/personal'
-    elif item_type == cms.models.AgentPermission:
+    elif item_type == cms.models.AgentRolePermission:
         icon = 'apps/proxy'
     elif item_type == cms.models.GroupMembership:
         icon = 'apps/katomic'
@@ -34,6 +34,8 @@ def icon_url(item_type, size=32):
         icon = 'apps/proxy'
     elif item_type == cms.models.Comment:
         icon = 'apps/filetypes'
+    elif item_type == cms.models.DefaultRolePermission:
+        icon = 'apps/proxy'
     elif item_type == cms.models.Document:
         icon = 'mimetypes/empty'
     elif item_type == cms.models.DjangoTemplateDocument:
@@ -42,7 +44,7 @@ def icon_url(item_type, size=32):
         icon = 'apps/kfm'
     elif item_type == cms.models.Group:
         icon = 'apps/Login Manager'
-    elif item_type == cms.models.GroupPermission:
+    elif item_type == cms.models.GroupRolePermission:
         icon = 'apps/proxy'
     elif item_type == cms.models.Item:
         icon = 'apps/kblackbox'
