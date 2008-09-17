@@ -1,0 +1,17 @@
+{% extends layout %}
+{% load resource_extras %}
+{% block title %}Login{% endblock %}
+{% block content %}
+
+<form action="/meta/login?redirect={{ redirect_url }}" method="post">
+    <div>
+        Email: <input type="text" name="email" />
+        Password: <input type="password" name="password" />
+    </div>
+    <div>
+        <input type="submit" value="Login" />
+    </div>
+</form>
+
+{% endblock content %}
+

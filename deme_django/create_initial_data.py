@@ -106,7 +106,12 @@ GroupRolePermission(group=symsys_group, item=symsys_role2_item, role=role2).save
 DefaultRolePermission(item=default_role1_item, role=role1).save_versioned(updater=admin)
 DefaultRolePermission(item=default_role2_item, role=role2).save_versioned(updater=admin)
 
-DefaultRoleGlobalPermission(role=role1).save_versioned(updater=admin) # everybody gets role1 w.r.t. whole site
+DefaultGlobalPermission(ability='do_something', is_allowed=True).save_versioned(updater=admin)
+AgentGlobalPermission(agent=anonymous_agent, ability='do_something', is_allowed=False).save_versioned(updater=admin)
+AgentGlobalPermission(agent=mike_person, ability='do_everything', is_allowed=True).save_versioned(updater=admin)
+
+DefaultPermission(item=default_role1_item, ability='list', is_allowed=True).save_versioned(updater=admin)
+AgentPermission(item=mike_role1_item, ability='list', is_allowed=True, agent=mike_person).save_versioned(updater=admin)
 
 itemset = ItemSet(name="Fun ItemSet")
 itemset.save_versioned(updater=admin)

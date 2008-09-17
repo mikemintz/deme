@@ -7,6 +7,7 @@ from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 import logging
+import permission_functions
 
 ### MODELS ###
 
@@ -22,65 +23,6 @@ def get_form_class_for_item_type(item_type):
             item_type = item_type.__base__
             continue
         return form_class
-
-def get_roles_for_agent_and_item(agent, item):
-    """
-    Return a triple (user_role_list, group_role_list, default_role_list)
-    """
-    if not agent:
-        raise Exception("You must create an anonymous user")
-    role_manager = cms.models.Role.objects
-    direct_roles = role_manager.filter(agent_role_permissions_as_role__item__exact=item,
-                                       agent_role_permissions_as_role__agent=agent)
-    groupwide_roles = role_manager.filter(group_role_permissions_as_role__item__exact=item,
-                                          group_role_permissions_as_role__group__group_memberships_as_group__agent=agent)
-    default_roles = role_manager.filter(default_role_permissions_as_role__item__exact=item)
-    return (direct_roles, groupwide_roles, default_roles)
-
-def get_abilities_for_roles(roles_triple, possible_abilities=None):
-    abilities_yes = set()
-    abilities_no = set()
-    if possible_abilities:
-        abilities_unset = set(possible_abilities)
-    else:
-        abilities_unset = set([x[0] for x in cms.models.RoleAbility._meta.get_field('ability').choices])
-    for role_list in roles_triple:
-        if possible_abilities:
-            role_abilities = cms.models.RoleAbility.objects.filter(role__in=role_list, ability_in=possible_abilities).all()
-        else:
-            role_abilities = cms.models.RoleAbility.objects.filter(role__in=role_list).all()
-        for role_ability in role_abilities:
-            ability = role_ability.ability
-            if ability in abilities_unset:
-                # yes takes precedence over no
-                if role_ability.is_allowed:
-                    abilities_yes.add(ability)
-                    abilities_no.discard(ability)
-                else:
-                    if ability not in abilities_yes:
-                        abilities_no.add(ability)
-                abilities_unset.discard(ability)
-    # anything left over in abilities_unset is effectively "no"
-    return abilities_yes
-
-def filter_for_agent_and_ability(agent, ability):
-    direct_yes_q = Q(agent_role_permissions_as_item__agent=agent,
-                     agent_role_permissions_as_item__role__abilities_as_role__ability=ability,
-                     agent_role_permissions_as_item__role__abilities_as_role__is_allowed=True)
-    direct_no_q = Q(agent_role_permissions_as_item__agent=agent,
-                    agent_role_permissions_as_item__role__abilities_as_role__ability=ability,
-                    agent_role_permissions_as_item__role__abilities_as_role__is_allowed=False)
-    group_yes_q = Q(group_role_permissions_as_item__group__group_memberships_as_group__agent=agent,
-                    group_role_permissions_as_item__role__abilities_as_role__ability=ability,
-                    group_role_permissions_as_item__role__abilities_as_role__is_allowed=True)
-    group_no_q = Q(group_role_permissions_as_item__group__group_memberships_as_group__agent=agent,
-                   group_role_permissions_as_item__role__abilities_as_role__ability=ability,
-                   group_role_permissions_as_item__role__abilities_as_role__is_allowed=False)
-    default_yes_q = Q(default_role_permissions_as_item__role__abilities_as_role__ability=ability,
-                      default_role_permissions_as_item__role__abilities_as_role__is_allowed=True)
-    default_no_q = Q(default_role_permissions_as_item__role__abilities_as_role__ability=ability,
-                     default_role_permissions_as_item__role__abilities_as_role__is_allowed=False)
-    return direct_yes_q | (~direct_no_q & group_yes_q) | (~direct_no_q & ~group_no_q & default_yes_q)
 
 ### FORMS ###
 
@@ -193,10 +135,6 @@ class ItemViewer(object):
             self.context['cur_agent'] = self.context['cur_account'].agent
         else:
             self.context['cur_agent'] = None
-        #TODO delete next lines
-        #logging.debug("calculating accessible items")
-        #accessible = cms.models.Item.objects.filter(filter_for_agent_and_ability(self.context['cur_agent'], 'this')).all()
-        #logging.debug(accessible)
 
     def init_show_from_div(self, original_request, viewer_name, item, itemversion):
         self.layout = 'blank.html'
@@ -228,6 +166,18 @@ class ItemViewer(object):
             self.context['cur_agent'] = None
 
     def dispatch(self):
+        if 'do_something' not in permission_functions.get_global_abilities_for_agent(self.context['cur_agent']):
+            template = loader.get_template_from_string("""
+{% extends layout %}
+{% load resource_extras %}
+{% block title %}Not Allowed{% endblock %}
+{% block content %}
+
+The agent currently logged in is not allowed to use this application. Please log in as another agent.
+
+{% endblock content %}
+""")
+            return HttpResponse(template.render(self.context))
         if self.noun == None:
             action_method = getattr(self, 'collection_%s' % self.action, None)
         else:
@@ -253,18 +203,28 @@ class ItemViewer(object):
 
     def collection_list(self):
         #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
+        offset = int(self.request.GET.get('offset', 0))
+        limit = int(self.request.GET.get('limit', 10))
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
         if 'q' in self.request.GET:
             items = self.item_type.objects.filter(description__icontains=self.request.GET['q'])
             self.context['search_query'] = self.request.GET['q']
         else:
-            items = self.item_type.objects.all()
+            items = self.item_type.objects
             self.context['search_query'] = ''
-        items = [item.downcast() for item in items]
+        listable_items = items.filter(permission_functions.filter_for_agent_and_ability(self.context['cur_agent'], 'list'))
+        n_items = items.count()
+        n_listable_items = listable_items.count()
+        items = [item.downcast() for item in listable_items.all()[offset:offset+limit]]
         template = loader.get_template('item/list.html')
         self.context['model_names'] = model_names
         self.context['items'] = items
+        self.context['n_items'] = n_items
+        self.context['n_listable_items'] = n_listable_items
+        self.context['n_unlistable_items'] = n_items - n_listable_items
+        self.context['offset'] = offset
+        self.context['limit'] = limit
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
@@ -348,7 +308,7 @@ class ItemViewer(object):
                 info['obj'] = obj
                 fields.append(info)
             return fields
-        roles = get_roles_for_agent_and_item(self.context['cur_agent'], self.item)
+        roles = permission_functions.get_roles_for_agent_and_item(self.context['cur_agent'], self.item)
         template = loader.get_template('item/show.html')
         self.context['inheritance'] = [x.__name__ for x in reversed(type(self.item).mro()) if issubclass(x, cms.models.Item)]
         self.context['item'] = self.item
@@ -359,7 +319,7 @@ class ItemViewer(object):
         self.context['direct_roles'] = roles[0].all()
         self.context['groupwide_roles'] = roles[1].all()
         self.context['default_roles'] = roles[2].all()
-        self.context['abilities'] = get_abilities_for_roles(roles)
+        self.context['abilities'] = permission_functions.get_abilities_for_agent_and_item(self.context['cur_agent'], self.item)
         return HttpResponse(template.render(self.context))
 
     def entry_edit(self):

@@ -403,7 +403,26 @@ class ItemSetMembership(Relationship):
         return 'Membership of %s in %s' % (self.item.downcast().get_name(), self.itemset.downcast().get_name())
 
 
+################################################################################
 # Permissions
+################################################################################
+
+POSSIBLE_ABILITIES = [
+    ('this', 'Do This'),
+    ('that', 'Do That'),
+    ('list', 'List'),
+]
+
+POSSIBLE_GLOBAL_ABILITIES = [
+    ('do_something', 'Do Something'),
+    ('do_everything', 'Do Everything'),
+]
+
+class GlobalRole(Item):
+    name = models.CharField(max_length=255)
+    def get_name(self):
+        return self.name
+
 
 class Role(Item):
     name = models.CharField(max_length=255)
@@ -411,9 +430,19 @@ class Role(Item):
         return self.name
 
 
+class GlobalRoleAbility(Item):
+    global_role = models.ForeignKey(GlobalRole, related_name='abilities_as_global_role')
+    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
+    is_allowed = models.BooleanField()
+    class Meta:
+        unique_together = (('global_role', 'ability'),)
+    def get_name(self):
+        return 'Global ability to %s %s for %s' % ('do' if self.is_allowed else 'not do', self.ability, self.role.downcast().get_name())
+
+
 class RoleAbility(Item):
     role = models.ForeignKey(Role, related_name='abilities_as_role')
-    ability = models.CharField(max_length=255, choices=[('this', 'do this'), ('that', 'do that')])
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES)
     is_allowed = models.BooleanField()
     class Meta:
         unique_together = (('role', 'ability'),)
@@ -421,32 +450,97 @@ class RoleAbility(Item):
         return 'Ability to %s %s for %s' % ('do' if self.is_allowed else 'not do', self.ability, self.role.downcast().get_name())
 
 
-class AgentRoleGlobalPermission(Relationship):
-    agent = models.ForeignKey(Agent, related_name='agent_role_global_permissions_as_agent')
-    role = models.ForeignKey(Role, related_name='agent_role_global_permissions_as_role')
+class AgentGlobalPermission(Relationship):
+    agent = models.ForeignKey(Agent, related_name='agent_global_permissions_as_agent')
+    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
+    is_allowed = models.BooleanField()
     class Meta:
-        unique_together = (('agent', 'role'),)
+        unique_together = (('agent', 'ability'),)
     def get_name(self):
         agent_name = self.agent.downcast().get_name()
-        return '%s Role for %s' % (self.role.downcast().get_name(), agent_name)
+        return '%s Ability for %s' % (self.ability, agent_name)
 
 
-class GroupRoleGlobalPermission(Relationship):
-    group = models.ForeignKey(Group, related_name='group_role_global_permissions_as_group')
-    role = models.ForeignKey(Role, related_name='group_role_global_permissions_as_role')
+class GroupGlobalPermission(Relationship):
+    group = models.ForeignKey(Group, related_name='group_global_permissions_as_group')
+    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
+    is_allowed = models.BooleanField()
     class Meta:
-        unique_together = (('group', 'role'),)
+        unique_together = (('group', 'ability'),)
     def get_name(self):
-        return '%s Role for %s' % (self.role.downcast().get_name(), self.group.downcast().get_name())
+        return '%s Ability for %s' % (self.ability, self.group.downcast().get_name())
 
 
-class DefaultRoleGlobalPermission(Relationship):
-    role = models.ForeignKey(Role, related_name='default_role_global_permissions_as_role')
+class DefaultGlobalPermission(Relationship):
+    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
+    is_allowed = models.BooleanField()
     class Meta:
-        unique_together = (('role',),)
+        unique_together = (('ability',),)
     def get_name(self):
         agent_name = 'Default Agent'
-        return '%s Role for %s' % (self.role.downcast().get_name(), agent_name)
+        return '%s Ability for %s' % (self.ability, agent_name)
+
+
+class AgentPermission(Relationship):
+    agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent')
+    item = models.ForeignKey(Item, related_name='agent_permissions_as_item', null=True, blank=True)
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES)
+    is_allowed = models.BooleanField()
+    class Meta:
+        unique_together = (('agent', 'item', 'ability'),)
+    def get_name(self):
+        agent_name = self.agent.downcast().get_name()
+        return '%s Ability for %s with %s' % (self.ability, agent_name, self.item.downcast().get_name())
+
+
+class GroupPermission(Relationship):
+    group = models.ForeignKey(Group, related_name='group_permissions_as_group')
+    item = models.ForeignKey(Item, related_name='group_permissions_as_item', null=True, blank=True)
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES)
+    is_allowed = models.BooleanField()
+    class Meta:
+        unique_together = (('group', 'item', 'ability'),)
+    def get_name(self):
+        return '%s Ability for %s with %s' % (self.ability, self.group.downcast().get_name(), self.item.downcast().get_name())
+
+
+class DefaultPermission(Relationship):
+    item = models.ForeignKey(Item, related_name='default_permissions_as_item', null=True, blank=True)
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES)
+    is_allowed = models.BooleanField()
+    class Meta:
+        unique_together = (('item', 'ability'),)
+    def get_name(self):
+        agent_name = 'Default Agent'
+        return '%s Ability for %s with %s' % (self.ability, agent_name, self.item.downcast().get_name())
+
+
+class AgentGlobalRolePermission(Relationship):
+    agent = models.ForeignKey(Agent, related_name='agent_global_role_permissions_as_agent')
+    global_role = models.ForeignKey(GlobalRole, related_name='agent_global_role_permissions_as_global_role')
+    class Meta:
+        unique_together = (('agent', 'global_role'),)
+    def get_name(self):
+        agent_name = self.agent.downcast().get_name()
+        return '%s Role for %s' % (self.global_role.downcast().get_name(), agent_name)
+
+
+class GroupGlobalRolePermission(Relationship):
+    group = models.ForeignKey(Group, related_name='group_global_role_permissions_as_group')
+    global_role = models.ForeignKey(GlobalRole, related_name='group_global_role_permissions_as_global_role')
+    class Meta:
+        unique_together = (('group', 'global_role'),)
+    def get_name(self):
+        return '%s Role for %s' % (self.global_role.downcast().get_name(), self.group.downcast().get_name())
+
+
+class DefaultGlobalRolePermission(Relationship):
+    global_role = models.ForeignKey(GlobalRole, related_name='default_global_role_permissions_as_global_role')
+    class Meta:
+        unique_together = (('global_role',),)
+    def get_name(self):
+        agent_name = 'Default Agent'
+        return '%s Role for %s' % (self.global_role.downcast().get_name(), agent_name)
 
 
 class AgentRolePermission(Relationship):
@@ -480,7 +574,10 @@ class DefaultRolePermission(Relationship):
         return '%s Role for %s with %s' % (self.role.downcast().get_name(), agent_name, self.item.downcast().get_name())
 
 
+################################################################################
 # Viewer aliases
+################################################################################
+
 
 class ViewerRequest(Item):
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
@@ -536,7 +633,9 @@ class CustomUrl(ViewerRequest):
             return 'View %s.%s at %s' % (self.viewer, self.action, url_name)
 
 
-# all_models
+################################################################################
+# all_models()
+################################################################################
 
 def all_models():
     import django.db.models.loading
