@@ -55,3 +55,16 @@ form.item_form ul.errorlist li {
     padding: 0;
 }
 
+.list_results_prev {
+    margin-right: 3px;
+}
+.list_results_next {
+    margin-right: 3px;
+}
+.list_results_highlighted {
+    margin-right: 3px;
+    font-weight: bold;
+}
+.list_results_step {
+    margin-right: 3px;
+}

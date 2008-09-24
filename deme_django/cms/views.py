@@ -15,38 +15,14 @@ resource_name_dict = {}
 for model in cms.models.all_models():
     resource_name_dict[model.__name__.lower()] = model
 
-def get_form_class_for_item_type(item_type):
-    while issubclass(item_type, cms.models.Item):
-        try:
-            form_class = eval("%sForm" % item_type.__name__)
-        except NameError:
-            item_type = item_type.__base__
-            continue
-        return form_class
-
-### FORMS ###
-
-import new
-for model in cms.models.all_models():
-    meta_class_dict = {}
-    meta_class_dict['model'] = model
-    meta_class_dict['exclude'] = ()
-    for field in model._meta.fields:
+def get_form_class_for_item_type(item_type, fields=None):
+    exclude = []
+    for field in item_type._meta.fields:
         if field.rel and field.rel.parent_link:
-            meta_class_dict['exclude'] += (field.name,)
-    meta_class_def = new.classobj('Meta', (), meta_class_dict)
-    form_class_name = '%sForm' % model.__name__
-    form_class_def = new.classobj(form_class_name, (forms.ModelForm,), {'Meta': meta_class_def})
-    exec('global %s;%s = form_class_def'%(form_class_name, form_class_name))
-
-class GroupForm(forms.ModelForm):
-    class Meta:
-        model = cms.models.Group
-        exclude = ()
-        for field in model._meta.fields:
-            if field.rel and field.rel.parent_link:
-                exclude += (field.name,)
-        exclude += ('folio',)
+            exclude.append(field.name)
+    if issubclass(item_type, cms.models.Group):
+        exclude.append('folio')
+    return forms.models.modelform_factory(item_type, exclude=exclude, fields=fields)
 
 ### VIEWERS ###
 
@@ -80,7 +56,7 @@ class ItemViewer(object):
     def __init__(self):
         pass
 
-    def init_from_http(self, request, url_info):
+    def init_from_http(self, request, cur_agent, url_info):
         self.layout = 'base.html'
         self.viewer_name = url_info['viewer']
         self.format = url_info['format'] or 'html'
@@ -110,33 +86,15 @@ class ItemViewer(object):
             if self.item:
                 self.item = self.item.downcast()
                 self.itemversion = self.itemversion.downcast()
-        self.form_class = get_form_class_for_item_type(self.item_type)
         self.context = Context()
         self.context['layout'] = self.layout
         self.context['item_type'] = self.item_type.__name__
         self.context['item_type_inheritance'] = [x.__name__ for x in reversed(self.item_type.mro()) if issubclass(x, cms.models.Item)]
         self.context['full_path'] = self.request.get_full_path()
-        account_unique_id = self.request.session.get('account_unique_id', None)
-        if account_unique_id != None:
-            try:
-                self.context['cur_account'] = cms.models.Account.objects.get(pk=account_unique_id)
-            except ObjectDoesNotExist:
-                self.context['cur_account'] = None
-                del self.request.session['account_unique_id']
-        else:
-            self.context['cur_account'] = None
-        if not self.context['cur_account']:
-            try:
-                self.context['cur_account'] = cms.models.AnonymousAccount.objects.all()[0:1].get()
-            except ObjectDoesNotExist:
-                raise Exception("You must create an anonymous account")
-                pass
-        if self.context['cur_account']:
-            self.context['cur_agent'] = self.context['cur_account'].agent
-        else:
-            self.context['cur_agent'] = None
+        self.cur_agent = cur_agent
+        self.context['cur_agent'] = self.cur_agent
 
-    def init_show_from_div(self, original_request, viewer_name, item, itemversion):
+    def init_show_from_div(self, original_request, viewer_name, item, itemversion, cur_agent):
         self.layout = 'blank.html'
         self.request = original_request
         self.viewer_name = viewer_name
@@ -151,22 +109,11 @@ class ItemViewer(object):
         self.context['item_type'] = self.item_type.__name__
         self.context['item_type_inheritance'] = [x.__name__ for x in reversed(self.item_type.mro()) if issubclass(x, cms.models.Item)]
         self.context['full_path'] = self.request.get_full_path()
-        account_unique_id = self.request.session.get('account_unique_id', None)
-        if account_unique_id != None:
-            try:
-                self.context['cur_account'] = cms.models.Account.objects.get(pk=account_unique_id).downcast()
-            except ObjectDoesNotExist:
-                self.context['cur_account'] = None
-                del self.request.session['account_unique_id']
-        else:
-            self.context['cur_account'] = None
-        if self.context['cur_account']:
-            self.context['cur_agent'] = self.context['cur_account'].agent.downcast()
-        else:
-            self.context['cur_agent'] = None
+        self.cur_agent = cur_agent
+        self.context['cur_agent'] = self.cur_agent
 
     def dispatch(self):
-        if 'do_something' not in permission_functions.get_global_abilities_for_agent(self.context['cur_agent']):
+        if ('do_something', 'Item') not in permission_functions.get_global_abilities_for_agent(self.cur_agent):
             template = loader.get_template_from_string("""
 {% extends layout %}
 {% load resource_extras %}
@@ -204,19 +151,21 @@ The agent currently logged in is not allowed to use this application. Please log
     def collection_list(self):
         #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
         offset = int(self.request.GET.get('offset', 0))
-        limit = int(self.request.GET.get('limit', 10))
+        limit = int(self.request.GET.get('limit', 100))
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
-        if 'q' in self.request.GET:
+        self.context['search_query'] = self.request.GET.get('q', '')
+        if self.context['search_query']:
             items = self.item_type.objects.filter(description__icontains=self.request.GET['q'])
-            self.context['search_query'] = self.request.GET['q']
         else:
             items = self.item_type.objects
-            self.context['search_query'] = ''
-        listable_items = items.filter(permission_functions.filter_for_agent_and_ability(self.context['cur_agent'], 'list'))
+        if ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent):
+            listable_items = items
+        else:
+            listable_items = items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'id')).distinct()
         n_items = items.count()
         n_listable_items = listable_items.count()
-        items = [item.downcast() for item in listable_items.all()[offset:offset+limit]]
+        items = [item for item in listable_items.all()[offset:offset+limit]]
         template = loader.get_template('item/list.html')
         self.context['model_names'] = model_names
         self.context['items'] = items
@@ -225,14 +174,21 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['n_unlistable_items'] = n_items - n_listable_items
         self.context['offset'] = offset
         self.context['limit'] = limit
+        self.context['list_start_i'] = offset + 1
+        self.context['list_end_i'] = min(offset + limit, n_listable_items)
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
+        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
+        can_create = ('create', self.item_type.__name__) in permission_functions.get_global_abilities_for_agent(self.cur_agent)
+        if not (can_do_everything or can_create):
+            return HttpResponseBadRequest("you do not have permission to create %ss" % self.item_type.__name__)
         #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
-        form = self.form_class(initial=form_initial)
+        form_class = get_form_class_for_item_type(self.item_type)
+        form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['model_names'] = model_names
         self.context['form'] = form
@@ -241,10 +197,15 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponse(template.render(self.context))
 
     def collection_create(self):
-        form = self.form_class(self.request.POST, self.request.FILES)
+        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
+        can_create = ('create', self.item_type.__name__) in permission_functions.get_global_abilities_for_agent(self.cur_agent)
+        if not (can_do_everything or can_create):
+            return HttpResponseBadRequest("you do not have permission to create %ss" % self.item_type.__name__)
+        form_class = get_form_class_for_item_type(self.item_type)
+        form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            item.save_versioned(updater=self.context['cur_agent'])
+            item.save_versioned(updater=self.cur_agent)
 	    
 	    # hacky email sender for comments
 	    if isinstance(item, cms.models.Comment):
@@ -255,7 +216,7 @@ The agent currently logged in is not allowed to use this application. Please log
 		    if recipient_list:
 		        from django.core.mail import send_mail
 			subject = '[%s] %s' % (commented_item.get_name(), item.get_name())
-			message = '%s wrote a comment in %s\n%s\n\n%s' % (self.context['cur_agent'].get_name(), commented_item.get_name(), 'http://deme.stanford.edu/resource/group/%d' % commented_item.pk, item.body)
+			message = '%s wrote a comment in %s\n%s\n\n%s' % (self.cur_agent.get_name(), commented_item.get_name(), 'http://deme.stanford.edu/resource/group/%d' % commented_item.pk, item.body)
 			from_email = 'noreply@deme.stanford.edu'
 			send_mail(subject, message, from_email, recipient_list)
 
@@ -271,6 +232,11 @@ The agent currently logged in is not allowed to use this application. Please log
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
+        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_view = ('view', 'id') in abilities_for_item
+        if not (can_do_everything or can_view):
+            return HttpResponseBadRequest("you do not have permission to view this item")
         comments = comment_dicts_for_item(self.item)
         def get_fields_for_item(item):
             #TODO we ignore OneToOneFields and ManyToManyFields
@@ -289,7 +255,8 @@ The agent currently logged in is not allowed to use this application. Please log
                         except ObjectDoesNotExist:
                             obj = None
                         if obj:
-                            obj = [x.downcast() for x in obj.all()]
+                            #obj = [x.downcast() for x in obj.all()]
+                            obj = [x for x in obj.all()]
                         info['field_type'] = 'collection'
                     else:
                         obj = None
@@ -300,15 +267,21 @@ The agent currently logged in is not allowed to use this application. Please log
                     except ObjectDoesNotExist:
                         obj = None
                     if obj:
-                        obj = obj.downcast()
+                        pass#obj = obj.downcast()
                     info['field_type'] = 'entry'
+                elif type(field).__name__ == 'OneToOneField':
+                    continue
+                elif type(field).__name__ == 'ManyToManyField':
+                    continue
                 else:
                     obj = getattr(item, name)
                     info['field_type'] = 'regular'
                 info['obj'] = obj
+                info['can_view'] = ('view', name) in abilities_for_item or can_do_everything
+                #TODO do something like can_view with collections
                 fields.append(info)
             return fields
-        roles = permission_functions.get_roles_for_agent_and_item(self.context['cur_agent'], self.item)
+        roles = permission_functions.get_roles_for_agent_and_item(self.cur_agent, self.item)
         template = loader.get_template('item/show.html')
         self.context['inheritance'] = [x.__name__ for x in reversed(type(self.item).mro()) if issubclass(x, cms.models.Item)]
         self.context['item'] = self.item
@@ -319,11 +292,18 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['direct_roles'] = roles[0].all()
         self.context['groupwide_roles'] = roles[1].all()
         self.context['default_roles'] = roles[2].all()
-        self.context['abilities'] = permission_functions.get_abilities_for_agent_and_item(self.context['cur_agent'], self.item)
+        self.context['abilities'] = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         return HttpResponse(template.render(self.context))
 
     def entry_edit(self):
-        form = self.form_class(instance=self.itemversion)
+        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_edit = ('edit', 'id') in abilities_for_item
+        if not (can_do_everything or can_edit):
+            return HttpResponseBadRequest("you do not have permission to edit this item")
+        fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
+        form_class = get_form_class_for_item_type(self.item_type, fields_can_edit)
+        form = form_class(instance=self.itemversion)
         template = loader.get_template('item/edit.html')
         self.context['item'] = self.item
         self.context['itemversion'] = self.itemversion
@@ -335,17 +315,30 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponse(template.render(self.context))
 
     def entry_update(self):
+        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_edit = ('edit', 'id') in abilities_for_item
+        if not (can_do_everything or can_edit):
+            return HttpResponseBadRequest("you do not have permission to edit this item")
         #TODO if specified specific version and uploaded file blank, it would revert to newest version uploaded file
+        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         if issubclass(self.item_type, type(self.item)):
-            new_item = self.item_type(**self.item.__dict__)
+            new_item = self.item_type()
+            for field in self.item._meta.fields:
+                key = field.name
+                val = getattr(self.item, key)
+                setattr(new_item, key, val)
             new_item.pk = self.item.pk
             new_item.item_type = self.item_type.__name__
         else:
             new_item = self.item
-        form = self.form_class(self.request.POST, self.request.FILES, instance=new_item)
+        fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
+        form_class = get_form_class_for_item_type(self.item_type, fields_can_edit)
+        form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
             new_item = form.save(commit=False)
-            new_item.save_versioned(updater=self.context['cur_agent'])
+            new_item.save_versioned(updater=self.cur_agent)
             return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name, new_item.pk))
         else:
             template = loader.get_template('item/edit.html')
@@ -383,13 +376,14 @@ class GroupViewer(ItemViewer):
     viewer_name = 'group'
 
     def collection_create(self):
-        #TODO if you update an Item into a Group, it doesn't make a Folio
-        form = self.form_class(self.request.POST, self.request.FILES)
+        #TODO if you self.update an Item into a Group, it doesn't make a Folio
+        form_class = get_form_class_for_item_type(self.item_type)
+        form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             new_item = form.save(commit=False)
-            new_item.save_versioned(updater=self.context['cur_agent'])
+            new_item.save_versioned(updater=self.cur_agent)
             folio = cms.models.Folio(name="Group Folio", group=new_item)
-            folio.save_versioned(updater=self.context['cur_agent'])
+            folio.save_versioned(updater=self.cur_agent)
             return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name, new_item.pk))
         else:
             template = loader.get_template('item/new.html')
@@ -401,7 +395,7 @@ class GroupViewer(ItemViewer):
         folio = self.item.folios_as_group.get()
         folio_viewer_class = get_viewer_class_for_viewer_name('itemset')
         folio_viewer = folio_viewer_class()
-        folio_viewer.init_show_from_div(self.request, 'itemset', folio, folio.versions.latest())
+        folio_viewer.init_show_from_div(self.request, 'itemset', folio, folio.versions.latest(), self.cur_agent)
         folio_html = folio_viewer.dispatch().content
         template = loader.get_template('group/show.html')
         self.context['item'] = self.item
@@ -491,6 +485,7 @@ for item_type in cms.models.all_models():
             parent_item_type_with_viewer = parent_item_type_with_viewer.__base__
         if parent_viewer_class:
             viewer_class_name = '%sViewer' % item_type.__name__
+            import new
             viewer_class_def = new.classobj(viewer_class_name, (parent_viewer_class,), {'item_type': item_type, 'viewer_name': viewer_name})
             exec('global %s;%s = viewer_class_def'%(viewer_class_name, viewer_class_name))
         else:

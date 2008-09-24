@@ -85,6 +85,7 @@ class ItemVersion(models.Model):
     current_item = models.ForeignKey('Item', related_name='versions', editable=False)
     version_number = models.IntegerField(default=1, editable=False)
     item_type = models.CharField(max_length=255, default='Item', editable=False)
+    name = models.CharField(max_length=255, blank=True)
     description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='item_versions_as_updater')
     updated_at = models.DateTimeField(editable=False)
@@ -99,7 +100,7 @@ class ItemVersion(models.Model):
         return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.get_name())
 
     def get_name(self):
-        return 'Generic Item'
+        return self.name
 
     def downcast(self):
         #TODO make more efficient
@@ -169,6 +170,7 @@ class ItemVersion(models.Model):
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
     item_type = models.CharField(max_length=255, default='Item', editable=False)
+    name = models.CharField(max_length=255, blank=True)
     description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='items_as_updater', editable=False)
     updated_at = models.DateTimeField(editable=False)
@@ -180,7 +182,7 @@ class Item(models.Model):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.get_name())
 
     def get_name(self):
-        return 'Generic Item'
+        return self.name
 
     def downcast(self):
         #TODO make more efficient
@@ -200,7 +202,7 @@ class Item(models.Model):
         self.versions.all().update(trashed=False)
 
     @transaction.commit_on_success
-    def save_versioned(self, updater=None, first_agent=False, created_at=None, updated_at=None):
+    def save_versioned(self, updater=None, first_agent=False, create_permissions=True, created_at=None, updated_at=None):
         save_time = datetime.datetime.now()
         self.item_type = type(self).__name__
         if first_agent:
@@ -249,18 +251,22 @@ class Item(models.Model):
         self.save()
         new_version.current_item_id = self.pk
         new_version.save()
+        #TODO don't create these permissions on other funny things like SiteDomain or RoleAbility, etc.?
+        if create_permissions and latest_version_number == 0 and not issubclass(self.__class__, Relationship):
+            DefaultRolePermission(item=self, role=Role.objects.get(name="%s Default" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
+            AgentRolePermission(agent=updater, item=self, role=Role.objects.get(name="%s Creator" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
 
 
 class Agent(Item):
-    last_online_at = models.DateTimeField(null=True, blank=True) #TODO make this get set in the viewer
-    def get_name(self):
-        return 'Generic Agent'
+    last_online_at = models.DateTimeField(null=True, blank=True) # it's a little sketchy how this gets set without save_versioned(), so maybe reverting to an old version will reset this to NULL
+
+
+class AnonymousAgent(Agent):
+    pass
 
 
 class Account(Item):
     agent = models.ForeignKey(Agent, related_name='accounts_as_agent')
-    def get_name(self):
-        return 'Generic Account'
 
 
 # ported to python from http://packages.debian.org/lenny/libcrypt-mysql-perl
@@ -310,14 +316,6 @@ class PasswordAccount(Account):
     def check_password(self, raw_password):
         algo, salt, hsh = self.password.split('$')
         return hsh == get_hexdigest(algo, salt, raw_password)
-    
-    def get_name(self):
-        return 'Password Account'
-
-
-class AnonymousAccount(Account):
-    def get_name(self):
-        return 'Anonymous Account'
 
 
 class Person(Agent):
@@ -325,35 +323,26 @@ class Person(Agent):
     middle_names = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255)
     suffix = models.CharField(max_length=255, blank=True)
-    email = models.EmailField(max_length=320)
+    email = models.EmailField(max_length=320, unique=True, null=True, blank=True)
     password_question = models.CharField(max_length=255, blank=True)
     password_answer = models.CharField(max_length=255, blank=True)
-    def get_name(self):
-        return '%s %s' % (self.first_name, self.last_name)
 
 
 class ItemSet(Item):
-    name = models.CharField(max_length=255)
-    def get_name(self):
-        return self.name
+    pass
 
 
 class Group(Agent):
     #folio = models.OneToOneField(Item, related_name='group_as_folio')
     # can't be onetoone because lots of versions pointing to folio
-    name = models.CharField(max_length=255)
-    def get_name(self):
-        return self.name
-
+    pass
 
 class Folio(ItemSet):
     group = models.ForeignKey(Group, related_name='folios_as_group', unique=True, editable=False)
 
 
 class Document(Item):
-    name = models.CharField(max_length=255)
-    def get_name(self):
-        return self.name
+    pass
 
 
 class TextDocument(Document):
@@ -375,14 +364,10 @@ class FileDocument(Document):
 class Comment(TextDocument):
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
     commented_item_version = models.ForeignKey(Item.VERSION, related_name='comments_as_item_version')
-    name = models.CharField(max_length=255)
-    def get_name(self):
-        return self.name
 
 
 class Relationship(Item):
-    def get_name(self):
-        return 'Generic Relationship'
+    pass
 
 
 class GroupMembership(Relationship):
@@ -390,8 +375,6 @@ class GroupMembership(Relationship):
     group = models.ForeignKey(Group, related_name='group_memberships_as_group')
     class Meta:
         unique_together = (('agent', 'group'),)
-    def get_name(self):
-        return 'Membership of %s in %s' % (self.agent.downcast().get_name(), self.group.downcast().get_name())
 
 
 class ItemSetMembership(Relationship):
@@ -399,8 +382,6 @@ class ItemSetMembership(Relationship):
     itemset = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
     class Meta:
         unique_together = (('item', 'itemset'),)
-    def get_name(self):
-        return 'Membership of %s in %s' % (self.item.downcast().get_name(), self.itemset.downcast().get_name())
 
 
 ################################################################################
@@ -410,109 +391,101 @@ class ItemSetMembership(Relationship):
 POSSIBLE_ABILITIES = [
     ('this', 'Do This'),
     ('that', 'Do That'),
-    ('list', 'List'),
+    ('view', 'View'),
+    ('edit', 'Edit'),
+    ('modify_permissions', 'Modify Permissions'),
+    ('trash', 'Trash'),
+    ('login_as', 'Login As'),
 ]
 
 POSSIBLE_GLOBAL_ABILITIES = [
-    ('do_something', 'Do Something'),
+    ('create', 'Create'),
+    ('do_something', 'Do Something'), #TODO get rid of this (probably replace with can_login which only matters at login, not on any other pages)
     ('do_everything', 'Do Everything'),
 ]
 
+#TODO somehow limit ability_parameter
+#TODO make role name unique maybe, or at least have a way of finding the ONE "Account Creator" role
+
 class GlobalRole(Item):
-    name = models.CharField(max_length=255)
-    def get_name(self):
-        return self.name
+    pass
 
 
 class Role(Item):
-    name = models.CharField(max_length=255)
-    def get_name(self):
-        return self.name
+    pass
 
 
 class GlobalRoleAbility(Item):
     global_role = models.ForeignKey(GlobalRole, related_name='abilities_as_global_role')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
+    ability_parameter = models.CharField(max_length=255)
     is_allowed = models.BooleanField()
     class Meta:
-        unique_together = (('global_role', 'ability'),)
-    def get_name(self):
-        return 'Global ability to %s %s for %s' % ('do' if self.is_allowed else 'not do', self.ability, self.role.downcast().get_name())
+        unique_together = (('global_role', 'ability', 'ability_parameter'),)
 
 
 class RoleAbility(Item):
     role = models.ForeignKey(Role, related_name='abilities_as_role')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES)
-    is_allowed = models.BooleanField()
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
+    ability_parameter = models.CharField(max_length=255, db_index=True)
+    is_allowed = models.BooleanField(db_index=True)
     class Meta:
-        unique_together = (('role', 'ability'),)
-    def get_name(self):
-        return 'Ability to %s %s for %s' % ('do' if self.is_allowed else 'not do', self.ability, self.role.downcast().get_name())
+        unique_together = (('role', 'ability', 'ability_parameter'),)
 
 
 class AgentGlobalPermission(Relationship):
     agent = models.ForeignKey(Agent, related_name='agent_global_permissions_as_agent')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
+    ability_parameter = models.CharField(max_length=255)
     is_allowed = models.BooleanField()
     class Meta:
-        unique_together = (('agent', 'ability'),)
-    def get_name(self):
-        agent_name = self.agent.downcast().get_name()
-        return '%s Ability for %s' % (self.ability, agent_name)
+        unique_together = (('agent', 'ability', 'ability_parameter'),)
 
 
 class GroupGlobalPermission(Relationship):
     group = models.ForeignKey(Group, related_name='group_global_permissions_as_group')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
+    ability_parameter = models.CharField(max_length=255)
     is_allowed = models.BooleanField()
     class Meta:
-        unique_together = (('group', 'ability'),)
-    def get_name(self):
-        return '%s Ability for %s' % (self.ability, self.group.downcast().get_name())
+        unique_together = (('group', 'ability', 'ability_parameter'),)
 
 
 class DefaultGlobalPermission(Relationship):
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
+    ability_parameter = models.CharField(max_length=255)
     is_allowed = models.BooleanField()
     class Meta:
-        unique_together = (('ability',),)
-    def get_name(self):
-        agent_name = 'Default Agent'
-        return '%s Ability for %s' % (self.ability, agent_name)
+        unique_together = (('ability', 'ability_parameter'),)
 
 
 class AgentPermission(Relationship):
     agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent')
     item = models.ForeignKey(Item, related_name='agent_permissions_as_item', null=True, blank=True)
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES)
-    is_allowed = models.BooleanField()
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
+    ability_parameter = models.CharField(max_length=255, db_index=True)
+    is_allowed = models.BooleanField(db_index=True)
     class Meta:
-        unique_together = (('agent', 'item', 'ability'),)
-    def get_name(self):
-        agent_name = self.agent.downcast().get_name()
-        return '%s Ability for %s with %s' % (self.ability, agent_name, self.item.downcast().get_name())
+        unique_together = (('agent', 'item', 'ability', 'ability_parameter'),)
 
 
 class GroupPermission(Relationship):
     group = models.ForeignKey(Group, related_name='group_permissions_as_group')
     item = models.ForeignKey(Item, related_name='group_permissions_as_item', null=True, blank=True)
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES)
-    is_allowed = models.BooleanField()
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
+    ability_parameter = models.CharField(max_length=255, db_index=True)
+    is_allowed = models.BooleanField(db_index=True)
     class Meta:
-        unique_together = (('group', 'item', 'ability'),)
-    def get_name(self):
-        return '%s Ability for %s with %s' % (self.ability, self.group.downcast().get_name(), self.item.downcast().get_name())
+        unique_together = (('group', 'item', 'ability', 'ability_parameter'),)
 
 
 class DefaultPermission(Relationship):
     item = models.ForeignKey(Item, related_name='default_permissions_as_item', null=True, blank=True)
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES)
-    is_allowed = models.BooleanField()
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
+    ability_parameter = models.CharField(max_length=255, db_index=True)
+    is_allowed = models.BooleanField(db_index=True)
     class Meta:
-        unique_together = (('item', 'ability'),)
-    def get_name(self):
-        agent_name = 'Default Agent'
-        return '%s Ability for %s with %s' % (self.ability, agent_name, self.item.downcast().get_name())
+        unique_together = (('item', 'ability', 'ability_parameter'),)
 
 
 class AgentGlobalRolePermission(Relationship):
@@ -520,9 +493,6 @@ class AgentGlobalRolePermission(Relationship):
     global_role = models.ForeignKey(GlobalRole, related_name='agent_global_role_permissions_as_global_role')
     class Meta:
         unique_together = (('agent', 'global_role'),)
-    def get_name(self):
-        agent_name = self.agent.downcast().get_name()
-        return '%s Role for %s' % (self.global_role.downcast().get_name(), agent_name)
 
 
 class GroupGlobalRolePermission(Relationship):
@@ -530,17 +500,12 @@ class GroupGlobalRolePermission(Relationship):
     global_role = models.ForeignKey(GlobalRole, related_name='group_global_role_permissions_as_global_role')
     class Meta:
         unique_together = (('group', 'global_role'),)
-    def get_name(self):
-        return '%s Role for %s' % (self.global_role.downcast().get_name(), self.group.downcast().get_name())
 
 
 class DefaultGlobalRolePermission(Relationship):
     global_role = models.ForeignKey(GlobalRole, related_name='default_global_role_permissions_as_global_role')
     class Meta:
         unique_together = (('global_role',),)
-    def get_name(self):
-        agent_name = 'Default Agent'
-        return '%s Role for %s' % (self.global_role.downcast().get_name(), agent_name)
 
 
 class AgentRolePermission(Relationship):
@@ -549,9 +514,6 @@ class AgentRolePermission(Relationship):
     role = models.ForeignKey(Role, related_name='agent_role_permissions_as_role')
     class Meta:
         unique_together = (('agent', 'item', 'role'),)
-    def get_name(self):
-        agent_name = self.agent.downcast().get_name()
-        return '%s Role for %s with %s' % (self.role.downcast().get_name(), agent_name, self.item.downcast().get_name())
 
 
 class GroupRolePermission(Relationship):
@@ -560,8 +522,6 @@ class GroupRolePermission(Relationship):
     role = models.ForeignKey(Role, related_name='group_role_permissions_as_role')
     class Meta:
         unique_together = (('group', 'item', 'role'),)
-    def get_name(self):
-        return '%s Role for %s with %s' % (self.role.downcast().get_name(), self.group.downcast().get_name(), self.item.downcast().get_name())
 
 
 class DefaultRolePermission(Relationship):
@@ -569,9 +529,6 @@ class DefaultRolePermission(Relationship):
     role = models.ForeignKey(Role, related_name='default_role_permissions_as_role')
     class Meta:
         unique_together = (('item', 'role'),)
-    def get_name(self):
-        agent_name = 'Default Agent'
-        return '%s Role for %s with %s' % (self.role.downcast().get_name(), agent_name, self.item.downcast().get_name())
 
 
 ################################################################################
@@ -584,22 +541,10 @@ class ViewerRequest(Item):
     viewer = models.CharField(max_length=255, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('djangotemplatedocument', 'DjangoTemplateDocument')])
     action = models.CharField(max_length=256)
     query_string = models.CharField(max_length=1024, null=True, blank=True)
-    def get_name(self):
-        if self.aliased_item:
-            return 'View %s in %s.%s' % (self.aliased_item.downcast().get_name(), self.viewer, self.action)
-        else:
-            return 'View %s.%s' % (self.viewer, self.action)
 
 
 class Site(ViewerRequest):
     is_default_site = IsDefaultField(default=None)
-    name = models.CharField(max_length=255)
-    def get_name(self):
-        url_name = self.name
-        if self.aliased_item:
-            return 'View %s in %s.%s at %s' % (self.aliased_item.downcast().get_name(), self.viewer, self.action, url_name)
-        else:
-            return 'View %s.%s at %s' % (self.viewer, self.action, url_name)
 
 
 class SiteDomain(Item):
@@ -607,8 +552,6 @@ class SiteDomain(Item):
     site = models.ForeignKey(Site, related_name='site_domains_as_site')
     class Meta:
         unique_together = (('site', 'hostname'),)
-    def get_name(self):
-        return hostname
 #TODO match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
 
 
@@ -618,19 +561,6 @@ class CustomUrl(ViewerRequest):
     path = models.CharField(max_length=256)
     class Meta:
         unique_together = (('parent_url', 'path'),)
-    def get_name(self):
-        url_name = ''
-        cur = self
-        while True:
-            url_name = '/%s%s' % (cur.path, url_name)
-            cur = cur.parent_url.downcast()
-            if cur.item_type == 'Site':
-                url_name = '%s %s' % (cur.name, url_name)
-                break
-        if self.aliased_item:
-            return 'View %s in %s.%s at %s' % (self.aliased_item.downcast().get_name(), self.viewer, self.action, url_name)
-        else:
-            return 'View %s.%s at %s' % (self.viewer, self.action, url_name)
 
 
 ################################################################################

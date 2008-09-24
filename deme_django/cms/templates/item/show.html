@@ -109,29 +109,31 @@
         <tr class="{% cycle 'even' 'odd' %}">
             <td>{{ field.name|title }}</td>
             <td>
+                {% if field.can_view %}
+                    {% ifequal field.field_type 'regular' %}
+                    {{ field.obj }}
+                    {% endifequal %}
 
-                {% ifequal field.field_type 'regular' %}
-                {{ field.obj }}
-                {% endifequal %}
+                    {% ifequal field.field_type 'entry' %}
+                    {% if field.obj %}
+                    <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                    {% else %}
+                    NULL
+                    {% endif %}
+                    {% endifequal %}
 
-                {% ifequal field.field_type 'entry' %}
-                {% if field.obj %}
-                <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                    {% ifequal field.field_type 'collection' %}
+                    {% if field.obj %}
+                    {% for obj in field.obj %}
+                    <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
+                    {% endfor %}
+                    {% else %}
+
+                    {% endif %}
+                    {% endifequal %}
                 {% else %}
-                NULL
+                    PERMISSION DENIED
                 {% endif %}
-                {% endifequal %}
-
-                {% ifequal field.field_type 'collection' %}
-                {% if field.obj %}
-                {% for obj in field.obj %}
-                <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
-                {% endfor %}
-                {% else %}
-
-                {% endif %}
-                {% endifequal %}
-
             </td>
             <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
         </tr>
@@ -156,29 +158,31 @@
         <tr class="{% cycle 'even' 'odd' %}">
             <td>{{ field.name|title }}</td>
             <td>
+                {% if field.can_view %}
+                    {% ifequal field.field_type 'regular' %}
+                    {{ field.obj }}
+                    {% endifequal %}
 
-                {% ifequal field.field_type 'regular' %}
-                {{ field.obj }}
-                {% endifequal %}
+                    {% ifequal field.field_type 'entry' %}
+                    {% if field.obj %}
+                    <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                    {% else %}
+                    NULL
+                    {% endif %}
+                    {% endifequal %}
 
-                {% ifequal field.field_type 'entry' %}
-                {% if field.obj %}
-                <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                    {% ifequal field.field_type 'collection' %}
+                    {% if field.obj %}
+                    {% for obj in field.obj %}
+                    <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
+                    {% endfor %}
+                    {% else %}
+
+                    {% endif %}
+                    {% endifequal %}
                 {% else %}
-                NULL
+                    PERMISSION DENIED
                 {% endif %}
-                {% endifequal %}
-
-                {% ifequal field.field_type 'collection' %}
-                {% if field.obj %}
-                {% for obj in field.obj %}
-                <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
-                {% endfor %}
-                {% else %}
-
-                {% endif %}
-                {% endifequal %}
-
             </td>
             <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
         </tr>
@@ -208,29 +212,31 @@
         <tr class="{% cycle 'even' 'odd' %}">
             <td>{{ field.name|title }}</td>
             <td>
+                {% if field.can_view %}
+                    {% ifequal field.field_type 'regular' %}
+                    {{ field.obj }}
+                    {% endifequal %}
 
-                {% ifequal field.field_type 'regular' %}
-                {{ field.obj }}
-                {% endifequal %}
+                    {% ifequal field.field_type 'entry' %}
+                    {% if field.obj %}
+                    <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                    {% else %}
+                    NULL
+                    {% endif %}
+                    {% endifequal %}
 
-                {% ifequal field.field_type 'entry' %}
-                {% if field.obj %}
-                <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                    {% ifequal field.field_type 'collection' %}
+                    {% if field.obj %}
+                    {% for obj in field.obj %}
+                    <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
+                    {% endfor %}
+                    {% else %}
+
+                    {% endif %}
+                    {% endifequal %}
                 {% else %}
-                NULL
+                    PERMISSION DENIED
                 {% endif %}
-                {% endifequal %}
-
-                {% ifequal field.field_type 'collection' %}
-                {% if field.obj %}
-                {% for obj in field.obj %}
-                <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
-                {% endfor %}
-                {% else %}
-
-                {% endif %}
-                {% endifequal %}
-
             </td>
             <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
         </tr>
@@ -255,29 +261,31 @@
         <tr class="{% cycle 'even' 'odd' %}">
             <td>{{ field.name|title }}</td>
             <td>
+                {% if field.can_view %}
+                    {% ifequal field.field_type 'regular' %}
+                    {{ field.obj }}
+                    {% endifequal %}
 
-                {% ifequal field.field_type 'regular' %}
-                {{ field.obj }}
-                {% endifequal %}
+                    {% ifequal field.field_type 'entry' %}
+                    {% if field.obj %}
+                    <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                    {% else %}
+                    NULL
+                    {% endif %}
+                    {% endifequal %}
 
-                {% ifequal field.field_type 'entry' %}
-                {% if field.obj %}
-                <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                    {% ifequal field.field_type 'collection' %}
+                    {% if field.obj %}
+                    {% for obj in field.obj %}
+                    <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
+                    {% endfor %}
+                    {% else %}
+
+                    {% endif %}
+                    {% endifequal %}
                 {% else %}
-                NULL
+                    PERMISSION DENIED
                 {% endif %}
-                {% endifequal %}
-
-                {% ifequal field.field_type 'collection' %}
-                {% if field.obj %}
-                {% for obj in field.obj %}
-                <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
-                {% endfor %}
-                {% else %}
-
-                {% endif %}
-                {% endifequal %}
-
             </td>
             <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
         </tr>
@@ -289,6 +297,7 @@
 </div>
 
 <h2>Comments</h2>
+<!-- TODO comments should be subject to permissions -->
 <div>
     <a href="/resource/comment/new?commented_item={{ item.pk }}&commented_item_version={{ itemversion.pk }}&redirect={{ full_path|urlencode }}">Add Comment</a>
 </div>

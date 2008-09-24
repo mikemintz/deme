@@ -10,12 +10,13 @@
 <body>
 
 <div style="position: absolute; right: 3px; top: 3px;">
-    {% ifequal cur_account.item_type 'AnonymousAccount' %}
+    {% ifequal cur_agent.item_type 'AnonymousAgent' %}
     You are not logged in
     [<a href="/meta/login?redirect={{ full_path|urlencode }}">Login</a>]
     {% else %}
-    You are logged in as: {{ cur_agent.downcast }} / {{ cur_account.downcast }}
+    You are logged in as: {{ cur_agent }}
     [<a href="/meta/logout?redirect={{ full_path|urlencode }}">Logout</a>]
+    [<a href="/meta/login?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]
     {% endifequal %}
 </div>
     

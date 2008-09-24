@@ -6,16 +6,45 @@ setup_environ(settings)
 
 from cms.models import *
 
+################################################################################
 # Necessary items
+################################################################################
 
-admin = Agent(description="Admin")
-admin.save_versioned(first_agent=True)
+admin = Agent(name="Admin")
+admin.save_versioned(first_agent=True, create_permissions=False)
 
-anonymous_agent = Agent(description="Anonymous")
+for model in all_models():
+    #TODO don't create these permissions on other funny things like SiteDomain or RoleAbility, etc.?
+    if issubclass(model, Relationship):
+        continue
+    print 'Creating roles for %s' % model.__name__
+    default_role = Role(name="%s Default" % model.__name__)
+    default_role.save_versioned(updater=admin, create_permissions=False)
+    creator_role = Role(name="%s Creator" % model.__name__)
+    creator_role.save_versioned(updater=admin, create_permissions=False)
+    for name in model._meta.get_all_field_names():
+        field, defined_model, direct, m2m = model._meta.get_field_by_name(name)
+        if direct and type(field).__name__ != 'OneToOneField':
+            RoleAbility(role=default_role, ability="view", ability_parameter=name, is_allowed=True).save_versioned(updater=admin, create_permissions=False)
+            RoleAbility(role=creator_role, ability="view", ability_parameter=name, is_allowed=True).save_versioned(updater=admin, create_permissions=False)
+            RoleAbility(role=creator_role, ability="edit", ability_parameter=name, is_allowed=True).save_versioned(updater=admin, create_permissions=False)
+    RoleAbility(role=creator_role, ability="modify_permissions", ability_parameter="id", is_allowed=True).save_versioned(updater=admin, create_permissions=False)
+    RoleAbility(role=creator_role, ability="trash", ability_parameter="id", is_allowed=True).save_versioned(updater=admin, create_permissions=False)
+
+for model in all_models():
+    #TODO don't create these permissions on other funny things like SiteDomain or RoleAbility, etc.?
+    if issubclass(model, Relationship):
+        continue
+    default_role = Role.objects.get(name="%s Default" % model.__name__)
+    creator_role = Role.objects.get(name="%s Creator" % model.__name__)
+    for role in [default_role, creator_role]:
+        DefaultRolePermission(item=role, role=Role.objects.get(name="Role Default")).save_versioned(updater=admin)
+        AgentRolePermission(agent=admin, item=role, role=Role.objects.get(name="Role Creator")).save_versioned(updater=admin)
+
+AgentGlobalPermission(ability='do_everything', ability_parameter="Item", is_allowed=True, agent=admin).save_versioned(updater=admin)
+
+anonymous_agent = AnonymousAgent()
 anonymous_agent.save_versioned(updater=admin)
-
-anonymous_account = AnonymousAccount(description="Anonymous Account", agent=anonymous_agent)
-anonymous_account.save_versioned(updater=admin)
 
 home_page = DjangoTemplateDocument(body="""
 {% extends 'base.html' %}
@@ -30,21 +59,23 @@ default_site = Site(name="Default Site", is_default_site=True, viewer='djangotem
 default_site.save_versioned(updater=admin)
 
 
+################################################################################
 # Just testing here:
+################################################################################
 
-mike_person = Person(first_name="Mike", last_name="Mintz", email="mikemintz@cs.stanford.edu")
+mike_person = Person(first_name="Mike", last_name="Mintz", email="mike@example.com", name="Mike Mintz")
 mike_person.save_versioned(updater=admin)
 mike_account = PasswordAccount(agent=mike_person)
 mike_account.set_password('')
 mike_account.save_versioned(updater=admin)
 
-todd_person = Person(first_name="Todd", last_name="Davies", email="davies@csli.stanford.edu")
+todd_person = Person(first_name="Todd", last_name="Davies", email="todd@example.com", name="Todd Davies")
 todd_person.save_versioned(updater=admin)
 todd_account = PasswordAccount(agent=todd_person)
 todd_account.set_password('')
 todd_account.save_versioned(updater=admin)
 
-reid_person = Person(first_name="Reid", last_name="Chandler", email="reidc@stanford.edu")
+reid_person = Person(first_name="Reid", last_name="Chandler", email="reid@example.com", name="Reid Chandler")
 reid_person.save_versioned(updater=admin)
 reid_account = PasswordAccount(agent=reid_person)
 reid_account.set_password('')
@@ -79,24 +110,24 @@ GroupMembership(agent=todd_person, group=discuss_group).save_versioned(updater=a
 
 role1 = Role(name="Role1")
 role1.save_versioned(updater=admin)
-RoleAbility(role=role1, ability="this", is_allowed=True).save_versioned(updater=admin)
+RoleAbility(role=role1, ability="this", ability_parameter="id", is_allowed=True).save_versioned(updater=admin)
 
 role2 = Role(name="Role2")
 role2.save_versioned(updater=admin)
-RoleAbility(role=role2, ability="this", is_allowed=False).save_versioned(updater=admin)
-RoleAbility(role=role2, ability="that", is_allowed=True).save_versioned(updater=admin)
+RoleAbility(role=role2, ability="this", ability_parameter="id", is_allowed=False).save_versioned(updater=admin)
+RoleAbility(role=role2, ability="that", ability_parameter="id", is_allowed=True).save_versioned(updater=admin)
 
-mike_role1_item = Item(description="mike_role1_item")
+mike_role1_item = Item(name="mike_role1_item")
 mike_role1_item.save_versioned(updater=admin)
-mike_role2_item = Item(description="mike_role2_item")
+mike_role2_item = Item(name="mike_role2_item")
 mike_role2_item.save_versioned(updater=admin)
-symsys_role1_item = Item(description="symsys_role1_item")
+symsys_role1_item = Item(name="symsys_role1_item")
 symsys_role1_item.save_versioned(updater=admin)
-symsys_role2_item = Item(description="symsys_role2_item")
+symsys_role2_item = Item(name="symsys_role2_item")
 symsys_role2_item.save_versioned(updater=admin)
-default_role1_item = Item(description="default_role1_item")
+default_role1_item = Item(name="default_role1_item")
 default_role1_item.save_versioned(updater=admin)
-default_role2_item = Item(description="default_role2_item")
+default_role2_item = Item(name="default_role2_item")
 default_role2_item.save_versioned(updater=admin)
 
 AgentRolePermission(agent=mike_person, item=mike_role1_item, role=role1).save_versioned(updater=admin)
@@ -106,12 +137,15 @@ GroupRolePermission(group=symsys_group, item=symsys_role2_item, role=role2).save
 DefaultRolePermission(item=default_role1_item, role=role1).save_versioned(updater=admin)
 DefaultRolePermission(item=default_role2_item, role=role2).save_versioned(updater=admin)
 
-DefaultGlobalPermission(ability='do_something', is_allowed=True).save_versioned(updater=admin)
-AgentGlobalPermission(agent=anonymous_agent, ability='do_something', is_allowed=False).save_versioned(updater=admin)
-AgentGlobalPermission(agent=mike_person, ability='do_everything', is_allowed=True).save_versioned(updater=admin)
+DefaultGlobalPermission(ability='do_something', ability_parameter='Item', is_allowed=True).save_versioned(updater=admin)
+AgentGlobalPermission(agent=anonymous_agent, ability='do_something', ability_parameter='Item', is_allowed=False).save_versioned(updater=admin)
 
-DefaultPermission(item=default_role1_item, ability='list', is_allowed=True).save_versioned(updater=admin)
-AgentPermission(item=mike_role1_item, ability='list', is_allowed=True, agent=mike_person).save_versioned(updater=admin)
+DefaultPermission(item=default_role1_item, ability='view', ability_parameter="id", is_allowed=True).save_versioned(updater=admin)
+AgentPermission(item=mike_role1_item, ability='view', ability_parameter="id", is_allowed=True, agent=mike_person).save_versioned(updater=admin)
+
+AgentPermission(item=symsys_group, ability='login_as', ability_parameter="id", is_allowed=True, agent=mike_person).save_versioned(updater=admin)
+AgentPermission(item=admin, ability='login_as', ability_parameter="id", is_allowed=True, agent=mike_person).save_versioned(updater=admin)
+AgentPermission(item=mike_person, ability='login_as', ability_parameter="id", is_allowed=True, agent=anonymous_agent).save_versioned(updater=admin)
 
 itemset = ItemSet(name="Fun ItemSet")
 itemset.save_versioned(updater=admin)

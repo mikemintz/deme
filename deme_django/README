@@ -3,7 +3,9 @@ Deme is licensed under the GNU Affero General Public License version 3.
 
 We currently run with Django from SVN:
 http://code.djangoproject.com/svn/django/trunk/django
-Currently works with r8866
+Currently works with r9084
+
+Because of the table-name size restriction in MySQL, we run on postgresql
 
 Download tinymce and extract it into a directory called trunk/deme_django/static/javascripts/tinymce
 Download an iconset called crystal project (at everaldo) and extract the size folders to a folder called trunk/deme_django/static/crystal_project

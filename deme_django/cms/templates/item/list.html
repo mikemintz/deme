@@ -6,7 +6,7 @@
 
 <div class="crumbs">
     <div style="float: right;">
-        [+] <a href="/resource/{{ item_type|lower}}/new">New {{ item_type }}</a>
+        [+] <a href="/resource/{{ item_type|lower }}/new">New {{ item_type }}</a>
     </div>
     {% for inherited_item_type in item_type_inheritance %}
     <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
@@ -36,6 +36,15 @@
 </div>
 
 {% if items %}
+
+<div>
+    Displaying {{ list_start_i }} - {{ list_end_i }} of {{ n_listable_items }} listable items (plus {{ n_unlistable_items }} unlistable items)
+</div>
+
+<div>
+    {% list_results_navigator item_type search_query offset limit n_listable_items 10 %}
+</div>
+
 <table class="list">
     <tr>
         <th>Name</th>
@@ -49,13 +58,6 @@
 {% else %}
     No {{ item_type }}s Found
 {% endif %}
-
-<div>
-    {{ n_listable_items }} listable items
-</div>
-<div>
-    {{ n_unlistable_items }} unlistable items
-</div>
 
 {% endblock content %}
 
