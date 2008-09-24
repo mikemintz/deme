@@ -24,6 +24,8 @@ for model in all_models():
     creator_role.save_versioned(updater=admin, create_permissions=False)
     for name in model._meta.get_all_field_names():
         field, defined_model, direct, m2m = model._meta.get_field_by_name(name)
+        if name in ['item_type', 'trashed']:
+            continue
         if direct and type(field).__name__ != 'OneToOneField':
             RoleAbility(role=default_role, ability="view", ability_parameter=name, is_allowed=True).save_versioned(updater=admin, create_permissions=False)
             RoleAbility(role=creator_role, ability="view", ability_parameter=name, is_allowed=True).save_versioned(updater=admin, create_permissions=False)
@@ -31,6 +33,7 @@ for model in all_models():
     RoleAbility(role=creator_role, ability="modify_permissions", ability_parameter="id", is_allowed=True).save_versioned(updater=admin, create_permissions=False)
     RoleAbility(role=creator_role, ability="trash", ability_parameter="id", is_allowed=True).save_versioned(updater=admin, create_permissions=False)
 
+print 'Creating permissions for roles'
 for model in all_models():
     #TODO don't create these permissions on other funny things like SiteDomain or RoleAbility, etc.?
     if issubclass(model, Relationship):

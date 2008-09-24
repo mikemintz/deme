@@ -163,6 +163,7 @@ The agent currently logged in is not allowed to use this application. Please log
             listable_items = items
         else:
             listable_items = items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'id')).distinct()
+        listable_items = listable_items.filter(trashed=False) #TODO add the ability to look at trashed items somewhere
         n_items = items.count()
         n_listable_items = listable_items.count()
         items = [item for item in listable_items.all()[offset:offset+limit]]
@@ -259,8 +260,7 @@ The agent currently logged in is not allowed to use this application. Please log
                             obj = [x for x in obj.all()]
                         info['field_type'] = 'collection'
                     else:
-                        obj = None
-                        info['field_type'] = 'unknown'
+                        continue
                 elif type(field).__name__ == 'ForeignKey':
                     try:
                         obj = getattr(item, name)
@@ -321,8 +321,6 @@ The agent currently logged in is not allowed to use this application. Please log
         if not (can_do_everything or can_edit):
             return HttpResponseBadRequest("you do not have permission to edit this item")
         #TODO if specified specific version and uploaded file blank, it would revert to newest version uploaded file
-        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         if issubclass(self.item_type, type(self.item)):
             new_item = self.item_type()
             for field in self.item._meta.fields:
@@ -352,6 +350,11 @@ The agent currently logged in is not allowed to use this application. Please log
             return HttpResponse(template.render(self.context))
 
     def entry_trash(self):
+        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_trash = ('trash', 'id') in abilities_for_item
+        if not (can_do_everything or can_trash):
+            return HttpResponseBadRequest("you do not have permission to trash this item")
         if 'version' in self.request.GET:
             self.itemversion.trash()
         else:
@@ -359,6 +362,11 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name,self.item.pk))
 
     def entry_untrash(self):
+        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_trash = ('trash', 'id') in abilities_for_item
+        if not (can_do_everything or can_trash):
+            return HttpResponseBadRequest("you do not have permission to untrash this item")
         if 'version' in self.request.GET:
             self.itemversion.untrash()
         else:

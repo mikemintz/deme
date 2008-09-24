@@ -13,10 +13,14 @@ def get_global_roles_for_agent(agent):
     """
     if not agent:
         raise Exception("You must create an anonymous user")
-    role_manager = GlobalRole.objects
-    direct_roles = role_manager.filter(agent_global_role_permissions_as_global_role__agent=agent)
-    groupwide_roles = role_manager.filter(group_global_role_permissions_as_global_role__group__group_memberships_as_group__agent=agent)
-    default_roles = role_manager.filter(default_global_role_permissions_as_global_role__pk__isnull=False)
+    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('pk').query
+    role_manager = GlobalRole.objects.filter(trashed=False)
+    direct_roles = role_manager.filter(agent_global_role_permissions_as_global_role__agent=agent,
+                                       agent_global_role_permissions_as_global_role__trashed=False)
+    groupwide_roles = role_manager.filter(group_global_role_permissions_as_global_role__pk__in=my_group_ids,
+                                          group_global_role_permissions_as_global_role__trashed=False)
+    default_roles = role_manager.filter(default_global_role_permissions_as_global_role__pk__isnull=False,
+                                        default_global_role_permissions_as_global_role__trashed=False)
     return (direct_roles, groupwide_roles, default_roles)
 
 
@@ -26,9 +30,10 @@ def get_global_permissions_for_agent(agent):
     """
     if not agent:
         raise Exception("You must create an anonymous user")
-    direct_roles = AgentGlobalPermission.objects.filter(agent=agent)
-    groupwide_roles = GroupGlobalPermission.objects.filter(group__group_memberships_as_group__agent=agent)
-    default_roles = DefaultGlobalPermission.objects.all()
+    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('pk').query
+    direct_roles = AgentGlobalPermission.objects.filter(trashed=False, agent=agent)
+    groupwide_roles = GroupGlobalPermission.objects.filter(trashed=False, group__pk__in=my_group_ids)
+    default_roles = DefaultGlobalPermission.objects.filter(trashed=False)
     return (direct_roles, groupwide_roles, default_roles)
 
 
@@ -44,7 +49,7 @@ def get_global_abilities_for_agent(agent):
     for role_list, permission_list in zip(roles_triple, permissions_triple):
         cur_abilities_yes = set()
         cur_abilities_no = set()
-        role_abilities = GlobalRoleAbility.objects.filter(global_role__in=role_list).all()
+        role_abilities = GlobalRoleAbility.objects.filter(trashed=False, global_role__in=role_list).all()
         import itertools
         for role_ability_or_permission in itertools.chain(role_abilities, permission_list):
             ability = role_ability_or_permission.ability
@@ -76,12 +81,16 @@ def get_roles_for_agent_and_item(agent, item):
     """
     if not agent:
         raise Exception("You must create an anonymous user")
-    role_manager = Role.objects
+    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('pk').query
+    role_manager = Role.objects.filter(trashed=False)
     direct_roles = role_manager.filter(agent_role_permissions_as_role__item=item,
-                                       agent_role_permissions_as_role__agent=agent)
+                                       agent_role_permissions_as_role__agent=agent,
+                                       agent_role_permissions_as_role__trashed=False)
     groupwide_roles = role_manager.filter(group_role_permissions_as_role__item=item,
-                                          group_role_permissions_as_role__group__group_memberships_as_group__agent=agent)
-    default_roles = role_manager.filter(default_role_permissions_as_role__item=item)
+                                          group_role_permissions_as_role__group__pk__in=my_group_ids,
+                                          group_role_permissions_as_role__trashed=False)
+    default_roles = role_manager.filter(default_role_permissions_as_role__item=item,
+                                        default_role_permissions_as_role__trashed=False)
     return (direct_roles, groupwide_roles, default_roles)
 
 
@@ -91,9 +100,10 @@ def get_permissions_for_agent_and_item(agent, item):
     """
     if not agent:
         raise Exception("You must create an anonymous user")
-    direct_permissions = AgentPermission.objects.filter(item=item, agent=agent)
-    groupwide_permissions = GroupPermission.objects.filter(item=item, group__group_memberships_as_group__agent=agent)
-    default_permissions = DefaultPermission.objects.filter(item=item)
+    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('pk').query
+    direct_permissions = AgentPermission.objects.filter(item=item, agent=agent, trashed=False)
+    groupwide_permissions = GroupPermission.objects.filter(item=item, group__pk__in=my_group_ids, trashed=False)
+    default_permissions = DefaultPermission.objects.filter(item=item, trashed=False)
     return (direct_permissions, groupwide_permissions, default_permissions)
 
 
@@ -108,7 +118,7 @@ def get_abilities_for_agent_and_item(agent, item):
     for role_list, permission_list in zip(roles_triple, permissions_triple):
         cur_abilities_yes = set()
         cur_abilities_no = set()
-        role_abilities = RoleAbility.objects.filter(role__in=role_list).all()
+        role_abilities = RoleAbility.objects.filter(trashed=False, role__in=role_list).all()
         import itertools
         for role_ability_or_permission in itertools.chain(role_abilities, permission_list):
             ability = role_ability_or_permission.ability
@@ -130,43 +140,55 @@ def get_abilities_for_agent_and_item(agent, item):
 
 
 def filter_for_agent_and_ability(agent, ability, ability_parameter):
-    my_group_ids = agent.group_memberships_as_agent.values('pk').query
-    relevant_yes_role_ids = RoleAbility.objects.filter(ability=ability, ability_parameter=ability_parameter, is_allowed=True).values('role_id').query
-    relevant_no_role_ids = RoleAbility.objects.filter(ability=ability, ability_parameter=ability_parameter, is_allowed=False).values('role_id').query
+    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('pk').query
+    relevant_yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, ability_parameter=ability_parameter, is_allowed=True).values('role_id').query
+    relevant_no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, ability_parameter=ability_parameter, is_allowed=False).values('role_id').query
 
     direct_yes_q = Q(agent_permissions_as_item__agent=agent,
                      agent_permissions_as_item__ability=ability,
                      agent_permissions_as_item__ability_parameter=ability_parameter,
-                     agent_permissions_as_item__is_allowed=True)
+                     agent_permissions_as_item__is_allowed=True,
+                     agent_permissions_as_item__trashed=False)
     direct_no_q = Q(agent_permissions_as_item__agent=agent,
                     agent_permissions_as_item__ability=ability,
                     agent_permissions_as_item__ability_parameter=ability_parameter,
-                    agent_permissions_as_item__is_allowed=False)
+                    agent_permissions_as_item__is_allowed=False,
+                    agent_permissions_as_item__trashed=False)
     group_yes_q = Q(group_permissions_as_item__group__pk__in=my_group_ids,
                     group_permissions_as_item__ability=ability,
                     group_permissions_as_item__ability_parameter=ability_parameter,
-                    group_permissions_as_item__is_allowed=True)
+                    group_permissions_as_item__is_allowed=True,
+                    group_permissions_as_item__trashed=False)
     group_no_q = Q(group_permissions_as_item__group__pk__in=my_group_ids,
                    group_permissions_as_item__ability=ability,
                    group_permissions_as_item__ability_parameter=ability_parameter,
-                   group_permissions_as_item__is_allowed=False)
+                   group_permissions_as_item__is_allowed=False,
+                   group_permissions_as_item__trashed=False)
     default_yes_q = Q(default_permissions_as_item__ability=ability,
                       default_permissions_as_item__ability_parameter=ability_parameter,
-                      default_permissions_as_item__is_allowed=True)
+                      default_permissions_as_item__is_allowed=True,
+                      default_permissions_as_item__trashed=False)
     default_no_q = Q(default_permissions_as_item__ability=ability,
                      default_permissions_as_item__ability_parameter=ability_parameter,
-                     default_permissions_as_item__is_allowed=False)
+                     default_permissions_as_item__is_allowed=False,
+                     default_permissions_as_item__trashed=False)
 
     role_direct_yes_q = Q(agent_role_permissions_as_item__agent=agent,
-                          agent_role_permissions_as_item__role__pk__in=relevant_yes_role_ids)
+                          agent_role_permissions_as_item__role__pk__in=relevant_yes_role_ids,
+                          agent_role_permissions_as_item__trashed=False)
     role_direct_no_q = Q(agent_role_permissions_as_item__agent=agent,
-                         agent_role_permissions_as_item__role__pk__in=relevant_no_role_ids)
+                         agent_role_permissions_as_item__role__pk__in=relevant_no_role_ids,
+                         agent_role_permissions_as_item__trashed=False)
     role_group_yes_q = Q(group_role_permissions_as_item__group__pk__in=my_group_ids,
-                         group_role_permissions_as_item__role__pk__in=relevant_yes_role_ids)
+                         group_role_permissions_as_item__role__pk__in=relevant_yes_role_ids,
+                         group_role_permissions_as_item__trashed=False)
     role_group_no_q = Q(group_permissions_as_item__group__pk__in=my_group_ids,
-                        group_role_permissions_as_item__role__pk__in=relevant_no_role_ids)
-    role_default_yes_q = Q(default_role_permissions_as_item__role__pk__in=relevant_yes_role_ids)
-    role_default_no_q = Q(default_role_permissions_as_item__role__pk__in=relevant_no_role_ids)
+                        group_role_permissions_as_item__role__pk__in=relevant_no_role_ids,
+                        group_role_permissions_as_item__trashed=False)
+    role_default_yes_q = Q(default_role_permissions_as_item__role__pk__in=relevant_yes_role_ids,
+                           default_role_permissions_as_item__trashed=False)
+    role_default_no_q = Q(default_role_permissions_as_item__role__pk__in=relevant_no_role_ids,
+                          default_role_permissions_as_item__trashed=False)
 
     return direct_yes_q |\
            role_direct_yes_q |\

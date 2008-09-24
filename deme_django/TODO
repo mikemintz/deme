@@ -21,6 +21,8 @@ PhotoDocument subclasses FileDocument
 * more efficient versioning (like like latest version in db, but have deltas to prev versions)
 * SSL for login or just sha1 the password in javascript
 * make favicon transparent
+* having the default "Item" and "id" ability_parameter is kind of unelegant.
+* if you edit an item so it gets downcasted, problems with permissions?
 
 * ask for wildcard dns
 
