@@ -38,11 +38,11 @@
 {% if items %}
 
 <div>
-    Displaying {{ list_start_i }} - {{ list_end_i }} of {{ n_listable_items }} listable items (plus {{ n_unlistable_items }} unlistable items)
+    Displaying {{ list_start_i }} - {{ list_end_i }} of {{ n_listable_items }} listable items (plus {{ n_opposite_trashed_items }} opposite-trashed items and {{ n_unlistable_items }} unlistable items)
 </div>
 
 <div>
-    {% list_results_navigator item_type search_query offset limit n_listable_items 10 %}
+    {% list_results_navigator item_type search_query trashed offset limit n_listable_items 10 %}
 </div>
 
 <table class="list">

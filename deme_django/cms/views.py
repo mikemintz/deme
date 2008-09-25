@@ -152,6 +152,7 @@ The agent currently logged in is not allowed to use this application. Please log
         #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
         offset = int(self.request.GET.get('offset', 0))
         limit = int(self.request.GET.get('limit', 100))
+        trashed = self.request.GET.get('trashed', None) == '1'
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
         self.context['search_query'] = self.request.GET.get('q', '')
@@ -163,7 +164,8 @@ The agent currently logged in is not allowed to use this application. Please log
             listable_items = items
         else:
             listable_items = items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'id')).distinct()
-        listable_items = listable_items.filter(trashed=False) #TODO add the ability to look at trashed items somewhere
+        n_opposite_trashed_items = listable_items.filter(trashed=(not trashed)).count()
+        listable_items = listable_items.filter(trashed=trashed)
         n_items = items.count()
         n_listable_items = listable_items.count()
         items = [item for item in listable_items.all()[offset:offset+limit]]
@@ -172,11 +174,13 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['items'] = items
         self.context['n_items'] = n_items
         self.context['n_listable_items'] = n_listable_items
-        self.context['n_unlistable_items'] = n_items - n_listable_items
+        self.context['n_unlistable_items'] = n_items - n_listable_items - n_opposite_trashed_items
+        self.context['n_opposite_trashed_items'] = n_opposite_trashed_items
         self.context['offset'] = offset
         self.context['limit'] = limit
         self.context['list_start_i'] = offset + 1
         self.context['list_end_i'] = min(offset + limit, n_listable_items)
+        self.context['trashed'] = trashed
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):

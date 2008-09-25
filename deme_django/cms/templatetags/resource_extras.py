@@ -75,21 +75,21 @@ def icon_url(item_type, size=32):
     return "/static/crystal_project/%dx%d/%s.png" % (size, size, icon)
 
 @register.simple_tag
-def list_results_navigator(item_type, search_query, offset, limit, n_results, max_pages):
+def list_results_navigator(item_type, search_query, trashed, offset, limit, n_results, max_pages):
     result = []
     if offset > 0:
         new_offset = max(0, offset - limit)
-        prev_button = '<a class="list_results_prev" href="/resource/%s/list?q=%s&offset=%d&limit=%d">&laquo; Prev</a>' % (item_type.lower(), search_query, new_offset, limit)
+        prev_button = '<a class="list_results_prev" href="/resource/%s/list?q=%s&trashed=%s&&offset=%d&limit=%d">&laquo; Prev</a>' % (item_type.lower(), search_query, '1' if trashed else '0', new_offset, limit)
         result.append(prev_button)
     for new_offset in xrange(max(0, offset - limit * max_pages), min(n_results - 1, offset + limit * max_pages), limit):
         if new_offset == offset:
             step_button = '<span class="list_results_highlighted">%d</span>' % (1 + new_offset / limit,)
         else:
-            step_button = '<a class="list_results_step" href="/resource/%s/list?q=%s&offset=%d&limit=%d">%d</a>' % (item_type.lower(), search_query, new_offset, limit, 1 + new_offset / limit)
+            step_button = '<a class="list_results_step" href="/resource/%s/list?q=%s&trashed=%s&&offset=%d&limit=%d">%d</a>' % (item_type.lower(), search_query, '1' if trashed else '0', new_offset, limit, 1 + new_offset / limit)
         result.append(step_button)
     if offset < n_results - limit:
         new_offset = offset + limit
-        next_button = '<a class="list_results_next" href="/resource/%s/list?q=%s&offset=%d&limit=%d">Next &raquo;</a>' % (item_type.lower(), search_query, new_offset, limit)
+        next_button = '<a class="list_results_next" href="/resource/%s/list?q=%s&trashed=%s&offset=%d&limit=%d">Next &raquo;</a>' % (item_type.lower(), search_query, '1' if trashed else '0', new_offset, limit)
         result.append(next_button)
     return ''.join(result)
 
