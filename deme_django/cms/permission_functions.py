@@ -190,6 +190,7 @@ def filter_for_agent_and_ability(agent, ability, ability_parameter):
     role_default_no_q = Q(default_role_permissions_as_item__role__pk__in=relevant_no_role_ids,
                           default_role_permissions_as_item__trashed=False)
 
+    #return group_yes_q | default_yes_q # this is the majority of the bottleneck, so easier to debug SQL
     return direct_yes_q |\
            role_direct_yes_q |\
            (~direct_no_q & ~role_direct_no_q & group_yes_q) |\
@@ -197,3 +198,134 @@ def filter_for_agent_and_ability(agent, ability, ability_parameter):
            (~direct_no_q & ~group_no_q & ~role_direct_no_q & ~role_group_no_q & default_yes_q) |\
            (~direct_no_q & ~group_no_q & ~role_direct_no_q & ~role_group_no_q & role_default_yes_q)
 
+
+class filter_for_agent_and_ability2(Q):
+
+    def __init__(self, agent, ability, ability_parameter):
+        self.agent = agent
+        self.ability = ability
+        self.ability_parameter = ability_parameter
+
+    def add_to_query(self, query, used_aliases):
+
+        my_group_ids = self.agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('pk').query
+        relevant_yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=self.ability, ability_parameter=self.ability_parameter, is_allowed=True).values('role_id').query
+        relevant_no_role_ids = RoleAbility.objects.filter(trashed=False, ability=self.ability, ability_parameter=self.ability_parameter, is_allowed=False).values('role_id').query
+
+        from django.db.models.sql.query import AND, OR
+        qn = query.quote_name_unless_alias
+        qn2 = query.connection.ops.quote_name
+
+        def add_joins_to_access_parts(alias, parts, can_reuse, opts):
+            setup_result = query.setup_joins(parts, opts, alias, dupe_multis=True, allow_many=True, can_reuse=can_reuse, negate=False, process_extras=False)
+            field, target, opts, join_list, last, extra_filters = setup_result
+            #query.promote_alias_chain(join_list, False) # if we get too many inner joins, set the False to True
+            query.promote_alias_chain(join_list, True) # we were getting too many
+            return {'field':field, 'target':target, 'opts':opts, 'join_list':join_list}
+
+        opts = query.get_meta()
+        initial_alias = query.get_initial_alias()
+        
+        def add_permission_type(agent_group_or_default, role, is_allowed):
+            permissions_related_name = '%s%s_permissions_as_item' % (agent_group_or_default, '_role' if role else '')
+            reuse_set = set()
+
+            join_info_trashed = add_joins_to_access_parts(initial_alias, [permissions_related_name, 'trashed'], reuse_set, opts)
+            reuse_set.update(join_info_trashed['join_list'])
+            def custom_join(default_join, default_params):
+                return ("%s AND %s.%s = %%s" % (default_join, qn(join_info_trashed['join_list'][-1]), qn2('trashed')), default_params + [False])
+            query.custom_join_map[join_info_trashed['join_list'][-1]] = custom_join
+
+            join_info_details = add_joins_to_access_parts(initial_alias, [permissions_related_name, 'role' if role else 'ability'], reuse_set, opts)
+            reuse_set.update(join_info_details['join_list'])
+            def custom_join(default_join, default_params):
+                alias = join_info_details['join_list'][-2 if role else -1]
+                conditions = []
+                params = []
+                conditions.append(default_join)
+                params.extend(default_params)
+
+                if agent_group_or_default == 'agent':
+                    conditions.append('%s.%s = %%s' % (qn(alias), qn2('agent_id')))
+                    params.append(self.agent.pk)
+                elif agent_group_or_default == 'group':
+                    #TODO the alias names can clash in the group subquery with the outer query, will this be a problem?
+                    my_group_ids_sql, my_group_ids_params = my_group_ids.as_sql()
+                    conditions.append('%s.%s IN (%s)' % (qn(alias), qn2('group_id'), my_group_ids_sql))
+                    params.extend(my_group_ids_params)
+                elif agent_group_or_default == 'default':
+                    pass # no extra conditions
+
+                if role:
+                    relevant_role_ids = relevant_yes_role_ids if is_allowed else relevant_no_role_ids
+                    relevant_role_ids_sql, relevant_role_ids_params = relevant_role_ids.as_sql()
+                    conditions.append('%s.%s IN (%s)' % (qn(alias), qn2('role_id'), relevant_role_ids_sql))
+                    params.extend(relevant_role_ids_params)
+                else:
+                    conditions.append('%s.%s = %%s' % (qn(alias), qn2('ability')))
+                    params.append(self.ability)
+                    conditions.append('%s.%s = %%s' % (qn(alias), qn2('ability_parameter')))
+                    params.append(self.ability_parameter)
+                    conditions.append('%s.%s = %%s' % (qn(alias), qn2('is_allowed')))
+                    params.append(is_allowed)
+
+                return (' AND '.join(conditions), params)
+            query.custom_join_map[join_info_details['join_list'][-2 if role else -1]] = custom_join
+
+            join_info_id = add_joins_to_access_parts(initial_alias, [permissions_related_name, 'id'], reuse_set, opts)
+            reuse_set.update(join_info_id['join_list'])
+            return join_info_id
+
+
+        def require_join_in_where_clause(join_info, negate=False):
+            query.where.add((join_info['join_list'][-1], join_info['target'].column, join_info['field'], 'isnull', negate), AND)
+
+        agent_direct_yes = add_permission_type('agent', role=False, is_allowed=True)
+        group_direct_yes = add_permission_type('group', role=False, is_allowed=True)
+        default_direct_yes = add_permission_type('default', role=False, is_allowed=True)
+        agent_role_yes = add_permission_type('agent', role=True, is_allowed=True)
+        group_role_yes = add_permission_type('group', role=True, is_allowed=True)
+        default_role_yes = add_permission_type('default', role=True, is_allowed=True)
+        
+        agent_direct_no = add_permission_type('agent', role=False, is_allowed=False)
+        group_direct_no = add_permission_type('group', role=False, is_allowed=False)
+        agent_role_no = add_permission_type('agent', role=True, is_allowed=False)
+        group_role_no = add_permission_type('group', role=True, is_allowed=False)
+
+        query.where.start_subtree(OR)
+        require_join_in_where_clause(agent_direct_yes)
+        query.where.end_subtree()
+
+        query.where.start_subtree(OR)
+        require_join_in_where_clause(agent_role_yes)
+        query.where.end_subtree()
+
+        query.where.start_subtree(OR)
+        require_join_in_where_clause(agent_direct_no, negate=True)
+        require_join_in_where_clause(agent_role_no, negate=True)
+        require_join_in_where_clause(group_direct_yes)
+        query.where.end_subtree()
+
+        query.where.start_subtree(OR)
+        require_join_in_where_clause(agent_direct_no, negate=True)
+        require_join_in_where_clause(agent_role_no, negate=True)
+        require_join_in_where_clause(group_role_yes)
+        query.where.end_subtree()
+
+        query.where.start_subtree(OR)
+        require_join_in_where_clause(agent_direct_no, negate=True)
+        require_join_in_where_clause(agent_role_no, negate=True)
+        require_join_in_where_clause(group_direct_no, negate=True)
+        require_join_in_where_clause(group_role_no, negate=True)
+        require_join_in_where_clause(default_direct_yes)
+        query.where.end_subtree()
+
+        query.where.start_subtree(OR)
+        require_join_in_where_clause(agent_direct_no, negate=True)
+        require_join_in_where_clause(agent_role_no, negate=True)
+        require_join_in_where_clause(group_direct_no, negate=True)
+        require_join_in_where_clause(group_role_no, negate=True)
+        require_join_in_where_clause(default_role_yes)
+        query.where.end_subtree()
+
+filter_for_agent_and_ability = filter_for_agent_and_ability2
