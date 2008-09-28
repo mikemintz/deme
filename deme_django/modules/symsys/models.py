@@ -79,26 +79,16 @@ class SymsysAffiliate(Person):
     then_image = models.ForeignKey(FileDocument, related_name='symsysaffiliates_with_then_image', blank=True, null=True)
     now_image = models.ForeignKey(FileDocument, related_name='symsysaffiliates_with_now_image', blank=True, null=True)
 
-    def get_name(self):
-        return '%s %s' % (self.first_name, self.last_name)
-
 
 class Event(Item):
     event_time = models.DateTimeField()
-    event_name = models.CharField(max_length=255)
     event_details = models.TextField(blank=True)
     location = models.TextField(blank=True)
     url = models.TextField(blank=True)
 
-    def get_name(self):
-        return self.event_name
-
 
 class NewsRoll(Item):
-    name = models.CharField(max_length=255)
-
-    def get_name(self):
-        return self.name
+    pass
 
 
 #TODO add newsitemmembership so that newsitems can be in multiple newsrolls
