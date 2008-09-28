@@ -85,9 +85,9 @@ def login(request, *args, **kwargs):
         context['full_path'] = request.get_full_path()
         context['cur_agent'] = cur_agent
         if can_do_everything:
-            context['login_as_agents'] = [x.downcast() for x in cms.models.Agent.objects.all()]
+            context['login_as_agents'] = [x for x in cms.models.Agent.objects.all()]
         else:
-            context['login_as_agents'] = [x.downcast() for x in cms.models.Agent.objects.filter(permission_functions.filter_for_agent_and_ability(cur_agent, 'login_as', 'id')).distinct()]
+            context['login_as_agents'] = [x for x in cms.models.Agent.objects.filter(permission_functions.filter_for_agent_and_ability(cur_agent, 'login_as', 'id')).distinct()]
         return HttpResponse(template.render(context))
     else:
         redirect_url = request.GET['redirect']
