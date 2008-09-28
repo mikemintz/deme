@@ -157,7 +157,7 @@ The agent currently logged in is not allowed to use this application. Please log
         model_names.sort()
         self.context['search_query'] = self.request.GET.get('q', '')
         if self.context['search_query']:
-            items = self.item_type.objects.filter(description__icontains=self.request.GET['q'])
+            items = self.item_type.objects.filter(name__icontains=self.request.GET['q'])
         else:
             items = self.item_type.objects
         if ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent):
