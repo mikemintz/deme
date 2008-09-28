@@ -13,7 +13,7 @@ def get_global_roles_for_agent(agent):
     """
     if not agent:
         raise Exception("You must create an anonymous user")
-    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('pk').query
+    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('group_id').query
     role_manager = GlobalRole.objects.filter(trashed=False)
     direct_roles = role_manager.filter(agent_global_role_permissions_as_global_role__agent=agent,
                                        agent_global_role_permissions_as_global_role__trashed=False)
@@ -30,7 +30,7 @@ def get_global_permissions_for_agent(agent):
     """
     if not agent:
         raise Exception("You must create an anonymous user")
-    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('pk').query
+    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('group_id').query
     direct_roles = AgentGlobalPermission.objects.filter(trashed=False, agent=agent)
     groupwide_roles = GroupGlobalPermission.objects.filter(trashed=False, group__pk__in=my_group_ids)
     default_roles = DefaultGlobalPermission.objects.filter(trashed=False)
@@ -81,14 +81,17 @@ def get_roles_for_agent_and_item(agent, item):
     """
     if not agent:
         raise Exception("You must create an anonymous user")
-    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('pk').query
+    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('group_id').query
     role_manager = Role.objects.filter(trashed=False)
     direct_roles = role_manager.filter(agent_role_permissions_as_role__item=item,
                                        agent_role_permissions_as_role__agent=agent,
                                        agent_role_permissions_as_role__trashed=False)
+    print 'looking for roles'
     groupwide_roles = role_manager.filter(group_role_permissions_as_role__item=item,
                                           group_role_permissions_as_role__group__pk__in=my_group_ids,
                                           group_role_permissions_as_role__trashed=False)
+    print groupwide_roles
+    print 'done'
     default_roles = role_manager.filter(default_role_permissions_as_role__item=item,
                                         default_role_permissions_as_role__trashed=False)
     return (direct_roles, groupwide_roles, default_roles)
@@ -100,7 +103,7 @@ def get_permissions_for_agent_and_item(agent, item):
     """
     if not agent:
         raise Exception("You must create an anonymous user")
-    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('pk').query
+    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('group_id').query
     direct_permissions = AgentPermission.objects.filter(item=item, agent=agent, trashed=False)
     groupwide_permissions = GroupPermission.objects.filter(item=item, group__pk__in=my_group_ids, trashed=False)
     default_permissions = DefaultPermission.objects.filter(item=item, trashed=False)
@@ -140,7 +143,7 @@ def get_abilities_for_agent_and_item(agent, item):
 
 
 def filter_for_agent_and_ability(agent, ability, ability_parameter):
-    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('pk').query
+    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('group_id').query
     relevant_yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, ability_parameter=ability_parameter, is_allowed=True).values('role_id').query
     relevant_no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, ability_parameter=ability_parameter, is_allowed=False).values('role_id').query
 
@@ -208,7 +211,7 @@ class filter_for_agent_and_ability2(Q):
 
     def add_to_query(self, query, used_aliases):
 
-        my_group_ids = self.agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('pk').query
+        my_group_ids = self.agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('group_id').query
         relevant_yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=self.ability, ability_parameter=self.ability_parameter, is_allowed=True).values('role_id').query
         relevant_no_role_ids = RoleAbility.objects.filter(trashed=False, ability=self.ability, ability_parameter=self.ability_parameter, is_allowed=False).values('role_id').query
 
