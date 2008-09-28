@@ -55,6 +55,7 @@ class ItemMetaClass(ModelBase):
         def convert_to_version(key, value):
             #TODO do we need to remove uniqueness of related_field?
             #TODO do we need to deepcopy the key?
+            #TODO do we preserve the db_index? should we?
             value = deepcopy(value)
             if isinstance(value, models.Field):
                 if value.rel and value.rel.related_name:
@@ -89,7 +90,7 @@ class ItemVersion(models.Model):
     description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='item_versions_as_updater')
     updated_at = models.DateTimeField(editable=False)
-    trashed = models.BooleanField(default=False, editable=False)
+    trashed = models.BooleanField(default=False, editable=False, db_index=True)
 
     class Meta:
         unique_together = (('current_item', 'version_number'),)
@@ -176,7 +177,7 @@ class Item(models.Model):
     updated_at = models.DateTimeField(editable=False)
     creator = models.ForeignKey('Agent', related_name='items_as_creator', editable=False)
     created_at = models.DateTimeField(editable=False)
-    trashed = models.BooleanField(default=False, editable=False)
+    trashed = models.BooleanField(default=False, editable=False, db_index=True)
 
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.get_name())
@@ -359,6 +360,11 @@ class HtmlDocument(TextDocument):
 
 class FileDocument(Document):
     datafile = models.FileField(upload_to='filedocument/%Y/%m/%d', max_length=255)
+
+
+class ImageDocument(FileDocument):
+    #TODO eventually we'll have metadata like width, height, exif, and a pointer to a thumbfile or 2
+    pass
 
 
 class Comment(TextDocument):
