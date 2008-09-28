@@ -58,6 +58,7 @@ class ItemViewer(object):
 
     def init_from_http(self, request, cur_agent, url_info):
         self.layout = 'base.html'
+        #self.layout = 'base_symsys.html'
         self.viewer_name = url_info['viewer']
         self.format = url_info['format'] or 'html'
         self.method = (request.REQUEST.get('_method', None) or request.method).upper()

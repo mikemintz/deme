@@ -54,15 +54,6 @@ href="/ssp_static?page=jobs.html" alt="Careers">
 <table border=0 cellpadding=10 cellspacing=0 width="100%">
 <tr valign=top>
         <td width="1%">
-                <!--navigation-->
-
-
-
-
-
-
-
-
 
 
 
@@ -75,7 +66,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
         <td colspan = "2">
             <span class=nav_menu_header>
             <a href="ssp_welcome">
-            <!--hl7-->Welcome!<!--endhl7--></a><!--edit-->
+            Welcome!</a>
             </span>
         </td>
         </tr>
@@ -86,7 +77,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
         <td>
             <span class=nav_menu_item>
                     <a href="/ssp_static?page=ssp-description/expl1.html">
-                        <!--hl8-->What Is SSP?<!--endhl8--></a>
+                        What Is SSP?</a>
                         </span>
 
                 <tr>
@@ -94,7 +85,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
                 <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
                 <td>
         <span class=nav_menu_item>
-                <a href="/ssp_static?page=genInfo.html"><!--hl9-->Contact Information<!--endhl9--></a>
+                <a href="/ssp_static?page=genInfo.html">Contact Information</a>
                 </span>
                 </td>
                 </tr>
@@ -104,7 +95,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
                 <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
                 <td>
         <span class=nav_menu_item>
-                <a href="/ssp_static?page=admissions2.html"><!--hl10-->Admissions<!--endhl10--></a>
+                <a href="/ssp_static?page=admissions2.html">Admissions</a>
                 </span>
                 </td>
                 </tr>
@@ -115,7 +106,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
                 <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
                 <td>
         <span class=nav_menu_item>
-                <a href="/ssp_static?page=degrees.html"><!--hl11-->Degrees<!--endhl11--></a>
+                <a href="/ssp_static?page=degrees.html">Degrees</a>
                 </span>
                 </td>
                 </tr>
@@ -140,7 +131,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
         </td>
         <td colspan = "2">
            <span class=nav_menu_header>
-           <B><!--hl16--><a href="ssp_people">People</a><!--endhl16--></B>
+           <B>Your Account</B>
            </span>            
         </td>
         </tr>
@@ -152,67 +143,17 @@ href="/ssp_static?page=jobs.html" alt="Careers">
         <td valign=top ><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
         <td>
             <span class=nav_menu_item>
-            <!--hl18--><a href="ssp_people?group=Students">Students</a><!--endhl18--> (<a href="ssp_people_full?group=Students">Expanded</a>)
-            <!--students-->
+            {% ifequal cur_agent.item_type 'AnonymousAgent' %}
+            <a href="/meta/login?redirect={{ full_path|urlencode }}">Sign In</a>
+            {% else %}
+            <a href="/meta/logout?redirect={{ full_path|urlencode }}">Sign Out</a>
+            <!--You are logged in as: {{ cur_agent }}-->
+            <!--[<a href="/meta/login?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]-->
+            {% endifequal %}
             </span>
         </td>
         </tr>
                 
-        <tr>        
-        <td></td>
-        <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-            <!--hl19--><a href="ssp_people?group=Alumni">Alumni</a><!--endhl19--> (<a href="ssp_people_full?group=Alumni">Expanded</a>)
-            <!--alumni--> 
-            </span>
-        </td>
-        </tr>
-
-
-        <tr>        
-        <td></td>
-        <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-            <!--hl20--><a href="ssp_people?group=Faculty">Faculty</a><!--endhl20--> (<a href="ssp_people_full?group=Faculty">Expanded</a>)
-            <!--faculty--> 
-            </span>
-        </td>
-        </tr>
-
-        <tr>        
-        <td></td>
-        <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-            <!--hl21--><a href="ssp_people?group=AdvisingFellows">Advising Fellows</a><!--endhl21-->
-            <!--afs-->
-            </span>
-        </td>
-        </tr>
-
-        <tr>        
-        <td></td>
-        <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        
-    <td> <span class=nav_menu_item> 
-      <!--hl22-->
-      <a href="ssp_people?group=Administration">Administration</a> 
-      <!--endhl22-->
-      <!--progadmin-->
-      </span> </td>
-        </tr>
-
-        <tr>        
-        <td></td>
-        <td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-            <!--hl17--><a href="ssp_facebook">SSP Facebook</a><!--endhl17-->
-            </span>
-        </td>
-        </tr>
 </table>
 <br>
 
@@ -232,9 +173,86 @@ href="/ssp_static?page=jobs.html" alt="Careers">
                 <img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" border=0>
         </td>
         <td colspan = "2">
+           <span class=nav_menu_header>
+           <B><a href="ssp_people">People</a></B>
+           </span>            
+        </td>
+        </tr>
+        
+        
+
+        <tr>        
+        <td></td>
+        <td valign=top ><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
+        <td>
+            <span class=nav_menu_item>
+            <a href="ssp_people?group=Students">Students</a> (<a href="ssp_people_full?group=Students">Expanded</a>)
+            </span>
+        </td>
+        </tr>
+                
+        <tr>        
+        <td></td>
+        <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
+        <td>
+            <span class=nav_menu_item>
+            <a href="ssp_people?group=Alumni">Alumni</a> (<a href="ssp_people_full?group=Alumni">Expanded</a>)
+            </span>
+        </td>
+        </tr>
+
+
+        <tr>        
+        <td></td>
+        <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
+        <td>
+            <span class=nav_menu_item>
+            <a href="ssp_people?group=Faculty">Faculty</a> (<a href="ssp_people_full?group=Faculty">Expanded</a>)
+            </span>
+        </td>
+        </tr>
+
+        <tr>        
+        <td></td>
+        <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
+        <td>
+            <span class=nav_menu_item>
+            <a href="ssp_people?group=AdvisingFellows">Advising Fellows</a>
+            </span>
+        </td>
+        </tr>
+
+        <tr>        
+        <td></td>
+        <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
+        
+    <td> <span class=nav_menu_item> 
+      
+      <a href="ssp_people?group=Administration">Administration</a> 
+      
+      </span> </td>
+        </tr>
+
+        <tr>        
+        <td></td>
+        <td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
+        <td>
+            <span class=nav_menu_item>
+            <a href="ssp_facebook">SSP Facebook</a>
+            </span>
+        </td>
+        </tr>
+</table>
+<br>
+<table cellspacing=0 cellpadding=0 border=0>
+        <tr>
+        <td valign=top align=right width=5>
+                <img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" border=0>
+        </td>
+        <td colspan = "2">
                 <span class=nav_menu_header>
                 <a href="/ssp_static?page=events.html">
-                <!--hl13-->Events<!--endhl13--></a>
+                Events</a>
                 </span>
         </td>
         
@@ -246,7 +264,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
 		<td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
 		<td>
 		<span class=nav_menu_item>
-		<a href="ssp_events"><!--hl14-->SSP Calendar<!--endhl14--></a><!--edit-->
+		<a href="ssp_events">SSP Calendar</a>
 		</span>
 		</td>
 		</tr>
@@ -256,7 +274,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
 		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
 		<td>
         <span class=nav_menu_item>
-		<a href="/ssp_static?page=forum.html"><!--hl15-->SSP_Forum<!--endhl15--></a>
+		<a href="/ssp_static?page=forum.html">SSP_Forum</a>
 		</span>
 		</td>
 		</tr>
@@ -300,7 +318,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
         </td>
         <td colspan = "2">
                 <span class=nav_menu_header>
-                <a href="/ssp_static?page=courses.html"><b><!--hl24-->Courses<!--endhl24--></b></a>        
+                <a href="/ssp_static?page=courses.html"><b>Courses</b></a>        
                 </span>
         </td>
         </tr>
@@ -329,7 +347,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
 		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
 		<td>
         <span class=nav_menu_item> 
-		<a href="ssp_courses"><!--hl25-->Course Websites<!--endhl25--></a><!--edit--><BR> 
+		<a href="ssp_courses">Course Websites</a><BR> 
         </span>
         </td>
         </tr>
@@ -355,7 +373,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
         </td>
         <td colspan = "2">
                 <span class=nav_menu_header>
-                <a href="/ssp_static?page=research.html"><b><!--hl26-->Research Opportunities<!--endhl26--></b></a>
+                <a href="/ssp_static?page=research.html"><b>Research Opportunities</b></a>
                 </span>
         </td>
         </tr>
@@ -364,7 +382,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
 		<td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
 		<td>
 		<span class=nav_menu_item>
-		<a href="/ssp_static?page=choosehonor.html"><!--hl27-->Honors Program<!--endhl27--></a>
+		<a href="/ssp_static?page=choosehonor.html">Honors Program</a>
 		</span>
 		</td>
 		</tr>
@@ -374,7 +392,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
 		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
 		<td>
         <span class=nav_menu_item>
-		<a href="ssp_research"><!--hl28-->Academic Year Positions<!--endhl28--></a><!--edit-->
+		<a href="ssp_research">Academic Year Positions</a>
 		</span>
 		</td>
 		</tr>
@@ -384,7 +402,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
 		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
 		<td>
         <span class=nav_menu_item>
-		<a href="ssp_internships"><!--hl29-->Summer Internships<!--endhl29--></a><!--summer-->
+		<a href="ssp_internships">Summer Internships</a>
 		</span>
 		</td>
 		</tr>
@@ -394,7 +412,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
 		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
 		<td>
 		<span class=nav_menu_item>
-		<a href="ssp_other_research"><!--hl34-->Other Opportunities<!--endhl34--></a><!--other_research-->
+		<a href="ssp_other_research">Other Opportunities</a>
 		
 		</span>
 		</td>
@@ -413,7 +431,6 @@ href="/ssp_static?page=jobs.html" alt="Careers">
 			
 	    
 		
-        <!--archive-->
 </table>
 <br>
 
@@ -434,7 +451,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
         </td>
         <td colspan = "2">
                 <span class=nav_menu_header>
-                <a href="/ssp_static?page=jobs.html"><b><!--hl30-->Career Resources<!--endhl30--></b></a>
+                <a href="/ssp_static?page=jobs.html"><b>Career Resources</b></a>
                 </span>
         </td>
         </tr>
@@ -443,7 +460,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
 		<td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
 		<td>
 		<span class=nav_menu_item>
-		<a href="ssp_jobs"><!--hl31-->SSP Jobs Database<!--endhl31--></a><!--edit-->
+		<a href="ssp_jobs">SSP Jobs Database</a>
 		</span>
 		</td>
 		</tr>
@@ -452,7 +469,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
 		<td></td>
 		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
 		
-    <td> <span class=nav_menu_item> <a href="/ssp_static?page=otherjobs.html"><!--hl32-->Other Resources<!--endhl32-->
+    <td> <span class=nav_menu_item> <a href="/ssp_static?page=otherjobs.html">Other Resources
       </a> </span> </td>
 		</tr>
 
@@ -461,7 +478,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
 		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
 		<td>
         <span class=nav_menu_item>
-		<a href="ssp_admin_jobs_create?action=create"><!--hl33-->List a Job<!--endhl33--></a>
+		<a href="ssp_admin_jobs_create?action=create">List a Job</a>
 		</span>
         </td>
         </tr>
