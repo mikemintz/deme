@@ -49,6 +49,15 @@ AgentGlobalPermission(ability='do_everything', ability_parameter="Item", is_allo
 anonymous_agent = AnonymousAgent()
 anonymous_agent.save_versioned(updater=admin)
 
+default_site = Site(name="Default Site", is_default_site=True, viewer='item', action='list', aliased_item=None, query_string='')
+default_site.save_versioned(updater=admin)
+
+import sys; sys.exit(0)
+
+################################################################################
+# Just testing here:
+################################################################################
+
 home_page = DjangoTemplateDocument(body="""
 {% extends 'base.html' %}
 {% block title %}Welcome to Deme!{% endblock %}
@@ -57,14 +66,11 @@ Welcome to Deme!
 {% endblock content %}
 """)
 home_page.save_versioned(updater=admin)
-
-default_site = Site(name="Default Site", is_default_site=True, viewer='djangotemplatedocument', action='show', aliased_item=home_page, query_string='')
+default_site.viewer = 'djangotemplatedocument'
+default_site.action = 'show'
+default_site.aliased_item = home_page
+default_site.query_string = ''
 default_site.save_versioned(updater=admin)
-
-
-################################################################################
-# Just testing here:
-################################################################################
 
 mike_person = Person(first_name="Mike", last_name="Mintz", email="mike@example.com", name="Mike Mintz")
 mike_person.save_versioned(updater=admin)
