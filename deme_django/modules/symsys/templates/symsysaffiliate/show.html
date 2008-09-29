@@ -1,46 +1,605 @@
 {% extends layout %}
+{% load symsys_extras %}
 {% load resource_extras %}
 {% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
 {% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
 {% block content %}
 
-<div class="crumbs">
-    <div style="float: right;">
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit?version={{ itemversion.version_number }}">Edit</a>
-        {% if item.trashed %}
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/untrash">Untrash</a>
-        {% else %}
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/trash">Trash</a>
-        {% endif %}
-        {% if itemversion.trashed %}
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/untrash?version={{ itemversion.version_number }}">Untrash Version</a>
-        {% else %}
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/trash?version={{ itemversion.version_number }}">Trash Version</a>
-        {% endif %}
-    </div>
-    {% for inherited_item_type in item_type_inheritance %}
-    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
-    &raquo;
-    {% endfor %}
-    <a href="{% show_resource_url item %}">{{ item }}</a>
-    &raquo;
-    Version {{ itemversion.version_number }}
-</div>
+<table class="twocol">
 
-<div style="background: #ccf; padding: 10px; margin-bottom: 10px;">
-    Versions:
-    {% for other_itemversion in item.versions.all %}
-    <span style="margin-left: 10px;">
-        {% ifequal other_itemversion.version_number itemversion.version_number %}
-        <b>{{ other_itemversion.version_number }}</b>
-        {% else %}
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}?version={{ other_itemversion.version_number }}">{{ other_itemversion.version_number }}</a>
-        {% endifequal %}
-    </span>
-    {% endfor %}
-</div>
+    {% ifagentcan cur_agent 'view' 'first_name' item %}
+    {% if item.first_name %}
+    <tr>
+        <th>First name:</th>
+        <td>{{ item.first_name|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
 
-This is the symsysaffiliate viewer looking at {{ item }}!
+    {% ifagentcan cur_agent 'view' 'middle_names' item %}
+    {% if item.middle_names %}
+    <tr>
+        <th>Middle names:</th>
+        <td>{{ item.middle_names|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'last_name' item %}
+    {% if item.last_name %}
+    <tr>
+        <th>Last name:</th>
+        <td>{{ item.last_name|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'suffix' item %}
+    {% if item.suffix %}
+    <tr>
+        <th>Suffix:</th>
+        <td>{{ item.suffix|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'email' item %}
+    {% if item.email %}
+    <tr>
+        <th>Email:</th>
+        <td><a href="mailto:{{ item.email|escape }}">{{ item.email|escape }}</a></td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'suid' item %}
+    {% if item.suid %}
+    <tr>
+        <th>SUID:</th>
+        <td>{{ item.suid|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'class_year' item %}
+    {% if item.class_year %}
+    <tr>
+        <th>Class year:</th>
+        <td>{{ item.class_year|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'first_affiliation_year' item %}
+    {% if item.first_affiliation_year %}
+    <tr>
+        <th>First affiliation year:</th>
+        <td>{{ item.first_affiliation_year|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'graduation_year' item %}
+    {% if item.graduation_year %}
+    <tr>
+        <th>Graduation year:</th>
+        <td>{{ item.graduation_year|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'title' item %}
+    {% if item.title %}
+    <tr>
+        <th>Title:</th>
+        <td>{{ item.title|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'admin_title' item %}
+    {% if item.admin_title %}
+    <tr>
+        <th>Admin title:</th>
+        <td>{{ item.admin_title|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'department' item %}
+    {% if item.department %}
+    <tr>
+        <th>Department:</th>
+        <td>{{ item.department|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'concentration' item %}
+    {% if item.concentration %}
+    <tr>
+        <th>Concentration:</th>
+        <td>{{ item.concentration|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'advisor' item %}
+    {% if item.advisor %}
+    <tr>
+        <th>Advisor:</th>
+        <td>{{ item.advisor|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'p_address1' item %}
+    {% if item.p_address1 %}
+    <tr>
+        <th>Personal address 1:</th>
+        <td>{{ item.p_address1|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'p_address2' item %}
+    {% if item.p_address2 %}
+    <tr>
+        <th>Personal address 2:</th>
+        <td>{{ item.p_address2|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'p_city' item %}
+    {% if item.p_city %}
+    <tr>
+        <th>Personal city:</th>
+        <td>{{ item.p_city|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'p_state' item %}
+    {% if item.p_state %}
+    <tr>
+        <th>Personal state:</th>
+        <td>{{ item.p_state|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'p_country' item %}
+    {% if item.p_country %}
+    <tr>
+        <th>Personal country:</th>
+        <td>{{ item.p_country|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'p_zip' item %}
+    {% if item.p_zip %}
+    <tr>
+        <th>Personal zip:</th>
+        <td>{{ item.p_zip|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'p_phone1' item %}
+    {% if item.p_phone1 %}
+    <tr>
+        <th>Personal phone 1:</th>
+        <td>{{ item.p_phone1|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'p_phone2' item %}
+    {% if item.p_phone2 %}
+    <tr>
+        <th>Personal phone 2:</th>
+        <td>{{ item.p_phone2|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'p_fax' item %}
+    {% if item.p_fax %}
+    <tr>
+        <th>Personal fax:</th>
+        <td>{{ item.p_fax|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'p_email' item %}
+    {% if item.p_email %}
+    <tr>
+        <th>Personal email:</th>
+        <td>{{ item.p_email|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'p_website' item %}
+    {% if item.p_website %}
+    <tr>
+        <th>Personal website:</th>
+        <td>{{ item.p_website|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'p_im' item %}
+    {% if item.p_im %}
+    <tr>
+        <th>Personal IM:</th>
+        <td>{{ item.p_im|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_organization' item %}
+    {% if item.w_organization %}
+    <tr>
+        <th>Work organization:</th>
+        <td>{{ item.w_organization|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_position' item %}
+    {% if item.w_position %}
+    <tr>
+        <th>Work position:</th>
+        <td>{{ item.w_position|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_address1' item %}
+    {% if item.w_address1 %}
+    <tr>
+        <th>Work address1:</th>
+        <td>{{ item.w_address1|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_address2' item %}
+    {% if item.w_address2 %}
+    <tr>
+        <th>Work address2:</th>
+        <td>{{ item.w_address2|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_city' item %}
+    {% if item.w_city %}
+    <tr>
+        <th>Work city:</th>
+        <td>{{ item.w_city|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_state' item %}
+    {% if item.w_state %}
+    <tr>
+        <th>Work state:</th>
+        <td>{{ item.w_state|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_country' item %}
+    {% if item.w_country %}
+    <tr>
+        <th>Work country:</th>
+        <td>{{ item.w_country|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_zip' item %}
+    {% if item.w_zip %}
+    <tr>
+        <th>Work zip:</th>
+        <td>{{ item.w_zip|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_phone1' item %}
+    {% if item.w_phone1 %}
+    <tr>
+        <th>Work phone 1:</th>
+        <td>{{ item.w_phone1|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_phone2' item %}
+    {% if item.w_phone2 %}
+    <tr>
+        <th>Work phone 2:</th>
+        <td>{{ item.w_phone2|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_fax' item %}
+    {% if item.w_fax %}
+    <tr>
+        <th>Work fax:</th>
+        <td>{{ item.w_fax|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_email' item %}
+    {% if item.w_email %}
+    <tr>
+        <th>Work email:</th>
+        <td>{{ item.w_email|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_website' item %}
+    {% if item.w_website %}
+    <tr>
+        <th>Work website:</th>
+        <td>{{ item.w_website|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'w_im' item %}
+    {% if item.w_im %}
+    <tr>
+        <th>Work IM:</th>
+        <td>{{ item.w_im|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'background' item %}
+    {% if item.background %}
+    <tr>
+        <th>background:</th>
+        <td>{{ item.background|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'doing_now' item %}
+    {% if item.doing_now %}
+    <tr>
+        <th>Doing Now:</th>
+        <td>{{ item.doing_now|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'interests' item %}
+    {% if item.interests %}
+    <tr>
+        <th>Interests:</th>
+        <td>{{ item.interests|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'publications' item %}
+    {% if item.publications %}
+    <tr>
+        <th>Publications:</th>
+        <td>{{ item.publications|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'office_hours' item %}
+    {% if item.office_hours %}
+    <tr>
+        <th>Office hours:</th>
+        <td>{{ item.office_hours|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'about' item %}
+    {% if item.about %}
+    <tr>
+        <th>About:</th>
+        <td>{{ item.about|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'symsys_degree' item %}
+    {% if item.symsys_degree %}
+    <tr>
+        <th>Symsys degree:</th>
+        <td>{{ item.symsys_degree|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'other_degrees' item %}
+    {% if item.other_degrees %}
+    <tr>
+        <th>Other degrees:</th>
+        <td>{{ item.other_degrees|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'indivdesignedconc' item %}
+    {% if item.indivdesignedconc %}
+    <tr>
+        <th>Individually designed concentration:</th>
+        <td>{{ item.indivdesignedconc|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'department2' item %}
+    {% if item.department2 %}
+    <tr>
+        <th>Department 2:</th>
+        <td>{{ item.department2|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'ms_track' item %}
+    {% if item.ms_track %}
+    <tr>
+        <th>MS track:</th>
+        <td>{{ item.ms_track|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'ms_graduation' item %}
+    {% if item.ms_graduation %}
+    <tr>
+        <th>MS graduation:</th>
+        <td>{{ item.ms_graduation|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'honors_thesis_title' item %}
+    {% if item.honors_thesis_title %}
+    <tr>
+        <th>Honors thesis title:</th>
+        <td>{{ item.honors_thesis_title|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'honors_thesis_filename' item %}
+    {% if item.honors_thesis_filename %}
+    <tr>
+        <th>Honors thesis filename:</th>
+        <td>{{ item.honors_thesis_filename|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'honors_thesis_url' item %}
+    {% if item.honors_thesis_url %}
+    <tr>
+        <th>Honors thesis URL:</th>
+        <td>{{ item.honors_thesis_url|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'ms_thesis_title' item %}
+    {% if item.ms_thesis_title %}
+    <tr>
+        <th>MS thesis title:</th>
+        <td>{{ item.ms_thesis_title|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'ms_thesis_filename' item %}
+    {% if item.ms_thesis_filename %}
+    <tr>
+        <th>MS thesis filename:</th>
+        <td>{{ item.ms_thesis_filename|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'ms_thesis_url' item %}
+    {% if item.ms_thesis_url %}
+    <tr>
+        <th>MS thesis URL:</th>
+        <td>{{ item.ms_thesis_url|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'ms_idt' item %}
+    {% if item.ms_idt %}
+    <tr>
+        <th>MS IDT:</th>
+        <td>{{ item.ms_idt|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'honors_status' item %}
+    {% if item.honors_status %}
+    <tr>
+        <th>Honors status:</th>
+        <td>{{ item.honors_status|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'honors_advisor' item %}
+    {% if item.honors_advisor %}
+    <tr>
+        <th>Honors advisor:</th>
+        <td>{{ item.honors_advisor|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'honors_second_reader' item %}
+    {% if item.honors_second_reader %}
+    <tr>
+        <th>Honors second reader:</th>
+        <td>{{ item.honors_second_reader|escape }}</td>
+    </tr>
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'then_image' item %}
+    {% if item.then_image %}
+    {% ifagentcan cur_agent 'view' 'id' item.then_image %}
+    {% ifagentcan cur_agent 'view' 'datafile' item.then_image %}
+    <tr>
+        <th>Then image:</th>
+        <td><a href="{% show_resource_url item.then_image %}"><img src="/static/media/{{ item.then_image.datafile }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a></td>
+    </tr>
+    {% endifagentcan %}
+    {% endifagentcan %}
+    {% endif %}
+    {% endifagentcan %}
+
+    {% ifagentcan cur_agent 'view' 'now_image' item %}
+    {% if item.now_image %}
+    {% ifagentcan cur_agent 'view' 'id' item.now_image %}
+    {% ifagentcan cur_agent 'view' 'datafile' item.now_image %}
+    <tr>
+        <th>Now image:</th>
+        <td><a href="{% show_resource_url item.now_image %}"><img src="/static/media/{{ item.now_image.datafile }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a></td>
+    </tr>
+    {% endifagentcan %}
+    {% endifagentcan %}
+    {% endif %}
+    {% endifagentcan %}
+
+<!--
+TODO also include..?
+original_first_name
+original_middle_names
+original_last_name
+respos_job_email_subscribe
+-->
+
+</table>
 
 {% endblock content %}
 

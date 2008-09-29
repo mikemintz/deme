@@ -54,7 +54,22 @@ class ItemViewer(object):
     viewer_name = 'item'
 
     def __init__(self):
-        pass
+        self._global_ability_cache = {}
+        self._item_ability_cache = {}
+
+    def get_global_abilities_for_agent(self, agent):
+        result = self._global_ability_cache.get(agent.pk)
+        if result is None:
+            result = permission_functions.get_global_abilities_for_agent(agent)
+            self._global_ability_cache[agent.pk] = result
+        return result
+
+    def get_abilities_for_agent_and_item(self, agent, item):
+        result = self._item_ability_cache.get((agent.pk, item.pk))
+        if result is None:
+            result = permission_functions.get_abilities_for_agent_and_item(agent, item)
+            self._item_ability_cache[(agent.pk, item.pk)] = result
+        return result
 
     def init_from_http(self, request, cur_agent, url_info):
         self.layout = 'base.html'
@@ -94,6 +109,8 @@ class ItemViewer(object):
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = cur_agent
         self.context['cur_agent'] = self.cur_agent
+        self.context['_global_ability_cache'] = self._global_ability_cache
+        self.context['_item_ability_cache'] = self._item_ability_cache
 
     def init_show_from_div(self, original_request, viewer_name, item, itemversion, cur_agent):
         self.layout = 'blank.html'
@@ -112,6 +129,8 @@ class ItemViewer(object):
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = cur_agent
         self.context['cur_agent'] = self.cur_agent
+        self.context['_global_ability_cache'] = self._global_ability_cache
+        self.context['_item_ability_cache'] = self._item_ability_cache
 
     def dispatch(self):
         if ('do_something', 'Item') not in permission_functions.get_global_abilities_for_agent(self.cur_agent):
@@ -161,12 +180,13 @@ The agent currently logged in is not allowed to use this application. Please log
             items = self.item_type.objects.filter(name__icontains=self.request.GET['q'])
         else:
             items = self.item_type.objects
-        if ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent):
+        if ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent):
             listable_items = items
         else:
             listable_items = items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'id')).distinct()
         n_opposite_trashed_items = listable_items.filter(trashed=(not trashed)).count()
         listable_items = listable_items.filter(trashed=trashed)
+        listable_items = listable_items.order_by('id')
         n_items = items.count()
         n_listable_items = listable_items.count()
         items = [item for item in listable_items.all()[offset:offset+limit]]
@@ -185,8 +205,8 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
-        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
-        can_create = ('create', self.item_type.__name__) in permission_functions.get_global_abilities_for_agent(self.cur_agent)
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        can_create = ('create', self.item_type.__name__) in self.get_global_abilities_for_agent(self.cur_agent)
         if not (can_do_everything or can_create):
             return HttpResponseBadRequest("you do not have permission to create %ss" % self.item_type.__name__)
         #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
@@ -203,8 +223,8 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponse(template.render(self.context))
 
     def collection_create(self):
-        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
-        can_create = ('create', self.item_type.__name__) in permission_functions.get_global_abilities_for_agent(self.cur_agent)
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        can_create = ('create', self.item_type.__name__) in self.get_global_abilities_for_agent(self.cur_agent)
         if not (can_do_everything or can_create):
             return HttpResponseBadRequest("you do not have permission to create %ss" % self.item_type.__name__)
         form_class = get_form_class_for_item_type(self.item_type)
@@ -238,8 +258,8 @@ The agent currently logged in is not allowed to use this application. Please log
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
-        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_view = ('view', 'id') in abilities_for_item
         if not (can_do_everything or can_view):
             return HttpResponseBadRequest("you do not have permission to view this item")
@@ -297,12 +317,12 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['direct_roles'] = roles[0].all()
         self.context['groupwide_roles'] = roles[1].all()
         self.context['default_roles'] = roles[2].all()
-        self.context['abilities'] = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        self.context['abilities'] = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         return HttpResponse(template.render(self.context))
 
     def entry_edit(self):
-        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = ('edit', 'id') in abilities_for_item
         if not (can_do_everything or can_edit):
             return HttpResponseBadRequest("you do not have permission to edit this item")
@@ -320,8 +340,8 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponse(template.render(self.context))
 
     def entry_update(self):
-        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = ('edit', 'id') in abilities_for_item
         if not (can_do_everything or can_edit):
             return HttpResponseBadRequest("you do not have permission to edit this item")
@@ -355,8 +375,8 @@ The agent currently logged in is not allowed to use this application. Please log
             return HttpResponse(template.render(self.context))
 
     def entry_trash(self):
-        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_trash = ('trash', 'id') in abilities_for_item
         if not (can_do_everything or can_trash):
             return HttpResponseBadRequest("you do not have permission to trash this item")
@@ -367,8 +387,8 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name,self.item.pk))
 
     def entry_untrash(self):
-        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_trash = ('trash', 'id') in abilities_for_item
         if not (can_do_everything or can_trash):
             return HttpResponseBadRequest("you do not have permission to untrash this item")
@@ -383,6 +403,7 @@ The agent currently logged in is not allowed to use this application. Please log
         cms.models.Item.objects.get(pk=self.item.pk).delete()
         return HttpResponseRedirect('/resource/%s' % (self.viewer_name,))
 
+#TODO permissions on all of these other viewers
 
 class GroupViewer(ItemViewer):
     item_type = cms.models.Group
@@ -428,6 +449,21 @@ class ItemSetViewer(ItemViewer):
         self.context['item'] = self.item
         self.context['itemversion'] = self.itemversion
         self.context['comments'] = comments
+        return HttpResponse(template.render(self.context))
+
+
+class ImageDocument(ItemViewer):
+    item_type = cms.models.ImageDocument
+    viewer_name = 'imagedocument'
+
+    def entry_show(self):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_view = ('view', 'id') in abilities_for_item
+        if not (can_do_everything or can_view):
+            return HttpResponseBadRequest("you do not have permission to view this item")
+        template = loader.get_template('imagedocument/show.html')
+        self.context['item'] = self.item
         return HttpResponse(template.render(self.context))
 
 

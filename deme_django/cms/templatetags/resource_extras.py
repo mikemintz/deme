@@ -1,5 +1,6 @@
 from django import template
 import cms.models
+from cms import permission_functions
 
 register = template.Library()
 
@@ -92,4 +93,71 @@ def list_results_navigator(item_type, search_query, trashed, offset, limit, n_re
         next_button = '<a class="list_results_next" href="/resource/%s/list?q=%s&trashed=%s&offset=%d&limit=%d">Next &raquo;</a>' % (item_type.lower(), search_query, '1' if trashed else '0', new_offset, limit)
         result.append(next_button)
     return ''.join(result)
+
+
+
+
+#TODO make this more efficient (i.e. cache it in a consistent place)
+class IfAgentCan(template.Node):
+    def __init__(self, agent, ability, ability_parameter, item, nodelist_true, nodelist_false):
+        self.agent = template.Variable(agent)
+        self.ability = template.Variable(ability)
+        self.ability_parameter = template.Variable(ability_parameter)
+        self.item = template.Variable(item)
+        self.nodelist_true, self.nodelist_false = nodelist_true, nodelist_false
+
+    def __repr__(self):
+        return "<IfAgentCanNode>"
+
+    def render(self, context):
+        try:
+            agent = self.agent.resolve(context)
+        except template.VariableDoesNotExist:
+            agent = None
+        try:
+            item = self.item.resolve(context)
+        except template.VariableDoesNotExist:
+            item = None
+        try:
+            ability = self.ability.resolve(context)
+        except template.VariableDoesNotExist:
+            ability = None
+        try:
+            ability_parameter = self.ability_parameter.resolve(context)
+        except template.VariableDoesNotExist:
+            ability_parameter = None
+        if agent == None or item == None or ability == None or ability_parameter == None:
+            return 'invalid 13409120491824' # TODO what should i do here?
+        global_abilities = context['_global_ability_cache'].get(agent.pk)
+        if global_abilities is None:
+            global_abilities = permission_functions.get_global_abilities_for_agent(agent)
+            context['_global_ability_cache'][agent.pk] = global_abilities
+        if ('do_everything', 'Item') in global_abilities:
+            return self.nodelist_true.render(context)
+        abilities_for_item = context['_item_ability_cache'].get((agent.pk, item.pk))
+        if abilities_for_item is None:
+            abilities_for_item = permission_functions.get_abilities_for_agent_and_item(agent, item)
+            context['_item_ability_cache'][(agent.pk, item.pk)] = abilities_for_item
+        if (ability, ability_parameter) in abilities_for_item:
+            return self.nodelist_true.render(context)
+        return self.nodelist_false.render(context)
+
+
+def do_ifagentcan(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 5:
+        raise template.TemplateSyntaxError, "%r takes four arguments" % bits[0]
+    end_tag = 'end' + bits[0]
+    nodelist_true = parser.parse(('else', end_tag))
+    token = parser.next_token()
+    if token.contents == 'else':
+        nodelist_false = parser.parse((end_tag,))
+        parser.delete_first_token()
+    else:
+        nodelist_false = template.NodeList()
+    return IfAgentCan(bits[1], bits[2], bits[3], bits[4], nodelist_true, nodelist_false)
+
+@register.tag
+def ifagentcan(parser, token):
+    return do_ifagentcan(parser, token)
 

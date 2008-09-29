@@ -25,3 +25,4 @@ PhotoDocument subclasses FileDocument
 * having the default "Item" and "id" ability_parameter is kind of unelegant.
 * if you edit an item so it gets downcasted, problems with permissions?
 * write a query that finds out all of the people that have permission to do X to item Y
+* urls should be more modular, not hard coded as much, like all the /static/media and /resource/{{item_type}}

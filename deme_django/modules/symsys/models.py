@@ -1,7 +1,6 @@
 from cms.models import *
 from django.db import models
 
-#TODO permissions for who can view which fields (staff, symsysaffiliates, or everyone)
 class SymsysAffiliate(Person):
     suid = models.IntegerField(default=0)
 

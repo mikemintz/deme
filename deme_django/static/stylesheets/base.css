@@ -31,6 +31,17 @@ table.list tr.odd td {
     background: #ffffff;
 }
 
+table.twocol {
+}
+table.twocol tr th {
+    padding: 3px;
+    font-weight: bold;
+    text-align: right;
+}
+table.twocol tr td {
+    padding: 3px;
+}
+
 form.item_form table tr {
     /*vertical-align: top;*/
 }
