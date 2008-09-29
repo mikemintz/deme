@@ -467,7 +467,7 @@ class DefaultGlobalPermission(Relationship):
 
 class AgentPermission(Relationship):
     agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent')
-    item = models.ForeignKey(Item, related_name='agent_permissions_as_item', null=True, blank=True)
+    item = models.ForeignKey(Item, related_name='agent_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     ability_parameter = models.CharField(max_length=255, db_index=True)
     is_allowed = models.BooleanField(db_index=True)
@@ -477,7 +477,7 @@ class AgentPermission(Relationship):
 
 class GroupPermission(Relationship):
     group = models.ForeignKey(Group, related_name='group_permissions_as_group')
-    item = models.ForeignKey(Item, related_name='group_permissions_as_item', null=True, blank=True)
+    item = models.ForeignKey(Item, related_name='group_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     ability_parameter = models.CharField(max_length=255, db_index=True)
     is_allowed = models.BooleanField(db_index=True)
@@ -486,7 +486,7 @@ class GroupPermission(Relationship):
 
 
 class DefaultPermission(Relationship):
-    item = models.ForeignKey(Item, related_name='default_permissions_as_item', null=True, blank=True)
+    item = models.ForeignKey(Item, related_name='default_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     ability_parameter = models.CharField(max_length=255, db_index=True)
     is_allowed = models.BooleanField(db_index=True)
@@ -516,7 +516,7 @@ class DefaultGlobalRolePermission(Relationship):
 
 class AgentRolePermission(Relationship):
     agent = models.ForeignKey(Agent, related_name='agent_role_permissions_as_agent')
-    item = models.ForeignKey(Item, related_name='agent_role_permissions_as_item', null=True, blank=True)
+    item = models.ForeignKey(Item, related_name='agent_role_permissions_as_item')
     role = models.ForeignKey(Role, related_name='agent_role_permissions_as_role')
     class Meta:
         unique_together = (('agent', 'item', 'role'),)
@@ -524,14 +524,14 @@ class AgentRolePermission(Relationship):
 
 class GroupRolePermission(Relationship):
     group = models.ForeignKey(Group, related_name='group_role_permissions_as_group')
-    item = models.ForeignKey(Item, related_name='group_role_permissions_as_item', null=True, blank=True)
+    item = models.ForeignKey(Item, related_name='group_role_permissions_as_item')
     role = models.ForeignKey(Role, related_name='group_role_permissions_as_role')
     class Meta:
         unique_together = (('group', 'item', 'role'),)
 
 
 class DefaultRolePermission(Relationship):
-    item = models.ForeignKey(Item, related_name='default_role_permissions_as_item', null=True, blank=True)
+    item = models.ForeignKey(Item, related_name='default_role_permissions_as_item')
     role = models.ForeignKey(Role, related_name='default_role_permissions_as_role')
     class Meta:
         unique_together = (('item', 'role'),)

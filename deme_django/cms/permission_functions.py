@@ -86,12 +86,9 @@ def get_roles_for_agent_and_item(agent, item):
     direct_roles = role_manager.filter(agent_role_permissions_as_role__item=item,
                                        agent_role_permissions_as_role__agent=agent,
                                        agent_role_permissions_as_role__trashed=False)
-    print 'looking for roles'
     groupwide_roles = role_manager.filter(group_role_permissions_as_role__item=item,
                                           group_role_permissions_as_role__group__pk__in=my_group_ids,
                                           group_role_permissions_as_role__trashed=False)
-    print groupwide_roles
-    print 'done'
     default_roles = role_manager.filter(default_role_permissions_as_role__item=item,
                                         default_role_permissions_as_role__trashed=False)
     return (direct_roles, groupwide_roles, default_roles)

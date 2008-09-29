@@ -111,7 +111,11 @@
             <td>
                 {% if field.can_view %}
                     {% ifequal field.field_type 'regular' %}
+                    {% ifequal field.format 'FileField' %}
+                    <a href="/static/media/{{ field.obj }}">{{ field.obj }}</a>
+                    {% else %}
                     {{ field.obj }}
+                    {% endifequal %}
                     {% endifequal %}
 
                     {% ifequal field.field_type 'entry' %}
@@ -214,7 +218,11 @@
             <td>
                 {% if field.can_view %}
                     {% ifequal field.field_type 'regular' %}
+                    {% ifequal field.format 'FileField' %}
+                    <a href="/static/media/{{ field.obj }}">{{ field.obj }}</a>
+                    {% else %}
                     {{ field.obj }}
+                    {% endifequal %}
                     {% endifequal %}
 
                     {% ifequal field.field_type 'entry' %}
