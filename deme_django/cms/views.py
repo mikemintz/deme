@@ -183,7 +183,7 @@ The agent currently logged in is not allowed to use this application. Please log
         if ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent):
             listable_items = items
         else:
-            listable_items = items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'id')).distinct()
+            listable_items = items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'id'))#.distinct() #TODO don't need this?
         n_opposite_trashed_items = listable_items.filter(trashed=(not trashed)).count()
         listable_items = listable_items.filter(trashed=trashed)
         listable_items = listable_items.order_by('id')

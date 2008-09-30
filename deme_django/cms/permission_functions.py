@@ -328,4 +328,32 @@ class filter_for_agent_and_ability2(Q):
         require_join_in_where_clause(default_role_yes)
         query.where.end_subtree()
 
-filter_for_agent_and_ability = filter_for_agent_and_ability2
+
+def filter_for_agent_and_ability3(agent, ability, ability_parameter):
+    my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('group_id').query
+    relevant_yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, ability_parameter=ability_parameter, is_allowed=True).values('role_id').query
+    relevant_no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, ability_parameter=ability_parameter, is_allowed=False).values('role_id').query
+
+    direct_yes_q = Q(pk__in=AgentPermission.objects.filter(agent=agent, ability=ability, ability_parameter=ability_parameter, is_allowed=True, trashed=False).values('item_id').query)
+    direct_no_q = Q(pk__in=AgentPermission.objects.filter(agent=agent, ability=ability, ability_parameter=ability_parameter, is_allowed=False, trashed=False).values('item_id').query)
+    group_yes_q = Q(pk__in=GroupPermission.objects.filter(group__pk__in=my_group_ids, ability=ability, ability_parameter=ability_parameter, is_allowed=True, trashed=False).values('item_id').query)
+    group_no_q = Q(pk__in=GroupPermission.objects.filter(group__pk__in=my_group_ids, ability=ability, ability_parameter=ability_parameter, is_allowed=False, trashed=False).values('item_id').query)
+    default_yes_q = Q(pk__in=DefaultPermission.objects.filter(ability=ability, ability_parameter=ability_parameter, is_allowed=True, trashed=False).values('item_id').query)
+    default_no_q = Q(pk__in=DefaultPermission.objects.filter(ability=ability, ability_parameter=ability_parameter, is_allowed=False, trashed=False).values('item_id').query)
+
+    role_direct_yes_q = Q(pk__in=AgentRolePermission.objects.filter(agent=agent, role__pk__in=relevant_yes_role_ids, trashed=False).values('item_id').query)
+    role_direct_no_q = Q(pk__in=AgentRolePermission.objects.filter(agent=agent, role__pk__in=relevant_no_role_ids, trashed=False).values('item_id').query)
+    role_group_yes_q = Q(pk__in=GroupRolePermission.objects.filter(group__pk__in=my_group_ids, role__pk__in=relevant_yes_role_ids, trashed=False).values('item_id').query)
+    role_group_no_q = Q(pk__in=GroupRolePermission.objects.filter(group__pk__in=my_group_ids, role__pk__in=relevant_no_role_ids, trashed=False).values('item_id').query)
+    role_default_yes_q = Q(pk__in=DefaultRolePermission.objects.filter(role__pk__in=relevant_yes_role_ids, trashed=False).values('item_id').query)
+    role_default_no_q = Q(pk__in=DefaultRolePermission.objects.filter(role__pk__in=relevant_no_role_ids, trashed=False).values('item_id').query)
+
+    #return group_yes_q | default_yes_q # this is the majority of the bottleneck, so easier to debug SQL
+    return direct_yes_q |\
+           role_direct_yes_q |\
+           (~direct_no_q & ~role_direct_no_q & group_yes_q) |\
+           (~direct_no_q & ~role_direct_no_q & role_group_yes_q) |\
+           (~direct_no_q & ~group_no_q & ~role_direct_no_q & ~role_group_no_q & default_yes_q) |\
+           (~direct_no_q & ~group_no_q & ~role_direct_no_q & ~role_group_no_q & role_default_yes_q)
+
+filter_for_agent_and_ability = filter_for_agent_and_ability3
