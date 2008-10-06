@@ -351,7 +351,8 @@ class TextDocument(Document):
 
 
 class DjangoTemplateDocument(TextDocument):
-    pass
+    layout = models.ForeignKey('DjangoTemplateDocument', null=True, blank=True)
+    override_default_layout = models.BooleanField(default=False)
 
 
 class HtmlDocument(TextDocument):
@@ -547,10 +548,12 @@ class ViewerRequest(Item):
     viewer = models.CharField(max_length=255, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('djangotemplatedocument', 'DjangoTemplateDocument')])
     action = models.CharField(max_length=256)
     query_string = models.CharField(max_length=1024, null=True, blank=True)
+    #TODO add kwargs['format']
 
 
 class Site(ViewerRequest):
     is_default_site = IsDefaultField(default=None)
+    default_layout = models.ForeignKey('DjangoTemplateDocument', null=True, blank=True)
 
 
 class SiteDomain(Item):

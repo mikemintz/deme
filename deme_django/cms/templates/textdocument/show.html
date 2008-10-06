@@ -39,7 +39,7 @@
     {{ itemversion.description }}
 </div>
 <div id="docbody" style="padding: 10px; border: 3px solid #000; background: #f8f8f8;">
-    {{ itemversion.body|escape|linebreaksbr }}
+    {{ itemversion.body|escape|linebreaksbr|urlize }}<!-- TODO this doesn't work to escape pages with HTML for some reason -->
 </div>
 <div style="padding: 10px; border: 3px solid #000; border-top: none; background: #ccc; text-align: center; font-size: smaller;">
     Last modified by <a href="{% show_resource_url itemversion.updater %}">{{ itemversion.updater }}</a> on {{ itemversion.updated_at }}.

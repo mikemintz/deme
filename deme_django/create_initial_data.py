@@ -59,7 +59,7 @@ import sys; sys.exit(0)
 ################################################################################
 
 home_page = DjangoTemplateDocument(body="""
-{% extends 'base.html' %}
+{% extends layout %}
 {% block title %}Welcome to Deme!{% endblock %}
 {% block content %}
 Welcome to Deme!
@@ -67,7 +67,7 @@ Welcome to Deme!
 """)
 home_page.save_versioned(updater=admin)
 default_site.viewer = 'djangotemplatedocument'
-default_site.action = 'show'
+default_site.action = 'render'
 default_site.aliased_item = home_page
 default_site.query_string = ''
 default_site.save_versioned(updater=admin)

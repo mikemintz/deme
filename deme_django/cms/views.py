@@ -36,6 +36,26 @@ def comment_dicts_for_item(item):
         result.append(comment_info)
     return result
 
+def set_default_layout(context, site, cur_agent):
+    #TODO permissions
+    cur_node = site.default_layout
+    while cur_node is not None:
+        next_node = cur_node.layout
+        if next_node is None:
+            if cur_node.override_default_layout:
+                extends_string = ''
+            else:
+                extends_string = "{% extends 'default_layout.html' %}\n"
+        else:
+            extends_string = "{%% extends layout%s %%}\n" % next_node.pk
+        template_string = extends_string + cur_node.body
+        t = loader.get_template_from_string(template_string)
+        context['layout%d' % cur_node.pk] = t
+        cur_node = next_node
+    if site.default_layout:
+        context['layout'] = context['layout%s' % site.default_layout.pk]
+    else:
+        context['layout'] = 'default_layout.html'
 
 class ViewerMetaClass(type):
     viewer_name_dict = {}
@@ -71,9 +91,7 @@ class ItemViewer(object):
             self._item_ability_cache[(agent.pk, item.pk)] = result
         return result
 
-    def init_from_http(self, request, cur_agent, url_info):
-        self.layout = 'base.html'
-        #self.layout = 'base_symsys.html'
+    def init_from_http(self, request, cur_agent, current_site, url_info):
         self.viewer_name = url_info['viewer']
         self.format = url_info['format'] or 'html'
         self.method = (request.REQUEST.get('_method', None) or request.method).upper()
@@ -103,7 +121,6 @@ class ItemViewer(object):
                 self.item = self.item.downcast()
                 self.itemversion = self.itemversion.downcast()
         self.context = Context()
-        self.context['layout'] = self.layout
         self.context['item_type'] = self.item_type.__name__
         self.context['item_type_inheritance'] = [x.__name__ for x in reversed(self.item_type.mro()) if issubclass(x, cms.models.Item)]
         self.context['full_path'] = self.request.get_full_path()
@@ -111,9 +128,9 @@ class ItemViewer(object):
         self.context['cur_agent'] = self.cur_agent
         self.context['_global_ability_cache'] = self._global_ability_cache
         self.context['_item_ability_cache'] = self._item_ability_cache
+        set_default_layout(self.context, current_site, cur_agent)
 
     def init_show_from_div(self, original_request, viewer_name, item, itemversion, cur_agent):
-        self.layout = 'blank.html'
         self.request = original_request
         self.viewer_name = viewer_name
         self.format = 'html'
@@ -123,7 +140,7 @@ class ItemViewer(object):
         self.itemversion = itemversion
         self.action = 'show'
         self.context = Context()
-        self.context['layout'] = self.layout
+        self.context['layout'] = 'blank.html'
         self.context['item_type'] = self.item_type.__name__
         self.context['item_type_inheritance'] = [x.__name__ for x in reversed(self.item_type.mro()) if issubclass(x, cms.models.Item)]
         self.context['full_path'] = self.request.get_full_path()
@@ -183,7 +200,7 @@ The agent currently logged in is not allowed to use this application. Please log
         if ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent):
             listable_items = items
         else:
-            listable_items = items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'id'))#.distinct() #TODO don't need this?
+            listable_items = items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'id'))
         n_opposite_trashed_items = listable_items.filter(trashed=(not trashed)).count()
         listable_items = listable_items.filter(trashed=trashed)
         listable_items = listable_items.order_by('id')
@@ -505,9 +522,21 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
     item_type = cms.models.DjangoTemplateDocument
     viewer_name = 'djangotemplatedocument'
 
-    def entry_show(self):
-        code = self.itemversion.body
-        template = loader.get_template_from_string(code)
+    def entry_render(self):
+        #TODO permissions
+        cur_node = self.itemversion
+        while cur_node is not None:
+            next_node = cur_node.layout
+            if cur_node.override_default_layout:
+                template_string = cur_node.body
+            else:
+                template_string = '{%% extends layout%s %%}\n%s' % (next_node.pk if next_node else '', cur_node.body)
+            t = loader.get_template_from_string(template_string)
+            if cur_node is self.itemversion:
+                template = t
+            else:
+                self.context['layout%d' % cur_node.pk] = t
+            cur_node = next_node
         return HttpResponse(template.render(self.context))
 
 
