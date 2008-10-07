@@ -1,10 +1,6 @@
 Add Location class, Add LocationContains relationship
 Event? Multiple locations and times?
 
-custom layouts for sure
-
-PhotoDocument subclasses FileDocument
-
 * deleting items (i.e. blanking)
 * remember to fully respect trashed=1 everywhere, like in groups, comments, etc.
 * We're going to have to integrate permissions into binary files (e.g., MediaDocument) so that users can't bypass Deme and download things from Apache directly.
@@ -18,7 +14,7 @@ PhotoDocument subclasses FileDocument
 * fyi, there may be cases where there is cur_agent but no cur_account (like anonymous, and login_as other)
 * don't forget to update icons for new models
 * what happens when viewer2 inherits from viewer1, and viewer2 item type subclasses viewer1 item type, and viewer2 inherits the edit/update functionality?
-* add indexes on things besides foreign keys, like description (for search) or version_number, and in global permissions: ability, ability_parameter, and is_allowed fields
+* add indexes on things besides foreign keys, like name,description (for search) or version_number, and in global permissions: ability, ability_parameter, and is_allowed fields
 * more efficient versioning (like like latest version in db, but have deltas to prev versions)
 * SSL for login or just sha1 the password in javascript
 * make favicon transparent
