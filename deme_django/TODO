@@ -23,3 +23,4 @@ Event? Multiple locations and times?
 * write a query that finds out all of the people that have permission to do X to item Y
 * urls should be more modular, not hard coded as much, like all the /static/media and /resource/{{item_type}}
 * decide whether to have autoescape on or off
+* add sensitive_function.alters_data = True to functions like save_versioned so templates cant call them

@@ -26,16 +26,6 @@ def get_form_class_for_item_type(item_type, fields=None):
 
 ### VIEWERS ###
 
-def comment_dicts_for_item(item):
-    comments = item.comments_as_item.order_by('updated_at')
-    result = []
-    for comment in comments:
-        comment_info = {}
-        comment_info['comment'] = comment
-        comment_info['subcomments'] = comment_dicts_for_item(comment)
-        result.append(comment_info)
-    return result
-
 def set_default_layout(context, site, cur_agent):
     #TODO permissions
     cur_node = site.default_layout
@@ -101,6 +91,8 @@ class ItemViewer(object):
             self.action = url_info['collection_action']
             if self.action == None:
                 self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'delete'}.get(self.method, 'list')
+            self.item = None
+            self.itemversion = None
         else:
             self.action = url_info['entry_action']
             if self.action == None:
@@ -121,6 +113,8 @@ class ItemViewer(object):
                 self.item = self.item.downcast()
                 self.itemversion = self.itemversion.downcast()
         self.context = Context()
+        self.context['item'] = self.item
+        self.context['itemversion'] = self.itemversion
         self.context['item_type'] = self.item_type.__name__
         self.context['item_type_inheritance'] = [x.__name__ for x in reversed(self.item_type.mro()) if issubclass(x, cms.models.Item)]
         self.context['full_path'] = self.request.get_full_path()
@@ -141,6 +135,8 @@ class ItemViewer(object):
         self.action = 'show'
         self.context = Context()
         self.context['layout'] = 'blank.html'
+        self.context['item'] = self.item
+        self.context['itemversion'] = self.itemversion
         self.context['item_type'] = self.item_type.__name__
         self.context['item_type_inheritance'] = [x.__name__ for x in reversed(self.item_type.mro()) if issubclass(x, cms.models.Item)]
         self.context['full_path'] = self.request.get_full_path()
@@ -180,7 +176,6 @@ The agent currently logged in is not allowed to use this application. Please log
 
     def render_item_not_found(self):
         template = loader.get_template('item_not_found.html')
-        self.context['item'] = self.item
         self.context['noun'] = self.noun
         self.context['viewer'] = self.viewer_name
         return HttpResponseNotFound(template.render(self.context))
@@ -280,11 +275,12 @@ The agent currently logged in is not allowed to use this application. Please log
         can_view = ('view', 'id') in abilities_for_item
         if not (can_do_everything or can_view):
             return HttpResponseBadRequest("you do not have permission to view this item")
-        comments = comment_dicts_for_item(self.item)
         def get_fields_for_item(item):
             #TODO we ignore OneToOneFields and ManyToManyFields
             fields = []
             for name in item._meta.get_all_field_names():
+                if name in ['item_type', 'trashed', 'current_item', 'version_number']: # special fields
+                    continue
                 field, model, direct, m2m = item._meta.get_field_by_name(name)
                 model_class = type(item) if model == None else model
                 model_class = model_class.NOTVERSION if issubclass(model_class, cms.models.Item.VERSION) else model_class
@@ -298,8 +294,7 @@ The agent currently logged in is not allowed to use this application. Please log
                         except ObjectDoesNotExist:
                             obj = None
                         if obj:
-                            #obj = [x.downcast() for x in obj.all()]
-                            obj = [x for x in obj.all()]
+                            obj = obj.all()
                         info['field_type'] = 'collection'
                     else:
                         continue
@@ -308,8 +303,6 @@ The agent currently logged in is not allowed to use this application. Please log
                         obj = getattr(item, name)
                     except ObjectDoesNotExist:
                         obj = None
-                    if obj:
-                        pass#obj = obj.downcast()
                     info['field_type'] = 'entry'
                 elif type(field).__name__ == 'OneToOneField':
                     continue
@@ -320,15 +313,11 @@ The agent currently logged in is not allowed to use this application. Please log
                     info['field_type'] = 'regular'
                 info['obj'] = obj
                 info['can_view'] = ('view', name) in abilities_for_item or can_do_everything
-                #TODO do something like can_view with collections
                 fields.append(info)
             return fields
         roles = permission_functions.get_roles_for_agent_and_item(self.cur_agent, self.item)
         template = loader.get_template('item/show.html')
         self.context['inheritance'] = [x.__name__ for x in reversed(type(self.item).mro()) if issubclass(x, cms.models.Item)]
-        self.context['item'] = self.item
-        self.context['itemversion'] = self.itemversion
-        self.context['comments'] = comments
         self.context['item_fields'] = get_fields_for_item(self.item)
         self.context['itemversion_fields'] = get_fields_for_item(self.itemversion)
         self.context['direct_roles'] = roles[0].all()
@@ -347,8 +336,6 @@ The agent currently logged in is not allowed to use this application. Please log
         form_class = get_form_class_for_item_type(self.item_type, fields_can_edit)
         form = form_class(instance=self.itemversion)
         template = loader.get_template('item/edit.html')
-        self.context['item'] = self.item
-        self.context['itemversion'] = self.itemversion
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, type(self.item))]
@@ -382,8 +369,6 @@ The agent currently logged in is not allowed to use this application. Please log
             return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name, new_item.pk))
         else:
             template = loader.get_template('item/edit.html')
-            self.context['item'] = self.item
-            self.context['itemversion'] = self.itemversion
             self.context['form'] = form
             self.context['query_string'] = self.request.META['QUERY_STRING']
             model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, type(self.item))]
@@ -442,16 +427,12 @@ class GroupViewer(ItemViewer):
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
-        comments = comment_dicts_for_item(self.item)
         folio = self.item.folios_as_group.get()
         folio_viewer_class = get_viewer_class_for_viewer_name('itemset')
         folio_viewer = folio_viewer_class()
         folio_viewer.init_show_from_div(self.request, 'itemset', folio, folio.versions.latest(), self.cur_agent)
         folio_html = folio_viewer.dispatch().content
         template = loader.get_template('group/show.html')
-        self.context['item'] = self.item
-        self.context['itemversion'] = self.itemversion
-        self.context['comments'] = comments
         self.context['folio_html'] = folio_html
         return HttpResponse(template.render(self.context))
 
@@ -461,11 +442,7 @@ class ItemSetViewer(ItemViewer):
     viewer_name = 'itemset'
 
     def entry_show(self):
-        comments = comment_dicts_for_item(self.item)
         template = loader.get_template('itemset/show.html')
-        self.context['item'] = self.item
-        self.context['itemversion'] = self.itemversion
-        self.context['comments'] = comments
         return HttpResponse(template.render(self.context))
 
 
@@ -480,7 +457,6 @@ class ImageDocument(ItemViewer):
         if not (can_do_everything or can_view):
             return HttpResponseBadRequest("you do not have permission to view this item")
         template = loader.get_template('imagedocument/show.html')
-        self.context['item'] = self.item
         return HttpResponse(template.render(self.context))
 
 
@@ -489,11 +465,7 @@ class TextDocumentViewer(ItemViewer):
     viewer_name = 'textdocument'
 
     def entry_show(self):
-        comments = comment_dicts_for_item(self.item)
         template = loader.get_template('textdocument/show.html')
-        self.context['item'] = self.item
-        self.context['itemversion'] = self.itemversion
-        self.context['comments'] = comments
         return HttpResponse(template.render(self.context))
 
     def collection_getregions(self):
@@ -506,11 +478,7 @@ class HtmlDocumentViewer(TextDocumentViewer):
     viewer_name = 'htmldocument'
 
     def entry_show(self):
-        comments = comment_dicts_for_item(self.item)
         template = loader.get_template('htmldocument/show.html')
-        self.context['item'] = self.item
-        self.context['itemversion'] = self.itemversion
-        self.context['comments'] = comments
         return HttpResponse(template.render(self.context))
 
     def collection_getregions(self):

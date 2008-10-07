@@ -4,7 +4,12 @@
 {% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
 {% block content %}
 
-<img src="/static/media/{{ item.datafile }}" />
+{% item_header itemversion item_type_inheritance %}
+
+<img src="/static/media/{{ itemversion.datafile }}" />
+
+<h2>Comments</h2>
+{% comment_box itemversion full_path %}
 
 {% endblock content %}
 

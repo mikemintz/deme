@@ -16,7 +16,6 @@ class SymsysAffiliateViewer(ItemViewer):
         if not (can_do_everything or can_view):
             return HttpResponseBadRequest("you do not have permission to view this item")
         template = loader.get_template('symsysaffiliate/show.html')
-        self.context['item'] = self.item
         return HttpResponse(template.render(self.context))
 
 

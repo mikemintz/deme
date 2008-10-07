@@ -1,6 +1,7 @@
 from django import template
 import cms.models
 from cms import permission_functions
+from django.utils.http import urlquote
 
 register = template.Library()
 
@@ -94,7 +95,82 @@ def list_results_navigator(item_type, search_query, trashed, offset, limit, n_re
         result.append(next_button)
     return ''.join(result)
 
+def comment_dicts_for_item(item):
+    comments = item.comments_as_item.order_by('updated_at')
+    result = []
+    for comment in comments:
+        comment_info = {}
+        comment_info['comment'] = comment
+        comment_info['subcomments'] = comment_dicts_for_item(comment)
+        result.append(comment_info)
+    return result
 
+@register.simple_tag
+def item_header(itemversion, item_type_inheritance):
+    #TODO only show edit or trash if you have the ability w.r.t. 'id'!
+    item = itemversion.current_item
+    result = []
+
+    result.append("""<div class="crumbs">""")
+    result.append("""<div style="float: right;">""")
+    result.append("""<a href="/resource/%s/%s/edit?version=%s">Edit</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
+    if item.trashed:
+        result.append("""<a href="/resource/%s/%s/untrash">Untrash</a>""" % (item.item_type.lower(), item.pk))
+    else:
+        result.append("""<a href="/resource/%s/%s/trash">Trash</a>""" % (item.item_type.lower(), item.pk))
+    if itemversion.trashed:
+        result.append("""<a href="/resource/%s/%s/untrash?version=%s">Untrash Version</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
+    else:
+        result.append("""<a href="/resource/%s/%s/trash?version=%s">Trash Version</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
+    result.append("""</div>""")
+    for inherited_item_type in item_type_inheritance:
+        result.append("""<a href="/resource/%s">%ss</a> &raquo;""" % (inherited_item_type.lower(), inherited_item_type))
+    result.append("""<a href="%s">%s</a> &raquo;""" % (show_resource_url(item), item))
+    result.append("""Version %s""" % (itemversion.version_number,))
+    result.append("""</div>""")
+
+    result.append("""<div style="background: #ccf; padding: 10px; margin-bottom: 10px;">""")
+    result.append("""Versions:""")
+    for other_itemversion in item.versions.all():
+        result.append("""<span style="margin-left: 10px;">""")
+        if other_itemversion.version_number == itemversion.version_number:
+            result.append("""<b>%s</b>""" % (other_itemversion.version_number,))
+        else:
+            result.append("""<a href="/resource/%s/%s?version=%s">%s</a>""" % (item.item_type.lower(), item.pk, other_itemversion.version_number, other_itemversion.version_number))
+        result.append("""</span>""")
+    result.append("""</div>""")
+
+    if item.trashed:
+        result.append("""<div style="color: #c00; font-weight: bold; font-size: larger;">This version is trashed</div>""")
+
+    return '\n'.join(result)
+
+
+
+@register.simple_tag
+def comment_box(itemversion, full_path):
+    #TODO comments should be subject to permissions
+    result = []
+    result.append("""<div class="comment_box">""")
+    result.append("""<div class="comment_box_header"><a href="/resource/comment/new?commented_item=%s&commented_item_version=%s&redirect=%s">[+] Add Comment</a></div>""" % (itemversion.current_item.pk, itemversion.pk, urlquote(full_path)))
+    def add_comments_to_div(comments, nesting_level=0):
+        for comment_info in comments:
+            result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
+            result.append("""<div class="comment_header">""")
+            result.append("""<a href="/resource/%s/%s">%s</a>""" % (comment_info['comment'].item_type.lower(), comment_info['comment'].pk, comment_info['comment'].name))
+            result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment_info['comment'].creator), comment_info['comment'].creator.name))
+            result.append("</div>")
+            result.append("""<div class="comment_description">""")
+            result.append(comment_info['comment'].description)
+            result.append("</div>")
+            result.append("""<div class="comment_body">""")
+            result.append(comment_info['comment'].body)
+            result.append("</div>")
+            add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
+            result.append("</div>")
+    add_comments_to_div(comment_dicts_for_item(itemversion.current_item))
+    result.append("</div>")
+    return '\n'.join(result)
 
 
 #TODO make this more efficient (i.e. cache it in a consistent place)

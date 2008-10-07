@@ -4,15 +4,7 @@
 {% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
 {% block content %}
 
-<div class="crumbs">
-    {% for inherited_item_type in item_type_inheritance %}
-    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
-    &raquo;
-    {% endfor %}
-    <a href="{% show_resource_url item %}">{{ item }}</a>
-    &raquo;
-    Version {{ itemversion.version_number }}
-</div>
+{% item_header itemversion item_type_inheritance %}
 
 <div style="margin-bottom: 10px;">
     <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit">[Edit This ItemSet]</a>
@@ -35,23 +27,7 @@
 {% endif %}
 
 <h2>Comments</h2>
-<div>
-    <a href="/resource/comment/new?commented_item={{ item.pk }}&commented_item_version={{ itemversion.pk }}&redirect={{ full_path|urlencode }}">Add Comment</a>
-</div>
-<div>
-    {% for comment_info in comments %}
-    <div style="margin-bottom: 5px; border: 1px solid #666; padding: 15px;">
-        <div style="border-bottom: 1px solid #888;">
-            <a href="/resource/{{ comment_info.comment.item_type|lower }}/{{ comment_info.comment.pk }}">{{ comment_info.comment }}</a>
-            by <a href="{% show_resource_url comment_info.comment.creator %}">{{ comment_info.comment.creator }}</a>
-            for <a href="{% show_resource_url comment_info.comment.commented_item_version %}">version {{ comment_info.comment.commented_item_version.version_number }}</a>
-        </div>
-        <div>
-            {{ comment_info.comment.body }}
-        </div>
-    </div>
-    {% endfor %}
-</div>
+{% comment_box itemversion full_path %}
 
 {% endblock content %}
 

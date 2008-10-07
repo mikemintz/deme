@@ -4,49 +4,56 @@
 {% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
 {% block content %}
 
-<div class="crumbs">
-    <div style="float: right;">
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit?version={{ itemversion.version_number }}">Edit</a>
-        {% if item.trashed %}
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/untrash">Untrash</a>
-        {% else %}
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/trash">Trash</a>
-        {% endif %}
-        {% if itemversion.trashed %}
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/untrash?version={{ itemversion.version_number }}">Untrash Version</a>
-        {% else %}
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/trash?version={{ itemversion.version_number }}">Trash Version</a>
-        {% endif %}
-    </div>
-    {% for inherited_item_type in item_type_inheritance %}
-    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
-    &raquo;
-    {% endfor %}
-    <a href="{% show_resource_url item %}">{{ item }}</a>
-    &raquo;
-    Version {{ itemversion.version_number }}
-</div>
+{% item_header itemversion item_type_inheritance %}
 
-<div style="background: #ccf; padding: 10px; margin-bottom: 10px;">
-    Versions:
-    {% for other_itemversion in item.versions.all %}
-    <span style="margin-left: 10px;">
-        {% ifequal other_itemversion.version_number itemversion.version_number %}
-        <b>{{ other_itemversion.version_number }}</b>
+<h2 style="border-bottom: 3px solid #000;">Version {{ itemversion.version_number }} Details</h2>
+
+<div style="margin-left: 30px;">
+    <h3>Fields</h3>
+
+    <table class="list">
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Defined In</th>
+        </tr>
+        {% for model_name in inheritance %}
+        {% for field in itemversion_fields %}
+        {% ifequal field.model_name model_name %}
+        {% ifequal field.field_type 'collection' %}
         {% else %}
-        <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}?version={{ other_itemversion.version_number }}">{{ other_itemversion.version_number }}</a>
+        <tr class="{% cycle 'even' 'odd' %}">
+            <td>{{ field.name|title }}</td>
+            <td>
+                {% if field.can_view %}
+                    {% ifequal field.field_type 'regular' %}
+                    {% ifequal field.format 'FileField' %}
+                    <a href="/static/media/{{ field.obj }}">{{ field.obj }}</a>
+                    {% else %}
+                    {{ field.obj }}
+                    {% endifequal %}
+                    {% endifequal %}
+
+                    {% ifequal field.field_type 'entry' %}
+                    {% if field.obj %}
+                    <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                    {% else %}
+                    NULL
+                    {% endif %}
+                    {% endifequal %}
+                {% else %}
+                    PERMISSION DENIED
+                {% endif %}
+            </td>
+            <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
+        </tr>
         {% endifequal %}
-    </span>
-    {% endfor %}
-</div>
+        {% endifequal %}
+        {% endfor %}
+        {% endfor %}
+    </table>
 
-<!--
-<div style="margin-bottom: 10px;">
-    <form method="post" action="/resource/{{ item.item_type|lower }}/{{ item.pk }}/delete">
-        <input type="submit" value="Delete" onclick="return confirm('Are you sure?');" />
-    </form>
 </div>
--->
 
 <h2 style="border-bottom: 3px solid #000;">Your Permissions To This {{ item.item_type }}</h2>
 <div style="margin-left: 30px;">
@@ -90,239 +97,8 @@
     </table>
 </div>
 
-<h2 style="border-bottom: 3px solid #000;">Version {{ itemversion.version_number }} Details</h2>
-
-<div style="margin-left: 30px;">
-    <h3>Fields</h3>
-
-    <table class="list">
-        <tr>
-            <th>Name</th>
-            <th>Value</th>
-            <th>Defined In</th>
-        </tr>
-        {% for model_name in inheritance %}
-        {% for field in itemversion_fields %}
-        {% ifequal field.model_name model_name %}
-        {% ifequal field.field_type 'collection' %}
-        {% else %}
-        <tr class="{% cycle 'even' 'odd' %}">
-            <td>{{ field.name|title }}</td>
-            <td>
-                {% if field.can_view %}
-                    {% ifequal field.field_type 'regular' %}
-                    {% ifequal field.format 'FileField' %}
-                    <a href="/static/media/{{ field.obj }}">{{ field.obj }}</a>
-                    {% else %}
-                    {{ field.obj }}
-                    {% endifequal %}
-                    {% endifequal %}
-
-                    {% ifequal field.field_type 'entry' %}
-                    {% if field.obj %}
-                    <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
-                    {% else %}
-                    NULL
-                    {% endif %}
-                    {% endifequal %}
-
-                    {% ifequal field.field_type 'collection' %}
-                    {% if field.obj %}
-                    {% for obj in field.obj %}
-                    <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
-                    {% endfor %}
-                    {% else %}
-
-                    {% endif %}
-                    {% endifequal %}
-                {% else %}
-                    PERMISSION DENIED
-                {% endif %}
-            </td>
-            <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
-        </tr>
-        {% endifequal %}
-        {% endifequal %}
-        {% endfor %}
-        {% endfor %}
-    </table>
-
-    <h3>Collections</h3>
-
-    <table class="list">
-        <tr>
-            <th>Name</th>
-            <th>Value</th>
-            <th>Defined In</th>
-        </tr>
-        {% for model_name in inheritance %}
-        {% for field in itemversion_fields %}
-        {% ifequal field.model_name model_name %}
-        {% ifequal field.field_type 'collection' %}
-        <tr class="{% cycle 'even' 'odd' %}">
-            <td>{{ field.name|title }}</td>
-            <td>
-                {% if field.can_view %}
-                    {% ifequal field.field_type 'regular' %}
-                    {{ field.obj }}
-                    {% endifequal %}
-
-                    {% ifequal field.field_type 'entry' %}
-                    {% if field.obj %}
-                    <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
-                    {% else %}
-                    NULL
-                    {% endif %}
-                    {% endifequal %}
-
-                    {% ifequal field.field_type 'collection' %}
-                    {% if field.obj %}
-                    {% for obj in field.obj %}
-                    <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
-                    {% endfor %}
-                    {% else %}
-
-                    {% endif %}
-                    {% endifequal %}
-                {% else %}
-                    PERMISSION DENIED
-                {% endif %}
-            </td>
-            <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
-        </tr>
-        {% endifequal %}
-        {% endifequal %}
-        {% endfor %}
-        {% endfor %}
-    </table>
-</div>
-
-<h2 style="border-bottom: 3px solid #000;">Current Details</h2>
-
-<div style="margin-left: 30px;">
-    <h3>Fields</h3>
-
-    <table class="list">
-        <tr>
-            <th>Name</th>
-            <th>Value</th>
-            <th>Defined In</th>
-        </tr>
-        {% for model_name in inheritance %}
-        {% for field in item_fields %}
-        {% ifequal field.model_name model_name %}
-        {% ifequal field.field_type 'collection' %}
-        {% else %}
-        <tr class="{% cycle 'even' 'odd' %}">
-            <td>{{ field.name|title }}</td>
-            <td>
-                {% if field.can_view %}
-                    {% ifequal field.field_type 'regular' %}
-                    {% ifequal field.format 'FileField' %}
-                    <a href="/static/media/{{ field.obj }}">{{ field.obj }}</a>
-                    {% else %}
-                    {{ field.obj }}
-                    {% endifequal %}
-                    {% endifequal %}
-
-                    {% ifequal field.field_type 'entry' %}
-                    {% if field.obj %}
-                    <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
-                    {% else %}
-                    NULL
-                    {% endif %}
-                    {% endifequal %}
-
-                    {% ifequal field.field_type 'collection' %}
-                    {% if field.obj %}
-                    {% for obj in field.obj %}
-                    <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
-                    {% endfor %}
-                    {% else %}
-
-                    {% endif %}
-                    {% endifequal %}
-                {% else %}
-                    PERMISSION DENIED
-                {% endif %}
-            </td>
-            <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
-        </tr>
-        {% endifequal %}
-        {% endifequal %}
-        {% endfor %}
-        {% endfor %}
-    </table>
-
-    <h3>Collections</h3>
-
-    <table class="list">
-        <tr>
-            <th>Name</th>
-            <th>Value</th>
-            <th>Defined In</th>
-        </tr>
-        {% for model_name in inheritance %}
-        {% for field in item_fields %}
-        {% ifequal field.model_name model_name %}
-        {% ifequal field.field_type 'collection' %}
-        <tr class="{% cycle 'even' 'odd' %}">
-            <td>{{ field.name|title }}</td>
-            <td>
-                {% if field.can_view %}
-                    {% ifequal field.field_type 'regular' %}
-                    {{ field.obj }}
-                    {% endifequal %}
-
-                    {% ifequal field.field_type 'entry' %}
-                    {% if field.obj %}
-                    <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
-                    {% else %}
-                    NULL
-                    {% endif %}
-                    {% endifequal %}
-
-                    {% ifequal field.field_type 'collection' %}
-                    {% if field.obj %}
-                    {% for obj in field.obj %}
-                    <div><a href="{% show_resource_url obj %}">{{ obj }}</a></div>
-                    {% endfor %}
-                    {% else %}
-
-                    {% endif %}
-                    {% endifequal %}
-                {% else %}
-                    PERMISSION DENIED
-                {% endif %}
-            </td>
-            <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
-        </tr>
-        {% endifequal %}
-        {% endifequal %}
-        {% endfor %}
-        {% endfor %}
-    </table>
-</div>
-
 <h2>Comments</h2>
-<!-- TODO comments should be subject to permissions -->
-<div>
-    <a href="/resource/comment/new?commented_item={{ item.pk }}&commented_item_version={{ itemversion.pk }}&redirect={{ full_path|urlencode }}">Add Comment</a>
-</div>
-<div>
-    {% for comment_info in comments %}
-    <div style="margin-bottom: 5px; border: 1px solid #666; padding: 15px;">
-        <div style="border-bottom: 1px solid #888;">
-            <a href="/resource/{{ comment_info.comment.item_type|lower }}/{{ comment_info.comment.pk }}">{{ comment_info.comment }}</a>
-            by <a href="{% show_resource_url comment_info.comment.creator %}">{{ comment_info.comment.creator }}</a>
-            for <a href="{% show_resource_url comment_info.comment.commented_item_version %}">version {{ comment_info.comment.commented_item_version.version_number }}</a>
-        </div>
-        <div>
-            {{ comment_info.comment.body }}
-        </div>
-    </div>
-    {% endfor %}
-</div>
+{% comment_box itemversion full_path %}
 
 {% endblock content %}
 

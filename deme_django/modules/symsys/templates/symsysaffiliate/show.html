@@ -5,6 +5,8 @@
 {% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
 {% block content %}
 
+{% item_header itemversion item_type_inheritance %}
+
 <table class="twocol">
 
     {% ifagentcan cur_agent 'view' 'first_name' item %}
@@ -600,6 +602,9 @@ respos_job_email_subscribe
 -->
 
 </table>
+
+<h2>Comments</h2>
+{% comment_box itemversion full_path %}
 
 {% endblock content %}
 

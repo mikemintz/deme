@@ -79,3 +79,41 @@ form.item_form ul.errorlist li {
 .list_results_step {
     margin-right: 3px;
 }
+
+/* Comments */
+
+div.comment_box {
+    border: thick solid #ccc;
+    padding: 5px;
+}
+div.comment_box_header {
+    text-align: right;
+    font-size: smaller;
+    margin-bottom: 5px;
+}
+
+div.comment_outer {
+    margin-left: 20px;
+    border: thin solid #aaa;
+    border-width: thin 0 0 thin;
+}
+div.comment_outer_toplevel {
+    margin-left: 0;
+    border-width: thin thin thin thin;
+}
+div.comment_header {
+    background: #ccc;
+    padding: 3px;
+}
+div.comment_description {
+    color: #999;
+    font-style: italic;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+div.comment_body {
+    padding-bottom: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
