@@ -24,3 +24,4 @@ Event? Multiple locations and times?
 * urls should be more modular, not hard coded as much, like all the /static/media and /resource/{{item_type}}
 * decide whether to have autoescape on or off
 * add sensitive_function.alters_data = True to functions like save_versioned so templates cant call them
+* make it so permission view(name) and view(id) are merged? gets confusing, because edit(name) and edit(id) are different

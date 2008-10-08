@@ -86,14 +86,9 @@ class Event(Item):
     url = models.TextField(blank=True)
 
 
-class NewsRoll(Item):
-    pass
-
-
-#TODO add newsitemmembership so that newsitems can be in multiple newsrolls
 #TODO maybe it just points to a Document, rather than subclassing. that way it can be interpretted in any way
 class NewsItem(TextDocument):
-    news_roll = models.ForeignKey(NewsRoll, related_name='newsitems_as_newsroll')
+    pass
 
 
 class Advertisement(NewsItem):

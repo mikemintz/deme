@@ -8,39 +8,30 @@ from django.db.models import Q
 
 
 def get_global_roles_for_agent(agent):
-    """
-    Return a triple (user_role_list, group_role_list, default_role_list)
-    """
     if not agent:
         raise Exception("You must create an anonymous user")
     my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('group_id').query
     role_manager = GlobalRole.objects.filter(trashed=False)
-    direct_roles = role_manager.filter(agent_global_role_permissions_as_global_role__agent=agent,
-                                       agent_global_role_permissions_as_global_role__trashed=False)
-    groupwide_roles = role_manager.filter(group_global_role_permissions_as_global_role__pk__in=my_group_ids,
-                                          group_global_role_permissions_as_global_role__trashed=False)
+    agent_roles = role_manager.filter(agent_global_role_permissions_as_global_role__agent=agent,
+                                      agent_global_role_permissions_as_global_role__trashed=False)
+    group_roles = role_manager.filter(group_global_role_permissions_as_global_role__pk__in=my_group_ids,
+                                      group_global_role_permissions_as_global_role__trashed=False)
     default_roles = role_manager.filter(default_global_role_permissions_as_global_role__pk__isnull=False,
                                         default_global_role_permissions_as_global_role__trashed=False)
-    return (direct_roles, groupwide_roles, default_roles)
+    return (agent_roles, group_roles, default_roles)
 
 
 def get_global_permissions_for_agent(agent):
-    """
-    Return a triple (user_permission_list, group_permission_list, default_permission_list)
-    """
     if not agent:
         raise Exception("You must create an anonymous user")
     my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('group_id').query
-    direct_roles = AgentGlobalPermission.objects.filter(trashed=False, agent=agent)
-    groupwide_roles = GroupGlobalPermission.objects.filter(trashed=False, group__pk__in=my_group_ids)
-    default_roles = DefaultGlobalPermission.objects.filter(trashed=False)
-    return (direct_roles, groupwide_roles, default_roles)
+    agent_perms = AgentGlobalPermission.objects.filter(trashed=False, agent=agent)
+    group_perms = GroupGlobalPermission.objects.filter(trashed=False, group__pk__in=my_group_ids)
+    default_perms = DefaultGlobalPermission.objects.filter(trashed=False)
+    return (agent_perms, group_perms, default_perms)
 
 
 def get_global_abilities_for_agent(agent):
-    """
-    Return a set of strings
-    """
     roles_triple = get_global_roles_for_agent(agent)
     permissions_triple = get_global_permissions_for_agent(agent)
     abilities_yes = set()
@@ -83,15 +74,15 @@ def get_roles_for_agent_and_item(agent, item):
         raise Exception("You must create an anonymous user")
     my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('group_id').query
     role_manager = Role.objects.filter(trashed=False)
-    direct_roles = role_manager.filter(agent_role_permissions_as_role__item=item,
-                                       agent_role_permissions_as_role__agent=agent,
-                                       agent_role_permissions_as_role__trashed=False)
-    groupwide_roles = role_manager.filter(group_role_permissions_as_role__item=item,
-                                          group_role_permissions_as_role__group__pk__in=my_group_ids,
-                                          group_role_permissions_as_role__trashed=False)
+    agent_roles = role_manager.filter(agent_role_permissions_as_role__item=item,
+                                      agent_role_permissions_as_role__agent=agent,
+                                      agent_role_permissions_as_role__trashed=False)
+    group_roles = role_manager.filter(group_role_permissions_as_role__item=item,
+                                      group_role_permissions_as_role__group__pk__in=my_group_ids,
+                                      group_role_permissions_as_role__trashed=False)
     default_roles = role_manager.filter(default_role_permissions_as_role__item=item,
                                         default_role_permissions_as_role__trashed=False)
-    return (direct_roles, groupwide_roles, default_roles)
+    return (agent_roles, group_roles, default_roles)
 
 
 def get_permissions_for_agent_and_item(agent, item):
@@ -101,10 +92,10 @@ def get_permissions_for_agent_and_item(agent, item):
     if not agent:
         raise Exception("You must create an anonymous user")
     my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('group_id').query
-    direct_permissions = AgentPermission.objects.filter(item=item, agent=agent, trashed=False)
-    groupwide_permissions = GroupPermission.objects.filter(item=item, group__pk__in=my_group_ids, trashed=False)
-    default_permissions = DefaultPermission.objects.filter(item=item, trashed=False)
-    return (direct_permissions, groupwide_permissions, default_permissions)
+    agent_perms = AgentPermission.objects.filter(item=item, agent=agent, trashed=False)
+    group_perms = GroupPermission.objects.filter(item=item, group__pk__in=my_group_ids, trashed=False)
+    default_perms = DefaultPermission.objects.filter(item=item, trashed=False)
+    return (agent_perms, group_perms, default_perms)
 
 
 def get_abilities_for_agent_and_item(agent, item):
