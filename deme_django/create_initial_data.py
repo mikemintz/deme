@@ -6,6 +6,9 @@ setup_environ(settings)
 
 from cms.models import *
 
+if Item.objects.count() != 0:
+    raise AssertionError, 'You cannot run ./create_initial_data.py on a non-empty database'
+
 ################################################################################
 # Necessary items
 ################################################################################

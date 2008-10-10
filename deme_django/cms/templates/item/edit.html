@@ -30,22 +30,6 @@ tinyMCE.init({
 <div>
     <form method="post" enctype="multipart/form-data" action="/resource/{{ item_type|lower }}/{{ itemversion.current_item_id }}/update?version={{ itemversion.version_number }}" class="item_form">
         <table>
-            <tr>
-                <th>
-                    <label for="id_item_type">Item Type:</label>
-                </th>
-                <td>
-                    <select id="id_item_type" name="item_type" onchange="window.location = this.value;">
-                        {% for model_name in model_names %}
-                        {% ifequal model_name item_type %}
-                        <option value="/resource/{{ model_name|lower }}/{{ itemversion.current_item_id }}/edit?{{ query_string }}" selected="selected">{{ model_name }}</option>
-                        {% else %}
-                        <option value="/resource/{{ model_name|lower }}/{{ itemversion.current_item_id }}/edit?{{ query_string }}">{{ model_name }}</option>
-                        {% endifequal %}
-                        {% endfor %}
-                    </select>
-                </td>
-            </tr>
             {{ form.as_table }}
         </table>
     <input type="submit" />

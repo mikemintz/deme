@@ -139,21 +139,45 @@ href="/ssp_static?page=jobs.html" alt="Careers">
         
         
 
+        {% ifequal cur_agent.item_type 'AnonymousAgent' %}
         <tr>        
         <td></td>
         <td valign=top ><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
         <td>
             <span class=nav_menu_item>
-            {% ifequal cur_agent.item_type 'AnonymousAgent' %}
             <a href="/meta/login?redirect={{ full_path|urlencode }}">Sign In</a>
-            {% else %}
-            <a href="/meta/logout?redirect={{ full_path|urlencode }}">Sign Out</a>
-            <!--You are logged in as: {{ cur_agent }}-->
-            <!--[<a href="/meta/login?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]-->
-            {% endifequal %}
             </span>
         </td>
         </tr>
+        {% else %}
+        <tr>        
+        <td></td>
+        <td valign=top ><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
+        <td>
+            <span class=nav_menu_item>
+            Welcome, {{ cur_agent.name }}
+            </span>
+        </td>
+        </tr>
+        <tr>        
+        <td></td>
+        <td valign=top ><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
+        <td>
+            <span class=nav_menu_item>
+            <a href="/meta/login?redirect={{ full_path|urlencode }}">Sign In As Someone Else</a>
+            </span>
+        </td>
+        </tr>
+        <tr>        
+        <td></td>
+        <td valign=top ><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
+        <td>
+            <span class=nav_menu_item>
+            <a href="/meta/logout?redirect={{ full_path|urlencode }}">Sign Out</a>
+            </span>
+        </td>
+        </tr>
+        {% endifequal %}
                 
 </table>
 <br>

@@ -1,6 +1,7 @@
 # Create your views here.
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
 from django.template import Context, loader
+from django.db.models import Model
 from django.db.models import Q
 import cms.models
 from django import forms
@@ -164,8 +165,10 @@ The agent currently logged in is not allowed to use this application. Please log
             action_method = getattr(self, 'entry_%s' % self.action, None)
         if action_method:
             if self.noun != None:
-                if (self.action == 'edit' or self.action == 'update'):
-                    if not issubclass(self.item_type, type(self.item)):
+                if self.action == 'copy':
+                    pass
+                elif (self.action == 'edit' or self.action == 'update'):
+                    if self.item_type != type(self.item):
                         return self.render_item_not_found()
                 else:
                     if not isinstance(self.item, self.item_type):
@@ -332,15 +335,50 @@ The agent currently logged in is not allowed to use this application. Please log
         can_edit = ('edit', 'id') in abilities_for_item
         if not (can_do_everything or can_edit):
             return HttpResponseBadRequest("you do not have permission to edit this item")
-        fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
-        form_class = get_form_class_for_item_type(self.item_type, fields_can_edit)
+        if can_do_everything:
+            form_class = get_form_class_for_item_type(self.item_type)
+        else:
+            fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
+            form_class = get_form_class_for_item_type(self.item_type, fields_can_edit)
         form = form_class(instance=self.itemversion)
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, type(self.item))]
+        return HttpResponse(template.render(self.context))
+
+    def entry_copy(self):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        can_create = ('create', self.item_type.__name__) in self.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_edit = ('view', 'id') in abilities_for_item
+        if not (can_do_everything or can_create):
+            return HttpResponseBadRequest("you do not have permission to create %ss" % self.item_type.__name__)
+        if not (can_do_everything or can_edit):
+            return HttpResponseBadRequest("you do not have permission to copy this item")
+        form_class = get_form_class_for_item_type(self.item_type)
+        if can_do_everything:
+            fields_to_copy = [field_name for field_name in form_class.base_fields]
+        else:
+            fields_can_view = [x[1] for x in abilities_for_item if x[0] == 'view']
+            fields_to_copy = [field_name for field_name in form_class.base_fields if field_name in fields_can_view]
+        form_initial = {}
+        for field_name in fields_to_copy:
+            try:
+                field_value = getattr(self.itemversion, field_name)
+            except AttributeError:
+                continue
+            if isinstance(field_value, Model):
+                field_value = field_value.pk
+            form_initial[field_name] = field_value
+        form = form_class(initial=form_initial)
+        template = loader.get_template('item/new.html')
+        self.context['form'] = form
+        model_names = [model.__name__ for model in resource_name_dict.itervalues()]
         model_names.sort()
         self.context['model_names'] = model_names
+        self.context['action_is_entry_copy'] = True
+        if 'redirect' in self.request.GET:
+            self.context['redirect'] = self.request.GET['redirect']
         return HttpResponse(template.render(self.context))
 
     def entry_update(self):

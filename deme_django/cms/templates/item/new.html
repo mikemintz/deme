@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load resource_extras %}
 {% block favicon %}{{ item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item_type|icon_url:48 }}" /> New {{ item_type }}{% endblock %}
+{% block title %}<img src="{{ item_type|icon_url:48 }}" /> {% if action_is_entry_copy %}Copy{% else %}New{% endif %} {{ item_type }}{% endblock %}
 {% block content %}
 
 <script type="text/javascript" src="/static/javascripts/tinymce/jscripts/tiny_mce/tiny_mce.js"></script>
@@ -20,7 +20,7 @@ tinyMCE.init({
     <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
     &raquo;
     {% endfor %}
-    New
+    {% if action_is_entry_copy %}Copy{% else %}New{% endif %}
 </div>
 
 <div>
@@ -37,11 +37,7 @@ tinyMCE.init({
                 <td>
                     <select id="id_item_type" name="item_type" onchange="window.location = this.value;">
                         {% for model_name in model_names %}
-                        {% ifequal model_name item_type %}
-                        <option value="/resource/{{ model_name|lower }}/new" selected="selected">{{ model_name }}</option>
-                        {% else %}
-                        <option value="/resource/{{ model_name|lower }}/new">{{ model_name }}</option>
-                        {% endifequal %}
+                        <option value="/resource/{{ model_name|lower }}/{% if action_is_entry_copy %}{{ item.pk }}/copy?version={{ itemversion.version_number }}{% else %}new{% endif %}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>
                         {% endfor %}
                     </select>
                 </td>

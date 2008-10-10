@@ -114,6 +114,7 @@ def item_header(itemversion, item_type_inheritance):
     result.append("""<div class="crumbs">""")
     result.append("""<div style="float: right;">""")
     result.append("""<a href="/resource/%s/%s/edit?version=%s">Edit</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
+    result.append("""<a href="/resource/%s/%s/copy?version=%s">Copy</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
     if item.trashed:
         result.append("""<a href="/resource/%s/%s/untrash">Untrash</a>""" % (item.item_type.lower(), item.pk))
     else:
@@ -125,8 +126,7 @@ def item_header(itemversion, item_type_inheritance):
     result.append("""</div>""")
     for inherited_item_type in item_type_inheritance:
         result.append("""<a href="/resource/%s">%ss</a> &raquo;""" % (inherited_item_type.lower(), inherited_item_type))
-    result.append("""<a href="%s">%s</a> &raquo;""" % (show_resource_url(item), item))
-    result.append("""Version %s""" % (itemversion.version_number,))
+    result.append(item.name)
     result.append("""</div>""")
 
     result.append("""<div style="background: #ccf; padding: 10px; margin-bottom: 10px;">""")
