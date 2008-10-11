@@ -347,7 +347,7 @@ class Document(Item):
 
 
 class TextDocument(Document):
-    body = models.TextField()
+    body = models.TextField(blank=True)
 
 
 class DjangoTemplateDocument(TextDocument):

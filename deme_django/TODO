@@ -19,7 +19,8 @@ Event? Multiple locations and times?
 * SSL for login or just sha1 the password in javascript
 * make favicon transparent
 * having the default "Item" and "id" ability_parameter is kind of unelegant.
-* if you edit an item so it gets downcasted, problems with permissions?
+* later, think about adding back "edit downcast"
+* make "create folio" after group create be a after_save filter sort of thing, rather than viewer implemented, so subclasses of viewer do okay
 * write a query that finds out all of the people that have permission to do X to item Y
 * urls should be more modular, not hard coded as much, like all the /static/media and /resource/{{item_type}}
 * decide whether to have autoescape on or off

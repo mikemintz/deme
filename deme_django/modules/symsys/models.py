@@ -79,14 +79,14 @@ class SymsysAffiliate(Person):
     now_image = models.ForeignKey(FileDocument, related_name='symsysaffiliates_with_now_image', blank=True, null=True)
 
 
-class Event(Item):
+class Event(TextDocument):
     event_time = models.DateTimeField()
-    event_details = models.TextField(blank=True)
     location = models.TextField(blank=True)
     url = models.TextField(blank=True)
 
 
 #TODO maybe it just points to a Document, rather than subclassing. that way it can be interpretted in any way
+# same with Event I guess
 class NewsItem(TextDocument):
     pass
 
