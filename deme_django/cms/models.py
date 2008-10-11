@@ -546,7 +546,7 @@ class DefaultRolePermission(Relationship):
 class ViewerRequest(Item):
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
     viewer = models.CharField(max_length=255, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('djangotemplatedocument', 'DjangoTemplateDocument')])
-    action = models.CharField(max_length=256)
+    action = models.CharField(max_length=255)
     query_string = models.CharField(max_length=1024, null=True, blank=True)
     #TODO add kwargs['format']
 
@@ -557,7 +557,7 @@ class Site(ViewerRequest):
 
 
 class SiteDomain(Item):
-    hostname = models.CharField(max_length=256)
+    hostname = models.CharField(max_length=255)
     site = models.ForeignKey(Site, related_name='site_domains_as_site')
     class Meta:
         unique_together = (('site', 'hostname'),)
@@ -567,7 +567,7 @@ class SiteDomain(Item):
 #TODO we should prevent top level names like 'static' and 'resource', although not a big deal since it doesn't overwrite
 class CustomUrl(ViewerRequest):
     parent_url = models.ForeignKey('ViewerRequest', related_name='child_urls')
-    path = models.CharField(max_length=256)
+    path = models.CharField(max_length=255)
     class Meta:
         unique_together = (('parent_url', 'path'),)
 

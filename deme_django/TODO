@@ -26,3 +26,4 @@ Event? Multiple locations and times?
 * decide whether to have autoescape on or off
 * add sensitive_function.alters_data = True to functions like save_versioned so templates cant call them
 * make it so permission view(name) and view(id) are merged? gets confusing, because edit(name) and edit(id) are different
+* make all of the error messages dynamic functions in views.py, not templates of their own, and make the "permission denied" display nicely, maybe with shortcut to login as someone else

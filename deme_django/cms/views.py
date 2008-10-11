@@ -184,17 +184,25 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponseNotFound(template.render(self.context))
 
     def collection_list(self):
-        #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
+        if 'itemset' in self.request.GET:
+            itemset = cms.models.Item.objects.get(pk=self.request.GET.get('itemset')).downcast()
+        else:
+            itemset = None
         offset = int(self.request.GET.get('offset', 0))
         limit = int(self.request.GET.get('limit', 100))
         trashed = self.request.GET.get('trashed', None) == '1'
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
         self.context['search_query'] = self.request.GET.get('q', '')
+        items = self.item_type.objects
         if self.context['search_query']:
-            items = self.item_type.objects.filter(name__icontains=self.request.GET['q'])
-        else:
-            items = self.item_type.objects
+            items = items.filter(name__icontains=self.request.GET['q'])
+        # TODO filter the itemsetmembership and groupmembership by permission, check trashed
+        if isinstance(itemset, cms.models.ItemSet):
+            items = items.filter(pk__in=cms.models.ItemSetMembership.objects.filter(itemset=itemset).values('item_id').query)
+        elif isinstance(itemset, cms.models.Group):
+            #TODO a little sketchy putting a group in the itemset variable. maybe we should have group subclass itemset or something similar?
+            items = items.filter(pk__in=cms.models.GroupMembership.objects.filter(group=itemset).values('agent_id').query)
         if ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent):
             listable_items = items
         else:
@@ -217,6 +225,9 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['list_start_i'] = offset + 1
         self.context['list_end_i'] = min(offset + limit, n_listable_items)
         self.context['trashed'] = trashed
+        self.context['itemset'] = itemset
+        # TODO filter the itemset by permission, check trashed
+        self.context['all_itemsets'] = cms.models.Item.objects.filter(Q(pk__in=cms.models.ItemSet.objects.all().values('pk').query) | Q(pk__in=cms.models.Group.objects.all().values('pk').query)).order_by('name')
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
@@ -224,7 +235,6 @@ The agent currently logged in is not allowed to use this application. Please log
         can_create = ('create', self.item_type.__name__) in self.get_global_abilities_for_agent(self.cur_agent)
         if not (can_do_everything or can_create):
             return HttpResponseBadRequest("you do not have permission to create %ss" % self.item_type.__name__)
-        #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())

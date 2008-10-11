@@ -18,25 +18,55 @@
     {% endfor %}
 </div>
 
-<div style="margin-bottom: 10px;">
-    Filter:
-    <select onchange="window.location = this.value;">
-        {% for model_name in model_names %}
-        {% ifequal model_name item_type %}
-        <option value="/resource/{{ model_name|lower }}" selected="selected">{{ model_name }}</option>
-        {% else %}
-        <option value="/resource/{{ model_name|lower }}">{{ model_name }}</option>
-        {% endifequal %}
-        {% endfor %}
-    </select>
-</div>
-
-<div style="margin-bottom: 10px;">
-    <form method="get">
-    Search:
-    <input type="text" name="q" value="{{ search_query }}" />
-    </form>
-</div>
+<form method="get">
+<table class="twocol">
+    <tr>
+        <th>
+            Item Type Filter:
+        </th>
+        <td>
+            <select onchange="window.location = this.value;">
+                {% for model_name in model_names %}
+                {% ifequal model_name item_type %}
+                <option value="/resource/{{ model_name|lower }}" selected="selected">{{ model_name }}</option>
+                {% else %}
+                <option value="/resource/{{ model_name|lower }}">{{ model_name }}</option>
+                {% endifequal %}
+                {% endfor %}
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <th>
+            Item Set Filter:
+        </th>
+        <td>
+            <select onchange="window.location = this.value;">
+                {% if itemset %}
+                <option value="/resource/{{ item_type|lower }}"></option>
+                {% else %}
+                <option value="/resource/{{ item_type|lower }}" selected="selected"></option>
+                {% endif %}
+                {% for other_itemset in all_itemsets %}
+                {% ifequal other_itemset.pk itemset.pk %}
+                <option value="/resource/{{ item_type|lower }}?itemset={{ other_itemset.pk }}" selected="selected">{{ other_itemset.name }}</option>
+                {% else %}
+                <option value="/resource/{{ item_type|lower }}?itemset={{ other_itemset.pk }}">{{ other_itemset.name }}</option>
+                {% endifequal %}
+                {% endfor %}
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <th>
+            Search:
+        </th>
+        <td>
+            <input type="text" name="q" value="{{ search_query }}" />
+        </td>
+    </tr>
+</table>
+</form>
 
 {% if items %}
 
@@ -45,7 +75,7 @@
 </div>
 
 <div>
-    {% list_results_navigator item_type search_query trashed offset limit n_listable_items 10 %}
+    {% list_results_navigator item_type itemset search_query trashed offset limit n_listable_items 10 %}
 </div>
 
 <table class="list">

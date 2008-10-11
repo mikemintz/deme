@@ -7,7 +7,6 @@
 {% item_header itemversion item_type_inheritance %}
 
 <div style="margin-bottom: 10px;">
-    <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}/edit">[Edit This ItemSet]</a>
     <a href="/resource/itemsetmembership/new?itemset={{ item.pk }}&redirect={{ full_path|urlencode }}">[Add Item]</a>
 </div>
 
@@ -15,10 +14,16 @@
 <table class="list">
     <tr>
         <th>Name</th>
+        <th>Membership</th>
+        <th>Date Added</th>
+        <th>Added By</th>
     </tr>
     {% for itemset_memebership in item.itemset_memberships_as_itemset.all %}
     <tr class="{% cycle 'even' 'odd' %}">
-        <td><a href="{% show_resource_url itemset_memebership.item %}">{{ itemset_memebership.item.downcast }}</a> (added {{ itemset_memebership.updated_at }}) with <a href="{% show_resource_url itemset_memebership %}">{{ itemset_memebership }}</a></td>
+        <td><a href="{% show_resource_url itemset_memebership.item %}">{{ itemset_memebership.item.name }}</a></td>
+        <td><a href="{% show_resource_url itemset_memebership %}">{{ itemset_memebership.pk }}</a></td>
+        <td>{{ itemset_memebership.created_at }}</td>
+        <td><a href="{% show_resource_url itemset_memebership.creator %}">{{ itemset_memebership.creator.name }}</a></td>
     </tr>
     {% endfor %}
 </table>
