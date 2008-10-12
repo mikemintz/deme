@@ -221,7 +221,7 @@ The agent currently logged in is not allowed to use this application. Please log
             q = self.context['search_query']
             #TODO more fancy searching
             search_filter = Q(name__icontains=q)
-            search_filter = Q(description__icontains=q)
+            search_filter = search_filter | Q(description__icontains=q)
             if self.item_type == cms.models.Item:
                 search_filter = search_filter | Q(document__textdocument__body__icontains=q)
             elif self.item_type == cms.models.Document:
