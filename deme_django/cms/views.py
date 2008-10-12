@@ -218,8 +218,17 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['search_query'] = self.request.GET.get('q', '')
         items = self.item_type.objects
         if self.context['search_query']:
+            q = self.context['search_query']
             #TODO more fancy searching
-            items = items.filter(Q(name__icontains=self.request.GET['q']) | Q(document__textdocument__body__icontains=self.request.GET['q']))
+            search_filter = Q(name__icontains=q)
+            search_filter = Q(description__icontains=q)
+            if self.item_type == cms.models.Item:
+                search_filter = search_filter | Q(document__textdocument__body__icontains=q)
+            elif self.item_type == cms.models.Document:
+                search_filter = search_filter | Q(textdocument__body__icontains=q)
+            elif issubclass(self.item_type, cms.models.TextDocument):
+                search_filter = search_filter | Q(body__icontains=q)
+            items = items.filter(search_filter)
         # TODO filter the itemsetmembership and groupmembership by permission, check trashed
         if isinstance(itemset, cms.models.ItemSet):
             items = items.filter(pk__in=cms.models.ItemSetMembership.objects.filter(itemset=itemset).values('item_id').query)
