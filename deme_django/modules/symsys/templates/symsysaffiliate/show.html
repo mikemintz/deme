@@ -575,13 +575,11 @@
     </tr>
     {% else %}
     {% ifagentcan 'view' 'then_image' item %}
-    {% ifagentcan 'view' 'id' item.then_image %}
     {% ifagentcan 'view' 'datafile' item.then_image %}
     <tr>
         <th>Then image:</th>
         <td><a href="{% show_resource_url item.then_image %}"><img src="/static/media/{{ item.then_image.datafile }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a></td>
     </tr>
-    {% endifagentcan %}
     {% endifagentcan %}
     {% endifagentcan %}
     {% endif %}
@@ -595,13 +593,11 @@
     </tr>
     {% else %}
     {% ifagentcan 'view' 'now_image' item %}
-    {% ifagentcan 'view' 'id' item.now_image %}
     {% ifagentcan 'view' 'datafile' item.now_image %}
     <tr>
         <th>Now image:</th>
         <td><a href="{% show_resource_url item.now_image %}"><img src="/static/media/{{ item.now_image.datafile }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a></td>
     </tr>
-    {% endifagentcan %}
     {% endifagentcan %}
     {% endifagentcan %}
     {% endif %}
