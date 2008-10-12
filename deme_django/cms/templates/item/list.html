@@ -18,7 +18,7 @@
     {% endfor %}
 </div>
 
-<form method="get">
+<form method="get" name="list_filter_form">
 <table class="twocol">
     <tr>
         <th>
@@ -41,17 +41,17 @@
             Item Set Filter:
         </th>
         <td>
-            <select onchange="window.location = this.value;">
+            <select name="itemset">
                 {% if itemset %}
-                <option value="/resource/{{ item_type|lower }}"></option>
+                <option value=""></option>
                 {% else %}
-                <option value="/resource/{{ item_type|lower }}" selected="selected"></option>
+                <option value="" selected="selected"></option>
                 {% endif %}
                 {% for other_itemset in all_itemsets %}
                 {% ifequal other_itemset.pk itemset.pk %}
-                <option value="/resource/{{ item_type|lower }}?itemset={{ other_itemset.pk }}" selected="selected">{{ other_itemset.name }}</option>
+                <option value="{{ other_itemset.pk }}" selected="selected">{{ other_itemset.name }}</option>
                 {% else %}
-                <option value="/resource/{{ item_type|lower }}?itemset={{ other_itemset.pk }}">{{ other_itemset.name }}</option>
+                <option value="{{ other_itemset.pk }}">{{ other_itemset.name }}</option>
                 {% endifequal %}
                 {% endfor %}
             </select>

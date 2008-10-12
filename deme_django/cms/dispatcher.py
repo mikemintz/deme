@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.utils import datastructures
 import datetime
+import random
 
 from cms.views import *
 import permission_functions
@@ -21,6 +22,20 @@ for module_name in os.listdir(modules_dir):
 
 
 ### HELPER FUNCTIONS ###
+
+def render_error(cur_agent, current_site, full_path, request_class, title, body):
+    template = loader.get_template_from_string("""
+    {%% extends layout %%}
+    {%% load resource_extras %%}
+    {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
+    {%% block title %%}<img src="{{ "error"|icon_url:48 }}" /> %s{%% endblock %%}
+    {%% block content %%}%s{%% endblock content %%}
+    """ % (title, body))
+    context = Context()
+    context['cur_agent'] = cur_agent
+    context['full_path'] = full_path
+    set_default_layout(context, current_site, cur_agent)
+    return request_class(template.render(context))
 
 def get_logged_in_agent(request):
     cur_agent_id = request.session.get('cur_agent_id', None)
@@ -63,32 +78,17 @@ def resource(request, *args, **kwargs):
         viewer.init_from_http(request, cur_agent, current_site, kwargs)
         response = viewer.dispatch()
         if response == None:
-            template = loader.get_template('action_not_found.html')
-            context = Context()
-            context['cur_agent'] = cur_agent
-            context['full_path'] = request.get_full_path()
-            set_default_layout(context, current_site, cur_agent)
-            return HttpResponseNotFound(template.render(context))
+            return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseNotFound, "Action Not Found", "We could not find any action matching your URL.")
         else:
             return response
     else:
-        template = loader.get_template('viewer_not_found.html')
-        context = Context()
-        context['cur_agent'] = cur_agent
-        context['full_path'] = request.get_full_path()
-        set_default_layout(context, current_site, cur_agent)
-        return HttpResponseNotFound(template.render(context))
+        return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseNotFound, "Viewer Not Found", "We could not find any viewer matching your URL.")
 
 
 def invalidresource(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)
     current_site = get_current_site(request)
-    template = loader.get_template('invalid_resource_url.html')
-    context = Context()
-    context['cur_agent'] = cur_agent
-    context['full_path'] = request.get_full_path()
-    set_default_layout(context, current_site, cur_agent)
-    return HttpResponseNotFound(template.render(context))
+    return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseNotFound, "Invalid Resource URL", "The resource URL you typed in is invalid.")
 
 def login(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)
@@ -100,6 +100,8 @@ def login(request, *args, **kwargs):
         context['redirect_url'] = request.GET['redirect']
         context['full_path'] = request.get_full_path()
         context['cur_agent'] = cur_agent
+        context['_global_ability_cache'] = {}
+        context['_item_ability_cache'] = {}
         if can_do_everything:
             context['login_as_agents'] = [x for x in cms.models.Agent.objects.all()]
         else:
@@ -115,7 +117,7 @@ def login(request, *args, **kwargs):
             try:
                 person = cms.models.Person.objects.get(email=email)
             except ObjectDoesNotExist:
-                return HttpResponseBadRequest('no person has that email')
+                return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Email", "No person has this email")
             new_account = None
             for password_account in cms.models.PasswordAccount.objects.filter(agent=person).all():
                 if password_account.check_password(password):
@@ -126,7 +128,7 @@ def login(request, *args, **kwargs):
                 request.session['cur_agent_id'] = new_agent.pk
                 return HttpResponseRedirect(redirect_url)
             else:
-                return HttpResponseBadRequest('no account for that person has that password')
+                return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Password", "No account for that person has that password")
         elif login_type == 'login_as':
             for key in request.POST.iterkeys():
                 if key.startswith('login_as_'):
@@ -134,13 +136,13 @@ def login(request, *args, **kwargs):
                     try:
                         new_agent = cms.models.Agent.objects.get(pk=new_agent_id)
                     except ObjectDoesNotExist:
-                        return HttpResponseBadRequest('invalid agent id')
+                        return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Agent ID", "There is no agent with the id you specified")
                     if can_do_everything or ('login_as', 'id') in permission_functions.get_abilities_for_agent_and_item(cur_agent, new_agent):
                         request.session['cur_agent_id'] = new_agent.pk
                         return HttpResponseRedirect(redirect_url)
                     else:
-                        return HttpResponseBadRequest('you do not have permission to login as this agent')
-            return HttpResponseBadRequest('invalid login request')
+                        return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Permission Denied", "You do not have permission to login as this agent")
+        return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Login Request", "The login_type field on your form was invalid")
 
 def logout(request, *args, **kwargs):
     redirect_url = request.GET['redirect']
@@ -185,16 +187,7 @@ def alias(request, *args, **kwargs):
         for path_part in path_parts:
             custom_url = cms.models.CustomUrl.objects.filter(path=path_part, parent_url=custom_url)[0:1].get()
     except ObjectDoesNotExist:
-        template = loader.get_template('alias_not_found.html')
-        context = Context()
-        context['hostname'] = request.META['HTTP_HOST']
-        context['path'] = request.path
-        context['cur_agent'] = cur_agent
-        context['full_path'] = request.get_full_path()
-        set_default_layout(context, current_site, cur_agent)
-        return HttpResponseNotFound(template.render(context))
-    if not custom_url:
-        raise Exception("we should never get here 23942934")
+        return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseNotFound, "Alias Not Found", "We could not find any alias matching your URL http://%s%s." % (request.META['HTTP_HOST'], request.path))
     item = custom_url.aliased_item
     kwargs = {}
     kwargs['viewer'] = custom_url.viewer

@@ -2,14 +2,14 @@
 {% load symsys_extras %}
 {% load resource_extras %}
 {% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {% ifagentcan 'view' 'name' item %}{{ item }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
-{% item_header itemversion item_type_inheritance %}
+{% itemheader %}
 
 <table class="twocol">
 
-    {% ifagentcan cur_agent 'view' 'first_name' item %}
+    {% ifagentcan 'view' 'first_name' item %}
     {% if item.first_name %}
     <tr>
         <th>First name:</th>
@@ -18,7 +18,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'middle_names' item %}
+    {% ifagentcan 'view' 'middle_names' item %}
     {% if item.middle_names %}
     <tr>
         <th>Middle names:</th>
@@ -27,7 +27,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'last_name' item %}
+    {% ifagentcan 'view' 'last_name' item %}
     {% if item.last_name %}
     <tr>
         <th>Last name:</th>
@@ -36,7 +36,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'suffix' item %}
+    {% ifagentcan 'view' 'suffix' item %}
     {% if item.suffix %}
     <tr>
         <th>Suffix:</th>
@@ -45,7 +45,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'email' item %}
+    {% ifagentcan 'view' 'email' item %}
     {% if item.email %}
     <tr>
         <th>Email:</th>
@@ -54,7 +54,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'suid' item %}
+    {% ifagentcan 'view' 'suid' item %}
     {% if item.suid %}
     <tr>
         <th>SUID:</th>
@@ -63,7 +63,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'class_year' item %}
+    {% ifagentcan 'view' 'class_year' item %}
     {% if item.class_year %}
     <tr>
         <th>Class year:</th>
@@ -72,7 +72,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'first_affiliation_year' item %}
+    {% ifagentcan 'view' 'first_affiliation_year' item %}
     {% if item.first_affiliation_year %}
     <tr>
         <th>First affiliation year:</th>
@@ -81,7 +81,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'graduation_year' item %}
+    {% ifagentcan 'view' 'graduation_year' item %}
     {% if item.graduation_year %}
     <tr>
         <th>Graduation year:</th>
@@ -90,7 +90,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'title' item %}
+    {% ifagentcan 'view' 'title' item %}
     {% if item.title %}
     <tr>
         <th>Title:</th>
@@ -99,7 +99,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'admin_title' item %}
+    {% ifagentcan 'view' 'admin_title' item %}
     {% if item.admin_title %}
     <tr>
         <th>Admin title:</th>
@@ -108,7 +108,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'department' item %}
+    {% ifagentcan 'view' 'department' item %}
     {% if item.department %}
     <tr>
         <th>Department:</th>
@@ -117,7 +117,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'concentration' item %}
+    {% ifagentcan 'view' 'concentration' item %}
     {% if item.concentration %}
     <tr>
         <th>Concentration:</th>
@@ -126,7 +126,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'advisor' item %}
+    {% ifagentcan 'view' 'advisor' item %}
     {% if item.advisor %}
     <tr>
         <th>Advisor:</th>
@@ -135,7 +135,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'p_address1' item %}
+    {% ifagentcan 'view' 'p_address1' item %}
     {% if item.p_address1 %}
     <tr>
         <th>Personal address 1:</th>
@@ -144,7 +144,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'p_address2' item %}
+    {% ifagentcan 'view' 'p_address2' item %}
     {% if item.p_address2 %}
     <tr>
         <th>Personal address 2:</th>
@@ -153,7 +153,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'p_city' item %}
+    {% ifagentcan 'view' 'p_city' item %}
     {% if item.p_city %}
     <tr>
         <th>Personal city:</th>
@@ -162,7 +162,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'p_state' item %}
+    {% ifagentcan 'view' 'p_state' item %}
     {% if item.p_state %}
     <tr>
         <th>Personal state:</th>
@@ -171,7 +171,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'p_country' item %}
+    {% ifagentcan 'view' 'p_country' item %}
     {% if item.p_country %}
     <tr>
         <th>Personal country:</th>
@@ -180,7 +180,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'p_zip' item %}
+    {% ifagentcan 'view' 'p_zip' item %}
     {% if item.p_zip %}
     <tr>
         <th>Personal zip:</th>
@@ -189,7 +189,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'p_phone1' item %}
+    {% ifagentcan 'view' 'p_phone1' item %}
     {% if item.p_phone1 %}
     <tr>
         <th>Personal phone 1:</th>
@@ -198,7 +198,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'p_phone2' item %}
+    {% ifagentcan 'view' 'p_phone2' item %}
     {% if item.p_phone2 %}
     <tr>
         <th>Personal phone 2:</th>
@@ -207,7 +207,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'p_fax' item %}
+    {% ifagentcan 'view' 'p_fax' item %}
     {% if item.p_fax %}
     <tr>
         <th>Personal fax:</th>
@@ -216,7 +216,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'p_email' item %}
+    {% ifagentcan 'view' 'p_email' item %}
     {% if item.p_email %}
     <tr>
         <th>Personal email:</th>
@@ -225,7 +225,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'p_website' item %}
+    {% ifagentcan 'view' 'p_website' item %}
     {% if item.p_website %}
     <tr>
         <th>Personal website:</th>
@@ -234,7 +234,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'p_im' item %}
+    {% ifagentcan 'view' 'p_im' item %}
     {% if item.p_im %}
     <tr>
         <th>Personal IM:</th>
@@ -243,7 +243,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_organization' item %}
+    {% ifagentcan 'view' 'w_organization' item %}
     {% if item.w_organization %}
     <tr>
         <th>Work organization:</th>
@@ -252,7 +252,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_position' item %}
+    {% ifagentcan 'view' 'w_position' item %}
     {% if item.w_position %}
     <tr>
         <th>Work position:</th>
@@ -261,7 +261,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_address1' item %}
+    {% ifagentcan 'view' 'w_address1' item %}
     {% if item.w_address1 %}
     <tr>
         <th>Work address1:</th>
@@ -270,7 +270,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_address2' item %}
+    {% ifagentcan 'view' 'w_address2' item %}
     {% if item.w_address2 %}
     <tr>
         <th>Work address2:</th>
@@ -279,7 +279,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_city' item %}
+    {% ifagentcan 'view' 'w_city' item %}
     {% if item.w_city %}
     <tr>
         <th>Work city:</th>
@@ -288,7 +288,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_state' item %}
+    {% ifagentcan 'view' 'w_state' item %}
     {% if item.w_state %}
     <tr>
         <th>Work state:</th>
@@ -297,7 +297,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_country' item %}
+    {% ifagentcan 'view' 'w_country' item %}
     {% if item.w_country %}
     <tr>
         <th>Work country:</th>
@@ -306,7 +306,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_zip' item %}
+    {% ifagentcan 'view' 'w_zip' item %}
     {% if item.w_zip %}
     <tr>
         <th>Work zip:</th>
@@ -315,7 +315,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_phone1' item %}
+    {% ifagentcan 'view' 'w_phone1' item %}
     {% if item.w_phone1 %}
     <tr>
         <th>Work phone 1:</th>
@@ -324,7 +324,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_phone2' item %}
+    {% ifagentcan 'view' 'w_phone2' item %}
     {% if item.w_phone2 %}
     <tr>
         <th>Work phone 2:</th>
@@ -333,7 +333,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_fax' item %}
+    {% ifagentcan 'view' 'w_fax' item %}
     {% if item.w_fax %}
     <tr>
         <th>Work fax:</th>
@@ -342,7 +342,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_email' item %}
+    {% ifagentcan 'view' 'w_email' item %}
     {% if item.w_email %}
     <tr>
         <th>Work email:</th>
@@ -351,7 +351,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_website' item %}
+    {% ifagentcan 'view' 'w_website' item %}
     {% if item.w_website %}
     <tr>
         <th>Work website:</th>
@@ -360,7 +360,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'w_im' item %}
+    {% ifagentcan 'view' 'w_im' item %}
     {% if item.w_im %}
     <tr>
         <th>Work IM:</th>
@@ -369,7 +369,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'background' item %}
+    {% ifagentcan 'view' 'background' item %}
     {% if item.background %}
     <tr>
         <th>background:</th>
@@ -378,7 +378,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'doing_now' item %}
+    {% ifagentcan 'view' 'doing_now' item %}
     {% if item.doing_now %}
     <tr>
         <th>Doing Now:</th>
@@ -387,7 +387,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'interests' item %}
+    {% ifagentcan 'view' 'interests' item %}
     {% if item.interests %}
     <tr>
         <th>Interests:</th>
@@ -396,7 +396,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'publications' item %}
+    {% ifagentcan 'view' 'publications' item %}
     {% if item.publications %}
     <tr>
         <th>Publications:</th>
@@ -405,7 +405,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'office_hours' item %}
+    {% ifagentcan 'view' 'office_hours' item %}
     {% if item.office_hours %}
     <tr>
         <th>Office hours:</th>
@@ -414,7 +414,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'about' item %}
+    {% ifagentcan 'view' 'about' item %}
     {% if item.about %}
     <tr>
         <th>About:</th>
@@ -423,7 +423,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'symsys_degree' item %}
+    {% ifagentcan 'view' 'symsys_degree' item %}
     {% if item.symsys_degree %}
     <tr>
         <th>Symsys degree:</th>
@@ -432,7 +432,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'other_degrees' item %}
+    {% ifagentcan 'view' 'other_degrees' item %}
     {% if item.other_degrees %}
     <tr>
         <th>Other degrees:</th>
@@ -441,7 +441,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'indivdesignedconc' item %}
+    {% ifagentcan 'view' 'indivdesignedconc' item %}
     {% if item.indivdesignedconc %}
     <tr>
         <th>Individually designed concentration:</th>
@@ -450,7 +450,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'department2' item %}
+    {% ifagentcan 'view' 'department2' item %}
     {% if item.department2 %}
     <tr>
         <th>Department 2:</th>
@@ -459,7 +459,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'ms_track' item %}
+    {% ifagentcan 'view' 'ms_track' item %}
     {% if item.ms_track %}
     <tr>
         <th>MS track:</th>
@@ -468,7 +468,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'ms_graduation' item %}
+    {% ifagentcan 'view' 'ms_graduation' item %}
     {% if item.ms_graduation %}
     <tr>
         <th>MS graduation:</th>
@@ -477,7 +477,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'honors_thesis_title' item %}
+    {% ifagentcan 'view' 'honors_thesis_title' item %}
     {% if item.honors_thesis_title %}
     <tr>
         <th>Honors thesis title:</th>
@@ -486,7 +486,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'honors_thesis_filename' item %}
+    {% ifagentcan 'view' 'honors_thesis_filename' item %}
     {% if item.honors_thesis_filename %}
     <tr>
         <th>Honors thesis filename:</th>
@@ -495,7 +495,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'honors_thesis_url' item %}
+    {% ifagentcan 'view' 'honors_thesis_url' item %}
     {% if item.honors_thesis_url %}
     <tr>
         <th>Honors thesis URL:</th>
@@ -504,7 +504,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'ms_thesis_title' item %}
+    {% ifagentcan 'view' 'ms_thesis_title' item %}
     {% if item.ms_thesis_title %}
     <tr>
         <th>MS thesis title:</th>
@@ -513,7 +513,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'ms_thesis_filename' item %}
+    {% ifagentcan 'view' 'ms_thesis_filename' item %}
     {% if item.ms_thesis_filename %}
     <tr>
         <th>MS thesis filename:</th>
@@ -522,7 +522,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'ms_thesis_url' item %}
+    {% ifagentcan 'view' 'ms_thesis_url' item %}
     {% if item.ms_thesis_url %}
     <tr>
         <th>MS thesis URL:</th>
@@ -531,7 +531,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'ms_idt' item %}
+    {% ifagentcan 'view' 'ms_idt' item %}
     {% if item.ms_idt %}
     <tr>
         <th>MS IDT:</th>
@@ -540,7 +540,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'honors_status' item %}
+    {% ifagentcan 'view' 'honors_status' item %}
     {% if item.honors_status %}
     <tr>
         <th>Honors status:</th>
@@ -549,7 +549,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'honors_advisor' item %}
+    {% ifagentcan 'view' 'honors_advisor' item %}
     {% if item.honors_advisor %}
     <tr>
         <th>Honors advisor:</th>
@@ -558,7 +558,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'honors_second_reader' item %}
+    {% ifagentcan 'view' 'honors_second_reader' item %}
     {% if item.honors_second_reader %}
     <tr>
         <th>Honors second reader:</th>
@@ -567,31 +567,45 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan cur_agent 'view' 'then_image' item %}
     {% if item.then_image %}
-    {% ifagentcan cur_agent 'view' 'id' item.then_image %}
-    {% ifagentcan cur_agent 'view' 'datafile' item.then_image %}
+    {% if item.then_image.trashed %}
+    <tr>
+        <th>Then image:</th>
+        <td>[Trashed]</td>
+    </tr>
+    {% else %}
+    {% ifagentcan 'view' 'then_image' item %}
+    {% ifagentcan 'view' 'id' item.then_image %}
+    {% ifagentcan 'view' 'datafile' item.then_image %}
     <tr>
         <th>Then image:</th>
         <td><a href="{% show_resource_url item.then_image %}"><img src="/static/media/{{ item.then_image.datafile }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a></td>
     </tr>
     {% endifagentcan %}
     {% endifagentcan %}
-    {% endif %}
     {% endifagentcan %}
+    {% endif %}
+    {% endif %}
 
-    {% ifagentcan cur_agent 'view' 'now_image' item %}
     {% if item.now_image %}
-    {% ifagentcan cur_agent 'view' 'id' item.now_image %}
-    {% ifagentcan cur_agent 'view' 'datafile' item.now_image %}
+    {% if item.now_image.trashed %}
+    <tr>
+        <th>Now image:</th>
+        <td>[Trashed]</td>
+    </tr>
+    {% else %}
+    {% ifagentcan 'view' 'now_image' item %}
+    {% ifagentcan 'view' 'id' item.now_image %}
+    {% ifagentcan 'view' 'datafile' item.now_image %}
     <tr>
         <th>Now image:</th>
         <td><a href="{% show_resource_url item.now_image %}"><img src="/static/media/{{ item.now_image.datafile }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a></td>
     </tr>
     {% endifagentcan %}
     {% endifagentcan %}
-    {% endif %}
     {% endifagentcan %}
+    {% endif %}
+    {% endif %}
 
 <!--
 TODO also include..?
@@ -604,7 +618,7 @@ respos_job_email_subscribe
 </table>
 
 <h2>Comments</h2>
-{% comment_box itemversion full_path %}
+{% commentbox %}
 
 {% endblock content %}
 

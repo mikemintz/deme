@@ -3,7 +3,7 @@
 {% block title %}Login{% endblock %}
 {% block content %}
 
-<form action="/meta/login?redirect={{ redirect_url }}" method="post">
+<form name="password_form" action="/meta/login?redirect={{ redirect_url }}" method="post">
     <input type="hidden" name="login_type" value="password" />
     <div>
         Email: <input type="text" name="email" />
@@ -19,14 +19,26 @@
 <div style="margin-top: 15px;">
     <input type="hidden" name="login_type" value="login_as" />
     You can also login as one of the following agents:
-    <ul>
+    <table class="list">
+        <tr>
+            <th>Name</th>
+            <th>Login</th>
+        </tr>
     {% for agent in login_as_agents %}
-        <li>
-            {{ agent }}
-            <input type="submit" name="login_as_{{ agent.pk }}" value="Login" />
-        </li>
+        <tr>
+            <td>
+                {% ifagentcan 'view' 'name' agent %}
+                <a href="{% show_resource_url agent %}">{{ agent.name|default:"[Untitled]" }}</a>
+                {% else %}
+                <a href="{% show_resource_url agent %}">[PERMISSION DENIED]</a>
+                {% endifagentcan %}
+            </td>
+            <td>
+                <input type="submit" name="login_as_{{ agent.pk }}" value="Login" />
+            </td>
+        </tr>
     {% endfor %}
-    </ul>
+    </table>
 </div>
 </form>
 {% endif %}

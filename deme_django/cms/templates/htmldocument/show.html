@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load resource_extras %}
 {% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {% ifagentcan 'view' 'name' item %}{{ item }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
 <script type="text/javascript" src="/static/javascripts/prototype.js"></script>
@@ -9,17 +9,16 @@
 <script type="text/javascript" src="/static/javascripts/ref.js"></script>
 <script type="text/javascript" src="/static/javascripts/ref_deme.js"></script>
 
-{% item_header itemversion item_type_inheritance %}
+{% itemheader %}
 
-<div style="padding: 10px; border: 3px solid #000; border-bottom: none; background: #ccc; text-align: center; font-size: larger; font-weight: bold;">
-    {{ itemversion.description }}
-</div>
 <div id="docbody" style="padding: 10px; border: 3px solid #000; background: #f8f8f8;">
+    {% ifagentcan 'view' 'body' item %}
     {{ itemversion.body }}
+    {% else %}
+    [PERMISSION DENIED]
+    {% endifagentcan %}
 </div>
-<div style="padding: 10px; border: 3px solid #000; border-top: none; background: #ccc; text-align: center; font-size: smaller;">
-    Last modified by <a href="{% show_resource_url itemversion.updater %}">{{ itemversion.updater }}</a> on {{ itemversion.updated_at }}.
-</div>
+
 <script type="text/javascript">
     //ref_bless('docbody', '123');
     //gRegMgr.hl('123');
@@ -27,7 +26,7 @@
 <!--<button onclick="gRegMgr.transmit();">Transmit Highlights</button>-->
 
 <h2>Comments</h2>
-{% comment_box itemversion full_path %}
+{% commentbox %}
 
 {% endblock content %}
 

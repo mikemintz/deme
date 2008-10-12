@@ -99,6 +99,47 @@ def get_permissions_for_agent_and_item(agent, item):
 
 
 def get_abilities_for_agent_and_item(agent, item):
+
+    # new code below
+    # my_group_ids = agent.group_memberships_as_agent.filter(trashed=False, group__trashed=False).values('group_id').query
+    # my_group_ids = Group.objects.filter(trashed=False, pk__in=GroupMembership.objects.filter(trashed=False, agent=agent).values('group_id').query).values('pk').query
+
+    # perm_q = {}
+    # for agentgroupdefault in ['agent', 'group', 'default']:
+    #     for role in ['role', '']:
+    #         for is_allowed in ['yes', 'no']:
+    #             permission_class = eval("%s%sPermission" % (agentgroupdefault.capitalize(), role.capitalize()))
+    #             args = {'trashed': False, 'item': item}
+    #             if agentgroupdefault == 'agent':
+    #                 args['agent'] = agent
+    #             elif agentgroupdefault == 'group':
+    #                 args['group__pk__in'] = my_group_ids
+    #             if role == 'role':
+    #                 args['role__trashed'] = False
+    #                 role_permission_query = permission_class.objects.filter(**args).values('role__pk').query
+    #                 query = RoleAbility.objects.filter(trashed=False, is_allowed=(is_allowed == 'yes'), role__pk__in=role_permission_query).values_list('ability', 'ability_parameter')
+    #             else:
+    #                 args['is_allowed'] = (is_allowed == 'yes')
+    #                 query = permission_class.objects.filter(**args).values_list('ability', 'ability_parameter')
+    #             perm_q["%s%s%s" % (agentgroupdefault, role, is_allowed)] = query
+
+    # result = set()
+    # result.update(perm_q['agentyes'])
+    # result.update(perm_q['agentroleyes'])
+    # if perm_q['groupyes']:
+    #     result.update(set(perm_q['groupyes']).difference(perm_q['agentno']).difference(perm_q['agentroleno']))
+    # if perm_q['grouproleyes']:
+    #     result.update(set(perm_q['grouproleyes']).difference(perm_q['agentno']).difference(perm_q['agentroleno']))
+    # if perm_q['defaultyes']:
+    #     result.update(set(perm_q['defaultyes']).difference(perm_q['agentno']).difference(perm_q['agentroleno']).difference(perm_q['groupno']).difference(perm_q['grouproleno']))
+    # if perm_q['defaultroleyes']:
+    #     result.update(set(perm_q['defaultroleyes']).difference(perm_q['agentno']).difference(perm_q['agentroleno']).difference(perm_q['groupno']).difference(perm_q['grouproleno']))
+    # print result
+    # print
+    # return result
+    
+    # new code stops
+
     """
     Return a set of string-pairs (ability, ability_parameter)
     """

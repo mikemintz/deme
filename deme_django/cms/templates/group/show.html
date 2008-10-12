@@ -1,10 +1,10 @@
 {% extends layout %}
 {% load resource_extras %}
 {% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {% ifagentcan 'view' 'name' item %}{{ item }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
-{% item_header itemversion item_type_inheritance %}
+{% itemheader %}
 
 <div style="margin-bottom: 10px;">
     <a href="/resource/groupmembership/new?group={{ item.pk }}&redirect={{ full_path|urlencode }}">[Add Agent]</a>
@@ -17,15 +17,15 @@
         <tr>
             <th>Name</th>
             <th>Membership</th>
-            <th>Date Added</th>
-            <th>Added By</th>
         </tr>
         {% for agent_relationship in item.group_memberships_as_group.all %}
         <tr class="{% cycle 'even' 'odd' %}">
+            {% ifagentcan 'view' 'name' agent_relationship.agent %}
             <td><a href="{% show_resource_url agent_relationship.agent %}">{{ agent_relationship.agent.name }}</a></td>
+            {% else %}
+            <td><a href="{% show_resource_url agent_relationship.agent %}">[PERMISSION DENIED]</a></td>
+            {% endifagentcan %}
             <td><a href="{% show_resource_url agent_relationship %}">{{ agent_relationship.pk }}</a></td>
-            <td>{{ agent_relationship.created_at }}</td>
-            <td><a href="{% show_resource_url agent_relationship.creator %}">{{ agent_relationship.creator.name }}</a></td>
         </tr>
         {% endfor %}
     </table>
@@ -40,7 +40,7 @@
 </div>
 
 <h2>Comments</h2>
-{% comment_box itemversion full_path %}
+{% commentbox %}
 
 {% endblock content %}
 

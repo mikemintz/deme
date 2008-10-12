@@ -1,15 +1,19 @@
 {% extends layout %}
 {% load resource_extras %}
 {% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {% ifagentcan 'view' 'name' item %}{{ item }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
-{% item_header itemversion item_type_inheritance %}
+{% itemheader %}
 
+{% ifagentcan 'view' 'datafile' item %}
 <img src="/static/media/{{ itemversion.datafile }}" />
+{% else %}
+[PERMISSION DENIED]
+{% endifagentcan %}
 
 <h2>Comments</h2>
-{% comment_box itemversion full_path %}
+{% commentbox %}
 
 {% endblock content %}
 

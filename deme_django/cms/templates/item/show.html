@@ -1,104 +1,69 @@
 {% extends layout %}
 {% load resource_extras %}
 {% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {{ item }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {% ifagentcan 'view' 'name' item %}{{ item }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
-{% item_header itemversion item_type_inheritance %}
+{% itemheader %}
 
-<h2 style="border-bottom: 3px solid #000;">Version {{ itemversion.version_number }} Details</h2>
-
-<div style="margin-left: 30px;">
-    <h3>Fields</h3>
-
-    <table class="list">
-        <tr>
-            <th>Name</th>
-            <th>Value</th>
-            <th>Defined In</th>
-        </tr>
-        {% for model_name in inheritance %}
-        {% for field in itemversion_fields %}
-        {% ifequal field.model_name model_name %}
-        {% ifequal field.field_type 'collection' %}
-        {% else %}
-        <tr class="{% cycle 'even' 'odd' %}">
-            <td>{{ field.name|title }}</td>
-            <td>
-                {% if field.can_view %}
-                    {% ifequal field.field_type 'regular' %}
-                    {% ifequal field.format 'FileField' %}
-                    <a href="/static/media/{{ field.obj }}">{{ field.obj }}</a>
-                    {% else %}
-                    {{ field.obj }}
-                    {% endifequal %}
-                    {% endifequal %}
-
-                    {% ifequal field.field_type 'entry' %}
-                    {% if field.obj %}
-                    <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
-                    {% else %}
-                    NULL
-                    {% endif %}
-                    {% endifequal %}
+<table class="list">
+    <tr>
+        <th>Name</th>
+        <th>Value</th>
+        <th>Defined In</th>
+    </tr>
+    {% for model_name in inheritance %}
+    {% for field in itemversion_fields %}
+    {% ifequal field.model_name model_name %}
+    {% ifequal field.field_type 'collection' %}
+    {% else %}
+    <tr class="{% cycle 'even' 'odd' %}">
+        <td>{{ field.name|title }}</td>
+        <td>
+            {% if field.can_view %}
+                {% ifequal field.field_type 'regular' %}
+                {% ifequal field.format 'FileField' %}
+                <a href="/static/media/{{ field.obj }}">{{ field.obj }}</a>
                 {% else %}
-                    PERMISSION DENIED
+                {{ field.obj }}
+                {% endifequal %}
+                {% endifequal %}
+
+                {% ifequal field.field_type 'entry' %}
+                {% if field.obj %}
+                <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                {% else %}
+                NULL
                 {% endif %}
-            </td>
-            <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
-        </tr>
-        {% endifequal %}
-        {% endifequal %}
-        {% endfor %}
-        {% endfor %}
-    </table>
+                {% endifequal %}
+            {% else %}
+                PERMISSION DENIED
+            {% endif %}
+        </td>
+        <td><a href="/resource/{{ field.model_name|lower }}">{{ field.model_name }}</a></td>
+    </tr>
+    {% endifequal %}
+    {% endifequal %}
+    {% endfor %}
+    {% endfor %}
+</table>
 
-</div>
-
-<h2 style="border-bottom: 3px solid #000;">Your Permissions To This {{ item.item_type }}</h2>
-<div style="margin-left: 30px;">
-    <table class="list">
-        <tr>
-            <th>Name</th>
-            <th>Value</th>
-        </tr>
-        <tr class="{% cycle 'even' 'odd' as permissions_cycle %}">
-            <td>Direct Roles</td>
-            <td>
-                {% for role in direct_roles %}
-                <div><a href="{% show_resource_url role %}">{{ role }}</a></div>
-                {% endfor %}
-            </td>
-        </tr>
-        <tr class="{% cycle permissions_cycle %}">
-            <td>Groupwide Roles</td>
-            <td>
-                {% for role in groupwide_roles %}
-                <div><a href="{% show_resource_url role %}">{{ role }}</a></div>
-                {% endfor %}
-            </td>
-        </tr>
-        <tr class="{% cycle permissions_cycle %}">
-            <td>Default Roles</td>
-            <td>
-                {% for role in default_roles %}
-                <div><a href="{% show_resource_url role %}">{{ role }}</a></div>
-                {% endfor %}
-            </td>
-        </tr>
-        <tr class="{% cycle permissions_cycle %}">
-            <td>Abilities</td>
-            <td>
-                {% for ability in abilities %}
-                <div>{{ ability }}</div>
-                {% endfor %}
-            </td>
-        </tr>
-    </table>
-</div>
+<h2 style="border-bottom: 3px solid #000;">Your Abilities For This {{ item.item_type }}</h2>
+<table class="list">
+    <tr>
+        <th>Ability</th>
+        <th>Parameter</th>
+    </tr>
+    {% for ability in abilities %}
+    <tr class="{% cycle 'even' 'odd' %}">
+        <td>{{ ability.0 }}</td>
+        <td>{{ ability.1 }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
 <h2>Comments</h2>
-{% comment_box itemversion full_path %}
+{% commentbox %}
 
 {% endblock content %}
 

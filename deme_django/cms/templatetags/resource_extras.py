@@ -16,11 +16,17 @@ def show_resource_url(item):
 
 @register.filter
 def icon_url(item_type, size=32):
-    if isinstance(item_type, basestring):
-        item_type = getattr(cms.models, item_type, None)
-    if not isinstance(item_type, type):
+    if item_type != 'error' and isinstance(item_type, basestring):
+        try:
+            item_type = [x for x in cms.models.all_models() if x.__name__ == item_type][0]
+        except IndexError:
+            pass
+
+    if item_type == 'error':
+        icon = 'apps/error'
+    elif not isinstance(item_type, type):
         return icon_url(type(item_type), size)
-    if issubclass(item_type, cms.models.Item.VERSION):
+    elif issubclass(item_type, cms.models.Item.VERSION):
         return icon_url(item_type.NOTVERSION, size)
     elif item_type == cms.models.Account:
         icon = 'apps/password'
@@ -102,6 +108,82 @@ def list_results_navigator(item_type, itemset, search_query, trashed, offset, li
         result.append(next_button)
     return ''.join(result)
 
+def agentcan_global_helper(context, ability, ability_parameter):
+    agent = context['cur_agent']
+    global_abilities = context['_global_ability_cache'].get(agent.pk)
+    if global_abilities is None:
+        global_abilities = permission_functions.get_global_abilities_for_agent(agent)
+        context['_global_ability_cache'][agent.pk] = global_abilities
+    if ('do_everything', 'Item') in global_abilities:
+        return True
+    if ability_parameter is None:
+        if any(x[0] == ability for x in global_abilities):
+            return True
+    else:
+        if (ability, ability_parameter) in global_abilities:
+            return True
+    return False
+
+def agentcan_helper(context, ability, ability_parameter, item):
+    agent = context['cur_agent']
+    if agentcan_global_helper(context, 'do_everything', 'Item'):
+        return True
+    abilities_for_item = context['_item_ability_cache'].get((agent.pk, item.pk))
+    if abilities_for_item is None:
+        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(agent, item)
+        context['_item_ability_cache'][(agent.pk, item.pk)] = abilities_for_item
+    if ability_parameter is None:
+        if any(x[0] == ability for x in abilities_for_item):
+            return True
+    else:
+        if (ability, ability_parameter) in abilities_for_item:
+            return True
+    return False
+
+class IfAgentCan(template.Node):
+    def __init__(self, ability, ability_parameter, item, nodelist_true, nodelist_false):
+        self.ability = template.Variable(ability)
+        self.ability_parameter = template.Variable(ability_parameter)
+        self.item = template.Variable(item)
+        self.nodelist_true, self.nodelist_false = nodelist_true, nodelist_false
+
+    def __repr__(self):
+        return "<IfAgentCanNode>"
+
+    def render(self, context):
+        agent = context['cur_agent']
+        try:
+            item = self.item.resolve(context)
+        except template.VariableDoesNotExist:
+            return 'invalid 232593713' # TODO what should i do here?
+        try:
+            ability = self.ability.resolve(context)
+        except template.VariableDoesNotExist:
+            return 'invalid 232593714' # TODO what should i do here?
+        try:
+            ability_parameter = self.ability_parameter.resolve(context)
+        except template.VariableDoesNotExist:
+            return 'invalid 232593715' # TODO what should i do here?
+        if agentcan_helper(context, ability, ability_parameter, item):
+            return self.nodelist_true.render(context)
+        else:
+            return self.nodelist_false.render(context)
+
+@register.tag
+def ifagentcan(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 4:
+        raise template.TemplateSyntaxError, "%r takes three arguments" % bits[0]
+    end_tag = 'end' + bits[0]
+    nodelist_true = parser.parse(('else', end_tag))
+    token = parser.next_token()
+    if token.contents == 'else':
+        nodelist_false = parser.parse((end_tag,))
+        parser.delete_first_token()
+    else:
+        nodelist_false = template.NodeList()
+    return IfAgentCan(bits[1], bits[2], bits[3], nodelist_true, nodelist_false)
+
 def comment_dicts_for_item(item):
     comments = item.comments_as_item.order_by('updated_at')
     result = []
@@ -112,135 +194,165 @@ def comment_dicts_for_item(item):
         result.append(comment_info)
     return result
 
-@register.simple_tag
-def item_header(itemversion, item_type_inheritance):
-    #TODO only show edit or trash if you have the ability w.r.t. 'id'!
-    item = itemversion.current_item
-    result = []
-
-    result.append("""<div class="crumbs">""")
-    result.append("""<div style="float: right;">""")
-    result.append("""<a href="/resource/%s/%s/edit?version=%s">Edit</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
-    result.append("""<a href="/resource/%s/%s/copy?version=%s">Copy</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
-    if item.trashed:
-        result.append("""<a href="/resource/%s/%s/untrash">Untrash</a>""" % (item.item_type.lower(), item.pk))
-    else:
-        result.append("""<a href="/resource/%s/%s/trash">Trash</a>""" % (item.item_type.lower(), item.pk))
-    if itemversion.trashed:
-        result.append("""<a href="/resource/%s/%s/untrash?version=%s">Untrash Version</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
-    else:
-        result.append("""<a href="/resource/%s/%s/trash?version=%s">Trash Version</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
-    result.append("""</div>""")
-    for inherited_item_type in item_type_inheritance:
-        result.append("""<a href="/resource/%s">%ss</a> &raquo;""" % (inherited_item_type.lower(), inherited_item_type))
-    result.append(item.name)
-    result.append("""</div>""")
-
-    result.append("""<div style="background: #ccf; padding: 10px; margin-bottom: 10px;">""")
-    result.append("""Versions:""")
-    for other_itemversion in item.versions.all():
-        result.append("""<span style="margin-left: 10px;">""")
-        if other_itemversion.version_number == itemversion.version_number:
-            result.append("""<b>%s</b>""" % (other_itemversion.version_number,))
-        else:
-            result.append("""<a href="/resource/%s/%s?version=%s">%s</a>""" % (item.item_type.lower(), item.pk, other_itemversion.version_number, other_itemversion.version_number))
-        result.append("""</span>""")
-    result.append("""</div>""")
-
-    if item.trashed:
-        result.append("""<div style="color: #c00; font-weight: bold; font-size: larger;">This version is trashed</div>""")
-
-    return '\n'.join(result)
-
-
-
-@register.simple_tag
-def comment_box(itemversion, full_path):
-    #TODO comments should be subject to permissions
-    result = []
-    result.append("""<div class="comment_box">""")
-    result.append("""<div class="comment_box_header"><a href="/resource/comment/new?commented_item=%s&commented_item_version=%s&redirect=%s">[+] Add Comment</a></div>""" % (itemversion.current_item.pk, itemversion.pk, urlquote(full_path)))
-    def add_comments_to_div(comments, nesting_level=0):
-        for comment_info in comments:
-            result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
-            result.append("""<div class="comment_header">""")
-            result.append("""<a href="/resource/%s/%s">%s</a>""" % (comment_info['comment'].item_type.lower(), comment_info['comment'].pk, comment_info['comment'].name))
-            result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment_info['comment'].creator), comment_info['comment'].creator.name))
-            result.append("</div>")
-            result.append("""<div class="comment_description">""")
-            result.append(comment_info['comment'].description)
-            result.append("</div>")
-            result.append("""<div class="comment_body">""")
-            result.append(comment_info['comment'].body)
-            result.append("</div>")
-            add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
-            result.append("</div>")
-    add_comments_to_div(comment_dicts_for_item(itemversion.current_item))
-    result.append("</div>")
-    return '\n'.join(result)
-
-
-#TODO make this more efficient (i.e. cache it in a consistent place)
-class IfAgentCan(template.Node):
-    def __init__(self, agent, ability, ability_parameter, item, nodelist_true, nodelist_false):
-        self.agent = template.Variable(agent)
-        self.ability = template.Variable(ability)
-        self.ability_parameter = template.Variable(ability_parameter)
-        self.item = template.Variable(item)
-        self.nodelist_true, self.nodelist_false = nodelist_true, nodelist_false
+class ItemHeader(template.Node):
+    def __init__(self):
+        pass
 
     def __repr__(self):
-        return "<IfAgentCanNode>"
+        return "<ItemHeaderNode>"
 
     def render(self, context):
-        try:
-            agent = self.agent.resolve(context)
-        except template.VariableDoesNotExist:
-            agent = None
-        try:
-            item = self.item.resolve(context)
-        except template.VariableDoesNotExist:
-            item = None
-        try:
-            ability = self.ability.resolve(context)
-        except template.VariableDoesNotExist:
-            ability = None
-        try:
-            ability_parameter = self.ability_parameter.resolve(context)
-        except template.VariableDoesNotExist:
-            ability_parameter = None
-        if agent == None or item == None or ability == None or ability_parameter == None:
-            return 'invalid 13409120491824' # TODO what should i do here?
-        global_abilities = context['_global_ability_cache'].get(agent.pk)
-        if global_abilities is None:
-            global_abilities = permission_functions.get_global_abilities_for_agent(agent)
-            context['_global_ability_cache'][agent.pk] = global_abilities
-        if ('do_everything', 'Item') in global_abilities:
-            return self.nodelist_true.render(context)
-        abilities_for_item = context['_item_ability_cache'].get((agent.pk, item.pk))
-        if abilities_for_item is None:
-            abilities_for_item = permission_functions.get_abilities_for_agent_and_item(agent, item)
-            context['_item_ability_cache'][(agent.pk, item.pk)] = abilities_for_item
-        if (ability, ability_parameter) in abilities_for_item:
-            return self.nodelist_true.render(context)
-        return self.nodelist_false.render(context)
+        item = context['item']
+        itemversion = context['itemversion']
+        item_type_inheritance = context['item_type_inheritance']
 
+        result = []
 
-def do_ifagentcan(parser, token):
-    bits = list(token.split_contents())
-    if len(bits) != 5:
-        raise template.TemplateSyntaxError, "%r takes four arguments" % bits[0]
-    end_tag = 'end' + bits[0]
-    nodelist_true = parser.parse(('else', end_tag))
-    token = parser.next_token()
-    if token.contents == 'else':
-        nodelist_false = parser.parse((end_tag,))
-        parser.delete_first_token()
-    else:
-        nodelist_false = template.NodeList()
-    return IfAgentCan(bits[1], bits[2], bits[3], bits[4], nodelist_true, nodelist_false)
+        result.append("""<div class="crumbs">""")
+        result.append("""<div style="float: right;">""")
+        if agentcan_helper(context, 'edit', None, item):
+            result.append("""<a href="/resource/%s/%s/edit?version=%s">Edit</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
+        if agentcan_global_helper(context, 'create', None):
+            result.append("""<a href="/resource/%s/%s/copy?version=%s">Copy</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
+        if agentcan_helper(context, 'trash', 'id', item):
+            if item.trashed:
+                result.append("""<a href="/resource/%s/%s/untrash">Untrash</a>""" % (item.item_type.lower(), item.pk))
+            else:
+                result.append("""<a href="/resource/%s/%s/trash">Trash</a>""" % (item.item_type.lower(), item.pk))
+            if itemversion.trashed:
+                result.append("""<a href="/resource/%s/%s/untrash?version=%s">Untrash Version</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
+            else:
+                result.append("""<a href="/resource/%s/%s/trash?version=%s">Trash Version</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
+        result.append("""</div>""")
+        for inherited_item_type in item_type_inheritance:
+            result.append("""<a href="/resource/%s">%ss</a> &raquo;""" % (inherited_item_type.lower(), inherited_item_type))
+        if agentcan_helper(context, 'view', 'name', item):
+            result.append(item.name)
+        else:
+            result.append('[PERMISSION DENIED]')
+        result.append("""&raquo; """)
+        result.append("""<select id="id_item_type" name="item_type" onchange="window.location = this.value;">""")
+        for other_itemversion in item.versions.all():
+            result.append("""<option value="/resource/%s/%s/%s?version=%s"%s>Version %s</option>""" % (item.item_type.lower(), item.pk, context['action'], other_itemversion.version_number, ' selected="selected"' if other_itemversion.version_number == itemversion.version_number else '', other_itemversion.version_number))
+        result.append("""</select>""")
+
+        result.append("""</div>""")
+
+        if agentcan_helper(context, 'view', 'created_at', item):
+            created_at_text = item.created_at
+        else:
+            created_at_text = '[PERMISSION DENIED]'
+        if agentcan_helper(context, 'view', 'updated_at', item):
+            updated_at_text = itemversion.updated_at
+        else:
+            updated_at_text = '[PERMISSION DENIED]'
+        if agentcan_helper(context, 'view', 'creator', item):
+            if agentcan_helper(context, 'view', 'name', item.creator):
+                creator_text = """<a href="%s">%s</a>""" % (show_resource_url(item.creator), item.creator.name)
+            else:
+                creator_text = """<a href="%s">%s</a>""" % (show_resource_url(item.creator), '[PERMISSION DENIED]')
+        else:
+            creator_text = '[PERMISSION DENIED]'
+        if agentcan_helper(context, 'view', 'updater', item):
+            if agentcan_helper(context, 'view', 'name', itemversion.updater):
+                updater_text = """<a href="%s">%s</a>""" % (show_resource_url(itemversion.updater), itemversion.updater.name)
+            else:
+                updater_text = """<a href="%s">%s</a>""" % (show_resource_url(itemversion.updater), '[PERMISSION DENIED]')
+        else:
+            updater_text = '[PERMISSION DENIED]'
+        result.append('<div style="font-size: smaller;">')
+        result.append('<div style="float: left;">')
+        result.append("""Originally created by %s on %s""" % (creator_text, created_at_text))
+        result.append('</div>')
+        result.append('<div style="float: right;">')
+        result.append("""Version %s updated by %s on %s""" % (itemversion.version_number, updater_text, updated_at_text))
+        result.append('</div>')
+        result.append('<div style="clear: both;">')
+        result.append('</div>')
+        result.append('</div>')
+
+        result.append('<div style="font-size: smaller; color: #aaa;">')
+        if agentcan_helper(context, 'view', 'description', item):
+            result.append('<b>Description:</b> %s' % itemversion.description)
+        else:
+            result.append('<b>Description:</b> [PERMISSION DENIED]')
+        result.append('</div>')
+
+        if item.trashed:
+            result.append("""<div style="color: #c00; font-weight: bold; font-size: larger;">This version is trashed</div>""")
+
+        return '\n'.join(result)
 
 @register.tag
-def ifagentcan(parser, token):
-    return do_ifagentcan(parser, token)
+def itemheader(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return ItemHeader()
+
+
+class CommentBox(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<CommentBoxNode>"
+
+    def render(self, context):
+        item = context['item']
+        itemversion = context['itemversion']
+        full_path = context['full_path']
+
+        result = []
+        result.append("""<div class="comment_box">""")
+        result.append("""<div class="comment_box_header"><a href="/resource/comment/new?commented_item=%s&commented_item_version=%s&redirect=%s">[+] Add Comment</a></div>""" % (itemversion.current_item.pk, itemversion.pk, urlquote(full_path)))
+        def add_comments_to_div(comments, nesting_level=0):
+            for comment_info in comments:
+                comment = comment_info['comment']
+                if not agentcan_helper(context, 'view', 'commented_item', comment):
+                    continue
+                result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
+                result.append("""<div class="comment_header">""")
+                if agentcan_helper(context, 'view', 'name', comment):
+                    result.append("""<a href="/resource/%s/%s">%s</a>""" % (comment.item_type.lower(), comment.pk, comment.name))
+                else:
+                    result.append('[PERMISSION DENIED]')
+                if agentcan_helper(context, 'view', 'creator', comment):
+                    if agentcan_helper(context, 'view', 'name', comment.creator):
+                        result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), comment.creator.name))
+                    else:
+                        result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), 'PERMISSION DENIED'))
+                else:
+                    result.append('by [PERMISSION DENIED]')
+                result.append("</div>")
+                if comment.trashed:
+                    result.append("""<div class="comment_body">""")
+                    result.append("[TRASHED]")
+                    result.append("</div>")
+                else:
+                    result.append("""<div class="comment_description">""")
+                    if agentcan_helper(context, 'view', 'description', comment):
+                        result.append(comment.description)
+                    else:
+                        result.append('[PERMISSION DENIED]')
+                    result.append("</div>")
+                    result.append("""<div class="comment_body">""")
+                    if agentcan_helper(context, 'view', 'body', comment):
+                        result.append(comment.body)
+                    else:
+                        result.append('[PERMISSION DENIED]')
+                    result.append("</div>")
+                add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
+                result.append("</div>")
+        add_comments_to_div(comment_dicts_for_item(itemversion.current_item))
+        result.append("</div>")
+        return '\n'.join(result)
+
+@register.tag
+def commentbox(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return CommentBox()
+
 

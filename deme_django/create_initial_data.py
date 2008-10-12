@@ -17,8 +17,8 @@ admin = Agent(name="Admin")
 admin.save_versioned(first_agent=True, create_permissions=False)
 
 for model in all_models():
-    #TODO don't create these permissions on other funny things like SiteDomain or RoleAbility, etc.?
-    if issubclass(model, Relationship):
+    #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
+    if issubclass(model, Permission):
         continue
     print 'Creating roles for %s' % model.__name__
     default_role = Role(name="%s Default" % model.__name__)
@@ -27,7 +27,7 @@ for model in all_models():
     creator_role.save_versioned(updater=admin, create_permissions=False)
     for name in model._meta.get_all_field_names():
         field, defined_model, direct, m2m = model._meta.get_field_by_name(name)
-        if name in ['item_type', 'trashed']:
+        if name in ['item_type', 'trashed', 'id']:
             continue
         if direct and type(field).__name__ != 'OneToOneField':
             RoleAbility(role=default_role, ability="view", ability_parameter=name, is_allowed=True).save_versioned(updater=admin, create_permissions=False)
@@ -38,8 +38,8 @@ for model in all_models():
 
 print 'Creating permissions for roles'
 for model in all_models():
-    #TODO don't create these permissions on other funny things like SiteDomain or RoleAbility, etc.?
-    if issubclass(model, Relationship):
+    #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
+    if issubclass(model, Permission):
         continue
     default_role = Role.objects.get(name="%s Default" % model.__name__)
     creator_role = Role.objects.get(name="%s Creator" % model.__name__)
