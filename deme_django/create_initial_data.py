@@ -62,7 +62,6 @@ import sys; sys.exit(0)
 ################################################################################
 
 home_page = DjangoTemplateDocument(body="""
-{% extends layout %}
 {% block title %}Welcome to Deme!{% endblock %}
 {% block content %}
 Welcome to Deme!
