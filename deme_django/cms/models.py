@@ -548,7 +548,7 @@ class DefaultRolePermission(Permission):
 
 class ViewerRequest(Item):
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
-    viewer = models.CharField(max_length=255, choices=[('item', 'Item'), ('group', 'Group'), ('itemset', 'ItemSet'), ('textdocument', 'TextDocument'), ('djangotemplatedocument', 'DjangoTemplateDocument')])
+    viewer = models.CharField(max_length=255)
     action = models.CharField(max_length=255)
     query_string = models.CharField(max_length=1024, null=True, blank=True)
     #TODO add kwargs['format']

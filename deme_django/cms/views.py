@@ -378,6 +378,12 @@ The agent currently logged in is not allowed to use this application. Please log
             fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
             form_class = get_form_class_for_item_type(self.item_type, fields_can_edit)
         form = form_class(instance=self.itemversion)
+        if not can_do_everything:
+            fields_can_view = set([x[1] for x in abilities_for_item if x[0] == 'view'])
+            initial_fields_set = set(form.initial.iterkeys())
+            fields_must_blank = initial_fields_set - fields_can_view
+            for field_name in fields_must_blank:
+                del form.initial[field_name]
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']

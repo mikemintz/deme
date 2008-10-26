@@ -1,3 +1,58 @@
+New
+---
+excerpts
+nicer admin interface for things (permissions?)
+permissions for symsysusers will just be interpreted in the viewer, they don't get "modify_permissions"
+
+Document1.1: A bcdefg
+
+[A] bcdefg
+Excerpt1.1: (Document1.1) start=1, end=1
+
+[A] bcdefg
+[Aa] bcdefg
+Document1.2: AA bcdefg
+
+Excerpt1.2: (Document1.2) start=1, end=2
+
+[Aa] bcdefg
+[]bcdefg
+Document1.3: bcdefg
+
+THERE IS NO EXCERPT1.3?
+
+excerpts don't change automatically
+
+
+
+Abc
+Abc*
+Abcdef<deme:comment id="123"/>
+
+v1 Abc *def
+v2(current) Abc def123
+
+
+Comment
+-------
+Item_Id
+ItemVersion
+FieldItIsAbout
+Location (NULL or xpath point-location)
+Body
+
+Excerpt
+-------
+Item_Id
+ItemVersion
+FieldItIsAbout (maybe just the body)
+xpath_string (multiple regions)
+data
+
+
+
+* When user doesn't have permission to Create thing, don't display at top of page New Item
+* Why can't anonymous user see name in last item in http://symsys02.mintz.org/resource/itemset/69116
 * Add Location class and LocationContains relationship
 * Event has multiple locations and times
 * deleting items (i.e. blanking)
