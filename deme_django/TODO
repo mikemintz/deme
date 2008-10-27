@@ -51,6 +51,7 @@ data
 
 
 
+* Make foreign keys that can't change (like commented_item) not editable, including in initial role definition
 * When user doesn't have permission to Create thing, don't display at top of page New Item
 * Why can't anonymous user see name in last item in http://symsys02.mintz.org/resource/itemset/69116
 * Add Location class and LocationContains relationship

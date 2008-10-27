@@ -5,9 +5,11 @@
 {% block content %}
 
 <div class="crumbs">
+    {% ifagentcanglobal 'create' item_type %}
     <div style="float: right;">
         [+] <a href="/resource/{{ item_type|lower }}/new">New {{ item_type }}</a>
     </div>
+    {% endifagentcanglobal %}
     {% for inherited_item_type in item_type_inheritance %}
     {% ifequal inherited_item_type item_type %}
     {{ inherited_item_type }}s

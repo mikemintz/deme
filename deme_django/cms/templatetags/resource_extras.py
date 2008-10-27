@@ -184,6 +184,45 @@ def ifagentcan(parser, token):
         nodelist_false = template.NodeList()
     return IfAgentCan(bits[1], bits[2], bits[3], nodelist_true, nodelist_false)
 
+class IfAgentCanGlobal(template.Node):
+    def __init__(self, ability, ability_parameter, nodelist_true, nodelist_false):
+        self.ability = template.Variable(ability)
+        self.ability_parameter = template.Variable(ability_parameter)
+        self.nodelist_true, self.nodelist_false = nodelist_true, nodelist_false
+
+    def __repr__(self):
+        return "<IfAgentCanNode>"
+
+    def render(self, context):
+        agent = context['cur_agent']
+        try:
+            ability = self.ability.resolve(context)
+        except template.VariableDoesNotExist:
+            return 'invalid 232593738' # TODO what should i do here?
+        try:
+            ability_parameter = self.ability_parameter.resolve(context)
+        except template.VariableDoesNotExist:
+            return 'invalid 232593752' # TODO what should i do here?
+        if agentcan_global_helper(context, ability, ability_parameter):
+            return self.nodelist_true.render(context)
+        else:
+            return self.nodelist_false.render(context)
+
+@register.tag
+def ifagentcanglobal(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 3:
+        raise template.TemplateSyntaxError, "%r takes two arguments" % bits[0]
+    end_tag = 'end' + bits[0]
+    nodelist_true = parser.parse(('else', end_tag))
+    token = parser.next_token()
+    if token.contents == 'else':
+        nodelist_false = parser.parse((end_tag,))
+        parser.delete_first_token()
+    else:
+        nodelist_false = template.NodeList()
+    return IfAgentCanGlobal(bits[1], bits[2], nodelist_true, nodelist_false)
+
 def comment_dicts_for_item(item):
     comments = item.comments_as_item.order_by('updated_at')
     result = []
