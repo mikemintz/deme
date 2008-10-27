@@ -18,7 +18,7 @@
     </tr>
     {% for itemset_membership in itemset_memberships %}
     <tr class="{% cycle 'even' 'odd' %}">
-        {% ifagentcan 'view' 'id' itemset_membership.item %}
+        {% ifagentcan 'view' 'name' itemset_membership.item %}
         <td><a href="{% show_resource_url itemset_membership.item %}">{{ itemset_membership.item.name }}</a></td>
         {% else %}
         <td><a href="{% show_resource_url itemset_membership.item %}">[PERMISSION DENIED]</a></td>
