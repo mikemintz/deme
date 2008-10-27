@@ -81,8 +81,6 @@ def get_form_class_for_item_type(item_type, fields=None):
     for field in item_type._meta.fields:
         if field.rel and field.rel.parent_link:
             exclude.append(field.name)
-    if issubclass(item_type, cms.models.Group):
-        exclude.append('folio')
     def formfield_callback(f):
         if isinstance(f, models.ForeignKey):
             return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)

@@ -86,7 +86,7 @@ class ItemVersion(models.Model):
     current_item = models.ForeignKey('Item', related_name='versions', editable=False)
     version_number = models.IntegerField(default=1, editable=False)
     item_type = models.CharField(max_length=255, default='Item', editable=False)
-    name = models.CharField(max_length=255, blank=True)
+    name = models.CharField(max_length=255)
     description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='item_versions_as_updater')
     updated_at = models.DateTimeField(editable=False)
@@ -171,7 +171,7 @@ class ItemVersion(models.Model):
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
     item_type = models.CharField(max_length=255, default='Item', editable=False)
-    name = models.CharField(max_length=255, blank=True)
+    name = models.CharField(max_length=255)
     description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='items_as_updater', editable=False)
     updated_at = models.DateTimeField(editable=False)
@@ -253,9 +253,10 @@ class Item(models.Model):
         new_version.current_item_id = self.pk
         new_version.save()
         #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
+        #TODO we need to reference the roles by id, not name, otherwise very insecure!
         if create_permissions and latest_version_number == 0 and not issubclass(self.__class__, Permission):
-            DefaultRolePermission(item=self, role=Role.objects.get(name="%s Default" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
-            AgentRolePermission(agent=updater, item=self, role=Role.objects.get(name="%s Creator" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
+            DefaultRolePermission(name="Default permission for %s" % self.name, item=self, role=Role.objects.get(name="%s Default" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
+            AgentRolePermission(name="Creator permission for %s" % self.name, agent=updater, item=self, role=Role.objects.get(name="%s Creator" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
 
 
 class Agent(Item):
@@ -333,9 +334,8 @@ class ItemSet(Item):
 
 
 class Group(Agent):
-    #folio = models.OneToOneField(Item, related_name='group_as_folio')
-    # can't be onetoone because lots of versions pointing to folio
     pass
+
 
 class Folio(ItemSet):
     group = models.ForeignKey(Group, related_name='folios_as_group', unique=True, editable=False)
