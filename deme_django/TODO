@@ -1,7 +1,6 @@
 New
 ---
 excerpts
-nicer admin interface for things (permissions?)
 permissions for symsysusers will just be interpreted in the viewer, they don't get "modify_permissions"
 
 Document1.1: A bcdefg
@@ -73,6 +72,7 @@ data
 * add sensitive_function.alters_data = True to functions like save_versioned so templates cant call them
 * come up with a scheme so when you create a new comment on an item, you can't select what it's a comment on (same with edit, although that can be done with permissions)
 * lots of html escaping to do probably
+* we need a global permission editor like the local permission editor
 
 Distant Future
 --------------

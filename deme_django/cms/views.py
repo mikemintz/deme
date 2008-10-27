@@ -40,38 +40,44 @@ class AjaxModelChoiceWidget(forms.Widget):
         <input type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" autocomplete="off" />
         <div id="%(id)s_search_results"></div>
         <script type="text/javascript">
-        var ajax_observer_%(id)s = null;
-        var search_onchange_%(id)s = function(e, value) {
-          var url = '%(ajax_url)s?q=' + encodeURIComponent(value);
-          new Ajax.Request(url, {
-            method: 'get',
-            onSuccess: function(transport) {
-              var results = $A(transport.responseJSON);
-              results.splice(0, 0, ['[NULL]', '']);
-              var results_div = $('%(id)s_search_results');
-              $A(results_div.childNodes).each(Element.remove);
-              results.each(function(result){
-                var option = document.createElement('div');
-                option.innerHTML = result[0];
-                $(option).observe('click', function(event){
-                  ajax_observer_%(id)s.stop();
-                  $('%(id)s').value = result[0];
-                  ajax_observer_%(id)s = new Form.Element.Observer('%(id)s', 0.5, search_onchange_%(id)s);
-                  $('%(id)s_hidden').value = result[1];
-                  $A(results_div.childNodes).each(Element.remove);
+        fn = function(){
+          var ajax_observer = null;
+          var search_onchange = function(e, value) {
+            var url = '%(ajax_url)s?q=' + encodeURIComponent(value);
+            new Ajax.Request(url, {
+              method: 'get',
+              onSuccess: function(transport) {
+                var results = $A(transport.responseJSON);
+                results.splice(0, 0, ['[NULL]', '']);
+                var results_div = $('%(id)s_search_results');
+                $A(results_div.childNodes).each(Element.remove);
+                results.each(function(result){
+                  var option = document.createElement('div');
+                  option.innerHTML = result[0];
+                  $(option).observe('click', function(event){
+                    ajax_observer.stop();
+                    $('%(id)s').value = result[0];
+                    ajax_observer = new Form.Element.Observer('%(id)s', 0.5, search_onchange);
+                    $('%(id)s_hidden').value = result[1];
+                    $A(results_div.childNodes).each(Element.remove);
+                  });
+                  results_div.appendChild(option);
                 });
-                results_div.appendChild(option);
-              });
-            }
-          });
+              }
+            });
+          };
+          ajax_observer = new Form.Element.Observer('%(id)s', 0.5, search_onchange);
         };
-        ajax_observer_%(id)s = new Form.Element.Observer('%(id)s', 0.5, search_onchange_%(id)s);
+        fn();
         </script>
         """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search}
         return result
 
 class AjaxModelChoiceField(forms.ModelChoiceField):
     widget = AjaxModelChoiceWidget
+
+class HiddenModelChoiceField(forms.ModelChoiceField):
+    widget = forms.HiddenInput
 
 class TextModelChoiceField(forms.ModelChoiceField):
     widget = forms.TextInput
@@ -511,6 +517,136 @@ The agent currently logged in is not allowed to use this application. Please log
         else:
             self.item.untrash()
         return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name,self.item.pk))
+
+    def entry_permissions(self):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_modify_permissions = ('modify_permissions', 'id') in abilities_for_item
+        if not (can_do_everything or can_modify_permissions):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
+        agent_permissions = self.item.agent_permissions_as_item.filter(trashed=False)
+        group_permissions = self.item.group_permissions_as_item.filter(trashed=False)
+        default_permissions = self.item.default_permissions_as_item.filter(trashed=False)
+        agent_role_permissions = self.item.agent_role_permissions_as_item.filter(trashed=False)
+        group_role_permissions = self.item.group_role_permissions_as_item.filter(trashed=False)
+        default_role_permissions = self.item.default_role_permissions_as_item.filter(trashed=False)
+        agents = cms.models.Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query)).order_by('name')
+        groups = cms.models.Agent.objects.filter(Q(pk__in=group_permissions.values('group__pk').query) | Q(pk__in=group_role_permissions.values('group__pk').query)).order_by('name')
+
+        def formfield_callback(f):
+            if f.name in ['agent', 'group', 'item']:
+                return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=f.rel.field_name)
+            if isinstance(f, models.ForeignKey):
+                return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
+            else:
+                return f.formfield()
+        agent_permission_form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['agent', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        agent_role_permission_form_class = forms.models.modelform_factory(cms.models.AgentRolePermission, fields=['agent', 'item', 'role'], formfield_callback=formfield_callback)
+        group_permission_form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['group', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        group_role_permission_form_class = forms.models.modelform_factory(cms.models.AgentRolePermission, fields=['group', 'item', 'role'], formfield_callback=formfield_callback)
+        default_permission_form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        default_role_permission_form_class = forms.models.modelform_factory(cms.models.AgentRolePermission, fields=['item', 'role'], formfield_callback=formfield_callback)
+
+        agent_data = []
+        for agent in agents:
+            agent_datum = {}
+            agent_datum['agent'] = agent
+            agent_datum['permissions'] = agent_permissions.filter(agent=agent)
+            agent_datum['role_permissions'] = agent_role_permissions.filter(agent=agent)
+            agent_datum['permission_form'] = agent_permission_form_class(prefix="agent%s" % agent.pk, initial={'item': self.item.pk, 'agent': agent.pk})
+            agent_datum['role_permission_form'] = agent_role_permission_form_class(prefix="roleagent%s" % agent.pk, initial={'item': self.item.pk, 'agent': agent.pk})
+            agent_data.append(agent_datum)
+        group_data = []
+        for group in groups:
+            group_datum = {}
+            group_datum['group'] = group
+            group_datum['permissions'] = group_permissions.filter(group=group)
+            group_datum['role_permissions'] = group_role_permissions.filter(group=group)
+            group_datum['permission_form'] = group_permission_form_class(prefix="group%s" % group.pk, initial={'item': self.item.pk, 'group': group.pk})
+            group_datum['role_permission_form'] = group_role_permission_form_class(prefix="rolegroup%s" % group.pk, initial={'item': self.item.pk, 'group': group.pk})
+            group_data.append(group_datum)
+        default_data = {}
+        default_data['permissions'] = default_permissions
+        default_data['role_permissions'] = default_role_permissions
+        default_data['permission_form'] = default_permission_form_class(prefix="default", initial={'item': self.item.pk})
+        default_data['role_permission_form'] = default_role_permission_form_class(prefix="roledefault", initial={'item': self.item.pk})
+
+        template = loader.get_template('item/permissions.html')
+        self.context['agent_data'] = agent_data
+        self.context['group_data'] = group_data
+        self.context['default_data'] = default_data
+        return HttpResponse(template.render(self.context))
+
+    def entry_permissioncreate(self):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_modify_permissions = ('modify_permissions', 'id') in abilities_for_item
+        if not (can_do_everything or can_modify_permissions):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
+        def formfield_callback(f):
+            if f.name in ['agent', 'group', 'item']:
+                return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=f.rel.field_name)
+            if isinstance(f, models.ForeignKey):
+                return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
+            else:
+                return f.formfield()
+        form_type = self.request.GET.get('formtype')
+        if form_type == 'agentpermission':
+            form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['agent', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        elif form_type == 'agentrolepermission':
+            form_class = forms.models.modelform_factory(cms.models.AgentRolePermission, fields=['agent', 'item', 'role'], formfield_callback=formfield_callback)
+        elif form_type == 'grouppermission':
+            form_class = forms.models.modelform_factory(cms.models.GroupPermission, fields=['group', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        elif form_type == 'grouprolepermission':
+            form_class = forms.models.modelform_factory(cms.models.GroupRolePermission, fields=['group', 'item', 'role'], formfield_callback=formfield_callback)
+        elif form_type == 'defaultpermission':
+            form_class = forms.models.modelform_factory(cms.models.DefaultPermission, fields=['item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        elif form_type == 'defaultrolepermission':
+            form_class = forms.models.modelform_factory(cms.models.DefaultRolePermission, fields=['item', 'role'], formfield_callback=formfield_callback)
+        else:
+            return self.render_error(HttpResponseBadRequest, 'Invalid Form Type', "You submitted a permission form with an invalid formtype parameter")
+
+        form = form_class(self.request.POST, self.request.FILES, prefix=self.request.GET['formprefix'])
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.name = "Untitled Permission"
+            item.save_versioned(updater=self.cur_agent)
+            redirect = self.request.GET['redirect']
+            return HttpResponseRedirect(redirect)
+        else:
+            model = form._meta.model
+            fields = form._meta.fields
+            existing_permission = model.objects
+            for field in fields:
+                if field == 'agent':
+                    existing_permission = existing_permission.filter(agent__pk=form[field].data)
+                elif field == 'group':
+                    existing_permission = existing_permission.filter(group__pk=form[field].data)
+                elif field == 'item':
+                    existing_permission = existing_permission.filter(item__pk=form[field].data)
+                elif field == 'role':
+                    existing_permission = existing_permission.filter(role__pk=form[field].data)
+                elif field == 'ability':
+                    existing_permission = existing_permission.filter(ability=form[field].data)
+                elif field == 'ability_parameter':
+                    existing_permission = existing_permission.filter(ability_parameter=form[field].data)
+            try:
+                existing_permission = existing_permission.get()
+            except ObjectDoesNotExist:
+                return HttpResponse('crap')
+            something_changed = False
+            if existing_permission.trashed:
+                existing_permission.untrash()
+                something_changed = True
+            if 'is_allowed' in fields and existing_permission.is_allowed != form['is_allowed'].data:
+                existing_permission.is_allowed = form['is_allowed'].data
+                existing_permission.save_versioned(updater=self.cur_agent)
+                something_changed = True
+            if something_changed:
+                redirect = self.request.GET['redirect']
+                return HttpResponseRedirect(redirect)
+            else:
+                return HttpResponse('nothing changed, you must be creating a duplicate!')
 
 class GroupViewer(ItemViewer):
     item_type = cms.models.Group

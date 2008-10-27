@@ -399,8 +399,6 @@ class ItemSetMembership(Relationship):
 ################################################################################
 
 POSSIBLE_ABILITIES = [
-    ('this', 'Do This'),
-    ('that', 'Do That'),
     ('view', 'View'),
     ('edit', 'Edit'),
     ('modify_permissions', 'Modify Permissions'),
