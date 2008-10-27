@@ -5,6 +5,7 @@ import settings
 setup_environ(settings)
 
 from cms.models import *
+from django import db
 
 if Item.objects.count() != 0:
     raise AssertionError, 'You cannot run ./create_initial_data.py on a non-empty database'
@@ -28,11 +29,17 @@ for model in all_models():
     creator_role.save_versioned(updater=admin, create_permissions=False)
     for name in model._meta.get_all_field_names():
         field, defined_model, direct, m2m = model._meta.get_field_by_name(name)
-        if name in ['item_type', 'trashed', 'id']:
+        if not direct:
             continue
-        if direct and type(field).__name__ != 'OneToOneField':
-            role_abilities.append(RoleAbility(name="Default ability to view %s.%s" % (model.__name__, name), role=default_role, ability="view", ability_parameter=name, is_allowed=True))
-            role_abilities.append(RoleAbility(name="Creator ability to view %s.%s" % (model.__name__, name), role=creator_role, ability="view", ability_parameter=name, is_allowed=True))
+        if isinstance(field, db.models.fields.related.OneToOneField):
+            continue
+        if isinstance(field, db.models.fields.AutoField):
+            continue
+        if name in ['item_type', 'trashed']:
+            continue
+        role_abilities.append(RoleAbility(name="Default ability to view %s.%s" % (model.__name__, name), role=default_role, ability="view", ability_parameter=name, is_allowed=True))
+        role_abilities.append(RoleAbility(name="Creator ability to view %s.%s" % (model.__name__, name), role=creator_role, ability="view", ability_parameter=name, is_allowed=True))
+        if not field.editable or name in model.immutable_fields:
             role_abilities.append(RoleAbility(name="Creator ability to edit %s.%s" % (model.__name__, name), role=creator_role, ability="edit", ability_parameter=name, is_allowed=True))
     role_abilities.append(RoleAbility(name="Creator ability to modify permissions of %s" % (model.__name__,), role=creator_role, ability="modify_permissions", ability_parameter="id", is_allowed=True))
     role_abilities.append(RoleAbility(name="Creator ability to trash %s" % (model.__name__,), role=creator_role, ability="trash", ability_parameter="id", is_allowed=True))
