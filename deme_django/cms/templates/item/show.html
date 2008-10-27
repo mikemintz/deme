@@ -25,7 +25,7 @@
                 {% ifequal field.format 'FileField' %}
                 <a href="/static/media/{{ field.obj }}">{{ field.obj }}</a>
                 {% else %}
-                {{ field.obj }}
+                {{ field.obj|escape }}
                 {% endifequal %}
                 {% endifequal %}
 

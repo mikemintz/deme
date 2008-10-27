@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models import Q
 import cms.models
 from django import forms
+from django.utils import simplejson
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 import logging
@@ -16,7 +17,63 @@ resource_name_dict = {}
 for model in cms.models.all_models():
     resource_name_dict[model.__name__.lower()] = model
 
-class FasterModelChoiceField(forms.ModelChoiceField):
+
+class AjaxModelChoiceWidget(forms.Widget):
+    def render(self, name, value, attrs=None):
+        model = self.choices.queryset.model
+        #field = self.choices.field
+        try:
+            if issubclass(model, cms.models.Item):
+                value_item = cms.models.Item.objects.get(pk=value)
+            elif issubclass(model, cms.models.ItemVersion):
+                value_item = cms.models.ItemVersion.objects.get(pk=value)
+            else:
+                value_item = None
+        except:
+            value_item = None
+        initial_search = value_item.name if value_item else ''
+        if value is None: value = ''
+        if attrs is None: attrs = {}
+        ajax_url = '/resource/%s/list.json' % model.__name__.lower()
+        result = """
+        <input type="hidden" id="%(id)s_hidden" name="%(name)s" value="%(value)s" />
+        <input type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" autocomplete="off" />
+        <div id="%(id)s_search_results"></div>
+        <script type="text/javascript">
+        var ajax_observer_%(id)s = null;
+        var search_onchange_%(id)s = function(e, value) {
+          var url = '%(ajax_url)s?q=' + encodeURIComponent(value);
+          new Ajax.Request(url, {
+            method: 'get',
+            onSuccess: function(transport) {
+              var results = $A(transport.responseJSON);
+              results.splice(0, 0, ['[NULL]', '']);
+              var results_div = $('%(id)s_search_results');
+              $A(results_div.childNodes).each(Element.remove);
+              results.each(function(result){
+                var option = document.createElement('div');
+                option.innerHTML = result[0];
+                $(option).observe('click', function(event){
+                  ajax_observer_%(id)s.stop();
+                  $('%(id)s').value = result[0];
+                  ajax_observer_%(id)s = new Form.Element.Observer('%(id)s', 0.5, search_onchange_%(id)s);
+                  $('%(id)s_hidden').value = result[1];
+                  $A(results_div.childNodes).each(Element.remove);
+                });
+                results_div.appendChild(option);
+              });
+            }
+          });
+        };
+        ajax_observer_%(id)s = new Form.Element.Observer('%(id)s', 0.5, search_onchange_%(id)s);
+        </script>
+        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search}
+        return result
+
+class AjaxModelChoiceField(forms.ModelChoiceField):
+    widget = AjaxModelChoiceWidget
+
+class TextModelChoiceField(forms.ModelChoiceField):
     widget = forms.TextInput
 
 def get_form_class_for_item_type(item_type, fields=None):
@@ -28,7 +85,7 @@ def get_form_class_for_item_type(item_type, fields=None):
         exclude.append('folio')
     def formfield_callback(f):
         if isinstance(f, models.ForeignKey):
-            return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=FasterModelChoiceField, to_field_name=f.rel.field_name)
+            return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
         else:
             return f.formfield()
     return forms.models.modelform_factory(item_type, exclude=exclude, fields=fields, formfield_callback=formfield_callback)
@@ -245,6 +302,9 @@ The agent currently logged in is not allowed to use this application. Please log
         n_items = items.count()
         n_listable_items = listable_items.count()
         items = [item for item in listable_items.all()[offset:offset+limit]]
+        if self.format == 'json':
+            json_data = simplejson.dumps([[item.name, item.pk] for item in items], separators=(',',':'))
+            return HttpResponse(json_data, mimetype='application/json')
         template = loader.get_template('item/list.html')
         self.context['model_names'] = model_names
         self.context['items'] = items
@@ -318,7 +378,6 @@ The agent currently logged in is not allowed to use this application. Please log
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         def get_fields_for_item(item):
-            #TODO we ignore OneToOneFields and ManyToManyFields
             fields = []
             for name in item._meta.get_all_field_names():
                 if name in ['item_type', 'trashed', 'current_item', 'version_number']: # special fields
@@ -330,19 +389,7 @@ The agent currently logged in is not allowed to use this application. Please log
                 if model_name == 'Item':
                     continue # things in Item are boring, since they're already part of the layout (itemheader)
                 info = {'model_name': model_name, 'name': name, 'format': type(field).__name__}
-                if type(field).__name__ == 'RelatedObject':
-                    forward_field = field.field
-                    if type(forward_field).__name__ == 'ForeignKey':
-                        try:
-                            obj = getattr(item, name)
-                        except ObjectDoesNotExist:
-                            obj = None
-                        if obj:
-                            obj = obj.all()
-                        info['field_type'] = 'collection'
-                    else:
-                        continue
-                elif type(field).__name__ == 'ForeignKey':
+                if type(field).__name__ == 'ForeignKey':
                     try:
                         obj = getattr(item, name)
                     except ObjectDoesNotExist:
@@ -351,6 +398,8 @@ The agent currently logged in is not allowed to use this application. Please log
                 elif type(field).__name__ == 'OneToOneField':
                     continue
                 elif type(field).__name__ == 'ManyToManyField':
+                    continue
+                elif type(field).__name__ == 'RelatedObject':
                     continue
                 else:
                     obj = getattr(item, name)
