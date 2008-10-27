@@ -76,10 +76,10 @@ class AjaxModelChoiceField(forms.ModelChoiceField):
 class TextModelChoiceField(forms.ModelChoiceField):
     widget = forms.TextInput
 
-def get_form_class_for_item_type(item_type, fields=None):
+def get_form_class_for_item_type(update_or_create, item_type, fields=None):
     exclude = []
     for field in item_type._meta.fields:
-        if field.rel and field.rel.parent_link:
+        if (field.rel and field.rel.parent_link) or (update_or_create == 'update' and field.name in item_type.immutable_fields):
             exclude.append(field.name)
     def formfield_callback(f):
         if isinstance(f, models.ForeignKey):
@@ -328,13 +328,12 @@ The agent currently logged in is not allowed to use this application. Please log
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
-        form_class = get_form_class_for_item_type(self.item_type)
+        form_class = get_form_class_for_item_type('create', self.item_type)
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['model_names'] = model_names
         self.context['form'] = form
-        if 'redirect' in self.request.GET:
-            self.context['redirect'] = self.request.GET['redirect']
+        self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
     def collection_create(self):
@@ -342,35 +341,31 @@ The agent currently logged in is not allowed to use this application. Please log
         can_create = ('create', self.item_type.__name__) in self.get_global_abilities_for_agent(self.cur_agent)
         if not (can_do_everything or can_create):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        form_class = get_form_class_for_item_type(self.item_type)
+        form_class = get_form_class_for_item_type('create', self.item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
             item.save_versioned(updater=self.cur_agent)
-	    
-	    # hacky email sender for comments
-	    if isinstance(item, cms.models.Comment):
-	        commented_item = item.commented_item.downcast()
-		if isinstance(commented_item, cms.models.Group):
-		    persons_in_group = cms.models.Person.objects.filter(group_memberships_as_agent__group=commented_item).all()
-		    recipient_list = [x.email for x in persons_in_group]
-		    if recipient_list:
-		        from django.core.mail import send_mail
-			subject = '[%s] %s' % (commented_item.get_name(), item.get_name())
-			message = '%s wrote a comment in %s\n%s\n\n%s' % (self.cur_agent.get_name(), commented_item.get_name(), 'http://deme.stanford.edu/resource/group/%d' % commented_item.pk, item.body)
-			from_email = 'noreply@deme.stanford.edu'
-			send_mail(subject, message, from_email, recipient_list)
-
             redirect = self.request.GET.get('redirect', '/resource/%s/%d' % (self.viewer_name, item.pk))
             return HttpResponseRedirect(redirect)
         else:
-            #model_names = [model.__name__ for model in resource_name_dict.itervalues()]
             model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
             model_names.sort()
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
             self.context['form'] = form
+            self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
+
+        ### old code that emails comments to members of the group, we'll use it when we implement subscriptions
+        # persons_in_group = cms.models.Person.objects.filter(group_memberships_as_agent__group=commented_item).all()
+        # recipient_list = [x.email for x in persons_in_group]
+        # if recipient_list:
+        #     from django.core.mail import send_mail
+        # subject = '[%s] %s' % (commented_item.get_name(), item.get_name())
+        # message = '%s wrote a comment in %s\n%s\n\n%s' % (self.cur_agent.get_name(), commented_item.get_name(), 'http://deme.stanford.edu/resource/group/%d' % commented_item.pk, item.body)
+        # from_email = 'noreply@deme.stanford.edu'
+        # send_mail(subject, message, from_email, recipient_list)
 
     def entry_show(self):
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
@@ -420,10 +415,10 @@ The agent currently logged in is not allowed to use this application. Please log
         if not (can_do_everything or can_edit):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         if can_do_everything:
-            form_class = get_form_class_for_item_type(self.item_type)
+            form_class = get_form_class_for_item_type('update', self.item_type)
         else:
             fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
-            form_class = get_form_class_for_item_type(self.item_type, fields_can_edit)
+            form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
         form = form_class(instance=self.itemversion)
         if not can_do_everything:
             fields_can_view = set([x[1] for x in abilities_for_item if x[0] == 'view'])
@@ -443,7 +438,7 @@ The agent currently logged in is not allowed to use this application. Please log
         if not (can_do_everything or can_create):
             #TODO but agent can copy to another item type, so this is misleading
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        form_class = get_form_class_for_item_type(self.item_type)
+        form_class = get_form_class_for_item_type('create', self.item_type)
         if can_do_everything:
             fields_to_copy = [field_name for field_name in form_class.base_fields]
         else:
@@ -478,7 +473,7 @@ The agent currently logged in is not allowed to use this application. Please log
         #TODO if specified specific version and uploaded file blank, it would revert to newest version uploaded file
         new_item = self.item
         fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
-        form_class = get_form_class_for_item_type(self.item_type, fields_can_edit)
+        form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
             new_item = form.save(commit=False)
@@ -526,7 +521,7 @@ class GroupViewer(ItemViewer):
         can_create = ('create', self.item_type.__name__) in self.get_global_abilities_for_agent(self.cur_agent)
         if not (can_do_everything or can_create):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        form_class = get_form_class_for_item_type(self.item_type)
+        form_class = get_form_class_for_item_type('create', self.item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             new_item = form.save(commit=False)

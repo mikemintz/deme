@@ -60,7 +60,7 @@ anonymous_agent.save_versioned(updater=admin)
 default_site = Site(name="Default Site", is_default_site=True, viewer='item', action='list', aliased_item=None, query_string='')
 default_site.save_versioned(updater=admin)
 
-import sys; sys.exit(0)
+#import sys; sys.exit(0)
 
 ################################################################################
 # Just testing here:

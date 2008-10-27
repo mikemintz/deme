@@ -352,6 +352,7 @@ class CommentBox(template.Node):
                     continue
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
+                result.append("""<div style="float: right;"><a href="/resource/comment/new?commented_item=%s&commented_item_version=%s&redirect=%s">[+] Reply</a></div>""" % (comment.pk, comment.versions.latest().pk, urlquote(full_path)))
                 if agentcan_helper(context, 'view', 'name', comment):
                     result.append("""<a href="/resource/%s/%s">%s</a>""" % (comment.item_type.lower(), comment.pk, comment.name))
                 else:

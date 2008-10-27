@@ -61,7 +61,6 @@ data
   - I'd like to have a settings option where you either have apache with no permissions, django with no permissions, or django with full permissions (or maybe later a workaround with apache and permissions based on cookie)
 * make constraints (validations?) other than uniqueness work in models with revisions (are there any issues?)
 * figure out import deal on deme_django.cms and just cms
-* after you comment, and there's a validation error, and you fix it, it doesn't take you back to the original item
 * start using verbose_name to have nice displays of item type names
 * edit locks
 * fyi, there may be cases where there is cur_agent but no cur_account (like anonymous, and login_as other)
@@ -74,7 +73,6 @@ data
 * add sensitive_function.alters_data = True to functions like save_versioned so templates cant call them
 * come up with a scheme so when you create a new comment on an item, you can't select what it's a comment on (same with edit, although that can be done with permissions)
 * lots of html escaping to do probably
-* make name a required field. this would make it simpler to link to things without wondering if the link will be unclickable since it's blank
 
 Distant Future
 --------------
