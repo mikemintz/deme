@@ -39,7 +39,7 @@ for model in all_models():
             continue
         role_abilities.append(RoleAbility(name="Default ability to view %s.%s" % (model.__name__, name), role=default_role, ability="view", ability_parameter=name, is_allowed=True))
         role_abilities.append(RoleAbility(name="Creator ability to view %s.%s" % (model.__name__, name), role=creator_role, ability="view", ability_parameter=name, is_allowed=True))
-        if not field.editable or name in model.immutable_fields:
+        if field.editable and name not in model.immutable_fields:
             role_abilities.append(RoleAbility(name="Creator ability to edit %s.%s" % (model.__name__, name), role=creator_role, ability="edit", ability_parameter=name, is_allowed=True))
     role_abilities.append(RoleAbility(name="Creator ability to modify permissions of %s" % (model.__name__,), role=creator_role, ability="modify_permissions", ability_parameter="id", is_allowed=True))
     role_abilities.append(RoleAbility(name="Creator ability to trash %s" % (model.__name__,), role=creator_role, ability="trash", ability_parameter="id", is_allowed=True))
@@ -132,7 +132,9 @@ GroupMembership(name="Mike's membership in discuss group", agent=mike_person, gr
 GroupMembership(name="Todd's membership in discuss group", agent=todd_person, group=discuss_group).save_versioned(updater=admin)
 
 DefaultGlobalPermission(name="Default permission to do_something", ability='do_something', ability_parameter='Item', is_allowed=True).save_versioned(updater=admin)
-AgentGlobalPermission(name="Permission for Anonymous not to do_something", agent=anonymous_agent, ability='do_something', ability_parameter='Item', is_allowed=False).save_versioned(updater=admin)
+#AgentGlobalPermission(name="Permission for Anonymous not to do_something", agent=anonymous_agent, ability='do_something', ability_parameter='Item', is_allowed=False).save_versioned(updater=admin)
+DefaultGlobalPermission(name="Default permission to create Comments", ability='create', ability_parameter='Comment', is_allowed=True).save_versioned(updater=admin)
+DefaultGlobalPermission(name="Default permission to create HtmlDocuments", ability='create', ability_parameter='HtmlDocument', is_allowed=True).save_versioned(updater=admin)
 
 AgentPermission(name="Permission for Mike to login_as Admin", item=admin, ability='login_as', ability_parameter="id", is_allowed=True, agent=mike_person).save_versioned(updater=admin)
 AgentPermission(name="Permission for Anonymous to login_as mike_person", item=mike_person, ability='login_as', ability_parameter="id", is_allowed=True, agent=anonymous_agent).save_versioned(updater=admin)
