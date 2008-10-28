@@ -118,5 +118,25 @@
     </tr>
 </table>
 
+<div>
+    <div>New Agent</div>
+    <form method="get" class="item_form">
+        <table>
+            {{ new_agent_form.as_table }}
+        </table>
+        <input type="submit" />
+    </form>
+</div>
+
+<div>
+    <div>New Group</div>
+    <form method="get" class="item_form">
+        <table>
+            {{ new_group_form.as_table }}
+        </table>
+        <input type="submit" />
+    </form>
+</div>
+
 {% endblock content %}
 

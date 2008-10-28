@@ -530,8 +530,8 @@ The agent currently logged in is not allowed to use this application. Please log
         agent_role_permissions = self.item.agent_role_permissions_as_item.filter(trashed=False)
         group_role_permissions = self.item.group_role_permissions_as_item.filter(trashed=False)
         default_role_permissions = self.item.default_role_permissions_as_item.filter(trashed=False)
-        agents = cms.models.Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query)).order_by('name')
-        groups = cms.models.Agent.objects.filter(Q(pk__in=group_permissions.values('group__pk').query) | Q(pk__in=group_role_permissions.values('group__pk').query)).order_by('name')
+        agents = cms.models.Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
+        groups = cms.models.Group.objects.filter(Q(pk__in=group_permissions.values('group__pk').query) | Q(pk__in=group_role_permissions.values('group__pk').query) | Q(pk=self.request.GET.get('group', 0))).order_by('name')
 
         def formfield_callback(f):
             if f.name in ['agent', 'group', 'item']:
@@ -540,12 +540,13 @@ The agent currently logged in is not allowed to use this application. Please log
                 return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
             else:
                 return f.formfield()
+
         agent_permission_form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['agent', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
         agent_role_permission_form_class = forms.models.modelform_factory(cms.models.AgentRolePermission, fields=['agent', 'item', 'role'], formfield_callback=formfield_callback)
-        group_permission_form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['group', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
-        group_role_permission_form_class = forms.models.modelform_factory(cms.models.AgentRolePermission, fields=['group', 'item', 'role'], formfield_callback=formfield_callback)
-        default_permission_form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
-        default_role_permission_form_class = forms.models.modelform_factory(cms.models.AgentRolePermission, fields=['item', 'role'], formfield_callback=formfield_callback)
+        group_permission_form_class = forms.models.modelform_factory(cms.models.GroupPermission, fields=['group', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        group_role_permission_form_class = forms.models.modelform_factory(cms.models.GroupRolePermission, fields=['group', 'item', 'role'], formfield_callback=formfield_callback)
+        default_permission_form_class = forms.models.modelform_factory(cms.models.DefaultPermission, fields=['item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        default_role_permission_form_class = forms.models.modelform_factory(cms.models.DefaultRolePermission, fields=['item', 'role'], formfield_callback=formfield_callback)
 
         agent_data = []
         for agent in agents:
@@ -571,10 +572,15 @@ The agent currently logged in is not allowed to use this application. Please log
         default_data['permission_form'] = default_permission_form_class(prefix="default", initial={'item': self.item.pk})
         default_data['role_permission_form'] = default_role_permission_form_class(prefix="roledefault", initial={'item': self.item.pk})
 
+        new_agent_form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_group_form_class = forms.models.modelform_factory(cms.models.GroupPermission, fields=['group'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+
         template = loader.get_template('item/permissions.html')
         self.context['agent_data'] = agent_data
         self.context['group_data'] = group_data
         self.context['default_data'] = default_data
+        self.context['new_agent_form'] = new_agent_form_class()
+        self.context['new_group_form'] = new_group_form_class()
         return HttpResponse(template.render(self.context))
 
     def entry_permissioncreate(self):
