@@ -10,6 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 import logging
 import permission_functions
+import re
 
 ### MODELS ###
 
@@ -81,6 +82,14 @@ class HiddenModelChoiceField(forms.ModelChoiceField):
 
 class TextModelChoiceField(forms.ModelChoiceField):
     widget = forms.TextInput
+
+class NewCommentForm(forms.ModelForm):
+    commented_item = HiddenModelChoiceField(cms.models.Item.objects)
+    commented_item_version_number = forms.IntegerField(widget=forms.HiddenInput())
+    commented_item_index = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    class Meta:
+        model = cms.models.Comment
+        fields = ['name', 'description', 'body', 'commented_item']
 
 def get_form_class_for_item_type(update_or_create, item_type, fields=None):
     exclude = []
@@ -624,6 +633,7 @@ The agent currently logged in is not allowed to use this application. Please log
             fields = form._meta.fields
             existing_permission = model.objects
             for field in fields:
+                #TODO change form[field].data to form.cleaned_data[field] and see if it still works
                 if field == 'agent':
                     existing_permission = existing_permission.filter(agent__pk=form[field].data)
                 elif field == 'group':
@@ -741,6 +751,83 @@ class HtmlDocumentViewer(TextDocumentViewer):
         data = '[["refbase_123::14", "refbase_123::18"]]'
         return HttpResponse(data)
 
+    def entry_edit(self):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_edit = any(x[0] == 'edit' for x in abilities_for_item)
+        if not (can_do_everything or can_edit):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
+        if can_do_everything:
+            form_class = get_form_class_for_item_type('update', self.item_type)
+        else:
+            fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
+            form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
+
+
+        comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=self.itemversion.current_item, commented_item_version_number=self.itemversion.version_number, commented_item_index__isnull=False).order_by('-commented_item_index')
+        body_as_list = list(self.itemversion.body)
+        for comment_location in comment_locations:
+            i = comment_location.commented_item_index
+            body_as_list[i:i] = '<img id="comment_location_%s" src="/static/spacer.gif" title="Comment %s" style="margin: 0 2px 0 2px; background: red; height: 10px; width: 10px;"/>' % (comment_location.comment.pk, comment_location.comment.pk)
+        self.itemversion.body = ''.join(body_as_list)
+
+        form = form_class(instance=self.itemversion)
+        if not can_do_everything:
+            fields_can_view = set([x[1] for x in abilities_for_item if x[0] == 'view'])
+            initial_fields_set = set(form.initial.iterkeys())
+            fields_must_blank = initial_fields_set - fields_can_view
+            for field_name in fields_must_blank:
+                del form.initial[field_name]
+        template = loader.get_template('item/edit.html')
+        self.context['form'] = form
+        self.context['query_string'] = self.request.META['QUERY_STRING']
+        return HttpResponse(template.render(self.context))
+
+    def entry_update(self):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        can_edit = any(x[0] == 'edit' for x in abilities_for_item)
+        if not (can_do_everything or can_edit):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
+        #TODO if specified specific version and uploaded file blank, it would revert to newest version uploaded file
+        new_item = self.item
+        fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
+        form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
+        form = form_class(self.request.POST, self.request.FILES, instance=new_item)
+        if form.is_valid():
+            new_item = form.save(commit=False)
+
+            new_comment_locations = []
+            while True:
+                def repl(m):
+                    index = m.start()
+                    comment_id = m.group(1)
+                    new_comment_locations.append((index, comment_id))
+                    return ''
+                new_item.body, n_subs = re.subn(r'(?i)<img[^>]+comment_location_(\d+)[^>]*>', repl, new_item.body, 1)
+                if n_subs == 0:
+                    break
+            
+            new_item.save_versioned(updater=self.cur_agent)
+
+            new_item_version_number = new_item.versions.latest().version_number
+            for index, comment_id in new_comment_locations:
+                comment_location = cms.models.CommentLocation()
+                comment_location.name = 'Untitled CommentLocation'
+                comment_location.comment = cms.models.Comment.objects.get(pk=comment_id)
+                comment_location.commented_item_index = index
+                comment_location.commented_item_version_number = new_item_version_number
+                comment_location.save_versioned(updater=self.cur_agent)
+
+            return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name, new_item.pk))
+        else:
+            template = loader.get_template('item/edit.html')
+            self.context['form'] = form
+            self.context['query_string'] = self.request.META['QUERY_STRING']
+            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, type(self.item))]
+            model_names.sort()
+            self.context['model_names'] = model_names
+            return HttpResponse(template.render(self.context))
 
 class DjangoTemplateDocumentViewer(TextDocumentViewer):
     item_type = cms.models.DjangoTemplateDocument
@@ -762,6 +849,56 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
                 self.context['layout%d' % cur_node.pk] = t
             cur_node = next_node
         return HttpResponse(template.render(self.context))
+
+class CommentViewer(TextDocumentViewer):
+    __metaclass__ = ViewerMetaClass
+
+    item_type = cms.models.Comment
+    viewer_name = 'comment'
+
+    def collection_new(self):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        can_create = ('create', self.item_type.__name__) in self.get_global_abilities_for_agent(self.cur_agent)
+        if not (can_do_everything or can_create):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+        model_names.sort()
+        form_initial = dict(self.request.GET.items())
+        form_class = NewCommentForm
+        form = form_class(initial=form_initial)
+        template = loader.get_template('item/new.html')
+        self.context['model_names'] = model_names
+        self.context['form'] = form
+        self.context['redirect'] = self.request.GET.get('redirect')
+        return HttpResponse(template.render(self.context))
+
+    def collection_create(self):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        can_create = ('create', self.item_type.__name__) in self.get_global_abilities_for_agent(self.cur_agent)
+        if not (can_do_everything or can_create):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
+        form_class = NewCommentForm
+        form = form_class(self.request.POST, self.request.FILES)
+        if form.is_valid():
+            #TODO use transactions to make the CommentLocation save at the same time as the Comment
+            commented_item_version_number = form.cleaned_data['commented_item_version_number']
+            commented_item_index = form.cleaned_data['commented_item_index']
+            item = form.save(commit=False)
+            item.save_versioned(updater=self.cur_agent)
+            comment_location = cms.models.CommentLocation(name="Untitled CommentLocation", comment=item, commented_item_version_number=commented_item_version_number, commented_item_index=commented_item_index)
+            comment_location.save_versioned(updater=self.cur_agent)
+            redirect = self.request.GET.get('redirect', '/resource/%s/%d' % (self.viewer_name, item.pk))
+            return HttpResponseRedirect(redirect)
+        else:
+            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+            model_names.sort()
+            template = loader.get_template('item/new.html')
+            self.context['model_names'] = model_names
+            self.context['form'] = form
+            self.context['redirect'] = self.request.GET.get('redirect')
+            return HttpResponse(template.render(self.context))
+
+    #TODO copy/edit/update comments
 
 
 class MagicViewer(ItemViewer):

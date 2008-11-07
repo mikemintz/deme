@@ -4,25 +4,119 @@
 {% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {% ifagentcan 'view' 'name' item %}{{ item }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
+<script src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.0.2/prototype.js"></script>
+<!--
 <script type="text/javascript" src="/static/javascripts/prototype.js"></script>
 <script type="text/javascript" src="/static/javascripts/class_improved.js"></script>
 <script type="text/javascript" src="/static/javascripts/ref.js"></script>
 <script type="text/javascript" src="/static/javascripts/ref_deme.js"></script>
+-->
 
 {% itemheader %}
 
+<div id="refbase_123">
+{% ifagentcan 'view' 'body' item %}
+<div id="docbody" style="padding: 10px; border: 3px solid #000; background: #f8f8f8;">{% display_body_with_inline_comments itemversion %}</div>
+{% else %}
 <div id="docbody" style="padding: 10px; border: 3px solid #000; background: #f8f8f8;">
-    {% ifagentcan 'view' 'body' item %}
-    {{ itemversion.body }}
-    {% else %}
-    [PERMISSION DENIED]
-    {% endifagentcan %}
+[PERMISSION DENIED]
+</div>
+{% endifagentcan %}
 </div>
 
 <script type="text/javascript">
+    var body_str = "{{ itemversion.body|escapejs }}";
+    function getBodyIndex() {
+        if (Prototype.Browser.IE) {
+            var range = window.document.selection.createRange();
+            var getOwnerDoc = function(hint) {
+                if (!hint) return document; // lame!
+                if (/document$/i.test(hint.nodeName))
+                    return hint; // hint *is* a document object
+                else if (hint.ownerDocument)
+                    return hint.ownerDocument;
+                else // rare case: eventually hit the document root
+                    return getOwnerDoc(hint.parentNode);
+            };
+            
+            range.collapse(true);
+            var node = range.parentElement();
+            /*
+            range.move('Character', 1);
+            range.move('Character', -1);
+            var id = (Math.random() + '').split('.')[1];
+            var span_html_text = '<SPAN id=' + id + '></SPAN>'; //TODO why does it have to be uppercase and no quotes in ie?
+            range.pasteHTML(span_html_text);
+
+            var docbody_clone = $($('docbody').cloneNode(true));
+            docbody_clone.select('.commentref').each(Element.remove);
+            var offset = docbody_clone.innerHTML.indexOf(span_html_text);
+
+            var span = getOwnerDoc(range.parentElement()).getElementById(id);
+            span.parentNode.removeChild(span);
+
+            return offset;
+            */
+        } else {
+            var selection = window.getSelection();
+            var node = selection.anchorNode;
+        }
+        if (!node) return null;
+        var offset = selection.anchorOffset;
+
+        var id = (Math.random() + '').split('.')[1];
+        var span_html_text = '<span id="' + id + '"></span>'; //TODO kind of sketchy to be searching for this exact syntax
+        var span = document.createElement('span');
+        span.id = id;
+        node.parentNode.insertBefore(span, node);
+
+        var docbody_clone = $($('docbody').cloneNode(true));
+        docbody_clone.select('.commentref').each(Element.remove);
+
+        var node_index = docbody_clone.innerHTML.indexOf(span_html_text);
+        var pre_inner_html = docbody_clone.innerHTML.slice(0, node_index);
+        var body_str_index = 0;
+        for (var i in pre_inner_html) {
+            if (pre_inner_html[i] == '>') {
+                body_str_index = body_str.indexOf('>', body_str_index) + 1;
+            }
+        }
+
+        $(id).remove();
+        return body_str_index + offset;
+    }
+
+    function located_comment_mouseup_handler(e) {
+        var index = getBodyIndex();
+        var url = '/resource/comment/new?commented_item={{ item.pk }}&commented_item_version_number={{ itemversion.version_number }}&redirect={{ full_path|urlencode }}&commented_item_index=' + index;
+        //window.location = url;
+    }
+
+    function add_located_comment() {
+        $('docbody').observe('mouseup', located_comment_mouseup_handler);
+        $('add_located_comment_div').hide();
+        $('adding_located_comment_div').show();
+    }
+
+    function cancel_add_located_comment() {
+        $('docbody').stopObserving('mouseup', located_comment_mouseup_handler);
+        $('add_located_comment_div').show();
+        $('adding_located_comment_div').hide();
+    }
+
     //ref_bless('docbody', '123');
     //gRegMgr.hl('123');
 </script>
+
+<div id="add_located_comment_div">
+<a href="#" onclick="add_located_comment(); return false;">Add Located Comment</a>
+</div>
+
+<div id="adding_located_comment_div" style="display: none;">
+Now just select text where you want to comment or
+<a href="#" onclick="cancel_add_located_comment(); return false;">Cancel</a>
+</div>
+
 <!--<button onclick="gRegMgr.transmit();">Transmit Highlights</button>-->
 
 <h2>Comments</h2>

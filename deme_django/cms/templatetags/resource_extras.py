@@ -2,6 +2,7 @@ from django import template
 import cms.models
 from cms import permission_functions
 from django.utils.http import urlquote
+from django.core.exceptions import ObjectDoesNotExist
 
 register = template.Library()
 
@@ -223,13 +224,17 @@ def ifagentcanglobal(parser, token):
         nodelist_false = template.NodeList()
     return IfAgentCanGlobal(bits[1], bits[2], nodelist_true, nodelist_false)
 
-def comment_dicts_for_item(item):
+def comment_dicts_for_item(item, itemversion):
     comments = item.comments_as_item.order_by('updated_at')
     result = []
     for comment in comments:
         comment_info = {}
         comment_info['comment'] = comment
-        comment_info['subcomments'] = comment_dicts_for_item(comment)
+        try:
+            comment_info['comment_location'] = comment.comment_locations_as_comment.get(commented_item_version_number=itemversion.version_number)
+        except ObjectDoesNotExist:
+            comment_info['comment_location'] = None
+        comment_info['subcomments'] = comment_dicts_for_item(comment, comment.versions.latest())
         result.append(comment_info)
     return result
 
@@ -324,6 +329,18 @@ class ItemHeader(template.Node):
 
         return '\n'.join(result)
 
+@register.simple_tag
+def display_body_with_inline_comments(itemversion):
+    #TODO permissions? you should be able to see any CommentLocation, but maybe not the id of the comment it refers to
+    #TODO don't insert these in bad places, like inside a tag <img <a href="....> />
+    comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=itemversion.current_item, commented_item_version_number=itemversion.version_number, commented_item_index__isnull=False, trashed=False, comment__trashed=False).order_by('-commented_item_index')
+    body_as_list = list(itemversion.body)
+    for comment_location in comment_locations:
+        i = comment_location.commented_item_index
+        body_as_list[i:i] = '<a href="/resource/comment/%s" class="commentref">[%s]</a>' % (comment_location.comment.pk, comment_location.comment.name)
+    return ''.join(body_as_list)
+
+
 @register.tag
 def itemheader(parser, token):
     bits = list(token.split_contents())
@@ -346,15 +363,16 @@ class CommentBox(template.Node):
 
         result = []
         result.append("""<div class="comment_box">""")
-        result.append("""<div class="comment_box_header"><a href="/resource/comment/new?commented_item=%s&commented_item_version=%s&redirect=%s">[+] Add Comment</a></div>""" % (itemversion.current_item.pk, itemversion.pk, urlquote(full_path)))
+        result.append("""<div class="comment_box_header"><a href="/resource/comment/new?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Add Comment</a></div>""" % (itemversion.current_item.pk, itemversion.version_number, urlquote(full_path)))
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
+                comment_location = comment_info['comment_location']
                 if not agentcan_helper(context, 'view', 'commented_item', comment):
                     continue
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
-                result.append("""<div style="float: right;"><a href="/resource/comment/new?commented_item=%s&commented_item_version=%s&redirect=%s">[+] Reply</a></div>""" % (comment.pk, comment.versions.latest().pk, urlquote(full_path)))
+                result.append("""<div style="float: right;"><a href="/resource/comment/new?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (comment.pk, comment.versions.latest().version_number, urlquote(full_path)))
                 if agentcan_helper(context, 'view', 'name', comment):
                     result.append("""<a href="/resource/%s/%s">%s</a>""" % (comment.item_type.lower(), comment.pk, comment.name))
                 else:
@@ -366,6 +384,8 @@ class CommentBox(template.Node):
                         result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), 'PERMISSION DENIED'))
                 else:
                     result.append('by [PERMISSION DENIED]')
+                if not comment_location:
+                    result.append("[INACTIVE]")
                 result.append("</div>")
                 if comment.trashed:
                     result.append("""<div class="comment_body">""")
@@ -386,7 +406,7 @@ class CommentBox(template.Node):
                     result.append("</div>")
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
-        add_comments_to_div(comment_dicts_for_item(itemversion.current_item))
+        add_comments_to_div(comment_dicts_for_item(item, itemversion))
         result.append("</div>")
         return '\n'.join(result)
 

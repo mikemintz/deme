@@ -81,6 +81,7 @@ Distant Future
   - what happens when viewer2 inherits from viewer1, and viewer2 item type subclasses viewer1 item type, and viewer2 inherits the edit/update functionality?
   - make it work better when you downcast an item in the editor, with versioning backward, and calling actions that should be called on create
 * respect the format string and have XML output and stuff
+* work on google app engine
 
 Small Details
 -------------

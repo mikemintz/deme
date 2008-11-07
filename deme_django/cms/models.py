@@ -371,7 +371,15 @@ class ImageDocument(FileDocument):
 class Comment(TextDocument):
     immutable_fields = TextDocument.immutable_fields + ['commented_item']
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
-    commented_item_version = models.ForeignKey(Item.VERSION, related_name='comments_as_item_version')
+
+
+class CommentLocation(Item):
+    immutable_fields = TextDocument.immutable_fields + ['comment', 'commented_item_version_number']
+    comment = models.ForeignKey(Comment, related_name='comment_locations_as_comment')
+    commented_item_version_number = models.IntegerField()
+    commented_item_index = models.IntegerField(null=True, blank=True)
+    class Meta:
+        unique_together = (('comment', 'commented_item_version_number'),)
 
 
 class Relationship(Item):
