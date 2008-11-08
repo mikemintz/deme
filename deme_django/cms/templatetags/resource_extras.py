@@ -285,11 +285,11 @@ class ItemHeader(template.Node):
         result.append("""</div>""")
 
         if agentcan_helper(context, 'view', 'created_at', item):
-            created_at_text = item.created_at
+            created_at_text = item.created_at.strftime("%Y-%m-%d %H:%m")
         else:
             created_at_text = '[PERMISSION DENIED]'
         if agentcan_helper(context, 'view', 'updated_at', item):
-            updated_at_text = itemversion.updated_at
+            updated_at_text = itemversion.updated_at.strftime("%Y-%m-%d %H:%m")
         else:
             updated_at_text = '[PERMISSION DENIED]'
         if agentcan_helper(context, 'view', 'creator', item):
