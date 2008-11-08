@@ -455,8 +455,12 @@ class Permission(Item):
     pass
 
 
-class AgentGlobalPermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['agent', 'ability', 'ability_parameter']
+class GlobalPermission(Item):
+    pass
+
+
+class AgentGlobalPermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['agent', 'ability', 'ability_parameter']
     agent = models.ForeignKey(Agent, related_name='agent_global_permissions_as_agent')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
     ability_parameter = models.CharField(max_length=255)
@@ -465,8 +469,8 @@ class AgentGlobalPermission(Permission):
         unique_together = (('agent', 'ability', 'ability_parameter'),)
 
 
-class GroupGlobalPermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['group', 'ability', 'ability_parameter']
+class GroupGlobalPermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['group', 'ability', 'ability_parameter']
     group = models.ForeignKey(Group, related_name='group_global_permissions_as_group')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
     ability_parameter = models.CharField(max_length=255)
@@ -475,13 +479,36 @@ class GroupGlobalPermission(Permission):
         unique_together = (('group', 'ability', 'ability_parameter'),)
 
 
-class DefaultGlobalPermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['ability', 'ability_parameter']
+class DefaultGlobalPermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['ability', 'ability_parameter']
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
     ability_parameter = models.CharField(max_length=255)
     is_allowed = models.BooleanField()
     class Meta:
         unique_together = (('ability', 'ability_parameter'),)
+
+
+class AgentGlobalRolePermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['agent', 'global_role']
+    agent = models.ForeignKey(Agent, related_name='agent_global_role_permissions_as_agent')
+    global_role = models.ForeignKey(GlobalRole, related_name='agent_global_role_permissions_as_global_role')
+    class Meta:
+        unique_together = (('agent', 'global_role'),)
+
+
+class GroupGlobalRolePermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['group', 'global_role']
+    group = models.ForeignKey(Group, related_name='group_global_role_permissions_as_group')
+    global_role = models.ForeignKey(GlobalRole, related_name='group_global_role_permissions_as_global_role')
+    class Meta:
+        unique_together = (('group', 'global_role'),)
+
+
+class DefaultGlobalRolePermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['global_role']
+    global_role = models.ForeignKey(GlobalRole, related_name='default_global_role_permissions_as_global_role')
+    class Meta:
+        unique_together = (('global_role',),)
 
 
 class AgentPermission(Permission):
@@ -514,29 +541,6 @@ class DefaultPermission(Permission):
     is_allowed = models.BooleanField(db_index=True)
     class Meta:
         unique_together = (('item', 'ability', 'ability_parameter'),)
-
-
-class AgentGlobalRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['agent', 'global_role']
-    agent = models.ForeignKey(Agent, related_name='agent_global_role_permissions_as_agent')
-    global_role = models.ForeignKey(GlobalRole, related_name='agent_global_role_permissions_as_global_role')
-    class Meta:
-        unique_together = (('agent', 'global_role'),)
-
-
-class GroupGlobalRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['group', 'global_role']
-    group = models.ForeignKey(Group, related_name='group_global_role_permissions_as_group')
-    global_role = models.ForeignKey(GlobalRole, related_name='group_global_role_permissions_as_global_role')
-    class Meta:
-        unique_together = (('group', 'global_role'),)
-
-
-class DefaultGlobalRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['global_role']
-    global_role = models.ForeignKey(GlobalRole, related_name='default_global_role_permissions_as_global_role')
-    class Meta:
-        unique_together = (('global_role',),)
 
 
 class AgentRolePermission(Permission):
