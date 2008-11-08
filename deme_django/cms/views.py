@@ -427,22 +427,43 @@ The agent currently logged in is not allowed to use this application. Please log
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         relationship_sets = []
+        version_relationship_sets = []
         for this_item in [self.item, self.itemversion]:
-            for name in this_item._meta.get_all_field_names():
+            for name in sorted(this_item._meta.get_all_field_names()):
                 field, model, direct, m2m = this_item._meta.get_field_by_name(name)
                 if type(field).__name__ != 'RelatedObject':
                     continue
                 if type(field.field).__name__ != 'ForeignKey':
                     continue
+                if issubclass(field.model, cms.models.Permission):
+                    continue
+                if issubclass(field.model, cms.models.Permission.VERSION):
+                    continue
                 manager = getattr(this_item, name)
                 relationship_set = {}
                 relationship_set['name'] = name
-                viewable_items = manager.filter(trashed=False) #TODO we need to filter by permission
-                ids_can_view_name = set(viewable_items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'name')).values_list('pk', flat=True))
-                relationship_set['items'] = [{'item': item, 'can_view_name': item.pk in ids_can_view_name} for item in viewable_items]
-                relationship_sets.append(relationship_set)
+                viewable_items = manager.filter(trashed=False)
+                if viewable_items.count() == 0:
+                    continue
+                if can_do_everything:
+                    relationship_set['items'] = [{'item': item, 'can_view_name': True} for item in viewable_items]
+                else:
+                    if issubclass(field.model, cms.models.Item.VERSION):
+                        viewable_current_items = cms.models.Item.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', field.field.name)).values('pk').query
+                        name_viewable_current_items = cms.models.Item.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'name')).values('pk').query
+                        viewable_items = viewable_items.filter(current_item__in=viewable_current_items)
+                        ids_can_view_name = set(viewable_items.filter(current_item__in=name_viewable_current_items).values_list('pk', flat=True))
+                    else:
+                        viewable_items = viewable_items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', field.field.name))
+                        ids_can_view_name = set(viewable_items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'name')).values_list('pk', flat=True))
+                    relationship_set['items'] = [{'item': item, 'can_view_name': item.pk in ids_can_view_name} for item in viewable_items]
+                if issubclass(field.model, cms.models.Item.VERSION):
+                    version_relationship_sets.append(relationship_set)
+                else:
+                    relationship_sets.append(relationship_set)
         template = loader.get_template('item/relationships.html')
         self.context['relationship_sets'] = relationship_sets
+        self.context['version_relationship_sets'] = version_relationship_sets
         return HttpResponse(template.render(self.context))
 
     def entry_edit(self):

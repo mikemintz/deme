@@ -16,12 +16,15 @@
     Relationships
 </div>
 
+<table width="100%">
+<tr valign="top">
+<td width="50%">
+
 {% for relationship_set in relationship_sets %}
 {% if relationship_set.items %}
-<h2 style="border-bottom: 3px solid #000;">{{ relationship_set.name }}</h2>
-<table class="list">
+<table class="list" style="margin-bottom: 15px; width: 100%;">
     <tr>
-        <th>Name</th>
+        <th>{{ relationship_set.name|title }}</th>
     </tr>
     {% for relationship in relationship_set.items %}
     <tr class="{% cycle 'even' 'odd' %}">
@@ -35,6 +38,32 @@
 </table>
 {% endif %}
 {% endfor %}
+
+</td>
+<td width="50%">
+
+{% for relationship_set in version_relationship_sets %}
+{% if relationship_set.items %}
+<table class="list" style="margin-bottom: 15px; width: 100%;">
+    <tr>
+        <th>{{ relationship_set.name|title }}</th>
+    </tr>
+    {% for relationship in relationship_set.items %}
+    <tr class="{% cycle 'even' 'odd' %}">
+        {% if relationship.can_view_name %}
+            <td><a href="{% show_resource_url relationship.item %}">{{ relationship.item.name }} (v{{ relationship.item.version_number }})</a></td>
+        {% else %}
+            <td><a href="{% show_resource_url relationship.item %}">[PERMISSION DENIED] (v{{ relationship.item.version_number }})</a></td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+{% endfor %}
+
+</td>
+</tr>
+</table>
 
 {% endblock content %}
 
