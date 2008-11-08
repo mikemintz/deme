@@ -423,6 +423,28 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['abilities'] = sorted(self.get_abilities_for_agent_and_item(self.cur_agent, self.item))
         return HttpResponse(template.render(self.context))
 
+    def entry_relationships(self):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        relationship_sets = []
+        for this_item in [self.item, self.itemversion]:
+            for name in this_item._meta.get_all_field_names():
+                field, model, direct, m2m = this_item._meta.get_field_by_name(name)
+                if type(field).__name__ != 'RelatedObject':
+                    continue
+                if type(field.field).__name__ != 'ForeignKey':
+                    continue
+                manager = getattr(this_item, name)
+                relationship_set = {}
+                relationship_set['name'] = name
+                viewable_items = manager.filter(trashed=False) #TODO we need to filter by permission
+                ids_can_view_name = set(viewable_items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'name')).values_list('pk', flat=True))
+                relationship_set['items'] = [{'item': item, 'can_view_name': item.pk in ids_can_view_name} for item in viewable_items]
+                relationship_sets.append(relationship_set)
+        template = loader.get_template('item/relationships.html')
+        self.context['relationship_sets'] = relationship_sets
+        return HttpResponse(template.render(self.context))
+
     def entry_edit(self):
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)

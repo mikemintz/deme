@@ -1,0 +1,40 @@
+{% extends layout %}
+{% load resource_extras %}
+{% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Relationships for {% ifagentcan 'view' 'name' item %}{{ item }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
+{% block content %}
+
+<div class="crumbs">
+    {% for inherited_item_type in item_type_inheritance %}
+    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
+    &raquo;
+    {% endfor %}
+    <a href="{% show_resource_url item %}">{{ item }}</a>
+    &raquo;
+    <a href="{% show_resource_url itemversion %}">Version {{ itemversion.version_number }}</a>
+    &raquo;
+    Relationships
+</div>
+
+{% for relationship_set in relationship_sets %}
+{% if relationship_set.items %}
+<h2 style="border-bottom: 3px solid #000;">{{ relationship_set.name }}</h2>
+<table class="list">
+    <tr>
+        <th>Name</th>
+    </tr>
+    {% for relationship in relationship_set.items %}
+    <tr class="{% cycle 'even' 'odd' %}">
+        {% if relationship.can_view_name %}
+            <td><a href="{% show_resource_url relationship.item %}">{{ relationship.item.name }}</a></td>
+        {% else %}
+            <td><a href="{% show_resource_url relationship.item %}">[PERMISSION DENIED]</a></td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+{% endfor %}
+
+{% endblock content %}
+

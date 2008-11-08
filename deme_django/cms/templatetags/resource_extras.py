@@ -254,6 +254,7 @@ class ItemHeader(template.Node):
 
         result.append("""<div class="crumbs">""")
         result.append("""<div style="float: right;">""")
+        result.append("""<a href="/resource/%s/%s/relationships?version=%s">Relationships</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
         if agentcan_helper(context, 'modify_permissions', 'id', item):
             result.append("""<a href="/resource/%s/%s/permissions">Permissions</a>""" % (item.item_type.lower(), item.pk))
         if agentcan_helper(context, 'edit', None, item):
