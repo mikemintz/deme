@@ -318,7 +318,7 @@ class ItemHeader(template.Node):
         result.append('</div>')
         result.append('</div>')
 
-        result.append('<div style="font-size: smaller; color: #aaa;">')
+        result.append('<div style="font-size: smaller; color: #aaa; margin-bottom: 10px;">')
         if agentcan_helper(context, 'view', 'description', item):
             result.append('<b>Description:</b> %s' % itemversion.description)
         else:
