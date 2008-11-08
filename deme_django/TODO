@@ -70,7 +70,6 @@ data
 * urls should be more modular, not hard coded as much, like all the /static/media and /resource/{{item_type}}
 * decide whether to have autoescape on or off
 * add sensitive_function.alters_data = True to functions like save_versioned so templates cant call them
-* come up with a scheme so when you create a new comment on an item, you can't select what it's a comment on (same with edit, although that can be done with permissions)
 * lots of html escaping to do probably
 * we need a global permission editor like the local permission editor
 
