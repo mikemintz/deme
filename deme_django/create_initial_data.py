@@ -59,6 +59,10 @@ for model in all_models():
         DefaultRolePermission(name="Default permission for %s" % role.name, item=role, role=Role.objects.get(name="Role Default")).save_versioned(updater=admin)
         AgentRolePermission(name="Creator permission for %s" % role.name, agent=admin, item=role, role=Role.objects.get(name="Role Creator")).save_versioned(updater=admin)
 
+print 'Creating permissions for admin'
+DefaultRolePermission(name="Default permission for Admin", item=admin, role=Role.objects.get(name="Agent Default")).save_versioned(updater=admin)
+AgentRolePermission(name="Creator permission for Admin", agent=admin, item=admin, role=Role.objects.get(name="Agent Creator")).save_versioned(updater=admin)
+
 AgentGlobalPermission(name='Admin can do everything', ability='do_everything', ability_parameter="Item", is_allowed=True, agent=admin).save_versioned(updater=admin)
 
 anonymous_agent = AnonymousAgent(name='Anonymous')
