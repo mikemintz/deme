@@ -129,6 +129,8 @@ def agentcan_helper(context, ability, ability_parameter, item):
     agent = context['cur_agent']
     if agentcan_global_helper(context, 'do_everything', 'Item'):
         return True
+    if isinstance(item, cms.models.Permission) and hasattr(item, 'item') and not isinstance(item.item, cms.models.Permission) and agentcan_helper(context, 'modify_permissions', 'id', item.item):
+        return True
     abilities_for_item = context['_item_ability_cache'].get((agent.pk, item.pk))
     if abilities_for_item is None:
         abilities_for_item = permission_functions.get_abilities_for_agent_and_item(agent, item)
@@ -274,9 +276,9 @@ class ItemHeader(template.Node):
         for inherited_item_type in item_type_inheritance:
             result.append("""<a href="/resource/%s">%ss</a> &raquo;""" % (inherited_item_type.lower(), inherited_item_type))
         if agentcan_helper(context, 'view', 'name', item):
-            result.append(item.name)
+            result.append('<a href="/resource/%s/%s">%s</a>' % (item.item_type.lower(), item.pk, item.name))
         else:
-            result.append('[PERMISSION DENIED]')
+            result.append('<a href="/resource/%s/%s">[PERMISSION DENIED]</a>' % (item.item_type.lower(), item.pk))
         result.append("""&raquo; """)
         result.append("""<select id="id_item_type" name="item_type" onchange="window.location = this.value;">""")
         for other_itemversion in item.versions.all():
@@ -418,4 +420,54 @@ def commentbox(parser, token):
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
     return CommentBox()
 
+
+class EmbeddedItem(template.Node):
+    def __init__(self, item):
+        self.item = template.Variable(item)
+
+    def __repr__(self):
+        return "<EmbeddedItemNode>"
+
+    def render(self, context):
+        item = self.item.resolve(context)
+        if isinstance(item, basestring):
+            try:
+                item = cms.models.Item.objects.get(pk=item)
+            except ObjectDoesNotExist:
+                item = None
+        if not isinstance(item, cms.models.Item):
+            return ''
+        item = item.downcast()
+        from cms.views import get_viewer_class_for_viewer_name
+        viewer_class = get_viewer_class_for_viewer_name(item.item_type.lower())
+        viewer = viewer_class()
+        viewer.init_from_div(context['request'], 'show', item.item_type.lower(), item, item.versions.latest().downcast(), context['cur_agent'])
+        return viewer.dispatch().content
+
+
+@register.tag
+def embed(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
+    return EmbeddedItem(bits[1])
+
+    def render(self, context):
+        agent = context['cur_agent']
+        try:
+            item = self.item.resolve(context)
+        except template.VariableDoesNotExist:
+            return 'invalid 232593713' # TODO what should i do here?
+        try:
+            ability = self.ability.resolve(context)
+        except template.VariableDoesNotExist:
+            return 'invalid 232593714' # TODO what should i do here?
+        try:
+            ability_parameter = self.ability_parameter.resolve(context)
+        except template.VariableDoesNotExist:
+            return 'invalid 232593715' # TODO what should i do here?
+        if agentcan_helper(context, ability, ability_parameter, item):
+            return self.nodelist_true.render(context)
+        else:
+            return self.nodelist_false.render(context)
 

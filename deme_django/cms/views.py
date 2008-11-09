@@ -211,6 +211,7 @@ class ItemViewer(object):
                 self.item = self.item.downcast()
                 self.itemversion = self.itemversion.downcast()
         self.context = Context()
+        self.context['request'] = self.request # for NOW
         self.context['action'] = self.action
         self.context['item'] = self.item
         self.context['itemversion'] = self.itemversion
@@ -233,6 +234,7 @@ class ItemViewer(object):
         self.itemversion = itemversion
         self.action = action
         self.context = Context()
+        self.context['request'] = self.request # for NOW
         self.context['layout'] = 'blank.html'
         self.context['action'] = self.action
         self.context['item'] = self.item
@@ -479,6 +481,8 @@ The agent currently logged in is not allowed to use this application. Please log
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = any(x[0] == 'edit' for x in abilities_for_item)
+        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and ('modify_permissions', 'id') in self.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
+            can_edit = True
         if not (can_do_everything or can_edit):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         if can_do_everything:
@@ -535,6 +539,8 @@ The agent currently logged in is not allowed to use this application. Please log
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = any(x[0] == 'edit' for x in abilities_for_item)
+        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and ('modify_permissions', 'id') in self.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
+            can_edit = True
         if not (can_do_everything or can_edit):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         #TODO if specified specific version and uploaded file blank, it would revert to newest version uploaded file
@@ -559,6 +565,8 @@ The agent currently logged in is not allowed to use this application. Please log
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_trash = ('trash', 'id') in abilities_for_item
+        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and ('modify_permissions', 'id') in self.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
+            can_trash = True
         if not (can_do_everything or can_trash):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to trash this item")
         if 'version' in self.request.GET:
@@ -571,6 +579,8 @@ The agent currently logged in is not allowed to use this application. Please log
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_trash = ('trash', 'id') in abilities_for_item
+        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and ('modify_permissions', 'id') in self.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
+            can_trash = True
         if not (can_do_everything or can_trash):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to untrash this item")
         if 'version' in self.request.GET:
@@ -747,7 +757,7 @@ class GroupViewer(ItemViewer):
         folio = self.item.folios_as_group.get()
         folio_viewer_class = get_viewer_class_for_viewer_name('itemset')
         folio_viewer = folio_viewer_class()
-        folio_viewer.init_from_div(self.request, 'show', 'itemset', folio, folio.versions.latest(), self.cur_agent)
+        folio_viewer.init_from_div(self.request, 'show', 'itemset', folio, folio.versions.latest().downcast(), self.cur_agent)
         folio_html = folio_viewer.dispatch().content
         self.context['folio_html'] = folio_html
         template = loader.get_template('group/show.html')
