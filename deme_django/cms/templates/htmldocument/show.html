@@ -148,7 +148,7 @@ background: #fff; /* set desired hover color */
 
 /* end css tabs */
 	
-div#section_body, div#section_comments, div#section_sidebyside {
+div#section_body, div#section_comments, div#section_combined {
     border: 1px solid #6c6;
     border-top: none;
     padding: 10px;
@@ -162,7 +162,7 @@ div#section_body, div#section_comments, div#section_sidebyside {
         $('tab_body').addClassName('tabhighlighted');
         $('section_body').show();
         $('section_comments').hide();
-        $('section_sidebyside').hide();
+        $('section_combined').hide();
     }
     function select_section_comments() {
         $('section_comments').appendChild($('section_comments_inner'));
@@ -170,16 +170,16 @@ div#section_body, div#section_comments, div#section_sidebyside {
         $('tab_comments').addClassName('tabhighlighted');
         $('section_body').hide();
         $('section_comments').show();
-        $('section_sidebyside').hide();
+        $('section_combined').hide();
     }
-    function select_section_sidebyside() {
+    function select_section_combined() {
         $('body_side').appendChild($('section_body_inner'));
         $('comments_side').appendChild($('section_comments_inner'));
         $$('ul#tabnav li.tabhighlighted').each(function(e){e.removeClassName('tabhighlighted')});
-        $('tab_sidebyside').addClassName('tabhighlighted');
+        $('tab_combined').addClassName('tabhighlighted');
         $('section_body').hide();
         $('section_comments').hide();
-        $('section_sidebyside').show();
+        $('section_combined').show();
     }
     /*
     var body_clone = $($('section_body_inner').cloneNode(true));
@@ -191,8 +191,8 @@ div#section_body, div#section_comments, div#section_sidebyside {
 
 <ul id="tabnav">
 	<li id="tab_body" class="tabhighlighted"><a href="#" onclick="select_section_body(); return false;">Document</a></li>
+	<li id="tab_combined"><a href="#" onclick="select_section_combined(); return false;">Side By Side</a></li>
 	<li id="tab_comments"><a href="#" onclick="select_section_comments(); return false;">Comments ({{ item.comments_as_item.all|length }})</a></li>
-	<li id="tab_sidebyside"><a href="#" onclick="select_section_sidebyside(); return false;">Side By Side</a></li>
 </ul>
 
 <div id="section_body">
@@ -220,16 +220,17 @@ Now just select text where you want to comment or
 </div>
 </div>
 
+<div id="section_combined" style="display: none;">
+    <div id="body_side" style="float: left; width: 50%;"></div>
+    <div id="comments_side" style="float: right; width: 50%;"></div>
+    <div style="clear: both;"></div>
+</div>
+
 <div id="section_comments" style="display: none;">
 <div id="section_comments_inner">
 {% commentbox %}
 </div>
 </div>
 
-<div id="section_sidebyside" style="display: none;">
-    <div id="body_side" style="float: left; width: 50%;"></div>
-    <div id="comments_side" style="float: right; width: 50%;"></div>
-    <div style="clear: both;"></div>
-</div>
 {% endblock content %}
 
