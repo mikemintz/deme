@@ -39,21 +39,28 @@ class AjaxModelChoiceWidget(forms.Widget):
         result = """
         <input type="hidden" id="%(id)s_hidden" name="%(name)s" value="%(value)s" />
         <input type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" autocomplete="off" />
-        <div id="%(id)s_search_results"></div>
+        <div id="%(id)s_search_results" class="ajax_choice_results" style="display: none;"></div>
         <script type="text/javascript">
         fn = function(){
           var ajax_observer = null;
           var search_onchange = function(e, value) {
+            var results_div = $('%(id)s_search_results');
+            if (value == '') {
+              $A(results_div.childNodes).each(Element.remove);
+              $(results_div).hide();
+              $('%(id)s_hidden').value = '';
+              return;
+            }
             var url = '%(ajax_url)s?q=' + encodeURIComponent(value);
             new Ajax.Request(url, {
               method: 'get',
               onSuccess: function(transport) {
                 var results = $A(transport.responseJSON);
                 results.splice(0, 0, ['[NULL]', '']);
-                var results_div = $('%(id)s_search_results');
                 $A(results_div.childNodes).each(Element.remove);
                 results.each(function(result){
                   var option = document.createElement('div');
+                  option.className = 'ajax_choice_option';
                   option.innerHTML = result[0];
                   $(option).observe('click', function(event){
                     ajax_observer.stop();
@@ -61,9 +68,11 @@ class AjaxModelChoiceWidget(forms.Widget):
                     ajax_observer = new Form.Element.Observer('%(id)s', 0.5, search_onchange);
                     $('%(id)s_hidden').value = result[1];
                     $A(results_div.childNodes).each(Element.remove);
+                    $(results_div).hide();
                   });
                   results_div.appendChild(option);
                 });
+                $(results_div).show();
               }
             });
           };
@@ -811,7 +820,7 @@ class HtmlDocumentViewer(TextDocumentViewer):
         body_as_list = list(self.itemversion.body)
         for comment_location in comment_locations:
             i = comment_location.commented_item_index
-            body_as_list[i:i] = '<img id="comment_location_%s" src="/static/spacer.gif" title="Comment %s" style="margin: 0 2px 0 2px; background: red; height: 10px; width: 10px;"/>' % (comment_location.comment.pk, comment_location.comment.pk)
+            body_as_list[i:i] = '<img id="comment_location_%s" src="/static/spacer.gif" title="Comment %s" style="margin: 0 2px 0 2px; background: #ddd; border: 1px dotted #777; height: 10px; width: 10px;"/>' % (comment_location.comment.pk, comment_location.comment.pk)
         self.itemversion.body = ''.join(body_as_list)
 
         form = form_class(instance=self.itemversion)

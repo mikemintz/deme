@@ -124,3 +124,15 @@ div.comment_body {
     padding: 1px;
     margin: 0 3px 0 3px;
 }
+
+.ajax_choice_results {
+    border: 1px solid #000;
+    font-size: smaller;
+}
+.ajax_choice_option {
+    cursor: pointer;
+}
+.ajax_choice_option:hover {
+    background: #009;
+    color: #fff;
+}
