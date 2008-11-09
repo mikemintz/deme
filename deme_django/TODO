@@ -70,7 +70,7 @@ data
 * urls should be more modular, not hard coded as much, like all the /static/media and /resource/{{item_type}}
 * decide whether to have autoescape on or off
 * add sensitive_function.alters_data = True to functions like save_versioned so templates cant call them
-* lots of html escaping to do probably
+* lots of html escaping to do probably (or probably turn autoescape on)
 * we need a global permission editor like the local permission editor
 
 Distant Future
