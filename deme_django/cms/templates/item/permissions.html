@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load resource_extras %}
 {% block favicon %}{{ item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item_type|icon_url:48 }}" /> {{ item }} Permissions{% endblock %}
+{% block title %}<img src="{{ item_type|icon_url:48 }}" /> Permissions for {{ item.name }}{% endblock %}
 {% block content %}
 
 <script src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.0.2/prototype.js"></script>
