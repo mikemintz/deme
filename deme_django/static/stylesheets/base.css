@@ -83,8 +83,6 @@ form.item_form ul.errorlist li {
 /* Comments */
 
 div.comment_box {
-    border: thick solid #ccc;
-    padding: 5px;
 }
 div.comment_box_header {
     text-align: right;
@@ -117,3 +115,12 @@ div.comment_body {
     padding-right: 5px;
 }
 
+.commentref {
+    font-size: smaller;
+    color: #777;
+    text-decoration: none;
+    background: #ddd;
+    border: 1px dotted #777;
+    padding: 1px;
+    margin: 0 3px 0 3px;
+}

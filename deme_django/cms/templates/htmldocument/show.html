@@ -199,17 +199,18 @@ div#section_body, div#section_comments, div#section_combined {
 <div id="section_body_inner">
 
 <div id="refbase_123">
+    <div><a href="#" onclick="$$('.commentref').each(function(e){e.toggle()}); return false;">Toggle Comments</a></div>
 {% ifagentcan 'view' 'body' item %}
-<div id="docbody" style="padding: 10px; border: 3px solid #000; background: #f8f8f8;">{% display_body_with_inline_comments itemversion %}</div>
+<div id="docbody" style="padding: 10px;">{% display_body_with_inline_comments itemversion %}</div>
 {% else %}
-<div id="docbody" style="padding: 10px; border: 3px solid #000; background: #f8f8f8;">
+<div id="docbody" style="padding: 10px;">
 [PERMISSION DENIED]
 </div>
 {% endifagentcan %}
 </div>
 
 <div id="add_located_comment_div">
-<a href="#" onclick="add_located_comment(); return false;">Add Located Comment</a>
+<a href="#" onclick="add_located_comment(); return false;">[+] Add Located Comment</a>
 </div>
 
 <div id="adding_located_comment_div" style="display: none;">
@@ -228,6 +229,7 @@ Now just select text where you want to comment or
 
 <div id="section_comments" style="display: none;">
 <div id="section_comments_inner">
+<div><a href="#" onclick="$$('.comment_body, .comment_description').each(function(e){e.toggle()}); return false;">Collapse/Expand</a></div>
 {% commentbox %}
 </div>
 </div>

@@ -338,7 +338,7 @@ def display_body_with_inline_comments(itemversion):
     body_as_list = list(itemversion.body)
     for comment_location in comment_locations:
         i = comment_location.commented_item_index
-        body_as_list[i:i] = '<a href="/resource/comment/%s" class="commentref">[%s]</a>' % (comment_location.comment.pk, comment_location.comment.name)
+        body_as_list[i:i] = '<a href="/resource/comment/%s" class="commentref">%s</a>' % (comment_location.comment.pk, comment_location.comment.name)
     return ''.join(body_as_list)
 
 
