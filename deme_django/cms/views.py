@@ -429,7 +429,6 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['inheritance'] = [x.__name__ for x in reversed(type(self.item).mro()) if issubclass(x, cms.models.Item)]
         self.context['item_fields'] = get_fields_for_item(self.item)
         self.context['itemversion_fields'] = get_fields_for_item(self.itemversion)
-        self.context['abilities'] = sorted(self.get_abilities_for_agent_and_item(self.cur_agent, self.item))
         return HttpResponse(template.render(self.context))
 
     def entry_relationships(self):
@@ -473,6 +472,7 @@ The agent currently logged in is not allowed to use this application. Please log
         template = loader.get_template('item/relationships.html')
         self.context['relationship_sets'] = relationship_sets
         self.context['version_relationship_sets'] = version_relationship_sets
+        self.context['abilities'] = sorted(self.get_abilities_for_agent_and_item(self.cur_agent, self.item))
         return HttpResponse(template.render(self.context))
 
     def entry_edit(self):

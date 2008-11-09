@@ -48,20 +48,6 @@
     {% endfor %}
 </table>
 
-<h2 style="border-bottom: 3px solid #000;">Your Abilities For This {{ item.item_type }}</h2>
-<table class="list">
-    <tr>
-        <th>Ability</th>
-        <th>Parameter</th>
-    </tr>
-    {% for ability in abilities %}
-    <tr class="{% cycle 'even' 'odd' %}">
-        <td>{{ ability.0 }}</td>
-        <td>{{ ability.1 }}</td>
-    </tr>
-    {% endfor %}
-</table>
-
 <h2>Comments</h2>
 {% commentbox %}
 
