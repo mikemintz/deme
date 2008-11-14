@@ -86,7 +86,7 @@
     </tr>
     {% for item in items %}
     <tr class="{% cycle 'even' 'odd' %}">
-        <td><img src="{{ item.item_type|icon_url:16 }}" /> <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}">{{ item }}</a></td>
+        <td><img src="{{ item.item_type|icon_url:16 }}" /> <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}">{{ item.name }}</a></td>
     </tr>
     {% endfor %}
 </table>

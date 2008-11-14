@@ -309,7 +309,7 @@ class ItemHeader(template.Node):
                 updater_text = """<a href="%s">%s</a>""" % (show_resource_url(itemversion.updater), '[PERMISSION DENIED]')
         else:
             updater_text = '[PERMISSION DENIED]'
-        result.append('<div style="font-size: smaller;">')
+        result.append('<div style="font-size: 8pt;">')
         result.append('<div style="float: left;">')
         result.append("""Originally created by %s on %s""" % (creator_text, created_at_text))
         result.append('</div>')
@@ -320,11 +320,11 @@ class ItemHeader(template.Node):
         result.append('</div>')
         result.append('</div>')
 
-        result.append('<div style="font-size: smaller; color: #aaa; margin-bottom: 10px;">')
+        result.append('<div style="font-size: 8pt; color: #aaa; margin-bottom: 10px;">')
         if agentcan_helper(context, 'view', 'description', item):
-            result.append('<b>Description:</b> %s' % itemversion.description)
+            result.append('Description: %s' % itemversion.description)
         else:
-            result.append('<b>Description:</b> [PERMISSION DENIED]')
+            result.append('Description: [PERMISSION DENIED]')
         result.append('</div>')
 
         if item.trashed:
@@ -442,7 +442,7 @@ class EmbeddedItem(template.Node):
         viewer_class = get_viewer_class_for_viewer_name(item.item_type.lower())
         viewer = viewer_class()
         viewer.init_from_div(context['request'], 'show', item.item_type.lower(), item, item.versions.latest().downcast(), context['cur_agent'])
-        return viewer.dispatch().content
+        return """<div style="padding: 10px; border: thick solid #aaa;">%s</div>""" % viewer.dispatch().content
 
 
 @register.tag
@@ -451,23 +451,4 @@ def embed(parser, token):
     if len(bits) != 2:
         raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
     return EmbeddedItem(bits[1])
-
-    def render(self, context):
-        agent = context['cur_agent']
-        try:
-            item = self.item.resolve(context)
-        except template.VariableDoesNotExist:
-            return 'invalid 232593713' # TODO what should i do here?
-        try:
-            ability = self.ability.resolve(context)
-        except template.VariableDoesNotExist:
-            return 'invalid 232593714' # TODO what should i do here?
-        try:
-            ability_parameter = self.ability_parameter.resolve(context)
-        except template.VariableDoesNotExist:
-            return 'invalid 232593715' # TODO what should i do here?
-        if agentcan_helper(context, ability, ability_parameter, item):
-            return self.nodelist_true.render(context)
-        else:
-            return self.nodelist_false.render(context)
 

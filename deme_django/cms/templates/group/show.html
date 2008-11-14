@@ -6,12 +6,17 @@
 
 {% itemheader %}
 
-<div style="margin-bottom: 10px;">
-    <a href="/resource/groupmembership/new?group={{ item.pk }}&redirect={{ full_path|urlencode }}">[Add Agent]</a>
-</div>
+<table width="100%" style="margin-bottom: 15px;">
 
-<h2>Group Agents</h2>
-<div style="border: 1px solid #666; padding: 15px;">
+<tr valign="top">
+    <td style="font-size: larger;">Roster</td>
+    <td style="font-size: larger;">Folio</td>
+</tr>
+
+<tr valign="top">
+<td>
+
+<div>
     {% if item.group_memberships_as_group.all %}
     <table class="list">
         <tr>
@@ -32,14 +37,24 @@
     {% else %}
         No Agents In This Group
     {% endif %}
+
+    <div style="margin-top: 10px;">
+        <a href="/resource/groupmembership/new?group={{ item.pk }}&redirect={{ full_path|urlencode }}">[+] Add Agent</a>
+    </div>
 </div>
 
-<h2>Group Folio</h2>
-<div style="border: 1px solid #666; padding: 15px;">
-{{ folio_html }}
-</div>
+</td>
 
-<h2>Comments</h2>
+<td>
+
+    {% embed item.folios_as_group.get %}
+    {# {{ folio_html }} #}
+
+</td>
+</tr>
+
+</table>
+
 {% commentbox %}
 
 {% endblock content %}

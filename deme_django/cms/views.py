@@ -76,7 +76,7 @@ class AjaxModelChoiceWidget(forms.Widget):
               }
             });
           };
-          ajax_observer = new Form.Element.Observer('%(id)s', 0.5, search_onchange);
+          ajax_observer = new Form.Element.Observer('%(id)s', 0.25, search_onchange);
         };
         fn();
         </script>

@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load resource_extras %}
 {% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Edit {{ itemversion.name }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Edit {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
 <script src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.0.2/prototype.js"></script>
@@ -21,7 +21,7 @@ tinyMCE.init({
     <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
     &raquo;
     {% endfor %}
-    <a href="{% show_resource_url item %}">{{ item }}</a>
+    <a href="{% show_resource_url item %}">{% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a>
     &raquo;
     <a href="{% show_resource_url itemversion %}">Version {{ itemversion.version_number }}</a>
     &raquo;

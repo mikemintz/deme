@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load resource_extras %}
 {% block favicon %}{{ item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item_type|icon_url:48 }}" /> Permissions for {{ item.name }}{% endblock %}
+{% block title %}<img src="{{ item_type|icon_url:48 }}" /> Permissions for {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
 <script src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.0.2/prototype.js"></script>
@@ -11,9 +11,33 @@
     <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
     &raquo;
     {% endfor %}
-    <a href="{% show_resource_url item %}">{{ item }}</a>
+    <a href="{% show_resource_url item %}">{% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a>
     &raquo;
     Permissions
+</div>
+
+<div style="margin-bottom: 5px;">
+    <div><a href="#" onclick="$('new_agent_form').toggle(); return false;">[+] Agent</a></div>
+    <div id="new_agent_form" style="display: none;">
+        <form method="get" class="item_form">
+            <table>
+                {{ new_agent_form.as_table }}
+            </table>
+            <input type="submit" />
+        </form>
+    </div>
+</div>
+
+<div style="margin-bottom: 5px;">
+    <div><a href="#" onclick="$('new_group_form').toggle(); return false;">[+] Group</a></div>
+    <div id="new_group_form" style="display: none;">
+        <form method="get" class="item_form">
+            <table>
+                {{ new_group_form.as_table }}
+            </table>
+            <input type="submit" />
+        </form>
+    </div>
 </div>
 
 <table class="list">
@@ -21,6 +45,7 @@
         <th>Type</th>
         <th>Name</th>
         <th>Permissions</th>
+        <th>Add</th>
     </tr>
     {% for agent_datum in agent_data %}
     <tr class="{% cycle 'even' 'odd' as row_parity %}">
@@ -33,7 +58,9 @@
             {% for p in agent_datum.permissions %}
                 <div><a href="{% show_resource_url p %}">{% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}({{ p.ability_parameter }})</a></div>
             {% endfor %}
-            <div><a href="#" onclick="$('role_permission_form_{{ agent_datum.agent.pk }}').toggle(); return false;">[New Role Permission]</a></div>
+        </td>
+        <td>
+            <div><a href="#" onclick="$('role_permission_form_{{ agent_datum.agent.pk }}').toggle(); return false;">[+] Role Permission</a></div>
             <div id="role_permission_form_{{ agent_datum.agent.pk }}" style="display: none;">
                 <form method="post" enctype="multipart/form-data" action="/resource/item/{{ item.pk }}/permissioncreate?formtype=agentrolepermission&redirect={{ full_path|urlencode }}&formprefix={{ agent_datum.role_permission_form.prefix|urlencode }}" class="item_form">
                     <table>
@@ -42,7 +69,7 @@
                     <input type="submit" />
                 </form>
             </div>
-            <div><a href="#" onclick="$('permission_form_{{ agent_datum.agent.pk }}').toggle(); return false;">[New Permission]</a></div>
+            <div><a href="#" onclick="$('permission_form_{{ agent_datum.agent.pk }}').toggle(); return false;">[+] Permission</a></div>
             <div id="permission_form_{{ agent_datum.agent.pk }}" style="display: none;">
                 <form method="post" enctype="multipart/form-data" action="/resource/item/{{ item.pk }}/permissioncreate?formtype=agentpermission&redirect={{ full_path|urlencode }}&formprefix={{ agent_datum.permission_form.prefix|urlencode }}" class="item_form">
                     <table>
@@ -65,7 +92,9 @@
             {% for p in group_datum.permissions %}
                 <div><a href="{% show_resource_url p %}">{% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}({{ p.ability_parameter }})</a></div>
             {% endfor %}
-            <div><a href="#" onclick="$('role_permission_form_{{ group_datum.group.pk }}').toggle(); return false;">[New Role Permission]</a></div>
+        </td>
+        <td>
+            <div><a href="#" onclick="$('role_permission_form_{{ group_datum.group.pk }}').toggle(); return false;">[+] Role Permission</a></div>
             <div id="role_permission_form_{{ group_datum.group.pk }}" style="display: none;">
                 <form method="post" enctype="multipart/form-data" action="/resource/item/{{ item.pk }}/permissioncreate?formtype=grouprolepermission&redirect={{ full_path|urlencode }}&formprefix={{ group_datum.role_permission_form.prefix|urlencode }}" class="item_form">
                     <table>
@@ -74,7 +103,7 @@
                     <input type="submit" />
                 </form>
             </div>
-            <div><a href="#" onclick="$('permission_form_{{ group_datum.group.pk }}').toggle(); return false;">[New Permission]</a></div>
+            <div><a href="#" onclick="$('permission_form_{{ group_datum.group.pk }}').toggle(); return false;">[+] Permission</a></div>
             <div id="permission_form_{{ group_datum.group.pk }}" style="display: none;">
                 <form method="post" enctype="multipart/form-data" action="/resource/item/{{ item.pk }}/permissioncreate?formtype=grouppermission&redirect={{ full_path|urlencode }}&formprefix={{ group_datum.permission_form.prefix|urlencode }}" class="item_form">
                     <table>
@@ -96,7 +125,9 @@
             {% for p in default_data.permissions %}
                 <div><a href="{% show_resource_url p %}">{% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}({{ p.ability_parameter }})</a></div>
             {% endfor %}
-            <div><a href="#" onclick="$('role_permission_form_default').toggle(); return false;">[New Role Permission]</a></div>
+        </td>
+        <td>
+            <div><a href="#" onclick="$('role_permission_form_default').toggle(); return false;">[+] Role Permission</a></div>
             <div id="role_permission_form_default" style="display: none;">
                 <form method="post" enctype="multipart/form-data" action="/resource/item/{{ item.pk }}/permissioncreate?formtype=defaultrolepermission&redirect={{ full_path|urlencode }}&formprefix={{ default_data.role_permission_form.prefix|urlencode }}" class="item_form">
                     <table>
@@ -105,7 +136,7 @@
                     <input type="submit" />
                 </form>
             </div>
-            <div><a href="#" onclick="$('permission_form_default').toggle(); return false;">[New Permission]</a></div>
+            <div><a href="#" onclick="$('permission_form_default').toggle(); return false;">[+] Permission</a></div>
             <div id="permission_form_default" style="display: none;">
                 <form method="post" enctype="multipart/form-data" action="/resource/item/{{ item.pk }}/permissioncreate?formtype=defaultpermission&redirect={{ full_path|urlencode }}&formprefix={{ default_data.permission_form.prefix|urlencode }}" class="item_form">
                     <table>
@@ -117,26 +148,6 @@
         </td>
     </tr>
 </table>
-
-<div>
-    <div>New Agent</div>
-    <form method="get" class="item_form">
-        <table>
-            {{ new_agent_form.as_table }}
-        </table>
-        <input type="submit" />
-    </form>
-</div>
-
-<div>
-    <div>New Group</div>
-    <form method="get" class="item_form">
-        <table>
-            {{ new_group_form.as_table }}
-        </table>
-        <input type="submit" />
-    </form>
-</div>
 
 {% endblock content %}
 

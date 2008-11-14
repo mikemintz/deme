@@ -9,18 +9,16 @@
     <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
     &raquo;
     {% endfor %}
-    <a href="{% show_resource_url item %}">{{ item }}</a>
+    <a href="{% show_resource_url item %}">{% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a>
     &raquo;
     <a href="{% show_resource_url itemversion %}">Version {{ itemversion.version_number }}</a>
     &raquo;
     Relationships
 </div>
 
-<h2 style="border-bottom: 3px solid #000;">Your Abilities For This {{ item.item_type }}</h2>
-<table class="list">
+<table class="list" style="margin-bottom: 15px; width: 100%;">
     <tr>
-        <th>Ability</th>
-        <th>Parameter</th>
+        <th colspan="2">Your Abilities</th>
     </tr>
     {% for ability in abilities %}
     <tr class="{% cycle 'even' 'odd' %}">
