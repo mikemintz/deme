@@ -81,6 +81,8 @@ def icon_url(item_type, size=32):
 
 @register.simple_tag
 def list_results_navigator(item_type, itemset, search_query, trashed, offset, limit, n_results, max_pages):
+    if n_results <= limit:
+        return ''
     url_prefix = '/resource/%s/list?limit=%d&' % (item_type.lower(), limit)
     if search_query:
         url_prefix += 'q=%s&' % search_query

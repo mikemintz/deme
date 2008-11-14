@@ -20,6 +20,7 @@
     {% endfor %}
 </div>
 
+<div style="border: thin solid #aaa; background: #eee; padding: 10px; margin-bottom: 10px;">
 <form method="get" name="list_filter_form">
 <table class="twocol">
     <tr>
@@ -69,18 +70,19 @@
     </tr>
 </table>
 </form>
+</div>
 
 {% if items %}
 
-<div>
-    Displaying {{ list_start_i }} - {{ list_end_i }} of {{ n_listable_items }} listable items (plus {{ n_opposite_trashed_items }} opposite-trashed items and {{ n_unlistable_items }} unlistable items)
+<div style="text-align: right; font-size: smaller;">
+    Displaying {{ list_start_i }} - {{ list_end_i }} of {{ n_listable_items }} listable {{ item_type }}s <!--(plus {{ n_opposite_trashed_items }} opposite-trashed items and {{ n_unlistable_items }} unlistable items)-->
 </div>
 
-<div>
+<div style="margin-top: 10px; margin-bottom: 10px; text-align: center;">
     {% list_results_navigator item_type itemset search_query trashed offset limit n_listable_items 10 %}
 </div>
 
-<table class="list">
+<table class="list" width="100%">
     <tr>
         <th>Name</th>
     </tr>
@@ -93,6 +95,10 @@
 {% else %}
     No {{ item_type }}s Found
 {% endif %}
+
+<div style="margin-top: 10px; text-align: center;">
+    {% list_results_navigator item_type itemset search_query trashed offset limit n_listable_items 10 %}
+</div>
 
 {% endblock content %}
 
