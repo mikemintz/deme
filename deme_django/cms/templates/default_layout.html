@@ -19,6 +19,11 @@
     [<a href="/meta/logout?redirect={{ full_path|urlencode }}">Logout</a>]
     [<a href="/meta/login?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]
     {% endifequal %}
+    <div style="margin-top: 15px;">
+    <form method="get" action="/resource/item">
+    Search: <input type="text" name="q" value="{{ search_query }}" />
+    </form>
+    </div> 
 </div>
     
 <h1 style="border-bottom: 3px solid #246; color: #369; margin-bottom: 10px;">{% block title %}{% endblock %}</h1>
