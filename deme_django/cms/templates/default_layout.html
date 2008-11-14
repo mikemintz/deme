@@ -10,23 +10,50 @@
 </head>
 <body>
 
-<div style="position: absolute; right: 3px; top: 3px;">
+<div style="border-bottom: 3px solid #246; margin-bottom: 10px; padding-bottom: 5px;">
+
+<div style="float: right; text-align: right;">
+    <div style="font-size: 9pt;">
     {% ifequal cur_agent.item_type 'AnonymousAgent' %}
     You are not logged in
     [<a href="/meta/login?redirect={{ full_path|urlencode }}">Login</a>]
     {% else %}
-    You are logged in as: <a href="{% show_resource_url cur_agent %}">{{ cur_agent.name }}</a>
+    You are logged in as <a href="{% show_resource_url cur_agent %}">{{ cur_agent.name }}</a>
     [<a href="/meta/logout?redirect={{ full_path|urlencode }}">Logout</a>]
     [<a href="/meta/login?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]
     {% endifequal %}
-    <div style="margin-top: 15px;">
+    </div>
+    <div style="margin-top: 10px;">
     <form method="get" action="/resource/item">
-    Search: <input type="text" name="q" value="{{ search_query }}" />
+    <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
     </form>
-    </div> 
+    </div>
+    <script>
+        var search_box_changed = {% if search_query %}true{% else %}false{% endif %};
+        var search_box = document.getElementById('search_box');
+        search_box.onfocus = function(e){
+            if (!search_box_changed) {
+                search_box_changed = true;
+                search_box.value = '';
+                search_box.style.color = '#000';
+            }
+        };
+        search_box.onblur = function(e){
+            if (search_box.value == '') {
+                search_box_changed = false;
+                search_box.value = 'Search';
+                search_box.style.color = '#777';
+            }
+        };
+        search_box.onblur();
+    </script>
 </div>
-    
-<h1 style="border-bottom: 3px solid #246; color: #369; margin-bottom: 10px;">{% block title %}{% endblock %}</h1>
+
+<h1 style="color: #369; float: left; margin: 0;">{% block title %}{% endblock %}</h1>
+
+<div style="clear: both;"></div>
+
+</div>
 
 <div style="width: 150px; float: left;">
     <div style="background: #ddd; border: 1px solid #aaa; padding: 10px;">
