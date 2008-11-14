@@ -1,12 +1,23 @@
 body {
     font-family: helvetica, arial, sans;
+    color: #333;
+}
+
+a, a:visited {
+    color: #449;
+    text-decoration: none;
+}
+
+a:hover, a:active {
+    color: #55a;
+    text-decoration: underline;
 }
 
 div.crumbs {
     font-size: smaller;
     border-bottom: 1px solid #888;
     padding-bottom: 3px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 table.list {
