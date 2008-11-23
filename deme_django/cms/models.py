@@ -351,7 +351,7 @@ class TextDocument(Document):
 
 
 class DjangoTemplateDocument(TextDocument):
-    layout = models.ForeignKey('DjangoTemplateDocument', null=True, blank=True)
+    layout = models.ForeignKey('DjangoTemplateDocument', related_name='djangotemplatedocuments_as_layout', null=True, blank=True)
     override_default_layout = models.BooleanField(default=False)
 
 
@@ -584,7 +584,7 @@ class ViewerRequest(Item):
 
 class Site(ViewerRequest):
     is_default_site = IsDefaultField(default=None)
-    default_layout = models.ForeignKey('DjangoTemplateDocument', null=True, blank=True)
+    default_layout = models.ForeignKey('DjangoTemplateDocument', related_name='sites_as_default_layout', null=True, blank=True)
 
 
 class SiteDomain(Item):
