@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db import connection
 import datetime
 from django.core.exceptions import ObjectDoesNotExist
+import django.db.models.loading
 
 from django.db.models.base import ModelBase
 from copy import deepcopy
@@ -610,7 +611,6 @@ class CustomUrl(ViewerRequest):
 ################################################################################
 
 def all_models():
-    import django.db.models.loading
     result = [x for x in django.db.models.loading.get_models() if issubclass(x, Item)]
     return result
 
