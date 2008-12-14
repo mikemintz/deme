@@ -4,101 +4,149 @@
 {% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
-<script src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.0.2/prototype.js"></script>
-<!--
 <script type="text/javascript" src="/static/javascripts/prototype.js"></script>
-<script type="text/javascript" src="/static/javascripts/class_improved.js"></script>
-<script type="text/javascript" src="/static/javascripts/ref.js"></script>
-<script type="text/javascript" src="/static/javascripts/ref_deme.js"></script>
+<!--
+<script src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.0.2/prototype.js"></script>
 -->
 
 {% itemheader %}
 
+<style type="text/css">
+    .located_token_hover {
+        cursor: pointer;
+        border-left: 2px solid #f00;
+        margin-left: -3px;
+        padding-left: 1px;
+        background: #ddd;
+    }
+</style>
+
 <script type="text/javascript">
     var body_str = "{{ itemversion.body|escapejs }}";
-    function getBodyIndex() {
-        if (Prototype.Browser.IE) {
-            var range = window.document.selection.createRange();
-            var getOwnerDoc = function(hint) {
-                if (!hint) return document; // lame!
-                if (/document$/i.test(hint.nodeName))
-                    return hint; // hint *is* a document object
-                else if (hint.ownerDocument)
-                    return hint.ownerDocument;
-                else // rare case: eventually hit the document root
-                    return getOwnerDoc(hint.parentNode);
-            };
-            
-            range.collapse(true);
-            var node = range.parentElement();
-            /*
-            range.move('Character', 1);
-            range.move('Character', -1);
-            var id = (Math.random() + '').split('.')[1];
-            var span_html_text = '<SPAN id=' + id + '></SPAN>'; //TODO why does it have to be uppercase and no quotes in ie?
-            range.pasteHTML(span_html_text);
-
-            var docbody_clone = $($('docbody').cloneNode(true));
-            docbody_clone.select('.commentref').each(Element.remove);
-            var offset = docbody_clone.innerHTML.indexOf(span_html_text);
-
-            var span = getOwnerDoc(range.parentElement()).getElementById(id);
-            span.parentNode.removeChild(span);
-
-            return offset;
-            */
-        } else {
-            var selection = window.getSelection();
-            var node = selection.anchorNode;
-        }
-        if (!node) return null;
-        var offset = selection.anchorOffset;
-
-        var id = (Math.random() + '').split('.')[1];
-        var span_html_text = '<span id="' + id + '"></span>'; //TODO kind of sketchy to be searching for this exact syntax
-        var span = document.createElement('span');
-        span.id = id;
-        node.parentNode.insertBefore(span, node);
-
-        var docbody_clone = $($('docbody').cloneNode(true));
-        docbody_clone.select('.commentref').each(Element.remove);
-
-        var node_index = docbody_clone.innerHTML.indexOf(span_html_text);
-        var pre_inner_html = docbody_clone.innerHTML.slice(0, node_index);
-        var body_str_index = 0;
-        for (var i in pre_inner_html) {
-            if (pre_inner_html[i] == '>') {
-                body_str_index = body_str.indexOf('>', body_str_index) + 1;
-            }
-        }
-
-        $(id).remove();
-        return body_str_index + offset;
+    function located_comment_mouseup_handler(e) {
     }
 
-    function located_comment_mouseup_handler(e) {
-        var index = getBodyIndex();
+    function located_token_mouseover(tokenWrapper) {
+        tokenWrapper.addClassName('located_token_hover');
+    }
+
+    function located_token_mouseout(tokenWrapper) {
+        tokenWrapper.removeClassName('located_token_hover');
+    }
+
+    function located_token_click(tokenWrapper) {
+        var index = tokenWrapper.deme_text_offset;
         var url = '/resource/comment/new?commented_item={{ item.pk }}&commented_item_version_number={{ itemversion.version_number }}&redirect={{ full_path|urlencode }}&commented_item_index=' + index;
         window.location = url;
     }
 
     function add_located_comment() {
-        $('docbody').observe('mouseup', located_comment_mouseup_handler);
+        // TODO new idea: let's go through all textnodes in the document, finding their first index in body_str, and surrounding them with a span annotated with the number (eventually using that jquery data thing instead of class="loc15" or whatever
+        var docbody = $('docbody');
+        var docbody_clone = $(docbody.cloneNode(true));
+
+        var body_str_index = 0;
+        var remaining_body_str = body_str;
+        var increment_body_str = function(n){
+            body_str_index += n;
+            remaining_body_str = remaining_body_str.substring(n);
+        };
+        var traverse_text = function(text, wrapper){
+            if (text.length > 0) {
+                var whiteSpaceBodyMatch = /((&nbsp;)|(\s))+/i.exec(remaining_body_str);
+                var whiteSpaceTextMatch = /((&nbsp;)|(\s))+/i.exec(text);
+                if (whiteSpaceBodyMatch != null && whiteSpaceBodyMatch.index == 0 && whiteSpaceTextMatch != null && whiteSpaceTextMatch.index == 0) {
+                    increment_body_str(whiteSpaceBodyMatch[0].length);
+                    if (whiteSpaceTextMatch != null) {
+                        var whiteSpaceTextNode = document.createTextNode(text.substring(0, whiteSpaceTextMatch[0].length));
+                        wrapper.appendChild(whiteSpaceTextNode);
+                        text = text.substring(whiteSpaceTextMatch[0].length);
+                    }
+                } else {
+                    var token;
+                    if (whiteSpaceTextMatch == null) {
+                        token = text;
+                    } else if (whiteSpaceTextMatch.index == 0) {
+                        token = whiteSpaceTextMatch[0].substring(0, 1);
+                    } else {
+                        token = text.substring(0, whiteSpaceTextMatch.index);
+                    }
+                    var tokenTextNode = document.createTextNode(token);
+                    var tokenWrapper = $(document.createElement('span'));
+                    tokenWrapper.appendChild(tokenTextNode);
+                    tokenWrapper.deme_text_offset = body_str_index; //TODO jquery tips article said there was a better way to do this
+                    tokenWrapper.observe('mouseover', function(event){located_token_mouseover(tokenWrapper)});
+                    tokenWrapper.observe('mouseout', function(event){located_token_mouseout(tokenWrapper)});
+                    tokenWrapper.observe('click', function(event){located_token_click(tokenWrapper)});
+                    wrapper.appendChild(tokenWrapper);
+                    for (var i = 0; i < token.length; i++) {
+                        if (remaining_body_str.length <= 0) {
+                            alert("error: out of remaining_body_str");
+                            //TODO what to do about this?
+                        }
+                        var c = token.substring(i, i+1);
+                        if (remaining_body_str.substring(0, 1) != c && remaining_body_str.substring(0, 1) != '&') {
+                            alert("error: remaining_body_str[0] != c");
+                            //TODO what to do about this?
+                        }
+                        if (remaining_body_str.substring(0, 1) == '&') {
+                            increment_body_str(remaining_body_str.indexOf(';') + 1);
+                        } else {
+                            increment_body_str(1);
+                        }
+                    }
+                    text = text.substring(token.length);
+                }
+                traverse_text(text, wrapper);
+            }
+        };
+        var traverse_fn = function(node){
+            // TODO don't we also want to wrap things like imgs?
+            if (node.nodeType == Node.TEXT_NODE) {
+                var wrapper = $(document.createElement('span'));
+                node.parentNode.insertBefore(wrapper, node);
+                traverse_text(node.data, wrapper);
+                node.parentNode.removeChild(node);
+            } else {
+                // match the start tag
+                //TODO technically if tagName was "i" it could match an <img> tag
+                var startTagPattern = new RegExp("^\\s*<\\s*" + node.tagName + "[^>]*>", "i");
+                var startTagMatch = startTagPattern.exec(remaining_body_str);
+                if (startTagMatch == null) {
+                    // TODO this should be some kind of error
+                } else {
+                    increment_body_str(startTagMatch[0].length);
+                    $A(node.childNodes).each(function(child){
+                        traverse_fn($(child));
+                    });
+
+                    // match the optional end tag
+                    var endTagPattern = new RegExp("^\\s*<\\s*/\\s*" + node.tagName + "[^>]*>", "i");
+                    var endTagMatch = endTagPattern.exec(remaining_body_str);
+                    if (endTagMatch != null) {
+                        increment_body_str(endTagMatch[0].length);
+                    }
+                }
+            }
+        };
+        $A(docbody_clone.childNodes).each(traverse_fn);
+
+        docbody_clone.setAttribute('id', 'docbody_clone');
+        docbody.hide();
+        docbody.parentNode.insertBefore(docbody_clone, docbody);
+
         $('add_located_comment_div').hide();
         $('adding_located_comment_div').show();
     }
 
     function cancel_add_located_comment() {
-        $('docbody').stopObserving('mouseup', located_comment_mouseup_handler);
+        //TODO fix me so we bring back old docbody
+        $('docbody').show();
+        $('docbody_clone').remove();
         $('add_located_comment_div').show();
         $('adding_located_comment_div').hide();
     }
-
-    //ref_bless('docbody', '123');
-    //gRegMgr.hl('123');
 </script>
-
-<!--<button onclick="gRegMgr.transmit();">Transmit Highlights</button>-->
 
 <!-- Adapted from http://unraveled.com/projects/css_tabs/ -->
 <style type="text/css">
@@ -198,8 +246,7 @@ div#section_body, div#section_comments, div#section_combined {
 <div id="section_body">
 <div id="section_body_inner">
 
-<div id="refbase_123">
-    <div><a href="#" onclick="$$('.commentref').each(function(e){e.toggle()}); return false;">Toggle Comments</a></div>
+<div><a href="#" onclick="$$('.commentref').each(function(e){e.toggle()}); return false;">Toggle Comments</a></div>
 {% ifagentcan 'view' 'body' item %}
 <div id="docbody" style="padding: 10px;">{% display_body_with_inline_comments itemversion %}</div>
 {% else %}
@@ -207,7 +254,6 @@ div#section_body, div#section_comments, div#section_combined {
 [PERMISSION DENIED]
 </div>
 {% endifagentcan %}
-</div>
 
 <div id="add_located_comment_div">
 <a href="#" onclick="add_located_comment(); return false;">[+] Add Located Comment</a>
