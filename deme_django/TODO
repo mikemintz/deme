@@ -52,6 +52,12 @@ Interface
 ---------
 * we need a global permission editor like the local permission editor
 
+Documentation
+-------------
+* Update the architecture doc
+* Document more functions with docstrings more
+* Make some sort of API doc
+
 Distant Future
 --------------
 * more efficient versioning (like like latest version in db, but have deltas to prev versions)
