@@ -24,7 +24,6 @@ data
 
 
 * Speed up itemset view by doing filter permissions rather than per-item
-* Make foreign keys that can't change (like commented_item) not editable, including in initial role definition
 * Add Location class and LocationContains relationship
 * Event has multiple locations and times
 * deleting items (i.e. blanking)
