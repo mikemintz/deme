@@ -23,25 +23,42 @@
 
 <script type="text/javascript">
     var body_str = "{{ itemversion.body|escapejs }}";
-    function located_comment_mouseup_handler(e) {
-    }
-
-    function located_token_mouseover(tokenWrapper) {
+    function located_token_mouseover(e) {
+        var targ;
+        if (!e) var e = window.event;
+        if (e.target) targ = e.target;
+        else if (e.srcElement) targ = e.srcElement;
+        if (targ.nodeType == 3) // defeat Safari bug
+            targ = targ.parentNode;
+        var tokenWrapper = $(targ);
         tokenWrapper.addClassName('located_token_hover');
     }
 
-    function located_token_mouseout(tokenWrapper) {
+    function located_token_mouseout(e) {
+        var targ;
+        if (!e) var e = window.event;
+        if (e.target) targ = e.target;
+        else if (e.srcElement) targ = e.srcElement;
+        if (targ.nodeType == 3) // defeat Safari bug
+            targ = targ.parentNode;
+        var tokenWrapper = $(targ);
         tokenWrapper.removeClassName('located_token_hover');
     }
 
-    function located_token_click(tokenWrapper) {
+    function located_token_click(e) {
+        var targ;
+        if (!e) var e = window.event;
+        if (e.target) targ = e.target;
+        else if (e.srcElement) targ = e.srcElement;
+        if (targ.nodeType == 3) // defeat Safari bug
+            targ = targ.parentNode;
+        var tokenWrapper = $(targ);
         var index = tokenWrapper.deme_text_offset;
         var url = '/resource/comment/new?commented_item={{ item.pk }}&commented_item_version_number={{ itemversion.version_number }}&redirect={{ full_path|urlencode }}&commented_item_index=' + index;
         window.location = url;
     }
 
     function add_located_comment() {
-        // TODO new idea: let's go through all textnodes in the document, finding their first index in body_str, and surrounding them with a span annotated with the number (eventually using that jquery data thing instead of class="loc15" or whatever
         var docbody = $('docbody');
         var docbody_clone = $(docbody.cloneNode(true));
 
@@ -52,7 +69,7 @@
             remaining_body_str = remaining_body_str.substring(n);
         };
         var traverse_text = function(text, wrapper){
-            if (text.length > 0) {
+            while (text.length > 0) {
                 var whiteSpaceBodyMatch = /((&nbsp;)|(\s))+/i.exec(remaining_body_str);
                 var whiteSpaceTextMatch = /((&nbsp;)|(\s))+/i.exec(text);
                 if (whiteSpaceBodyMatch != null && whiteSpaceBodyMatch.index == 0 && whiteSpaceTextMatch != null && whiteSpaceTextMatch.index == 0) {
@@ -71,33 +88,37 @@
                     } else {
                         token = text.substring(0, whiteSpaceTextMatch.index);
                     }
+                    var tokenWrapper = document.createElement('span');
+                    tokenWrapper.deme_text_offset = body_str_index;
+                    tokenWrapper.onmouseover = located_token_mouseover;
+                    tokenWrapper.onmouseout = located_token_mouseout;
+                    tokenWrapper.onclick = located_token_click;
                     var tokenTextNode = document.createTextNode(token);
-                    var tokenWrapper = $(document.createElement('span'));
                     tokenWrapper.appendChild(tokenTextNode);
-                    tokenWrapper.deme_text_offset = body_str_index; //TODO jquery tips article said there was a better way to do this
-                    tokenWrapper.observe('mouseover', function(event){located_token_mouseover(tokenWrapper)});
-                    tokenWrapper.observe('mouseout', function(event){located_token_mouseout(tokenWrapper)});
-                    tokenWrapper.observe('click', function(event){located_token_click(tokenWrapper)});
                     wrapper.appendChild(tokenWrapper);
+                    var body_i = 0;
                     for (var i = 0; i < token.length; i++) {
                         if (remaining_body_str.length <= 0) {
-                            alert("error: out of remaining_body_str");
-                            //TODO what to do about this?
+                            alert("error: out of remaining_body_str"); //TODO what to do about this?
                         }
-                        var c = token.substring(i, i+1);
-                        if (remaining_body_str.substring(0, 1) != c && remaining_body_str.substring(0, 1) != '&') {
-                            alert("error: remaining_body_str[0] != c");
-                            //TODO what to do about this?
-                        }
-                        if (remaining_body_str.substring(0, 1) == '&') {
-                            increment_body_str(remaining_body_str.indexOf(';') + 1);
+                        var bodyChar = remaining_body_str.substring(body_i, body_i+1);
+                        if (bodyChar == '&') {
+                            var semicolonIndex = remaining_body_str.indexOf(';', body_i+1);
+                            if (semicolonIndex == -1) {
+                                alert("error: found ampersand without semicolon"); //TODO what to do about this?
+                            }
+                            body_i = semicolonIndex + 1;
                         } else {
-                            increment_body_str(1);
+                            var tokenChar = token.substring(i, i+1);
+                            if (bodyChar != tokenChar) {
+                                alert("error: bodyChar != tokenChar"); //TODO what to do about this?
+                            }
+                            body_i += 1;
                         }
                     }
+                    increment_body_str(body_i);
                     text = text.substring(token.length);
                 }
-                traverse_text(text, wrapper);
             }
         };
         var traverse_fn = function(node){
@@ -108,23 +129,24 @@
                 traverse_text(node.data, wrapper);
                 node.parentNode.removeChild(node);
             } else {
-                // match the start tag
-                //TODO technically if tagName was "i" it could match an <img> tag
-                var startTagPattern = new RegExp("^\\s*<\\s*" + node.tagName + "[^>]*>", "i");
-                var startTagMatch = startTagPattern.exec(remaining_body_str);
-                if (startTagMatch == null) {
-                    // TODO this should be some kind of error
-                } else {
-                    increment_body_str(startTagMatch[0].length);
-                    $A(node.childNodes).each(function(child){
-                        traverse_fn($(child));
-                    });
+                if (!node.hasClassName('commentref')) {
+                    // match the start tag
+                    var startTagPattern = new RegExp("^\\s*<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "i");
+                    var startTagMatch = startTagPattern.exec(remaining_body_str);
+                    if (startTagMatch == null) {
+                        alert("error: could not find start tag"); //TODO what to do about this?
+                    } else {
+                        increment_body_str(startTagMatch[0].length);
+                        $A(node.childNodes).each(function(child){
+                            traverse_fn($(child));
+                        });
 
-                    // match the optional end tag
-                    var endTagPattern = new RegExp("^\\s*<\\s*/\\s*" + node.tagName + "[^>]*>", "i");
-                    var endTagMatch = endTagPattern.exec(remaining_body_str);
-                    if (endTagMatch != null) {
-                        increment_body_str(endTagMatch[0].length);
+                        // match the optional end tag
+                        var endTagPattern = new RegExp("^\\s*<\\s*/\\s*" + node.tagName + "[^>]*>", "i");
+                        var endTagMatch = endTagPattern.exec(remaining_body_str);
+                        if (endTagMatch != null) {
+                            increment_body_str(endTagMatch[0].length);
+                        }
                     }
                 }
             }
@@ -140,7 +162,6 @@
     }
 
     function cancel_add_located_comment() {
-        //TODO fix me so we bring back old docbody
         $('docbody').show();
         $('docbody_clone').remove();
         $('add_located_comment_div').show();
