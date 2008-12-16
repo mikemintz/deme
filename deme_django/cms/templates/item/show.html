@@ -26,7 +26,11 @@
 
                 {% ifequal field.field_type 'entry' %}
                 {% if field.obj %}
+                {% if field.can_view_name %}
                 <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                {% else %}
+                <div><a href="{% show_resource_url field.obj %}">PERMISSION DENIED</a></div>
+                {% endif %}
                 {% else %}
                 NULL
                 {% endif %}

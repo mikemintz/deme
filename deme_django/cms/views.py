@@ -425,6 +425,8 @@ The agent currently logged in is not allowed to use this application. Please log
                     info['field_type'] = 'regular'
                 info['obj'] = obj
                 info['can_view'] = ('view', name) in abilities_for_item or can_do_everything
+                if info['field_type'] == 'entry':
+                    info['can_view_name'] = can_do_everything or (('view', 'name') in self.get_abilities_for_agent_and_item(self.cur_agent, obj))
                 fields.append(info)
             return fields
         template = loader.get_template('item/show.html')
