@@ -1,4 +1,5 @@
 from django import template
+from django.db.models import Q
 import cms.models
 from cms import permission_functions
 from django.utils.http import urlquote
@@ -224,8 +225,12 @@ def ifagentcanglobal(parser, token):
         nodelist_false = template.NodeList()
     return IfAgentCanGlobal(bits[1], bits[2], nodelist_true, nodelist_false)
 
-def comment_dicts_for_item(item, itemversion):
-    comments = item.comments_as_item.order_by('updated_at')
+def comment_dicts_for_item(item, itemversion, include_recursive_itemset_comments):
+    if include_recursive_itemset_comments:
+        comments = cms.models.Comment.objects.filter(Q(commented_item=item) | Q(commented_item__in=item.recursive_child_items().values('pk').query)).order_by('created_at')
+        print item.recursive_child_items()
+    else:
+        comments = item.comments_as_item.order_by('created_at')
     result = []
     for comment in comments:
         comment_info = {}
@@ -234,7 +239,7 @@ def comment_dicts_for_item(item, itemversion):
             comment_info['comment_location'] = comment.comment_locations_as_comment.get(commented_item_version_number=itemversion.version_number)
         except ObjectDoesNotExist:
             comment_info['comment_location'] = None
-        comment_info['subcomments'] = comment_dicts_for_item(comment, comment.versions.latest())
+        comment_info['subcomments'] = comment_dicts_for_item(comment, comment.versions.latest(), False)
         result.append(comment_info)
     return result
 
@@ -385,6 +390,11 @@ class CommentBox(template.Node):
                         result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), 'PERMISSION DENIED'))
                 else:
                     result.append('by [PERMISSION DENIED]')
+                if item.pk != comment.commented_item.pk and nesting_level == 0:
+                    if agentcan_helper(context, 'view', 'name', comment.commented_item):
+                        result.append('for <a href="%s">%s</a>' % (show_resource_url(comment.commented_item), comment.commented_item.name))
+                    else:
+                        result.append('for <a href="%s">[PERMISSION DENIED]</a>' % (show_resource_url(comment.commented_item)))
                 if not comment_location:
                     result.append("[INACTIVE]")
                 result.append("</div>")
@@ -407,7 +417,7 @@ class CommentBox(template.Node):
                     result.append("</div>")
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
-        add_comments_to_div(comment_dicts_for_item(item, itemversion))
+        add_comments_to_div(comment_dicts_for_item(item, itemversion, isinstance(item, cms.models.ItemSet)))
         result.append("</div>")
         return '\n'.join(result)
 

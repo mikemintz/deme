@@ -196,9 +196,9 @@ class Item(models.Model):
         return item_type.objects.get(id=self.id)
 
     def recursive_parent_itemsets(self):
-        my_parents = Q(pk__in=ItemSetMembership.objects.filter(item=self).values('itemset').query)
+        my_parents = Q(pk__in=ItemSetMembership.objects.filter(item=self, trashed=False).values('itemset').query)
         recursive_parents = Q(pk__in=RecursiveItemSetMembership.objects.filter(child__in=ItemSetMembership.objects.filter(item=self).values('itemset').query).values('parent').query)
-        return Item.objects.filter(my_parents | recursive_parents)
+        return ItemSet.objects.filter(trashed=False).filter(my_parents | recursive_parents)
 
     @transaction.commit_on_success
     def trash(self):
@@ -302,11 +302,12 @@ class Item(models.Model):
 
         #TODO really? no emails if the comment was updated (not created)?
         #TODO permissions to view name/body/etc
-        #TODO bubble up to itemsets that contain this item recursively
         #TODO maybe this should happen asynchronously somehow
         if is_new and isinstance(self, Comment):
             # email everyone subscribed to items this comment is relevant for
-            subscribed_persons = Person.objects.filter(subscriptions_as_person__item=self.commented_item).all()
+            direct_subscribers = Q(subscriptions_as_person__item=self.commented_item, subscriptions_as_person__trashed=False)
+            recursive_subscribers = Q(subscriptions_as_person__item__in=self.commented_item.recursive_parent_itemsets().values('pk').query, subscriptions_as_person__comprehensive=True, subscriptions_as_person__trashed=False)
+            subscribed_persons = Person.objects.filter(trashed=False).filter(direct_subscribers | recursive_subscribers).all()
             recipient_list = [x.email for x in subscribed_persons]
             if recipient_list:
                 from django.core.mail import send_mail
@@ -388,9 +389,9 @@ class Person(Agent):
 
 class ItemSet(Item):
     def recursive_child_items(self):
-        my_children = Q(pk__in=ItemSetMembership.objects.filter(itemset=self).values('item').query)
+        my_children = Q(pk__in=ItemSetMembership.objects.filter(itemset=self, trashed=False).values('item').query)
         recursive_children = Q(pk__in=ItemSetMembership.objects.filter(itemset__in=RecursiveItemSetMembership.objects.filter(parent=self).values('child').query).values('item').query)
-        return Item.objects.filter(my_children | recursive_children)
+        return Item.objects.filter(trashed=False).filter(my_children | recursive_children)
 
 
 class Group(Agent):
@@ -483,18 +484,19 @@ class RecursiveItemSetMembership(models.Model):
     def recursive_remove(cls, parent, child):
         ancestors = ItemSet.objects.filter(Q(recursive_itemset_memberships_as_parent__child=parent) | Q(pk=parent.pk))
         descendants = ItemSet.objects.filter(Q(recursive_itemset_memberships_as_child__parent=child) | Q(pk=child.pk))
+        #TODO make this work with transactions
+        if ancestors and descendants:
+            # first remove all connections between ancestors and descendants
+            from django.db import connection
+            cursor = connection.cursor()
+            ancestor_select = ','.join([str(x.pk) for x in ancestors])
+            descendant_select = ','.join([str(x.pk) for x in descendants])
+            cursor.execute("DELETE FROM cms_recursiveitemsetmembership WHERE parent_id IN (%s) AND child_id IN (%s)" % (ancestor_select, descendant_select))
 
-        # first remove all connections between ancestors and descendants
-        from django.db import connection
-        cursor = connection.cursor()
-        ancestor_select = ','.join([str(x.pk) for x in ancestors])
-        descendant_select = ','.join([str(x.pk) for x in descendants])
-        cursor.execute("DELETE FROM cms_recursiveitemsetmembership WHERE parent_id IN (%s) AND child_id IN (%s)" % (ancestor_select, descendant_select))
-
-        # now add back any real connections between ancestors and descendants
-        memberships = ItemSetMembership.objects.filter(itemset__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(itemset=parent, item=child)
-        for membership in memberships:
-            RecursiveItemSetMembership.recursive_add(membership.itemset, membership.item)
+            # now add back any real connections between ancestors and descendants
+            memberships = ItemSetMembership.objects.filter(itemset__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(itemset=parent, item=child)
+            for membership in memberships:
+                RecursiveItemSetMembership.recursive_add(membership.itemset, membership.item)
 
 
 class Subscription(Item):
