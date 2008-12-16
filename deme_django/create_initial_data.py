@@ -6,6 +6,9 @@ setup_environ(settings)
 
 from cms.models import *
 from django import db
+import subprocess
+import re
+import time
 
 if Item.objects.count() != 0:
     raise AssertionError, 'You cannot run ./create_initial_data.py on a non-empty database'
@@ -77,12 +80,23 @@ default_site.save_versioned(updater=admin)
 # Just testing here:
 ################################################################################
 
+git_log = subprocess.Popen(["git", "log"], stdout=subprocess.PIPE).communicate()[0]
+git_commit = re.search(r'commit (.+)', git_log).group(1)
+git_date = re.search(r'Date:\s*(.*) (-|\+)\d+', git_log).group(1)
+formatted_git_date = time.strftime("%Y-%m-%d", time.strptime(git_date, "%a %b %d %H:%M:%S %Y"))
 home_page = DjangoTemplateDocument(name='Deme Home Page', body="""
-{% block title %}Welcome to Deme!{% endblock %}
-{% block content %}
+{%% block title %%}Welcome to Deme!{%% endblock %%}
+{%% block content %%}
 Welcome to Deme!
-{% endblock content %}
-""")
+<br><br>
+Visit our GitHub page for the latest source code: <a href="http://github.com/mikemintz/deme">http://github.com/mikemintz/deme</a>.
+<br><br>
+
+This site is running a working copy of Deme <a href="http://github.com/mikemintz/deme/commit/%s">tree %s</a> from %s.
+<br><br>
+View the slides from our presentation at Code Camp at <a href="http://www.stanford.edu/~davies/tdavies-presentations.html">http://www.stanford.edu/~davies/tdavies-presentations.html</a>.
+{%% endblock content %%} 
+""" % (git_commit, git_commit, formatted_git_date) )
 home_page.save_versioned(updater=admin)
 default_site.viewer = 'djangotemplatedocument'
 default_site.action = 'render'
