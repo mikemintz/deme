@@ -207,6 +207,7 @@ class Item(models.Model):
     @transaction.commit_on_success
     def save_versioned(self, updater=None, first_agent=False, create_permissions=True, created_at=None, updated_at=None):
         save_time = datetime.datetime.now()
+        is_new = not self.pk
         self.item_type = type(self).__name__
         if first_agent:
             self.creator = self
@@ -215,7 +216,7 @@ class Item(models.Model):
             self.updater_id = 1
         if updater:
             self.updater = updater
-            if not self.pk:
+            if is_new:
                 self.creator = updater
         fields = {}
         for field in self._meta.fields:
@@ -235,7 +236,7 @@ class Item(models.Model):
             new_version.updater_id = 1
         for key, val in fields.iteritems():
             setattr(new_version, key, val)
-        if self.pk:
+        if not is_new:
             latest_version_number = ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
         else:
             latest_version_number = 0
@@ -259,6 +260,21 @@ class Item(models.Model):
         if create_permissions and latest_version_number == 0 and not issubclass(self.__class__, Permission):
             DefaultRolePermission(name="Default permission for %s" % self.name, item=self, role=Role.objects.get(name="%s Default" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
             AgentRolePermission(name="Creator permission for %s" % self.name, agent=updater, item=self, role=Role.objects.get(name="%s Creator" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
+
+        #TODO really? no emails if the comment was updated (not created)?
+        #TODO permissions to view name/body/etc
+        #TODO bubble up to itemsets that contain this item recursively
+        #TODO maybe this should happen asynchronously somehow
+        if is_new and isinstance(self, Comment):
+            # email everyone subscribed to items this comment is relevant for
+            subscribed_persons = Person.objects.filter(subscriptions_as_person__item=self.commented_item).all()
+            recipient_list = [x.email for x in subscribed_persons]
+            if recipient_list:
+                from django.core.mail import send_mail
+                subject = '[%s] %s' % (self.commented_item.name, self.name)
+                message = '%s wrote a comment in %s\n%s\n\n%s' % (self.creator.name, self.commented_item.name, 'http://deme.stanford.edu/resource/%s/%d' % (self.commented_item.item_type.lower(), self.commented_item.pk), self.body)
+                from_email = '"Deme" <noreply@deme.stanford.edu>'
+                send_mail(subject, message, from_email, recipient_list)
 
 
 class Agent(Item):
@@ -401,6 +417,15 @@ class ItemSetMembership(Relationship):
     itemset = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
     class Meta:
         unique_together = (('item', 'itemset'),)
+
+
+class Subscription(Item):
+    immutable_fields = Item.immutable_fields + ['subscriber', 'item']
+    subscriber = models.ForeignKey(Person, related_name='subscriptions_as_person')
+    item = models.ForeignKey(Item, related_name='subscriptions_as_item')
+    comprehensive = models.BooleanField()
+    class Meta:
+        unique_together = (('subscriber', 'item'),)
 
 
 ################################################################################

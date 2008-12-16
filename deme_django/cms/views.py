@@ -383,16 +383,6 @@ The agent currently logged in is not allowed to use this application. Please log
             self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
 
-        ### old code that emails comments to members of the group, we'll use it when we implement subscriptions
-        # persons_in_group = cms.models.Person.objects.filter(group_memberships_as_agent__group=commented_item).all()
-        # recipient_list = [x.email for x in persons_in_group]
-        # if recipient_list:
-        #     from django.core.mail import send_mail
-        # subject = '[%s] %s' % (commented_item.get_name(), item.get_name())
-        # message = '%s wrote a comment in %s\n%s\n\n%s' % (self.cur_agent.get_name(), commented_item.get_name(), 'http://deme.stanford.edu/resource/group/%d' % commented_item.pk, item.body)
-        # from_email = 'noreply@deme.stanford.edu'
-        # send_mail(subject, message, from_email, recipient_list)
-
     def entry_show(self):
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
