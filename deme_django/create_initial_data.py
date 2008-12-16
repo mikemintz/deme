@@ -92,7 +92,7 @@ Welcome to Deme!
 Visit our GitHub page for the latest source code: <a href="http://github.com/mikemintz/deme">http://github.com/mikemintz/deme</a>.
 <br><br>
 
-This site is running a working copy of Deme <a href="http://github.com/mikemintz/deme/commit/%s">tree %s</a> from %s.
+This site is running a working copy of Deme <a href="http://github.com/mikemintz/deme/commit/%s">commit %s</a> from %s.
 <br><br>
 View the slides from our presentation at Code Camp at <a href="http://www.stanford.edu/~davies/tdavies-presentations.html">http://www.stanford.edu/~davies/tdavies-presentations.html</a>.
 {%% endblock content %%} 
