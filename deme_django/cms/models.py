@@ -423,7 +423,7 @@ class Subscription(Item):
     immutable_fields = Item.immutable_fields + ['subscriber', 'item']
     subscriber = models.ForeignKey(Person, related_name='subscriptions_as_person')
     item = models.ForeignKey(Item, related_name='subscriptions_as_item')
-    comprehensive = models.BooleanField()
+    comprehensive = models.BooleanField(default=False)
     class Meta:
         unique_together = (('subscriber', 'item'),)
 
@@ -462,7 +462,7 @@ class GlobalRoleAbility(Item):
     global_role = models.ForeignKey(GlobalRole, related_name='abilities_as_global_role')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
     ability_parameter = models.CharField(max_length=255)
-    is_allowed = models.BooleanField()
+    is_allowed = models.BooleanField(default=True)
     class Meta:
         unique_together = (('global_role', 'ability', 'ability_parameter'),)
 
@@ -472,7 +472,7 @@ class RoleAbility(Item):
     role = models.ForeignKey(Role, related_name='abilities_as_role')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     ability_parameter = models.CharField(max_length=255, db_index=True)
-    is_allowed = models.BooleanField(db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         unique_together = (('role', 'ability', 'ability_parameter'),)
 
@@ -490,7 +490,7 @@ class AgentGlobalPermission(GlobalPermission):
     agent = models.ForeignKey(Agent, related_name='agent_global_permissions_as_agent')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
     ability_parameter = models.CharField(max_length=255)
-    is_allowed = models.BooleanField()
+    is_allowed = models.BooleanField(default=True)
     class Meta:
         unique_together = (('agent', 'ability', 'ability_parameter'),)
 
@@ -500,7 +500,7 @@ class GroupGlobalPermission(GlobalPermission):
     group = models.ForeignKey(Group, related_name='group_global_permissions_as_group')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
     ability_parameter = models.CharField(max_length=255)
-    is_allowed = models.BooleanField()
+    is_allowed = models.BooleanField(default=True)
     class Meta:
         unique_together = (('group', 'ability', 'ability_parameter'),)
 
@@ -509,7 +509,7 @@ class DefaultGlobalPermission(GlobalPermission):
     immutable_fields = GlobalPermission.immutable_fields + ['ability', 'ability_parameter']
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
     ability_parameter = models.CharField(max_length=255)
-    is_allowed = models.BooleanField()
+    is_allowed = models.BooleanField(default=True)
     class Meta:
         unique_together = (('ability', 'ability_parameter'),)
 
@@ -543,7 +543,7 @@ class AgentPermission(Permission):
     item = models.ForeignKey(Item, related_name='agent_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     ability_parameter = models.CharField(max_length=255, db_index=True)
-    is_allowed = models.BooleanField(db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         unique_together = (('agent', 'item', 'ability', 'ability_parameter'),)
 
@@ -554,7 +554,7 @@ class GroupPermission(Permission):
     item = models.ForeignKey(Item, related_name='group_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     ability_parameter = models.CharField(max_length=255, db_index=True)
-    is_allowed = models.BooleanField(db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         unique_together = (('group', 'item', 'ability', 'ability_parameter'),)
 
@@ -564,7 +564,7 @@ class DefaultPermission(Permission):
     item = models.ForeignKey(Item, related_name='default_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     ability_parameter = models.CharField(max_length=255, db_index=True)
-    is_allowed = models.BooleanField(db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         unique_together = (('item', 'ability', 'ability_parameter'),)
 
