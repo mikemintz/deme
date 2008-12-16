@@ -122,16 +122,14 @@ reid_account = PasswordAccount(name="Reid's Password Account", agent=reid_person
 reid_account.set_password('')
 reid_account.save_versioned(updater=admin)
 
-hello_page = DjangoTemplateDocument(name="Front Page", body="""
-{% extends layout %}
-{% load resource_extras %}
+hello_page = DjangoTemplateDocument(name="Hello Page", body="""
 {% block title %}Sample Home Page{% endblock %}
 {% block content %}
 Hello World!
 {% endblock content %}
 """)
 hello_page.save_versioned(updater=admin)
-hello_url = CustomUrl(name="/hello URL", parent_url=default_site, path="hello", viewer='dynamicpage', action='run', aliased_item=hello_page)
+hello_url = CustomUrl(name="/hello URL", parent_url=default_site, path="hello", viewer='djangotemplatedocument', action='render', aliased_item=hello_page)
 hello_url.save_versioned(updater=admin)
 
 symsys_group = Group(name="Symsys Group")
