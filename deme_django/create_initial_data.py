@@ -152,5 +152,4 @@ DefaultGlobalPermission(name="Default permission to do_something", ability='do_s
 DefaultGlobalPermission(name="Default permission to create Comments", ability='create', ability_parameter='Comment', is_allowed=True).save_versioned(updater=admin)
 DefaultGlobalPermission(name="Default permission to create HtmlDocuments", ability='create', ability_parameter='HtmlDocument', is_allowed=True).save_versioned(updater=admin)
 
-AgentPermission(name="Permission for Mike to login_as Admin", item=admin, ability='login_as', ability_parameter="id", is_allowed=True, agent=mike_person).save_versioned(updater=admin)
-AgentPermission(name="Permission for Anonymous to login_as mike_person", item=mike_person, ability='login_as', ability_parameter="id", is_allowed=True, agent=anonymous_agent).save_versioned(updater=admin)
+DefaultPermission(name="Default permission to login_as Admin", item=admin, ability='login_as', ability_parameter="id", is_allowed=True).save_versioned(updater=admin)
