@@ -14,6 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist
 #TODO permissions (can person even create this comment)
 #TODO error handling (always send back an email, preferrably with same thread, on error)
 #TODO don't break on html emails
+#TODO use transactions to make the CommentLocation save at the same time as the Comment
 
 def main():
     msg = email.message_from_file(sys.stdin)
@@ -34,6 +35,8 @@ def main():
         return 
     comment = cms.models.Comment(commented_item=item, name=subject, body=body)
     comment.save_versioned(updater=person)
+    comment_location = cms.models.CommentLocation(name="Untitled CommentLocation", comment=comment, commented_item_version_number=item.versions.latest().version_number, commented_item_index=None)
+    comment_location.save_versioned(updater=person)
 
 
 if __name__ == '__main__':

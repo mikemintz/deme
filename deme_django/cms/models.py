@@ -503,6 +503,7 @@ class RecursiveItemSetMembership(models.Model):
             descendant_select = ' UNION '.join(["SELECT %s" % x.pk for x in descendants])
             sql = "INSERT INTO cms_recursiveitemsetmembership (parent_id, child_id) SELECT ancestors.id, descendants.id FROM (%s) AS ancestors(id), (%s) AS descendants(id) WHERE NOT EXISTS (SELECT parent_id,child_id FROM cms_recursiveitemsetmembership WHERE parent_id = ancestors.id AND child_id = descendants.id)" % (ancestor_select, descendant_select)
             cursor.execute(sql)
+            transaction.commit_unless_managed()
     @classmethod
     def recursive_remove(cls, parent, child):
         ancestors = ItemSet.objects.filter(Q(recursive_itemset_memberships_as_parent__child=parent) | Q(pk=parent.pk))
@@ -514,6 +515,7 @@ class RecursiveItemSetMembership(models.Model):
             ancestor_select = ','.join([str(x.pk) for x in ancestors])
             descendant_select = ','.join([str(x.pk) for x in descendants])
             cursor.execute("DELETE FROM cms_recursiveitemsetmembership WHERE parent_id IN (%s) AND child_id IN (%s)" % (ancestor_select, descendant_select))
+            transaction.commit_unless_managed()
             # now add back any real connections between ancestors and descendants
             memberships = ItemSetMembership.objects.filter(itemset__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(itemset=parent, item=child)
             for membership in memberships:
@@ -529,7 +531,6 @@ class RecursiveCommentMembership(models.Model):
     def recursive_add(cls, parent, child):
         ancestors = Item.objects.filter(Q(recursive_comment_memberships_as_parent__child=parent) | Q(pk=parent.pk))
         descendants = Comment.objects.filter(Q(recursive_comment_memberships_as_child__parent=child) | Q(pk=child.pk))
-        print ancestors, descendants
         #TODO make this work with transactions
         if ancestors and descendants:
             cursor = connection.cursor()
@@ -537,6 +538,7 @@ class RecursiveCommentMembership(models.Model):
             descendant_select = ' UNION '.join(["SELECT %s" % x.pk for x in descendants])
             sql = "INSERT INTO cms_recursivecommentmembership (parent_id, child_id) SELECT ancestors.id, descendants.id FROM (%s) AS ancestors(id), (%s) AS descendants(id) WHERE NOT EXISTS (SELECT parent_id,child_id FROM cms_recursivecommentmembership WHERE parent_id = ancestors.id AND child_id = descendants.id)" % (ancestor_select, descendant_select)
             cursor.execute(sql)
+            transaction.commit_unless_managed()
     @classmethod
     def recursive_remove(cls, parent, child):
         ancestors = Item.objects.filter(Q(recursive_comment_memberships_as_parent__child=parent) | Q(pk=parent.pk))
@@ -548,6 +550,7 @@ class RecursiveCommentMembership(models.Model):
             ancestor_select = ','.join([str(x.pk) for x in ancestors])
             descendant_select = ','.join([str(x.pk) for x in descendants])
             cursor.execute("DELETE FROM cms_recursivecommentmembership WHERE parent_id IN (%s) AND child_id IN (%s)" % (ancestor_select, descendant_select))
+            transaction.commit_unless_managed()
             # nothing to add back, since comments form a tree structure
 
 
