@@ -310,18 +310,28 @@ class Item(models.Model):
 
         #TODO permissions to view name/body/etc
         #TODO maybe this should happen asynchronously somehow
+        #TODO why doesn't an exception in this part of the code roll back the transaction?
         if is_new and isinstance(self, Comment):
             # email everyone subscribed to items this comment is relevant for
             direct_subscribers = Q(subscriptions_as_person__item__in=self.all_commented_items().values('pk').query, subscriptions_as_person__trashed=False)
             deep_subscribers = Q(subscriptions_as_person__item__in=self.all_commented_items_and_itemsets().values('pk').query, subscriptions_as_person__deep=True, subscriptions_as_person__trashed=False)
             subscribed_persons = Person.objects.filter(trashed=False).filter(direct_subscribers | deep_subscribers).all()
-            recipient_list = [x.email for x in subscribed_persons]
+            recipient_list = [x for x in subscribed_persons if x.email]
             if recipient_list:
-                from django.core.mail import send_mail
+                from django.core.mail import send_mail, SMTPConnection, EmailMessage
                 subject = '[%s] %s' % (self.commented_item.name, self.name)
-                message = '%s wrote a comment in %s\n%s\n\n%s' % (self.creator.name, self.commented_item.name, 'http://deme.stanford.edu/resource/%s/%d' % (self.commented_item.item_type.lower(), self.commented_item.pk), self.body)
-                from_email = '"Deme" <noreply@deme.stanford.edu>'
-                send_mail(subject, message, from_email, recipient_list)
+                body = '%s wrote a comment in %s\n%s\n\n%s' % (self.creator.name, self.commented_item.name, 'http://deme.stanford.edu/resource/%s/%d' % (self.commented_item.item_type.lower(), self.commented_item.pk), self.body)
+                sender_agent = self.updater.downcast()
+                if isinstance(sender_agent, Person):
+                    from_email_address = sender_agent.email or 'noreply@deme.stanford.edu'
+                else:
+                    from_email_address = 'noreply@deme.stanford.edu'
+                from_email = '"%s" <%s>' % (sender_agent.name.replace('"', ''), from_email_address.replace('<', '').replace('>', ''))
+                headers = {'Reply-To': 'noreply@deme.stanford.edu'}
+                messages = [EmailMessage(subject=subject, body=body, from_email=from_email, to=['"%s" <%s>' % (rcpt.name.replace('"', ''), rcpt.email.replace('<', '').replace('>', ''))], headers=headers) for rcpt in recipient_list]
+                smtp_connection = SMTPConnection()
+                smtp_connection.send_messages(messages)
+                #send_mail(subject, body, from_email, recipient_list)
 
 
 class Agent(Item):
