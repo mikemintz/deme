@@ -227,7 +227,7 @@ def ifagentcanglobal(parser, token):
 
 def comment_dicts_for_item(item, itemversion, include_recursive_itemset_comments):
     if include_recursive_itemset_comments:
-        comments = cms.models.Comment.objects.filter(Q(commented_item=item) | Q(commented_item__in=item.recursive_child_items().values('pk').query)).order_by('created_at')
+        comments = cms.models.Comment.objects.filter(Q(commented_item=item) | Q(commented_item__in=item.all_contained_itemset_members().values('pk').query)).order_by('created_at')
     else:
         comments = item.comments_as_item.order_by('created_at')
     result = []

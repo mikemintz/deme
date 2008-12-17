@@ -195,8 +195,11 @@ class Item(models.Model):
         item_type = [x for x in all_models() if x.__name__ == self.item_type][0]
         return item_type.objects.get(id=self.id)
 
-    def recursive_parent_itemsets(self):
+    def all_containing_itemsets(self):
         return ItemSet.objects.filter(trashed=False, pk__in=RecursiveItemSetMembership.objects.filter(child=self).values('parent').query)
+
+    def all_comments(self):
+        return Comment.objects.filter(trashed=False, pk__in=RecursiveCommentMembership.objects.filter(parent=self).values('child').query)
 
     @transaction.commit_on_success
     def trash(self):
@@ -298,14 +301,20 @@ class Item(models.Model):
             DefaultRolePermission(name="Default permission for %s" % self.name, item=self, role=Role.objects.get(name="%s Default" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
             AgentRolePermission(name="Creator permission for %s" % self.name, agent=updater, item=self, role=Role.objects.get(name="%s Creator" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
 
-        #TODO really? no emails if the comment was updated (not created)?
+        if isinstance(self, Comment):
+            if is_new:
+                RecursiveCommentMembership.recursive_add(self.commented_item, self)
+            else:
+                # We assume that commented_item cannot change since it is marked immutable
+                pass
+
         #TODO permissions to view name/body/etc
         #TODO maybe this should happen asynchronously somehow
         if is_new and isinstance(self, Comment):
             # email everyone subscribed to items this comment is relevant for
-            direct_subscribers = Q(subscriptions_as_person__item=self.commented_item, subscriptions_as_person__trashed=False)
-            recursive_subscribers = Q(subscriptions_as_person__item__in=self.commented_item.recursive_parent_itemsets().values('pk').query, subscriptions_as_person__deep=True, subscriptions_as_person__trashed=False)
-            subscribed_persons = Person.objects.filter(trashed=False).filter(direct_subscribers | recursive_subscribers).all()
+            direct_subscribers = Q(subscriptions_as_person__item__in=self.all_commented_items().values('pk').query, subscriptions_as_person__trashed=False)
+            deep_subscribers = Q(subscriptions_as_person__item__in=self.all_commented_items_and_itemsets().values('pk').query, subscriptions_as_person__deep=True, subscriptions_as_person__trashed=False)
+            subscribed_persons = Person.objects.filter(trashed=False).filter(direct_subscribers | deep_subscribers).all()
             recipient_list = [x.email for x in subscribed_persons]
             if recipient_list:
                 from django.core.mail import send_mail
@@ -387,7 +396,7 @@ class Person(Agent):
 
 
 class ItemSet(Item):
-    def recursive_child_items(self):
+    def all_contained_itemset_members(self):
         return Item.objects.filter(trashed=False, pk__in=RecursiveItemSetMembership.objects.filter(parent=self).values('child').query)
 
 
@@ -429,6 +438,14 @@ class ImageDocument(FileDocument):
 class Comment(TextDocument):
     immutable_fields = TextDocument.immutable_fields + ['commented_item']
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
+    def all_commented_items(self):
+        return Item.objects.filter(trashed=False, pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query)
+    def all_commented_items_and_itemsets(self):
+        parent_item_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
+        parent_items = Q(pk__in=parent_item_pks_query)
+        parent_item_itemsets = Q(pk__in=RecursiveItemSetMembership.objects.filter(child__in=parent_item_pks_query).values('parent').query)
+        return Item.objects.filter(parent_items | parent_item_itemsets, trashed=False)
+
 
 
 class CommentLocation(Item):
@@ -471,7 +488,6 @@ class RecursiveItemSetMembership(models.Model):
         descendants = Item.objects.filter(Q(recursive_itemset_memberships_as_child__parent=child) | Q(pk=child.pk))
         #TODO make this work with transactions
         if ancestors and descendants:
-            from django.db import connection
             cursor = connection.cursor()
             ancestor_select = ' UNION '.join(["SELECT %s" % x.pk for x in ancestors])
             descendant_select = ' UNION '.join(["SELECT %s" % x.pk for x in descendants])
@@ -484,16 +500,45 @@ class RecursiveItemSetMembership(models.Model):
         #TODO make this work with transactions
         if ancestors and descendants:
             # first remove all connections between ancestors and descendants
-            from django.db import connection
             cursor = connection.cursor()
             ancestor_select = ','.join([str(x.pk) for x in ancestors])
             descendant_select = ','.join([str(x.pk) for x in descendants])
             cursor.execute("DELETE FROM cms_recursiveitemsetmembership WHERE parent_id IN (%s) AND child_id IN (%s)" % (ancestor_select, descendant_select))
-
             # now add back any real connections between ancestors and descendants
             memberships = ItemSetMembership.objects.filter(itemset__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(itemset=parent, item=child)
             for membership in memberships:
                 RecursiveItemSetMembership.recursive_add(membership.itemset, membership.item)
+
+
+class RecursiveCommentMembership(models.Model):
+    parent = models.ForeignKey(Item, related_name='recursive_comment_memberships_as_parent')
+    child = models.ForeignKey(Comment, related_name='recursive_comment_memberships_as_child')
+    class Meta:
+        unique_together = (('parent', 'child'),)
+    @classmethod
+    def recursive_add(cls, parent, child):
+        ancestors = Item.objects.filter(Q(recursive_comment_memberships_as_parent__child=parent) | Q(pk=parent.pk))
+        descendants = Comment.objects.filter(Q(recursive_comment_memberships_as_child__parent=child) | Q(pk=child.pk))
+        print ancestors, descendants
+        #TODO make this work with transactions
+        if ancestors and descendants:
+            cursor = connection.cursor()
+            ancestor_select = ' UNION '.join(["SELECT %s" % x.pk for x in ancestors])
+            descendant_select = ' UNION '.join(["SELECT %s" % x.pk for x in descendants])
+            sql = "INSERT INTO cms_recursivecommentmembership (parent_id, child_id) SELECT ancestors.id, descendants.id FROM (%s) AS ancestors(id), (%s) AS descendants(id) WHERE NOT EXISTS (SELECT parent_id,child_id FROM cms_recursivecommentmembership WHERE parent_id = ancestors.id AND child_id = descendants.id)" % (ancestor_select, descendant_select)
+            cursor.execute(sql)
+    @classmethod
+    def recursive_remove(cls, parent, child):
+        ancestors = Item.objects.filter(Q(recursive_comment_memberships_as_parent__child=parent) | Q(pk=parent.pk))
+        descendants = Comment.objects.filter(Q(recursive_comment_memberships_as_child__parent=child) | Q(pk=child.pk))
+        #TODO make this work with transactions
+        if ancestors and descendants:
+            # first remove all connections between ancestors and descendants
+            cursor = connection.cursor()
+            ancestor_select = ','.join([str(x.pk) for x in ancestors])
+            descendant_select = ','.join([str(x.pk) for x in descendants])
+            cursor.execute("DELETE FROM cms_recursivecommentmembership WHERE parent_id IN (%s) AND child_id IN (%s)" % (ancestor_select, descendant_select))
+            # nothing to add back, since comments form a tree structure
 
 
 class Subscription(Item):
