@@ -25,7 +25,7 @@ Ontology changes
   - FieldItIsAbout (maybe just the body)
   - xpath_string (multiple regions)
   - data
-* Add Shortcut item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
+* Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
 
 Code correctness/consistency/bugs
