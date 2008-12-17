@@ -324,6 +324,7 @@ class AnonymousAgent(Agent):
 
 
 class Account(Item):
+    immutable_fields = Item.immutable_fields + ['agent']
     agent = models.ForeignKey(Agent, related_name='accounts_as_agent')
 
 
@@ -395,6 +396,7 @@ class Group(Agent):
 
 
 class Folio(ItemSet):
+    immutable_fields = ItemSet.immutable_fields + ['group']
     group = models.ForeignKey(Group, related_name='folios_as_group', unique=True, editable=False)
 
 
