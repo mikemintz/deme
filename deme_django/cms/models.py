@@ -306,7 +306,7 @@ class Item(models.Model):
         if is_new and isinstance(self, Comment):
             # email everyone subscribed to items this comment is relevant for
             direct_subscribers = Q(subscriptions_as_person__item=self.commented_item, subscriptions_as_person__trashed=False)
-            recursive_subscribers = Q(subscriptions_as_person__item__in=self.commented_item.recursive_parent_itemsets().values('pk').query, subscriptions_as_person__comprehensive=True, subscriptions_as_person__trashed=False)
+            recursive_subscribers = Q(subscriptions_as_person__item__in=self.commented_item.recursive_parent_itemsets().values('pk').query, subscriptions_as_person__deep=True, subscriptions_as_person__trashed=False)
             subscribed_persons = Person.objects.filter(trashed=False).filter(direct_subscribers | recursive_subscribers).all()
             recipient_list = [x.email for x in subscribed_persons]
             if recipient_list:
@@ -503,7 +503,7 @@ class Subscription(Item):
     immutable_fields = Item.immutable_fields + ['subscriber', 'item']
     subscriber = models.ForeignKey(Person, related_name='subscriptions_as_person')
     item = models.ForeignKey(Item, related_name='subscriptions_as_item')
-    comprehensive = models.BooleanField(default=False)
+    deep = models.BooleanField(default=False)
     class Meta:
         unique_together = (('subscriber', 'item'),)
 
