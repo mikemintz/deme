@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+from django.core.management import setup_environ
+import settings
+setup_environ(settings)
+
+import cms.models
+import email
+import sys
+from django.core.mail import send_mail
+from django.core.exceptions import ObjectDoesNotExist
+
+
+#TODO permissions (can person even create this comment)
+#TODO error handling (always send back an email, preferrably with same thread, on error)
+#TODO don't break on html emails
+
+def main():
+    msg = email.message_from_file(sys.stdin)
+    subject = msg['Subject']
+    body = msg.get_payload()
+    from_email = email.utils.parseaddr(msg['From'])[1]
+    to_email = email.utils.parseaddr(msg['To'])[1]
+    item_id = to_email.split('@')[0]
+    try:
+        person = cms.models.Person.objects.get(email=from_email)
+    except ObjectDoesNotExist:
+        send_mail('Re: %s' % subject, 'Error: Deme could not create your comment "%s" because there does not exist a user with email address %s' % (subject, from_email), to_email, [from_email])
+        return 
+    try:
+        item = cms.models.Item.objects.get(pk=item_id)
+    except ObjectDoesNotExist:
+        send_mail('Re: %s' % subject, 'Error: Deme could not create your comment "%s" because there does not exist an item with id %s' % (subject, item_id), to_email, [from_email])
+        return 
+    comment = cms.models.Comment(commented_item=item, name=subject, body=body)
+    comment.save_versioned(updater=person)
+
+
+if __name__ == '__main__':
+    main()

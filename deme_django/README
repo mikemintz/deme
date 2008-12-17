@@ -32,3 +32,22 @@ RewriteEngine On
 RewriteRule   ^/static/modules/([^/]*)/(.*)  /static/modules/$1/static/$2  [QSA,L,PT]
 RewriteRule   ^/static/(.*)  /static/static/$1  [QSA,L,PT]
 
+
+Incoming mail
+-------------
+You need to route incoming mail to incoming_email.py. I use postfix, so I added
+the following to the end of /etc/postfix/master.cf:
+
+# Deme incoming mail
+deme      unix  -       n       n       -       -       pipe
+  flags= user=www-data argv=/var/www/deme/deme_django/incoming_email.py
+
+I then added the following to the end of /etc/postfix/main.cf:
+
+# Deme incoming mail    
+transport_maps = hash:/etc/postfix/deme_transport
+virtual_mailbox_domains = deme.stanford.edu                                                             
+
+I then created a file called /etc/postfix/deme_transport containing the following:
+
+deme.stanford.edu    deme:

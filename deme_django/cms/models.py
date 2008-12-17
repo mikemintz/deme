@@ -318,7 +318,8 @@ class Item(models.Model):
             subscribed_persons = Person.objects.filter(trashed=False).filter(direct_subscribers | deep_subscribers).all()
             recipient_list = [x for x in subscribed_persons if x.email]
             if recipient_list:
-                from django.core.mail import send_mail, SMTPConnection, EmailMessage
+                from django.core.mail import SMTPConnection, EmailMessage
+                from email.utils import formataddr
                 subject = '[%s] %s' % (self.commented_item.name, self.name)
                 body = '%s wrote a comment in %s\n%s\n\n%s' % (self.creator.name, self.commented_item.name, 'http://deme.stanford.edu/resource/%s/%d' % (self.commented_item.item_type.lower(), self.commented_item.pk), self.body)
                 sender_agent = self.updater.downcast()
@@ -326,12 +327,11 @@ class Item(models.Model):
                     from_email_address = sender_agent.email or 'noreply@deme.stanford.edu'
                 else:
                     from_email_address = 'noreply@deme.stanford.edu'
-                from_email = '"%s" <%s>' % (sender_agent.name.replace('"', ''), from_email_address.replace('<', '').replace('>', ''))
+                from_email = formataddr(sender_agent.name, from_email_address)
                 headers = {'Reply-To': 'noreply@deme.stanford.edu'}
-                messages = [EmailMessage(subject=subject, body=body, from_email=from_email, to=['"%s" <%s>' % (rcpt.name.replace('"', ''), rcpt.email.replace('<', '').replace('>', ''))], headers=headers) for rcpt in recipient_list]
+                messages = [EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr(rcpt.name, rcpt.email)], headers=headers) for rcpt in recipient_list]
                 smtp_connection = SMTPConnection()
                 smtp_connection.send_messages(messages)
-                #send_mail(subject, body, from_email, recipient_list)
 
 
 class Agent(Item):
