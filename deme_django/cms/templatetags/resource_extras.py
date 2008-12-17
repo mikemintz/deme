@@ -410,7 +410,8 @@ class CommentBox(template.Node):
                     result.append("</div>")
                     result.append("""<div class="comment_body">""")
                     if agentcan_helper(context, 'view', 'body', comment):
-                        result.append(comment.body)
+                        from django.utils.html import escape
+                        result.append(escape(comment.body).replace('\n', '<br />'))
                     else:
                         result.append('[PERMISSION DENIED]')
                     result.append("</div>")
