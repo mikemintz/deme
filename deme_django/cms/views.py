@@ -92,12 +92,12 @@ class HiddenModelChoiceField(forms.ModelChoiceField):
 class TextModelChoiceField(forms.ModelChoiceField):
     widget = forms.TextInput
 
-class NewCommentForm(forms.ModelForm):
+class NewTextCommentForm(forms.ModelForm):
     commented_item = HiddenModelChoiceField(cms.models.Item.objects)
     commented_item_version_number = forms.IntegerField(widget=forms.HiddenInput())
     commented_item_index = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     class Meta:
-        model = cms.models.Comment
+        model = cms.models.TextComment
         fields = ['name', 'description', 'body', 'commented_item']
 
 def get_form_class_for_item_type(update_or_create, item_type, fields=None):
@@ -415,7 +415,7 @@ The agent currently logged in is not allowed to use this application. Please log
                     info['field_type'] = 'regular'
                 info['obj'] = obj
                 info['can_view'] = ('view', name) in abilities_for_item or can_do_everything
-                if info['field_type'] == 'entry':
+                if info['field_type'] == 'entry' and obj is not None:
                     info['can_view_name'] = can_do_everything or (('view', 'name') in self.get_abilities_for_agent_and_item(self.cur_agent, obj))
                 fields.append(info)
             return fields
@@ -906,11 +906,11 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
             cur_node = next_node
         return HttpResponse(template.render(self.context))
 
-class CommentViewer(TextDocumentViewer):
+class TextCommentViewer(TextDocumentViewer):
     __metaclass__ = ViewerMetaClass
 
-    item_type = cms.models.Comment
-    viewer_name = 'comment'
+    item_type = cms.models.TextComment
+    viewer_name = 'textcomment'
 
     def collection_new(self):
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
@@ -920,7 +920,7 @@ class CommentViewer(TextDocumentViewer):
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
-        form_class = NewCommentForm
+        form_class = NewTextCommentForm
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['model_names'] = model_names
@@ -933,7 +933,7 @@ class CommentViewer(TextDocumentViewer):
         can_create = ('create', self.item_type.__name__) in self.get_global_abilities_for_agent(self.cur_agent)
         if not (can_do_everything or can_create):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        form_class = NewCommentForm
+        form_class = NewTextCommentForm
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             #TODO use transactions to make the CommentLocation save at the same time as the Comment

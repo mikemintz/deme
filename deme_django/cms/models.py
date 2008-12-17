@@ -321,7 +321,10 @@ class Item(models.Model):
                 from django.core.mail import SMTPConnection, EmailMessage
                 from email.utils import formataddr
                 subject = '[%s] %s' % (self.commented_item.name, self.name)
-                body = '%s wrote a comment in %s\n%s\n\n%s' % (self.creator.name, self.commented_item.name, 'http://deme.stanford.edu/resource/%s/%d' % (self.commented_item.item_type.lower(), self.commented_item.pk), self.body)
+                if isinstance(self, TextComment):
+                    body = '%s wrote a comment in %s\n%s\n\n%s' % (self.creator.name, self.commented_item.name, 'http://deme.stanford.edu/resource/%s/%d' % (self.commented_item.item_type.lower(), self.commented_item.pk), self.body)
+                else:
+                    body = '%s did action %s to %s\n%s' % (self.creator.name, self.item_type, self.commented_item.name, 'http://deme.stanford.edu/resource/%s/%d' % (self.commented_item.item_type.lower(), self.commented_item.pk))
                 sender_agent = self.updater.downcast()
                 if isinstance(sender_agent, Person):
                     from_email_address = sender_agent.email or 'noreply@deme.stanford.edu'
@@ -332,6 +335,13 @@ class Item(models.Model):
                 messages = [EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((rcpt.name, rcpt.email))], headers=headers) for rcpt in recipient_list]
                 smtp_connection = SMTPConnection()
                 smtp_connection.send_messages(messages)
+
+        if not is_new:
+            edit_comment = EditComment(commented_item=self, name='Edit')
+            edit_comment.save_versioned(updater=updater)
+            edit_comment_location = CommentLocation(name="Untitled CommentLocation", comment=edit_comment, commented_item_version_number=new_version.version_number, commented_item_index=None)
+            edit_comment_location.save_versioned(updater=updater)
+
 
 
 class Agent(Item):
@@ -445,8 +455,8 @@ class ImageDocument(FileDocument):
     pass
 
 
-class Comment(TextDocument):
-    immutable_fields = TextDocument.immutable_fields + ['commented_item']
+class Comment(Document):
+    immutable_fields = Document.immutable_fields + ['commented_item']
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
     def all_commented_items(self):
         return Item.objects.filter(trashed=False, pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query)
@@ -465,6 +475,14 @@ class CommentLocation(Item):
     commented_item_index = models.IntegerField(null=True, blank=True)
     class Meta:
         unique_together = (('comment', 'commented_item_version_number'),)
+
+
+class TextComment(Comment, TextDocument):
+    pass
+
+
+class EditComment(Comment):
+    pass
 
 
 class Relationship(Item):

@@ -225,21 +225,34 @@ def ifagentcanglobal(parser, token):
         nodelist_false = template.NodeList()
     return IfAgentCanGlobal(bits[1], bits[2], nodelist_true, nodelist_false)
 
+# remember this includes trashed comments, which should be displayed differently after calling this
 def comment_dicts_for_item(item, itemversion, include_recursive_itemset_comments):
+    comment_subclasses = [cms.models.TextComment, cms.models.EditComment]
+    comments = []
     if include_recursive_itemset_comments:
-        comments = cms.models.Comment.objects.filter(Q(commented_item=item) | Q(commented_item__in=item.all_contained_itemset_members().values('pk').query)).order_by('created_at')
+        members_and_me_pks_query = cms.models.Item.objects.filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_itemset_members().values('pk').query)).values('pk').query
+        for comment_subclass in comment_subclasses:
+            comments.extend(comment_subclass.objects.filter(pk__in=cms.models.RecursiveCommentMembership.objects.filter(parent__in=members_and_me_pks_query).values('child').query))
     else:
-        comments = item.comments_as_item.order_by('created_at')
-    result = []
+        for comment_subclass in comment_subclasses:
+            comments.extend(comment_subclass.objects.filter(pk__in=cms.models.RecursiveCommentMembership.objects.filter(parent=item).values('child').query))
+    comments.sort(key=lambda x: x.created_at)
+    pk_to_comment_info = {}
     for comment in comments:
-        comment_info = {}
-        comment_info['comment'] = comment
+        comment_info = {'comment': comment, 'subcomments': []}
         try:
             comment_info['comment_location'] = comment.comment_locations_as_comment.get(commented_item_version_number=itemversion.version_number)
         except ObjectDoesNotExist:
             comment_info['comment_location'] = None
-        comment_info['subcomments'] = comment_dicts_for_item(comment, comment.versions.latest(), False)
-        result.append(comment_info)
+        pk_to_comment_info[comment.pk] = comment_info
+    result = []
+    for comment in comments:
+        child = pk_to_comment_info[comment.pk]
+        parent = pk_to_comment_info.get(comment.commented_item.pk)
+        if parent:
+            parent['subcomments'].append(child)
+        else:
+            result.append(child)
     return result
 
 class ItemHeader(template.Node):
@@ -368,7 +381,7 @@ class CommentBox(template.Node):
 
         result = []
         result.append("""<div class="comment_box">""")
-        result.append("""<div class="comment_box_header"><a href="/resource/comment/new?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Add Comment</a></div>""" % (itemversion.current_item.pk, itemversion.version_number, urlquote(full_path)))
+        result.append("""<div class="comment_box_header"><a href="/resource/textcomment/new?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Add Comment</a></div>""" % (itemversion.current_item.pk, itemversion.version_number, urlquote(full_path)))
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
@@ -377,7 +390,7 @@ class CommentBox(template.Node):
                     continue
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
-                result.append("""<div style="float: right;"><a href="/resource/comment/new?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (comment.pk, comment.versions.latest().version_number, urlquote(full_path)))
+                result.append("""<div style="float: right;"><a href="/resource/textcomment/new?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (comment.pk, comment.versions.latest().version_number, urlquote(full_path)))
                 if agentcan_helper(context, 'view', 'name', comment):
                     result.append("""<a href="/resource/%s/%s">%s</a>""" % (comment.item_type.lower(), comment.pk, comment.name))
                 else:
@@ -409,11 +422,14 @@ class CommentBox(template.Node):
                         result.append('[PERMISSION DENIED]')
                     result.append("</div>")
                     result.append("""<div class="comment_body">""")
-                    if agentcan_helper(context, 'view', 'body', comment):
-                        from django.utils.html import escape
-                        result.append(escape(comment.body).replace('\n', '<br />'))
-                    else:
-                        result.append('[PERMISSION DENIED]')
+                    if isinstance(comment, cms.models.TextComment):
+                        if agentcan_helper(context, 'view', 'body', comment):
+                            from django.utils.html import escape
+                            result.append(escape(comment.body).replace('\n', '<br />'))
+                        else:
+                            result.append('[PERMISSION DENIED]')
+                    elif isinstance(comment, cms.models.EditComment):
+                        result.append('Edited')
                     result.append("</div>")
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
