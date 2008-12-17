@@ -441,6 +441,8 @@ The agent currently logged in is not allowed to use this application. Please log
                     continue
                 if issubclass(field.model, cms.models.Permission.VERSION):
                     continue
+                if not issubclass(field.model, cms.models.Item) and not issubclass(field.model, cms.models.Item.VERSION):
+                    continue
                 manager = getattr(this_item, name)
                 relationship_set = {}
                 relationship_set['name'] = name
