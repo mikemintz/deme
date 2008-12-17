@@ -327,9 +327,9 @@ class Item(models.Model):
                     from_email_address = sender_agent.email or 'noreply@deme.stanford.edu'
                 else:
                     from_email_address = 'noreply@deme.stanford.edu'
-                from_email = formataddr(sender_agent.name, from_email_address)
-                headers = {'Reply-To': 'noreply@deme.stanford.edu'}
-                messages = [EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr(rcpt.name, rcpt.email)], headers=headers) for rcpt in recipient_list]
+                from_email = formataddr((sender_agent.name, from_email_address))
+                headers = {'Reply-To': '%s@deme.stanford.edu' % self.pk}
+                messages = [EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((rcpt.name, rcpt.email))], headers=headers) for rcpt in recipient_list]
                 smtp_connection = SMTPConnection()
                 smtp_connection.send_messages(messages)
 
