@@ -196,15 +196,13 @@ class Item(models.Model):
         return item_type.objects.get(id=self.id)
 
     def recursive_parent_itemsets(self):
-        my_parents = Q(pk__in=ItemSetMembership.objects.filter(item=self, trashed=False).values('itemset').query)
-        recursive_parents = Q(pk__in=RecursiveItemSetMembership.objects.filter(child__in=ItemSetMembership.objects.filter(item=self).values('itemset').query).values('parent').query)
-        return ItemSet.objects.filter(trashed=False).filter(my_parents | recursive_parents)
+        return ItemSet.objects.filter(trashed=False, pk__in=RecursiveItemSetMembership.objects.filter(child=self).values('parent').query)
 
     @transaction.commit_on_success
     def trash(self):
         #TODO what happens when you trash/untrash an entire itemset? how do we modify the recursive table?
         if isinstance(self, ItemSetMembership):
-            if self.recursive and not self.trashed:
+            if not self.trashed:
                 RecursiveItemSetMembership.recursive_remove(self.itemset, self.item)
         self.trashed = True
         self.save()
@@ -213,7 +211,7 @@ class Item(models.Model):
     @transaction.commit_on_success
     def untrash(self):
         if isinstance(self, ItemSetMembership):
-            if self.recursive and self.trashed:
+            if self.trashed:
                 RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
         self.trashed = False
         self.save()
@@ -226,25 +224,25 @@ class Item(models.Model):
 
         if isinstance(self, ItemSetMembership):
             if is_new:
-                if self.recursive and not self.trashed:
+                if not self.trashed:
                     RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
             else:
                 old = ItemSetMembership.objects.get(pk=self.pk)
-                if old.recursive and not old.trashed:
-                    if self.recursive and not self.trashed:
-                        #old and new are both recursive: check for changed pointers
+                if not old.trashed:
+                    if not self.trashed:
+                        #old and new are both around: check for changed pointers
                         if (self.itemset, self.item) != (old.itemset, old.item):
                             RecursiveItemSetMembership.recursive_remove(old.itemset, old.item)
                             RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
                     else:
-                        #old is recursive, new is not recursive: remove old
+                        #old is around, new is not around: remove old
                         RecursiveItemSetMembership.recursive_remove(old.itemset, old.item)
                 else:
-                    if self.recursive and not self.trashed:
-                        #old is not recursive, new is recursive: add new
+                    if not self.trashed:
+                        #old is not around, new is around: add new
                         RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
                     else:
-                        #neither old nor new are recursive: nothing to do
+                        #neither old nor new are around: nothing to do
                         pass
 
         self.item_type = type(self).__name__
@@ -389,9 +387,7 @@ class Person(Agent):
 
 class ItemSet(Item):
     def recursive_child_items(self):
-        my_children = Q(pk__in=ItemSetMembership.objects.filter(itemset=self, trashed=False).values('item').query)
-        recursive_children = Q(pk__in=ItemSetMembership.objects.filter(itemset__in=RecursiveItemSetMembership.objects.filter(parent=self).values('child').query).values('item').query)
-        return Item.objects.filter(trashed=False).filter(my_children | recursive_children)
+        return Item.objects.filter(trashed=False, pk__in=RecursiveItemSetMembership.objects.filter(parent=self).values('child').query)
 
 
 class Group(Agent):
@@ -458,20 +454,19 @@ class ItemSetMembership(Relationship):
     immutable_fields = Relationship.immutable_fields + ['item', 'itemset']
     item = models.ForeignKey(Item, related_name='itemset_memberships_as_item')
     itemset = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
-    recursive = models.BooleanField(default=False)
     class Meta:
         unique_together = (('item', 'itemset'),)
 
 
 class RecursiveItemSetMembership(models.Model):
     parent = models.ForeignKey(ItemSet, related_name='recursive_itemset_memberships_as_parent')
-    child = models.ForeignKey(ItemSet, related_name='recursive_itemset_memberships_as_child')
+    child = models.ForeignKey(Item, related_name='recursive_itemset_memberships_as_child')
     class Meta:
         unique_together = (('parent', 'child'),)
     @classmethod
     def recursive_add(cls, parent, child):
         ancestors = ItemSet.objects.filter(Q(recursive_itemset_memberships_as_parent__child=parent) | Q(pk=parent.pk))
-        descendants = ItemSet.objects.filter(Q(recursive_itemset_memberships_as_child__parent=child) | Q(pk=child.pk))
+        descendants = Item.objects.filter(Q(recursive_itemset_memberships_as_child__parent=child) | Q(pk=child.pk))
         #TODO make this work with transactions
         if ancestors and descendants:
             from django.db import connection
@@ -483,7 +478,7 @@ class RecursiveItemSetMembership(models.Model):
     @classmethod
     def recursive_remove(cls, parent, child):
         ancestors = ItemSet.objects.filter(Q(recursive_itemset_memberships_as_parent__child=parent) | Q(pk=parent.pk))
-        descendants = ItemSet.objects.filter(Q(recursive_itemset_memberships_as_child__parent=child) | Q(pk=child.pk))
+        descendants = Item.objects.filter(Q(recursive_itemset_memberships_as_child__parent=child) | Q(pk=child.pk))
         #TODO make this work with transactions
         if ancestors and descendants:
             # first remove all connections between ancestors and descendants
