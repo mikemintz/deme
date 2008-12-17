@@ -313,9 +313,16 @@ class Item(models.Model):
         #TODO why doesn't an exception in this part of the code roll back the transaction?
         if is_new and isinstance(self, Comment):
             # email everyone subscribed to items this comment is relevant for
-            direct_subscribers = Q(subscriptions_as_person__item__in=self.all_commented_items().values('pk').query, subscriptions_as_person__trashed=False)
-            deep_subscribers = Q(subscriptions_as_person__item__in=self.all_commented_items_and_itemsets().values('pk').query, subscriptions_as_person__deep=True, subscriptions_as_person__trashed=False)
-            subscribed_persons = Person.objects.filter(trashed=False).filter(direct_subscribers | deep_subscribers).all()
+            if isinstance(self, TextComment):
+                comment_type_q = Q(notify_text=True)
+            elif isinstance(self, EditComment):
+                comment_type_q = Q(notify_edit=True)
+            else:
+                #TODO what to do if it's none of the above?
+                comment_type_q = Q(pk__isnull=False)
+            direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
+            deep_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items_and_itemsets().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
+            subscribed_persons = Person.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('subscriber').query) | Q(pk__in=deep_subscriptions.values('subscriber').query))
             recipient_list = [x for x in subscribed_persons if x.email]
             if recipient_list:
                 from django.core.mail import SMTPConnection, EmailMessage
@@ -577,6 +584,8 @@ class Subscription(Item):
     subscriber = models.ForeignKey(Person, related_name='subscriptions_as_person')
     item = models.ForeignKey(Item, related_name='subscriptions_as_item')
     deep = models.BooleanField(default=False)
+    notify_text = models.BooleanField(default=True)
+    notify_edit = models.BooleanField(default=False)
     class Meta:
         unique_together = (('subscriber', 'item'),)
 

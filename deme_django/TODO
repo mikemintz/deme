@@ -1,7 +1,6 @@
 Remaining Dec-16 notes
 ----------------------
 * trashing itemsets needs to remove the recursiveitemsetmembership (not just trashing itemsetmemberships)
-* create comments for every action, a subscription specifies which kind of comments are emailed
 * come up with specification for new symsys layout
 
 Nov-21 notes (automatic comments and subscriptions)
