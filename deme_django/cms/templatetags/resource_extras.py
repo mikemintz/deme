@@ -394,7 +394,7 @@ class CommentBox(template.Node):
                         result.append('for <a href="%s">%s</a>' % (show_resource_url(comment.commented_item), comment.commented_item.name))
                     else:
                         result.append('for <a href="%s">[PERMISSION DENIED]</a>' % (show_resource_url(comment.commented_item)))
-                if not comment_location:
+                if item.pk == comment.commented_item.pk and not comment_location:
                     result.append("[INACTIVE]")
                 result.append("</div>")
                 if comment.trashed:
