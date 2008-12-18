@@ -1,3 +1,32 @@
+Dec-17 notes
+------------
+* excerpts/highlighting (we still need to talk about details)
+* group is an itemset, group is not an agent
+  - this is for distant future: and new subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group)
+* move password_question and password_answer to PasswordAccount (has username, which is the symsys email address, is unique)
+* new ContactMethod class, belongs to Agent
+  - email is subclass (not necessarily unique anymore)
+  - subscriptions are between ContactMethods and Items, not Persons and Item
+* rename Account to AuthenticationMethod
+* respos_job_email_subscribe is replaced with an actual subscription (but be careful that no emails get sent yet) counts as all 3 things
+* make then_image and now_image point to ImageDoc, not FileDoc
+* add original_suffix
+* advisor should point to a symsysaffiliate
+* make title and admin_title a constrained choices set
+* rename title to academic_title
+* we make concentration and ms_track groups, distinct groups for ms and concentration, (eventually use subgroups to solve the Neuro problem)
+* we make department be a group
+* make sure all of the group memberships are inferred when displaying a profile
+* joining and leaving groups is somehow covered by permissions
+* change class_year to a group, anyone can join and leave when they want
+* for faculty, department2 will be another group that they join
+* get rid of symsys_degree
+* rename graduation_year to bs_graduation_year and ms_graduation to ms_graduation_year
+* change honors_advisor and honors_second_reader to symsysaffiliate pointers
+* add an honors group, derive from honors_status field (which we will remove)
+* get rid of newsitem, advertisement just inherits from item, but create TextAdvertisement and HtmlAdvertisement subclasses of doc and ad
+* Event inherits from HtmlDocument
+
 Remaining Dec-16 notes
 ----------------------
 * trashing itemsets needs to remove the recursiveitemsetmembership (not just trashing itemsetmemberships)
