@@ -85,13 +85,15 @@ class Event(HtmlDocument):
     url = models.TextField(blank=True)
 
 
-#TODO maybe it just points to a Document, rather than subclassing. that way it can be interpretted in any way
-# same with Event I guess
-class NewsItem(TextDocument):
+class Advertisement(Document):
+    contact_info = models.TextField()
+    expires_at = models.DateTimeField(blank=True, null=True)
+
+
+class TextAdvertisement(Advertisement, TextDocument):
     pass
 
 
-class Advertisement(NewsItem):
-    contact_info = models.TextField()
-    expires_at = models.DateTimeField(blank=True, null=True)
+class HtmlAdvertisement(Advertisement, HtmlDocument):
+    pass
 
