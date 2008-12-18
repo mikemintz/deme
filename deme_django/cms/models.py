@@ -260,10 +260,7 @@ class Item(models.Model):
             self.updater = updater
             if is_new:
                 self.creator = updater
-        if not is_new:
-            latest_version_number = ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
-        else:
-            latest_version_number = 0
+        if is_new:
             if created_at:
                 self.created_at = created_at
             else:
@@ -275,6 +272,7 @@ class Item(models.Model):
         self.save()
 
         # Create the new item version
+        latest_version_number = 0 if is_new else ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
         fields = {}
         for field in self._meta.fields:
             if field.primary_key:
