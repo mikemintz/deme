@@ -23,6 +23,14 @@
 
 <script type="text/javascript">
     var body_str = "{{ itemversion.body|escapejs }}";
+
+    function parse_error(str) {
+        $('parse_errors').show();
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        $('parse_errors').appendChild(div);
+    }
+
     function located_token_mouseover(e) {
         var targ;
         if (!e) var e = window.event;
@@ -54,7 +62,7 @@
             targ = targ.parentNode;
         var tokenWrapper = $(targ);
         var index = tokenWrapper.deme_text_offset;
-        var url = '/resource/comment/new?commented_item={{ item.pk }}&commented_item_version_number={{ itemversion.version_number }}&redirect={{ full_path|urlencode }}&commented_item_index=' + index;
+        var url = '/resource/textcomment/new?commented_item={{ item.pk }}&commented_item_version_number={{ itemversion.version_number }}&redirect={{ full_path|urlencode }}&commented_item_index=' + index;
         window.location = url;
     }
 
@@ -72,19 +80,25 @@
             while (text.length > 0) {
                 var whiteSpaceBodyMatch = /((&nbsp;)|(\s))+/i.exec(remaining_body_str);
                 var whiteSpaceTextMatch = /((&nbsp;)|(\s))+/i.exec(text);
-                if (whiteSpaceBodyMatch != null && whiteSpaceBodyMatch.index == 0 && whiteSpaceTextMatch != null && whiteSpaceTextMatch.index == 0) {
+                var bodyStartsWithWhiteSpace = (whiteSpaceBodyMatch != null && whiteSpaceBodyMatch.index == 0);
+                var textStartsWithWhiteSpace = (whiteSpaceTextMatch != null && whiteSpaceTextMatch.index == 0);
+                if (bodyStartsWithWhiteSpace && textStartsWithWhiteSpace) {
                     increment_body_str(whiteSpaceBodyMatch[0].length);
                     if (whiteSpaceTextMatch != null) {
                         var whiteSpaceTextNode = document.createTextNode(text.substring(0, whiteSpaceTextMatch[0].length));
                         wrapper.appendChild(whiteSpaceTextNode);
                         text = text.substring(whiteSpaceTextMatch[0].length);
                     }
+                } else if (bodyStartsWithWhiteSpace) {
+                    parse_error('error: body starts with whitespace but text does not'); //TODO what to do about this?
+                } else if (textStartsWithWhiteSpace) {
+                    var whiteSpaceTextNode = document.createTextNode(text.substring(0, whiteSpaceTextMatch[0].length));
+                    wrapper.appendChild(whiteSpaceTextNode);
+                    text = text.substring(whiteSpaceTextMatch[0].length);
                 } else {
                     var token;
                     if (whiteSpaceTextMatch == null) {
                         token = text;
-                    } else if (whiteSpaceTextMatch.index == 0) {
-                        token = whiteSpaceTextMatch[0].substring(0, 1);
                     } else {
                         token = text.substring(0, whiteSpaceTextMatch.index);
                     }
@@ -99,19 +113,19 @@
                     var body_i = 0;
                     for (var i = 0; i < token.length; i++) {
                         if (remaining_body_str.length <= 0) {
-                            alert("error: out of remaining_body_str"); //TODO what to do about this?
+                            parse_error("error: out of remaining_body_str"); //TODO what to do about this?
                         }
                         var bodyChar = remaining_body_str.substring(body_i, body_i+1);
                         if (bodyChar == '&') {
                             var semicolonIndex = remaining_body_str.indexOf(';', body_i+1);
                             if (semicolonIndex == -1) {
-                                alert("error: found ampersand without semicolon"); //TODO what to do about this?
+                                parse_error("error: found ampersand without semicolon"); //TODO what to do about this?
                             }
                             body_i = semicolonIndex + 1;
                         } else {
                             var tokenChar = token.substring(i, i+1);
                             if (bodyChar != tokenChar) {
-                                alert("error: bodyChar != tokenChar"); //TODO what to do about this?
+                                parse_error("error: bodyChar (" + bodyChar + ") != tokenChar (" + tokenChar + ")"); //TODO what to do about this?
                             }
                             body_i += 1;
                         }
@@ -121,37 +135,44 @@
                 }
             }
         };
-        var traverse_fn = function(node){
-            // TODO don't we also want to wrap things like imgs?
-            if (node.nodeType == Node.TEXT_NODE) {
-                var wrapper = $(document.createElement('span'));
-                node.parentNode.insertBefore(wrapper, node);
-                traverse_text(node.data, wrapper);
-                node.parentNode.removeChild(node);
-            } else {
-                if (!node.hasClassName('commentref')) {
-                    // match the start tag
-                    var startTagPattern = new RegExp("^\\s*<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "i");
-                    var startTagMatch = startTagPattern.exec(remaining_body_str);
-                    if (startTagMatch == null) {
-                        alert("error: could not find start tag"); //TODO what to do about this?
-                    } else {
-                        increment_body_str(startTagMatch[0].length);
-                        $A(node.childNodes).each(function(child){
-                            traverse_fn($(child));
-                        });
+        var traverse_fn = function(nodes){
+            for (var i = 0; i < nodes.length; i++) {
+                var node = $(nodes[i]);
+                if (node.nodeType == Node.TEXT_NODE) {
+                    var wrapper = $(document.createElement('span'));
+                    node.parentNode.insertBefore(wrapper, node);
+                    traverse_text(node.data, wrapper);
+                    node.parentNode.removeChild(node);
+                } else {
+                    if (!node.hasClassName('commentref')) {
+                        // match the start tag
+                        var startTagPattern = new RegExp("[.\\s]*<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "i");
+                        var startTagMatch = startTagPattern.exec(remaining_body_str);
+                        if (startTagMatch == null) {
+                            parse_error("error: could not find start tag: " + node.tagName); //TODO what to do about this?
+                        } else {
+                            increment_body_str(startTagMatch.index + startTagMatch[0].length);
+                            if (node.tagName == 'IMG') {
+                                node.deme_text_offset = body_str_index - startTagMatch[0].length;
+                                node.onmouseover = located_token_mouseover;
+                                node.onmouseout = located_token_mouseout;
+                                node.onclick = located_token_click;
+                            }
+                            traverse_fn(node.childNodes);
 
-                        // match the optional end tag
-                        var endTagPattern = new RegExp("^\\s*<\\s*/\\s*" + node.tagName + "[^>]*>", "i");
-                        var endTagMatch = endTagPattern.exec(remaining_body_str);
-                        if (endTagMatch != null) {
-                            increment_body_str(endTagMatch[0].length);
+                            // match the optional end tag
+                            var endTagPattern = new RegExp("\\s*<\\s*/\\s*" + node.tagName + "[^>]*>", "i");
+                            var endTagMatch = endTagPattern.exec(remaining_body_str);
+                            // we only want to match the end tag if it occurs RIGHT here
+                            if (endTagMatch != null && endTagMatch.index == 0) {
+                                increment_body_str(endTagMatch[0].length);
+                            }
                         }
                     }
                 }
             }
         };
-        $A(docbody_clone.childNodes).each(traverse_fn);
+        traverse_fn(docbody_clone.childNodes);
 
         docbody_clone.setAttribute('id', 'docbody_clone');
         docbody.hide();
@@ -267,14 +288,8 @@ div#section_body, div#section_comments, div#section_combined {
 <div id="section_body">
 <div id="section_body_inner">
 
-<div><a href="#" onclick="$$('.commentref').each(function(e){e.toggle()}); return false;">Toggle Comments</a></div>
-{% ifagentcan 'view' 'body' item %}
-<div id="docbody" style="padding: 10px;">{% display_body_with_inline_comments itemversion %}</div>
-{% else %}
-<div id="docbody" style="padding: 10px;">
-[PERMISSION DENIED]
+<div id="parse_errors" style="display: none;">
 </div>
-{% endifagentcan %}
 
 <div id="add_located_comment_div">
 <a href="#" onclick="add_located_comment(); return false;">[+] Add Located Comment</a>
@@ -284,6 +299,16 @@ div#section_body, div#section_comments, div#section_combined {
 Now just select text where you want to comment or
 <a href="#" onclick="cancel_add_located_comment(); return false;">Cancel</a>
 </div>
+
+<div><a href="#" onclick="$$('.commentref').each(function(e){e.toggle()}); return false;">Toggle Comments</a></div>
+
+{% ifagentcan 'view' 'body' item %}
+<div id="docbody" style="padding: 10px;">{% display_body_with_inline_comments itemversion %}</div>
+{% else %}
+<div id="docbody" style="padding: 10px;">
+[PERMISSION DENIED]
+</div>
+{% endifagentcan %}
 
 </div>
 </div>
