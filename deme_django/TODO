@@ -10,7 +10,7 @@ Dec-17 notes
 * rename Account to AuthenticationMethod
 * respos_job_email_subscribe is replaced with an actual subscription (but be careful that no emails get sent yet) counts as all 3 things
 * advisor should point to a symsysaffiliate
-* make academic_title and admin_title a constrained choices set
+* examine the choices for academic_title and admin_title
 * we make concentration and ms_track groups, distinct groups for ms and concentration, (eventually use subgroups to solve the Neuro problem)
 * we make department be a group
 * make sure all of the group memberships are inferred when displaying a profile

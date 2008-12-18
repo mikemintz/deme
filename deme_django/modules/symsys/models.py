@@ -13,8 +13,8 @@ class SymsysAffiliate(Person):
     first_affiliation_year = models.IntegerField(null=True, blank=True)
     graduation_year = models.IntegerField(null=True, blank=True)
 
-    academic_title = models.CharField(max_length=255, blank=True)
-    admin_title = models.CharField(max_length=255, blank=True)
+    academic_title = models.CharField(max_length=255, blank=True, choices=[("Assistant Professor", "Assistant Professor"), ("Associate Professor", "Associate Professor"), ("Associate Professor (Research)", "Associate Professor (Research)"), ("Consulting Assistant Professor", "Consulting Assistant Professor"), ("Consulting Associate Professor", "Consulting Associate Professor"), ("Consulting Professor", "Consulting Professor"), ("Engineering Research Associate", "Engineering Research Associate"), ("Executive Director", "Executive Director"), ("Lecturer", "Lecturer"), ("Professor", "Professor"), ("Professor Emeritus", "Professor Emeritus"), ("Senior Lecturer", "Senior Lecturer"), ("Senior Research Engineer", "Senior Research Engineer"), ("Student Services Officer", "Student Services Officer"), ("University Affiliate", "University Affiliate"), ("Wasow Visiting Lecturer", "Wasow Visiting Lecturer"), ("Web Design", "Web Design"),])
+    admin_title = models.CharField(max_length=255, blank=True, choices=[("Advising Fellow", "Advising Fellow"), ("AF", "AF"), ("Associate Director", "Associate Director"), ("Director Emeritus", "Director Emeritus"), ("Graduate Studies Director", "Graduate Studies Director"), ("Program Director", "Program Director"), ("Student Services Officer", "Student Services Officer"), ("Student Services Officer (on leave)", "Student Services Officer (on leave)"), ("Web Developer", "Web Developer"), ("Webmaster", "Webmaster"), ("Webmaster (2003-2004)", "Webmaster (2003-2004)"),])
     department = models.CharField(max_length=255, blank=True)
     concentration = models.CharField(max_length=255, blank=True)
     advisor = models.CharField(max_length=255, blank=True)
