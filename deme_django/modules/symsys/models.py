@@ -54,7 +54,6 @@ class SymsysAffiliate(Person):
     office_hours = models.TextField(blank=True)
     about = models.TextField(blank=True)
 
-    symsys_degree = models.CharField(max_length=255, blank=True)
     other_degrees = models.CharField(max_length=255, blank=True)
     indivdesignedconc = models.CharField(max_length=255, blank=True)
     department2 = models.CharField(max_length=255, blank=True)
