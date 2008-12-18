@@ -399,6 +399,8 @@ def get_hexdigest(algorithm, salt, raw_password):
 
 class PasswordAccount(Account):
     password = models.CharField(max_length=128)
+    password_question = models.CharField(max_length=255, blank=True)
+    password_answer = models.CharField(max_length=255, blank=True)
 
     def set_password(self, raw_password):
         import random
@@ -418,8 +420,6 @@ class Person(Agent):
     last_name = models.CharField(max_length=255)
     suffix = models.CharField(max_length=255, blank=True)
     email = models.EmailField(max_length=320, unique=True, null=True, blank=True)
-    password_question = models.CharField(max_length=255, blank=True)
-    password_answer = models.CharField(max_length=255, blank=True)
 
 
 class ItemSet(Item):
