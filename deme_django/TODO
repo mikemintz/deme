@@ -66,7 +66,7 @@ Documentation
 
 Distant Future
 --------------
-* migrations
+* migrations (let's use http://south.aeracode.org/)
 * more efficient versioning (like like latest version in db, but have deltas to prev versions)
 * later, think about adding back "edit downcast". we'll have to think about
   - what happens when viewer2 inherits from viewer1, and viewer2 item type subclasses viewer1 item type, and viewer2 inherits the edit/update functionality?
