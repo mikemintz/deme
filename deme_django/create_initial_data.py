@@ -149,7 +149,7 @@ GroupMembership(name="Todd's membership in discuss group", agent=todd_person, gr
 
 DefaultGlobalPermission(name="Default permission to do_something", ability='do_something', ability_parameter='Item', is_allowed=True).save_versioned(updater=admin)
 #AgentGlobalPermission(name="Permission for Anonymous not to do_something", agent=anonymous_agent, ability='do_something', ability_parameter='Item', is_allowed=False).save_versioned(updater=admin)
-DefaultGlobalPermission(name="Default permission to create Comments", ability='create', ability_parameter='Comment', is_allowed=True).save_versioned(updater=admin)
+DefaultGlobalPermission(name="Default permission to create TextComments", ability='create', ability_parameter='TextComment', is_allowed=True).save_versioned(updater=admin)
 DefaultGlobalPermission(name="Default permission to create HtmlDocuments", ability='create', ability_parameter='HtmlDocument', is_allowed=True).save_versioned(updater=admin)
 
 DefaultPermission(name="Default permission to login_as Admin", item=admin, ability='login_as', ability_parameter="id", is_allowed=True).save_versioned(updater=admin)
