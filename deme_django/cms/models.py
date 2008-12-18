@@ -225,6 +225,7 @@ class Item(models.Model):
         save_time = datetime.datetime.now()
         is_new = not self.pk
 
+        # Update RecursiveItemSetMembership if we're saving an ItemSetMembership
         if isinstance(self, ItemSetMembership):
             if is_new:
                 if not self.trashed:
@@ -248,6 +249,7 @@ class Item(models.Model):
                         #neither old nor new are around: nothing to do
                         pass
 
+        # Update the item
         self.item_type = type(self).__name__
         if first_agent:
             self.creator = self
@@ -258,24 +260,6 @@ class Item(models.Model):
             self.updater = updater
             if is_new:
                 self.creator = updater
-        fields = {}
-        for field in self._meta.fields:
-            if field.primary_key:
-                continue
-            if field.name in []:
-                continue
-            if type(field).__name__ == 'OneToOneField':
-                continue
-            try:
-                fields[field.name] = getattr(self, field.name)
-            except ObjectDoesNotExist:
-                fields[field.name] = None
-        new_version = self.__class__.VERSION()
-        if first_agent:
-            new_version.updater = self
-            new_version.updater_id = 1
-        for key, val in fields.iteritems():
-            setattr(new_version, key, val)
         if not is_new:
             latest_version_number = ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
         else:
@@ -288,19 +272,32 @@ class Item(models.Model):
             self.updated_at = updated_at
         else:
             self.updated_at = save_time
-        new_version.updated_at = self.updated_at
-        new_version.version_number = latest_version_number + 1
-        if first_agent:
-            new_version.updater_id = 1
         self.save()
-        new_version.current_item_id = self.pk
+
+        # Create the new item version
+        fields = {}
+        for field in self._meta.fields:
+            if field.primary_key:
+                continue
+            if type(field).__name__ == 'OneToOneField':
+                continue
+            try:
+                fields[field.name] = getattr(self, field.name)
+            except ObjectDoesNotExist:
+                fields[field.name] = None
+        new_version = self.__class__.VERSION(current_item_id=self.pk, version_number=latest_version_number+1)
+        for key, val in fields.iteritems():
+            setattr(new_version, key, val)
         new_version.save()
+
+        # Create the permissions
         #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
         #TODO we need to reference the roles by id, not name, otherwise very insecure!
         if create_permissions and latest_version_number == 0 and not issubclass(self.__class__, Permission):
             DefaultRolePermission(name="Default permission for %s" % self.name, item=self, role=Role.objects.get(name="%s Default" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
             AgentRolePermission(name="Creator permission for %s" % self.name, agent=updater, item=self, role=Role.objects.get(name="%s Creator" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
 
+        # Update RecursiveCommentMembership if we're saving a Comment
         if isinstance(self, Comment):
             if is_new:
                 RecursiveCommentMembership.recursive_add(self.commented_item, self)
@@ -308,6 +305,7 @@ class Item(models.Model):
                 # We assume that commented_item cannot change since it is marked immutable
                 pass
 
+        # Send notifications if we're creating a new Comment
         #TODO permissions to view name/body/etc
         #TODO maybe this should happen asynchronously somehow
         #TODO why doesn't an exception in this part of the code roll back the transaction?
@@ -343,6 +341,7 @@ class Item(models.Model):
                 smtp_connection = SMTPConnection()
                 smtp_connection.send_messages(messages)
 
+        # Create an EditComment if we're making an edit
         if not is_new:
             edit_comment = EditComment(commented_item=self, name='Edit')
             edit_comment.save_versioned(updater=updater)
