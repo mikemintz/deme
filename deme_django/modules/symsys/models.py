@@ -79,7 +79,7 @@ class SymsysAffiliate(Person):
     now_image = models.ForeignKey(FileDocument, related_name='symsysaffiliates_with_now_image', blank=True, null=True)
 
 
-class Event(TextDocument):
+class Event(HtmlDocument):
     event_time = models.DateTimeField()
     location = models.TextField(blank=True)
     url = models.TextField(blank=True)

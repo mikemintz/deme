@@ -25,7 +25,6 @@ Dec-17 notes
 * change honors_advisor and honors_second_reader to symsysaffiliate pointers
 * add an honors group, derive from honors_status field (which we will remove)
 * get rid of newsitem, advertisement just inherits from item, but create TextAdvertisement and HtmlAdvertisement subclasses of doc and ad
-* Event inherits from HtmlDocument
 
 Remaining Dec-16 notes
 ----------------------
