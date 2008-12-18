@@ -13,7 +13,7 @@ class SymsysAffiliate(Person):
     first_affiliation_year = models.IntegerField(null=True, blank=True)
     graduation_year = models.IntegerField(null=True, blank=True)
 
-    title = models.CharField(max_length=255, blank=True)
+    academic_title = models.CharField(max_length=255, blank=True)
     admin_title = models.CharField(max_length=255, blank=True)
     department = models.CharField(max_length=255, blank=True)
     concentration = models.CharField(max_length=255, blank=True)
