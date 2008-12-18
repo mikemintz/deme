@@ -76,8 +76,8 @@ class SymsysAffiliate(Person):
     honors_advisor = models.CharField(max_length=255, blank=True)
     honors_second_reader = models.CharField(max_length=255, blank=True)
 
-    then_image = models.ForeignKey(FileDocument, related_name='symsysaffiliates_with_then_image', blank=True, null=True)
-    now_image = models.ForeignKey(FileDocument, related_name='symsysaffiliates_with_now_image', blank=True, null=True)
+    then_image = models.ForeignKey(ImageDocument, related_name='symsysaffiliates_with_then_image', blank=True, null=True)
+    now_image = models.ForeignKey(ImageDocument, related_name='symsysaffiliates_with_now_image', blank=True, null=True)
 
 
 class Event(HtmlDocument):
