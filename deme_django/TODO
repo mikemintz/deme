@@ -10,7 +10,6 @@ Dec-17 notes
 * rename Account to AuthenticationMethod
 * respos_job_email_subscribe is replaced with an actual subscription (but be careful that no emails get sent yet) counts as all 3 things
 * make then_image and now_image point to ImageDoc, not FileDoc
-* add original_suffix
 * advisor should point to a symsysaffiliate
 * make title and admin_title a constrained choices set
 * rename title to academic_title
@@ -22,7 +21,7 @@ Dec-17 notes
 * for faculty, department2 will be another group that they join
 * get rid of symsys_degree
 * rename graduation_year to bs_graduation_year and ms_graduation to ms_graduation_year
-* change honors_advisor and honors_second_reader to symsysaffiliate pointers
+* change honors_advisor and honors_second_reader to symsysaffiliate pointers (problem is some aren't symsys affiliates)
 * add an honors group, derive from honors_status field (which we will remove)
 
 Remaining Dec-16 notes

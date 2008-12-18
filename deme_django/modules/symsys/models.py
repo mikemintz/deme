@@ -7,6 +7,7 @@ class SymsysAffiliate(Person):
     original_first_name = models.CharField(max_length=255)
     original_middle_names = models.CharField(max_length=255, blank=True)
     original_last_name = models.CharField(max_length=255)
+    original_suffix = models.CharField(max_length=255, blank=True)
 
     class_year = models.IntegerField(null=True, blank=True)
     first_affiliation_year = models.IntegerField(null=True, blank=True)
