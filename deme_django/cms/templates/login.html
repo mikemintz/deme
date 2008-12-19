@@ -3,7 +3,7 @@
 {% block title %}Login{% endblock %}
 {% block content %}
 
-<form name="password_form" action="/meta/login?redirect={{ redirect_url }}" method="post">
+<form name="password_form" action="/meta/login?redirect={{ redirect_url|urlencode }}" method="post">
     <input type="hidden" name="login_type" value="password" />
     <div>
         Username (email): <input type="text" name="username" />
@@ -15,7 +15,7 @@
 </form>
 
 {% if login_as_agents %}
-<form action="/meta/login?redirect={{ redirect_url }}" method="post">
+<form action="/meta/login?redirect={{ redirect_url|urlencode }}" method="post">
 <div style="margin-top: 15px;">
     <input type="hidden" name="login_type" value="login_as" />
     You can also login as one of the following agents:

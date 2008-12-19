@@ -54,7 +54,6 @@ Code correctness/consistency/bugs
 * decide whether to have autoescape on or off
 * add sensitive_function.alters_data = True to functions like save_versioned so templates cant call them
 * lots of html escaping to do probably (or probably turn autoescape on)
-* BUG: if you try to leave a located comment, but don't have permission, and then log in, it takes you back to the document page, not the comment page
 
 Performance
 -----------
