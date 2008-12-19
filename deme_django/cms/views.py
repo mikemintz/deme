@@ -685,22 +685,23 @@ The agent currently logged in is not allowed to use this application. Please log
             fields = form._meta.fields
             existing_permission = model.objects
             for field in fields:
-                #TODO change form[field].data to form.cleaned_data[field] and see if it still works
+                data = form[field].data
                 if field == 'agent':
-                    existing_permission = existing_permission.filter(agent__pk=form[field].data)
+                    existing_permission = existing_permission.filter(agent__pk=data)
                 elif field == 'itemset':
-                    existing_permission = existing_permission.filter(itemset__pk=form[field].data)
+                    existing_permission = existing_permission.filter(itemset__pk=data)
                 elif field == 'item':
-                    existing_permission = existing_permission.filter(item__pk=form[field].data)
+                    existing_permission = existing_permission.filter(item__pk=data)
                 elif field == 'role':
-                    existing_permission = existing_permission.filter(role__pk=form[field].data)
+                    existing_permission = existing_permission.filter(role__pk=data)
                 elif field == 'ability':
-                    existing_permission = existing_permission.filter(ability=form[field].data)
+                    existing_permission = existing_permission.filter(ability=data)
                 elif field == 'ability_parameter':
-                    existing_permission = existing_permission.filter(ability_parameter=form[field].data)
+                    existing_permission = existing_permission.filter(ability_parameter=data)
             try:
                 existing_permission = existing_permission.get()
             except ObjectDoesNotExist:
+                #TODO a better error would be nice
                 return HttpResponse('crap')
             something_changed = False
             if existing_permission.trashed:
