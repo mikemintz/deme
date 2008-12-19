@@ -19,33 +19,8 @@ class SymsysAffiliate(Person):
     concentration = models.CharField(max_length=255, blank=True)
     advisor = models.CharField(max_length=255, blank=True)
 
-    p_address1 = models.CharField(max_length=255, blank=True)
-    p_address2 = models.CharField(max_length=255, blank=True)
-    p_city = models.CharField(max_length=255, blank=True)
-    p_state = models.CharField(max_length=255, blank=True)
-    p_country = models.CharField(max_length=255, blank=True)
-    p_zip = models.CharField(max_length=20, blank=True)
-    p_phone1 = models.CharField(max_length=20, blank=True)
-    p_phone2 = models.CharField(max_length=20, blank=True)
-    p_fax = models.CharField(max_length=20, blank=True)
-    p_email = models.CharField(max_length=255, blank=True)
-    p_website = models.CharField(max_length=255, blank=True)
-    p_im = models.CharField(max_length=255, blank=True)
-
     w_organization = models.CharField(max_length=255, blank=True)
     w_position = models.CharField(max_length=255, blank=True)
-    w_address1 = models.CharField(max_length=255, blank=True)
-    w_address2 = models.CharField(max_length=255, blank=True)
-    w_city = models.CharField(max_length=255, blank=True)
-    w_state = models.CharField(max_length=255, blank=True)
-    w_country = models.CharField(max_length=255, blank=True)
-    w_zip = models.CharField(max_length=20, blank=True)
-    w_phone1 = models.CharField(max_length=20, blank=True)
-    w_phone2 = models.CharField(max_length=20, blank=True)
-    w_fax = models.CharField(max_length=20, blank=True)
-    w_email = models.CharField(max_length=255, blank=True)
-    w_website = models.CharField(max_length=255, blank=True)
-    w_im = models.CharField(max_length=255, blank=True)
 
     background = models.TextField(blank=True)
     doing_now = models.TextField(blank=True)
@@ -90,10 +65,10 @@ class Advertisement(Document):
     expires_at = models.DateTimeField(blank=True, null=True)
 
 
-class TextAdvertisement(Advertisement, TextDocument):
+class TextAdvertisement(TextDocument, Advertisement):
     pass
 
 
-class HtmlAdvertisement(Advertisement, HtmlDocument):
+class HtmlAdvertisement(HtmlDocument, Advertisement):
     pass
 

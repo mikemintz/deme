@@ -343,7 +343,7 @@ class Item(models.Model):
                 smtp_connection.send_messages(messages)
 
         # Create an EditComment if we're making an edit
-        if not is_new:
+        if not is_new and not overwrite_latest_version:
             edit_comment = EditComment(commented_item=self, name='Edit')
             edit_comment.save_versioned(updater=updater)
             edit_comment_location = CommentLocation(name="Untitled CommentLocation", comment=edit_comment, commented_item_version_number=new_version.version_number, commented_item_index=None)
@@ -484,7 +484,7 @@ class CommentLocation(Item):
         unique_together = (('comment', 'commented_item_version_number'),)
 
 
-class TextComment(Comment, TextDocument):
+class TextComment(TextDocument, Comment):
     pass
 
 
@@ -585,6 +585,31 @@ class ContactMethod(Item):
 
 class EmailContactMethod(ContactMethod):
     email = models.EmailField(max_length=320)
+
+
+class PhoneContactMethod(ContactMethod):
+    phone = models.CharField(max_length=20)
+
+
+class FaxContactMethod(ContactMethod):
+    fax = models.CharField(max_length=20)
+
+
+class WebsiteContactMethod(ContactMethod):
+    url = models.CharField(max_length=255)
+
+
+class IMContactMethod(ContactMethod):
+    im = models.CharField(max_length=255)
+
+
+class AddressContactMethod(ContactMethod):
+    street1 = models.CharField(max_length=255, blank=True)
+    street2 = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=255, blank=True)
+    state = models.CharField(max_length=255, blank=True)
+    country = models.CharField(max_length=255, blank=True)
+    zip = models.CharField(max_length=20, blank=True)
 
 
 class Subscription(Item):
