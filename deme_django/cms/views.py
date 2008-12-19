@@ -740,12 +740,6 @@ class GroupViewer(ItemViewer):
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
-        #TODO deleteme, doesn't seem to be in use
-        #group_memberships = self.cur_agent.group_memberships_as_agent
-        #group_memberships = group_memberships.filter(trashed=False)
-        #group_memberships = group_memberships.filter(agent__trashed=False)
-        #group_memberships = group_memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'agent'))
-        #group_memberships = group_memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'group'))
         folio = self.item.folios_as_group.get()
         folio_viewer_class = get_viewer_class_for_viewer_name('itemset')
         folio_viewer = folio_viewer_class()
