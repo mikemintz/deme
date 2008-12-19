@@ -41,19 +41,21 @@ Ontology changes
 * Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
 * Add more automatic generated comments (like Trash, Untrash, AddToItemset, RemoveFromItemset, etc.)
 
+Unusual things to remember
+--------------------------
+* The Meta class of a model does not get propagated to the ItemVersion
+* remember to fully respect trashed=1 everywhere, like in groups, comments, etc.
+* There are cases when there is a cur_agent but no associated account (anonymous, login_as other)
+
 Code correctness/consistency/bugs
 ---------------------------------
-* remember to fully respect trashed=1 everywhere, like in groups, comments, etc.
-* make constraints (validations?) other than uniqueness work in models with revisions (are there any issues?)
 * figure out import deal on deme_django.cms and just cms
 * start using verbose_name to have nice displays of item type names
-* fyi, there may be cases where there is cur_agent but no cur_account (like anonymous, and login_as other)
 * having the default "Item" and "id" ability_parameter is kind of unelegant.
 * make "create folio" after group create be a after_save filter sort of thing, rather than viewer implemented, so subclasses of viewer do okay
 * urls should be more modular, not hard coded as much, like all the /static/media and /resource/{{item_type}}
-* decide whether to have autoescape on or off
 * add sensitive_function.alters_data = True to functions like save_versioned so templates cant call them
-* lots of html escaping to do probably (or probably turn autoescape on)
+* Turn autoescape on in templates and make everything work with that
 
 Performance
 -----------

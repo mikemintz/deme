@@ -58,7 +58,6 @@ class ItemMetaClass(ModelBase):
         version_name = "%sVersion" % name
         version_bases = tuple([x.VERSION for x in bases])
         def convert_to_version(key, value):
-            #TODO what happens to Meta?
             value = deepcopy(value)
             if isinstance(value, models.Field):
                 # We don't want to waste time indexing versions, except things specified in ItemVersion like version_number and current_item
