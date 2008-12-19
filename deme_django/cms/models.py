@@ -637,7 +637,7 @@ POSSIBLE_ABILITIES = [
 
 POSSIBLE_GLOBAL_ABILITIES = [
     ('create', 'Create'),
-    ('do_something', 'Do Something'), #TODO get rid of this (probably replace with can_login which only matters at login, not on any other pages)
+    ('do_something', 'Do Something'),
     ('do_everything', 'Do Everything'),
 ]
 
