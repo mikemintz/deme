@@ -427,7 +427,7 @@ class ItemSet(Item):
         return Item.objects.filter(trashed=False, pk__in=RecursiveItemSetMembership.objects.filter(parent=self).values('child').query)
 
 
-class Group(Agent):
+class Group(ItemSet):
     pass
 
 
@@ -494,14 +494,6 @@ class EditComment(Comment):
 
 class Relationship(Item):
     pass
-
-
-class GroupMembership(Relationship):
-    immutable_fields = Relationship.immutable_fields + ['agent', 'group']
-    agent = models.ForeignKey(Agent, related_name='group_memberships_as_agent')
-    group = models.ForeignKey(Group, related_name='group_memberships_as_group')
-    class Meta:
-        unique_together = (('agent', 'group'),)
 
 
 class ItemSetMembership(Relationship):
@@ -690,14 +682,14 @@ class AgentGlobalPermission(GlobalPermission):
         unique_together = (('agent', 'ability', 'ability_parameter'),)
 
 
-class GroupGlobalPermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['group', 'ability', 'ability_parameter']
-    group = models.ForeignKey(Group, related_name='group_global_permissions_as_group')
+class ItemSetGlobalPermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['itemset', 'ability', 'ability_parameter']
+    itemset = models.ForeignKey(ItemSet, related_name='itemset_global_permissions_as_itemset')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES)
     ability_parameter = models.CharField(max_length=255)
     is_allowed = models.BooleanField(default=True)
     class Meta:
-        unique_together = (('group', 'ability', 'ability_parameter'),)
+        unique_together = (('itemset', 'ability', 'ability_parameter'),)
 
 
 class DefaultGlobalPermission(GlobalPermission):
@@ -717,12 +709,12 @@ class AgentGlobalRolePermission(GlobalPermission):
         unique_together = (('agent', 'global_role'),)
 
 
-class GroupGlobalRolePermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['group', 'global_role']
-    group = models.ForeignKey(Group, related_name='group_global_role_permissions_as_group')
-    global_role = models.ForeignKey(GlobalRole, related_name='group_global_role_permissions_as_global_role')
+class ItemSetGlobalRolePermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['itemset', 'global_role']
+    itemset = models.ForeignKey(ItemSet, related_name='itemset_global_role_permissions_as_itemset')
+    global_role = models.ForeignKey(GlobalRole, related_name='itemset_global_role_permissions_as_global_role')
     class Meta:
-        unique_together = (('group', 'global_role'),)
+        unique_together = (('itemset', 'global_role'),)
 
 
 class DefaultGlobalRolePermission(GlobalPermission):
@@ -743,15 +735,15 @@ class AgentPermission(Permission):
         unique_together = (('agent', 'item', 'ability', 'ability_parameter'),)
 
 
-class GroupPermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['group', 'item', 'ability', 'ability_parameter']
-    group = models.ForeignKey(Group, related_name='group_permissions_as_group')
-    item = models.ForeignKey(Item, related_name='group_permissions_as_item')
+class ItemSetPermission(Permission):
+    immutable_fields = Permission.immutable_fields + ['itemset', 'item', 'ability', 'ability_parameter']
+    itemset = models.ForeignKey(ItemSet, related_name='itemset_permissions_as_itemset')
+    item = models.ForeignKey(Item, related_name='itemset_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     ability_parameter = models.CharField(max_length=255, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
-        unique_together = (('group', 'item', 'ability', 'ability_parameter'),)
+        unique_together = (('itemset', 'item', 'ability', 'ability_parameter'),)
 
 
 class DefaultPermission(Permission):
@@ -773,13 +765,13 @@ class AgentRolePermission(Permission):
         unique_together = (('agent', 'item', 'role'),)
 
 
-class GroupRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['group', 'item', 'role']
-    group = models.ForeignKey(Group, related_name='group_role_permissions_as_group')
-    item = models.ForeignKey(Item, related_name='group_role_permissions_as_item')
-    role = models.ForeignKey(Role, related_name='group_role_permissions_as_role')
+class ItemSetRolePermission(Permission):
+    immutable_fields = Permission.immutable_fields + ['itemset', 'item', 'role']
+    itemset = models.ForeignKey(ItemSet, related_name='itemset_role_permissions_as_itemset')
+    item = models.ForeignKey(Item, related_name='itemset_role_permissions_as_item')
+    role = models.ForeignKey(Role, related_name='itemset_role_permissions_as_role')
     class Meta:
-        unique_together = (('group', 'item', 'role'),)
+        unique_together = (('itemset', 'item', 'role'),)
 
 
 class DefaultRolePermission(Permission):

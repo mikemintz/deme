@@ -34,8 +34,6 @@ def icon_url(item_type, size=32):
         icon = 'apps/personal'
     elif item_type == cms.models.AuthenticationMethod:
         icon = 'apps/password'
-    elif item_type == cms.models.GroupMembership:
-        icon = 'apps/katomic'
     elif item_type == cms.models.ContactMethod:
         icon = 'apps/kontact'
     elif item_type == cms.models.CustomUrl:

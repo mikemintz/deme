@@ -310,12 +310,9 @@ The agent currently logged in is not allowed to use this application. Please log
             elif issubclass(self.item_type, cms.models.TextDocument):
                 search_filter = search_filter | Q(body__icontains=q)
             items = items.filter(search_filter)
-        # TODO filter the itemsetmembership and groupmembership by permission, check trashed
+        # TODO filter the itemsetmembership by permission, check trashed
         if isinstance(itemset, cms.models.ItemSet):
             items = items.filter(pk__in=cms.models.ItemSetMembership.objects.filter(itemset=itemset).values('item_id').query)
-        elif isinstance(itemset, cms.models.Group):
-            #TODO a little sketchy putting a group in the itemset variable. maybe we should have group subclass itemset or something similar?
-            items = items.filter(pk__in=cms.models.GroupMembership.objects.filter(group=itemset).values('agent_id').query)
         if ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent):
             listable_items = items
         else:
@@ -343,7 +340,7 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['trashed'] = trashed
         self.context['itemset'] = itemset
         # TODO filter the itemset by permission, check trashed
-        self.context['all_itemsets'] = cms.models.Item.objects.filter(Q(pk__in=cms.models.ItemSet.objects.all().values('pk').query) | Q(pk__in=cms.models.Group.objects.all().values('pk').query)).order_by('name')
+        self.context['all_itemsets'] = cms.models.ItemSet.objects.all().order_by('name')
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
@@ -590,16 +587,16 @@ The agent currently logged in is not allowed to use this application. Please log
         if not (can_do_everything or can_modify_permissions):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
         agent_permissions = self.item.agent_permissions_as_item.filter(trashed=False)
-        group_permissions = self.item.group_permissions_as_item.filter(trashed=False)
+        itemset_permissions = self.item.itemset_permissions_as_item.filter(trashed=False)
         default_permissions = self.item.default_permissions_as_item.filter(trashed=False)
         agent_role_permissions = self.item.agent_role_permissions_as_item.filter(trashed=False)
-        group_role_permissions = self.item.group_role_permissions_as_item.filter(trashed=False)
+        itemset_role_permissions = self.item.itemset_role_permissions_as_item.filter(trashed=False)
         default_role_permissions = self.item.default_role_permissions_as_item.filter(trashed=False)
         agents = cms.models.Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
-        groups = cms.models.Group.objects.filter(Q(pk__in=group_permissions.values('group__pk').query) | Q(pk__in=group_role_permissions.values('group__pk').query) | Q(pk=self.request.GET.get('group', 0))).order_by('name')
+        itemsets = cms.models.ItemSet.objects.filter(Q(pk__in=itemset_permissions.values('itemset__pk').query) | Q(pk__in=itemset_role_permissions.values('itemset__pk').query) | Q(pk=self.request.GET.get('itemset', 0))).order_by('name')
 
         def formfield_callback(f):
-            if f.name in ['agent', 'group', 'item']:
+            if f.name in ['agent', 'itemset', 'item']:
                 return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=f.rel.field_name)
             if isinstance(f, models.ForeignKey):
                 return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
@@ -608,8 +605,8 @@ The agent currently logged in is not allowed to use this application. Please log
 
         agent_permission_form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['agent', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
         agent_role_permission_form_class = forms.models.modelform_factory(cms.models.AgentRolePermission, fields=['agent', 'item', 'role'], formfield_callback=formfield_callback)
-        group_permission_form_class = forms.models.modelform_factory(cms.models.GroupPermission, fields=['group', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
-        group_role_permission_form_class = forms.models.modelform_factory(cms.models.GroupRolePermission, fields=['group', 'item', 'role'], formfield_callback=formfield_callback)
+        itemset_permission_form_class = forms.models.modelform_factory(cms.models.ItemSetPermission, fields=['itemset', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        itemset_role_permission_form_class = forms.models.modelform_factory(cms.models.ItemSetRolePermission, fields=['itemset', 'item', 'role'], formfield_callback=formfield_callback)
         default_permission_form_class = forms.models.modelform_factory(cms.models.DefaultPermission, fields=['item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
         default_role_permission_form_class = forms.models.modelform_factory(cms.models.DefaultRolePermission, fields=['item', 'role'], formfield_callback=formfield_callback)
 
@@ -622,15 +619,15 @@ The agent currently logged in is not allowed to use this application. Please log
             agent_datum['permission_form'] = agent_permission_form_class(prefix="agent%s" % agent.pk, initial={'item': self.item.pk, 'agent': agent.pk})
             agent_datum['role_permission_form'] = agent_role_permission_form_class(prefix="roleagent%s" % agent.pk, initial={'item': self.item.pk, 'agent': agent.pk})
             agent_data.append(agent_datum)
-        group_data = []
-        for group in groups:
-            group_datum = {}
-            group_datum['group'] = group
-            group_datum['permissions'] = group_permissions.filter(group=group)
-            group_datum['role_permissions'] = group_role_permissions.filter(group=group)
-            group_datum['permission_form'] = group_permission_form_class(prefix="group%s" % group.pk, initial={'item': self.item.pk, 'group': group.pk})
-            group_datum['role_permission_form'] = group_role_permission_form_class(prefix="rolegroup%s" % group.pk, initial={'item': self.item.pk, 'group': group.pk})
-            group_data.append(group_datum)
+        itemset_data = []
+        for itemset in itemsets:
+            itemset_datum = {}
+            itemset_datum['itemset'] = itemset
+            itemset_datum['permissions'] = itemset_permissions.filter(itemset=itemset)
+            itemset_datum['role_permissions'] = itemset_role_permissions.filter(itemset=itemset)
+            itemset_datum['permission_form'] = itemset_permission_form_class(prefix="itemset%s" % itemset.pk, initial={'item': self.item.pk, 'itemset': itemset.pk})
+            itemset_datum['role_permission_form'] = itemset_role_permission_form_class(prefix="roleitemset%s" % itemset.pk, initial={'item': self.item.pk, 'itemset': itemset.pk})
+            itemset_data.append(itemset_datum)
         default_data = {}
         default_data['permissions'] = default_permissions
         default_data['role_permissions'] = default_role_permissions
@@ -638,14 +635,14 @@ The agent currently logged in is not allowed to use this application. Please log
         default_data['role_permission_form'] = default_role_permission_form_class(prefix="roledefault", initial={'item': self.item.pk})
 
         new_agent_form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
-        new_group_form_class = forms.models.modelform_factory(cms.models.GroupPermission, fields=['group'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_itemset_form_class = forms.models.modelform_factory(cms.models.ItemSetPermission, fields=['itemset'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
 
         template = loader.get_template('item/permissions.html')
         self.context['agent_data'] = agent_data
-        self.context['group_data'] = group_data
+        self.context['itemset_data'] = itemset_data
         self.context['default_data'] = default_data
         self.context['new_agent_form'] = new_agent_form_class()
-        self.context['new_group_form'] = new_group_form_class()
+        self.context['new_itemset_form'] = new_itemset_form_class()
         return HttpResponse(template.render(self.context))
 
     def entry_permissioncreate(self):
@@ -655,7 +652,7 @@ The agent currently logged in is not allowed to use this application. Please log
         if not (can_do_everything or can_modify_permissions):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
         def formfield_callback(f):
-            if f.name in ['agent', 'group', 'item']:
+            if f.name in ['agent', 'itemset', 'item']:
                 return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=f.rel.field_name)
             if isinstance(f, models.ForeignKey):
                 return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
@@ -666,10 +663,10 @@ The agent currently logged in is not allowed to use this application. Please log
             form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['agent', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
         elif form_type == 'agentrolepermission':
             form_class = forms.models.modelform_factory(cms.models.AgentRolePermission, fields=['agent', 'item', 'role'], formfield_callback=formfield_callback)
-        elif form_type == 'grouppermission':
-            form_class = forms.models.modelform_factory(cms.models.GroupPermission, fields=['group', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
-        elif form_type == 'grouprolepermission':
-            form_class = forms.models.modelform_factory(cms.models.GroupRolePermission, fields=['group', 'item', 'role'], formfield_callback=formfield_callback)
+        elif form_type == 'itemsetpermission':
+            form_class = forms.models.modelform_factory(cms.models.ItemSetPermission, fields=['itemset', 'item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        elif form_type == 'itemsetrolepermission':
+            form_class = forms.models.modelform_factory(cms.models.ItemSetRolePermission, fields=['itemset', 'item', 'role'], formfield_callback=formfield_callback)
         elif form_type == 'defaultpermission':
             form_class = forms.models.modelform_factory(cms.models.DefaultPermission, fields=['item', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
         elif form_type == 'defaultrolepermission':
@@ -692,8 +689,8 @@ The agent currently logged in is not allowed to use this application. Please log
                 #TODO change form[field].data to form.cleaned_data[field] and see if it still works
                 if field == 'agent':
                     existing_permission = existing_permission.filter(agent__pk=form[field].data)
-                elif field == 'group':
-                    existing_permission = existing_permission.filter(group__pk=form[field].data)
+                elif field == 'itemset':
+                    existing_permission = existing_permission.filter(itemset__pk=form[field].data)
                 elif field == 'item':
                     existing_permission = existing_permission.filter(item__pk=form[field].data)
                 elif field == 'role':
@@ -743,11 +740,12 @@ class GroupViewer(ItemViewer):
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
-        group_memberships = self.cur_agent.group_memberships_as_agent
-        group_memberships = group_memberships.filter(trashed=False)
-        group_memberships = group_memberships.filter(agent__trashed=False)
-        group_memberships = group_memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'agent'))
-        group_memberships = group_memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'group'))
+        #TODO deleteme, doesn't seem to be in use
+        #group_memberships = self.cur_agent.group_memberships_as_agent
+        #group_memberships = group_memberships.filter(trashed=False)
+        #group_memberships = group_memberships.filter(agent__trashed=False)
+        #group_memberships = group_memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'agent'))
+        #group_memberships = group_memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'group'))
         folio = self.item.folios_as_group.get()
         folio_viewer_class = get_viewer_class_for_viewer_name('itemset')
         folio_viewer = folio_viewer_class()
