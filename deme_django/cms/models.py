@@ -289,8 +289,9 @@ class Item(models.Model):
         if overwrite_latest_version and not is_new:
             new_version = self.__class__.VERSION.objects.get(current_item=self, version_number=latest_version_number)
         else:
-            new_version = self.__class__.VERSION(version_number=latest_version_number+1)
+            new_version = self.__class__.VERSION()
             new_version.current_item_id = self.pk
+            new_version.version_number = latest_version_number + 1
         for key, val in fields.iteritems():
             setattr(new_version, key, val)
         new_version.save()

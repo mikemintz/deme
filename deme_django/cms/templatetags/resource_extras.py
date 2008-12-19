@@ -3,6 +3,7 @@ from django.db.models import Q
 import cms.models
 from cms import permission_functions
 from django.utils.http import urlquote
+from django.utils.html import escape
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 
@@ -315,7 +316,7 @@ class ItemHeader(template.Node):
         for inherited_item_type in item_type_inheritance:
             result.append("""<a href="/resource/%s">%ss</a> &raquo;""" % (inherited_item_type.lower(), inherited_item_type))
         if agentcan_helper(context, 'view', 'name', item):
-            result.append('<a href="/resource/%s/%s">%s</a>' % (item.item_type.lower(), item.pk, item.name))
+            result.append('<a href="/resource/%s/%s">%s</a>' % (item.item_type.lower(), item.pk, escape(item.name)))
         else:
             result.append('<a href="/resource/%s/%s">[PERMISSION DENIED]</a>' % (item.item_type.lower(), item.pk))
         result.append("""&raquo; """)
@@ -336,14 +337,14 @@ class ItemHeader(template.Node):
             updated_at_text = '[PERMISSION DENIED]'
         if agentcan_helper(context, 'view', 'creator', item):
             if agentcan_helper(context, 'view', 'name', item.creator):
-                creator_text = """<a href="%s">%s</a>""" % (show_resource_url(item.creator), item.creator.name)
+                creator_text = """<a href="%s">%s</a>""" % (show_resource_url(item.creator), escape(item.creator.name))
             else:
                 creator_text = """<a href="%s">%s</a>""" % (show_resource_url(item.creator), '[PERMISSION DENIED]')
         else:
             creator_text = '[PERMISSION DENIED]'
         if agentcan_helper(context, 'view', 'updater', item):
             if agentcan_helper(context, 'view', 'name', itemversion.updater):
-                updater_text = """<a href="%s">%s</a>""" % (show_resource_url(itemversion.updater), itemversion.updater.name)
+                updater_text = """<a href="%s">%s</a>""" % (show_resource_url(itemversion.updater), escape(itemversion.updater.name))
             else:
                 updater_text = """<a href="%s">%s</a>""" % (show_resource_url(itemversion.updater), '[PERMISSION DENIED]')
         else:
@@ -361,7 +362,7 @@ class ItemHeader(template.Node):
 
         result.append('<div style="font-size: 8pt; color: #aaa; margin-bottom: 10px;">')
         if agentcan_helper(context, 'view', 'description', item):
-            result.append('Description: %s' % itemversion.description)
+            result.append('Description: %s' % escape(itemversion.description))
         else:
             result.append('Description: [PERMISSION DENIED]')
         result.append('</div>')
@@ -375,11 +376,12 @@ class ItemHeader(template.Node):
 def display_body_with_inline_comments(itemversion):
     #TODO permissions? you should be able to see any CommentLocation, but maybe not the id of the comment it refers to
     #TODO don't insert these in bad places, like inside a tag <img <a href="....> />
+    #TODO when you insert a comment in the middle of a tag like <b>hi <COMMENT></b> then it gets the style, this is bad
     comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=itemversion.current_item, commented_item_version_number=itemversion.version_number, commented_item_index__isnull=False, trashed=False, comment__trashed=False).order_by('-commented_item_index')
     body_as_list = list(itemversion.body)
     for comment_location in comment_locations:
         i = comment_location.commented_item_index
-        body_as_list[i:i] = '<a href="/resource/comment/%s" class="commentref">%s</a>' % (comment_location.comment.pk, comment_location.comment.name)
+        body_as_list[i:i] = '<a href="/resource/comment/%s" class="commentref">%s</a>' % (comment_location.comment.pk, escape(comment_location.comment.name))
     return ''.join(body_as_list)
 
 
@@ -416,19 +418,19 @@ class CommentBox(template.Node):
                 result.append("""<div class="comment_header">""")
                 result.append("""<div style="float: right;"><a href="/resource/textcomment/new?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (comment.pk, comment.versions.latest().version_number, urlquote(full_path)))
                 if agentcan_helper(context, 'view', 'name', comment):
-                    result.append("""<a href="/resource/%s/%s">%s</a>""" % (comment.item_type.lower(), comment.pk, comment.name))
+                    result.append("""<a href="/resource/%s/%s">%s</a>""" % (comment.item_type.lower(), comment.pk, escape(comment.name)))
                 else:
                     result.append('[PERMISSION DENIED]')
                 if agentcan_helper(context, 'view', 'creator', comment):
                     if agentcan_helper(context, 'view', 'name', comment.creator):
-                        result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), comment.creator.name))
+                        result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), escape(comment.creator.name)))
                     else:
                         result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), 'PERMISSION DENIED'))
                 else:
                     result.append('by [PERMISSION DENIED]')
                 if item.pk != comment.commented_item.pk and nesting_level == 0:
                     if agentcan_helper(context, 'view', 'name', comment.commented_item):
-                        result.append('for <a href="%s">%s</a>' % (show_resource_url(comment.commented_item), comment.commented_item.name))
+                        result.append('for <a href="%s">%s</a>' % (show_resource_url(comment.commented_item), escape(comment.commented_item.name)))
                     else:
                         result.append('for <a href="%s">[PERMISSION DENIED]</a>' % (show_resource_url(comment.commented_item)))
                 if item.pk == comment.commented_item.pk and not comment_location:
@@ -441,14 +443,13 @@ class CommentBox(template.Node):
                 else:
                     result.append("""<div class="comment_description">""")
                     if agentcan_helper(context, 'view', 'description', comment):
-                        result.append(comment.description)
+                        result.append(escape(comment.description))
                     else:
                         result.append('[PERMISSION DENIED]')
                     result.append("</div>")
                     result.append("""<div class="comment_body">""")
                     if isinstance(comment, cms.models.TextComment):
                         if agentcan_helper(context, 'view', 'body', comment):
-                            from django.utils.html import escape
                             result.append(escape(comment.body).replace('\n', '<br />'))
                         else:
                             result.append('[PERMISSION DENIED]')

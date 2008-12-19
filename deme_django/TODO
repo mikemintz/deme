@@ -54,7 +54,6 @@ Code correctness/consistency/bugs
 * having the default "Item" and "id" ability_parameter is kind of unelegant.
 * make "create folio" after group create be a after_save filter sort of thing, rather than viewer implemented, so subclasses of viewer do okay
 * urls should be more modular, not hard coded as much, like all the /static/media and /resource/{{item_type}}
-* Turn autoescape on in templates and make everything work with that
 
 Performance
 -----------
