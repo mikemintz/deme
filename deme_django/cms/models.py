@@ -88,7 +88,7 @@ class ItemVersion(models.Model):
     current_item = models.ForeignKey('Item', related_name='versions', editable=False)
     version_number = models.IntegerField(default=1, editable=False)
     item_type = models.CharField(max_length=255, default='Item', editable=False)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, default="Untitled")
     description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='item_versions_as_updater')
     updated_at = models.DateTimeField(editable=False)
@@ -176,7 +176,7 @@ class Item(models.Model):
     __metaclass__ = ItemMetaClass
     immutable_fields = []
     item_type = models.CharField(max_length=255, default='Item', editable=False)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, default="Untitled")
     description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='items_as_updater', editable=False)
     updated_at = models.DateTimeField(editable=False)
