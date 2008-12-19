@@ -83,9 +83,6 @@ class ItemMetaClass(ModelBase):
             version_attrs['get_name'] = attrs['get_name']
         version_result = super(ItemMetaClass, cls).__new__(cls, version_name, version_bases, version_attrs)
         result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
-        #exec('global %s;%s = version_result'%(version_name, version_name))
-        #this_module = sys.modules[__name__]
-        #setattr(this_module, version_name, version_result)
         result.VERSION = version_result
         version_result.NOTVERSION = result
         return result
