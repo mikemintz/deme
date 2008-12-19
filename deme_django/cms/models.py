@@ -221,7 +221,7 @@ class Item(models.Model):
         self.versions.all().update(trashed=False)
 
     @transaction.commit_on_success
-    def save_versioned(self, updater=None, first_agent=False, create_permissions=True, created_at=None, updated_at=None):
+    def save_versioned(self, updater=None, first_agent=False, create_permissions=True, created_at=None, updated_at=None, overwrite_latest_version=False):
         save_time = datetime.datetime.now()
         is_new = not self.pk
 
@@ -272,7 +272,6 @@ class Item(models.Model):
         self.save()
 
         # Create the new item version
-        latest_version_number = 0 if is_new else ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
         fields = {}
         for field in self._meta.fields:
             if field.primary_key:
@@ -283,7 +282,11 @@ class Item(models.Model):
                 fields[field.name] = getattr(self, field.name)
             except ObjectDoesNotExist:
                 fields[field.name] = None
-        new_version = self.__class__.VERSION(current_item_id=self.pk, version_number=latest_version_number+1)
+        latest_version_number = 0 if is_new else ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
+        if overwrite_latest_version and not is_new:
+            new_version = self.__class__.VERSION.objects.get(current_item_id=self.pk, version_number=latest_version_number)
+        else:
+            new_version = self.__class__.VERSION(current_item_id=self.pk, version_number=latest_version_number+1)
         for key, val in fields.iteritems():
             setattr(new_version, key, val)
         new_version.save()
@@ -395,6 +398,7 @@ def get_hexdigest(algorithm, salt, raw_password):
     raise ValueError("Got unknown password algorithm type in password.")
 
 class PasswordAccount(Account):
+    username = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=128)
     password_question = models.CharField(max_length=255, blank=True)
     password_answer = models.CharField(max_length=255, blank=True)

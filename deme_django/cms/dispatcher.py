@@ -112,23 +112,18 @@ def login(request, *args, **kwargs):
         redirect_url = request.GET['redirect']
         login_type = request.POST['login_type']
         if login_type == 'password':
-            email = request.POST['email']
+            username = request.POST['username']
             password = request.POST['password']
             try:
-                person = cms.models.Person.objects.get(email=email)
+                password_account = cms.models.PasswordAccount.objects.get(username=username)
             except ObjectDoesNotExist:
-                return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Email", "No person has this email")
-            new_account = None
-            for password_account in cms.models.PasswordAccount.objects.filter(agent=person).all():
-                if password_account.check_password(password):
-                    new_account = password_account
-                    break
-            if new_account:
-                new_agent = new_account.agent
+                return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Username", "No person has this username")
+            if password_account.check_password(password):
+                new_agent = password_account.agent
                 request.session['cur_agent_id'] = new_agent.pk
                 return HttpResponseRedirect(redirect_url)
             else:
-                return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Password", "No account for that person has that password")
+                return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Password", "The password you typed was not correct for this username")
         elif login_type == 'login_as':
             for key in request.POST.iterkeys():
                 if key.startswith('login_as_'):

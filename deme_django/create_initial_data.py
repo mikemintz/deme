@@ -108,19 +108,19 @@ default_site.save_versioned(updater=admin)
 
 mike_person = Person(first_name="Mike", last_name="Mintz", email="mike@example.com", name="Mike Mintz")
 mike_person.save_versioned(updater=admin)
-mike_account = PasswordAccount(name="Mike's Password Account", agent=mike_person)
+mike_account = PasswordAccount(name="Mike's Password Account", username="mike", agent=mike_person)
 mike_account.set_password('')
 mike_account.save_versioned(updater=admin)
 
 todd_person = Person(first_name="Todd", last_name="Davies", email="todd@example.com", name="Todd Davies")
 todd_person.save_versioned(updater=admin)
-todd_account = PasswordAccount(name="Todd's Password Account", agent=todd_person)
+todd_account = PasswordAccount(name="Todd's Password Account", username="todd", agent=todd_person)
 todd_account.set_password('')
 todd_account.save_versioned(updater=admin)
 
 reid_person = Person(first_name="Reid", last_name="Chandler", email="reid@example.com", name="Reid Chandler")
 reid_person.save_versioned(updater=admin)
-reid_account = PasswordAccount(name="Reid's Password Account", agent=reid_person)
+reid_account = PasswordAccount(name="Reid's Password Account", username="reid", agent=reid_person)
 reid_account.set_password('')
 reid_account.save_versioned(updater=admin)
 
