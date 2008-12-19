@@ -4,11 +4,6 @@
 {% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
-<script type="text/javascript" src="/static/javascripts/prototype.js"></script>
-<script type="text/javascript" src="/static/javascripts/class_improved.js"></script>
-<script type="text/javascript" src="/static/javascripts/ref.js"></script>
-<script type="text/javascript" src="/static/javascripts/ref_deme.js"></script>
-
 {% itemheader %}
 
 <div id="docbody" style="padding: 10px; border: 3px solid #000; background: #f8f8f8;">
@@ -18,11 +13,6 @@
     [PERMISSION DENIED]
     {% endifagentcan %}
 </div>
-<script type="text/javascript">
-    //ref_bless('docbody', '123');
-    //gRegMgr.hl('123');
-</script>
-<!--<button onclick="gRegMgr.transmit();">Transmit Highlights</button>-->
 
 {% commentbox %}
 
