@@ -203,19 +203,22 @@ class Item(models.Model):
 
     @transaction.commit_on_success
     def trash(self):
-        #TODO what happens when you trash/untrash an entire itemset? how do we modify the recursive table?
-        if isinstance(self, ItemSetMembership):
-            if not self.trashed:
+        if not self.trashed:
+            if isinstance(self, ItemSetMembership):
                 RecursiveItemSetMembership.recursive_remove(self.itemset, self.item)
+            if isinstance(self, ItemSet):
+                RecursiveItemSetMembership.recursive_remove_itemset(self)
         self.trashed = True
         self.save()
         self.versions.all().update(trashed=True)
 
     @transaction.commit_on_success
     def untrash(self):
-        if isinstance(self, ItemSetMembership):
-            if self.trashed:
+        if self.trashed:
+            if isinstance(self, ItemSetMembership):
                 RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
+            if isinstance(self, ItemSet):
+                RecursiveItemSetMembership.recursive_add_itemset(self)
         self.trashed = False
         self.save()
         self.versions.all().update(trashed=False)
@@ -533,10 +536,18 @@ class RecursiveItemSetMembership(models.Model):
             descendant_select = ','.join([str(x.pk) for x in descendants])
             cursor.execute("DELETE FROM cms_recursiveitemsetmembership WHERE parent_id IN (%s) AND child_id IN (%s)" % (ancestor_select, descendant_select))
             transaction.commit_unless_managed()
-            # now add back any real connections between ancestors and descendants
-            memberships = ItemSetMembership.objects.filter(itemset__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(itemset=parent, item=child)
+            # now add back any real connections between ancestors and descendants that aren't trashed
+            memberships = ItemSetMembership.objects.filter(trashed=False, itemset__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(itemset=parent, item=child)
             for membership in memberships:
                 RecursiveItemSetMembership.recursive_add(membership.itemset, membership.item)
+    @classmethod
+    def recursive_add_itemset(cls, itemset):
+        memberships = ItemSetMembership.objects.filter(Q(itemset=itemset) | Q(item=itemset), trashed=False)
+        for membership in memberships:
+            RecursiveItemSetMembership.recursive_add(membership.itemset, membership.item)
+    @classmethod
+    def recursive_remove_itemset(cls, itemset):
+        RecursiveItemSetMembership.recursive_remove(itemset, itemset)
 
 
 class RecursiveCommentMembership(models.Model):
