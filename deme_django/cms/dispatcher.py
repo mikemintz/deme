@@ -188,7 +188,7 @@ def alias(request, *args, **kwargs):
     item = custom_url.aliased_item
     kwargs = {}
     kwargs['viewer'] = custom_url.viewer
-    kwargs['format'] = 'html'
+    kwargs['format'] = custom_url.format
     if item:
         kwargs['noun'] = str(item.pk)
         kwargs['collection_action'] = None

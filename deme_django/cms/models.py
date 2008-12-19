@@ -800,7 +800,7 @@ class ViewerRequest(Item):
     viewer = models.CharField(max_length=255)
     action = models.CharField(max_length=255)
     query_string = models.CharField(max_length=1024, null=True, blank=True)
-    #TODO add kwargs['format']
+    format = models.CharField(max_length=255, default='html')
 
 
 class Site(ViewerRequest):
