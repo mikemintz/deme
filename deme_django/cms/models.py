@@ -79,8 +79,6 @@ class ItemMetaClass(ModelBase):
                 return True
             return False
         version_attrs = dict([convert_to_version(k,v) for k,v in attrs.iteritems() if is_valid_in_version(k,v)])
-        if 'get_name' in attrs:
-            version_attrs['get_name'] = attrs['get_name']
         version_result = super(ItemMetaClass, cls).__new__(cls, version_name, version_bases, version_attrs)
         result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
         result.VERSION = version_result
@@ -105,10 +103,7 @@ class ItemVersion(models.Model):
         get_latest_by = "version_number"
 
     def __unicode__(self):
-        return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.get_name())
-
-    def get_name(self):
-        return self.name
+        return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.name)
 
     def downcast(self):
         #TODO make more efficient
@@ -190,10 +185,7 @@ class Item(models.Model):
     trashed = models.BooleanField(default=False, editable=False, db_index=True)
 
     def __unicode__(self):
-        return u'%s[%s] "%s"' % (self.item_type, self.pk, self.get_name())
-
-    def get_name(self):
-        return self.name
+        return u'%s[%s] "%s"' % (self.item_type, self.pk, self.name)
 
     def downcast(self):
         #TODO make more efficient
