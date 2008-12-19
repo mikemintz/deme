@@ -4,6 +4,7 @@ import cms.models
 from cms import permission_functions
 from django.utils.http import urlquote
 from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 
 register = template.Library()
 
@@ -165,15 +166,24 @@ class IfAgentCan(template.Node):
         try:
             item = self.item.resolve(context)
         except template.VariableDoesNotExist:
-            return 'invalid 232593713' # TODO what should i do here?
+            if settings.DEBUG:
+                return "[Couldn't resolve item variable]"
+            else:
+                return '' # Fail silently for invalid variables.
         try:
             ability = self.ability.resolve(context)
         except template.VariableDoesNotExist:
-            return 'invalid 232593714' # TODO what should i do here?
+            if settings.DEBUG:
+                return "[Couldn't resolve ability variable]"
+            else:
+                return '' # Fail silently for invalid variables.
         try:
             ability_parameter = self.ability_parameter.resolve(context)
         except template.VariableDoesNotExist:
-            return 'invalid 232593715' # TODO what should i do here?
+            if settings.DEBUG:
+                return "[Couldn't resolve ability_parameter variable]"
+            else:
+                return '' # Fail silently for invalid variables.
         if agentcan_helper(context, ability, ability_parameter, item):
             return self.nodelist_true.render(context)
         else:
@@ -208,11 +218,17 @@ class IfAgentCanGlobal(template.Node):
         try:
             ability = self.ability.resolve(context)
         except template.VariableDoesNotExist:
-            return 'invalid 232593738' # TODO what should i do here?
+            if settings.DEBUG:
+                return "[Couldn't resolve ability variable]"
+            else:
+                return '' # Fail silently for invalid variables.
         try:
             ability_parameter = self.ability_parameter.resolve(context)
         except template.VariableDoesNotExist:
-            return 'invalid 232593752' # TODO what should i do here?
+            if settings.DEBUG:
+                return "[Couldn't resolve ability_parameter variable]"
+            else:
+                return '' # Fail silently for invalid variables.
         if agentcan_global_helper(context, ability, ability_parameter):
             return self.nodelist_true.render(context)
         else:
