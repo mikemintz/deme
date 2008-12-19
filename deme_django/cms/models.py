@@ -284,7 +284,7 @@ class Item(models.Model):
                 fields[field.name] = None
         latest_version_number = 0 if is_new else ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
         if overwrite_latest_version and not is_new:
-            new_version = self.__class__.VERSION.objects.get(current_item_id=self.pk, version_number=latest_version_number)
+            new_version = self.__class__.VERSION.objects.get(current_item=self, version_number=latest_version_number)
         else:
             new_version = self.__class__.VERSION(version_number=latest_version_number+1)
             new_version.current_item_id = self.pk
@@ -359,9 +359,9 @@ class AnonymousAgent(Agent):
     pass
 
 
-class Account(Item):
+class AuthenticationMethod(Item):
     immutable_fields = Item.immutable_fields + ['agent']
-    agent = models.ForeignKey(Agent, related_name='accounts_as_agent')
+    agent = models.ForeignKey(Agent, related_name='authenticationmethods_as_agent')
 
 
 # ported to python from http://packages.debian.org/lenny/libcrypt-mysql-perl
@@ -397,7 +397,7 @@ def get_hexdigest(algorithm, salt, raw_password):
         return mysql_pre41_password(raw_password)
     raise ValueError("Got unknown password algorithm type in password.")
 
-class PasswordAccount(Account):
+class PasswordAuthenticationMethod(AuthenticationMethod):
     username = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=128)
     password_question = models.CharField(max_length=255, blank=True)
@@ -617,7 +617,7 @@ POSSIBLE_GLOBAL_ABILITIES = [
 ]
 
 #TODO somehow limit ability_parameter
-#TODO make role name unique maybe, or at least have a way of finding the ONE "Account Creator" role
+#TODO make role name unique maybe, or at least have a way of finding the ONE "AuthenticationMethod Creator" role
 
 class GlobalRole(Item):
     pass

@@ -13,11 +13,3 @@ class SymsysAffiliateViewer(ItemViewer):
         template = loader.get_template('symsysaffiliate/show.html')
         return HttpResponse(template.render(self.context))
 
-
-class SuperViewer(ItemViewer):
-    item_type = cms.models.Account
-    viewer_name = 'blarg'
-
-    def collection_list(self):
-        return HttpResponse('ka BLAM!')
-

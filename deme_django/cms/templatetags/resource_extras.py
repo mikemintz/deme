@@ -30,10 +30,10 @@ def icon_url(item_type, size=32):
         return icon_url(type(item_type), size)
     elif issubclass(item_type, cms.models.Item.VERSION):
         return icon_url(item_type.NOTVERSION, size)
-    elif item_type == cms.models.Account:
-        icon = 'apps/password'
     elif item_type == cms.models.Agent:
         icon = 'apps/personal'
+    elif item_type == cms.models.AuthenticationMethod:
+        icon = 'apps/password'
     elif item_type == cms.models.GroupMembership:
         icon = 'apps/katomic'
     elif item_type == cms.models.ContactMethod:

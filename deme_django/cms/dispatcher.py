@@ -50,7 +50,7 @@ def get_logged_in_agent(request):
         try:
             cur_agent = cms.models.AnonymousAgent.objects.all()[0:1].get()
         except ObjectDoesNotExist:
-            raise Exception("You must create an anonymous account")
+            raise Exception("You must create an anonymous agent")
     cms.models.Agent.objects.filter(pk=cur_agent.pk).update(last_online_at=datetime.datetime.now())
     return cur_agent
 
@@ -115,11 +115,11 @@ def login(request, *args, **kwargs):
             username = request.POST['username']
             password = request.POST['password']
             try:
-                password_account = cms.models.PasswordAccount.objects.get(username=username)
+                password_authentication_method = cms.models.PasswordAuthenticationMethod.objects.get(username=username)
             except ObjectDoesNotExist:
                 return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Username", "No person has this username")
-            if password_account.check_password(password):
-                new_agent = password_account.agent
+            if password_authentication_method.check_password(password):
+                new_agent = password_authentication_method.agent
                 request.session['cur_agent_id'] = new_agent.pk
                 return HttpResponseRedirect(redirect_url)
             else:
