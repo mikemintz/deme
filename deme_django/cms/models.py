@@ -47,6 +47,9 @@ class IsDefaultField(models.NullBooleanField):
 class ItemMetaClass(ModelBase):
     def __new__(cls, name, bases, attrs):
         if name in ['Item', 'ItemVersion']:
+            # No point in indexing updater in versions
+            if name == 'ItemVersion':
+                attrs['updater'].db_index = False
             result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
             if name == 'Item':
                 result.VERSION = eval('ItemVersion')
@@ -55,14 +58,19 @@ class ItemMetaClass(ModelBase):
         version_name = "%sVersion" % name
         version_bases = tuple([x.VERSION for x in bases])
         def convert_to_version(key, value):
-            #TODO do we need to remove uniqueness of related_field?
-            #TODO do we need to deepcopy the key?
-            #TODO do we preserve the db_index? should we?
+            #TODO what happens to Meta?
             value = deepcopy(value)
             if isinstance(value, models.Field):
+                # We don't want to waste time indexing versions, except things specified in ItemVersion like version_number and current_item
+                value.db_index = False
                 if value.rel and value.rel.related_name:
                     value.rel.related_name = 'version_' + value.rel.related_name
                 value._unique = False
+            elif key == '__module__':
+                # Just keep it the same
+                pass
+            else:
+                raise Exception("wtf119283913: %s -> %s" % (key, value))
             return key, value
         def is_valid_in_version(key, value):
             if key == '__module__':
@@ -86,13 +94,13 @@ class ItemMetaClass(ModelBase):
 class ItemVersion(models.Model):
     __metaclass__ = ItemMetaClass
     current_item = models.ForeignKey('Item', related_name='versions', editable=False)
-    version_number = models.IntegerField(default=1, editable=False)
+    version_number = models.IntegerField(default=1, editable=False, db_index=True)
     item_type = models.CharField(max_length=255, default='Item', editable=False)
     name = models.CharField(max_length=255, default="Untitled")
     description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='item_versions_as_updater')
     updated_at = models.DateTimeField(editable=False)
-    trashed = models.BooleanField(default=False, editable=False, db_index=True)
+    trashed = models.BooleanField(default=False, editable=False)
 
     class Meta:
         unique_together = (('current_item', 'version_number'),)
