@@ -339,8 +339,7 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['list_end_i'] = min(offset + limit, n_listable_items)
         self.context['trashed'] = trashed
         self.context['itemset'] = itemset
-        # TODO filter the itemset by permission, check trashed
-        self.context['all_itemsets'] = cms.models.ItemSet.objects.all().order_by('name')
+        self.context['all_itemsets'] = cms.models.ItemSet.objects.filter(trashed=False).filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'name')).order_by('name')
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
