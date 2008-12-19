@@ -310,9 +310,9 @@ The agent currently logged in is not allowed to use this application. Please log
             elif issubclass(self.item_type, cms.models.TextDocument):
                 search_filter = search_filter | Q(body__icontains=q)
             items = items.filter(search_filter)
-        # TODO filter the itemsetmembership by permission, check trashed
+        # TODO filter the itemsetmembership by permission (hard!!!)
         if isinstance(itemset, cms.models.ItemSet):
-            items = items.filter(pk__in=cms.models.ItemSetMembership.objects.filter(itemset=itemset).values('item_id').query)
+            items = items.filter(pk__in=itemset.all_contained_itemset_members().values('pk').query)
         if ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent):
             listable_items = items
         else:
