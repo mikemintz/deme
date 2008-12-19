@@ -83,7 +83,7 @@ if len(sys.argv) < 2 or sys.argv[1] != 'test':
 ################################################################################
 
 git_log = subprocess.Popen(["git", "log"], stdout=subprocess.PIPE).communicate()[0]
-git_commit = re.search(r'commit (.+)', git_log).group(1)
+git_commit = re.search(r'commit (.+)\nAuthor:', git_log).group(1)
 git_date = re.search(r'Date:\s*(.*) (-|\+)\d+', git_log).group(1)
 formatted_git_date = time.strftime("%Y-%m-%d", time.strptime(git_date, "%a %b %d %H:%M:%S %Y"))
 home_page = DjangoTemplateDocument(name='Deme Home Page', body="""
