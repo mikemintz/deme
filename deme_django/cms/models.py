@@ -286,7 +286,8 @@ class Item(models.Model):
         if overwrite_latest_version and not is_new:
             new_version = self.__class__.VERSION.objects.get(current_item_id=self.pk, version_number=latest_version_number)
         else:
-            new_version = self.__class__.VERSION(current_item_id=self.pk, version_number=latest_version_number+1)
+            new_version = self.__class__.VERSION(version_number=latest_version_number+1)
+            new_version.current_item_id = self.pk
         for key, val in fields.iteritems():
             setattr(new_version, key, val)
         new_version.save()
@@ -321,9 +322,8 @@ class Item(models.Model):
                 comment_type_q = Q(pk__isnull=False)
             direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
             deep_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items_and_itemsets().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
-            subscribed_persons = Person.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('subscriber').query) | Q(pk__in=deep_subscriptions.values('subscriber').query))
-            recipient_list = [x for x in subscribed_persons if x.email]
-            if recipient_list:
+            subscribed_email_contact_methods = EmailContactMethod.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('contact_method').query) | Q(pk__in=deep_subscriptions.values('contact_method').query))
+            if subscribed_email_contact_methods:
                 from django.core.mail import SMTPConnection, EmailMessage
                 from email.utils import formataddr
                 subject = '[%s] %s' % (self.commented_item.name, self.name)
@@ -338,7 +338,7 @@ class Item(models.Model):
                     from_email_address = 'noreply@deme.stanford.edu'
                 from_email = formataddr((sender_agent.name, from_email_address))
                 headers = {'Reply-To': '%s@deme.stanford.edu' % self.pk}
-                messages = [EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((rcpt.name, rcpt.email))], headers=headers) for rcpt in recipient_list]
+                messages = [EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((rcpt.agent.name, rcpt.email))], headers=headers) for rcpt in subscribed_email_contact_methods]
                 smtp_connection = SMTPConnection()
                 smtp_connection.send_messages(messages)
 
@@ -420,7 +420,6 @@ class Person(Agent):
     middle_names = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255)
     suffix = models.CharField(max_length=255, blank=True)
-    email = models.EmailField(max_length=320, unique=True, null=True, blank=True)
 
 
 class ItemSet(Item):
@@ -580,15 +579,23 @@ class RecursiveCommentMembership(models.Model):
             # nothing to add back, since comments form a tree structure
 
 
+class ContactMethod(Item):
+    agent = models.ForeignKey(Agent, related_name='contactmethods_as_agent')
+
+
+class EmailContactMethod(ContactMethod):
+    email = models.EmailField(max_length=320)
+
+
 class Subscription(Item):
     immutable_fields = Item.immutable_fields + ['subscriber', 'item']
-    subscriber = models.ForeignKey(Person, related_name='subscriptions_as_person')
+    contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions_as_contact_method')
     item = models.ForeignKey(Item, related_name='subscriptions_as_item')
     deep = models.BooleanField(default=False)
     notify_text = models.BooleanField(default=True)
     notify_edit = models.BooleanField(default=False)
     class Meta:
-        unique_together = (('subscriber', 'item'),)
+        unique_together = (('contact_method', 'item'),)
 
 
 ################################################################################

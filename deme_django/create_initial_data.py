@@ -106,23 +106,29 @@ default_site.aliased_item = home_page
 default_site.query_string = ''
 default_site.save_versioned(updater=admin)
 
-mike_person = Person(first_name="Mike", last_name="Mintz", email="mike@example.com", name="Mike Mintz")
+mike_person = Person(first_name="Mike", last_name="Mintz", name="Mike Mintz")
 mike_person.save_versioned(updater=admin)
 mike_account = PasswordAccount(name="Mike's Password Account", username="mike", agent=mike_person)
 mike_account.set_password('')
 mike_account.save_versioned(updater=admin)
+mike_email_contact_method = EmailContactMethod(name="Mike's Email Contact Method", email="mike@example.com", agent=mike_person)
+mike_email_contact_method.save_versioned(updater=admin)
 
-todd_person = Person(first_name="Todd", last_name="Davies", email="todd@example.com", name="Todd Davies")
+todd_person = Person(first_name="Todd", last_name="Davies", name="Todd Davies")
 todd_person.save_versioned(updater=admin)
 todd_account = PasswordAccount(name="Todd's Password Account", username="todd", agent=todd_person)
 todd_account.set_password('')
 todd_account.save_versioned(updater=admin)
+todd_email_contact_method = EmailContactMethod(name="Todd's Email Contact Method", email="todd@example.com", agent=todd_person)
+todd_email_contact_method.save_versioned(updater=admin)
 
-reid_person = Person(first_name="Reid", last_name="Chandler", email="reid@example.com", name="Reid Chandler")
+reid_person = Person(first_name="Reid", last_name="Chandler", name="Reid Chandler")
 reid_person.save_versioned(updater=admin)
 reid_account = PasswordAccount(name="Reid's Password Account", username="reid", agent=reid_person)
 reid_account.set_password('')
 reid_account.save_versioned(updater=admin)
+reid_email_contact_method = EmailContactMethod(name="Reid's Email Contact Method", email="reid@example.com", agent=reid_person)
+reid_email_contact_method.save_versioned(updater=admin)
 
 hello_page = DjangoTemplateDocument(name="Hello Page", body="""
 {% block title %}Sample Home Page{% endblock %}
