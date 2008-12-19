@@ -142,6 +142,7 @@ class ItemVersion(models.Model):
             else:
                 self.current_item.trashed = True
                 self.current_item.save()
+    trash.alters_data = True
 
     @transaction.commit_on_success
     def untrash(self):
@@ -169,6 +170,7 @@ class ItemVersion(models.Model):
             for key, val in fields.iteritems():
                 setattr(self.current_item, key, val)
             self.current_item.save()
+    untrash.alters_data = True
 
 
 class Item(models.Model):
@@ -207,6 +209,7 @@ class Item(models.Model):
         self.trashed = True
         self.save()
         self.versions.all().update(trashed=True)
+    trash.alters_data = True
 
     @transaction.commit_on_success
     def untrash(self):
@@ -218,6 +221,7 @@ class Item(models.Model):
         self.trashed = False
         self.save()
         self.versions.all().update(trashed=False)
+    untrash.alters_data = True
 
     @transaction.commit_on_success
     def save_versioned(self, updater=None, first_agent=False, create_permissions=True, created_at=None, updated_at=None, overwrite_latest_version=False):
@@ -347,6 +351,7 @@ class Item(models.Model):
             edit_comment.save_versioned(updater=updater)
             edit_comment_location = CommentLocation(name="Untitled CommentLocation", comment=edit_comment, commented_item_version_number=new_version.version_number, commented_item_index=None)
             edit_comment_location.save_versioned(updater=updater)
+    save_versioned.alters_data = True
 
 
 
@@ -408,6 +413,7 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
         salt = get_hexdigest(algo, str(random.random()), str(random.random()))[:5]
         hsh = get_hexdigest(algo, salt, raw_password)
         self.password = '%s$%s$%s' % (algo, salt, hsh)
+    set_password.alters_data = True
 
     def check_password(self, raw_password):
         algo, salt, hsh = self.password.split('$')
