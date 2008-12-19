@@ -1,11 +1,8 @@
 Dec-17 notes
 ------------
-* excerpts/highlighting (we still need to talk about details)
+* excerpts/highlighting (we still need to talk about details) with apps/highlight icon
 * group is an itemset, group is not an agent
   - this is for distant future: and new subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group)
-* new ContactMethod class, belongs to Agent
-  - email is subclass (not necessarily unique anymore)
-  - subscriptions are between ContactMethods and Items, not Persons and Item
 * rename Account to AuthenticationMethod
 * respos_job_email_subscribe is replaced with an actual subscription (but be careful that no emails get sent yet) counts as all 3 things
 * advisor should point to a symsysaffiliate

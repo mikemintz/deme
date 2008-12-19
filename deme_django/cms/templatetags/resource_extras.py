@@ -36,34 +36,40 @@ def icon_url(item_type, size=32):
         icon = 'apps/personal'
     elif item_type == cms.models.GroupMembership:
         icon = 'apps/katomic'
+    elif item_type == cms.models.ContactMethod:
+        icon = 'apps/kontact'
     elif item_type == cms.models.CustomUrl:
         icon = 'mimetypes/message'
-    elif item_type == cms.models.Relationship:
-        icon = 'apps/proxy'
     elif item_type == cms.models.Comment:
         icon = 'apps/filetypes'
+    elif item_type == cms.models.CommentLocation:
+        icon = 'apps/knotes'
     elif item_type == cms.models.Document:
         icon = 'mimetypes/empty'
     elif item_type == cms.models.DjangoTemplateDocument:
         icon = 'mimetypes/html'
+    elif item_type == cms.models.EmailContactMethod:
+        icon = 'apps/kmail'
+    elif item_type == cms.models.FileDocument:
+        icon = 'mimetypes/misc'
     elif item_type == cms.models.Folio:
         icon = 'apps/kfm'
     elif item_type == cms.models.Group:
         icon = 'apps/Login Manager'
+    elif item_type == cms.models.ImageDocument:
+        icon = 'mimetypes/images'
     elif item_type == cms.models.Item:
         icon = 'apps/kblackbox'
     elif item_type == cms.models.ItemSet:
         icon = 'filesystems/folder_blue'
     elif item_type == cms.models.ItemSetMembership:
         icon = 'filesystems/folder_documents'
-    elif item_type == cms.models.ViewerRequest:
-        icon = 'mimetypes/message'
-    elif item_type == cms.models.FileDocument:
-        icon = 'mimetypes/misc'
     elif item_type == cms.models.Permission or item_type == cms.models.GlobalPermission:
         icon = 'apps/proxy'
     elif item_type == cms.models.Person:
         icon = 'apps/access'
+    elif item_type == cms.models.Relationship:
+        icon = 'apps/proxy'
     elif item_type == cms.models.Role or item_type == cms.models.GlobalRole:
         icon = 'apps/lassist'
     elif item_type == cms.models.RoleAbility or item_type == cms.models.GlobalRoleAbility:
@@ -72,8 +78,12 @@ def icon_url(item_type, size=32):
         icon = 'devices/nfs_unmount'
     elif item_type == cms.models.SiteDomain:
         icon = 'devices/modem'
+    elif item_type == cms.models.Subscription:
+        icon = 'apps/knewsticker'
     elif item_type == cms.models.TextDocument:
         icon = 'mimetypes/txt'
+    elif item_type == cms.models.ViewerRequest:
+        icon = 'mimetypes/message'
     elif issubclass(item_type, cms.models.Item):
         return icon_url(item_type.__base__, size)
     else:
