@@ -331,6 +331,7 @@ class Item(models.Model):
                 from django.core.mail import SMTPConnection, EmailMessage
                 from email.utils import formataddr
                 subject = '[%s] %s' % (self.commented_item.name, self.name)
+                # TODO we need to generate a more dynamic URL here
                 if isinstance(self, TextComment):
                     body = '%s wrote a comment in %s\n%s\n\n%s' % (self.creator.name, self.commented_item.name, 'http://deme.stanford.edu/resource/%s/%d' % (self.commented_item.item_type.lower(), self.commented_item.pk), self.body)
                 else:

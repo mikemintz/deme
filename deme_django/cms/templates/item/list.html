@@ -7,14 +7,14 @@
 <div class="crumbs">
     {% ifagentcanglobal 'create' item_type %}
     <div style="float: right;">
-        [+] <a href="/resource/{{ item_type|lower }}/new">New {{ item_type }}</a>
+        [+] <a href="{% url resource_collection viewer=item_type|lower,collection_action="new" %}">New {{ item_type }}</a>
     </div>
     {% endifagentcanglobal %}
     {% for inherited_item_type in item_type_inheritance %}
     {% ifequal inherited_item_type item_type %}
     {{ inherited_item_type }}s
     {% else %}
-    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
+    <a href="{% url resource_collection viewer=inherited_item_type|lower %}">{{ inherited_item_type }}s</a>
     &raquo;
     {% endifequal %}
     {% endfor %}
@@ -31,9 +31,9 @@
             <select onchange="window.location = this.value;">
                 {% for model_name in model_names %}
                 {% ifequal model_name item_type %}
-                <option value="/resource/{{ model_name|lower }}" selected="selected">{{ model_name }}</option>
+                <option value="{% url resource_collection viewer=model_name|lower %}" selected="selected">{{ model_name }}</option>
                 {% else %}
-                <option value="/resource/{{ model_name|lower }}">{{ model_name }}</option>
+                <option value="{% url resource_collection viewer=model_name|lower %}">{{ model_name }}</option>
                 {% endifequal %}
                 {% endfor %}
             </select>
@@ -88,7 +88,7 @@
     </tr>
     {% for item in items %}
     <tr class="{% cycle 'even' 'odd' %}">
-        <td><img src="{{ item.item_type|icon_url:16 }}" /> <a href="/resource/{{ item.item_type|lower }}/{{ item.pk }}">{{ item.name }}</a></td>
+        <td><img src="{{ item.item_type|icon_url:16 }}" /> <a href="{% url resource_entry viewer=item.item_type|lower,noun=item.pk %}">{{ item.name }}</a></td>
     </tr>
     {% endfor %}
 </table>

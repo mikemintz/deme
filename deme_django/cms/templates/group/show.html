@@ -39,7 +39,7 @@
     {% endif %}
 
     <div style="margin-top: 10px;">
-        <a href="/resource/itemsetmembership/new?itemset={{ item.pk }}&redirect={{ full_path|urlencode }}">[+] Add Member</a>
+        <a href="{% url resource_collection viewer="itemsetmembership",collection_action="new" %}?itemset={{ item.pk }}&redirect={{ full_path|urlencode }}">[+] Add Member</a>
     </div>
 </div>
 

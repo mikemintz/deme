@@ -18,7 +18,7 @@ tinyMCE.init({
 
 <div class="crumbs">
     {% for inherited_item_type in item_type_inheritance %}
-    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
+    <a href="{% url resource_collection viewer=inherited_item_type|lower %}">{{ inherited_item_type }}s</a>
     &raquo;
     {% endfor %}
     {% if action_is_entry_copy %}Copy{% else %}New{% endif %}
@@ -26,9 +26,9 @@ tinyMCE.init({
 
 <div>
     {% if redirect %}
-    <form method="post" enctype="multipart/form-data" action="/resource/{{ item_type|lower }}/create?redirect={{ redirect|urlencode }}" class="item_form">
+    <form method="post" enctype="multipart/form-data" action="{% url resource_collection viewer=item_type|lower,collection_action="create" %}?redirect={{ redirect|urlencode }}" class="item_form">
     {% else %}
-    <form method="post" enctype="multipart/form-data" action="/resource/{{ item_type|lower }}/create" class="item_form">
+    <form method="post" enctype="multipart/form-data" action="{% url resource_collection viewer=item_type|lower,collection_action="create" %}" class="item_form">
     {% endif %}
         <table>
             <tr>
@@ -38,7 +38,11 @@ tinyMCE.init({
                 <td>
                     <select id="id_item_type" name="item_type" onchange="window.location = this.value;">
                         {% for model_name in model_names %}
-                        <option value="/resource/{{ model_name|lower }}/{% if action_is_entry_copy %}{{ item.pk }}/copy?version={{ itemversion.version_number }}{% else %}new{% endif %}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>
+                        {% if action_is_entry_copy %}
+                        <option value="{% url resource_entry viewer=model_name|lower,noun=item.pk,entry_action="copy" %}?version={{ itemversion.version_number }}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>
+                        {% else %}
+                        <option value="{% url resource_collection viewer=model_name|lower,collection_action="new" %}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>
+                        {% endif %}
                         {% endfor %}
                     </select>
                 </td>

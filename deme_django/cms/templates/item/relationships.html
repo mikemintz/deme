@@ -6,7 +6,7 @@
 
 <div class="crumbs">
     {% for inherited_item_type in item_type_inheritance %}
-    <a href="/resource/{{ inherited_item_type|lower }}">{{ inherited_item_type }}s</a>
+    <a href="{% url resource_collection viewer=inherited_item_type|lower %}">{{ inherited_item_type }}s</a>
     &raquo;
     {% endfor %}
     <a href="{% show_resource_url item %}">{% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a>

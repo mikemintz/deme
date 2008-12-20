@@ -23,7 +23,7 @@
     {% endifequal %}
     </div>
     <div style="margin-top: 10px;">
-    <form method="get" action="/resource/item">
+    <form method="get" action="{% url resource_collection viewer="item" %}">
     <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
     </form>
     </div>
@@ -60,7 +60,7 @@
             <a href="/">Home</a>
         </div>
         <div>
-            <a href="/resource/item">Items</a>
+            <a href="{% url resource_collection viewer="item" %}">Items</a>
         </div>
         <div>
             <a href="/meta/codegraph">Codegraph</a>
