@@ -286,7 +286,10 @@ def comment_dicts_for_item(item, version_number, include_recursive_itemset_comme
 
 class ItemHeader(template.Node):
     def __init__(self, page_name):
-        self.page_name = template.Variable(page_name)
+        if page_name:
+            self.page_name = template.Variable(page_name)
+        else:
+            self.page_name = None
 
     def __repr__(self):
         return "<ItemHeaderNode>"
