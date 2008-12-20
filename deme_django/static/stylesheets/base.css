@@ -131,6 +131,8 @@ div.comment_body {
     color: #777;
     text-decoration: none;
     font-weight: normal;
+    font-variant: normal;
+    font-style: normal;
     background: #ddd;
     border: 1px dotted #777;
     padding: 1px;
