@@ -53,8 +53,8 @@ Code correctness/consistency/bugs
 * start using verbose_name to have nice displays of item type names
 * having the default "Item" and "id" ability_parameter is kind of unelegant.
 * make "create folio" after group create be a after_save filter sort of thing, rather than viewer implemented, so subclasses of viewer do okay
-* urls should be more modular, not hard coded as much, like all the /static/media and /resource/{{item_type}}
 * Modifying TextDocuments needs to be able to move around located comments
+* We get an error when we try to leave a located comment on "Deme Home Page" source
 
 Performance
 -----------
