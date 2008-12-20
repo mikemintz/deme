@@ -417,9 +417,9 @@ The agent currently logged in is not allowed to use this application. Please log
                 fields.append(info)
             return fields
         template = loader.get_template('item/show.html')
-        self.context['inheritance'] = [x.__name__ for x in reversed(type(self.item).mro()) if issubclass(x, cms.models.Item)]
-        self.context['item_fields'] = get_fields_for_item(self.item)
-        self.context['itemversion_fields'] = get_fields_for_item(self.itemversion)
+        item_fields = get_fields_for_item(self.item)
+        itemversion_fields = get_fields_for_item(self.itemversion)
+        self.context['fields'] = itemversion_fields + [field for field in item_fields if not any([x['name'] == field['name'] for x in itemversion_fields])]
         return HttpResponse(template.render(self.context))
 
     def entry_relationships(self):

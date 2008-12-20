@@ -7,9 +7,7 @@
 {% itemheader %}
 
 <table class="twocol">
-    {% for model_name in inheritance %}
-    {% for field in itemversion_fields %}
-    {% ifequal field.model_name model_name %}
+    {% for field in fields|dictsort:"name" %}
     {% ifequal field.field_type 'collection' %}
     {% else %}
     <tr>
@@ -41,8 +39,6 @@
         </td>
     </tr>
     {% endifequal %}
-    {% endifequal %}
-    {% endfor %}
     {% endfor %}
 </table>
 
