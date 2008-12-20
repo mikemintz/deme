@@ -1,4 +1,5 @@
 # Create your views here.
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
 from django.template import Context, loader
 from django.db import models
@@ -35,7 +36,7 @@ class AjaxModelChoiceWidget(forms.Widget):
         initial_search = value_item.name if value_item else ''
         if value is None: value = ''
         if attrs is None: attrs = {}
-        ajax_url = '/resource/%s/list.json' % model.__name__.lower()
+        ajax_url = reverse('resource_collection', kwargs={'viewer': model.__name__.lower(), 'format': 'json'})
         result = """
         <input type="hidden" id="%(id)s_hidden" name="%(name)s" value="%(value)s" />
         <input type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" autocomplete="off" />
@@ -368,7 +369,7 @@ The agent currently logged in is not allowed to use this application. Please log
         if form.is_valid():
             item = form.save(commit=False)
             item.save_versioned(updater=self.cur_agent)
-            redirect = self.request.GET.get('redirect', '/resource/%s/%d' % (self.viewer_name, item.pk))
+            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
             model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
@@ -541,7 +542,7 @@ The agent currently logged in is not allowed to use this application. Please log
         if form.is_valid():
             new_item = form.save(commit=False)
             new_item.save_versioned(updater=self.cur_agent)
-            return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name, new_item.pk))
+            return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
             template = loader.get_template('item/edit.html')
             self.context['form'] = form
@@ -563,7 +564,7 @@ The agent currently logged in is not allowed to use this application. Please log
             self.itemversion.trash()
         else:
             self.item.trash()
-        return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name,self.item.pk))
+        return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
 
     def entry_untrash(self):
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
@@ -577,7 +578,7 @@ The agent currently logged in is not allowed to use this application. Please log
             self.itemversion.untrash()
         else:
             self.item.untrash()
-        return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name,self.item.pk))
+        return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
 
     def entry_permissions(self):
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
@@ -733,7 +734,7 @@ class GroupViewer(ItemViewer):
             new_item.save_versioned(updater=self.cur_agent)
             folio = cms.models.Folio(name="Group Folio", group=new_item)
             folio.save_versioned(updater=self.cur_agent)
-            return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name, new_item.pk))
+            return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
             template = loader.get_template('item/new.html')
             self.context['form'] = form
@@ -856,7 +857,7 @@ class HtmlDocumentViewer(TextDocumentViewer):
                 comment_location.commented_item_version_number = new_item_version_number
                 comment_location.save_versioned(updater=self.cur_agent)
 
-            return HttpResponseRedirect('/resource/%s/%d' % (self.viewer_name, new_item.pk))
+            return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
             template = loader.get_template('item/edit.html')
             self.context['form'] = form
@@ -924,7 +925,7 @@ class TextCommentViewer(TextDocumentViewer):
             item.save_versioned(updater=self.cur_agent)
             comment_location = cms.models.CommentLocation(name="Untitled CommentLocation", comment=item, commented_item_version_number=commented_item_version_number, commented_item_index=commented_item_index)
             comment_location.save_versioned(updater=self.cur_agent)
-            redirect = self.request.GET.get('redirect', '/resource/%s/%d' % (self.viewer_name, item.pk))
+            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
             model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
