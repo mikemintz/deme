@@ -783,18 +783,10 @@ class TextDocumentViewer(ItemViewer):
         self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
         return HttpResponse(template.render(self.context))
 
-    def collection_getregions(self):
-        data = '[["refbase_123::14", "refbase_123::18"]]'
-        return HttpResponse(data)
-
 
 class HtmlDocumentViewer(TextDocumentViewer):
     item_type = cms.models.HtmlDocument
     viewer_name = 'htmldocument'
-
-    def collection_getregions(self):
-        data = '[["refbase_123::14", "refbase_123::18"]]'
-        return HttpResponse(data)
 
     def entry_edit(self):
         can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
