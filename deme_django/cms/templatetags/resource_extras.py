@@ -285,13 +285,24 @@ def comment_dicts_for_item(item, version_number, include_recursive_itemset_comme
     return result
 
 class ItemHeader(template.Node):
-    def __init__(self):
-        pass
+    def __init__(self, page_name):
+        self.page_name = template.Variable(page_name)
 
     def __repr__(self):
         return "<ItemHeaderNode>"
 
     def render(self, context):
+        if self.page_name is None:
+            page_name = None
+        else:
+            try:
+                page_name = self.page_name.resolve(context)
+            except template.VariableDoesNotExist:
+                if settings.DEBUG:
+                    return "[Couldn't resolve page_name variable]"
+                else:
+                    return '' # Fail silently for invalid variables.
+
         item = context['item']
         version_number = item.version_number
         item_type_inheritance = context['item_type_inheritance']
@@ -338,6 +349,9 @@ class ItemHeader(template.Node):
             version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': context['action']}) + '?version=%s' % other_itemversion.version_number
             result.append('<option value="%s"%s>Version %s</option>' % (version_url, ' selected="selected"' if other_itemversion.version_number == version_number else '', other_itemversion.version_number))
         result.append('</select>')
+        if page_name is not None:
+            result.append('&raquo; ')
+            result.append(page_name)
 
         result.append('</div>')
 
@@ -388,6 +402,18 @@ class ItemHeader(template.Node):
 
         return '\n'.join(result)
 
+@register.tag
+def itemheader(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) < 1 or len(bits) > 2:
+        raise template.TemplateSyntaxError, "%r takes zero or one arguments" % bits[0]
+    if len(bits) == 2:
+        page_name = bits[1]
+    else:
+        page_name = None
+    return ItemHeader(page_name)
+
+
 @register.simple_tag
 def display_body_with_inline_comments(item, is_html):
     #TODO permissions? you should be able to see any CommentLocation, but maybe not the id of the comment it refers to
@@ -407,14 +433,6 @@ def display_body_with_inline_comments(item, is_html):
         last_i = i
     result.insert(0, format(item.body[0:last_i]))
     return ''.join(result)
-
-
-@register.tag
-def itemheader(parser, token):
-    bits = list(token.split_contents())
-    if len(bits) != 1:
-        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
-    return ItemHeader()
 
 
 class CommentBox(template.Node):

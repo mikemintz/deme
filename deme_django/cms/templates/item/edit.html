@@ -16,17 +16,7 @@ tinyMCE.init({
 });
 </script>    
 
-<div class="crumbs">
-    {% for inherited_item_type in item_type_inheritance %}
-    <a href="{% url resource_collection viewer=inherited_item_type|lower %}">{{ inherited_item_type }}s</a>
-    &raquo;
-    {% endfor %}
-    <a href="{% show_resource_url item %}">{% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a>
-    &raquo;
-    <a href="{% show_resource_url item item.version_number %}">Version {{ item.version_number }}</a>
-    &raquo;
-    Edit
-</div>
+{% itemheader 'Edit' %}
 
 <div>
     <form method="post" enctype="multipart/form-data" action="{% url resource_entry viewer=item_type|lower,noun=item.pk,entry_action="update" %}?version={{ item.version_number }}" class="item_form">

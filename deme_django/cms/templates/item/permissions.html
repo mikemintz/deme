@@ -6,15 +6,7 @@
 
 <script type="text/javascript" src="/static/javascripts/prototype.js"></script>
 
-<div class="crumbs">
-    {% for inherited_item_type in item_type_inheritance %}
-    <a href="{% url resource_collection viewer=inherited_item_type|lower %}">{{ inherited_item_type }}s</a>
-    &raquo;
-    {% endfor %}
-    <a href="{% show_resource_url item %}">{% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a>
-    &raquo;
-    Permissions
-</div>
+{% itemheader 'Permissions' %}
 
 <div style="margin-bottom: 5px;">
     <div><a href="#" onclick="$('new_agent_form').toggle(); return false;">[+] Agent</a></div>
