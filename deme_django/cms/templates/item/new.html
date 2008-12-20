@@ -39,7 +39,7 @@ tinyMCE.init({
                     <select id="id_item_type" name="item_type" onchange="window.location = this.value;">
                         {% for model_name in model_names %}
                         {% if action_is_entry_copy %}
-                        <option value="{% url resource_entry viewer=model_name|lower,noun=item.pk,entry_action="copy" %}?version={{ itemversion.version_number }}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>
+                        <option value="{% url resource_entry viewer=model_name|lower,noun=item.pk,entry_action="copy" %}?version={{ item.version_number }}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>
                         {% else %}
                         <option value="{% url resource_collection viewer=model_name|lower,collection_action="new" %}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>
                         {% endif %}

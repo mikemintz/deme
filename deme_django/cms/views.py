@@ -146,6 +146,39 @@ class ViewerMetaClass(type):
 def get_viewer_class_for_viewer_name(viewer_name):
     return ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
 
+#TODO make sure this really gets the right fields
+def get_versioned_item(item, version_number):
+    if version_number is None:
+        try:
+            itemversion = type(item).VERSION.objects.filter(current_item=item.pk, trashed=False).latest()
+        except ObjectDoesNotExist:
+            itemversion = type(item).VERSION.objects.filter(current_item=item.pk).latest()
+    else:
+        itemversion = type(item).VERSION.objects.get(current_item=item.pk, version_number=version_number)
+        for name in itemversion._meta.get_all_field_names():
+            if name in ['item_type', 'trashed', 'current_item', 'version_number']: # special fields
+                continue
+            field, model, direct, m2m = itemversion._meta.get_field_by_name(name)
+            if hasattr(field, 'primary_key') and field.primary_key:
+                continue
+            elif type(field).__name__ == 'OneToOneField':
+                continue
+            elif type(field).__name__ == 'ManyToManyField':
+                continue
+            elif type(field).__name__ == 'RelatedObject':
+                continue
+            elif type(field).__name__ == 'ForeignKey':
+                try:
+                    obj = getattr(itemversion, name)
+                except ObjectDoesNotExist:
+                    obj = None
+            else:
+                obj = getattr(itemversion, name)
+            setattr(item, name, obj)
+    item.version_number = itemversion.version_number
+    item.version_trashed = itemversion.trashed
+    return item
+
 class ItemViewer(object):
     __metaclass__ = ViewerMetaClass
 
@@ -191,31 +224,25 @@ class ItemViewer(object):
             if self.action == None:
                 self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'delete'}.get(self.method, 'list')
             self.item = None
-            self.itemversion = None
         else:
             self.action = url_info.get('entry_action')
             if self.action == None:
                 self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'delete'}.get(self.method, 'show')
             try:
                 self.item = cms.models.Item.objects.get(pk=self.noun)
+                if self.item:
+                    self.item = self.item.downcast()
                 if 'version' in self.request.REQUEST:
-                    self.itemversion = cms.models.Item.VERSION.objects.get(current_item=self.noun, version_number=self.request.REQUEST['version'])
+                    version_number = self.request.REQUEST['version']
+                    self.item = get_versioned_item(self.item, version_number)
                 else:
-                    try:
-                        self.itemversion = cms.models.Item.VERSION.objects.filter(current_item=self.noun, trashed=False).latest()
-                    except ObjectDoesNotExist:
-                        self.itemversion = cms.models.Item.VERSION.objects.filter(current_item=self.noun).latest()
+                    self.item = get_versioned_item(self.item, None)
             except ObjectDoesNotExist:
                 self.item = None
-                self.itemversion = None
-            if self.item:
-                self.item = self.item.downcast()
-                self.itemversion = self.itemversion.downcast()
         self.context = Context()
         self.context['request'] = self.request # for NOW
         self.context['action'] = self.action
         self.context['item'] = self.item
-        self.context['itemversion'] = self.itemversion
         self.context['item_type'] = self.item_type.__name__
         self.context['item_type_inheritance'] = [x.__name__ for x in reversed(self.item_type.mro()) if issubclass(x, cms.models.Item)]
         self.context['full_path'] = self.request.get_full_path()
@@ -225,21 +252,19 @@ class ItemViewer(object):
         self.context['_item_ability_cache'] = self._item_ability_cache
         set_default_layout(self.context, current_site, cur_agent)
 
-    def init_from_div(self, original_request, action, viewer_name, item, itemversion, cur_agent):
+    def init_from_div(self, original_request, action, viewer_name, item, cur_agent):
         self.request = original_request
         self.viewer_name = viewer_name
         self.format = 'html'
         self.method = 'GET'
         self.noun = item.pk
         self.item = item
-        self.itemversion = itemversion
         self.action = action
         self.context = Context()
         self.context['request'] = self.request # for NOW
         self.context['layout'] = 'blank.html'
         self.context['action'] = self.action
         self.context['item'] = self.item
-        self.context['itemversion'] = self.itemversion
         self.context['item_type'] = self.item_type.__name__
         self.context['item_type_inheritance'] = [x.__name__ for x in reversed(self.item_type.mro()) if issubclass(x, cms.models.Item)]
         self.context['full_path'] = self.request.get_full_path()
@@ -267,7 +292,9 @@ The agent currently logged in is not allowed to use this application. Please log
             action_method = getattr(self, 'entry_%s' % self.action, None)
         if action_method:
             if self.noun != None:
-                if self.action == 'copy':
+                if self.item is None:
+                    return self.render_item_not_found()
+                elif self.action == 'copy':
                     pass
                 elif (self.action == 'edit' or self.action == 'update'):
                     if self.item_type != type(self.item):
@@ -418,8 +445,7 @@ The agent currently logged in is not allowed to use this application. Please log
             return fields
         template = loader.get_template('item/show.html')
         item_fields = get_fields_for_item(self.item)
-        itemversion_fields = get_fields_for_item(self.itemversion)
-        self.context['fields'] = itemversion_fields + [field for field in item_fields if not any([x['name'] == field['name'] for x in itemversion_fields])]
+        self.context['fields'] = item_fields
         return HttpResponse(template.render(self.context))
 
     def entry_relationships(self):
@@ -427,7 +453,8 @@ The agent currently logged in is not allowed to use this application. Please log
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         relationship_sets = []
         version_relationship_sets = []
-        for this_item in [self.item, self.itemversion]:
+        itemversion = self.item.versions.get(version_number=self.item.version_number)
+        for this_item in [self.item, itemversion]:
             for name in sorted(this_item._meta.get_all_field_names()):
                 field, model, direct, m2m = this_item._meta.get_field_by_name(name)
                 if type(field).__name__ != 'RelatedObject':
@@ -481,7 +508,7 @@ The agent currently logged in is not allowed to use this application. Please log
         else:
             fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
             form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
-        form = form_class(instance=self.itemversion)
+        form = form_class(instance=self.item)
         if not can_do_everything:
             fields_can_view = set([x[1] for x in abilities_for_item if x[0] == 'view'])
             initial_fields_set = set(form.initial.iterkeys())
@@ -509,7 +536,7 @@ The agent currently logged in is not allowed to use this application. Please log
         form_initial = {}
         for field_name in fields_to_copy:
             try:
-                field_value = getattr(self.itemversion, field_name)
+                field_value = getattr(self.item, field_name)
             except AttributeError:
                 continue
             if isinstance(field_value, models.Model):
@@ -561,7 +588,7 @@ The agent currently logged in is not allowed to use this application. Please log
         if not (can_do_everything or can_trash):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to trash this item")
         if 'version' in self.request.GET:
-            self.itemversion.trash()
+            self.item.versions.get(version_number=self.item.version_number).trash()
         else:
             self.item.trash()
         return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -575,7 +602,7 @@ The agent currently logged in is not allowed to use this application. Please log
         if not (can_do_everything or can_trash):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to untrash this item")
         if 'version' in self.request.GET:
-            self.itemversion.untrash()
+            self.item.versions.get(version_number=self.item.version_number).untrash()
         else:
             self.item.untrash()
         return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -742,7 +769,7 @@ class GroupViewer(ItemViewer):
         folio = self.item.folios_as_group.get()
         folio_viewer_class = get_viewer_class_for_viewer_name('itemset')
         folio_viewer = folio_viewer_class()
-        folio_viewer.init_from_div(self.request, 'show', 'itemset', folio, folio.versions.latest().downcast(), self.cur_agent)
+        folio_viewer.init_from_div(self.request, 'show', 'itemset', folio, self.cur_agent)
         folio_html = folio_viewer.dispatch().content
         self.context['folio_html'] = folio_html
         template = loader.get_template('group/show.html')
@@ -800,14 +827,14 @@ class HtmlDocumentViewer(TextDocumentViewer):
             form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
 
 
-        comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=self.itemversion.current_item, commented_item_version_number=self.itemversion.version_number, commented_item_index__isnull=False).order_by('-commented_item_index')
-        body_as_list = list(self.itemversion.body)
+        comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=self.item.pk, commented_item_version_number=self.item.version_number, commented_item_index__isnull=False).order_by('-commented_item_index')
+        body_as_list = list(self.item.body)
         for comment_location in comment_locations:
             i = comment_location.commented_item_index
             body_as_list[i:i] = '<img id="comment_location_%s" src="/static/spacer.gif" title="Comment %s" style="margin: 0 2px 0 2px; background: #ddd; border: 1px dotted #777; height: 10px; width: 10px;"/>' % (comment_location.comment.pk, comment_location.comment.pk)
-        self.itemversion.body = ''.join(body_as_list)
+        self.item.body = ''.join(body_as_list)
 
-        form = form_class(instance=self.itemversion)
+        form = form_class(instance=self.item)
         if not can_do_everything:
             fields_can_view = set([x[1] for x in abilities_for_item if x[0] == 'view'])
             initial_fields_set = set(form.initial.iterkeys())
@@ -871,7 +898,7 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
 
     def entry_render(self):
         #TODO permissions
-        cur_node = self.itemversion
+        cur_node = self.item
         while cur_node is not None:
             next_node = cur_node.layout
             if cur_node.override_default_layout:
@@ -879,7 +906,7 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
             else:
                 template_string = '{%% extends layout%s %%}\n%s' % (next_node.pk if next_node else '', cur_node.body)
             t = loader.get_template_from_string(template_string)
-            if cur_node is self.itemversion:
+            if cur_node is self.item:
                 template = t
             else:
                 self.context['layout%d' % cur_node.pk] = t

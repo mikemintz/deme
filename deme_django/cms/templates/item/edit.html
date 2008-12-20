@@ -23,13 +23,13 @@ tinyMCE.init({
     {% endfor %}
     <a href="{% show_resource_url item %}">{% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a>
     &raquo;
-    <a href="{% show_resource_url itemversion %}">Version {{ itemversion.version_number }}</a>
+    <a href="{% show_resource_url item item.version_number %}">Version {{ item.version_number }}</a>
     &raquo;
     Edit
 </div>
 
 <div>
-    <form method="post" enctype="multipart/form-data" action="{% url resource_entry viewer=item_type|lower,noun=itemversion.current_item_id,entry_action="update" %}?version={{ itemversion.version_number }}" class="item_form">
+    <form method="post" enctype="multipart/form-data" action="{% url resource_entry viewer=item_type|lower,noun=item.pk,entry_action="update" %}?version={{ item.version_number }}" class="item_form">
         <table>
             {{ form.as_table }}
         </table>

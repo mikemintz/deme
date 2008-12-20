@@ -11,7 +11,7 @@
     {% endfor %}
     <a href="{% show_resource_url item %}">{% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a>
     &raquo;
-    <a href="{% show_resource_url itemversion %}">Version {{ itemversion.version_number }}</a>
+    <a href="{% show_resource_url item item.version_number %}">Version {{ item.version_number }}</a>
     &raquo;
     Relationships
 </div>

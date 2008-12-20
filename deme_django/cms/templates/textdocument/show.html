@@ -19,7 +19,7 @@
 </style>
 
 <script type="text/javascript">
-    var body_str = "{{ itemversion.body|escapejs }}";
+    var body_str = "{{ item.body|escapejs }}";
 
     function parse_error(str) {
         $('parse_errors').show();
@@ -59,7 +59,7 @@
             targ = targ.parentNode;
         var tokenWrapper = $(targ);
         var index = tokenWrapper.deme_text_offset;
-        var url = '{% url resource_collection viewer="textcomment",collection_action="new" %}?commented_item={{ item.pk }}&commented_item_version_number={{ itemversion.version_number }}&redirect={{ full_path|urlencode }}&commented_item_index=' + index;
+        var url = '{% url resource_collection viewer="textcomment",collection_action="new" %}?commented_item={{ item.pk }}&commented_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&commented_item_index=' + index;
         window.location = url;
         return false;
     }
@@ -304,7 +304,7 @@ Now just select text where you want to comment or
 <div><a href="#" onclick="$$('.commentref').each(function(e){e.toggle()}); return false;">Toggle Comments</a></div>
 
 {% ifagentcan 'view' 'body' item %}
-<div id="docbody" style="padding: 10px;">{% display_body_with_inline_comments itemversion is_html %}</div>
+<div id="docbody" style="padding: 10px;">{% display_body_with_inline_comments item is_html %}</div>
 {% else %}
 <div id="docbody" style="padding: 10px;">
 [PERMISSION DENIED]

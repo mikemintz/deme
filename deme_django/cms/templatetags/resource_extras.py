@@ -11,11 +11,14 @@ from django.conf import settings
 register = template.Library()
 
 @register.simple_tag
-def show_resource_url(item):
+def show_resource_url(item, version_number=None):
     if isinstance(item, cms.models.ItemVersion):
         return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}) + '?version=%s' % item.version_number
     elif isinstance(item, cms.models.Item):
-        return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk})
+        if version_number is not None:
+            return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}) + '?version=%s' % version_number
+        else:
+            return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk})
     else:
         return ''
 
@@ -252,7 +255,7 @@ def ifagentcanglobal(parser, token):
     return IfAgentCanGlobal(bits[1], bits[2], nodelist_true, nodelist_false)
 
 # remember this includes trashed comments, which should be displayed differently after calling this
-def comment_dicts_for_item(item, itemversion, include_recursive_itemset_comments):
+def comment_dicts_for_item(item, version_number, include_recursive_itemset_comments):
     comment_subclasses = [cms.models.TextComment, cms.models.EditComment]
     comments = []
     if include_recursive_itemset_comments:
@@ -267,7 +270,7 @@ def comment_dicts_for_item(item, itemversion, include_recursive_itemset_comments
     for comment in comments:
         comment_info = {'comment': comment, 'subcomments': []}
         try:
-            comment_info['comment_location'] = comment.comment_locations_as_comment.get(commented_item_version_number=itemversion.version_number)
+            comment_info['comment_location'] = comment.comment_locations_as_comment.get(commented_item_version_number=version_number)
         except ObjectDoesNotExist:
             comment_info['comment_location'] = None
         pk_to_comment_info[comment.pk] = comment_info
@@ -290,17 +293,17 @@ class ItemHeader(template.Node):
 
     def render(self, context):
         item = context['item']
-        itemversion = context['itemversion']
+        version_number = item.version_number
         item_type_inheritance = context['item_type_inheritance']
 
         result = []
 
-        relationships_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'relationships'}) + '?version=%s' % itemversion.version_number
+        relationships_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'relationships'}) + '?version=%s' % version_number
         permissions_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'permissions'})
-        edit_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'edit'}) + '?version=%s' % itemversion.version_number
-        copy_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'copy'}) + '?version=%s' % itemversion.version_number
-        trash_version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'trash'}) + '?version=%s' % itemversion.version_number
-        untrash_version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'untrash'}) + '?version=%s' % itemversion.version_number
+        edit_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'edit'}) + '?version=%s' % version_number
+        copy_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'copy'}) + '?version=%s' % version_number
+        trash_version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'trash'}) + '?version=%s' % version_number
+        untrash_version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'untrash'}) + '?version=%s' % version_number
         trash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'trash'})
         untrash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'untrash'})
 
@@ -318,7 +321,7 @@ class ItemHeader(template.Node):
                 result.append('<a href="%s">Untrash</a>' % untrash_url)
             else:
                 result.append('<a href="%s">Trash</a>' % trash_url)
-            if itemversion.trashed:
+            if item.version_trashed:
                 result.append('<a href="%s">Untrash Version</a>' % untrash_version_url)
             else:
                 result.append('<a href="%s">Trash Version</a>' % trash_version_url)
@@ -333,7 +336,7 @@ class ItemHeader(template.Node):
         result.append('<select id="id_item_type" name="item_type" onchange="window.location = this.value;">')
         for other_itemversion in item.versions.all():
             version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': context['action']}) + '?version=%s' % other_itemversion.version_number
-            result.append('<option value="%s"%s>Version %s</option>' % (version_url, ' selected="selected"' if other_itemversion.version_number == itemversion.version_number else '', other_itemversion.version_number))
+            result.append('<option value="%s"%s>Version %s</option>' % (version_url, ' selected="selected"' if other_itemversion.version_number == version_number else '', other_itemversion.version_number))
         result.append('</select>')
 
         result.append('</div>')
@@ -343,7 +346,7 @@ class ItemHeader(template.Node):
         else:
             created_at_text = '[PERMISSION DENIED]'
         if agentcan_helper(context, 'view', 'updated_at', item):
-            updated_at_text = itemversion.updated_at.strftime("%Y-%m-%d %H:%m")
+            updated_at_text = item.updated_at.strftime("%Y-%m-%d %H:%m")
         else:
             updated_at_text = '[PERMISSION DENIED]'
         if agentcan_helper(context, 'view', 'creator', item):
@@ -354,10 +357,10 @@ class ItemHeader(template.Node):
         else:
             creator_text = '[PERMISSION DENIED]'
         if agentcan_helper(context, 'view', 'updater', item):
-            if agentcan_helper(context, 'view', 'name', itemversion.updater):
-                updater_text = '<a href="%s">%s</a>' % (show_resource_url(itemversion.updater), escape(itemversion.updater.name))
+            if agentcan_helper(context, 'view', 'name', item.updater):
+                updater_text = '<a href="%s">%s</a>' % (show_resource_url(item.updater), escape(item.updater.name))
             else:
-                updater_text = '<a href="%s">%s</a>' % (show_resource_url(itemversion.updater), '[PERMISSION DENIED]')
+                updater_text = '<a href="%s">%s</a>' % (show_resource_url(item.updater), '[PERMISSION DENIED]')
         else:
             updater_text = '[PERMISSION DENIED]'
         result.append('<div style="font-size: 8pt;">')
@@ -365,7 +368,7 @@ class ItemHeader(template.Node):
         result.append('Originally created by %s on %s' % (creator_text, created_at_text))
         result.append('</div>')
         result.append('<div style="float: right;">')
-        result.append('Version %s updated by %s on %s' % (itemversion.version_number, updater_text, updated_at_text))
+        result.append('Version %s updated by %s on %s' % (version_number, updater_text, updated_at_text))
         result.append('</div>')
         result.append('<div style="clear: both;">')
         result.append('</div>')
@@ -373,18 +376,20 @@ class ItemHeader(template.Node):
 
         result.append('<div style="font-size: 8pt; color: #aaa; margin-bottom: 10px;">')
         if agentcan_helper(context, 'view', 'description', item):
-            result.append('Description: %s' % escape(itemversion.description))
+            result.append('Description: %s' % escape(item.description))
         else:
             result.append('Description: [PERMISSION DENIED]')
         result.append('</div>')
 
         if item.trashed:
+            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is trashed</div>')
+        elif item.version_trashed:
             result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This version is trashed</div>')
 
         return '\n'.join(result)
 
 @register.simple_tag
-def display_body_with_inline_comments(itemversion, is_html):
+def display_body_with_inline_comments(item, is_html):
     #TODO permissions? you should be able to see any CommentLocation, but maybe not the id of the comment it refers to
     #TODO don't insert these in bad places, like inside a tag <img <a href="....> />
     #TODO when you insert a comment in the middle of a tag like <b>hi <COMMENT></b> then it gets the style, this is bad
@@ -392,15 +397,15 @@ def display_body_with_inline_comments(itemversion, is_html):
         format = lambda text: text
     else:
         format = lambda text: urlize(escape(text)).replace('\n', '<br />')
-    comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=itemversion.current_item, commented_item_version_number=itemversion.version_number, commented_item_index__isnull=False, trashed=False, comment__trashed=False).order_by('-commented_item_index')
+    comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=item, commented_item_version_number=item.version_number, commented_item_index__isnull=False, trashed=False, comment__trashed=False).order_by('-commented_item_index')
     result = []
     last_i = None
     for comment_location in comment_locations:
         i = comment_location.commented_item_index
-        result.insert(0, format(itemversion.body[i:last_i]))
+        result.insert(0, format(item.body[i:last_i]))
         result.insert(0, '<a href="%s" class="commentref">%s</a>' % (show_resource_url(comment_location.comment), escape(comment_location.comment.name)))
         last_i = i
-    result.insert(0, format(itemversion.body[0:last_i]))
+    result.insert(0, format(item.body[0:last_i]))
     return ''.join(result)
 
 
@@ -421,12 +426,12 @@ class CommentBox(template.Node):
 
     def render(self, context):
         item = context['item']
-        itemversion = context['itemversion']
+        version_number = item.version_number
         full_path = context['full_path']
 
         result = []
         result.append("""<div class="comment_box">""")
-        result.append("""<div class="comment_box_header"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Add Comment</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), itemversion.current_item.pk, itemversion.version_number, urlquote(full_path)))
+        result.append("""<div class="comment_box_header"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Add Comment</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), item.pk, version_number, urlquote(full_path)))
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
@@ -477,7 +482,7 @@ class CommentBox(template.Node):
                     result.append("</div>")
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
-        add_comments_to_div(comment_dicts_for_item(item, itemversion, isinstance(item, cms.models.ItemSet)))
+        add_comments_to_div(comment_dicts_for_item(item, version_number, isinstance(item, cms.models.ItemSet)))
         result.append("</div>")
         return '\n'.join(result)
 
