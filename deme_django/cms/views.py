@@ -732,8 +732,6 @@ class GroupViewer(ItemViewer):
         if form.is_valid():
             new_item = form.save(commit=False)
             new_item.save_versioned(updater=self.cur_agent)
-            folio = cms.models.Folio(name="Group Folio", group=new_item)
-            folio.save_versioned(updater=self.cur_agent)
             return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
             template = loader.get_template('item/new.html')

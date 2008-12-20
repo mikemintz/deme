@@ -353,7 +353,14 @@ class Item(models.Model):
             edit_comment.save_versioned(updater=updater)
             edit_comment_location = CommentLocation(name="Untitled CommentLocation", comment=edit_comment, commented_item_version_number=new_version.version_number, commented_item_index=None)
             edit_comment_location.save_versioned(updater=updater)
+
+        if is_new:
+            self.after_create()
     save_versioned.alters_data = True
+
+    def after_create(self):
+        pass
+    after_create.alters_data = True
 
 
 
@@ -435,7 +442,11 @@ class ItemSet(Item):
 
 
 class Group(ItemSet):
-    pass
+    def after_create(self):
+        super(Group, self).after_create()
+        folio = Folio(name="%s Folio" % self.name, group=self)
+        folio.save_versioned(updater=self.updater)
+    after_create.alters_data = True
 
 
 class Folio(ItemSet):

@@ -142,16 +142,12 @@ hello_url.save_versioned(updater=admin)
 
 symsys_group = Group(name="Symsys Group")
 symsys_group.save_versioned(updater=admin)
-symsys_folio = Folio(name="Symsys Folio", group=symsys_group)
-symsys_folio.save_versioned(updater=admin)
 ItemSetMembership(name="Mike's membership in Symsys group", item=mike_person, itemset=symsys_group).save_versioned(updater=admin)
 ItemSetMembership(name="Todd's membership in Symsys group", item=todd_person, itemset=symsys_group).save_versioned(updater=admin)
 ItemSetMembership(name="Reid's membership in Symsys group", item=reid_person, itemset=symsys_group).save_versioned(updater=admin)
 
 discuss_group = Group(name="Deme Dev Discussion")
 discuss_group.save_versioned(updater=admin)
-discuss_folio = Folio(name="Deme Dev Discussion Folio", group=discuss_group)
-discuss_folio.save_versioned(updater=admin)
 ItemSetMembership(name="Mike's membership in discuss group", item=mike_person, itemset=discuss_group).save_versioned(updater=admin)
 ItemSetMembership(name="Todd's membership in discuss group", item=todd_person, itemset=discuss_group).save_versioned(updater=admin)
 
