@@ -127,9 +127,10 @@ div.comment_body {
 }
 
 .commentref {
-    font-size: smaller;
+    font-size: 12px;
     color: #777;
     text-decoration: none;
+    font-weight: normal;
     background: #ddd;
     border: 1px dotted #777;
     padding: 1px;

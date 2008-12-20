@@ -302,11 +302,7 @@ Now just select text where you want to comment or
 <div><a href="#" onclick="$$('.commentref').each(function(e){e.toggle()}); return false;">Toggle Comments</a></div>
 
 {% ifagentcan 'view' 'body' item %}
-{% if is_html %}
-<div id="docbody" style="padding: 10px;">{% display_body_with_inline_comments itemversion %}</div>
-{% else %}
-<div id="docbody" style="padding: 10px;">{% display_text_body_with_inline_comments itemversion %}</div>
-{% endif %}
+<div id="docbody" style="padding: 10px;">{% display_body_with_inline_comments itemversion is_html %}</div>
 {% else %}
 <div id="docbody" style="padding: 10px;">
 [PERMISSION DENIED]
