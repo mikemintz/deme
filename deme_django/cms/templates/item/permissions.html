@@ -4,7 +4,7 @@
 {% block title %}<img src="{{ item_type|icon_url:48 }}" /> Permissions for {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
-<script src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.0.2/prototype.js"></script>
+<script type="text/javascript" src="/static/javascripts/prototype.js"></script>
 
 <div class="crumbs">
     {% for inherited_item_type in item_type_inheritance %}
