@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django import template
 from django.db.models import Q
 import cms.models
@@ -12,9 +13,9 @@ register = template.Library()
 @register.simple_tag
 def show_resource_url(item):
     if isinstance(item, cms.models.ItemVersion):
-        return '/resource/%s/%s?version=%s' % (item.item_type.lower(), item.current_item_id, item.version_number)
+        return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}) + '?version=%s' % item.version_number
     elif isinstance(item, cms.models.Item):
-        return '/resource/%s/%s' % (item.item_type.lower(), item.pk)
+        return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk})
     else:
         return ''
 
@@ -94,7 +95,7 @@ def icon_url(item_type, size=32):
 def list_results_navigator(item_type, itemset, search_query, trashed, offset, limit, n_results, max_pages):
     if n_results <= limit:
         return ''
-    url_prefix = '/resource/%s/list?limit=%d&' % (item_type.lower(), limit)
+    url_prefix = reverse('resource_collection', kwargs={'viewer': item_type.lower()}) + '?limit=%s&' % limit
     if search_query:
         url_prefix += 'q=%s&' % search_query
     if trashed:
@@ -294,38 +295,48 @@ class ItemHeader(template.Node):
 
         result = []
 
-        result.append("""<div class="crumbs">""")
-        result.append("""<div style="float: right;">""")
-        result.append("""<a href="/resource/%s/%s/relationships?version=%s">Relationships</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
+        relationships_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'relationships'}) + '?version=%s' % itemversion.version_number
+        permissions_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'permissions'})
+        edit_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'edit'}) + '?version=%s' % itemversion.version_number
+        copy_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'copy'}) + '?version=%s' % itemversion.version_number
+        trash_version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'trash'}) + '?version=%s' % itemversion.version_number
+        untrash_version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'untrash'}) + '?version=%s' % itemversion.version_number
+        trash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'trash'})
+        untrash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'untrash'})
+
+        result.append('<div class="crumbs">')
+        result.append('<div style="float: right;">')
+        result.append('<a href="%s">Relationships</a>' % relationships_url)
         if agentcan_helper(context, 'modify_permissions', 'id', item):
-            result.append("""<a href="/resource/%s/%s/permissions">Permissions</a>""" % (item.item_type.lower(), item.pk))
+            result.append('<a href="%s">Permissions</a>' % permissions_url)
         if agentcan_helper(context, 'edit', None, item):
-            result.append("""<a href="/resource/%s/%s/edit?version=%s">Edit</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
+            result.append('<a href="%s">Edit</a>' % edit_url)
         if agentcan_global_helper(context, 'create', None):
-            result.append("""<a href="/resource/%s/%s/copy?version=%s">Copy</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
+            result.append('<a href="%s">Copy</a>' % copy_url)
         if agentcan_helper(context, 'trash', 'id', item):
             if item.trashed:
-                result.append("""<a href="/resource/%s/%s/untrash">Untrash</a>""" % (item.item_type.lower(), item.pk))
+                result.append('<a href="%s">Untrash</a>' % untrash_url)
             else:
-                result.append("""<a href="/resource/%s/%s/trash">Trash</a>""" % (item.item_type.lower(), item.pk))
+                result.append('<a href="%s">Trash</a>' % trash_url)
             if itemversion.trashed:
-                result.append("""<a href="/resource/%s/%s/untrash?version=%s">Untrash Version</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
+                result.append('<a href="%s">Untrash Version</a>' % untrash_version_url)
             else:
-                result.append("""<a href="/resource/%s/%s/trash?version=%s">Trash Version</a>""" % (item.item_type.lower(), item.pk, itemversion.version_number))
-        result.append("""</div>""")
+                result.append('<a href="%s">Trash Version</a>' % trash_version_url)
+        result.append('</div>')
         for inherited_item_type in item_type_inheritance:
-            result.append("""<a href="/resource/%s">%ss</a> &raquo;""" % (inherited_item_type.lower(), inherited_item_type))
+            result.append('<a href="%s">%ss</a> &raquo;' % (reverse('resource_collection', kwargs={'viewer': inherited_item_type.lower()}), inherited_item_type))
         if agentcan_helper(context, 'view', 'name', item):
-            result.append('<a href="/resource/%s/%s">%s</a>' % (item.item_type.lower(), item.pk, escape(item.name)))
+            result.append('<a href="%s">%s</a>' % (show_resource_url(item), escape(item.name)))
         else:
-            result.append('<a href="/resource/%s/%s">[PERMISSION DENIED]</a>' % (item.item_type.lower(), item.pk))
-        result.append("""&raquo; """)
-        result.append("""<select id="id_item_type" name="item_type" onchange="window.location = this.value;">""")
+            result.append('<a href="%s">[PERMISSION DENIED]</a>' % show_resource_url(item))
+        result.append('&raquo; ')
+        result.append('<select id="id_item_type" name="item_type" onchange="window.location = this.value;">')
         for other_itemversion in item.versions.all():
-            result.append("""<option value="/resource/%s/%s/%s?version=%s"%s>Version %s</option>""" % (item.item_type.lower(), item.pk, context['action'], other_itemversion.version_number, ' selected="selected"' if other_itemversion.version_number == itemversion.version_number else '', other_itemversion.version_number))
-        result.append("""</select>""")
+            version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': context['action']}) + '?version=%s' % other_itemversion.version_number
+            result.append('<option value="%s"%s>Version %s</option>' % (version_url, ' selected="selected"' if other_itemversion.version_number == itemversion.version_number else '', other_itemversion.version_number))
+        result.append('</select>')
 
-        result.append("""</div>""")
+        result.append('</div>')
 
         if agentcan_helper(context, 'view', 'created_at', item):
             created_at_text = item.created_at.strftime("%Y-%m-%d %H:%m")
@@ -337,24 +348,24 @@ class ItemHeader(template.Node):
             updated_at_text = '[PERMISSION DENIED]'
         if agentcan_helper(context, 'view', 'creator', item):
             if agentcan_helper(context, 'view', 'name', item.creator):
-                creator_text = """<a href="%s">%s</a>""" % (show_resource_url(item.creator), escape(item.creator.name))
+                creator_text = '<a href="%s">%s</a>' % (show_resource_url(item.creator), escape(item.creator.name))
             else:
-                creator_text = """<a href="%s">%s</a>""" % (show_resource_url(item.creator), '[PERMISSION DENIED]')
+                creator_text = '<a href="%s">%s</a>' % (show_resource_url(item.creator), '[PERMISSION DENIED]')
         else:
             creator_text = '[PERMISSION DENIED]'
         if agentcan_helper(context, 'view', 'updater', item):
             if agentcan_helper(context, 'view', 'name', itemversion.updater):
-                updater_text = """<a href="%s">%s</a>""" % (show_resource_url(itemversion.updater), escape(itemversion.updater.name))
+                updater_text = '<a href="%s">%s</a>' % (show_resource_url(itemversion.updater), escape(itemversion.updater.name))
             else:
-                updater_text = """<a href="%s">%s</a>""" % (show_resource_url(itemversion.updater), '[PERMISSION DENIED]')
+                updater_text = '<a href="%s">%s</a>' % (show_resource_url(itemversion.updater), '[PERMISSION DENIED]')
         else:
             updater_text = '[PERMISSION DENIED]'
         result.append('<div style="font-size: 8pt;">')
         result.append('<div style="float: left;">')
-        result.append("""Originally created by %s on %s""" % (creator_text, created_at_text))
+        result.append('Originally created by %s on %s' % (creator_text, created_at_text))
         result.append('</div>')
         result.append('<div style="float: right;">')
-        result.append("""Version %s updated by %s on %s""" % (itemversion.version_number, updater_text, updated_at_text))
+        result.append('Version %s updated by %s on %s' % (itemversion.version_number, updater_text, updated_at_text))
         result.append('</div>')
         result.append('<div style="clear: both;">')
         result.append('</div>')
@@ -368,7 +379,7 @@ class ItemHeader(template.Node):
         result.append('</div>')
 
         if item.trashed:
-            result.append("""<div style="color: #c00; font-weight: bold; font-size: larger;">This version is trashed</div>""")
+            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This version is trashed</div>')
 
         return '\n'.join(result)
 
@@ -387,7 +398,7 @@ def display_body_with_inline_comments(itemversion, is_html):
     for comment_location in comment_locations:
         i = comment_location.commented_item_index
         result.insert(0, format(itemversion.body[i:last_i]))
-        result.insert(0, '<a href="/resource/comment/%s" class="commentref">%s</a>' % (comment_location.comment.pk, escape(comment_location.comment.name)))
+        result.insert(0, '<a href="%s" class="commentref">%s</a>' % (show_resource_url(comment_location.comment), escape(comment_location.comment.name)))
         last_i = i
     result.insert(0, format(itemversion.body[0:last_i]))
     return ''.join(result)
@@ -415,7 +426,7 @@ class CommentBox(template.Node):
 
         result = []
         result.append("""<div class="comment_box">""")
-        result.append("""<div class="comment_box_header"><a href="/resource/textcomment/new?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Add Comment</a></div>""" % (itemversion.current_item.pk, itemversion.version_number, urlquote(full_path)))
+        result.append("""<div class="comment_box_header"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Add Comment</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), itemversion.current_item.pk, itemversion.version_number, urlquote(full_path)))
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
@@ -424,9 +435,9 @@ class CommentBox(template.Node):
                     continue
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
-                result.append("""<div style="float: right;"><a href="/resource/textcomment/new?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (comment.pk, comment.versions.latest().version_number, urlquote(full_path)))
+                result.append("""<div style="float: right;"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), comment.pk, comment.versions.latest().version_number, urlquote(full_path)))
                 if agentcan_helper(context, 'view', 'name', comment):
-                    result.append("""<a href="/resource/%s/%s">%s</a>""" % (comment.item_type.lower(), comment.pk, escape(comment.name)))
+                    result.append("""<a href="%s">%s</a>""" % (show_resource_url(comment), escape(comment.name)))
                 else:
                     result.append('[PERMISSION DENIED]')
                 if agentcan_helper(context, 'view', 'creator', comment):

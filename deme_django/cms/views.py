@@ -180,19 +180,19 @@ class ItemViewer(object):
         return request_class(template.render(self.context))
 
     def init_from_http(self, request, cur_agent, current_site, url_info):
-        self.viewer_name = url_info['viewer']
-        self.format = url_info['format'] or 'html'
+        self.viewer_name = url_info.get('viewer')
+        self.format = url_info.get('format', 'html')
         self.method = (request.REQUEST.get('_method', None) or request.method).upper()
         self.request = request # FOR NOW
-        self.noun = url_info['noun']
+        self.noun = url_info.get('noun')
         if self.noun == None:
-            self.action = url_info['collection_action']
+            self.action = url_info.get('collection_action')
             if self.action == None:
                 self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'delete'}.get(self.method, 'list')
             self.item = None
             self.itemversion = None
         else:
-            self.action = url_info['entry_action']
+            self.action = url_info.get('entry_action')
             if self.action == None:
                 self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'delete'}.get(self.method, 'show')
             try:
