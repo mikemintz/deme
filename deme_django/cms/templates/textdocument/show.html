@@ -74,6 +74,7 @@
             body_str_index += n;
             remaining_body_str = remaining_body_str.substring(n);
         };
+        //TODO better error handling when we call parse_error()
         var traverse_text = function(text, wrapper){
             while (text.length > 0) {
                 var whiteSpaceBodyMatch = /((&nbsp;)|(\s))+/i.exec(remaining_body_str);
@@ -88,7 +89,7 @@
                         text = text.substring(whiteSpaceTextMatch[0].length);
                     }
                 } else if (bodyStartsWithWhiteSpace) {
-                    parse_error('error: body starts with whitespace but text does not'); //TODO what to do about this?
+                    parse_error('error: body starts with whitespace but text does not');
                     break;
                 } else if (textStartsWithWhiteSpace) {
                     var whiteSpaceTextNode = document.createTextNode(text.substring(0, whiteSpaceTextMatch[0].length));
@@ -112,19 +113,19 @@
                     var body_i = 0;
                     for (var i = 0; i < token.length; i++) {
                         if (remaining_body_str.length <= 0) {
-                            parse_error("error: out of remaining_body_str"); //TODO what to do about this?
+                            parse_error("error: out of remaining_body_str");
                         }
                         var bodyChar = remaining_body_str.substring(body_i, body_i+1);
                         if (bodyChar == '&') {
                             var semicolonIndex = remaining_body_str.indexOf(';', body_i+1);
                             if (semicolonIndex == -1) {
-                                parse_error("error: found ampersand without semicolon"); //TODO what to do about this?
+                                parse_error("error: found ampersand without semicolon");
                             }
                             body_i = semicolonIndex + 1;
                         } else {
                             var tokenChar = token.substring(i, i+1);
                             if (bodyChar != tokenChar) {
-                                parse_error("error: bodyChar (" + bodyChar + ") != tokenChar (" + tokenChar + ")"); //TODO what to do about this?
+                                parse_error("error: bodyChar (" + bodyChar + ") != tokenChar (" + tokenChar + ")");
                             }
                             body_i += 1;
                         }
@@ -148,7 +149,7 @@
                         var startTagPattern = new RegExp("[.\\s]*<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "i");
                         var startTagMatch = startTagPattern.exec(remaining_body_str);
                         if (startTagMatch == null) {
-                            //parse_error("error: could not find start tag: " + node.tagName); //TODO what to do about this?
+                            //parse_error("error: could not find start tag: " + node.tagName);
                             traverse_fn(node.childNodes);
                         } else {
                             increment_body_str(startTagMatch.index + startTagMatch[0].length);
