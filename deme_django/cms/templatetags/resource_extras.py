@@ -3,7 +3,7 @@ from django.db.models import Q
 import cms.models
 from cms import permission_functions
 from django.utils.http import urlquote
-from django.utils.html import escape
+from django.utils.html import escape, urlize
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 
@@ -378,11 +378,34 @@ def display_body_with_inline_comments(itemversion):
     #TODO don't insert these in bad places, like inside a tag <img <a href="....> />
     #TODO when you insert a comment in the middle of a tag like <b>hi <COMMENT></b> then it gets the style, this is bad
     comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=itemversion.current_item, commented_item_version_number=itemversion.version_number, commented_item_index__isnull=False, trashed=False, comment__trashed=False).order_by('-commented_item_index')
-    body_as_list = list(itemversion.body)
+    result = []
+    last_i = None
     for comment_location in comment_locations:
         i = comment_location.commented_item_index
-        body_as_list[i:i] = '<a href="/resource/comment/%s" class="commentref">%s</a>' % (comment_location.comment.pk, escape(comment_location.comment.name))
-    return ''.join(body_as_list)
+        result.insert(0, itemversion.body[i:last_i])
+        result.insert(0, '<a href="/resource/comment/%s" class="commentref">%s</a>' % (comment_location.comment.pk, escape(comment_location.comment.name)))
+        last_i = i
+    result.insert(0, itemversion.body[0:last_i])
+    return ''.join(result)
+
+
+@register.simple_tag
+def display_text_body_with_inline_comments(itemversion):
+    #TODO permissions? you should be able to see any CommentLocation, but maybe not the id of the comment it refers to
+    #TODO don't insert these in bad places, like inside a tag <img <a href="....> />
+    #TODO when you insert a comment in the middle of a tag like <b>hi <COMMENT></b> then it gets the style, this is bad
+    comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=itemversion.current_item, commented_item_version_number=itemversion.version_number, commented_item_index__isnull=False, trashed=False, comment__trashed=False).order_by('-commented_item_index')
+    result = []
+    last_i = None
+    def format(text):
+        return urlize(escape(text)).replace('\n', '<br />')
+    for comment_location in comment_locations:
+        i = comment_location.commented_item_index
+        result.insert(0, format(itemversion.body[i:last_i]))
+        result.insert(0, '<a href="/resource/comment/%s" class="commentref">%s</a>' % (comment_location.comment.pk, escape(comment_location.comment.name)))
+        last_i = i
+    result.insert(0, format(itemversion.body[0:last_i]))
+    return ''.join(result)
 
 
 @register.tag

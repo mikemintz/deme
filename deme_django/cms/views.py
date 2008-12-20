@@ -780,6 +780,7 @@ class TextDocumentViewer(ItemViewer):
 
     def entry_show(self):
         template = loader.get_template('textdocument/show.html')
+        self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
         return HttpResponse(template.render(self.context))
 
     def collection_getregions(self):
@@ -790,10 +791,6 @@ class TextDocumentViewer(ItemViewer):
 class HtmlDocumentViewer(TextDocumentViewer):
     item_type = cms.models.HtmlDocument
     viewer_name = 'htmldocument'
-
-    def entry_show(self):
-        template = loader.get_template('htmldocument/show.html')
-        return HttpResponse(template.render(self.context))
 
     def collection_getregions(self):
         data = '[["refbase_123::14", "refbase_123::18"]]'
