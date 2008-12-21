@@ -22,6 +22,7 @@ admin = Agent(name="Admin")
 admin.save_versioned(first_agent=True, create_permissions=False)
 
 role_abilities = []
+deme_settings = {}
 for model in all_models():
     #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
     if issubclass(model, Permission):
@@ -31,6 +32,8 @@ for model in all_models():
     creator_role = Role(name="%s Creator" % model.__name__)
     default_role.save_versioned(updater=admin, create_permissions=False)
     creator_role.save_versioned(updater=admin, create_permissions=False)
+    deme_settings["cms.default_role.%s" % model.__name__] = default_role.pk
+    deme_settings["cms.creator_role.%s" % model.__name__] = creator_role.pk
     for name in model._meta.get_all_field_names():
         field, defined_model, direct, m2m = model._meta.get_field_by_name(name)
         if not direct:
@@ -48,24 +51,34 @@ for model in all_models():
     role_abilities.append(RoleAbility(name="Creator ability to modify permissions of %s" % (model.__name__,), role=creator_role, ability="modify_permissions", ability_parameter="id", is_allowed=True))
     role_abilities.append(RoleAbility(name="Creator ability to trash %s" % (model.__name__,), role=creator_role, ability="trash", ability_parameter="id", is_allowed=True))
 
-print 'Saving roles...'
+print 'Saving role settings...'
+for key, value in deme_settings.iteritems():
+    deme_setting = DemeSetting(name="%s Setting" % key, key=key, value=value)
+    deme_setting.save_versioned(updater=admin, create_permissions=False)
+
+print 'Saving role_abilities...'
 for item in role_abilities:
     item.save_versioned(updater=admin, create_permissions=False)
 
+print 'Creating permissions for role settings'
+for deme_setting in DemeSetting.objects.all():
+    default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.DemeSetting"))
+    creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.DemeSetting"))
+    DefaultRolePermission(name="Default permission for %s" % deme_setting.name, item=deme_setting, role=default_role).save_versioned(updater=admin)
+    AgentRolePermission(name="Creator permission for %s" % deme_setting.name, agent=admin, item=deme_setting, role=creator_role).save_versioned(updater=admin)
+
 print 'Creating permissions for roles'
-for model in all_models():
-    #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
-    if issubclass(model, Permission):
-        continue
-    default_role = Role.objects.get(name="%s Default" % model.__name__)
-    creator_role = Role.objects.get(name="%s Creator" % model.__name__)
-    for role in [default_role, creator_role]:
-        DefaultRolePermission(name="Default permission for %s" % role.name, item=role, role=Role.objects.get(name="Role Default")).save_versioned(updater=admin)
-        AgentRolePermission(name="Creator permission for %s" % role.name, agent=admin, item=role, role=Role.objects.get(name="Role Creator")).save_versioned(updater=admin)
+for role in Role.objects.all():
+    default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.Role"))
+    creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.Role"))
+    DefaultRolePermission(name="Default permission for %s" % role.name, item=role, role=default_role).save_versioned(updater=admin)
+    AgentRolePermission(name="Creator permission for %s" % role.name, agent=admin, item=role, role=creator_role).save_versioned(updater=admin)
 
 print 'Creating permissions for admin'
-DefaultRolePermission(name="Default permission for Admin", item=admin, role=Role.objects.get(name="Agent Default")).save_versioned(updater=admin)
-AgentRolePermission(name="Creator permission for Admin", agent=admin, item=admin, role=Role.objects.get(name="Agent Creator")).save_versioned(updater=admin)
+DefaultRolePermission(name="Default permission for Admin", item=admin, role=Role.objects.get(pk=DemeSetting.get("cms.default_role.Agent"))).save_versioned(updater=admin)
+AgentRolePermission(name="Creator permission for Admin", agent=admin, item=admin, role=Role.objects.get(pk=DemeSetting.get("cms.creator_role.Agent"))).save_versioned(updater=admin)
+
+print 'Other stuff'
 
 AgentGlobalPermission(name='Admin can do everything', ability='do_everything', ability_parameter="Item", is_allowed=True, agent=admin).save_versioned(updater=admin)
 

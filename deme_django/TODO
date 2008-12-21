@@ -1,6 +1,12 @@
+Dec-19 notes
+-------------
+* Use DemeSetting to store symsys groups
+* ManyToMany between recursive itemsets and the memberships it was created from (just look at the child-most memberships, and if ANY of those are visible, the whole thing is visible)
+* Excerpt has many contiguous DocumentRegions (region has text field, offset field, and length field)
+  - use apps/highlight icon 
+
 Dec-17 notes
 ------------
-* excerpts/highlighting (we still need to talk about details) with apps/highlight icon
 * (distant future) new subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group
 * respos_job_email_subscribe is replaced with an actual subscription (but be careful that no emails get sent yet) counts as all 3 things
 * advisor should point to a symsysaffiliate
@@ -55,6 +61,7 @@ Code correctness/consistency/bugs
 * make "create folio" after group create be a after_save filter sort of thing, rather than viewer implemented, so subclasses of viewer do okay
 * Modifying TextDocuments needs to be able to move around located comments
 * We get an error when we try to leave a located comment on "Deme Home Page" source
+* The "crumbs" at the top of pages like TextAdvertisements and TextComments are wrong, since they have multiple inheritance
 
 Performance
 -----------

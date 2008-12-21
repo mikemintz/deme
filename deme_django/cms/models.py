@@ -298,10 +298,11 @@ class Item(models.Model):
 
         # Create the permissions
         #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
-        #TODO we need to reference the roles by id, not name, otherwise very insecure!
         if create_permissions and latest_version_number == 0 and not issubclass(self.__class__, Permission):
-            DefaultRolePermission(name="Default permission for %s" % self.name, item=self, role=Role.objects.get(name="%s Default" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
-            AgentRolePermission(name="Creator permission for %s" % self.name, agent=updater, item=self, role=Role.objects.get(name="%s Creator" % self.__class__.__name__)).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
+            default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.%s" % self.__class__.__name__))
+            creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.%s" % self.__class__.__name__))
+            DefaultRolePermission(name="Default permission for %s" % self.name, item=self, role=default_role).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
+            AgentRolePermission(name="Creator permission for %s" % self.name, agent=updater, item=self, role=creator_role).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
 
         # Update RecursiveCommentMembership if we're saving a Comment
         if isinstance(self, Comment):
@@ -362,6 +363,27 @@ class Item(models.Model):
         pass
     after_create.alters_data = True
 
+
+class DemeSetting(Item):
+    immutable_fields = Item.immutable_fields + ['key']
+    key = models.CharField(max_length=255, unique=True)
+    value = models.CharField(max_length=255, blank=True)
+    @classmethod
+    def get(cls, key):
+        try:
+            setting = cls.objects.get(key=key)
+            return setting.value
+        except ObjectDoesNotExist:
+            return None
+    @classmethod
+    def set(cls, key, value):
+        admin = Agent.objects.get(pk=1)
+        try:
+            setting = cls.objects.get(key=key)
+        except ObjectDoesNotExist:
+            setting = cls(name="%s Setting" % key, key=key)
+        setting.value = value
+        setting.save_versioned(updater=admin)
 
 
 class Agent(Item):
@@ -660,7 +682,6 @@ POSSIBLE_GLOBAL_ABILITIES = [
 ]
 
 #TODO somehow limit ability_parameter
-#TODO make role name unique maybe, or at least have a way of finding the ONE "AuthenticationMethod Creator" role
 
 class GlobalRole(Item):
     pass
