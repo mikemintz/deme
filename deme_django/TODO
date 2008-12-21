@@ -1,6 +1,5 @@
 Dec-19 notes
 -------------
-* Use DemeSetting to store symsys groups
 * ManyToMany between recursive itemsets and the memberships it was created from (just look at the child-most memberships, and if ANY of those are visible, the whole thing is visible)
 * Excerpt has many contiguous DocumentRegions (region has text field, offset field, and length field)
   - use apps/highlight icon 
@@ -11,12 +10,9 @@ Dec-17 notes
 * respos_job_email_subscribe is replaced with an actual subscription (but be careful that no emails get sent yet) counts as all 3 things
 * advisor should point to a symsysaffiliate
 * examine the choices for academic_title and admin_title
-* we make concentration and ms_track groups, distinct groups for ms and concentration, (eventually use subgroups to solve the Neuro problem)
-* make sure all of the group memberships are inferred when displaying a profile
+* make sure all of the group memberships are inferred when displaying a profile (using DemeSettings to know which group is which)
 * joining and leaving groups is somehow covered by permissions
-* change class_year to a group, anyone can join and leave when they want
 * change honors_advisor and honors_second_reader to symsysaffiliate pointers (problem is some aren't symsys affiliates)
-* add an honors group, derive from honors_status field (which we will remove)
 
 Remaining Dec-16 notes
 ----------------------
