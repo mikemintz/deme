@@ -307,11 +307,16 @@ The agent currently logged in is not allowed to use this application. Please log
             return None
 
     def render_item_not_found(self):
-        title = "%s Not Found" % self.item_type.__name__
         if self.item:
+            title = "%s Not Found" % self.item_type.__name__
             body = 'You cannot view item %s in this viewer. Try viewing it in the <a href="{%% show_resource_url item %%}">{{ item.item_type }} viewer</a>.' % self.noun
         else:
-            body = 'There is no item %s.' % self.noun
+            title = "Item Not Found"
+            version = self.request.GET.get('version')
+            if version is None:
+                body = 'There is no item %s.' % self.noun
+            else:
+                body = 'There is no item %s version %s.' % (self.noun, version)
         return self.render_error(HttpResponseNotFound, title, body)
 
     def collection_list(self):
