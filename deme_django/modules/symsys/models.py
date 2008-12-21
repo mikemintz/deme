@@ -39,8 +39,6 @@ class SymsysAffiliate(Person):
     ms_thesis_url = models.CharField(max_length=255, blank=True)
     ms_idt = models.CharField(max_length=255, blank=True)
 
-    respos_job_email_subscribe = models.CharField(max_length=20, blank=True)
-
     honors_advisor = models.CharField(max_length=255, blank=True)
     honors_second_reader = models.CharField(max_length=255, blank=True)
 
