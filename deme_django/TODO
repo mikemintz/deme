@@ -12,11 +12,9 @@ Dec-17 notes
 * advisor should point to a symsysaffiliate
 * examine the choices for academic_title and admin_title
 * we make concentration and ms_track groups, distinct groups for ms and concentration, (eventually use subgroups to solve the Neuro problem)
-* we make department be a group
 * make sure all of the group memberships are inferred when displaying a profile
 * joining and leaving groups is somehow covered by permissions
 * change class_year to a group, anyone can join and leave when they want
-* for faculty, department2 will be another group that they join
 * change honors_advisor and honors_second_reader to symsysaffiliate pointers (problem is some aren't symsys affiliates)
 * add an honors group, derive from honors_status field (which we will remove)
 

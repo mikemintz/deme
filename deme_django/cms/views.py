@@ -771,7 +771,7 @@ class GroupViewer(ItemViewer):
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
-        folio = self.item.folios_as_group.get()
+        folio = get_versioned_item(self.item.folios_as_group.get(), None)
         folio_viewer_class = get_viewer_class_for_viewer_name('itemset')
         folio_viewer = folio_viewer_class()
         folio_viewer.init_from_div(self.request, 'show', 'itemset', folio, self.cur_agent)

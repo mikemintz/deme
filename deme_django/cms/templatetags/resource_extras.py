@@ -531,11 +531,12 @@ class EmbeddedItem(template.Node):
                 item = None
         if not isinstance(item, cms.models.Item):
             return ''
+        from cms.views import get_viewer_class_for_viewer_name, get_versioned_item
         item = item.downcast()
-        from cms.views import get_viewer_class_for_viewer_name
+        item = get_versioned_item(item, None)
         viewer_class = get_viewer_class_for_viewer_name(item.item_type.lower())
         viewer = viewer_class()
-        viewer.init_from_div(context['request'], 'show', item.item_type.lower(), item, item.versions.latest().downcast(), context['cur_agent'])
+        viewer.init_from_div(context['request'], 'show', item.item_type.lower(), item, context['cur_agent'])
         return """<div style="padding: 10px; border: thick solid #aaa;">%s</div>""" % viewer.dispatch().content
 
 
