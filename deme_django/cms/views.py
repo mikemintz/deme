@@ -146,7 +146,6 @@ class ViewerMetaClass(type):
 def get_viewer_class_for_viewer_name(viewer_name):
     return ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
 
-#TODO make sure this really gets the right fields
 def get_versioned_item(item, version_number):
     if version_number is None:
         try:
@@ -530,7 +529,6 @@ The agent currently logged in is not allowed to use this application. Please log
         can_create = ('create', self.item_type.__name__) in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         if not (can_do_everything or can_create):
-            #TODO but agent can copy to another item type, so this is misleading
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
         form_class = get_form_class_for_item_type('create', self.item_type)
         if can_do_everything:

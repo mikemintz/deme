@@ -50,7 +50,7 @@ Code correctness/consistency/bugs
 ---------------------------------
 * figure out import deal on deme_django.cms and just cms
 * start using verbose_name to have nice displays of item type names
-* having the default "Item" and "id" ability_parameter is kind of unelegant.
+* having the default "Item" and "id" ability_parameter is kind of unelegant. And it would be nice to limit ability_parameter
 * make "create folio" after group create be a after_save filter sort of thing, rather than viewer implemented, so subclasses of viewer do okay
 * Modifying TextDocuments needs to be able to move around located comments
 * We get an error when we try to leave a located comment on "Deme Home Page" source
@@ -90,6 +90,9 @@ Distant Future
 * work on google app engine
 * We're going to have to integrate permissions into binary files (e.g., MediaDocument) so that users can't bypass Deme and download things from Apache directly.
   - I'd like to have a settings option where you either have apache with no permissions, django with no permissions, or django with full permissions (or maybe later a workaround with apache and permissions based on cookie)
+* Add to ImageDocument metadata like width, height, exif, and a pointer to a thumbfile or 2
+* When matching SiteDomain in alias, match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
+* In CustomUrl, we should prevent top level names like 'static' and 'resource' and 'modules', although not a big deal since it doesn't overwrite
 
 Small Details
 -------------

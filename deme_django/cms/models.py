@@ -498,7 +498,6 @@ class FileDocument(Document):
 
 
 class ImageDocument(FileDocument):
-    #TODO eventually we'll have metadata like width, height, exif, and a pointer to a thumbfile or 2
     pass
 
 
@@ -681,8 +680,6 @@ POSSIBLE_GLOBAL_ABILITIES = [
     ('do_everything', 'Do Everything'),
 ]
 
-#TODO somehow limit ability_parameter
-
 class GlobalRole(Item):
     pass
 
@@ -853,10 +850,8 @@ class SiteDomain(Item):
     site = models.ForeignKey(Site, related_name='site_domains_as_site')
     class Meta:
         unique_together = (('site', 'hostname'),)
-#TODO match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
 
 
-#TODO we should prevent top level names like 'static' and 'resource' and 'modules', although not a big deal since it doesn't overwrite
 class CustomUrl(ViewerRequest):
     immutable_fields = Item.immutable_fields + ['parent_url', 'path']
     parent_url = models.ForeignKey('ViewerRequest', related_name='child_urls')
