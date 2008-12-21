@@ -328,7 +328,7 @@ class ItemHeader(template.Node):
             result.append('<a href="%s">Permissions</a>' % permissions_url)
         if agentcan_helper(context, 'edit', None, item):
             result.append('<a href="%s">Edit</a>' % edit_url)
-        if agentcan_global_helper(context, 'create', None):
+        if agentcan_global_helper(context, 'create', item.item_type):
             result.append('<a href="%s">Copy</a>' % copy_url)
         if agentcan_helper(context, 'trash', 'id', item):
             if item.trashed:
