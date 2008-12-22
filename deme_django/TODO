@@ -45,6 +45,8 @@ Unusual things to remember
 * The Meta class of a model does not get propagated to the ItemVersion
 * remember to fully respect trashed=1 everywhere, like in groups, comments, etc.
 * There are cases when there is a cur_agent but no associated account (anonymous, login_as other)
+* Some code (especially recursive comments and memberships) assumes that immutable fields actually cannot change
+  - This also assumes that `trashed` can only change in trash() and untrash(), and items are always created untrashed
 
 Code correctness/consistency/bugs
 ---------------------------------

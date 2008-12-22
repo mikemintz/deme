@@ -232,30 +232,6 @@ class Item(models.Model):
         save_time = datetime.datetime.now()
         is_new = not self.pk
 
-        # Update RecursiveItemSetMembership if we're saving an ItemSetMembership
-        if isinstance(self, ItemSetMembership):
-            if is_new:
-                if not self.trashed:
-                    RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
-            else:
-                old = ItemSetMembership.objects.get(pk=self.pk)
-                if not old.trashed:
-                    if not self.trashed:
-                        #old and new are both around: check for changed pointers
-                        if (self.itemset, self.item) != (old.itemset, old.item):
-                            RecursiveItemSetMembership.recursive_remove(old.itemset, old.item)
-                            RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
-                    else:
-                        #old is around, new is not around: remove old
-                        RecursiveItemSetMembership.recursive_remove(old.itemset, old.item)
-                else:
-                    if not self.trashed:
-                        #old is not around, new is around: add new
-                        RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
-                    else:
-                        #neither old nor new are around: nothing to do
-                        pass
-
         # Update the item
         self.item_type = type(self).__name__
         if first_agent:
@@ -307,14 +283,6 @@ class Item(models.Model):
             creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.%s" % self.__class__.__name__))
             DefaultRolePermission(name="Default permission for %s" % self.name, item=self, role=default_role).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
             AgentRolePermission(name="Creator permission for %s" % self.name, agent=updater, item=self, role=creator_role).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
-
-        # Update RecursiveCommentMembership if we're saving a Comment
-        if isinstance(self, Comment):
-            if is_new:
-                RecursiveCommentMembership.recursive_add(self.commented_item, self)
-            else:
-                # We assume that commented_item cannot change since it is marked immutable
-                pass
 
         # Create an EditComment if we're making an edit
         if not is_new and not overwrite_latest_version:
@@ -481,6 +449,10 @@ class Comment(Document):
         return Item.objects.filter(parent_items | parent_item_itemsets, trashed=False)
     def after_create(self):
         super(Comment, self).after_create()
+
+        # Update RecursiveCommentMembership
+        RecursiveCommentMembership.recursive_add(self.commented_item, self)
+
         #TODO permissions to view name/body/etc
         #TODO maybe this should happen asynchronously somehow
         #TODO why doesn't an exception in this part of the code roll back the transaction?
@@ -541,6 +513,10 @@ class ItemSetMembership(Relationship):
     itemset = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
     class Meta:
         unique_together = (('item', 'itemset'),)
+    def after_create(self):
+        super(ItemSetMembership, self).after_create()
+        RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
+    after_create.alters_data = True
 
 
 class RecursiveItemSetMembership(models.Model):
