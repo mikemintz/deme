@@ -87,6 +87,12 @@ TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
+# The hostname used in URLs sent by email
+DEFAULT_HOSTNAME = 'localhost'
+
+# The hostname from which notification emails are sent
+NOTIFICATION_EMAIL_HOSTNAME = 'localhost'
+
 INSTALLED_APPS = (
     # 'django.contrib.auth',
     'django.contrib.contenttypes',

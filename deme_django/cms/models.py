@@ -7,6 +7,10 @@ from django.db import connection
 import datetime
 from django.core.exceptions import ObjectDoesNotExist
 import django.db.models.loading
+from django.core.mail import SMTPConnection, EmailMessage
+from email.utils import formataddr
+from django.core.urlresolvers import reverse
+import settings
 
 from django.db.models.base import ModelBase
 from copy import deepcopy
@@ -312,42 +316,6 @@ class Item(models.Model):
                 # We assume that commented_item cannot change since it is marked immutable
                 pass
 
-        # Send notifications if we're creating a new Comment
-        #TODO permissions to view name/body/etc
-        #TODO maybe this should happen asynchronously somehow
-        #TODO why doesn't an exception in this part of the code roll back the transaction?
-        if is_new and isinstance(self, Comment):
-            # email everyone subscribed to items this comment is relevant for
-            if isinstance(self, TextComment):
-                comment_type_q = Q(notify_text=True)
-            elif isinstance(self, EditComment):
-                comment_type_q = Q(notify_edit=True)
-            else:
-                #TODO what to do if it's none of the above?
-                comment_type_q = Q(pk__isnull=False)
-            direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
-            deep_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items_and_itemsets().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
-            subscribed_email_contact_methods = EmailContactMethod.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('contact_method').query) | Q(pk__in=deep_subscriptions.values('contact_method').query))
-            if subscribed_email_contact_methods:
-                from django.core.mail import SMTPConnection, EmailMessage
-                from email.utils import formataddr
-                subject = '[%s] %s' % (self.commented_item.name, self.name)
-                # TODO we need to generate a more dynamic URL here
-                if isinstance(self, TextComment):
-                    body = '%s wrote a comment in %s\n%s\n\n%s' % (self.creator.name, self.commented_item.name, 'http://deme.stanford.edu/resource/%s/%d' % (self.commented_item.item_type.lower(), self.commented_item.pk), self.body)
-                else:
-                    body = '%s did action %s to %s\n%s' % (self.creator.name, self.item_type, self.commented_item.name, 'http://deme.stanford.edu/resource/%s/%d' % (self.commented_item.item_type.lower(), self.commented_item.pk))
-                sender_agent = self.updater.downcast()
-                if isinstance(sender_agent, Person):
-                    from_email_address = sender_agent.email or 'noreply@deme.stanford.edu'
-                else:
-                    from_email_address = 'noreply@deme.stanford.edu'
-                from_email = formataddr((sender_agent.name, from_email_address))
-                headers = {'Reply-To': '%s@deme.stanford.edu' % self.pk}
-                messages = [EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((rcpt.agent.name, rcpt.email))], headers=headers) for rcpt in subscribed_email_contact_methods]
-                smtp_connection = SMTPConnection()
-                smtp_connection.send_messages(messages)
-
         # Create an EditComment if we're making an edit
         if not is_new and not overwrite_latest_version:
             edit_comment = EditComment(commented_item=self, name='Edit')
@@ -511,7 +479,39 @@ class Comment(Document):
         parent_items = Q(pk__in=parent_item_pks_query)
         parent_item_itemsets = Q(pk__in=RecursiveItemSetMembership.objects.filter(child__in=parent_item_pks_query).values('parent').query)
         return Item.objects.filter(parent_items | parent_item_itemsets, trashed=False)
+    def after_create(self):
+        super(Comment, self).after_create()
+        #TODO permissions to view name/body/etc
+        #TODO maybe this should happen asynchronously somehow
+        #TODO why doesn't an exception in this part of the code roll back the transaction?
 
+        # email everyone subscribed to items this comment is relevant for
+        if isinstance(self, TextComment):
+            comment_type_q = Q(notify_text=True)
+        elif isinstance(self, EditComment):
+            comment_type_q = Q(notify_edit=True)
+        else:
+            #TODO what to do if it's none of the above?
+            comment_type_q = Q(pk__isnull=False)
+        direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
+        deep_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items_and_itemsets().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
+        subscribed_email_contact_methods = EmailContactMethod.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('contact_method').query) | Q(pk__in=deep_subscriptions.values('contact_method').query))
+        if subscribed_email_contact_methods:
+            subject = '[%s] %s' % (self.commented_item.name, self.name)
+            commented_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': self.commented_item.item_type.lower(), 'noun': self.commented_item.pk}))
+            if isinstance(self, TextComment):
+                body = '%s wrote a comment in %s\n%s\n\n%s' % (self.creator.name, self.commented_item.name, commented_item_url, self.body)
+            else:
+                body = '%s did action %s to %s\n%s' % (self.creator.name, self.item_type, self.commented_item.name, commented_item_url)
+
+            from_email_address = '%s@%s' % (self.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
+            from_email = formataddr((self.updater.name, from_email_address))
+            reply_to = formataddr((self.name, from_email_address))
+            headers = {'Reply-To': reply_to}
+            messages = [EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((rcpt.agent.name, rcpt.email))], headers=headers) for rcpt in subscribed_email_contact_methods]
+            smtp_connection = SMTPConnection()
+            smtp_connection.send_messages(messages)
+    after_create.alters_data = True
 
 
 class CommentLocation(Item):
