@@ -512,12 +512,8 @@ class EditComment(Comment):
     pass
 
 
-class Relationship(Item):
-    pass
-
-
-class ItemSetMembership(Relationship):
-    immutable_fields = Relationship.immutable_fields + ['item', 'itemset']
+class ItemSetMembership(Item):
+    immutable_fields = Item.immutable_fields + ['item', 'itemset']
     item = models.ForeignKey(Item, related_name='itemset_memberships_as_item')
     itemset = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
     class Meta:

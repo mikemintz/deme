@@ -72,8 +72,6 @@ def icon_url(item_type, size=32):
         icon = 'apps/proxy'
     elif item_type == cms.models.Person:
         icon = 'apps/access'
-    elif item_type == cms.models.Relationship:
-        icon = 'apps/proxy'
     elif item_type == cms.models.Role or item_type == cms.models.GlobalRole:
         icon = 'apps/lassist'
     elif item_type == cms.models.RoleAbility or item_type == cms.models.GlobalRoleAbility:
