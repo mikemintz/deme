@@ -869,7 +869,6 @@ class HtmlDocumentViewer(TextDocumentViewer):
         can_edit = any(x[0] == 'edit' for x in abilities_for_item)
         if not (can_do_everything or can_edit):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
-        #TODO if specified specific version and uploaded file blank, it would revert to newest version uploaded file
         new_item = self.item
         fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
         form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
