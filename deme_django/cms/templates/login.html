@@ -25,6 +25,8 @@
             <th>Login</th>
         </tr>
     {% for agent in login_as_agents %}
+        {% if agent.trashed %}
+        {% else %}
         <tr>
             <td>
                 {% ifagentcan 'view' 'name' agent %}
@@ -37,6 +39,7 @@
                 <input type="submit" name="login_as_{{ agent.pk }}" value="Login" />
             </td>
         </tr>
+        {% endif %}
     {% endfor %}
     </table>
 </div>

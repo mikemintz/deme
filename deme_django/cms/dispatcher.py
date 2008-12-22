@@ -119,6 +119,8 @@ def login(request, *args, **kwargs):
                 password_authentication_method = cms.models.PasswordAuthenticationMethod.objects.get(username=username)
             except ObjectDoesNotExist:
                 return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Username", "No person has this username")
+            if password_authentication_method.agent.trashed: 
+                return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Trashed Agent", "The agent you are trying to log in as is trashed")
             if password_authentication_method.check_password(password):
                 new_agent = password_authentication_method.agent
                 request.session['cur_agent_id'] = new_agent.pk
@@ -133,6 +135,8 @@ def login(request, *args, **kwargs):
                         new_agent = cms.models.Agent.objects.get(pk=new_agent_id)
                     except ObjectDoesNotExist:
                         return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Agent ID", "There is no agent with the id you specified")
+                    if new_agent.trashed:
+                        return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Trashed Agent", "The agent you are trying to log in as is trashed")
                     if can_do_everything or ('login_as', 'id') in permission_functions.get_abilities_for_agent_and_item(cur_agent, new_agent):
                         request.session['cur_agent_id'] = new_agent.pk
                         return HttpResponseRedirect(redirect_url)
