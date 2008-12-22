@@ -114,7 +114,8 @@ class ItemVersion(models.Model):
 
     @transaction.commit_on_success
     def trash(self):
-        #TODO we must update RecursiveItemSetMembership
+        if self.trashed:
+            return
         try:
             latest_untrashed_version = self.current_item.versions.filter(trashed=False).latest()
         except ObjectDoesNotExist:
@@ -127,29 +128,18 @@ class ItemVersion(models.Model):
             except ObjectDoesNotExist:
                 new_latest_untrashed_version = None
             if new_latest_untrashed_version:
-                fields = {}
-                for field in new_latest_untrashed_version._meta.fields:
-                    if field.primary_key:
-                        continue
-                    if field.name in []:
-                        continue
-                    if type(field).__name__ == 'OneToOneField':
-                        continue
-                    try:
-                        fields[field.name] = getattr(new_latest_untrashed_version, field.name)
-                    except ObjectDoesNotExist:
-                        fields[field.name] = None
-                for key, val in fields.iteritems():
-                    setattr(new_latest_untrashed_version.current_item, key, val)
+                self.current_item.copy_fields_from_itemversion(new_latest_untrashed_version)
                 self.current_item.save()
             else:
                 self.current_item.trashed = True
                 self.current_item.save()
+                self.current_item.after_completely_trash()
     trash.alters_data = True
 
     @transaction.commit_on_success
     def untrash(self):
-        #TODO we must update RecursiveItemSetMembership
+        if not self.trashed:
+            return
         try:
             latest_untrashed_version = self.current_item.versions.filter(trashed=False).latest()
         except ObjectDoesNotExist:
@@ -157,22 +147,12 @@ class ItemVersion(models.Model):
         self.trashed = False
         self.save()
         if not latest_untrashed_version or self.version_number > latest_untrashed_version.version_number:
-            self.current_item.trashed = True
-            fields = {}
-            for field in self._meta.fields:
-                if field.primary_key:
-                    continue
-                if field.name in []:
-                    continue
-                if type(field).__name__ == 'OneToOneField':
-                    continue
-                try:
-                    fields[field.name] = getattr(self, field.name)
-                except ObjectDoesNotExist:
-                    fields[field.name] = None
-            for key, val in fields.iteritems():
-                setattr(self.current_item, key, val)
+            self.current_item.copy_fields_from_itemversion(self)
             self.current_item.save()
+        if not latest_untrashed_version:
+            self.current_item.trashed = False
+            self.current_item.save()
+            self.current_item.after_untrash()
     untrash.alters_data = True
 
 
@@ -201,28 +181,53 @@ class Item(models.Model):
     def all_comments(self):
         return Comment.objects.filter(trashed=False, pk__in=RecursiveCommentMembership.objects.filter(parent=self).values('child').query)
 
+    def copy_fields_from_itemversion(self, itemversion):
+        fields = {}
+        for field in itemversion._meta.fields:
+            if field.primary_key:
+                continue
+            if type(field).__name__ == 'OneToOneField':
+                continue
+            try:
+                fields[field.name] = getattr(itemversion, field.name)
+            except ObjectDoesNotExist:
+                fields[field.name] = None
+        for key, val in fields.iteritems():
+            setattr(self, key, val)
+
+    def copy_fields_to_itemversion(self, itemversion):
+        fields = {}
+        for field in self._meta.fields:
+            if field.primary_key:
+                continue
+            if type(field).__name__ == 'OneToOneField':
+                continue
+            try:
+                fields[field.name] = getattr(self, field.name)
+            except ObjectDoesNotExist:
+                fields[field.name] = None
+        for key, val in fields.iteritems():
+            setattr(itemversion, key, val)
+
     @transaction.commit_on_success
     def trash(self):
-        if not self.trashed:
-            if isinstance(self, ItemSetMembership):
-                RecursiveItemSetMembership.recursive_remove(self.itemset, self.item)
-            if isinstance(self, ItemSet):
-                RecursiveItemSetMembership.recursive_remove_itemset(self)
+        if self.trashed:
+            return
         self.trashed = True
         self.save()
         self.versions.all().update(trashed=True)
+        self.after_completely_trash()
     trash.alters_data = True
 
     @transaction.commit_on_success
     def untrash(self):
-        if self.trashed:
-            if isinstance(self, ItemSetMembership):
-                RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
-            if isinstance(self, ItemSet):
-                RecursiveItemSetMembership.recursive_add_itemset(self)
+        if not self.trashed:
+            return
+        self.copy_fields_from_itemversion(self.versions.latest())
         self.trashed = False
         self.save()
         self.versions.all().update(trashed=False)
+        self.after_untrash()
     untrash.alters_data = True
 
     @transaction.commit_on_success
@@ -250,19 +255,10 @@ class Item(models.Model):
             self.updated_at = updated_at
         else:
             self.updated_at = save_time
+        self.trashed = False
         self.save()
 
         # Create the new item version
-        fields = {}
-        for field in self._meta.fields:
-            if field.primary_key:
-                continue
-            if type(field).__name__ == 'OneToOneField':
-                continue
-            try:
-                fields[field.name] = getattr(self, field.name)
-            except ObjectDoesNotExist:
-                fields[field.name] = None
         latest_version_number = 0 if is_new else ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
         if overwrite_latest_version and not is_new:
             new_version = self.__class__.VERSION.objects.get(current_item=self, version_number=latest_version_number)
@@ -270,8 +266,7 @@ class Item(models.Model):
             new_version = self.__class__.VERSION()
             new_version.current_item_id = self.pk
             new_version.version_number = latest_version_number + 1
-        for key, val in fields.iteritems():
-            setattr(new_version, key, val)
+        self.copy_fields_to_itemversion(new_version)
         new_version.save()
 
         # Create the permissions
@@ -296,6 +291,14 @@ class Item(models.Model):
     def after_create(self):
         pass
     after_create.alters_data = True
+
+    def after_completely_trash(self):
+        pass
+    after_completely_trash.alters_data = True
+
+    def after_untrash(self):
+        pass
+    after_untrash.alters_data = True
 
 
 class DemeSetting(Item):
@@ -395,6 +398,14 @@ class Person(Agent):
 class ItemSet(Item):
     def all_contained_itemset_members(self):
         return Item.objects.filter(trashed=False, pk__in=RecursiveItemSetMembership.objects.filter(parent=self).values('child').query)
+    def after_completely_trash(self):
+        super(ItemSetMembership, self).after_completely_trash()
+        RecursiveItemSetMembership.recursive_remove_itemset(self)
+    after_completely_trash.alters_data = True
+    def after_untrash(self):
+        super(ItemSetMembership, self).after_untrash()
+        RecursiveItemSetMembership.recursive_add_itemset(self)
+    after_untrash.alters_data = True
 
 
 class Group(ItemSet):
@@ -515,6 +526,14 @@ class ItemSetMembership(Relationship):
         super(ItemSetMembership, self).after_create()
         RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
     after_create.alters_data = True
+    def after_completely_trash(self):
+        super(ItemSetMembership, self).after_completely_trash()
+        RecursiveItemSetMembership.recursive_remove(self.itemset, self.item)
+    after_completely_trash.alters_data = True
+    def after_untrash(self):
+        super(ItemSetMembership, self).after_untrash()
+        RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
+    after_untrash.alters_data = True
 
 
 class RecursiveItemSetMembership(models.Model):
