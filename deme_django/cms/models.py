@@ -584,16 +584,10 @@ class RecursiveCommentMembership(models.Model):
         unique_together = (('parent', 'child'),)
     @classmethod
     def recursive_add_comment(cls, comment):
-        parent = comment.commented_item
-        ancestors = Item.objects.filter(Q(recursive_comment_memberships_as_parent__child=parent) | Q(pk=parent.pk))
-        #TODO make this work with transactions
-        if ancestors:
-            cursor = connection.cursor()
-            ancestor_select = ' UNION '.join(["SELECT %s" % x.pk for x in ancestors])
-            descendant_select = "SELECT %s" % comment.pk
-            sql = "INSERT INTO cms_recursivecommentmembership (parent_id, child_id) SELECT ancestors.id, descendants.id FROM (%s) AS ancestors(id), (%s) AS descendants(id) WHERE NOT EXISTS (SELECT parent_id,child_id FROM cms_recursivecommentmembership WHERE parent_id = ancestors.id AND child_id = descendants.id)" % (ancestor_select, descendant_select)
-            cursor.execute(sql)
-            transaction.commit_unless_managed()
+        ancestors = Item.objects.filter(Q(pk__in=RecursiveCommentMembership.objects.filter(child=comment.commented_item).values('parent').query) | Q(pk=comment.commented_item.pk))
+        for ancestor in ancestors:
+            recursive_comment_membership = RecursiveCommentMembership(parent=ancestor, child=comment)
+            recursive_comment_membership.save()
 
 
 class ContactMethod(Item):
