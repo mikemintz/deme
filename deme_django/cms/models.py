@@ -460,7 +460,7 @@ class Comment(Document):
         super(Comment, self).after_create()
 
         # Update RecursiveCommentMembership
-        RecursiveCommentMembership.recursive_add(self.commented_item, self)
+        RecursiveCommentMembership.recursive_add_comment(self)
 
         #TODO permissions to view name/body/etc
         #TODO maybe this should happen asynchronously somehow
@@ -581,30 +581,17 @@ class RecursiveCommentMembership(models.Model):
     class Meta:
         unique_together = (('parent', 'child'),)
     @classmethod
-    def recursive_add(cls, parent, child):
+    def recursive_add_comment(cls, comment):
+        parent = comment.commented_item
         ancestors = Item.objects.filter(Q(recursive_comment_memberships_as_parent__child=parent) | Q(pk=parent.pk))
-        descendants = Comment.objects.filter(Q(recursive_comment_memberships_as_child__parent=child) | Q(pk=child.pk))
         #TODO make this work with transactions
-        if ancestors and descendants:
+        if ancestors:
             cursor = connection.cursor()
             ancestor_select = ' UNION '.join(["SELECT %s" % x.pk for x in ancestors])
-            descendant_select = ' UNION '.join(["SELECT %s" % x.pk for x in descendants])
+            descendant_select = "SELECT %s" % comment.pk
             sql = "INSERT INTO cms_recursivecommentmembership (parent_id, child_id) SELECT ancestors.id, descendants.id FROM (%s) AS ancestors(id), (%s) AS descendants(id) WHERE NOT EXISTS (SELECT parent_id,child_id FROM cms_recursivecommentmembership WHERE parent_id = ancestors.id AND child_id = descendants.id)" % (ancestor_select, descendant_select)
             cursor.execute(sql)
             transaction.commit_unless_managed()
-    @classmethod
-    def recursive_remove(cls, parent, child):
-        ancestors = Item.objects.filter(Q(recursive_comment_memberships_as_parent__child=parent) | Q(pk=parent.pk))
-        descendants = Comment.objects.filter(Q(recursive_comment_memberships_as_child__parent=child) | Q(pk=child.pk))
-        #TODO make this work with transactions
-        if ancestors and descendants:
-            # first remove all connections between ancestors and descendants
-            cursor = connection.cursor()
-            ancestor_select = ','.join([str(x.pk) for x in ancestors])
-            descendant_select = ','.join([str(x.pk) for x in descendants])
-            cursor.execute("DELETE FROM cms_recursivecommentmembership WHERE parent_id IN (%s) AND child_id IN (%s)" % (ancestor_select, descendant_select))
-            transaction.commit_unless_managed()
-            # nothing to add back, since comments form a tree structure
 
 
 class ContactMethod(Item):
