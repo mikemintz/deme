@@ -520,15 +520,15 @@ class ItemSetMembership(Item):
         unique_together = (('item', 'itemset'),)
     def after_create(self):
         super(ItemSetMembership, self).after_create()
-        RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
+        RecursiveItemSetMembership.recursive_add_membership(self)
     after_create.alters_data = True
     def after_completely_trash(self):
         super(ItemSetMembership, self).after_completely_trash()
-        RecursiveItemSetMembership.recursive_remove(self.itemset, self.item)
+        RecursiveItemSetMembership.recursive_remove_edge(self.itemset, self.item)
     after_completely_trash.alters_data = True
     def after_untrash(self):
         super(ItemSetMembership, self).after_untrash()
-        RecursiveItemSetMembership.recursive_add(self.itemset, self.item)
+        RecursiveItemSetMembership.recursive_add_membership(self)
     after_untrash.alters_data = True
 
 
@@ -538,7 +538,9 @@ class RecursiveItemSetMembership(models.Model):
     class Meta:
         unique_together = (('parent', 'child'),)
     @classmethod
-    def recursive_add(cls, parent, child):
+    def recursive_add_membership(cls, membership):
+        parent = membership.itemset
+        child = membership.item
         ancestors = ItemSet.objects.filter(Q(recursive_itemset_memberships_as_parent__child=parent) | Q(pk=parent.pk))
         descendants = Item.objects.filter(Q(recursive_itemset_memberships_as_child__parent=child) | Q(pk=child.pk))
         #TODO make this work with transactions
@@ -550,7 +552,7 @@ class RecursiveItemSetMembership(models.Model):
             cursor.execute(sql)
             transaction.commit_unless_managed()
     @classmethod
-    def recursive_remove(cls, parent, child):
+    def recursive_remove_edge(cls, parent, child):
         ancestors = ItemSet.objects.filter(Q(recursive_itemset_memberships_as_parent__child=parent) | Q(pk=parent.pk))
         descendants = Item.objects.filter(Q(recursive_itemset_memberships_as_child__parent=child) | Q(pk=child.pk))
         #TODO make this work with transactions
@@ -564,15 +566,15 @@ class RecursiveItemSetMembership(models.Model):
             # now add back any real connections between ancestors and descendants that aren't trashed
             memberships = ItemSetMembership.objects.filter(trashed=False, itemset__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(itemset=parent, item=child)
             for membership in memberships:
-                RecursiveItemSetMembership.recursive_add(membership.itemset, membership.item)
+                RecursiveItemSetMembership.recursive_add_membership(membership)
     @classmethod
     def recursive_add_itemset(cls, itemset):
         memberships = ItemSetMembership.objects.filter(Q(itemset=itemset) | Q(item=itemset), trashed=False)
         for membership in memberships:
-            RecursiveItemSetMembership.recursive_add(membership.itemset, membership.item)
+            RecursiveItemSetMembership.recursive_add_membership(membership)
     @classmethod
     def recursive_remove_itemset(cls, itemset):
-        RecursiveItemSetMembership.recursive_remove(itemset, itemset)
+        RecursiveItemSetMembership.recursive_remove_edge(itemset, itemset)
 
 
 class RecursiveCommentMembership(models.Model):
