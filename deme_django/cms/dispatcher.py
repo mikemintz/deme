@@ -52,6 +52,7 @@ def get_logged_in_agent(request):
         except ObjectDoesNotExist:
             raise Exception("You must create an anonymous agent")
     cms.models.Agent.objects.filter(pk=cur_agent.pk).update(last_online_at=datetime.datetime.now())
+    cms.models.Agent.VERSION.objects.filter(current_item__pk=cur_agent.pk).update(last_online_at=datetime.datetime.now())
     return cur_agent
 
 
