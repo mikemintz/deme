@@ -109,7 +109,6 @@ class ItemVersion(models.Model):
         return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.name)
 
     def downcast(self):
-        #TODO make more efficient
         item_type = [x for x in all_models() if x.__name__ == self.item_type][0]
         return item_type.VERSION.objects.get(id=self.id)
 
@@ -193,7 +192,6 @@ class Item(models.Model):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.name)
 
     def downcast(self):
-        #TODO make more efficient
         item_type = [x for x in all_models() if x.__name__ == self.item_type][0]
         return item_type.objects.get(id=self.id)
 
