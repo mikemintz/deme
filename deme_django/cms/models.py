@@ -271,7 +271,7 @@ class Item(models.Model):
 
         # Create the permissions
         #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
-        if create_permissions and latest_version_number == 0 and not issubclass(self.__class__, Permission):
+        if create_permissions and is_new and not issubclass(self.__class__, Permission):
             default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.%s" % self.__class__.__name__))
             creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.%s" % self.__class__.__name__))
             DefaultRolePermission(item=self, role=default_role).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
