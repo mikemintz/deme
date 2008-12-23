@@ -19,6 +19,8 @@ class SymsysAffiliateViewer(ItemViewer):
             visible_memberships = cms.models.ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'itemset'), permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'item'))
             recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
         self.context['containing_itemsets'] = self.item.all_containing_itemsets(recursive_filter)
-        self.context['contact_methods'] = self.item.contactmethods_as_agent.filter(trashed=False).filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'agent'))
+        self.context['contact_methods'] = self.item.contactmethods_as_agent.filter(trashed=False)
+        if ('do_everything', 'Item') not in self.get_global_abilities_for_agent(self.cur_agent):
+            self.context['contact_methods'] = self.context['contact_methods'].filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'agent'))
         return HttpResponse(template.render(self.context))
 
