@@ -44,16 +44,16 @@ for model in all_models():
             continue
         if name in ['item_type', 'trashed']:
             continue
-        role_abilities.append(RoleAbility(name="Default ability to view %s.%s" % (model.__name__, name), role=default_role, ability="view", ability_parameter=name, is_allowed=True))
-        role_abilities.append(RoleAbility(name="Creator ability to view %s.%s" % (model.__name__, name), role=creator_role, ability="view", ability_parameter=name, is_allowed=True))
+        role_abilities.append(RoleAbility(role=default_role, ability="view", ability_parameter=name, is_allowed=True))
+        role_abilities.append(RoleAbility(role=creator_role, ability="view", ability_parameter=name, is_allowed=True))
         if field.editable and name not in model.immutable_fields:
-            role_abilities.append(RoleAbility(name="Creator ability to edit %s.%s" % (model.__name__, name), role=creator_role, ability="edit", ability_parameter=name, is_allowed=True))
-    role_abilities.append(RoleAbility(name="Creator ability to modify permissions of %s" % (model.__name__,), role=creator_role, ability="modify_permissions", ability_parameter="id", is_allowed=True))
-    role_abilities.append(RoleAbility(name="Creator ability to trash %s" % (model.__name__,), role=creator_role, ability="trash", ability_parameter="id", is_allowed=True))
+            role_abilities.append(RoleAbility(role=creator_role, ability="edit", ability_parameter=name, is_allowed=True))
+    role_abilities.append(RoleAbility(role=creator_role, ability="modify_permissions", ability_parameter="id", is_allowed=True))
+    role_abilities.append(RoleAbility(role=creator_role, ability="trash", ability_parameter="id", is_allowed=True))
 
 print 'Saving role settings...'
 for key, value in deme_settings.iteritems():
-    deme_setting = DemeSetting(name="%s Setting" % key, key=key, value=value)
+    deme_setting = DemeSetting(name=key, key=key, value=value)
     deme_setting.save_versioned(updater=admin, create_permissions=False)
 
 print 'Saving role_abilities...'
@@ -64,23 +64,23 @@ print 'Creating permissions for role settings'
 for deme_setting in DemeSetting.objects.all():
     default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.DemeSetting"))
     creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.DemeSetting"))
-    DefaultRolePermission(name="Default permission for %s" % deme_setting.name, item=deme_setting, role=default_role).save_versioned(updater=admin)
-    AgentRolePermission(name="Creator permission for %s" % deme_setting.name, agent=admin, item=deme_setting, role=creator_role).save_versioned(updater=admin)
+    DefaultRolePermission(item=deme_setting, role=default_role).save_versioned(updater=admin)
+    AgentRolePermission(agent=admin, item=deme_setting, role=creator_role).save_versioned(updater=admin)
 
 print 'Creating permissions for roles'
 for role in Role.objects.all():
     default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.Role"))
     creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.Role"))
-    DefaultRolePermission(name="Default permission for %s" % role.name, item=role, role=default_role).save_versioned(updater=admin)
-    AgentRolePermission(name="Creator permission for %s" % role.name, agent=admin, item=role, role=creator_role).save_versioned(updater=admin)
+    DefaultRolePermission(item=role, role=default_role).save_versioned(updater=admin)
+    AgentRolePermission(agent=admin, item=role, role=creator_role).save_versioned(updater=admin)
 
 print 'Creating permissions for admin'
-DefaultRolePermission(name="Default permission for Admin", item=admin, role=Role.objects.get(pk=DemeSetting.get("cms.default_role.Agent"))).save_versioned(updater=admin)
-AgentRolePermission(name="Creator permission for Admin", agent=admin, item=admin, role=Role.objects.get(pk=DemeSetting.get("cms.creator_role.Agent"))).save_versioned(updater=admin)
+DefaultRolePermission(item=admin, role=Role.objects.get(pk=DemeSetting.get("cms.default_role.Agent"))).save_versioned(updater=admin)
+AgentRolePermission(agent=admin, item=admin, role=Role.objects.get(pk=DemeSetting.get("cms.creator_role.Agent"))).save_versioned(updater=admin)
 
 print 'Other stuff'
 
-AgentGlobalPermission(name='Admin can do everything', ability='do_everything', ability_parameter="Item", is_allowed=True, agent=admin).save_versioned(updater=admin)
+AgentGlobalPermission(ability='do_everything', ability_parameter="Item", is_allowed=True, agent=admin).save_versioned(updater=admin)
 
 anonymous_agent = AnonymousAgent(name='Anonymous')
 anonymous_agent.save_versioned(updater=admin)
@@ -121,7 +121,7 @@ default_site.save_versioned(updater=admin)
 
 mike_person = Person(first_name="Mike", last_name="Mintz", name="Mike Mintz")
 mike_person.save_versioned(updater=admin)
-mike_authentication_method = PasswordAuthenticationMethod(name="Mike's Password Authentication Method", username="mike", agent=mike_person)
+mike_authentication_method = PasswordAuthenticationMethod(username="mike", agent=mike_person)
 mike_authentication_method.set_password('')
 mike_authentication_method.save_versioned(updater=admin)
 mike_email_contact_method = EmailContactMethod(name="Mike's Email Contact Method", email="mike@example.com", agent=mike_person)
@@ -129,7 +129,7 @@ mike_email_contact_method.save_versioned(updater=admin)
 
 todd_person = Person(first_name="Todd", last_name="Davies", name="Todd Davies")
 todd_person.save_versioned(updater=admin)
-todd_authentication_method = PasswordAuthenticationMethod(name="Todd's Password Authentication Method", username="todd", agent=todd_person)
+todd_authentication_method = PasswordAuthenticationMethod(username="todd", agent=todd_person)
 todd_authentication_method.set_password('')
 todd_authentication_method.save_versioned(updater=admin)
 todd_email_contact_method = EmailContactMethod(name="Todd's Email Contact Method", email="todd@example.com", agent=todd_person)
@@ -137,7 +137,7 @@ todd_email_contact_method.save_versioned(updater=admin)
 
 reid_person = Person(first_name="Reid", last_name="Chandler", name="Reid Chandler")
 reid_person.save_versioned(updater=admin)
-reid_authentication_method = PasswordAuthenticationMethod(name="Reid's Password Authentication Method", username="reid", agent=reid_person)
+reid_authentication_method = PasswordAuthenticationMethod(username="reid", agent=reid_person)
 reid_authentication_method.set_password('')
 reid_authentication_method.save_versioned(updater=admin)
 reid_email_contact_method = EmailContactMethod(name="Reid's Email Contact Method", email="reid@example.com", agent=reid_person)
@@ -150,23 +150,23 @@ Hello World!
 {% endblock content %}
 """)
 hello_page.save_versioned(updater=admin)
-hello_url = CustomUrl(name="/hello URL", parent_url=default_site, path="hello", viewer='djangotemplatedocument', action='render', aliased_item=hello_page)
+hello_url = CustomUrl(parent_url=default_site, path="hello", viewer='djangotemplatedocument', action='render', aliased_item=hello_page)
 hello_url.save_versioned(updater=admin)
 
 symsys_group = Group(name="Symsys Group")
 symsys_group.save_versioned(updater=admin)
-ItemSetMembership(name="Mike's membership in Symsys group", item=mike_person, itemset=symsys_group).save_versioned(updater=admin)
-ItemSetMembership(name="Todd's membership in Symsys group", item=todd_person, itemset=symsys_group).save_versioned(updater=admin)
-ItemSetMembership(name="Reid's membership in Symsys group", item=reid_person, itemset=symsys_group).save_versioned(updater=admin)
+ItemSetMembership(item=mike_person, itemset=symsys_group).save_versioned(updater=admin)
+ItemSetMembership(item=todd_person, itemset=symsys_group).save_versioned(updater=admin)
+ItemSetMembership(item=reid_person, itemset=symsys_group).save_versioned(updater=admin)
 
 discuss_group = Group(name="Deme Dev Discussion")
 discuss_group.save_versioned(updater=admin)
-ItemSetMembership(name="Mike's membership in discuss group", item=mike_person, itemset=discuss_group).save_versioned(updater=admin)
-ItemSetMembership(name="Todd's membership in discuss group", item=todd_person, itemset=discuss_group).save_versioned(updater=admin)
+ItemSetMembership(item=mike_person, itemset=discuss_group).save_versioned(updater=admin)
+ItemSetMembership(item=todd_person, itemset=discuss_group).save_versioned(updater=admin)
 
-DefaultGlobalPermission(name="Default permission to do_something", ability='do_something', ability_parameter='Item', is_allowed=True).save_versioned(updater=admin)
-#AgentGlobalPermission(name="Permission for Anonymous not to do_something", agent=anonymous_agent, ability='do_something', ability_parameter='Item', is_allowed=False).save_versioned(updater=admin)
-DefaultGlobalPermission(name="Default permission to create TextComments", ability='create', ability_parameter='TextComment', is_allowed=True).save_versioned(updater=admin)
-DefaultGlobalPermission(name="Default permission to create HtmlDocuments", ability='create', ability_parameter='HtmlDocument', is_allowed=True).save_versioned(updater=admin)
+DefaultGlobalPermission(ability='do_something', ability_parameter='Item', is_allowed=True).save_versioned(updater=admin)
+#AgentGlobalPermission(agent=anonymous_agent, ability='do_something', ability_parameter='Item', is_allowed=False).save_versioned(updater=admin)
+DefaultGlobalPermission(ability='create', ability_parameter='TextComment', is_allowed=True).save_versioned(updater=admin)
+DefaultGlobalPermission(ability='create', ability_parameter='HtmlDocument', is_allowed=True).save_versioned(updater=admin)
 
-DefaultPermission(name="Default permission to login_as Admin", item=admin, ability='login_as', ability_parameter="id", is_allowed=True).save_versioned(updater=admin)
+DefaultPermission(item=admin, ability='login_as', ability_parameter="id", is_allowed=True).save_versioned(updater=admin)

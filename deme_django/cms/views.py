@@ -892,7 +892,6 @@ class HtmlDocumentViewer(TextDocumentViewer):
             new_item_version_number = new_item.versions.latest().version_number
             for index, comment_id in new_comment_locations:
                 comment_location = cms.models.CommentLocation()
-                comment_location.name = 'Untitled CommentLocation'
                 comment_location.comment = cms.models.Comment.objects.get(pk=comment_id)
                 comment_location.commented_item_index = index
                 comment_location.commented_item_version_number = new_item_version_number
@@ -964,7 +963,7 @@ class TextCommentViewer(TextDocumentViewer):
             commented_item_index = form.cleaned_data['commented_item_index']
             item = form.save(commit=False)
             item.save_versioned(updater=self.cur_agent)
-            comment_location = cms.models.CommentLocation(name="Untitled CommentLocation", comment=item, commented_item_version_number=commented_item_version_number, commented_item_index=commented_item_index)
+            comment_location = cms.models.CommentLocation(comment=item, commented_item_version_number=commented_item_version_number, commented_item_index=commented_item_index)
             comment_location.save_versioned(updater=self.cur_agent)
             redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
@@ -978,17 +977,6 @@ class TextCommentViewer(TextDocumentViewer):
             return HttpResponse(template.render(self.context))
 
     #TODO copy/edit/update comments
-
-
-class MagicViewer(ItemViewer):
-    item_type = cms.models.Item
-    viewer_name = 'blam'
-
-    def collection_list(self):
-        return HttpResponse('ka BLAM!')
-
-    def entry_show(self):
-        return HttpResponse('ka BLAM!')
 
 
 # let's dynamically create default viewers for the ones we don't have

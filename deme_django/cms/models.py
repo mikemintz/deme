@@ -274,14 +274,14 @@ class Item(models.Model):
         if create_permissions and latest_version_number == 0 and not issubclass(self.__class__, Permission):
             default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.%s" % self.__class__.__name__))
             creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.%s" % self.__class__.__name__))
-            DefaultRolePermission(name="Default permission for %s" % self.name, item=self, role=default_role).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
-            AgentRolePermission(name="Creator permission for %s" % self.name, agent=updater, item=self, role=creator_role).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
+            DefaultRolePermission(item=self, role=default_role).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
+            AgentRolePermission(agent=updater, item=self, role=creator_role).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
 
         # Create an EditComment if we're making an edit
         if not is_new and not overwrite_latest_version:
-            edit_comment = EditComment(commented_item=self, name='Edit')
+            edit_comment = EditComment(commented_item=self)
             edit_comment.save_versioned(updater=updater)
-            edit_comment_location = CommentLocation(name="Untitled CommentLocation", comment=edit_comment, commented_item_version_number=new_version.version_number, commented_item_index=None)
+            edit_comment_location = CommentLocation(comment=edit_comment, commented_item_version_number=new_version.version_number, commented_item_index=None)
             edit_comment_location.save_versioned(updater=updater)
 
         if is_new:
@@ -318,7 +318,7 @@ class DemeSetting(Item):
         try:
             setting = cls.objects.get(key=key)
         except ObjectDoesNotExist:
-            setting = cls(name="%s Setting" % key, key=key)
+            setting = cls(name=key, key=key)
         setting.value = value
         setting.save_versioned(updater=admin)
 
@@ -411,7 +411,7 @@ class ItemSet(Item):
 class Group(ItemSet):
     def after_create(self):
         super(Group, self).after_create()
-        folio = Folio(name="%s Folio" % self.name, group=self)
+        folio = Folio(group=self)
         folio.save_versioned(updater=self.updater)
     after_create.alters_data = True
 
@@ -463,6 +463,7 @@ class Comment(Document):
         RecursiveCommentMembership.recursive_add_comment(self)
 
         #TODO permissions to view name/body/etc
+        #TODO permissions to know what's in the itemset you're subscribed to
         #TODO maybe this should happen asynchronously somehow
         #TODO why doesn't an exception in this part of the code roll back the transaction?
 
