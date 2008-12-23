@@ -396,8 +396,11 @@ class Person(Agent):
 
 
 class ItemSet(Item):
-    def all_contained_itemset_members(self):
-        return Item.objects.filter(trashed=False, pk__in=RecursiveItemSetMembership.objects.filter(parent=self).values('child').query)
+    def all_contained_itemset_members(self, recursive_filter=None):
+        recursive_memberships = RecursiveItemSetMembership.objects.filter(parent=self)
+        if recursive_filter is not None:
+            recursive_memberships = recursive_memberships.filter(recursive_filter)
+        return Item.objects.filter(trashed=False, pk__in=recursive_memberships.values('child').query)
     def after_completely_trash(self):
         super(ItemSet, self).after_completely_trash()
         RecursiveItemSetMembership.recursive_remove_itemset(self)
@@ -539,18 +542,31 @@ class RecursiveItemSetMembership(models.Model):
     child_memberships = models.ManyToManyField(ItemSetMembership)
     class Meta:
         unique_together = (('parent', 'child'),)
+    #TODO when we remove itemsets and memberships, we need to take them out of child_memberships
     @classmethod
     def recursive_add_membership(cls, membership):
         #TODO if we raise an exception here (say we forgot .objects on get_or_create), transaction doesn't roll back!
         parent = membership.itemset
         child = membership.item
-        ancestors = ItemSet.objects.filter(Q(pk__in=RecursiveItemSetMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
-        descendants = Item.objects.filter(Q(pk__in=RecursiveItemSetMembership.objects.filter(parent=child).values('child').query) | Q(pk=child.pk))
-        for ancestor in ancestors:
-            for descendant in descendants:
-                recursive_itemset_membership, created = RecursiveItemSetMembership.objects.get_or_create(parent=ancestor, child=descendant)
-                if descendant.pk == child.pk:
-                    recursive_itemset_membership.child_memberships.add(membership)
+        # first connect parent to child
+        recursive_itemset_membership, created = RecursiveItemSetMembership.objects.get_or_create(parent=parent, child=child)
+        recursive_itemset_membership.child_memberships.add(membership)
+        # second connect ancestors to child, via parent
+        ancestor_recursive_memberships = RecursiveItemSetMembership.objects.filter(child=parent)
+        for ancestor_recursive_membership in ancestor_recursive_memberships:
+            recursive_itemset_membership, created = RecursiveItemSetMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent, child=child)
+            recursive_itemset_membership.child_memberships.add(membership)
+        # third connect parent and ancestors to all descendants
+        descendant_recursive_memberships = RecursiveItemSetMembership.objects.filter(parent=child)
+        for descendant_recursive_membership in descendant_recursive_memberships:
+            child_memberships = descendant_recursive_membership.child_memberships.all()
+            for ancestor_recursive_membership in ancestor_recursive_memberships:
+                recursive_itemset_membership, created = RecursiveItemSetMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent, child=descendant_recursive_membership.child)
+                for child_membership in child_memberships:
+                    recursive_itemset_membership.child_memberships.add(child_membership)
+            recursive_itemset_membership, created = RecursiveItemSetMembership.objects.get_or_create(parent=parent, child=descendant_recursive_membership.child)
+            for child_membership in child_memberships:
+                recursive_itemset_membership.child_memberships.add(child_membership)
     @classmethod
     def recursive_remove_edge(cls, parent, child):
         ancestors = ItemSet.objects.filter(Q(pk__in=RecursiveItemSetMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
