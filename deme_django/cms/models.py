@@ -535,18 +535,21 @@ class ItemSetMembership(Item):
 class RecursiveItemSetMembership(models.Model):
     parent = models.ForeignKey(ItemSet, related_name='recursive_itemset_memberships_as_parent')
     child = models.ForeignKey(Item, related_name='recursive_itemset_memberships_as_child')
+    child_memberships = models.ManyToManyField(ItemSetMembership)
     class Meta:
         unique_together = (('parent', 'child'),)
     @classmethod
     def recursive_add_membership(cls, membership):
+        #TODO if we raise an exception here (say we forgot .objects on get_or_create), transaction doesn't roll back!
         parent = membership.itemset
         child = membership.item
         ancestors = ItemSet.objects.filter(Q(pk__in=RecursiveItemSetMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
         descendants = Item.objects.filter(Q(pk__in=RecursiveItemSetMembership.objects.filter(parent=child).values('child').query) | Q(pk=child.pk))
         for ancestor in ancestors:
             for descendant in descendants:
-                recursive_itemset_membership = RecursiveItemSetMembership(parent=ancestor, child=descendant)
-                recursive_itemset_membership.save()
+                recursive_itemset_membership, created = RecursiveItemSetMembership.objects.get_or_create(parent=ancestor, child=descendant)
+                if descendant.pk == child.pk:
+                    recursive_itemset_membership.child_memberships.add(membership)
     @classmethod
     def recursive_remove_edge(cls, parent, child):
         ancestors = ItemSet.objects.filter(Q(pk__in=RecursiveItemSetMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
