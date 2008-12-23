@@ -399,11 +399,11 @@ class ItemSet(Item):
     def all_contained_itemset_members(self):
         return Item.objects.filter(trashed=False, pk__in=RecursiveItemSetMembership.objects.filter(parent=self).values('child').query)
     def after_completely_trash(self):
-        super(ItemSetMembership, self).after_completely_trash()
+        super(ItemSet, self).after_completely_trash()
         RecursiveItemSetMembership.recursive_remove_itemset(self)
     after_completely_trash.alters_data = True
     def after_untrash(self):
-        super(ItemSetMembership, self).after_untrash()
+        super(ItemSet, self).after_untrash()
         RecursiveItemSetMembership.recursive_add_itemset(self)
     after_untrash.alters_data = True
 
@@ -541,32 +541,23 @@ class RecursiveItemSetMembership(models.Model):
     def recursive_add_membership(cls, membership):
         parent = membership.itemset
         child = membership.item
-        ancestors = ItemSet.objects.filter(Q(recursive_itemset_memberships_as_parent__child=parent) | Q(pk=parent.pk))
-        descendants = Item.objects.filter(Q(recursive_itemset_memberships_as_child__parent=child) | Q(pk=child.pk))
-        #TODO make this work with transactions
-        if ancestors and descendants:
-            cursor = connection.cursor()
-            ancestor_select = ' UNION '.join(["SELECT %s" % x.pk for x in ancestors])
-            descendant_select = ' UNION '.join(["SELECT %s" % x.pk for x in descendants])
-            sql = "INSERT INTO cms_recursiveitemsetmembership (parent_id, child_id) SELECT ancestors.id, descendants.id FROM (%s) AS ancestors(id), (%s) AS descendants(id) WHERE NOT EXISTS (SELECT parent_id,child_id FROM cms_recursiveitemsetmembership WHERE parent_id = ancestors.id AND child_id = descendants.id)" % (ancestor_select, descendant_select)
-            cursor.execute(sql)
-            transaction.commit_unless_managed()
+        ancestors = ItemSet.objects.filter(Q(pk__in=RecursiveItemSetMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
+        descendants = Item.objects.filter(Q(pk__in=RecursiveItemSetMembership.objects.filter(parent=child).values('child').query) | Q(pk=child.pk))
+        for ancestor in ancestors:
+            for descendant in descendants:
+                recursive_itemset_membership = RecursiveItemSetMembership(parent=ancestor, child=descendant)
+                recursive_itemset_membership.save()
     @classmethod
     def recursive_remove_edge(cls, parent, child):
-        ancestors = ItemSet.objects.filter(Q(recursive_itemset_memberships_as_parent__child=parent) | Q(pk=parent.pk))
-        descendants = Item.objects.filter(Q(recursive_itemset_memberships_as_child__parent=child) | Q(pk=child.pk))
-        #TODO make this work with transactions
-        if ancestors and descendants:
-            # first remove all connections between ancestors and descendants
-            cursor = connection.cursor()
-            ancestor_select = ','.join([str(x.pk) for x in ancestors])
-            descendant_select = ','.join([str(x.pk) for x in descendants])
-            cursor.execute("DELETE FROM cms_recursiveitemsetmembership WHERE parent_id IN (%s) AND child_id IN (%s)" % (ancestor_select, descendant_select))
-            transaction.commit_unless_managed()
-            # now add back any real connections between ancestors and descendants that aren't trashed
-            memberships = ItemSetMembership.objects.filter(trashed=False, itemset__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(itemset=parent, item=child)
-            for membership in memberships:
-                RecursiveItemSetMembership.recursive_add_membership(membership)
+        ancestors = ItemSet.objects.filter(Q(pk__in=RecursiveItemSetMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
+        descendants = Item.objects.filter(Q(pk__in=RecursiveItemSetMembership.objects.filter(parent=child).values('child').query) | Q(pk=child.pk))
+        edges = RecursiveItemSetMembership.objects.filter(parent__pk__in=ancestors.values('pk').query, child__pk__in=descendants.values('pk').query)
+        # first remove all connections between ancestors and descendants
+        edges.delete()
+        # now add back any real connections between ancestors and descendants that aren't trashed
+        memberships = ItemSetMembership.objects.filter(trashed=False, itemset__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(itemset=parent, item=child)
+        for membership in memberships:
+            RecursiveItemSetMembership.recursive_add_membership(membership)
     @classmethod
     def recursive_add_itemset(cls, itemset):
         memberships = ItemSetMembership.objects.filter(Q(itemset=itemset) | Q(item=itemset), trashed=False)
@@ -584,7 +575,8 @@ class RecursiveCommentMembership(models.Model):
         unique_together = (('parent', 'child'),)
     @classmethod
     def recursive_add_comment(cls, comment):
-        ancestors = Item.objects.filter(Q(pk__in=RecursiveCommentMembership.objects.filter(child=comment.commented_item).values('parent').query) | Q(pk=comment.commented_item.pk))
+        parent = comment.commented_item
+        ancestors = Item.objects.filter(Q(pk__in=RecursiveCommentMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
         for ancestor in ancestors:
             recursive_comment_membership = RecursiveCommentMembership(parent=ancestor, child=comment)
             recursive_comment_membership.save()
