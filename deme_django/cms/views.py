@@ -343,8 +343,11 @@ The agent currently logged in is not allowed to use this application. Please log
                 search_filter = search_filter | Q(body__icontains=q)
             items = items.filter(search_filter)
         if isinstance(itemset, cms.models.ItemSet):
-            visible_memberships = cms.models.ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'itemset'), permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'item'))
-            recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
+            if ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent):
+                recursive_filter = None
+            else:
+                visible_memberships = cms.models.ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'itemset'), permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view', 'item'))
+                recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=itemset.all_contained_itemset_members(recursive_filter).values('pk').query)
         if ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent):
             listable_items = items

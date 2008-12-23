@@ -315,16 +315,16 @@
     {% endif %}
     {% endifagentcan %}
 
-    {# TODO display them individually, with permissions #}
-    {% for itemset in item.all_containing_itemsets %}
+    {# TODO display them as fields, rather than a silly list #}
+    {% for itemset in containing_itemsets %}
     <tr>
         <th>Item Set:</th>
         <td><a href="{% show_resource_url itemset %}">{{ itemset.name }}</a></td>
     </tr>
     {% endfor %}
 
-    {# TODO display them more nicely, with permissions #}
-    {% for contact_method in item.contactmethods_as_agent.all %}
+    {# TODO display them more nicely, rather than simply embedded #}
+    {% for contact_method in contact_methods %}
     <tr>
         <th>Contact Method:</th>
         <td>{% embed contact_method %}</td>

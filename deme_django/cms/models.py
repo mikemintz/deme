@@ -175,8 +175,11 @@ class Item(models.Model):
         item_type = [x for x in all_models() if x.__name__ == self.item_type][0]
         return item_type.objects.get(id=self.id)
 
-    def all_containing_itemsets(self):
-        return ItemSet.objects.filter(trashed=False, pk__in=RecursiveItemSetMembership.objects.filter(child=self).values('parent').query)
+    def all_containing_itemsets(self, recursive_filter=None):
+        recursive_memberships = RecursiveItemSetMembership.objects.filter(child=self)
+        if recursive_filter is not None:
+            recursive_memberships = recursive_memberships.filter(recursive_filter)
+        return ItemSet.objects.filter(trashed=False, pk__in=recursive_memberships.values('parent').query)
 
     def all_comments(self):
         return Comment.objects.filter(trashed=False, pk__in=RecursiveCommentMembership.objects.filter(parent=self).values('child').query)

@@ -1,6 +1,5 @@
 Dec-19 notes
 -------------
-* ManyToMany between recursive itemsets and the memberships it was created from (just look at the child-most memberships, and if ANY of those are visible, the whole thing is visible)
 * Excerpt has many contiguous DocumentRegions (region has text field, offset field, and length field)
   - use apps/highlight icon 
 

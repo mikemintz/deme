@@ -253,12 +253,15 @@ def ifagentcanglobal(parser, token):
     return IfAgentCanGlobal(bits[1], bits[2], nodelist_true, nodelist_false)
 
 # remember this includes trashed comments, which should be displayed differently after calling this
-def comment_dicts_for_item(item, version_number, cur_agent, include_recursive_itemset_comments):
+def comment_dicts_for_item(item, version_number, context, include_recursive_itemset_comments):
     comment_subclasses = [cms.models.TextComment, cms.models.EditComment]
     comments = []
     if include_recursive_itemset_comments:
-        visible_memberships = cms.models.ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(cur_agent, 'view', 'itemset'), permission_functions.filter_for_agent_and_ability(cur_agent, 'view', 'item'))
-        recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
+        if agentcan_global_helper(context, 'do_everything', 'Item'):
+            recursive_filter = None
+        else:
+            visible_memberships = cms.models.ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(context['cur_agent'], 'view', 'itemset'), permission_functions.filter_for_agent_and_ability(context['cur_agent'], 'view', 'item'))
+            recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
         members_and_me_pks_query = cms.models.Item.objects.filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_itemset_members(recursive_filter).values('pk').query)).values('pk').query
         for comment_subclass in comment_subclasses:
             comments.extend(comment_subclass.objects.filter(pk__in=cms.models.RecursiveCommentMembership.objects.filter(parent__in=members_and_me_pks_query).values('child').query))
@@ -503,7 +506,7 @@ class CommentBox(template.Node):
                     result.append("</div>")
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
-        add_comments_to_div(comment_dicts_for_item(item, version_number, context['cur_agent'], isinstance(item, cms.models.ItemSet)))
+        add_comments_to_div(comment_dicts_for_item(item, version_number, context, isinstance(item, cms.models.ItemSet)))
         result.append("</div>")
         return '\n'.join(result)
 
