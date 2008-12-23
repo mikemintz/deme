@@ -3,7 +3,7 @@ Deme is licensed under the GNU Affero General Public License version 3.
 
 We currently run with Django from SVN:
 http://code.djangoproject.com/svn/django/trunk/django
-Currently works with r9225
+Currently works with r9673
 
 Because of the table-name size restriction in MySQL, we run on postgresql
 
