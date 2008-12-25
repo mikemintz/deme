@@ -50,6 +50,7 @@ Performance
 * add indexes on things besides foreign keys, like name,description (for search) or version_number, and in global permissions: ability, ability_parameter, and is_allowed fields
 * we need multi-column indexes for permissions
   - we'll try http://docs.djangoproject.com/en/dev/howto/initial-data/#howto-initial-data
+* Asynchronous notifications
 
 Features
 --------

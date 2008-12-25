@@ -455,6 +455,9 @@ class ImageDocument(FileDocument):
 class Comment(Document):
     immutable_fields = Document.immutable_fields + ['commented_item']
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
+    def topmost_commented_item(self):
+        comment_class_names = [model.__name__ for model in all_models() if issubclass(model, Comment)]
+        return Item.objects.filter(pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query).exclude(item_type__in=comment_class_names).get()
     def all_commented_items(self):
         return Item.objects.filter(trashed=False, pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query)
     def all_commented_items_and_itemsets(self, recursive_filter=None):
@@ -473,37 +476,77 @@ class Comment(Document):
         # Update RecursiveCommentMembership
         RecursiveCommentMembership.recursive_add_comment(self)
 
-        #TODO permissions to view name/body/etc
-        #TODO permissions to know what's in the itemset you're subscribed to
-        #TODO maybe this should happen asynchronously somehow
-
         # email everyone subscribed to items this comment is relevant for
+        #TODO maybe this should happen asynchronously somehow
         if isinstance(self, TextComment):
             comment_type_q = Q(notify_text=True)
         elif isinstance(self, EditComment):
             comment_type_q = Q(notify_edit=True)
         else:
-            #TODO what to do if it's none of the above?
             comment_type_q = Q(pk__isnull=False)
         direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
         deep_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items_and_itemsets().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
         subscribed_email_contact_methods = EmailContactMethod.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('contact_method').query) | Q(pk__in=deep_subscriptions.values('contact_method').query))
-        if subscribed_email_contact_methods:
-            subject = '[%s] %s' % (self.commented_item.name, self.name)
-            commented_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': self.commented_item.item_type.lower(), 'noun': self.commented_item.pk}))
-            if isinstance(self, TextComment):
-                body = '%s wrote a comment in %s\n%s\n\n%s' % (self.creator.name, self.commented_item.name, commented_item_url, self.body)
-            else:
-                body = '%s did action %s to %s\n%s' % (self.creator.name, self.item_type, self.commented_item.name, commented_item_url)
-
-            from_email_address = '%s@%s' % (self.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
-            from_email = formataddr((self.updater.name, from_email_address))
-            reply_to = formataddr((self.name, from_email_address))
-            headers = {'Reply-To': reply_to}
-            messages = [EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((rcpt.agent.name, rcpt.email))], headers=headers) for rcpt in subscribed_email_contact_methods]
+        messages = [self.notification_email(email_contact_method) for email_contact_method in subscribed_email_contact_methods]
+        messages = [x for x in messages if x is not None]
+        if messages:
             smtp_connection = SMTPConnection()
             smtp_connection.send_messages(messages)
     after_create.alters_data = True
+    def notification_email(self, email_contact_method):
+        agent = email_contact_method.agent
+        import permission_functions
+        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(agent)
+
+        # First, decide if we're allowed to get this notification at all
+        if isinstance(self, TextComment):
+            comment_type_q = Q(notify_text=True)
+        elif isinstance(self, EditComment):
+            comment_type_q = Q(notify_edit=True)
+        else:
+            comment_type_q = Q(pk__isnull=False)
+        direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
+        if not direct_subscriptions:
+            if can_do_everything:
+                recursive_filter = None
+            else:
+                visible_memberships = ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(agent, 'view', 'itemset'), permission_functions.filter_for_agent_and_ability(agent, 'view', 'item'))
+                recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
+            possible_parents = self.all_commented_items_and_itemsets(recursive_filter)
+            deep_subscriptions = Subscription.objects.filter(item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
+            if not deep_subscriptions:
+                return None
+
+        # Now get the fields we are allowed to view
+        commented_item = self.commented_item
+        topmost_item = self.topmost_commented_item()
+        commented_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': commented_item.item_type.lower(), 'noun': commented_item.pk}))
+        topmost_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': topmost_item.item_type.lower(), 'noun': topmost_item.pk}))
+        abilities_for_comment = permission_functions.get_abilities_for_agent_and_item(agent, self)
+        abilities_for_commented_item = permission_functions.get_abilities_for_agent_and_item(agent, commented_item)
+        abilities_for_topmost_item = permission_functions.get_abilities_for_agent_and_item(agent, topmost_item)
+        abilities_for_comment_creator = permission_functions.get_abilities_for_agent_and_item(agent, self.creator)
+        comment_name = self.name if can_do_everything or ('view', 'name') in abilities_for_comment else 'PERMISSION DENIED'
+        if isinstance(self, TextComment):
+            comment_body = self.body if can_do_everything or ('view', 'body') in abilities_for_comment else 'PERMISSION DENIED'
+        commented_item_name = commented_item.name if can_do_everything or ('view', 'name') in abilities_for_commented_item else 'PERMISSION DENIED'
+        topmost_item_name = topmost_item.name if can_do_everything or ('view', 'name') in abilities_for_topmost_item else 'PERMISSION DENIED'
+        creator_name = self.creator.name if can_do_everything or ('view', 'name') in abilities_for_comment_creator else 'PERMISSION DENIED'
+
+        # Finally put together the message
+        if isinstance(self, TextComment):
+            subject = '[%s] %s' % (topmost_item_name, comment_name)
+            body = '%s wrote a comment in %s\n%s\n\n%s' % (creator_name, topmost_item_name, topmost_item_url, comment_body)
+        elif isinstance(self, EditComment):
+            subject = '[%s] Edited' % (commented_item_name,)
+            body = '%s edited %s\n%s' % (creator_name, commented_item_name, commented_item_url)
+        else:
+            return None
+        from_email_address = '%s@%s' % (self.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
+        from_email = formataddr((creator_name, from_email_address))
+        reply_to = formataddr((comment_name, from_email_address))
+        headers = {'Reply-To': reply_to}
+        return EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((agent.name, email_contact_method.email))], headers=headers)
 
 
 class CommentLocation(Item):
