@@ -19,8 +19,6 @@ Symsys module
 
 Ontology changes
 ----------------
-* Add Location class and LocationContains relationship
-* Event has multiple locations and times
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
 * Add more automatic generated comments (like Trash, Untrash, AddToItemset, RemoveFromItemset, etc.)
