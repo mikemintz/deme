@@ -18,7 +18,11 @@
                 {% ifequal field.format 'FileField' %}
                 <a href="/static/media/{{ field.obj }}">{{ field.obj }}</a>
                 {% else %}
+                {% ifequal field.format 'TextField' %}
+                {{ field.obj|escape|linebreaksbr|urlize }}
+                {% else %}
                 {{ field.obj|escape }}
+                {% endifequal %}
                 {% endifequal %}
                 {% endifequal %}
 
