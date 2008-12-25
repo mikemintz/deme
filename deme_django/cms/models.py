@@ -545,7 +545,6 @@ class RecursiveItemSetMembership(models.Model):
     child_memberships = models.ManyToManyField(ItemSetMembership)
     class Meta:
         unique_together = (('parent', 'child'),)
-    #TODO when we remove itemsets and memberships, we need to take them out of child_memberships
     @classmethod
     def recursive_add_membership(cls, membership):
         #TODO if we raise an exception here (say we forgot .objects on get_or_create), transaction doesn't roll back!
