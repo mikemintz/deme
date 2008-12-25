@@ -471,7 +471,6 @@ class Comment(Document):
         #TODO permissions to view name/body/etc
         #TODO permissions to know what's in the itemset you're subscribed to
         #TODO maybe this should happen asynchronously somehow
-        #TODO why doesn't an exception in this part of the code roll back the transaction?
 
         # email everyone subscribed to items this comment is relevant for
         if isinstance(self, TextComment):
