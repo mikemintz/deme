@@ -639,7 +639,7 @@ class AddressContactMethod(ContactMethod):
 
 
 class Subscription(Item):
-    immutable_fields = Item.immutable_fields + ['subscriber', 'item']
+    immutable_fields = Item.immutable_fields + ['contact_method', 'item']
     contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions_as_contact_method')
     item = models.ForeignKey(Item, related_name='subscriptions_as_item')
     deep = models.BooleanField(default=False)
