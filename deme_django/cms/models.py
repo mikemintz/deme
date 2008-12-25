@@ -457,10 +457,15 @@ class Comment(Document):
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
     def all_commented_items(self):
         return Item.objects.filter(trashed=False, pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query)
-    def all_commented_items_and_itemsets(self):
+    def all_commented_items_and_itemsets(self, recursive_filter=None):
         parent_item_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
         parent_items = Q(pk__in=parent_item_pks_query)
-        parent_item_itemsets = Q(pk__in=RecursiveItemSetMembership.objects.filter(child__in=parent_item_pks_query).values('parent').query)
+
+        recursive_memberships = RecursiveItemSetMembership.objects.filter(child__in=parent_item_pks_query)
+        if recursive_filter is not None:
+            recursive_memberships = recursive_memberships.filter(recursive_filter)
+        parent_item_itemsets = Q(pk__in=recursive_memberships.values('parent').query)
+
         return Item.objects.filter(parent_items | parent_item_itemsets, trashed=False)
     def after_create(self):
         super(Comment, self).after_create()
