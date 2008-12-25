@@ -3,19 +3,6 @@ Dec-19 notes
 * Excerpt has many contiguous DocumentRegions (region has text field, offset field, and length field)
   - use apps/highlight icon 
 
-Dec-17 notes
-------------
-* (distant future) new subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group
-* advisor should point to a symsysaffiliate
-* examine the choices for academic_title and admin_title
-* make sure all of the group memberships are inferred when displaying a profile (using DemeSettings to know which group is which)
-* joining and leaving groups is somehow covered by permissions
-* change honors_advisor and honors_second_reader to symsysaffiliate pointers (problem is some aren't symsys affiliates)
-
-Remaining Dec-16 notes
-----------------------
-* come up with specification for new symsys layout
-
 Nov-21 notes (automatic comments and subscriptions)
 ---------------------------------------------------
 * If you add something to an itemset, the comment is located at that particular "item" but the comment is still on the itemset
@@ -24,17 +11,16 @@ Nov-21 notes (automatic comments and subscriptions)
 Symsys module
 -------------
 * permissions for symsysusers will just be interpreted in the viewer, they don't get "modify_permissions"
+* joining and leaving groups is somehow covered by permissions
+* examine the choices for academic_title and admin_title
+* advisor should point to a symsysaffiliate
+* change honors_advisor and honors_second_reader to symsysaffiliate pointers (problem is some aren't symsys affiliates)
+* come up with specification for new symsys layout
 
 Ontology changes
 ----------------
 * Add Location class and LocationContains relationship
 * Event has multiple locations and times
-* Add Excerpt item_type
-  - Item_Id
-  - ItemVersion
-  - FieldItIsAbout (maybe just the body)
-  - xpath_string (multiple regions)
-  - data
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
 * Add more automatic generated comments (like Trash, Untrash, AddToItemset, RemoveFromItemset, etc.)
@@ -95,7 +81,8 @@ Distant Future
   - I'd like to have a settings option where you either have apache with no permissions, django with no permissions, or django with full permissions (or maybe later a workaround with apache and permissions based on cookie)
 * Add to ImageDocument metadata like width, height, exif, and a pointer to a thumbfile or 2
 * When matching SiteDomain in alias, match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
-* In CustomUrl, we should prevent top level names like 'static' and 'resource' and 'modules', although not a big deal since it doesn't overwrite
+* In CustomUrl, we should prevent top level names like 'static' and 'resource' and 'modules' and 'meta', although not a big deal since it doesn't overwrite
+* new subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group
 
 Small Details
 -------------
