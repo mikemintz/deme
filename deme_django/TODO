@@ -1,3 +1,8 @@
+|==========|
+|Short Term|
+|==========|
+
+
 Dec-19 notes
 -------------
 * Excerpt has many contiguous DocumentRegions (region has text field, offset field, and length field)
@@ -19,17 +24,7 @@ Symsys module
 
 Ontology changes
 ----------------
-* Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
-* Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
 * Add more automatic generated comments (like Trash, Untrash, AddToItemset, RemoveFromItemset, etc.)
-
-Unusual things to remember
---------------------------
-* The Meta class of a model does not get propagated to the ItemVersion
-* remember to fully respect trashed=1 everywhere, like in groups, comments, etc.
-* There are cases when there is a cur_agent but no associated account (anonymous, login_as other)
-* Some code (especially recursive comments and memberships) assumes that immutable fields actually cannot change
-  - This also assumes that `trashed` can only change in trash() and untrash(), and items are always created untrashed
 
 Code correctness/consistency/bugs
 ---------------------------------
@@ -68,25 +63,42 @@ Documentation
 * Document more functions with docstrings more
 * Make some sort of API doc
 
-Distant Future
---------------
-* migrations (let's use http://south.aeracode.org/)
-* more efficient versioning (like like latest version in db, but have deltas to prev versions)
-* later, think about adding back "edit downcast". we'll have to think about
-  - what happens when viewer2 inherits from viewer1, and viewer2 item type subclasses viewer1 item type, and viewer2 inherits the edit/update functionality?
-  - make it work better when you downcast an item in the editor, with versioning backward, and calling actions that should be called on create
-* respect the format string and have XML output and stuff
-* work on google app engine
-* We're going to have to integrate permissions into binary files (e.g., MediaDocument) so that users can't bypass Deme and download things from Apache directly.
-  - I'd like to have a settings option where you either have apache with no permissions, django with no permissions, or django with full permissions (or maybe later a workaround with apache and permissions based on cookie)
-* Add to ImageDocument metadata like width, height, exif, and a pointer to a thumbfile or 2
-* When matching SiteDomain in alias, match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
-* In CustomUrl, we should prevent top level names like 'static' and 'resource' and 'modules' and 'meta', although not a big deal since it doesn't overwrite
-* new subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group
-
 Small Details
 -------------
 * make favicon transparent (both symsys and groupspace)
 * SSL for login or just sha1 the password in javascript
-* don't forget to update crystal icons for new models
 * make sure actions that change state go through POST and not GET, like entry_trash
+
+Unusual things to remember
+--------------------------
+* The Meta class of a model does not get propagated to the ItemVersion
+* remember to fully respect trashed=1 everywhere, like in groups, comments, etc.
+* There are cases when there is a cur_agent but no associated account (anonymous, login_as other)
+* Some code (especially recursive comments and memberships) assumes that immutable fields actually cannot change
+  - This also assumes that `trashed` can only change in trash() and untrash(), and items are always created untrashed
+* Don't forget to update crystal icons for new models
+
+
+
+|=========|
+|Long Term|
+|=========|
+
+
+Distant Future (sorted by approximate order of planned implementation)
+----------------------------------------------------------------------
+* Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
+* new subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group
+* Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
+* migrations (let's use http://south.aeracode.org/)
+* more efficient versioning (like like latest version in db, but have deltas to prev versions)
+* We're going to have to integrate permissions into binary files (e.g., MediaDocument) so that users can't bypass Deme and download things from Apache directly.
+  - I'd like to have a settings option where you either have apache with no permissions, django with no permissions, or django with full permissions (or maybe later a workaround with apache and permissions based on cookie)
+* respect the format string and have XML output and stuff
+* When matching SiteDomain in alias, match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
+* Add to ImageDocument metadata like width, height, exif, and a pointer to a thumbfile or 2
+* In CustomUrl, we should prevent top level names like 'static' and 'resource' and 'modules' and 'meta', although not a big deal since it doesn't overwrite
+* later, think about adding back "edit downcast". we'll have to think about
+  - what happens when viewer2 inherits from viewer1, and viewer2 item type subclasses viewer1 item type, and viewer2 inherits the edit/update functionality?
+  - make it work better when you downcast an item in the editor, with versioning backward, and calling actions that should be called on create
+* work on google app engine
