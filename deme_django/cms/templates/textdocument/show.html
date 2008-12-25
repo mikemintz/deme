@@ -19,6 +19,7 @@
 </style>
 
 <script type="text/javascript">
+    var is_escaped = {% if is_html %}false{% else %}true{% endif %};
     var body_str = "{{ item.body|escapejs }}";
 
     function parse_error(str) {
@@ -150,14 +151,12 @@
                 } else {
                     if (!node.hasClassName('commentref')) {
                         // match the start tag
-                        //TODO maybe we should have \s* at the front of the next regexp
-                        var startTagPattern = new RegExp("<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "i");
+                        var startTagPattern = new RegExp("[.\\s]*<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "i");
                         var startTagMatch = startTagPattern.exec(remaining_body_str);
-                        if (startTagMatch == null || startTagMatch.index != 0) {
-                            //parse_error("error: could not find start tag: " + node.tagName);
-                            traverse_fn(node.childNodes);
+                        if (is_escaped || startTagMatch == null) {
+                            var success = traverse_fn(node.childNodes);
+                            if (!success) return false;
                         } else {
-                            parse_error('info @ ' + body_str_index + ': startTagMatch ' + startTagMatch[0] + ' at index ' + startTagMatch.index);
                             increment_body_str(startTagMatch.index + startTagMatch[0].length);
                             if (node.tagName == 'IMG') {
                                 node.deme_text_offset = body_str_index - startTagMatch[0].length;
