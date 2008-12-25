@@ -566,6 +566,23 @@ class EditComment(Comment):
     pass
 
 
+class Excerpt(Item):
+    pass
+
+
+class DocumentRegion(Item):
+    immutable_fields = Item.immutable_fields + ['excerpt']
+    excerpt = models.ForeignKey(Excerpt, related_name='document_regions_as_excerpt')
+
+
+class TextDocumentRegion(DocumentRegion, TextDocument):
+    immutable_fields = list(set(DocumentRegion.immutable_fields + TextDocument.immutable_fields + ['text_document','text_document_version_number', 'start_index', 'length', 'body']))
+    text_document = models.ForeignKey(TextDocument, related_name='text_document_regions_as_text_document')
+    text_document_version_number = models.IntegerField()
+    start_index = models.IntegerField()
+    length = models.IntegerField()
+
+
 class ItemSetMembership(Item):
     immutable_fields = Item.immutable_fields + ['item', 'itemset']
     item = models.ForeignKey(Item, related_name='itemset_memberships_as_item')
