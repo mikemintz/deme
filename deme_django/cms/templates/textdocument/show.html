@@ -89,8 +89,7 @@
                         text = text.substring(whiteSpaceTextMatch[0].length);
                     }
                 } else if (bodyStartsWithWhiteSpace) {
-                    parse_error('error: body starts with whitespace but text does not');
-                    break;
+                    increment_body_str(whiteSpaceBodyMatch[0].length);
                 } else if (textStartsWithWhiteSpace) {
                     var whiteSpaceTextNode = document.createTextNode(text.substring(0, whiteSpaceTextMatch[0].length));
                     wrapper.appendChild(whiteSpaceTextNode);
@@ -113,19 +112,22 @@
                     var body_i = 0;
                     for (var i = 0; i < token.length; i++) {
                         if (remaining_body_str.length <= 0) {
-                            parse_error("error: out of remaining_body_str");
+                            parse_error('error @ ' + body_str_index + ': out of remaining_body_str');
+                            return false;
                         }
                         var bodyChar = remaining_body_str.substring(body_i, body_i+1);
                         if (bodyChar == '&') {
                             var semicolonIndex = remaining_body_str.indexOf(';', body_i+1);
                             if (semicolonIndex == -1) {
-                                parse_error("error: found ampersand without semicolon");
+                                parse_error('error @ ' + body_str_index + ': found ampersand without semicolon');
+                                return false;
                             }
                             body_i = semicolonIndex + 1;
                         } else {
                             var tokenChar = token.substring(i, i+1);
                             if (bodyChar != tokenChar) {
-                                parse_error("error: bodyChar (" + bodyChar + ") != tokenChar (" + tokenChar + ")");
+                                parse_error('error @ ' + body_str_index + ': bodyChar (' + bodyChar + ') != tokenChar (' + tokenChar + ')');
+                                return false;
                             }
                             body_i += 1;
                         }
@@ -134,6 +136,7 @@
                     text = text.substring(token.length);
                 }
             }
+            return true;
         };
         var traverse_fn = function(nodes){
             for (var i = 0; i < nodes.length; i++) {
@@ -141,17 +144,20 @@
                 if (node.nodeType == Node.TEXT_NODE) {
                     var wrapper = $(document.createElement('span'));
                     node.parentNode.insertBefore(wrapper, node);
-                    traverse_text(node.data, wrapper);
+                    var success = traverse_text(node.data, wrapper);
                     node.parentNode.removeChild(node);
+                    if (!success) return false;
                 } else {
                     if (!node.hasClassName('commentref')) {
                         // match the start tag
-                        var startTagPattern = new RegExp("[.\\s]*<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "i");
+                        //TODO maybe we should have \s* at the front of the next regexp
+                        var startTagPattern = new RegExp("<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "i");
                         var startTagMatch = startTagPattern.exec(remaining_body_str);
-                        if (startTagMatch == null) {
+                        if (startTagMatch == null || startTagMatch.index != 0) {
                             //parse_error("error: could not find start tag: " + node.tagName);
                             traverse_fn(node.childNodes);
                         } else {
+                            parse_error('info @ ' + body_str_index + ': startTagMatch ' + startTagMatch[0] + ' at index ' + startTagMatch.index);
                             increment_body_str(startTagMatch.index + startTagMatch[0].length);
                             if (node.tagName == 'IMG') {
                                 node.deme_text_offset = body_str_index - startTagMatch[0].length;
@@ -159,7 +165,8 @@
                                 node.onmouseout = located_token_mouseout;
                                 node.onclick = located_token_click;
                             }
-                            traverse_fn(node.childNodes);
+                            var success = traverse_fn(node.childNodes);
+                            if (!success) return false;
 
                             // match the optional end tag
                             var endTagPattern = new RegExp("\\s*<\\s*/\\s*" + node.tagName + "[^>]*>", "i");
@@ -172,6 +179,7 @@
                     }
                 }
             }
+            return true;
         };
         traverse_fn(docbody_clone.childNodes);
 
