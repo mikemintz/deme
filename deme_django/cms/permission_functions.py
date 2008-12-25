@@ -161,3 +161,37 @@ def filter_for_agent_and_ability(agent, ability, ability_parameter):
            (~perm_q['agentno'] & ~perm_q['itemsetno'] & ~perm_q['agentroleno'] & ~perm_q['itemsetroleno'] & perm_q['defaultyes']) |\
            (~perm_q['agentno'] & ~perm_q['itemsetno'] & ~perm_q['agentroleno'] & ~perm_q['itemsetroleno'] & perm_q['defaultroleyes'])
 
+def filter_agents_for_item_and_ability(item, ability, ability_parameter):
+    relevant_yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, ability_parameter=ability_parameter, is_allowed=True).values('role_id').query
+    relevant_no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, ability_parameter=ability_parameter, is_allowed=False).values('role_id').query
+
+    perm_q = {}
+    for agentitemsetdefault in ['agent', 'itemset', 'default']:
+        for role in ['role', '']:
+            for is_allowed in ['yes', 'no']:
+                permission_class = eval("%s%sPermission" % ({'agent':'Agent','itemset':'ItemSet','default':'Default'}[agentitemsetdefault], role.capitalize()))
+                args = {'trashed': False, 'item': item}
+                if role == 'role':
+                    args['role__pk__in'] = (relevant_yes_role_ids if is_allowed == 'yes' else relevant_no_role_ids)
+                else:
+                    args['ability'] = ability
+                    args['ability_parameter'] = ability_parameter
+                    args['is_allowed'] = (is_allowed == 'yes')
+                if agentitemsetdefault == 'agent':
+                    query = permission_class.objects.filter(**args).values('agent_id').query
+                    perm_q["%s%s%s" % (agentitemsetdefault, role, is_allowed)] = Q(pk__in=query)
+                elif agentitemsetdefault == 'itemset':
+                    itemset_query = permission_class.objects.filter(**args).values('itemset_id').query
+                    query = RecursiveItemSetMembership.objects.filter(parent__pk__in=itemset_query).values('child_id').query
+                    perm_q["%s%s%s" % (agentitemsetdefault, role, is_allowed)] = Q(pk__in=query)
+                else:
+                    default_perm_exists = (len(permission_class.objects.filter(**args)[:1]) > 0)
+                    perm_q["%s%s%s" % (agentitemsetdefault, role, is_allowed)] = Q(pk__isnull=not default_perm_exists)
+
+    return perm_q['agentyes'] |\
+           perm_q['agentroleyes'] |\
+           (~perm_q['agentno'] & ~perm_q['agentroleno'] & perm_q['itemsetyes']) |\
+           (~perm_q['agentno'] & ~perm_q['agentroleno'] & perm_q['itemsetroleyes']) |\
+           (~perm_q['agentno'] & ~perm_q['itemsetno'] & ~perm_q['agentroleno'] & ~perm_q['itemsetroleno'] & perm_q['defaultyes']) |\
+           (~perm_q['agentno'] & ~perm_q['itemsetno'] & ~perm_q['agentroleno'] & ~perm_q['itemsetroleno'] & perm_q['defaultroleyes'])
+

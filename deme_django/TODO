@@ -55,7 +55,6 @@ Features
 --------
 * edit locks
 * deleting items (i.e. blanking)
-* write a query that finds out all of the people that have permission to do X to item Y
 
 Interface
 ---------
