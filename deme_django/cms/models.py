@@ -547,7 +547,6 @@ class RecursiveItemSetMembership(models.Model):
         unique_together = (('parent', 'child'),)
     @classmethod
     def recursive_add_membership(cls, membership):
-        #TODO if we raise an exception here (say we forgot .objects on get_or_create), transaction doesn't roll back!
         parent = membership.itemset
         child = membership.item
         # first connect parent to child
