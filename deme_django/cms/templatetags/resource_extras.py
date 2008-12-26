@@ -54,6 +54,8 @@ def icon_url(item_type, size=32):
         icon = 'mimetypes/html'
     elif item_type == cms.models.EmailContactMethod:
         icon = 'apps/kmail'
+    elif item_type == cms.models.Excerpt:
+        icon = 'mimetypes/shellscript'
     elif item_type == cms.models.FileDocument:
         icon = 'mimetypes/misc'
     elif item_type == cms.models.Folio:

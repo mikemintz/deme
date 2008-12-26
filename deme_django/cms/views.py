@@ -101,6 +101,15 @@ class NewTextCommentForm(forms.ModelForm):
         model = cms.models.TextComment
         fields = ['name', 'description', 'body', 'commented_item']
 
+class NewTextDocumentExcerptForm(forms.ModelForm):
+    text_document = HiddenModelChoiceField(cms.models.TextDocument.objects)
+    text_document_version_number = forms.IntegerField(widget=forms.HiddenInput())
+    start_index = forms.IntegerField(widget=forms.HiddenInput())
+    length = forms.IntegerField(widget=forms.HiddenInput())
+    class Meta:
+        model = cms.models.TextDocumentExcerpt
+        fields = ['name', 'description', 'text_document', 'text_document_version_number', 'start_index', 'length']
+
 def get_form_class_for_item_type(update_or_create, item_type, fields=None):
     exclude = []
     for field in item_type._meta.fields:
@@ -981,6 +990,57 @@ class TextCommentViewer(TextDocumentViewer):
             return HttpResponse(template.render(self.context))
 
     #TODO copy/edit/update comments
+
+
+class TextCommentViewer(TextDocumentViewer):
+    __metaclass__ = ViewerMetaClass
+
+    item_type = cms.models.TextDocumentExcerpt
+    viewer_name = 'textdocumentexcerpt'
+
+    def collection_new(self):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        can_create = ('create', self.item_type.__name__) in self.get_global_abilities_for_agent(self.cur_agent)
+        if not (can_do_everything or can_create):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+        model_names.sort()
+        form_initial = dict(self.request.GET.items())
+        form_class = NewTextDocumentExcerptForm
+        form = form_class(initial=form_initial)
+        template = loader.get_template('item/new.html')
+        self.context['model_names'] = model_names
+        self.context['form'] = form
+        self.context['redirect'] = self.request.GET.get('redirect')
+        return HttpResponse(template.render(self.context))
+
+    def collection_create(self):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        can_create = ('create', self.item_type.__name__) in self.get_global_abilities_for_agent(self.cur_agent)
+        if not (can_do_everything or can_create):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
+        form_class = NewTextDocumentExcerptForm
+        form = form_class(self.request.POST, self.request.FILES)
+        if form.is_valid():
+            start_index = form.cleaned_data['start_index']
+            length = form.cleaned_data['length']
+            text_document = form.cleaned_data['text_document']#TODO get right version
+            body = text_document.body[start_index:start_index+length]
+            item = form.save(commit=False)
+            item.body = body
+            item.save_versioned(updater=self.cur_agent)
+            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
+            return HttpResponseRedirect(redirect)
+        else:
+            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+            model_names.sort()
+            template = loader.get_template('item/new.html')
+            self.context['model_names'] = model_names
+            self.context['form'] = form
+            self.context['redirect'] = self.request.GET.get('redirect')
+            return HttpResponse(template.render(self.context))
+
+    #TODO copy/edit/update excerpts
 
 
 # let's dynamically create default viewers for the ones we don't have

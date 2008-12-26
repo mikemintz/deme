@@ -90,6 +90,9 @@
             cancel_add_highlight();
             //alert(body_str.substring(selection.start_offset, selection.end_offset));
             //$('docbody').parentNode.insertBefore(selection.contents, $('docbody'));
+            var length = selection.end_offset - selection.start_offset;
+            var url = '{% url resource_collection viewer="textdocumentexcerpt",collection_action="new" %}?text_document={{ item.pk }}&text_document_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&start_index=' + selection.start_offset + '&length=' + length;
+            window.location = url;
         }
     }
  
