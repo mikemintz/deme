@@ -477,7 +477,6 @@ class Comment(Document):
         RecursiveCommentMembership.recursive_add_comment(self)
 
         # email everyone subscribed to items this comment is relevant for
-        #TODO maybe this should happen asynchronously somehow
         if isinstance(self, TextComment):
             comment_type_q = Q(notify_text=True)
         elif isinstance(self, EditComment):
