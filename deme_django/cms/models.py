@@ -359,13 +359,15 @@ def get_hexdigest(algorithm, salt, raw_password):
     from django.utils.encoding import smart_str
     raw_password, salt = smart_str(raw_password), smart_str(salt)
     if algorithm == 'crypt':
-        try:
-            import crypt
-        except ImportError:
-            raise ValueError('"crypt" password algorithm not supported in this environment')
-        return crypt.crypt(raw_password, salt)
+        raise ValueError('"crypt" password algorithm not supported in this version of Deme')
+        # try:
+        #     import crypt
+        # except ImportError:
+        #     raise ValueError('"crypt" password algorithm not supported in this environment')
+        # return crypt.crypt(raw_password, salt)
     if algorithm == 'md5':
-        return hashlib.md5(salt + raw_password).hexdigest()
+        raise ValueError('"md5" password algorithm not supported in this version of Deme')
+        # return hashlib.md5(salt + raw_password).hexdigest()
     elif algorithm == 'sha1':
         return hashlib.sha1(salt + raw_password).hexdigest()
     elif algorithm == 'mysql_pre41_password':
@@ -390,6 +392,9 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
         algo, salt, hsh = self.password.split('$')
         return hsh == get_hexdigest(algo, salt, raw_password)
 
+    def check_nonced_password(self, hashed_password, nonce):
+        algo, salt, hsh = self.password.split('$')
+        return get_hexdigest('sha1', nonce, hsh) == hashed_password
 
 class Person(Agent):
     first_name = models.CharField(max_length=255)

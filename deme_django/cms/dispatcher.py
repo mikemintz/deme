@@ -96,32 +96,45 @@ def login(request, *args, **kwargs):
     current_site = get_current_site(request)
     can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(cur_agent)
     if request.method == 'GET':
-        template = loader.get_template('login.html')
-        context = Context()
-        context['redirect_url'] = request.GET['redirect']
-        context['full_path'] = request.get_full_path()
-        context['cur_agent'] = cur_agent
-        context['_global_ability_cache'] = {}
-        context['_item_ability_cache'] = {}
-        if can_do_everything:
-            context['login_as_agents'] = [x for x in cms.models.Agent.objects.all()]
+        if 'getencryptionmethod' in request.GET:
+            nonce = cms.models.get_hexdigest('sha1', str(random.random()), str(random.random()))[:5]
+            try:
+                password_authentication_method = cms.models.PasswordAuthenticationMethod.objects.get(username=request.GET['getencryptionmethod'])
+                algo, salt, hsh = password_authentication_method.password.split('$')
+                json_data = simplejson.dumps({'nonce':nonce, 'algo':algo, 'salt':salt}, separators=(',',':'))
+            except:
+                json_data = simplejson.dumps({'nonce':nonce, 'algo':'sha1', 'salt':'x'}, separators=(',',':'))
+            request.session['login_nonce'] = nonce
+            return HttpResponse(json_data, mimetype='application/json')
         else:
-            context['login_as_agents'] = [x for x in cms.models.Agent.objects.filter(permission_functions.filter_for_agent_and_ability(cur_agent, 'login_as', 'id'))]
-        set_default_layout(context, current_site, cur_agent)
-        return HttpResponse(template.render(context))
+            template = loader.get_template('login.html')
+            context = Context()
+            context['redirect_url'] = request.GET['redirect']
+            context['full_path'] = request.get_full_path()
+            context['cur_agent'] = cur_agent
+            context['_global_ability_cache'] = {}
+            context['_item_ability_cache'] = {}
+            if can_do_everything:
+                context['login_as_agents'] = cms.models.Agent.objects.filter(trashed=False).order_by('name')
+            else:
+                context['login_as_agents'] = cms.models.Agent.objects.filter(trashed=False).filter(permission_functions.filter_for_agent_and_ability(cur_agent, 'login_as', 'id')).order_by('name')
+            set_default_layout(context, current_site, cur_agent)
+            return HttpResponse(template.render(context))
     else:
         redirect_url = request.GET['redirect']
         login_type = request.POST['login_type']
         if login_type == 'password':
+            nonce = request.session['login_nonce']
+            del request.session['login_nonce']
             username = request.POST['username']
-            password = request.POST['password']
+            hashed_password = request.POST['hashed_password']
             try:
                 password_authentication_method = cms.models.PasswordAuthenticationMethod.objects.get(username=username)
             except ObjectDoesNotExist:
                 return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Username", "No person has this username")
             if password_authentication_method.agent.trashed: 
                 return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Trashed Agent", "The agent you are trying to log in as is trashed")
-            if password_authentication_method.check_password(password):
+            if password_authentication_method.check_nonced_password(hashed_password, nonce):
                 new_agent = password_authentication_method.agent
                 request.session['cur_agent_id'] = new_agent.pk
                 return HttpResponseRedirect(redirect_url)
