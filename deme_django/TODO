@@ -59,7 +59,7 @@ Documentation
 
 Small Details
 -------------
-* make favicon transparent (both symsys and groupspace)
+* make symsys favicon transparent
 * make sure actions that change state go through POST and not GET, like entry_trash
 
 Unusual things to remember
