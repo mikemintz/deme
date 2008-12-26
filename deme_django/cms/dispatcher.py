@@ -96,7 +96,6 @@ def login(request, *args, **kwargs):
     current_site = get_current_site(request)
     can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(cur_agent)
     if request.method == 'GET':
-        print request.GET['redirect']
         template = loader.get_template('login.html')
         context = Context()
         context['redirect_url'] = request.GET['redirect']
