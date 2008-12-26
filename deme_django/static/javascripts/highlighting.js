@@ -1,6 +1,6 @@
 var DemeHighlighting = function(){
     var pub = {};
-    pub.tokenize = function(docbody, body_str, is_escaped){
+    pub.tokenize = function(docbody, body_str, is_escaped, parse_error, token_mouseover, token_mouseout, token_click){
         var docbody_clone = $(docbody.cloneNode(true));
 
         var body_str_index = 0;
@@ -38,9 +38,9 @@ var DemeHighlighting = function(){
                     }
                     var tokenWrapper = document.createElement('span');
                     tokenWrapper.deme_text_offset = body_str_index;
-                    tokenWrapper.onmouseover = located_token_mouseover;
-                    tokenWrapper.onmouseout = located_token_mouseout;
-                    tokenWrapper.onclick = located_token_click;
+                    tokenWrapper.onmouseover = token_mouseover;
+                    tokenWrapper.onmouseout = token_mouseout;
+                    tokenWrapper.onclick = token_click;
                     var tokenTextNode = document.createTextNode(token);
                     tokenWrapper.appendChild(tokenTextNode);
                     wrapper.appendChild(tokenWrapper);
@@ -94,9 +94,9 @@ var DemeHighlighting = function(){
                             increment_body_str(startTagMatch.index + startTagMatch[0].length);
                             if (node.tagName == 'IMG') {
                                 node.deme_text_offset = body_str_index - startTagMatch[0].length;
-                                node.onmouseover = located_token_mouseover;
-                                node.onmouseout = located_token_mouseout;
-                                node.onclick = located_token_click;
+                                node.onmouseover = token_mouseover;
+                                node.onmouseout = token_mouseout;
+                                node.onclick = token_click;
                             }
                             var success = traverse_fn(node.childNodes);
                             if (!success) return false;

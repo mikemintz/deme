@@ -68,7 +68,7 @@
 
     function add_located_comment() {
         var docbody = $('docbody');
-        var docbody_clone = DemeHighlighting.tokenize(docbody, body_str, is_escaped);
+        var docbody_clone = DemeHighlighting.tokenize(docbody, body_str, is_escaped, parse_error, located_token_mouseover, located_token_mouseout, located_token_click);
         docbody_clone.setAttribute('id', 'docbody_clone');
         docbody.hide();
         docbody.parentNode.insertBefore(docbody_clone, docbody);
