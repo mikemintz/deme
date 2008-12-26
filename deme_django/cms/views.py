@@ -350,15 +350,15 @@ The agent currently logged in is not allowed to use this application. Please log
         items = self.item_type.objects
         if self.context['search_query']:
             q = self.context['search_query']
-            #TODO more fancy searching
             search_filter = Q(name__icontains=q)
-            search_filter = search_filter | Q(description__icontains=q)
-            if self.item_type == cms.models.Item:
-                search_filter = search_filter | Q(document__textdocument__body__icontains=q)
-            elif self.item_type == cms.models.Document:
-                search_filter = search_filter | Q(textdocument__body__icontains=q)
-            elif issubclass(self.item_type, cms.models.TextDocument):
-                search_filter = search_filter | Q(body__icontains=q)
+            # This is commented out because it's too simplistic, and does not respect permissions.
+            # search_filter = search_filter | Q(description__icontains=q)
+            # if self.item_type == cms.models.Item:
+            #     search_filter = search_filter | Q(document__textdocument__body__icontains=q)
+            # elif self.item_type == cms.models.Document:
+            #     search_filter = search_filter | Q(textdocument__body__icontains=q)
+            # elif issubclass(self.item_type, cms.models.TextDocument):
+            #     search_filter = search_filter | Q(body__icontains=q)
             items = items.filter(search_filter)
         if isinstance(itemset, cms.models.ItemSet):
             if ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent):
