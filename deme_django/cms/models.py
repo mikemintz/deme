@@ -92,7 +92,7 @@ class ItemMetaClass(ModelBase):
 class ItemVersion(models.Model):
     __metaclass__ = ItemMetaClass
     current_item = models.ForeignKey('Item', related_name='versions', editable=False)
-    version_number = models.IntegerField(default=1, editable=False, db_index=True)
+    version_number = models.PositiveIntegerField(default=1, editable=False, db_index=True)
     item_type = models.CharField(max_length=255, default='Item', editable=False)
     name = models.CharField(max_length=255, default="Untitled")
     description = models.CharField(max_length=255, blank=True)
@@ -552,8 +552,8 @@ class Comment(Document):
 class CommentLocation(Item):
     immutable_fields = TextDocument.immutable_fields + ['comment', 'commented_item_version_number']
     comment = models.ForeignKey(Comment, related_name='comment_locations_as_comment')
-    commented_item_version_number = models.IntegerField()
-    commented_item_index = models.IntegerField(null=True, blank=True)
+    commented_item_version_number = models.PositiveIntegerField()
+    commented_item_index = models.PositiveIntegerField(null=True, blank=True)
     class Meta:
         unique_together = (('comment', 'commented_item_version_number'),)
 
@@ -573,9 +573,9 @@ class Excerpt(Item):
 class TextDocumentExcerpt(Excerpt, TextDocument):
     immutable_fields = list(set(Excerpt.immutable_fields + TextDocument.immutable_fields + ['text_document','text_document_version_number', 'start_index', 'length', 'body']))
     text_document = models.ForeignKey(TextDocument, related_name='text_document_excerpts_as_text_document')
-    text_document_version_number = models.IntegerField()
-    start_index = models.IntegerField()
-    length = models.IntegerField()
+    text_document_version_number = models.PositiveIntegerField()
+    start_index = models.PositiveIntegerField()
+    length = models.PositiveIntegerField()
 
 
 class ItemSetMembership(Item):

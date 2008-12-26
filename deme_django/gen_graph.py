@@ -18,6 +18,7 @@ field_name_map = {
     'DateTimeField': 'Date\\/Time',
     'AutoField': 'Unique Id',
     'IntegerField': '\\#',
+    'PositiveIntegerField': '\\#',
     'CharField': 'String',
     'TextField': 'Long String',
     'IsDefaultField': 'Default Selector',
