@@ -570,14 +570,9 @@ class Excerpt(Item):
     pass
 
 
-class DocumentRegion(Item):
-    immutable_fields = Item.immutable_fields + ['excerpt']
-    excerpt = models.ForeignKey(Excerpt, related_name='document_regions_as_excerpt')
-
-
-class TextDocumentRegion(DocumentRegion, TextDocument):
-    immutable_fields = list(set(DocumentRegion.immutable_fields + TextDocument.immutable_fields + ['text_document','text_document_version_number', 'start_index', 'length', 'body']))
-    text_document = models.ForeignKey(TextDocument, related_name='text_document_regions_as_text_document')
+class TextDocumentExcerpt(Excerpt, TextDocument):
+    immutable_fields = list(set(Excerpt.immutable_fields + TextDocument.immutable_fields + ['text_document','text_document_version_number', 'start_index', 'length', 'body']))
+    text_document = models.ForeignKey(TextDocument, related_name='text_document_excerpts_as_text_document')
     text_document_version_number = models.IntegerField()
     start_index = models.IntegerField()
     length = models.IntegerField()
