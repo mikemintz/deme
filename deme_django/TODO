@@ -27,7 +27,6 @@ Code correctness/consistency/bugs
 * start using verbose_name to have nice displays of item type names
 * having the default "Item" and "id" ability_parameter is kind of unelegant. And it would be nice to limit ability_parameter
   - Maybe each item should specify which permissions can be applied to it
-* make "create folio" after group create be a after_save filter sort of thing, rather than viewer implemented, so subclasses of viewer do okay
 * Modifying TextDocuments needs to be able to move around located comments
 * The "crumbs" at the top of pages like TextAdvertisements and TextComments are wrong, since they have multiple inheritance
 * Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
