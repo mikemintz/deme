@@ -992,7 +992,7 @@ class TextCommentViewer(TextDocumentViewer):
     #TODO copy/edit/update comments
 
 
-class TextCommentViewer(TextDocumentViewer):
+class TextDocumentExcerptViewer(TextDocumentViewer):
     __metaclass__ = ViewerMetaClass
 
     item_type = cms.models.TextDocumentExcerpt
