@@ -10,6 +10,7 @@ import subprocess
 import re
 import time
 import sys
+import os.path
 
 if Item.objects.count() != 0:
     raise AssertionError, 'You cannot run ./create_initial_data.py on a non-empty database'
@@ -95,6 +96,11 @@ if len(sys.argv) < 2 or sys.argv[1] != 'test':
 # Just testing here:
 ################################################################################
 
+# Set the default layout
+default_layout_code = open(os.path.join(os.path.dirname(__file__), 'cms', 'templates', 'default_layout.html')).read()
+default_layout = DjangoTemplateDocument(override_default_layout=True, name='Deme Layout', body=default_layout_code)
+default_layout.save_versioned(updater=admin)
+
 git_log = subprocess.Popen(["git", "log"], stdout=subprocess.PIPE).communicate()[0]
 git_commit = re.search(r'commit (.+)\nAuthor:', git_log).group(1)
 git_date = re.search(r'Date:\s*(.*) (-|\+)\d+', git_log).group(1)
@@ -117,6 +123,7 @@ default_site.viewer = 'djangotemplatedocument'
 default_site.action = 'render'
 default_site.aliased_item = home_page
 default_site.query_string = ''
+default_site.default_layout = default_layout
 default_site.save_versioned(updater=admin)
 
 mike_person = Person(first_name="Mike", last_name="Mintz", name="Mike Mintz")
