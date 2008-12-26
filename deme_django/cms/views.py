@@ -124,27 +124,6 @@ def get_form_class_for_item_type(update_or_create, item_type, fields=None):
 
 ### VIEWERS ###
 
-def set_default_layout(context, site, cur_agent):
-    #TODO permissions
-    cur_node = site.default_layout
-    while cur_node is not None:
-        next_node = cur_node.layout
-        if next_node is None:
-            if cur_node.override_default_layout:
-                extends_string = ''
-            else:
-                extends_string = "{% extends 'default_layout.html' %}\n"
-        else:
-            extends_string = "{%% extends layout%s %%}\n" % next_node.pk
-        template_string = extends_string + cur_node.body
-        t = loader.get_template_from_string(template_string)
-        context['layout%d' % cur_node.pk] = t
-        cur_node = next_node
-    if site.default_layout:
-        context['layout'] = context['layout%s' % site.default_layout.pk]
-    else:
-        context['layout'] = 'default_layout.html'
-
 class ViewerMetaClass(type):
     viewer_name_dict = {}
     def __new__(cls, name, bases, attrs):
@@ -211,6 +190,36 @@ class ItemViewer(object):
             self._item_ability_cache[(agent.pk, item.pk)] = result
         return result
 
+    def set_default_layout(self, site, cur_agent):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        cur_node = site.default_layout
+        while cur_node is not None:
+            next_node = cur_node.layout
+            if next_node is None:
+                if cur_node.override_default_layout:
+                    extends_string = ''
+                else:
+                    extends_string = "{% extends 'default_layout.html' %}\n"
+            else:
+                extends_string = "{%% extends layout%s %%}\n" % next_node.pk
+            if can_do_everything or (('view', 'layout') in self.get_abilities_for_agent_and_item(self.cur_agent, cur_node) and ('view', 'body') in self.get_abilities_for_agent_and_item(self.cur_agent, cur_node)):
+                template_string = extends_string + cur_node.body
+            else:
+                template_string = "{% extends 'default_layout.html' %}\n"
+                self.context['layout_permissions_problem'] = True
+                next_node = None
+            t = loader.get_template_from_string(template_string)
+            self.context['layout%d' % cur_node.pk] = t
+            cur_node = next_node
+        if can_do_everything or ('view', 'default_layout') in self.get_abilities_for_agent_and_item(self.cur_agent, site):
+            if site.default_layout:
+                self.context['layout'] = self.context['layout%s' % site.default_layout.pk]
+            else:
+                self.context['layout'] = 'default_layout.html'
+        else:
+            self.context['layout'] = 'default_layout.html'
+            self.context['layout_permissions_problem'] = True
+
     def render_error(self, request_class, title, body):
         template = loader.get_template_from_string("""
         {%% extends layout %%}
@@ -258,7 +267,7 @@ class ItemViewer(object):
         self.context['cur_agent'] = self.cur_agent
         self.context['_global_ability_cache'] = self._global_ability_cache
         self.context['_item_ability_cache'] = self._item_ability_cache
-        set_default_layout(self.context, current_site, cur_agent)
+        self.set_default_layout(current_site, cur_agent)
 
     def init_from_div(self, original_request, action, viewer_name, item, cur_agent):
         self.request = original_request
@@ -920,19 +929,25 @@ class HtmlDocumentViewer(TextDocumentViewer):
             self.context['model_names'] = model_names
             return HttpResponse(template.render(self.context))
 
+
 class DjangoTemplateDocumentViewer(TextDocumentViewer):
     item_type = cms.models.DjangoTemplateDocument
     viewer_name = 'djangotemplatedocument'
 
     def entry_render(self):
-        #TODO permissions
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
         cur_node = self.item
         while cur_node is not None:
             next_node = cur_node.layout
             if cur_node.override_default_layout:
                 template_string = cur_node.body
             else:
-                template_string = '{%% extends layout%s %%}\n%s' % (next_node.pk if next_node else '', cur_node.body)
+                if can_do_everything or (('view', 'layout') in self.get_abilities_for_agent_and_item(self.cur_agent, cur_node) and ('view', 'body') in self.get_abilities_for_agent_and_item(self.cur_agent, cur_node)):
+                    template_string = '{%% extends layout%s %%}\n%s' % (next_node.pk if next_node else '', cur_node.body)
+                else:
+                    template_string = "{%% extends 'default_layout.html' %%}\n%s" % (cur_node.body,)
+                    self.context['layout_permissions_problem'] = True
+                    next_node = None
             t = loader.get_template_from_string(template_string)
             if cur_node is self.item:
                 template = t
@@ -940,6 +955,7 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
                 self.context['layout%d' % cur_node.pk] = t
             cur_node = next_node
         return HttpResponse(template.render(self.context))
+
 
 class TextCommentViewer(TextDocumentViewer):
     __metaclass__ = ViewerMetaClass

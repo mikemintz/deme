@@ -72,6 +72,11 @@
 </div>
 
 <div style="border: 1px solid #aaa; padding: 15px; margin-left: 160px;">
+{% if layout_permissions_problem %}
+<div style="color: #a00; padding: 15px; margin: 15px; border: thin dotted #a00; text-align: center;">
+    Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.
+</div>
+{% endif %}
 {% block content %}
 {% endblock %}
 </div>
