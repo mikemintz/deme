@@ -1024,7 +1024,7 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
         if form.is_valid():
             start_index = form.cleaned_data['start_index']
             length = form.cleaned_data['length']
-            text_document = form.cleaned_data['text_document']#TODO get right version
+            text_document = get_versioned_item(form.cleaned_data['text_document'], form.cleaned_data['text_document_version_number'])
             body = text_document.body[start_index:start_index+length]
             item = form.save(commit=False)
             item.body = body
