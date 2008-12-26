@@ -83,6 +83,27 @@
         $('add_located_comment_div').show();
         $('adding_located_comment_div').hide();
     }
+
+    function highlight_mouseup_handler(e) {
+        var selection = DemeHighlighting.get_current_highlight();
+        if (selection) {
+            cancel_add_highlight();
+            //alert(body_str.substring(selection.start_offset, selection.end_offset));
+            //$('docbody').parentNode.insertBefore(selection.contents, $('docbody'));
+        }
+    }
+ 
+    function add_highlight() {
+        $('docbody').observe('mouseup', highlight_mouseup_handler);
+        $('add_highlight_div').hide();
+        $('adding_highlight_div').show();
+    }
+ 
+    function cancel_add_highlight() {
+        $('docbody').stopObserving('mouseup', highlight_mouseup_handler);
+        $('add_highlight_div').show();
+        $('adding_highlight_div').hide();
+    }
 </script>
 
 <!-- Adapted from http://unraveled.com/projects/css_tabs/ -->
@@ -193,6 +214,15 @@ div#section_body, div#section_comments, div#section_combined {
 <div id="adding_located_comment_div" style="display: none;">
 Now just select text where you want to comment or
 <a href="#" onclick="cancel_add_located_comment(); return false;">Cancel</a>
+</div>
+
+<div id="add_highlight_div">
+<a href="#" onclick="add_highlight(); return false;">[+] Add Highlight</a>
+</div>
+
+<div id="adding_highlight_div" style="display: none;">
+Now just select text you want to highlight or
+<a href="#" onclick="cancel_add_highlight(); return false;">Cancel</a>
 </div>
 
 <div><a href="#" onclick="$$('.commentref').each(function(e){e.toggle()}); return false;">Toggle Comments</a></div>
