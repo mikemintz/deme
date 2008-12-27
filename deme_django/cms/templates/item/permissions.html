@@ -48,7 +48,7 @@
                 <div><a href="{% show_resource_url p %}">{{ p.role.name }}</a></div>
             {% endfor %}
             {% for p in agent_datum.permissions %}
-                <div><a href="{% show_resource_url p %}">{% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}({{ p.ability_parameter }})</a></div>
+                <div><a href="{% show_resource_url p %}">{% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}</a></div>
             {% endfor %}
         </td>
         <td>
@@ -82,7 +82,7 @@
                 <div><a href="{% show_resource_url p %}">{{ p.role.name }}</a></div>
             {% endfor %}
             {% for p in itemset_datum.permissions %}
-                <div><a href="{% show_resource_url p %}">{% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}({{ p.ability_parameter }})</a></div>
+                <div><a href="{% show_resource_url p %}">{% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}</a></div>
             {% endfor %}
         </td>
         <td>
@@ -115,7 +115,7 @@
                 <div><a href="{% show_resource_url p %}">{{ p.role.name }}</a></div>
             {% endfor %}
             {% for p in default_data.permissions %}
-                <div><a href="{% show_resource_url p %}">{% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}({{ p.ability_parameter }})</a></div>
+                <div><a href="{% show_resource_url p %}">{% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}</a></div>
             {% endfor %}
         </td>
         <td>

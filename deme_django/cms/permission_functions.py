@@ -44,12 +44,11 @@ def get_global_abilities_for_agent(agent):
         import itertools
         for role_ability_or_permission in itertools.chain(role_abilities, permission_list):
             ability = role_ability_or_permission.ability
-            ability_parameter = role_ability_or_permission.ability_parameter
             is_allowed = role_ability_or_permission.is_allowed
             if is_allowed:
-                cur_abilities_yes.add((ability, ability_parameter))
+                cur_abilities_yes.add(ability)
             else:
-                cur_abilities_no.add((ability, ability_parameter))
+                cur_abilities_no.add(ability)
         # yes takes precedence over no
         for x in cur_abilities_yes:
             if x not in abilities_yes and x not in abilities_no:
@@ -100,7 +99,7 @@ def get_permissions_for_agent_and_item(agent, item):
 
 def get_abilities_for_agent_and_item(agent, item):
     """
-    Return a set of string-pairs (ability, ability_parameter)
+    Return a set of ability strings
     """
     roles_triple = get_roles_for_agent_and_item(agent, item)
     permissions_triple = get_permissions_for_agent_and_item(agent, item)
@@ -113,12 +112,11 @@ def get_abilities_for_agent_and_item(agent, item):
         import itertools
         for role_ability_or_permission in itertools.chain(role_abilities, permission_list):
             ability = role_ability_or_permission.ability
-            ability_parameter = role_ability_or_permission.ability_parameter
             is_allowed = role_ability_or_permission.is_allowed
             if is_allowed:
-                cur_abilities_yes.add((ability, ability_parameter))
+                cur_abilities_yes.add(ability)
             else:
-                cur_abilities_no.add((ability, ability_parameter))
+                cur_abilities_no.add(ability)
         # yes takes precedence over no
         for x in cur_abilities_yes:
             if x not in abilities_yes and x not in abilities_no:
@@ -130,10 +128,10 @@ def get_abilities_for_agent_and_item(agent, item):
     return abilities_yes
 
 
-def filter_for_agent_and_ability(agent, ability, ability_parameter):
+def filter_for_agent_and_ability(agent, ability):
     my_itemset_ids = agent.all_containing_itemsets().values('pk').query
-    relevant_yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, ability_parameter=ability_parameter, is_allowed=True).values('role_id').query
-    relevant_no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, ability_parameter=ability_parameter, is_allowed=False).values('role_id').query
+    relevant_yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=True).values('role_id').query
+    relevant_no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=False).values('role_id').query
 
     perm_q = {}
     for agentitemsetdefault in ['agent', 'itemset', 'default']:
@@ -145,7 +143,6 @@ def filter_for_agent_and_ability(agent, ability, ability_parameter):
                     args['role__pk__in'] = (relevant_yes_role_ids if is_allowed == 'yes' else relevant_no_role_ids)
                 else:
                     args['ability'] = ability
-                    args['ability_parameter'] = ability_parameter
                     args['is_allowed'] = (is_allowed == 'yes')
                 if agentitemsetdefault == 'agent':
                     args['agent'] = agent
@@ -161,9 +158,9 @@ def filter_for_agent_and_ability(agent, ability, ability_parameter):
            (~perm_q['agentno'] & ~perm_q['itemsetno'] & ~perm_q['agentroleno'] & ~perm_q['itemsetroleno'] & perm_q['defaultyes']) |\
            (~perm_q['agentno'] & ~perm_q['itemsetno'] & ~perm_q['agentroleno'] & ~perm_q['itemsetroleno'] & perm_q['defaultroleyes'])
 
-def filter_agents_for_item_and_ability(item, ability, ability_parameter):
-    relevant_yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, ability_parameter=ability_parameter, is_allowed=True).values('role_id').query
-    relevant_no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, ability_parameter=ability_parameter, is_allowed=False).values('role_id').query
+def filter_agents_for_item_and_ability(item, ability):
+    relevant_yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=True).values('role_id').query
+    relevant_no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=False).values('role_id').query
 
     perm_q = {}
     for agentitemsetdefault in ['agent', 'itemset', 'default']:
@@ -175,7 +172,6 @@ def filter_agents_for_item_and_ability(item, ability, ability_parameter):
                     args['role__pk__in'] = (relevant_yes_role_ids if is_allowed == 'yes' else relevant_no_role_ids)
                 else:
                     args['ability'] = ability
-                    args['ability_parameter'] = ability_parameter
                     args['is_allowed'] = (is_allowed == 'yes')
                 if agentitemsetdefault == 'agent':
                     query = permission_class.objects.filter(**args).values('agent_id').query

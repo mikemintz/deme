@@ -94,7 +94,7 @@ def invalidresource(request, *args, **kwargs):
 def login(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)
     current_site = get_current_site(request)
-    can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(cur_agent)
+    can_do_everything = 'do_everything' in permission_functions.get_global_abilities_for_agent(cur_agent)
     if request.method == 'GET':
         if 'getencryptionmethod' in request.GET:
             nonce = cms.models.get_hexdigest('sha1', str(random.random()), str(random.random()))[:5]
@@ -117,7 +117,7 @@ def login(request, *args, **kwargs):
             if can_do_everything:
                 context['login_as_agents'] = cms.models.Agent.objects.filter(trashed=False).order_by('name')
             else:
-                context['login_as_agents'] = cms.models.Agent.objects.filter(trashed=False).filter(permission_functions.filter_for_agent_and_ability(cur_agent, 'login_as', 'id')).order_by('name')
+                context['login_as_agents'] = cms.models.Agent.objects.filter(trashed=False).filter(permission_functions.filter_for_agent_and_ability(cur_agent, 'login_as')).order_by('name')
             set_default_layout(context, current_site, cur_agent)
             return HttpResponse(template.render(context))
     else:
@@ -150,7 +150,7 @@ def login(request, *args, **kwargs):
                         return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Agent ID", "There is no agent with the id you specified")
                     if new_agent.trashed:
                         return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Trashed Agent", "The agent you are trying to log in as is trashed")
-                    if can_do_everything or ('login_as', 'id') in permission_functions.get_abilities_for_agent_and_item(cur_agent, new_agent):
+                    if can_do_everything or 'login_as' in permission_functions.get_abilities_for_agent_and_item(cur_agent, new_agent):
                         request.session['cur_agent_id'] = new_agent.pk
                         return HttpResponseRedirect(redirect_url)
                     else:

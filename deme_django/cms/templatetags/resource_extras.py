@@ -122,37 +122,37 @@ def list_results_navigator(item_type, itemset, search_query, trashed, offset, li
         result.append(next_button)
     return ''.join(result)
 
-def agentcan_global_helper(context, ability, ability_parameter):
+def agentcan_global_helper(context, ability, wildcard_suffix=False):
     agent = context['cur_agent']
     global_abilities = context['_global_ability_cache'].get(agent.pk)
     if global_abilities is None:
         global_abilities = permission_functions.get_global_abilities_for_agent(agent)
         context['_global_ability_cache'][agent.pk] = global_abilities
-    if ('do_everything', 'Item') in global_abilities:
+    if 'do_everything' in global_abilities:
         return True
-    if ability_parameter is None:
-        if any(x[0] == ability for x in global_abilities):
+    if wildcard_suffix:
+        if any(x.startswith(ability) for x in global_abilities):
             return True
     else:
-        if (ability, ability_parameter) in global_abilities:
+        if ability in global_abilities:
             return True
     return False
 
-def agentcan_helper(context, ability, ability_parameter, item):
+def agentcan_helper(context, ability, item, wildcard_suffix=False):
     agent = context['cur_agent']
-    if agentcan_global_helper(context, 'do_everything', 'Item'):
+    if agentcan_global_helper(context, 'do_everything'):
         return True
-    if isinstance(item, cms.models.Permission) and hasattr(item, 'item') and not isinstance(item.item, cms.models.Permission) and agentcan_helper(context, 'modify_permissions', 'id', item.item):
+    if isinstance(item, cms.models.Permission) and hasattr(item, 'item') and not isinstance(item.item, cms.models.Permission) and agentcan_helper(context, 'modify_permissions', item.item):
         return True
     abilities_for_item = context['_item_ability_cache'].get((agent.pk, item.pk))
     if abilities_for_item is None:
         abilities_for_item = permission_functions.get_abilities_for_agent_and_item(agent, item)
         context['_item_ability_cache'][(agent.pk, item.pk)] = abilities_for_item
-    if ability_parameter is None:
-        if any(x[0] == ability for x in abilities_for_item):
+    if wildcard_suffix:
+        if any(x.startswith(ability) for x in abilities_for_item):
             return True
     else:
-        if (ability, ability_parameter) in abilities_for_item:
+        if ability in abilities_for_item:
             return True
     return False
 
@@ -189,7 +189,8 @@ class IfAgentCan(template.Node):
                 return "[Couldn't resolve ability_parameter variable]"
             else:
                 return '' # Fail silently for invalid variables.
-        if agentcan_helper(context, ability, ability_parameter, item):
+        ability = '%s %s' % (ability, ability_parameter) if ability_parameter else ability
+        if agentcan_helper(context, ability, item):
             return self.nodelist_true.render(context)
         else:
             return self.nodelist_false.render(context)
@@ -234,7 +235,8 @@ class IfAgentCanGlobal(template.Node):
                 return "[Couldn't resolve ability_parameter variable]"
             else:
                 return '' # Fail silently for invalid variables.
-        if agentcan_global_helper(context, ability, ability_parameter):
+        ability = '%s %s' % (ability, ability_parameter) if ability_parameter else ability
+        if agentcan_global_helper(context, ability):
             return self.nodelist_true.render(context)
         else:
             return self.nodelist_false.render(context)
@@ -259,10 +261,10 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
     comment_subclasses = [cms.models.TextComment, cms.models.EditComment, cms.models.AddMemberComment, cms.models.RemoveMemberComment]
     comments = []
     if include_recursive_itemset_comments:
-        if agentcan_global_helper(context, 'do_everything', 'Item'):
+        if agentcan_global_helper(context, 'do_everything'):
             recursive_filter = None
         else:
-            visible_memberships = cms.models.ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(context['cur_agent'], 'view', 'itemset'), permission_functions.filter_for_agent_and_ability(context['cur_agent'], 'view', 'item'))
+            visible_memberships = cms.models.ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(context['cur_agent'], 'view itemset'), permission_functions.filter_for_agent_and_ability(context['cur_agent'], 'view item'))
             recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
         members_and_me_pks_query = cms.models.Item.objects.filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_itemset_members(recursive_filter).values('pk').query)).values('pk').query
         for comment_subclass in comment_subclasses:
@@ -329,13 +331,13 @@ class ItemHeader(template.Node):
         result.append('<div class="crumbs">')
         result.append('<div style="float: right;">')
         result.append('<a href="%s">Relationships</a>' % relationships_url)
-        if agentcan_helper(context, 'modify_permissions', 'id', item):
+        if agentcan_helper(context, 'modify_permissions', item):
             result.append('<a href="%s">Permissions</a>' % permissions_url)
-        if agentcan_helper(context, 'edit', None, item):
+        if agentcan_helper(context, 'edit', item, wildcard_suffix=True):
             result.append('<a href="%s">Edit</a>' % edit_url)
-        if agentcan_global_helper(context, 'create', item.item_type):
+        if agentcan_global_helper(context, 'create %s' % item.item_type):
             result.append('<a href="%s">Copy</a>' % copy_url)
-        if agentcan_helper(context, 'trash', 'id', item):
+        if agentcan_helper(context, 'trash', item):
             if item.trashed:
                 result.append('<a href="%s">Untrash</a>' % untrash_url)
             else:
@@ -347,7 +349,7 @@ class ItemHeader(template.Node):
         result.append('</div>')
         for inherited_item_type in item_type_inheritance:
             result.append('<a href="%s">%ss</a> &raquo;' % (reverse('resource_collection', kwargs={'viewer': inherited_item_type.lower()}), inherited_item_type))
-        if agentcan_helper(context, 'view', 'name', item):
+        if agentcan_helper(context, 'view name', item):
             result.append('<a href="%s">%s</a>' % (show_resource_url(item), escape(item.name)))
         else:
             result.append('<a href="%s">[PERMISSION DENIED]</a>' % show_resource_url(item))
@@ -363,23 +365,23 @@ class ItemHeader(template.Node):
 
         result.append('</div>')
 
-        if agentcan_helper(context, 'view', 'created_at', item):
+        if agentcan_helper(context, 'view created_at', item):
             created_at_text = item.created_at.strftime("%Y-%m-%d %H:%m")
         else:
             created_at_text = '[PERMISSION DENIED]'
-        if agentcan_helper(context, 'view', 'updated_at', item):
+        if agentcan_helper(context, 'view updated_at', item):
             updated_at_text = item.updated_at.strftime("%Y-%m-%d %H:%m")
         else:
             updated_at_text = '[PERMISSION DENIED]'
-        if agentcan_helper(context, 'view', 'creator', item):
-            if agentcan_helper(context, 'view', 'name', item.creator):
+        if agentcan_helper(context, 'view creator', item):
+            if agentcan_helper(context, 'view name', item.creator):
                 creator_text = '<a href="%s">%s</a>' % (show_resource_url(item.creator), escape(item.creator.name))
             else:
                 creator_text = '<a href="%s">%s</a>' % (show_resource_url(item.creator), '[PERMISSION DENIED]')
         else:
             creator_text = '[PERMISSION DENIED]'
-        if agentcan_helper(context, 'view', 'updater', item):
-            if agentcan_helper(context, 'view', 'name', item.updater):
+        if agentcan_helper(context, 'view updater', item):
+            if agentcan_helper(context, 'view name', item.updater):
                 updater_text = '<a href="%s">%s</a>' % (show_resource_url(item.updater), escape(item.updater.name))
             else:
                 updater_text = '<a href="%s">%s</a>' % (show_resource_url(item.updater), '[PERMISSION DENIED]')
@@ -397,7 +399,7 @@ class ItemHeader(template.Node):
         result.append('</div>')
 
         result.append('<div style="font-size: 8pt; color: #aaa; margin-bottom: 10px;">')
-        if agentcan_helper(context, 'view', 'description', item):
+        if agentcan_helper(context, 'view description', item):
             result.append('Description: %s' % escape(item.description))
         else:
             result.append('Description: [PERMISSION DENIED]')
@@ -462,24 +464,24 @@ class CommentBox(template.Node):
             for comment_info in comments:
                 comment = comment_info['comment']
                 comment_location = comment_info['comment_location']
-                if not agentcan_helper(context, 'view', 'commented_item', comment):
+                if not agentcan_helper(context, 'view commented_item', comment):
                     continue
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
                 result.append("""<div style="float: right;"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), comment.pk, comment.versions.latest().version_number, urlquote(full_path)))
-                if agentcan_helper(context, 'view', 'name', comment):
+                if agentcan_helper(context, 'view name', comment):
                     result.append("""<a href="%s">%s</a>""" % (show_resource_url(comment), escape(comment.name)))
                 else:
                     result.append('[PERMISSION DENIED]')
-                if agentcan_helper(context, 'view', 'creator', comment):
-                    if agentcan_helper(context, 'view', 'name', comment.creator):
+                if agentcan_helper(context, 'view creator', comment):
+                    if agentcan_helper(context, 'view name', comment.creator):
                         result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), escape(comment.creator.name)))
                     else:
                         result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), 'PERMISSION DENIED'))
                 else:
                     result.append('by [PERMISSION DENIED]')
                 if item.pk != comment.commented_item.pk and nesting_level == 0:
-                    if agentcan_helper(context, 'view', 'name', comment.commented_item):
+                    if agentcan_helper(context, 'view name', comment.commented_item):
                         result.append('for <a href="%s">%s</a>' % (show_resource_url(comment.commented_item), escape(comment.commented_item.name)))
                     else:
                         result.append('for <a href="%s">[PERMISSION DENIED]</a>' % (show_resource_url(comment.commented_item)))
@@ -492,14 +494,14 @@ class CommentBox(template.Node):
                     result.append("</div>")
                 else:
                     result.append("""<div class="comment_description">""")
-                    if agentcan_helper(context, 'view', 'description', comment):
+                    if agentcan_helper(context, 'view description', comment):
                         result.append(escape(comment.description))
                     else:
                         result.append('[PERMISSION DENIED]')
                     result.append("</div>")
                     result.append("""<div class="comment_body">""")
                     if isinstance(comment, cms.models.TextComment):
-                        if agentcan_helper(context, 'view', 'body', comment):
+                        if agentcan_helper(context, 'view body', comment):
                             result.append(escape(comment.body).replace('\n', '<br />'))
                         else:
                             result.append('[PERMISSION DENIED]')

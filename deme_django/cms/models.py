@@ -547,7 +547,7 @@ class Comment(Document):
     def notification_email(self, email_contact_method):
         agent = email_contact_method.agent
         import permission_functions
-        can_do_everything = ('do_everything', 'Item') in permission_functions.get_global_abilities_for_agent(agent)
+        can_do_everything = 'do_everything' in permission_functions.get_global_abilities_for_agent(agent)
 
         # First, decide if we're allowed to get this notification at all
         if isinstance(self, TextComment):
@@ -565,7 +565,7 @@ class Comment(Document):
             if can_do_everything:
                 recursive_filter = None
             else:
-                visible_memberships = ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(agent, 'view', 'itemset'), permission_functions.filter_for_agent_and_ability(agent, 'view', 'item'))
+                visible_memberships = ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(agent, 'view itemset'), permission_functions.filter_for_agent_and_ability(agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             possible_parents = self.all_commented_items_and_itemsets(recursive_filter)
             deep_subscriptions = Subscription.objects.filter(item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
@@ -581,12 +581,12 @@ class Comment(Document):
         abilities_for_commented_item = permission_functions.get_abilities_for_agent_and_item(agent, commented_item)
         abilities_for_topmost_item = permission_functions.get_abilities_for_agent_and_item(agent, topmost_item)
         abilities_for_comment_creator = permission_functions.get_abilities_for_agent_and_item(agent, self.creator)
-        comment_name = self.name if can_do_everything or ('view', 'name') in abilities_for_comment else 'PERMISSION DENIED'
+        comment_name = self.name if can_do_everything or 'view name' in abilities_for_comment else 'PERMISSION DENIED'
         if isinstance(self, TextComment):
-            comment_body = self.body if can_do_everything or ('view', 'body') in abilities_for_comment else 'PERMISSION DENIED'
-        commented_item_name = commented_item.name if can_do_everything or ('view', 'name') in abilities_for_commented_item else 'PERMISSION DENIED'
-        topmost_item_name = topmost_item.name if can_do_everything or ('view', 'name') in abilities_for_topmost_item else 'PERMISSION DENIED'
-        creator_name = self.creator.name if can_do_everything or ('view', 'name') in abilities_for_comment_creator else 'PERMISSION DENIED'
+            comment_body = self.body if can_do_everything or 'view body' in abilities_for_comment else 'PERMISSION DENIED'
+        commented_item_name = commented_item.name if can_do_everything or 'view name' in abilities_for_commented_item else 'PERMISSION DENIED'
+        topmost_item_name = topmost_item.name if can_do_everything or 'view name' in abilities_for_topmost_item else 'PERMISSION DENIED'
+        creator_name = self.creator.name if can_do_everything or 'view name' in abilities_for_comment_creator else 'PERMISSION DENIED'
 
         # Finally put together the message
         if isinstance(self, TextComment):
@@ -765,170 +765,6 @@ class Subscription(Item):
 
 
 ################################################################################
-# Permissions
-################################################################################
-
-POSSIBLE_ABILITIES = [
-    ('view', 'View'),
-    ('edit', 'Edit'),
-    ('modify_permissions', 'Modify Permissions'),
-    ('trash', 'Trash'),
-    ('login_as', 'Login As'),
-]
-
-POSSIBLE_GLOBAL_ABILITIES = [
-    ('create', 'Create'),
-    ('do_something', 'Do Something'),
-    ('do_everything', 'Do Everything'),
-]
-
-class GlobalRole(Item):
-    immutable_fields = Item.immutable_fields
-
-
-class Role(Item):
-    immutable_fields = Item.immutable_fields
-
-
-class GlobalRoleAbility(Item):
-    immutable_fields = Item.immutable_fields + ['global_role', 'ability', 'ability_parameter']
-    global_role = models.ForeignKey(GlobalRole, related_name='abilities_as_global_role')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
-    ability_parameter = models.CharField(max_length=255, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
-    class Meta:
-        unique_together = (('global_role', 'ability', 'ability_parameter'),)
-
-
-class RoleAbility(Item):
-    immutable_fields = Item.immutable_fields + ['role', 'ability', 'ability_parameter']
-    role = models.ForeignKey(Role, related_name='abilities_as_role')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
-    ability_parameter = models.CharField(max_length=255, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
-    class Meta:
-        unique_together = (('role', 'ability', 'ability_parameter'),)
-
-
-class Permission(Item):
-    immutable_fields = Item.immutable_fields
-
-
-class GlobalPermission(Item):
-    immutable_fields = Item.immutable_fields
-
-
-class AgentGlobalPermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['agent', 'ability', 'ability_parameter']
-    agent = models.ForeignKey(Agent, related_name='agent_global_permissions_as_agent')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
-    ability_parameter = models.CharField(max_length=255, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
-    class Meta:
-        unique_together = (('agent', 'ability', 'ability_parameter'),)
-
-
-class ItemSetGlobalPermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['itemset', 'ability', 'ability_parameter']
-    itemset = models.ForeignKey(ItemSet, related_name='itemset_global_permissions_as_itemset')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
-    ability_parameter = models.CharField(max_length=255, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
-    class Meta:
-        unique_together = (('itemset', 'ability', 'ability_parameter'),)
-
-
-class DefaultGlobalPermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['ability', 'ability_parameter']
-    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
-    ability_parameter = models.CharField(max_length=255, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
-    class Meta:
-        unique_together = (('ability', 'ability_parameter'),)
-
-
-class AgentGlobalRolePermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['agent', 'global_role']
-    agent = models.ForeignKey(Agent, related_name='agent_global_role_permissions_as_agent')
-    global_role = models.ForeignKey(GlobalRole, related_name='agent_global_role_permissions_as_global_role')
-    class Meta:
-        unique_together = (('agent', 'global_role'),)
-
-
-class ItemSetGlobalRolePermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['itemset', 'global_role']
-    itemset = models.ForeignKey(ItemSet, related_name='itemset_global_role_permissions_as_itemset')
-    global_role = models.ForeignKey(GlobalRole, related_name='itemset_global_role_permissions_as_global_role')
-    class Meta:
-        unique_together = (('itemset', 'global_role'),)
-
-
-class DefaultGlobalRolePermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['global_role']
-    global_role = models.ForeignKey(GlobalRole, related_name='default_global_role_permissions_as_global_role')
-    class Meta:
-        unique_together = (('global_role',),)
-
-
-class AgentPermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['agent', 'item', 'ability', 'ability_parameter']
-    agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent')
-    item = models.ForeignKey(Item, related_name='agent_permissions_as_item')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
-    ability_parameter = models.CharField(max_length=255, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
-    class Meta:
-        unique_together = (('agent', 'item', 'ability', 'ability_parameter'),)
-
-
-class ItemSetPermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['itemset', 'item', 'ability', 'ability_parameter']
-    itemset = models.ForeignKey(ItemSet, related_name='itemset_permissions_as_itemset')
-    item = models.ForeignKey(Item, related_name='itemset_permissions_as_item')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
-    ability_parameter = models.CharField(max_length=255, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
-    class Meta:
-        unique_together = (('itemset', 'item', 'ability', 'ability_parameter'),)
-
-
-class DefaultPermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['item', 'ability', 'ability_parameter']
-    item = models.ForeignKey(Item, related_name='default_permissions_as_item')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
-    ability_parameter = models.CharField(max_length=255, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
-    class Meta:
-        unique_together = (('item', 'ability', 'ability_parameter'),)
-
-
-class AgentRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['agent', 'item', 'role']
-    agent = models.ForeignKey(Agent, related_name='agent_role_permissions_as_agent')
-    item = models.ForeignKey(Item, related_name='agent_role_permissions_as_item')
-    role = models.ForeignKey(Role, related_name='agent_role_permissions_as_role')
-    class Meta:
-        unique_together = (('agent', 'item', 'role'),)
-
-
-class ItemSetRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['itemset', 'item', 'role']
-    itemset = models.ForeignKey(ItemSet, related_name='itemset_role_permissions_as_itemset')
-    item = models.ForeignKey(Item, related_name='itemset_role_permissions_as_item')
-    role = models.ForeignKey(Role, related_name='itemset_role_permissions_as_role')
-    class Meta:
-        unique_together = (('itemset', 'item', 'role'),)
-
-
-class DefaultRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['item', 'role']
-    item = models.ForeignKey(Item, related_name='default_role_permissions_as_item')
-    role = models.ForeignKey(Role, related_name='default_role_permissions_as_role')
-    class Meta:
-        unique_together = (('item', 'role'),)
-
-
-################################################################################
 # Viewer aliases
 ################################################################################
 
@@ -962,6 +798,184 @@ class CustomUrl(ViewerRequest):
     path = models.CharField(max_length=255)
     class Meta:
         unique_together = (('parent_url', 'path'),)
+
+
+################################################################################
+# Permissions
+################################################################################
+
+class POSSIBLE_ABILITIES_ITER(object):
+    def __iter__(self):
+        choices = set()
+        choices.add( ('modify_permissions', 'Modify Permissions') )
+        choices.add( ('trash', 'Trash') )
+        choices.add( ('login_as', 'Login As') )
+        for model in all_models():
+            for field in model._meta.local_fields:
+                if hasattr(field, 'primary_key') and field.primary_key:
+                    continue
+                elif type(field).__name__ == 'OneToOneField':
+                    continue
+                name = field.name
+                choices.add( ('edit %s' % name, 'Edit %s' % name) )
+        choices = list(choices)
+        choices.sort(key=lambda x: x[1])
+        for x in choices:
+            yield x
+
+class POSSIBLE_GLOBAL_ABILITIES_ITER(object):
+    def __iter__(self):
+        choices = set()
+        choices.add( ('do_something', 'Do Something') )
+        choices.add( ('do_everything', 'Do Everything') )
+        for model in all_models():
+            name = model.__name__
+            choices.add( ('create %s' % name, 'Create %s' % name) )
+        choices = list(choices)
+        choices.sort(key=lambda x: x[1])
+        for x in choices:
+            yield x
+
+POSSIBLE_ABILITIES = POSSIBLE_ABILITIES_ITER()
+POSSIBLE_GLOBAL_ABILITIES = POSSIBLE_GLOBAL_ABILITIES_ITER()
+
+
+class GlobalRole(Item):
+    immutable_fields = Item.immutable_fields
+
+
+class Role(Item):
+    immutable_fields = Item.immutable_fields
+
+
+class GlobalRoleAbility(Item):
+    immutable_fields = Item.immutable_fields + ['global_role', 'ability']
+    global_role = models.ForeignKey(GlobalRole, related_name='abilities_as_global_role')
+    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
+    class Meta:
+        unique_together = (('global_role', 'ability'),)
+
+
+class RoleAbility(Item):
+    immutable_fields = Item.immutable_fields + ['role', 'ability']
+    role = models.ForeignKey(Role, related_name='abilities_as_role')
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
+    class Meta:
+        unique_together = (('role', 'ability'),)
+
+
+class Permission(Item):
+    immutable_fields = Item.immutable_fields
+
+
+class GlobalPermission(Item):
+    immutable_fields = Item.immutable_fields
+
+
+class AgentGlobalPermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['agent', 'ability']
+    agent = models.ForeignKey(Agent, related_name='agent_global_permissions_as_agent')
+    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
+    class Meta:
+        unique_together = (('agent', 'ability'),)
+
+
+class ItemSetGlobalPermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['itemset', 'ability']
+    itemset = models.ForeignKey(ItemSet, related_name='itemset_global_permissions_as_itemset')
+    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
+    class Meta:
+        unique_together = (('itemset', 'ability'),)
+
+
+class DefaultGlobalPermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['ability']
+    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
+    class Meta:
+        unique_together = (('ability',),)
+
+
+class AgentGlobalRolePermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['agent', 'global_role']
+    agent = models.ForeignKey(Agent, related_name='agent_global_role_permissions_as_agent')
+    global_role = models.ForeignKey(GlobalRole, related_name='agent_global_role_permissions_as_global_role')
+    class Meta:
+        unique_together = (('agent', 'global_role'),)
+
+
+class ItemSetGlobalRolePermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['itemset', 'global_role']
+    itemset = models.ForeignKey(ItemSet, related_name='itemset_global_role_permissions_as_itemset')
+    global_role = models.ForeignKey(GlobalRole, related_name='itemset_global_role_permissions_as_global_role')
+    class Meta:
+        unique_together = (('itemset', 'global_role'),)
+
+
+class DefaultGlobalRolePermission(GlobalPermission):
+    immutable_fields = GlobalPermission.immutable_fields + ['global_role']
+    global_role = models.ForeignKey(GlobalRole, related_name='default_global_role_permissions_as_global_role')
+    class Meta:
+        unique_together = (('global_role',),)
+
+
+class AgentPermission(Permission):
+    immutable_fields = Permission.immutable_fields + ['agent', 'item', 'ability']
+    agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent')
+    item = models.ForeignKey(Item, related_name='agent_permissions_as_item')
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
+    class Meta:
+        unique_together = (('agent', 'item', 'ability'),)
+
+
+class ItemSetPermission(Permission):
+    immutable_fields = Permission.immutable_fields + ['itemset', 'item', 'ability']
+    itemset = models.ForeignKey(ItemSet, related_name='itemset_permissions_as_itemset')
+    item = models.ForeignKey(Item, related_name='itemset_permissions_as_item')
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
+    class Meta:
+        unique_together = (('itemset', 'item', 'ability'),)
+
+
+class DefaultPermission(Permission):
+    immutable_fields = Permission.immutable_fields + ['item', 'ability']
+    item = models.ForeignKey(Item, related_name='default_permissions_as_item')
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
+    class Meta:
+        unique_together = (('item', 'ability'),)
+
+
+class AgentRolePermission(Permission):
+    immutable_fields = Permission.immutable_fields + ['agent', 'item', 'role']
+    agent = models.ForeignKey(Agent, related_name='agent_role_permissions_as_agent')
+    item = models.ForeignKey(Item, related_name='agent_role_permissions_as_item')
+    role = models.ForeignKey(Role, related_name='agent_role_permissions_as_role')
+    class Meta:
+        unique_together = (('agent', 'item', 'role'),)
+
+
+class ItemSetRolePermission(Permission):
+    immutable_fields = Permission.immutable_fields + ['itemset', 'item', 'role']
+    itemset = models.ForeignKey(ItemSet, related_name='itemset_role_permissions_as_itemset')
+    item = models.ForeignKey(Item, related_name='itemset_role_permissions_as_item')
+    role = models.ForeignKey(Role, related_name='itemset_role_permissions_as_role')
+    class Meta:
+        unique_together = (('itemset', 'item', 'role'),)
+
+
+class DefaultRolePermission(Permission):
+    immutable_fields = Permission.immutable_fields + ['item', 'role']
+    item = models.ForeignKey(Item, related_name='default_role_permissions_as_item')
+    role = models.ForeignKey(Role, related_name='default_role_permissions_as_role')
+    class Meta:
+        unique_together = (('item', 'role'),)
 
 
 ################################################################################

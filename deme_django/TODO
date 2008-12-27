@@ -25,7 +25,6 @@ Code correctness/consistency/bugs
 ---------------------------------
 * figure out import deal on deme_django.cms and just cms
 * start using verbose_name to have nice displays of item type names
-* having the default "Item" and "id" ability_parameter is kind of unelegant. And it would be nice to limit ability_parameter
   - Maybe each item should specify which permissions can be applied to it
 * Modifying TextDocuments needs to be able to move around located comments
 * The "crumbs" at the top of pages like TextAdvertisements and TextComments are wrong, since they have multiple inheritance
@@ -40,7 +39,6 @@ Performance
   - Maybe Postgres has some nice full-text indexing for good searching
 * we need multi-column indexes for permissions
   - we'll try http://docs.djangoproject.com/en/dev/howto/initial-data/#howto-initial-data
-  - we can merge ability and ability_parameter into one field
 * Asynchronous notifications
 * See if permissions speed up with more postgres memory
 

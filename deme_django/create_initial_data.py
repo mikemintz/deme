@@ -45,12 +45,12 @@ for model in all_models():
             continue
         if name in ['item_type', 'trashed']:
             continue
-        role_abilities.append(RoleAbility(role=default_role, ability="view", ability_parameter=name, is_allowed=True))
-        role_abilities.append(RoleAbility(role=creator_role, ability="view", ability_parameter=name, is_allowed=True))
+        role_abilities.append(RoleAbility(role=default_role, ability="view %s" % name, is_allowed=True))
+        role_abilities.append(RoleAbility(role=creator_role, ability="view %s" % name, is_allowed=True))
         if field.editable and name not in model.immutable_fields:
-            role_abilities.append(RoleAbility(role=creator_role, ability="edit", ability_parameter=name, is_allowed=True))
-    role_abilities.append(RoleAbility(role=creator_role, ability="modify_permissions", ability_parameter="id", is_allowed=True))
-    role_abilities.append(RoleAbility(role=creator_role, ability="trash", ability_parameter="id", is_allowed=True))
+            role_abilities.append(RoleAbility(role=creator_role, ability="edit %s" % name, is_allowed=True))
+    role_abilities.append(RoleAbility(role=creator_role, ability="modify_permissions", is_allowed=True))
+    role_abilities.append(RoleAbility(role=creator_role, ability="trash", is_allowed=True))
 
 print 'Saving role settings...'
 for key, value in deme_settings.iteritems():
@@ -81,7 +81,7 @@ AgentRolePermission(agent=admin, item=admin, role=Role.objects.get(pk=DemeSettin
 
 print 'Other stuff...'
 
-AgentGlobalPermission(ability='do_everything', ability_parameter="Item", is_allowed=True, agent=admin).save_versioned(updater=admin)
+AgentGlobalPermission(ability='do_everything', is_allowed=True, agent=admin).save_versioned(updater=admin)
 
 anonymous_agent = AnonymousAgent(name='Anonymous')
 anonymous_agent.save_versioned(updater=admin)
@@ -171,9 +171,9 @@ discuss_group.save_versioned(updater=admin)
 ItemSetMembership(item=mike_person, itemset=discuss_group).save_versioned(updater=admin)
 ItemSetMembership(item=todd_person, itemset=discuss_group).save_versioned(updater=admin)
 
-DefaultGlobalPermission(ability='do_something', ability_parameter='Item', is_allowed=True).save_versioned(updater=admin)
-#AgentGlobalPermission(agent=anonymous_agent, ability='do_something', ability_parameter='Item', is_allowed=False).save_versioned(updater=admin)
-DefaultGlobalPermission(ability='create', ability_parameter='TextComment', is_allowed=True).save_versioned(updater=admin)
-DefaultGlobalPermission(ability='create', ability_parameter='HtmlDocument', is_allowed=True).save_versioned(updater=admin)
+DefaultGlobalPermission(ability='do_something', is_allowed=True).save_versioned(updater=admin)
+#AgentGlobalPermission(agent=anonymous_agent, ability='do_something', is_allowed=False).save_versioned(updater=admin)
+DefaultGlobalPermission(ability='create TextComment', is_allowed=True).save_versioned(updater=admin)
+DefaultGlobalPermission(ability='create HtmlDocument', is_allowed=True).save_versioned(updater=admin)
 
-DefaultPermission(item=admin, ability='login_as', ability_parameter="id", is_allowed=True).save_versioned(updater=admin)
+DefaultPermission(item=admin, ability='login_as', is_allowed=True).save_versioned(updater=admin)
