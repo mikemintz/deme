@@ -440,6 +440,38 @@ class Folio(ItemSet):
     group = models.ForeignKey(Group, related_name='folios_as_group', unique=True, editable=False)
 
 
+class ItemSetMembership(Item):
+    immutable_fields = Item.immutable_fields + ['item', 'itemset']
+    item = models.ForeignKey(Item, related_name='itemset_memberships_as_item')
+    itemset = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
+    class Meta:
+        unique_together = (('item', 'itemset'),)
+    def after_create(self):
+        super(ItemSetMembership, self).after_create()
+        RecursiveItemSetMembership.recursive_add_membership(self)
+        add_member_comment = AddMemberComment(commented_item=self.itemset, membership=self)
+        add_member_comment.save_versioned(updater=self.creator)
+        add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.itemset.latest_untrashed_itemversion().version_number, commented_item_index=None)
+        add_member_comment_location.save_versioned(updater=self.creator)
+    after_create.alters_data = True
+    def after_completely_trash(self, agent):
+        super(ItemSetMembership, self).after_completely_trash(agent)
+        RecursiveItemSetMembership.recursive_remove_edge(self.itemset, self.item)
+        remove_member_comment = RemoveMemberComment(commented_item=self.itemset, membership=self)
+        remove_member_comment.save_versioned(updater=agent)
+        remove_member_comment_location = CommentLocation(comment=remove_member_comment, commented_item_version_number=self.itemset.latest_untrashed_itemversion().version_number, commented_item_index=None)
+        remove_member_comment_location.save_versioned(updater=agent)
+    after_completely_trash.alters_data = True
+    def after_untrash(self, agent):
+        super(ItemSetMembership, self).after_untrash(agent)
+        RecursiveItemSetMembership.recursive_add_membership(self)
+        add_member_comment = AddMemberComment(commented_item=self.itemset, membership=self)
+        add_member_comment.save_versioned(updater=agent)
+        add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.itemset.latest_untrashed_itemversion().version_number, commented_item_index=None)
+        add_member_comment_location.save_versioned(updater=agent)
+    after_untrash.alters_data = True
+
+
 class Document(Item):
     immutable_fields = Item.immutable_fields
 
@@ -497,6 +529,10 @@ class Comment(Document):
             comment_type_q = Q(notify_text=True)
         elif isinstance(self, EditComment):
             comment_type_q = Q(notify_edit=True)
+        elif isinstance(self, AddMemberComment):
+            comment_type_q = Q(notify_edit=True)
+        elif isinstance(self, RemoveMemberComment):
+            comment_type_q = Q(notify_edit=True)
         else:
             comment_type_q = Q(pk__isnull=False)
         direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
@@ -517,6 +553,10 @@ class Comment(Document):
         if isinstance(self, TextComment):
             comment_type_q = Q(notify_text=True)
         elif isinstance(self, EditComment):
+            comment_type_q = Q(notify_edit=True)
+        elif isinstance(self, AddMemberComment):
+            comment_type_q = Q(notify_edit=True)
+        elif isinstance(self, RemoveMemberComment):
             comment_type_q = Q(notify_edit=True)
         else:
             comment_type_q = Q(pk__isnull=False)
@@ -555,6 +595,12 @@ class Comment(Document):
         elif isinstance(self, EditComment):
             subject = '[%s] Edited' % (commented_item_name,)
             body = '%s edited %s\n%s' % (creator_name, commented_item_name, commented_item_url)
+        elif isinstance(self, AddMemberComment):
+            subject = '[%s] Member Added' % (commented_item_name,)
+            body = '%s added a member to %s\n%s' % (creator_name, commented_item_name, commented_item_url)
+        elif isinstance(self, RemoveMemberComment):
+            subject = '[%s] Member Removed' % (commented_item_name,)
+            body = '%s removed a member from %s\n%s' % (creator_name, commented_item_name, commented_item_url)
         else:
             return None
         from_email_address = '%s@%s' % (self.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
@@ -581,6 +627,16 @@ class EditComment(Comment):
     immutable_fields = Comment.immutable_fields
 
 
+class AddMemberComment(Comment):
+    immutable_fields = Comment.immutable_fields + ['membership']
+    membership = models.ForeignKey(ItemSetMembership, related_name="add_member_comments_as_membership")
+
+
+class RemoveMemberComment(Comment):
+    immutable_fields = Comment.immutable_fields + ['membership']
+    membership = models.ForeignKey(ItemSetMembership, related_name="remove_member_comments_as_membership")
+
+
 class Excerpt(Item):
     immutable_fields = Item.immutable_fields
 
@@ -591,26 +647,6 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
     text_document_version_number = models.PositiveIntegerField()
     start_index = models.PositiveIntegerField()
     length = models.PositiveIntegerField()
-
-
-class ItemSetMembership(Item):
-    immutable_fields = Item.immutable_fields + ['item', 'itemset']
-    item = models.ForeignKey(Item, related_name='itemset_memberships_as_item')
-    itemset = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
-    class Meta:
-        unique_together = (('item', 'itemset'),)
-    def after_create(self):
-        super(ItemSetMembership, self).after_create()
-        RecursiveItemSetMembership.recursive_add_membership(self)
-    after_create.alters_data = True
-    def after_completely_trash(self, agent):
-        super(ItemSetMembership, self).after_completely_trash(agent)
-        RecursiveItemSetMembership.recursive_remove_edge(self.itemset, self.item)
-    after_completely_trash.alters_data = True
-    def after_untrash(self, agent):
-        super(ItemSetMembership, self).after_untrash(agent)
-        RecursiveItemSetMembership.recursive_add_membership(self)
-    after_untrash.alters_data = True
 
 
 class RecursiveItemSetMembership(models.Model):

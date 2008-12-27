@@ -19,7 +19,8 @@ Symsys module
 
 Ontology changes
 ----------------
-* Add more automatic generated comments (like Trash, Untrash, AddToItemset, RemoveFromItemset, etc.)
+* Add more automatic generated comments (like Trash, Untrash)
+  - Consider removing the ability to trash versions (then this will be much simpler)
 
 Code correctness/consistency/bugs
 ---------------------------------
