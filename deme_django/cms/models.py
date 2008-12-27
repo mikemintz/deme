@@ -554,7 +554,7 @@ class Comment(Document):
 
 
 class CommentLocation(Item):
-    immutable_fields = TextDocument.immutable_fields + ['comment', 'commented_item_version_number']
+    immutable_fields = Item.immutable_fields + ['comment', 'commented_item_version_number']
     comment = models.ForeignKey(Comment, related_name='comment_locations_as_comment')
     commented_item_version_number = models.PositiveIntegerField()
     commented_item_index = models.PositiveIntegerField(null=True, blank=True)
