@@ -197,6 +197,7 @@ class Item(models.Model):
                 fields[field.name] = None
         for key, val in fields.iteritems():
             setattr(self, key, val)
+    copy_fields_from_itemversion.alters_data = True
 
     def copy_fields_to_itemversion(self, itemversion):
         fields = {}
@@ -211,6 +212,7 @@ class Item(models.Model):
                 fields[field.name] = None
         for key, val in fields.iteritems():
             setattr(itemversion, key, val)
+    copy_fields_to_itemversion.alters_data = True
 
     @transaction.commit_on_success
     def trash(self, agent):
