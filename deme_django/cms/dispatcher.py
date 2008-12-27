@@ -216,7 +216,6 @@ def alias(request, *args, **kwargs):
         kwargs['collection_action'] = custom_url.action
         kwargs['entry_action'] = None
     query_dict = QueryDict(custom_url.query_string).copy()
-    #TODO this is quite hacky, let's fix this when we finalize sites and stuff
     query_dict.update(request.GET)
     request.GET = query_dict
     request._request = datastructures.MergeDict(request.POST, request.GET)
