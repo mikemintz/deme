@@ -291,7 +291,7 @@ class ItemViewer(object):
         self.context['_item_ability_cache'] = self._item_ability_cache
 
     def dispatch(self):
-        if ('do_something', 'Item') not in permission_functions.get_global_abilities_for_agent(self.cur_agent):
+        if ('do_something', 'Item') not in permission_functions.get_global_abilities_for_agent(self.cur_agent) and ('do_everything', 'Item') not in permission_functions.get_global_abilities_for_agent(self.cur_agent):
             template = loader.get_template_from_string("""
 {% extends layout %}
 {% load resource_extras %}
@@ -783,6 +783,156 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['new_agent_form'] = new_agent_form_class()
         self.context['new_itemset_form'] = new_itemset_form_class()
         return HttpResponse(template.render(self.context))
+
+    def collection_globalpermissions(self):
+        can_do_everything = ('do_everything', 'Item') in self.get_global_abilities_for_agent(self.cur_agent)
+        if not can_do_everything:
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify global permissions")
+
+        def formfield_callback(f):
+            if f.name in ['agent', 'itemset', 'item']:
+                return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=f.rel.field_name)
+            if isinstance(f, models.ForeignKey):
+                return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
+            else:
+                return f.formfield()
+
+        agent_permission_form_class = forms.models.modelform_factory(cms.models.AgentGlobalPermission, fields=['agent', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        agent_role_permission_form_class = forms.models.modelform_factory(cms.models.AgentGlobalRolePermission, fields=['agent', 'global_role'], formfield_callback=formfield_callback)
+        itemset_permission_form_class = forms.models.modelform_factory(cms.models.ItemSetGlobalPermission, fields=['itemset', 'ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        itemset_role_permission_form_class = forms.models.modelform_factory(cms.models.ItemSetGlobalRolePermission, fields=['itemset', 'global_role'], formfield_callback=formfield_callback)
+        default_permission_form_class = forms.models.modelform_factory(cms.models.DefaultGlobalPermission, fields=['ability', 'ability_parameter', 'is_allowed'], formfield_callback=formfield_callback)
+        default_role_permission_form_class = forms.models.modelform_factory(cms.models.DefaultGlobalRolePermission, fields=['global_role'], formfield_callback=formfield_callback)
+
+        if self.method == 'POST':
+            form_type = self.request.GET.get('formtype')
+            if form_type == 'agentpermission':
+                form_class = agent_permission_form_class
+            elif form_type == 'agentrolepermission':
+                form_class = agent_role_permission_form_class
+            elif form_type == 'itemsetpermission':
+                form_class = itemset_permission_form_class
+            elif form_type == 'itemsetrolepermission':
+                form_class = itemset_role_permission_form_class
+            elif form_type == 'defaultpermission':
+                form_class = default_permission_form_class
+            elif form_type == 'defaultrolepermission':
+                form_class = default_role_permission_form_class
+            else:
+                return self.render_error(HttpResponseBadRequest, 'Invalid Form Type', "You submitted a permission form with an invalid formtype parameter")
+
+            form = form_class(self.request.POST, self.request.FILES, prefix=self.request.GET['formprefix'])
+            if form.is_valid():
+                item = form.save(commit=False)
+                item.name = "Untitled Permission"
+                item.save_versioned(updater=self.cur_agent)
+                redirect = self.request.GET['redirect']
+                return HttpResponseRedirect(redirect)
+            elif form.non_field_errors(): # there may have been a duplicate
+                model = form._meta.model
+                fields = form._meta.fields
+                existing_permission = model.objects
+                for field in fields:
+                    data = form[field].data
+                    if field == 'agent':
+                        existing_permission = existing_permission.filter(agent__pk=data)
+                    elif field == 'itemset':
+                        existing_permission = existing_permission.filter(itemset__pk=data)
+                    elif field == 'global_role':
+                        existing_permission = existing_permission.filter(global_role__pk=data)
+                    elif field == 'ability':
+                        existing_permission = existing_permission.filter(ability=data)
+                    elif field == 'ability_parameter':
+                        existing_permission = existing_permission.filter(ability_parameter=data)
+                try:
+                    existing_permission = existing_permission.get()
+                except ObjectDoesNotExist:
+                    existing_permission = None
+                if existing_permission:
+                    something_changed = False
+                    if existing_permission.trashed:
+                        existing_permission.untrash()
+                        something_changed = True
+                    if 'is_allowed' in fields and existing_permission.is_allowed != form['is_allowed'].data:
+                        existing_permission.is_allowed = form['is_allowed'].data
+                        existing_permission.save_versioned(updater=self.cur_agent)
+                        something_changed = True
+                    # Regardless of whether something_changed, it was a success
+                    redirect = self.request.GET['redirect']
+                    return HttpResponseRedirect(redirect)
+                else:
+                    # we'll display it in the regular page below as an invalid form
+                    pass
+
+        agent_permissions = cms.models.AgentGlobalPermission.objects.filter(trashed=False)
+        itemset_permissions = cms.models.ItemSetGlobalPermission.objects.filter(trashed=False)
+        default_permissions = cms.models.DefaultGlobalPermission.objects.filter(trashed=False)
+        agent_role_permissions = cms.models.AgentGlobalRolePermission.objects.filter(trashed=False)
+        itemset_role_permissions = cms.models.ItemSetGlobalRolePermission.objects.filter(trashed=False)
+        default_role_permissions = cms.models.DefaultGlobalRolePermission.objects.filter(trashed=False)
+        agents = cms.models.Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
+        itemsets = cms.models.ItemSet.objects.filter(Q(pk__in=itemset_permissions.values('itemset__pk').query) | Q(pk__in=itemset_role_permissions.values('itemset__pk').query) | Q(pk=self.request.GET.get('itemset', 0))).order_by('name')
+
+        agent_data = []
+        for agent in agents:
+            agent_datum = {}
+            agent_datum['agent'] = agent
+            agent_datum['permissions'] = agent_permissions.filter(agent=agent)
+            agent_datum['role_permissions'] = agent_role_permissions.filter(agent=agent)
+            agent_datum['permission_form'] = agent_permission_form_class(prefix="agent%s" % agent.pk, initial={'agent': agent.pk})
+            agent_datum['role_permission_form'] = agent_role_permission_form_class(prefix="roleagent%s" % agent.pk, initial={'agent': agent.pk})
+            agent_data.append(agent_datum)
+        itemset_data = []
+        for itemset in itemsets:
+            itemset_datum = {}
+            itemset_datum['itemset'] = itemset
+            itemset_datum['permissions'] = itemset_permissions.filter(itemset=itemset)
+            itemset_datum['role_permissions'] = itemset_role_permissions.filter(itemset=itemset)
+            itemset_datum['permission_form'] = itemset_permission_form_class(prefix="itemset%s" % itemset.pk, initial={'itemset': itemset.pk})
+            itemset_datum['role_permission_form'] = itemset_role_permission_form_class(prefix="roleitemset%s" % itemset.pk, initial={'itemset': itemset.pk})
+            itemset_data.append(itemset_datum)
+        default_data = {}
+        default_data['permissions'] = default_permissions
+        default_data['role_permissions'] = default_role_permissions
+        default_data['permission_form'] = default_permission_form_class(prefix="default", initial={})
+        default_data['role_permission_form'] = default_role_permission_form_class(prefix="roledefault", initial={})
+
+        # now include the error form
+        if self.method == 'POST':
+            if form_type == 'agentpermission':
+                agent_datum = [datum for datum in agent_data if str(datum['agent'].pk) == form['agent'].data][0]
+                agent_datum['permission_form'] = form
+                agent_datum['permission_form_invalid'] = True
+            elif form_type == 'agentrolepermission':
+                agent_datum = [datum for datum in agent_data if str(datum['agent'].pk) == form['agent'].data][0]
+                agent_datum['role_permission_form'] = form
+                agent_datum['role_permission_form_invalid'] = True
+            elif form_type == 'itemsetpermission':
+                itemset_datum = [datum for datum in itemset_data if str(datum['itemset'].pk) == form['itemset'].data][0]
+                itemset_datum['permission_form'] = form
+                itemset_datum['permission_form_invalid'] = True
+            elif form_type == 'itemsetrolepermission':
+                itemset_datum = [datum for datum in itemset_data if str(datum['itemset'].pk) == form['itemset'].data][0]
+                itemset_datum['role_permission_form'] = form
+                itemset_datum['role_permission_form_invalid'] = True
+            elif form_type == 'defaultpermission':
+                default_data['permission_form'] = form
+                default_data['permission_form_invalid'] = True
+            elif form_type == 'defaultrolepermission':
+                default_data['role_permission_form'] = form
+                default_data['role_permission_form_invalid'] = True
+
+        new_agent_form_class = forms.models.modelform_factory(cms.models.AgentGlobalPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_itemset_form_class = forms.models.modelform_factory(cms.models.ItemSetGlobalPermission, fields=['itemset'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+
+        template = loader.get_template('item/globalpermissions.html')
+        self.context['agent_data'] = agent_data
+        self.context['itemset_data'] = itemset_data
+        self.context['default_data'] = default_data
+        self.context['new_agent_form'] = new_agent_form_class()
+        self.context['new_itemset_form'] = new_itemset_form_class()
+        return HttpResponse(template.render(self.context))
+
 
 class GroupViewer(ItemViewer):
     item_type = cms.models.Group
