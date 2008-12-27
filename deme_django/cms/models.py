@@ -116,43 +116,36 @@ class ItemVersion(models.Model):
     def trash(self, agent):
         if self.trashed:
             return
-        try:
-            latest_untrashed_version = self.current_item.versions.filter(trashed=False).latest()
-        except ObjectDoesNotExist:
-            latest_untrashed_version = None
+        cur_item = self.current_item.downcast()
+        latest_untrashed_version = cur_item.latest_untrashed_itemversion()
         self.trashed = True
         self.save()
-        if latest_untrashed_version == self:
-            try:
-                new_latest_untrashed_version = self.current_item.versions.filter(trashed=False).latest()
-            except ObjectDoesNotExist:
-                new_latest_untrashed_version = None
-            if new_latest_untrashed_version:
-                self.current_item.copy_fields_from_itemversion(new_latest_untrashed_version)
-                self.current_item.save()
+        if latest_untrashed_version.pk == self.pk:
+            new_latest_untrashed_version = cur_item.latest_untrashed_itemversion()
+            if new_latest_untrashed_version.trashed:
+                cur_item.copy_fields_from_itemversion(new_latest_untrashed_version)
+                cur_item.trashed = True
+                cur_item.save()
+                cur_item.after_completely_trash(agent)
             else:
-                self.current_item.trashed = True
-                self.current_item.save()
-                self.current_item.after_completely_trash(agent)
+                cur_item.copy_fields_from_itemversion(new_latest_untrashed_version)
+                cur_item.save()
     trash.alters_data = True
 
     @transaction.commit_on_success
     def untrash(self, agent):
         if not self.trashed:
             return
-        try:
-            latest_untrashed_version = self.current_item.versions.filter(trashed=False).latest()
-        except ObjectDoesNotExist:
-            latest_untrashed_version = None
+        cur_item = self.current_item.downcast()
+        latest_untrashed_version = cur_item.latest_untrashed_itemversion()
         self.trashed = False
         self.save()
-        if not latest_untrashed_version or self.version_number > latest_untrashed_version.version_number:
-            self.current_item.copy_fields_from_itemversion(self)
-            self.current_item.save()
-        if not latest_untrashed_version:
-            self.current_item.trashed = False
-            self.current_item.save()
-            self.current_item.after_untrash(agent)
+        if latest_untrashed_version.trashed or self.version_number > latest_untrashed_version.version_number:
+            cur_item.copy_fields_from_itemversion(self.downcast())
+            cur_item.trashed = False
+            cur_item.save()
+            if latest_untrashed_version.trashed:
+                cur_item.after_untrash(agent)
     untrash.alters_data = True
 
 
@@ -174,6 +167,13 @@ class Item(models.Model):
     def downcast(self):
         item_type = [x for x in all_models() if x.__name__ == self.item_type][0]
         return item_type.objects.get(id=self.id)
+
+    def latest_untrashed_itemversion(self):
+        try:
+            result = type(self).VERSION.objects.filter(current_item=self, trashed=False).latest()
+        except ObjectDoesNotExist:
+            result = type(self).VERSION.objects.filter(current_item=self).latest()
+        return result
 
     def all_containing_itemsets(self, recursive_filter=None):
         recursive_memberships = RecursiveItemSetMembership.objects.filter(child=self)
@@ -218,6 +218,7 @@ class Item(models.Model):
     def trash(self, agent):
         if self.trashed:
             return
+        self.copy_fields_from_itemversion(self.versions.latest().downcast())
         self.trashed = True
         self.save()
         self.versions.all().update(trashed=True)
@@ -228,7 +229,7 @@ class Item(models.Model):
     def untrash(self, agent):
         if not self.trashed:
             return
-        self.copy_fields_from_itemversion(self.versions.latest())
+        self.copy_fields_from_itemversion(self.versions.latest().downcast())
         self.trashed = False
         self.save()
         self.versions.all().update(trashed=False)

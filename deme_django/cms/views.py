@@ -166,10 +166,7 @@ def get_viewer_class_for_viewer_name(viewer_name):
 
 def get_versioned_item(item, version_number):
     if version_number is None:
-        try:
-            itemversion = type(item).VERSION.objects.filter(current_item=item.pk, trashed=False).latest()
-        except ObjectDoesNotExist:
-            itemversion = type(item).VERSION.objects.filter(current_item=item.pk).latest()
+        itemversion = item.latest_untrashed_itemversion()
     else:
         itemversion = type(item).VERSION.objects.get(current_item=item.pk, version_number=version_number)
         for name in itemversion._meta.get_all_field_names():
