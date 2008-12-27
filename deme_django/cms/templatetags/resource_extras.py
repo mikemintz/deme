@@ -525,13 +525,19 @@ def commentbox(parser, token):
 
 
 class EmbeddedItem(template.Node):
-    def __init__(self, item):
+    def __init__(self, viewer_name, item):
+        self.viewer_name = template.Variable(viewer_name)
         self.item = template.Variable(item)
 
     def __repr__(self):
         return "<EmbeddedItemNode>"
 
     def render(self, context):
+        from cms.views import get_viewer_class_for_viewer_name, get_versioned_item
+        viewer_name = self.viewer_name.resolve(context)
+        viewer_class = get_viewer_class_for_viewer_name(viewer_name)
+        if viewer_class is None:
+            return ''
         item = self.item.resolve(context)
         if isinstance(item, basestring):
             try:
@@ -540,10 +546,8 @@ class EmbeddedItem(template.Node):
                 item = None
         if not isinstance(item, cms.models.Item):
             return ''
-        from cms.views import get_viewer_class_for_viewer_name, get_versioned_item
         item = item.downcast()
         item = get_versioned_item(item, None)
-        viewer_class = get_viewer_class_for_viewer_name(item.item_type.lower())
         viewer = viewer_class()
         viewer.init_from_div(context['request'], 'show', item.item_type.lower(), item, context['cur_agent'])
         return """<div style="padding: 10px; border: thick solid #aaa;">%s</div>""" % viewer.dispatch().content
@@ -552,7 +556,7 @@ class EmbeddedItem(template.Node):
 @register.tag
 def embed(parser, token):
     bits = list(token.split_contents())
-    if len(bits) != 2:
-        raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
-    return EmbeddedItem(bits[1])
+    if len(bits) != 3:
+        raise template.TemplateSyntaxError, "%r takes two arguments" % bits[0]
+    return EmbeddedItem(bits[1], bits[2])
 

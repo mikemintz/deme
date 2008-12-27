@@ -6,56 +6,16 @@
 
 {% itemheader %}
 
-<table width="100%" style="margin-bottom: 15px;">
-
-<tr valign="top">
-    <td style="font-size: larger;">Roster</td>
-    <td style="font-size: larger;">Folio</td>
-</tr>
-
-<tr valign="top">
-<td>
-
+<div style="font-size: larger; margin: 10px 0 10px 0;">Folio</div>
 <div>
-    {% if item.itemset_memberships_as_itemset.all %}
-    <table class="list">
-        <tr>
-            <th>Name</th>
-            <th>Membership</th>
-        </tr>
-        {% for itemset_membership in item.itemset_memberships_as_itemset.all %}
-        <tr class="{% cycle 'even' 'odd' %}">
-            {% ifagentcan 'view' 'name' itemset_membership.item %}
-            <td><a href="{% show_resource_url itemset_membership.item %}">{{ itemset_membership.item.name }}</a></td>
-            {% else %}
-            <td><a href="{% show_resource_url itemset_membership.item %}">[PERMISSION DENIED]</a></td>
-            {% endifagentcan %}
-            <td><a href="{% show_resource_url itemset_membership %}">{{ itemset_membership.pk }}</a></td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-        No Agents In This Group
-    {% endif %}
-
-    <div style="margin-top: 10px;">
-        <a href="{% url resource_collection viewer="itemsetmembership",collection_action="new" %}?itemset={{ item.pk }}&redirect={{ full_path|urlencode }}">[+] Add Member</a>
-    </div>
+    {% embed 'folio' item.folios_as_group.get %}
+    {# {{ folio_html }} #}
 </div>
 
-</td>
-
-<td>
-
-    {% embed item.folios_as_group.get %}
-    {# {{ folio_html }} #}
-
-</td>
-</tr>
-
-</table>
-
-{% commentbox %}
+<div style="font-size: larger; margin: 10px 0 10px 0;">Roster</div>
+<div>
+    {% embed 'itemset' item %}
+</div>
 
 {% endblock content %}
 
