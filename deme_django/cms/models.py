@@ -113,7 +113,7 @@ class ItemVersion(models.Model):
         return item_type.VERSION.objects.get(id=self.id)
 
     @transaction.commit_on_success
-    def trash(self):
+    def trash(self, agent):
         if self.trashed:
             return
         try:
@@ -133,11 +133,11 @@ class ItemVersion(models.Model):
             else:
                 self.current_item.trashed = True
                 self.current_item.save()
-                self.current_item.after_completely_trash()
+                self.current_item.after_completely_trash(agent)
     trash.alters_data = True
 
     @transaction.commit_on_success
-    def untrash(self):
+    def untrash(self, agent):
         if not self.trashed:
             return
         try:
@@ -152,7 +152,7 @@ class ItemVersion(models.Model):
         if not latest_untrashed_version:
             self.current_item.trashed = False
             self.current_item.save()
-            self.current_item.after_untrash()
+            self.current_item.after_untrash(agent)
     untrash.alters_data = True
 
 
@@ -213,24 +213,24 @@ class Item(models.Model):
             setattr(itemversion, key, val)
 
     @transaction.commit_on_success
-    def trash(self):
+    def trash(self, agent):
         if self.trashed:
             return
         self.trashed = True
         self.save()
         self.versions.all().update(trashed=True)
-        self.after_completely_trash()
+        self.after_completely_trash(agent)
     trash.alters_data = True
 
     @transaction.commit_on_success
-    def untrash(self):
+    def untrash(self, agent):
         if not self.trashed:
             return
         self.copy_fields_from_itemversion(self.versions.latest())
         self.trashed = False
         self.save()
         self.versions.all().update(trashed=False)
-        self.after_untrash()
+        self.after_untrash(agent)
     untrash.alters_data = True
 
     @transaction.commit_on_success
@@ -295,11 +295,11 @@ class Item(models.Model):
         pass
     after_create.alters_data = True
 
-    def after_completely_trash(self):
+    def after_completely_trash(self, agent):
         pass
     after_completely_trash.alters_data = True
 
-    def after_untrash(self):
+    def after_untrash(self, agent):
         pass
     after_untrash.alters_data = True
 
@@ -413,12 +413,12 @@ class ItemSet(Item):
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         return Item.objects.filter(trashed=False, pk__in=recursive_memberships.values('child').query)
-    def after_completely_trash(self):
-        super(ItemSet, self).after_completely_trash()
+    def after_completely_trash(self, agent):
+        super(ItemSet, self).after_completely_trash(agent)
         RecursiveItemSetMembership.recursive_remove_itemset(self)
     after_completely_trash.alters_data = True
-    def after_untrash(self):
-        super(ItemSet, self).after_untrash()
+    def after_untrash(self, agent):
+        super(ItemSet, self).after_untrash(agent)
         RecursiveItemSetMembership.recursive_add_itemset(self)
     after_untrash.alters_data = True
 
@@ -600,12 +600,12 @@ class ItemSetMembership(Item):
         super(ItemSetMembership, self).after_create()
         RecursiveItemSetMembership.recursive_add_membership(self)
     after_create.alters_data = True
-    def after_completely_trash(self):
-        super(ItemSetMembership, self).after_completely_trash()
+    def after_completely_trash(self, agent):
+        super(ItemSetMembership, self).after_completely_trash(agent)
         RecursiveItemSetMembership.recursive_remove_edge(self.itemset, self.item)
     after_completely_trash.alters_data = True
-    def after_untrash(self):
-        super(ItemSetMembership, self).after_untrash()
+    def after_untrash(self, agent):
+        super(ItemSetMembership, self).after_untrash(agent)
         RecursiveItemSetMembership.recursive_add_membership(self)
     after_untrash.alters_data = True
 

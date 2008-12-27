@@ -612,9 +612,9 @@ The agent currently logged in is not allowed to use this application. Please log
         if not (can_do_everything or can_trash):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to trash this item")
         if 'version' in self.request.GET:
-            self.item.versions.get(version_number=self.item.version_number).trash()
+            self.item.versions.get(version_number=self.item.version_number).trash(self.cur_agent)
         else:
-            self.item.trash()
+            self.item.trash(self.cur_agent)
         return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
 
     def entry_untrash(self):
@@ -626,9 +626,9 @@ The agent currently logged in is not allowed to use this application. Please log
         if not (can_do_everything or can_trash):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to untrash this item")
         if 'version' in self.request.GET:
-            self.item.versions.get(version_number=self.item.version_number).untrash()
+            self.item.versions.get(version_number=self.item.version_number).untrash(self.cur_agent)
         else:
-            self.item.untrash()
+            self.item.untrash(self.cur_agent)
         return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
 
     def entry_permissions(self):
@@ -702,7 +702,7 @@ The agent currently logged in is not allowed to use this application. Please log
                 if existing_permission:
                     something_changed = False
                     if existing_permission.trashed:
-                        existing_permission.untrash()
+                        existing_permission.untrash(self.cur_agent)
                         something_changed = True
                     if 'is_allowed' in fields and existing_permission.is_allowed != form['is_allowed'].data:
                         existing_permission.is_allowed = form['is_allowed'].data
@@ -851,7 +851,7 @@ The agent currently logged in is not allowed to use this application. Please log
                 if existing_permission:
                     something_changed = False
                     if existing_permission.trashed:
-                        existing_permission.untrash()
+                        existing_permission.untrash(self.cur_agent)
                         something_changed = True
                     if 'is_allowed' in fields and existing_permission.is_allowed != form['is_allowed'].data:
                         existing_permission.is_allowed = form['is_allowed'].data
