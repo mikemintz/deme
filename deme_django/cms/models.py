@@ -327,11 +327,12 @@ class DemeSetting(Item):
 
 
 class Agent(Item):
+    immutable_fields = Item.immutable_fields
     last_online_at = models.DateTimeField(null=True, blank=True) # it's a little sketchy how this gets set without save_versioned(), so maybe reverting to an old version will reset this to NULL
 
 
 class AnonymousAgent(Agent):
-    pass
+    immutable_fields = Agent.immutable_fields
 
 
 class AuthenticationMethod(Item):
@@ -375,6 +376,7 @@ def get_hexdigest(algorithm, salt, raw_password):
     raise ValueError("Got unknown password algorithm type in password.")
 
 class PasswordAuthenticationMethod(AuthenticationMethod):
+    immutable_fields = AuthenticationMethod.immutable_fields
     username = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=128)
     password_question = models.CharField(max_length=255, blank=True)
@@ -397,6 +399,7 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
         return get_hexdigest('sha1', nonce, hsh) == hashed_password
 
 class Person(Agent):
+    immutable_fields = Agent.immutable_fields
     first_name = models.CharField(max_length=255)
     middle_names = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255)
@@ -404,6 +407,7 @@ class Person(Agent):
 
 
 class ItemSet(Item):
+    immutable_fields = Item.immutable_fields
     def all_contained_itemset_members(self, recursive_filter=None):
         recursive_memberships = RecursiveItemSetMembership.objects.filter(parent=self)
         if recursive_filter is not None:
@@ -420,6 +424,7 @@ class ItemSet(Item):
 
 
 class Group(ItemSet):
+    immutable_fields = ItemSet.immutable_fields
     def after_create(self):
         super(Group, self).after_create()
         folio = Folio(group=self)
@@ -433,28 +438,31 @@ class Folio(ItemSet):
 
 
 class Document(Item):
-    pass
+    immutable_fields = Item.immutable_fields
 
 
 class TextDocument(Document):
+    immutable_fields = Document.immutable_fields
     body = models.TextField(blank=True)
 
 
 class DjangoTemplateDocument(TextDocument):
+    immutable_fields = TextDocument.immutable_fields
     layout = models.ForeignKey('DjangoTemplateDocument', related_name='djangotemplatedocuments_as_layout', null=True, blank=True)
     override_default_layout = models.BooleanField(default=False)
 
 
 class HtmlDocument(TextDocument):
-    pass
+    immutable_fields = TextDocument.immutable_fields
 
 
 class FileDocument(Document):
+    immutable_fields = Document.immutable_fields
     datafile = models.FileField(upload_to='filedocument/%Y/%m/%d', max_length=255)
 
 
 class ImageDocument(FileDocument):
-    pass
+    immutable_fields = FileDocument.immutable_fields
 
 
 class Comment(Document):
@@ -563,15 +571,15 @@ class CommentLocation(Item):
 
 
 class TextComment(TextDocument, Comment):
-    pass
+    immutable_fields = list(set(TextDocument.immutable_fields + Comment.immutable_fields))
 
 
 class EditComment(Comment):
-    pass
+    immutable_fields = Comment.immutable_fields
 
 
 class Excerpt(Item):
-    pass
+    immutable_fields = Item.immutable_fields
 
 
 class TextDocumentExcerpt(Excerpt, TextDocument):
@@ -667,30 +675,37 @@ class RecursiveCommentMembership(models.Model):
 
 
 class ContactMethod(Item):
+    immutable_fields = Item.immutable_fields
     agent = models.ForeignKey(Agent, related_name='contactmethods_as_agent')
 
 
 class EmailContactMethod(ContactMethod):
+    immutable_fields = ContactMethod.immutable_fields
     email = models.EmailField(max_length=320)
 
 
 class PhoneContactMethod(ContactMethod):
+    immutable_fields = ContactMethod.immutable_fields
     phone = models.CharField(max_length=20)
 
 
 class FaxContactMethod(ContactMethod):
+    immutable_fields = ContactMethod.immutable_fields
     fax = models.CharField(max_length=20)
 
 
 class WebsiteContactMethod(ContactMethod):
+    immutable_fields = ContactMethod.immutable_fields
     url = models.CharField(max_length=255)
 
 
 class IMContactMethod(ContactMethod):
+    immutable_fields = ContactMethod.immutable_fields
     im = models.CharField(max_length=255)
 
 
 class AddressContactMethod(ContactMethod):
+    immutable_fields = ContactMethod.immutable_fields
     street1 = models.CharField(max_length=255, blank=True)
     street2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=255, blank=True)
@@ -729,11 +744,11 @@ POSSIBLE_GLOBAL_ABILITIES = [
 ]
 
 class GlobalRole(Item):
-    pass
+    immutable_fields = Item.immutable_fields
 
 
 class Role(Item):
-    pass
+    immutable_fields = Item.immutable_fields
 
 
 class GlobalRoleAbility(Item):
@@ -757,11 +772,11 @@ class RoleAbility(Item):
 
 
 class Permission(Item):
-    pass
+    immutable_fields = Item.immutable_fields
 
 
 class GlobalPermission(Item):
-    pass
+    immutable_fields = Item.immutable_fields
 
 
 class AgentGlobalPermission(GlobalPermission):
@@ -880,6 +895,7 @@ class DefaultRolePermission(Permission):
 
 
 class ViewerRequest(Item):
+    immutable_fields = Item.immutable_fields
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
     viewer = models.CharField(max_length=255)
     action = models.CharField(max_length=255)
@@ -888,6 +904,7 @@ class ViewerRequest(Item):
 
 
 class Site(ViewerRequest):
+    immutable_fields = ViewerRequest.immutable_fields
     is_default_site = IsDefaultField(default=None)
     default_layout = models.ForeignKey('DjangoTemplateDocument', related_name='sites_as_default_layout', null=True, blank=True)
 
@@ -901,7 +918,7 @@ class SiteDomain(Item):
 
 
 class CustomUrl(ViewerRequest):
-    immutable_fields = Item.immutable_fields + ['parent_url', 'path']
+    immutable_fields = ViewerRequest.immutable_fields + ['parent_url', 'path']
     parent_url = models.ForeignKey('ViewerRequest', related_name='child_urls')
     path = models.CharField(max_length=255)
     class Meta:
