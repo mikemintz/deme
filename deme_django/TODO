@@ -40,6 +40,7 @@ Performance
   - Maybe Postgres has some nice full-text indexing for good searching
 * we need multi-column indexes for permissions
   - we'll try http://docs.djangoproject.com/en/dev/howto/initial-data/#howto-initial-data
+  - we can merge ability and ability_parameter into one field
 * Asynchronous notifications
 * See if permissions speed up with more postgres memory
 

@@ -327,7 +327,7 @@
     {% for contact_method in contact_methods %}
     <tr>
         <th>Contact Method:</th>
-        <td>{% embed contact_method %}</td>
+        <td>{% embed contact_method.item_type.lower contact_method %}</td>
     </tr>
     {% endfor %}
 
