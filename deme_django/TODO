@@ -5,8 +5,7 @@
 
 Nov-21 notes (automatic comments and subscriptions)
 ---------------------------------------------------
-* If you add something to an itemset, the comment is located at that particular "item" but the comment is still on the itemset
-* Customizable email per site that gets sent out for each comment
+* Customizable email template per site that gets sent out for each comment (notification)
 
 Symsys module
 -------------
