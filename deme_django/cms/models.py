@@ -151,7 +151,7 @@ class ItemVersion(models.Model):
 
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
-    immutable_fields = []
+    immutable_fields = set()
     item_type = models.CharField(max_length=255, default='Item', editable=False)
     name = models.CharField(max_length=255, default="Untitled")
     description = models.CharField(max_length=255, blank=True)
@@ -308,7 +308,7 @@ class Item(models.Model):
 
 
 class DemeSetting(Item):
-    immutable_fields = Item.immutable_fields + ['key']
+    immutable_fields = Item.immutable_fields | set(['key'])
     key = models.CharField(max_length=255, unique=True)
     value = models.CharField(max_length=255, blank=True)
     @classmethod
@@ -339,7 +339,7 @@ class AnonymousAgent(Agent):
 
 
 class AuthenticationMethod(Item):
-    immutable_fields = Item.immutable_fields + ['agent']
+    immutable_fields = Item.immutable_fields | set(['agent'])
     agent = models.ForeignKey(Agent, related_name='authenticationmethods_as_agent')
 
 
@@ -436,12 +436,12 @@ class Group(ItemSet):
 
 
 class Folio(ItemSet):
-    immutable_fields = ItemSet.immutable_fields + ['group']
+    immutable_fields = ItemSet.immutable_fields | set(['group'])
     group = models.ForeignKey(Group, related_name='folios_as_group', unique=True, editable=False)
 
 
 class ItemSetMembership(Item):
-    immutable_fields = Item.immutable_fields + ['item', 'itemset']
+    immutable_fields = Item.immutable_fields | set(['item', 'itemset'])
     item = models.ForeignKey(Item, related_name='itemset_memberships_as_item')
     itemset = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
     class Meta:
@@ -501,7 +501,7 @@ class ImageDocument(FileDocument):
 
 
 class Comment(Document):
-    immutable_fields = Document.immutable_fields + ['commented_item']
+    immutable_fields = Document.immutable_fields | set(['commented_item'])
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
     def topmost_commented_item(self):
         comment_class_names = [model.__name__ for model in all_models() if issubclass(model, Comment)]
@@ -611,7 +611,7 @@ class Comment(Document):
 
 
 class CommentLocation(Item):
-    immutable_fields = Item.immutable_fields + ['comment', 'commented_item_version_number']
+    immutable_fields = Item.immutable_fields | set(['comment', 'commented_item_version_number'])
     comment = models.ForeignKey(Comment, related_name='comment_locations_as_comment')
     commented_item_version_number = models.PositiveIntegerField()
     commented_item_index = models.PositiveIntegerField(null=True, blank=True)
@@ -620,7 +620,7 @@ class CommentLocation(Item):
 
 
 class TextComment(TextDocument, Comment):
-    immutable_fields = list(set(TextDocument.immutable_fields + Comment.immutable_fields))
+    immutable_fields = TextDocument.immutable_fields | Comment.immutable_fields
 
 
 class EditComment(Comment):
@@ -628,12 +628,12 @@ class EditComment(Comment):
 
 
 class AddMemberComment(Comment):
-    immutable_fields = Comment.immutable_fields + ['membership']
+    immutable_fields = Comment.immutable_fields | set(['membership'])
     membership = models.ForeignKey(ItemSetMembership, related_name="add_member_comments_as_membership")
 
 
 class RemoveMemberComment(Comment):
-    immutable_fields = Comment.immutable_fields + ['membership']
+    immutable_fields = Comment.immutable_fields | set(['membership'])
     membership = models.ForeignKey(ItemSetMembership, related_name="remove_member_comments_as_membership")
 
 
@@ -642,7 +642,7 @@ class Excerpt(Item):
 
 
 class TextDocumentExcerpt(Excerpt, TextDocument):
-    immutable_fields = list(set(Excerpt.immutable_fields + TextDocument.immutable_fields + ['text_document','text_document_version_number', 'start_index', 'length', 'body']))
+    immutable_fields = Excerpt.immutable_fields | TextDocument.immutable_fields | set(['text_document','text_document_version_number', 'start_index', 'length', 'body'])
     text_document = models.ForeignKey(TextDocument, related_name='text_document_excerpts_as_text_document')
     text_document_version_number = models.PositiveIntegerField()
     start_index = models.PositiveIntegerField()
@@ -754,7 +754,7 @@ class AddressContactMethod(ContactMethod):
 
 
 class Subscription(Item):
-    immutable_fields = Item.immutable_fields + ['contact_method', 'item']
+    immutable_fields = Item.immutable_fields | set(['contact_method', 'item'])
     contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions_as_contact_method')
     item = models.ForeignKey(Item, related_name='subscriptions_as_item')
     deep = models.BooleanField(default=False)
@@ -785,7 +785,7 @@ class Site(ViewerRequest):
 
 
 class SiteDomain(Item):
-    immutable_fields = Item.immutable_fields + ['hostname', 'site']
+    immutable_fields = Item.immutable_fields | set(['hostname', 'site'])
     hostname = models.CharField(max_length=255)
     site = models.ForeignKey(Site, related_name='site_domains_as_site')
     class Meta:
@@ -793,7 +793,7 @@ class SiteDomain(Item):
 
 
 class CustomUrl(ViewerRequest):
-    immutable_fields = ViewerRequest.immutable_fields + ['parent_url', 'path']
+    immutable_fields = ViewerRequest.immutable_fields | set(['parent_url', 'path'])
     parent_url = models.ForeignKey('ViewerRequest', related_name='child_urls')
     path = models.CharField(max_length=255)
     class Meta:
@@ -849,7 +849,7 @@ class Role(Item):
 
 
 class GlobalRoleAbility(Item):
-    immutable_fields = Item.immutable_fields + ['global_role', 'ability']
+    immutable_fields = Item.immutable_fields | set(['global_role', 'ability'])
     global_role = models.ForeignKey(GlobalRole, related_name='abilities_as_global_role')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -858,7 +858,7 @@ class GlobalRoleAbility(Item):
 
 
 class RoleAbility(Item):
-    immutable_fields = Item.immutable_fields + ['role', 'ability']
+    immutable_fields = Item.immutable_fields | set(['role', 'ability'])
     role = models.ForeignKey(Role, related_name='abilities_as_role')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -875,7 +875,7 @@ class GlobalPermission(Item):
 
 
 class AgentGlobalPermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['agent', 'ability']
+    immutable_fields = GlobalPermission.immutable_fields | set(['agent', 'ability'])
     agent = models.ForeignKey(Agent, related_name='agent_global_permissions_as_agent')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -884,7 +884,7 @@ class AgentGlobalPermission(GlobalPermission):
 
 
 class ItemSetGlobalPermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['itemset', 'ability']
+    immutable_fields = GlobalPermission.immutable_fields | set(['itemset', 'ability'])
     itemset = models.ForeignKey(ItemSet, related_name='itemset_global_permissions_as_itemset')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -893,7 +893,7 @@ class ItemSetGlobalPermission(GlobalPermission):
 
 
 class DefaultGlobalPermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['ability']
+    immutable_fields = GlobalPermission.immutable_fields | set(['ability'])
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
@@ -901,7 +901,7 @@ class DefaultGlobalPermission(GlobalPermission):
 
 
 class AgentGlobalRolePermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['agent', 'global_role']
+    immutable_fields = GlobalPermission.immutable_fields | set(['agent', 'global_role'])
     agent = models.ForeignKey(Agent, related_name='agent_global_role_permissions_as_agent')
     global_role = models.ForeignKey(GlobalRole, related_name='agent_global_role_permissions_as_global_role')
     class Meta:
@@ -909,7 +909,7 @@ class AgentGlobalRolePermission(GlobalPermission):
 
 
 class ItemSetGlobalRolePermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['itemset', 'global_role']
+    immutable_fields = GlobalPermission.immutable_fields | set(['itemset', 'global_role'])
     itemset = models.ForeignKey(ItemSet, related_name='itemset_global_role_permissions_as_itemset')
     global_role = models.ForeignKey(GlobalRole, related_name='itemset_global_role_permissions_as_global_role')
     class Meta:
@@ -917,14 +917,14 @@ class ItemSetGlobalRolePermission(GlobalPermission):
 
 
 class DefaultGlobalRolePermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields + ['global_role']
+    immutable_fields = GlobalPermission.immutable_fields | set(['global_role'])
     global_role = models.ForeignKey(GlobalRole, related_name='default_global_role_permissions_as_global_role')
     class Meta:
         unique_together = (('global_role',),)
 
 
 class AgentPermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['agent', 'item', 'ability']
+    immutable_fields = Permission.immutable_fields | set(['agent', 'item', 'ability'])
     agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent')
     item = models.ForeignKey(Item, related_name='agent_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
@@ -934,7 +934,7 @@ class AgentPermission(Permission):
 
 
 class ItemSetPermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['itemset', 'item', 'ability']
+    immutable_fields = Permission.immutable_fields | set(['itemset', 'item', 'ability'])
     itemset = models.ForeignKey(ItemSet, related_name='itemset_permissions_as_itemset')
     item = models.ForeignKey(Item, related_name='itemset_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
@@ -944,7 +944,7 @@ class ItemSetPermission(Permission):
 
 
 class DefaultPermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['item', 'ability']
+    immutable_fields = Permission.immutable_fields | set(['item', 'ability'])
     item = models.ForeignKey(Item, related_name='default_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -953,7 +953,7 @@ class DefaultPermission(Permission):
 
 
 class AgentRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['agent', 'item', 'role']
+    immutable_fields = Permission.immutable_fields | set(['agent', 'item', 'role'])
     agent = models.ForeignKey(Agent, related_name='agent_role_permissions_as_agent')
     item = models.ForeignKey(Item, related_name='agent_role_permissions_as_item')
     role = models.ForeignKey(Role, related_name='agent_role_permissions_as_role')
@@ -962,7 +962,7 @@ class AgentRolePermission(Permission):
 
 
 class ItemSetRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['itemset', 'item', 'role']
+    immutable_fields = Permission.immutable_fields | set(['itemset', 'item', 'role'])
     itemset = models.ForeignKey(ItemSet, related_name='itemset_role_permissions_as_itemset')
     item = models.ForeignKey(Item, related_name='itemset_role_permissions_as_item')
     role = models.ForeignKey(Role, related_name='itemset_role_permissions_as_role')
@@ -971,7 +971,7 @@ class ItemSetRolePermission(Permission):
 
 
 class DefaultRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields + ['item', 'role']
+    immutable_fields = Permission.immutable_fields | set(['item', 'role'])
     item = models.ForeignKey(Item, related_name='default_role_permissions_as_item')
     role = models.ForeignKey(Role, related_name='default_role_permissions_as_role')
     class Meta:
