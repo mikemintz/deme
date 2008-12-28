@@ -151,8 +151,8 @@ class ItemVersion(models.Model):
 
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
-    immutable_fields = set()
-    relevant_abilities = set(['trash', 'login_as', 'modify_permissions', 'view name', 'view description', 'view updater', 'view updated_at', 'view creator', 'view created_at', 'edit name', 'edit description'])
+    immutable_fields = frozenset()
+    relevant_abilities = frozenset(['trash', 'login_as', 'modify_permissions', 'view name', 'view description', 'view updater', 'view updated_at', 'view creator', 'view created_at', 'edit name', 'edit description'])
     item_type = models.CharField(max_length=255, default='Item', editable=False)
     name = models.CharField(max_length=255, default="Untitled")
     description = models.CharField(max_length=255, blank=True)
