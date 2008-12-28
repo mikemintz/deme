@@ -24,7 +24,6 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
-* Each item should specify which *global* permission abilities it introduces
 * figure out import deal on deme_django.cms and just cms
 * start using verbose_name to have nice displays of item type names
 * Modifying TextDocuments needs to be able to move around located comments

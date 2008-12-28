@@ -153,6 +153,7 @@ class Item(models.Model):
     __metaclass__ = ItemMetaClass
     immutable_fields = frozenset()
     relevant_abilities = frozenset(['trash', 'login_as', 'modify_permissions', 'view name', 'view description', 'view updater', 'view updated_at', 'view creator', 'view created_at', 'edit name', 'edit description'])
+    relevant_global_abilities = frozenset(['do_something', 'do_everything', 'create Item'])
     item_type = models.CharField(max_length=255, default='Item', editable=False)
     name = models.CharField(max_length=255, default="Untitled")
     description = models.CharField(max_length=255, blank=True)
@@ -311,6 +312,7 @@ class Item(models.Model):
 class DemeSetting(Item):
     immutable_fields = Item.immutable_fields | set(['key'])
     relevant_abilities = Item.relevant_abilities | set(['view key', 'view value', 'edit value'])
+    relevant_global_abilities = frozenset(['create DemeSetting'])
     key = models.CharField(max_length=255, unique=True)
     value = models.CharField(max_length=255, blank=True)
     @classmethod
@@ -334,6 +336,7 @@ class DemeSetting(Item):
 class Agent(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities | set(['view last_online_at', 'edit last_online_at'])
+    relevant_global_abilities = frozenset(['create Agent'])
     last_online_at = models.DateTimeField(null=True, blank=True) # TODO it's a little sketchy how this gets set without save_versioned(), so maybe reverting to an old version will reset this to NULL
     #TODO last_online_at should be not editable or immutable and fix the 'edit last_online_at' ability?
 
@@ -341,11 +344,13 @@ class Agent(Item):
 class AnonymousAgent(Agent):
     immutable_fields = Agent.immutable_fields
     relevant_abilities = Agent.relevant_abilities
+    relevant_global_abilities = frozenset(['create AnonymousAgent'])
 
 
 class AuthenticationMethod(Item):
     immutable_fields = Item.immutable_fields | set(['agent'])
     relevant_abilities = Item.relevant_abilities | set(['view agent'])
+    relevant_global_abilities = frozenset(['create AuthenticationMethod'])
     agent = models.ForeignKey(Agent, related_name='authenticationmethods_as_agent')
 
 
@@ -387,6 +392,7 @@ def get_hexdigest(algorithm, salt, raw_password):
 class PasswordAuthenticationMethod(AuthenticationMethod):
     immutable_fields = AuthenticationMethod.immutable_fields
     relevant_abilities = AuthenticationMethod.relevant_abilities | set(['view username', 'view password', 'view password_question', 'view password_answer', 'edit username', 'edit password', 'edit password_question', 'edit password_answer'])
+    relevant_global_abilities = frozenset(['create PasswordAuthenticationMethod'])
     username = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=128)
     password_question = models.CharField(max_length=255, blank=True)
@@ -411,6 +417,7 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
 class Person(Agent):
     immutable_fields = Agent.immutable_fields
     relevant_abilities = Agent.relevant_abilities | set(['view first_name', 'view middle_names', 'view last_name', 'view suffix', 'edit first_name', 'edit middle_names', 'edit last_name', 'edit suffix'])
+    relevant_global_abilities = frozenset(['create Person'])
     first_name = models.CharField(max_length=255)
     middle_names = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255)
@@ -420,6 +427,7 @@ class Person(Agent):
 class ItemSet(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
+    relevant_global_abilities = frozenset(['create ItemSet'])
     def all_contained_itemset_members(self, recursive_filter=None):
         recursive_memberships = RecursiveItemSetMembership.objects.filter(parent=self)
         if recursive_filter is not None:
@@ -438,6 +446,7 @@ class ItemSet(Item):
 class Group(ItemSet):
     immutable_fields = ItemSet.immutable_fields
     relevant_abilities = ItemSet.relevant_abilities
+    relevant_global_abilities = frozenset(['create Group'])
     def after_create(self):
         super(Group, self).after_create()
         folio = Folio(group=self)
@@ -448,12 +457,14 @@ class Group(ItemSet):
 class Folio(ItemSet):
     immutable_fields = ItemSet.immutable_fields | set(['group'])
     relevant_abilities = ItemSet.relevant_abilities | set(['view group'])
+    relevant_global_abilities = frozenset(['create Folio'])
     group = models.ForeignKey(Group, related_name='folios_as_group', unique=True, editable=False)
 
 
 class ItemSetMembership(Item):
     immutable_fields = Item.immutable_fields | set(['item', 'itemset'])
     relevant_abilities = Item.relevant_abilities | set(['view item', 'view itemset'])
+    relevant_global_abilities = frozenset(['create ItemSetMembership'])
     item = models.ForeignKey(Item, related_name='itemset_memberships_as_item')
     itemset = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
     class Meta:
@@ -487,17 +498,20 @@ class ItemSetMembership(Item):
 class Document(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
+    relevant_global_abilities = frozenset(['create Document'])
 
 
 class TextDocument(Document):
     immutable_fields = Document.immutable_fields
     relevant_abilities = Document.relevant_abilities | set(['view body', 'edit body'])
+    relevant_global_abilities = frozenset(['create TextDocument'])
     body = models.TextField(blank=True)
 
 
 class DjangoTemplateDocument(TextDocument):
     immutable_fields = TextDocument.immutable_fields
     relevant_abilities = TextDocument.relevant_abilities | set(['view layout', 'view override_default_layout', 'edit layout', 'edit override_default_layout'])
+    relevant_global_abilities = frozenset(['create DjangoTemplateDocument'])
     layout = models.ForeignKey('DjangoTemplateDocument', related_name='djangotemplatedocuments_as_layout', null=True, blank=True)
     override_default_layout = models.BooleanField(default=False)
 
@@ -505,22 +519,26 @@ class DjangoTemplateDocument(TextDocument):
 class HtmlDocument(TextDocument):
     immutable_fields = TextDocument.immutable_fields
     relevant_abilities = TextDocument.relevant_abilities
+    relevant_global_abilities = frozenset(['create HtmlDocument'])
 
 
 class FileDocument(Document):
     immutable_fields = Document.immutable_fields
     relevant_abilities = Document.relevant_abilities | set(['view datafile', 'edit datafile'])
+    relevant_global_abilities = frozenset(['create FileDocument'])
     datafile = models.FileField(upload_to='filedocument/%Y/%m/%d', max_length=255)
 
 
 class ImageDocument(FileDocument):
     immutable_fields = FileDocument.immutable_fields
     relevant_abilities = FileDocument.relevant_abilities
+    relevant_global_abilities = frozenset(['create ImageDocument'])
 
 
 class Comment(Document):
     immutable_fields = Document.immutable_fields | set(['commented_item'])
     relevant_abilities = Document.relevant_abilities | set(['view commented_item'])
+    relevant_global_abilities = frozenset(['create Comment'])
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
     def topmost_commented_item(self):
         comment_class_names = [model.__name__ for model in all_models() if issubclass(model, Comment)]
@@ -632,6 +650,7 @@ class Comment(Document):
 class CommentLocation(Item):
     immutable_fields = Item.immutable_fields | set(['comment', 'commented_item_version_number'])
     relevant = Item.relevant_abilities | set(['view comment', 'view commented_item_version_number', 'view commented_item_index', 'edit commented_item_index'])
+    relevant_global_abilities = frozenset(['create CommentLocation'])
     comment = models.ForeignKey(Comment, related_name='comment_locations_as_comment')
     commented_item_version_number = models.PositiveIntegerField()
     commented_item_index = models.PositiveIntegerField(null=True, blank=True)
@@ -642,33 +661,39 @@ class CommentLocation(Item):
 class TextComment(TextDocument, Comment):
     immutable_fields = TextDocument.immutable_fields | Comment.immutable_fields
     relevant_abilities = TextDocument.relevant_abilities | Comment.relevant_abilities
+    relevant_global_abilities = frozenset(['create TextComment'])
 
 
 class EditComment(Comment):
     immutable_fields = Comment.immutable_fields
     relevant_abilities = Comment.relevant_abilities
+    relevant_global_abilities = frozenset(['create EditComment'])
 
 
 class AddMemberComment(Comment):
     immutable_fields = Comment.immutable_fields | set(['membership'])
     relevant_abilities = Comment.relevant_abilities | set(['view membership'])
+    relevant_global_abilities = frozenset(['create AddMemberComment'])
     membership = models.ForeignKey(ItemSetMembership, related_name="add_member_comments_as_membership")
 
 
 class RemoveMemberComment(Comment):
     immutable_fields = Comment.immutable_fields | set(['membership'])
     relevant_abilities = Comment.relevant_abilities | set(['view membership'])
+    relevant_global_abilities = frozenset(['create RemoveMemberComment'])
     membership = models.ForeignKey(ItemSetMembership, related_name="remove_member_comments_as_membership")
 
 
 class Excerpt(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
+    relevant_global_abilities = frozenset(['create Excerpt'])
 
 
 class TextDocumentExcerpt(Excerpt, TextDocument):
     immutable_fields = Excerpt.immutable_fields | TextDocument.immutable_fields | set(['text_document','text_document_version_number', 'start_index', 'length', 'body'])
     relevant_abilities = Excerpt.relevant_abilities | TextDocument.relevant_abilities | set(['view text_document', 'view text_document_version_number', 'view start_index', 'view length']) #TODO minus 'edit body'?
+    relevant_global_abilities = frozenset(['create TextDocumentExcerpt'])
     text_document = models.ForeignKey(TextDocument, related_name='text_document_excerpts_as_text_document')
     text_document_version_number = models.PositiveIntegerField()
     start_index = models.PositiveIntegerField()
@@ -742,42 +767,49 @@ class RecursiveCommentMembership(models.Model):
 class ContactMethod(Item):
     immutable_fields = Item.immutable_fields | set(['agent'])
     relevant_abilities = Item.relevant_abilities | set(['view agent'])
+    relevant_global_abilities = frozenset(['create ContactMethod'])
     agent = models.ForeignKey(Agent, related_name='contactmethods_as_agent')
 
 
 class EmailContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view email', 'edit email'])
+    relevant_global_abilities = frozenset(['create EmailContactMethod'])
     email = models.EmailField(max_length=320)
 
 
 class PhoneContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view phone', 'edit phone'])
+    relevant_global_abilities = frozenset(['create PhoneContactMethod'])
     phone = models.CharField(max_length=20)
 
 
 class FaxContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view fax', 'edit fax'])
+    relevant_global_abilities = frozenset(['create FaxContactMethod'])
     fax = models.CharField(max_length=20)
 
 
 class WebsiteContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view url', 'edit url'])
+    relevant_global_abilities = frozenset(['create WebsiteContactMethod'])
     url = models.CharField(max_length=255)
 
 
 class IMContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view im', 'edit im'])
+    relevant_global_abilities = frozenset(['create IMContactMethod'])
     im = models.CharField(max_length=255)
 
 
 class AddressContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view street1', 'view street2', 'view city', 'view state', 'view country', 'view zip', 'edit street1', 'edit street2', 'edit city', 'edit state', 'edit country', 'edit zip'])
+    relevant_global_abilities = frozenset(['create AddressContactMethod'])
     street1 = models.CharField(max_length=255, blank=True)
     street2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=255, blank=True)
@@ -789,6 +821,7 @@ class AddressContactMethod(ContactMethod):
 class Subscription(Item):
     immutable_fields = Item.immutable_fields | set(['contact_method', 'item'])
     relevant_abilities = Item.relevant_abilities | set(['view contact_method', 'view item', 'view deep', 'view notify_text', 'view notify_edit', 'edit deep', 'edit notify_text', 'edit notify_edit'])
+    relevant_global_abilities = frozenset(['create Subscription'])
     contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions_as_contact_method')
     item = models.ForeignKey(Item, related_name='subscriptions_as_item')
     deep = models.BooleanField(default=False)
@@ -806,6 +839,7 @@ class Subscription(Item):
 class ViewerRequest(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities | set(['view aliased_item', 'view viewer', 'view action', 'view query_string', 'view format', 'edit aliased_item', 'edit viewer', 'edit action', 'edit query_string', 'edit format'])
+    relevant_global_abilities = frozenset(['create ViewerRequest'])
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
     viewer = models.CharField(max_length=255)
     action = models.CharField(max_length=255)
@@ -816,6 +850,7 @@ class ViewerRequest(Item):
 class Site(ViewerRequest):
     immutable_fields = ViewerRequest.immutable_fields
     relevant_abilities = ViewerRequest.relevant_abilities | set(['view is_default_site', 'view default_layout', 'edit is_default_site', 'edit default_layout'])
+    relevant_global_abilities = frozenset(['create Site'])
     is_default_site = IsDefaultField(default=None)
     default_layout = models.ForeignKey('DjangoTemplateDocument', related_name='sites_as_default_layout', null=True, blank=True)
 
@@ -823,6 +858,7 @@ class Site(ViewerRequest):
 class SiteDomain(Item):
     immutable_fields = Item.immutable_fields | set(['hostname', 'site'])
     relevant_abilities = Item.relevant_abilities | set(['view hostname', 'view site'])
+    relevant_global_abilities = frozenset(['create SiteDomain'])
     hostname = models.CharField(max_length=255)
     site = models.ForeignKey(Site, related_name='site_domains_as_site')
     class Meta:
@@ -832,6 +868,7 @@ class SiteDomain(Item):
 class CustomUrl(ViewerRequest):
     immutable_fields = ViewerRequest.immutable_fields | set(['parent_url', 'path'])
     relevant_abilities = ViewerRequest.relevant_abilities | set(['view parent_url', 'view path'])
+    relevant_global_abilities = frozenset(['create CustomUrl'])
     parent_url = models.ForeignKey('ViewerRequest', related_name='child_urls')
     path = models.CharField(max_length=255)
     class Meta:
@@ -855,11 +892,8 @@ class POSSIBLE_ABILITIES_ITER(object):
 class POSSIBLE_GLOBAL_ABILITIES_ITER(object):
     def __iter__(self):
         choices = set()
-        choices.add( ('do_something', 'Do Something') )
-        choices.add( ('do_everything', 'Do Everything') )
         for model in all_models():
-            name = model.__name__
-            choices.add( ('create %s' % name, 'Create %s' % name) )
+            choices = choices | set([(x,x) for x in model.relevant_global_abilities])
         choices = list(choices)
         choices.sort(key=lambda x: x[1])
         for x in choices:
@@ -872,16 +906,19 @@ POSSIBLE_GLOBAL_ABILITIES = POSSIBLE_GLOBAL_ABILITIES_ITER()
 class GlobalRole(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
+    relevant_global_abilities = frozenset(['create GlobalRole'])
 
 
 class Role(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
+    relevant_global_abilities = frozenset(['create Role'])
 
 
 class GlobalRoleAbility(Item):
     immutable_fields = Item.immutable_fields | set(['global_role', 'ability'])
     relevant_abilities = Item.relevant_abilities | set(['view global_role', 'view ability', 'view is_allowed', 'edit is_allowed'])
+    relevant_global_abilities = frozenset(['create GlobalRoleAbility'])
     global_role = models.ForeignKey(GlobalRole, related_name='abilities_as_global_role')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -892,6 +929,7 @@ class GlobalRoleAbility(Item):
 class RoleAbility(Item):
     immutable_fields = Item.immutable_fields | set(['role', 'ability'])
     relevant_abilities = Item.relevant_abilities | set(['view role', 'view ability', 'view is_allowed', 'edit is_allowed'])
+    relevant_global_abilities = frozenset(['create RoleAbility'])
     role = models.ForeignKey(Role, related_name='abilities_as_role')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -902,16 +940,19 @@ class RoleAbility(Item):
 class Permission(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
+    relevant_global_abilities = frozenset(['create Permission'])
 
 
 class GlobalPermission(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
+    relevant_global_abilities = frozenset(['create GlobalPermission'])
 
 
 class AgentGlobalPermission(GlobalPermission):
     immutable_fields = GlobalPermission.immutable_fields | set(['agent', 'ability'])
     relevant_abilities = GlobalPermission.relevant_abilities | set(['view agent', 'view ability', 'view is_allowed', 'edit is_allowed'])
+    relevant_global_abilities = frozenset(['create AgentGlobalPermission'])
     agent = models.ForeignKey(Agent, related_name='agent_global_permissions_as_agent')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -922,6 +963,7 @@ class AgentGlobalPermission(GlobalPermission):
 class ItemSetGlobalPermission(GlobalPermission):
     immutable_fields = GlobalPermission.immutable_fields | set(['itemset', 'ability'])
     relevant_abilities = GlobalPermission.relevant_abilities | set(['view itemset', 'view ability', 'view is_allowed', 'edit is_allowed'])
+    relevant_global_abilities = frozenset(['create ItemSetGlobalPermission'])
     itemset = models.ForeignKey(ItemSet, related_name='itemset_global_permissions_as_itemset')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -932,6 +974,7 @@ class ItemSetGlobalPermission(GlobalPermission):
 class DefaultGlobalPermission(GlobalPermission):
     immutable_fields = GlobalPermission.immutable_fields | set(['ability'])
     relevant_abilities = GlobalPermission.relevant_abilities | set(['view ability', 'view is_allowed', 'edit is_allowed'])
+    relevant_global_abilities = frozenset(['create DefaultGlobalPermission'])
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
@@ -941,6 +984,7 @@ class DefaultGlobalPermission(GlobalPermission):
 class AgentGlobalRolePermission(GlobalPermission):
     immutable_fields = GlobalPermission.immutable_fields | set(['agent', 'global_role'])
     relevant_abilities = GlobalPermission.relevant_abilities | set(['view agent', 'view global_role'])
+    relevant_global_abilities = frozenset(['create AgentGlobalRolePermission'])
     agent = models.ForeignKey(Agent, related_name='agent_global_role_permissions_as_agent')
     global_role = models.ForeignKey(GlobalRole, related_name='agent_global_role_permissions_as_global_role')
     class Meta:
@@ -950,6 +994,7 @@ class AgentGlobalRolePermission(GlobalPermission):
 class ItemSetGlobalRolePermission(GlobalPermission):
     immutable_fields = GlobalPermission.immutable_fields | set(['itemset', 'global_role'])
     relevant_abilities = GlobalPermission.relevant_abilities | set(['view itemset', 'view global_role'])
+    relevant_global_abilities = frozenset(['create ItemSetGlobalRolePermission'])
     itemset = models.ForeignKey(ItemSet, related_name='itemset_global_role_permissions_as_itemset')
     global_role = models.ForeignKey(GlobalRole, related_name='itemset_global_role_permissions_as_global_role')
     class Meta:
@@ -959,6 +1004,7 @@ class ItemSetGlobalRolePermission(GlobalPermission):
 class DefaultGlobalRolePermission(GlobalPermission):
     immutable_fields = GlobalPermission.immutable_fields | set(['global_role'])
     relevant_abilities = GlobalPermission.relevant_abilities | set(['view global_role'])
+    relevant_global_abilities = frozenset(['create DefaultGlobalRolePermission'])
     global_role = models.ForeignKey(GlobalRole, related_name='default_global_role_permissions_as_global_role')
     class Meta:
         unique_together = (('global_role',),)
@@ -967,6 +1013,7 @@ class DefaultGlobalRolePermission(GlobalPermission):
 class AgentPermission(Permission):
     immutable_fields = Permission.immutable_fields | set(['agent', 'item', 'ability'])
     relevant_abilities = Permission.relevant_abilities | set(['view agent', 'view item', 'view ability', 'view is_allowed', 'edit is_allowed'])
+    relevant_global_abilities = frozenset(['create AgentPermission'])
     agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent')
     item = models.ForeignKey(Item, related_name='agent_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
@@ -978,6 +1025,7 @@ class AgentPermission(Permission):
 class ItemSetPermission(Permission):
     immutable_fields = Permission.immutable_fields | set(['itemset', 'item', 'ability'])
     relevant_abilities = Permission.relevant_abilities | set(['view itemset', 'view item', 'view ability', 'view is_allowed', 'edit is_allowed'])
+    relevant_global_abilities = frozenset(['create ItemSetPermission'])
     itemset = models.ForeignKey(ItemSet, related_name='itemset_permissions_as_itemset')
     item = models.ForeignKey(Item, related_name='itemset_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
@@ -989,6 +1037,7 @@ class ItemSetPermission(Permission):
 class DefaultPermission(Permission):
     immutable_fields = Permission.immutable_fields | set(['item', 'ability'])
     relevant_abilities = Permission.relevant_abilities | set(['view item', 'view ability', 'view is_allowed', 'edit is_allowed'])
+    relevant_global_abilities = frozenset(['create DefaultPermission'])
     item = models.ForeignKey(Item, related_name='default_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -999,6 +1048,7 @@ class DefaultPermission(Permission):
 class AgentRolePermission(Permission):
     immutable_fields = Permission.immutable_fields | set(['agent', 'item', 'role'])
     relevant_abilities = Permission.relevant_abilities | set(['view agent', 'view item', 'view role'])
+    relevant_global_abilities = frozenset(['create AgentRolePermission'])
     agent = models.ForeignKey(Agent, related_name='agent_role_permissions_as_agent')
     item = models.ForeignKey(Item, related_name='agent_role_permissions_as_item')
     role = models.ForeignKey(Role, related_name='agent_role_permissions_as_role')
@@ -1009,6 +1059,7 @@ class AgentRolePermission(Permission):
 class ItemSetRolePermission(Permission):
     immutable_fields = Permission.immutable_fields | set(['itemset', 'item', 'role'])
     relevant_abilities = Permission.relevant_abilities | set(['view itemset', 'view item', 'view role'])
+    relevant_global_abilities = frozenset(['create ItemSetRolePermission'])
     itemset = models.ForeignKey(ItemSet, related_name='itemset_role_permissions_as_itemset')
     item = models.ForeignKey(Item, related_name='itemset_role_permissions_as_item')
     role = models.ForeignKey(Role, related_name='itemset_role_permissions_as_role')
@@ -1019,6 +1070,7 @@ class ItemSetRolePermission(Permission):
 class DefaultRolePermission(Permission):
     immutable_fields = Permission.immutable_fields | set(['item', 'role'])
     relevant_abilities = Permission.relevant_abilities | set(['view item', 'view role'])
+    relevant_global_abilities = frozenset(['create DefaultRolePermission'])
     item = models.ForeignKey(Item, related_name='default_role_permissions_as_item')
     role = models.ForeignKey(Role, related_name='default_role_permissions_as_role')
     class Meta:
