@@ -15,6 +15,7 @@ Symsys module
 * advisor should point to a symsysaffiliate
 * change honors_advisor and honors_second_reader to symsysaffiliate pointers (problem is some aren't symsys affiliates)
 * come up with specification for new symsys layout
+* The IMContactMethod for symsys is always AOL/ICQ, so we should subclass it there
 
 Ontology changes
 ----------------

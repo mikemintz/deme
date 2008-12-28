@@ -184,7 +184,7 @@
     {% if item.background %}
     <tr>
         <th>Background:</th>
-        <td>{{ item.background }}</td>
+        <td>{{ item.background|linebreaksbr|urlize }}</td>
     </tr>
     {% endif %}
     {% endifagentcan %}
@@ -193,7 +193,7 @@
     {% if item.doing_now %}
     <tr>
         <th>Doing Now:</th>
-        <td>{{ item.doing_now }}</td>
+        <td>{{ item.doing_now|linebreaksbr|urlize }}</td>
     </tr>
     {% endif %}
     {% endifagentcan %}
@@ -202,7 +202,7 @@
     {% if item.interests %}
     <tr>
         <th>Interests:</th>
-        <td>{{ item.interests }}</td>
+        <td>{{ item.interests|linebreaksbr|urlize }}</td>
     </tr>
     {% endif %}
     {% endifagentcan %}
@@ -211,7 +211,7 @@
     {% if item.publications %}
     <tr>
         <th>Publications:</th>
-        <td>{{ item.publications }}</td>
+        <td>{{ item.publications|linebreaksbr|urlize }}</td>
     </tr>
     {% endif %}
     {% endifagentcan %}
@@ -220,7 +220,7 @@
     {% if item.office_hours %}
     <tr>
         <th>Office hours:</th>
-        <td>{{ item.office_hours }}</td>
+        <td>{{ item.office_hours|linebreaksbr|urlize }}</td>
     </tr>
     {% endif %}
     {% endifagentcan %}
@@ -229,7 +229,7 @@
     {% if item.about %}
     <tr>
         <th>About:</th>
-        <td>{{ item.about }}</td>
+        <td>{{ item.about|linebreaksbr|urlize }}</td>
     </tr>
     {% endif %}
     {% endifagentcan %}

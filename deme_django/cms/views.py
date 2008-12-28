@@ -169,6 +169,7 @@ def get_versioned_item(item, version_number):
         itemversion = item.latest_untrashed_itemversion()
     else:
         itemversion = type(item).VERSION.objects.get(current_item=item.pk, version_number=version_number)
+        #TODO use copy_fields_from_itemversion here
         for name in itemversion._meta.get_all_field_names():
             if name in ['item_type', 'trashed', 'current_item', 'version_number']: # special fields
                 continue

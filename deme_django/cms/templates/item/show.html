@@ -19,9 +19,9 @@
                 <a href="/static/media/{{ field.obj }}">{{ field.obj }}</a>
                 {% else %}
                 {% ifequal field.format 'TextField' %}
-                {{ field.obj|escape|linebreaksbr|urlize }}
+                {{ field.obj|linebreaksbr|urlize }}
                 {% else %}
-                {{ field.obj|escape }}
+                {{ field.obj }}
                 {% endifequal %}
                 {% endifequal %}
                 {% endifequal %}
