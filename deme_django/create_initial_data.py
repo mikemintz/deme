@@ -35,22 +35,10 @@ for model in all_models():
     creator_role.save_versioned(updater=admin, create_permissions=False)
     deme_settings["cms.default_role.%s" % model.__name__] = default_role.pk
     deme_settings["cms.creator_role.%s" % model.__name__] = creator_role.pk
-    for name in model._meta.get_all_field_names():
-        field, defined_model, direct, m2m = model._meta.get_field_by_name(name)
-        if not direct:
-            continue
-        if isinstance(field, db.models.fields.related.OneToOneField):
-            continue
-        if isinstance(field, db.models.fields.AutoField):
-            continue
-        if name in ['item_type', 'trashed']:
-            continue
-        role_abilities.append(RoleAbility(role=default_role, ability="view %s" % name, is_allowed=True))
-        role_abilities.append(RoleAbility(role=creator_role, ability="view %s" % name, is_allowed=True))
-        if field.editable and name not in model.immutable_fields:
-            role_abilities.append(RoleAbility(role=creator_role, ability="edit %s" % name, is_allowed=True))
-    role_abilities.append(RoleAbility(role=creator_role, ability="modify_permissions", is_allowed=True))
-    role_abilities.append(RoleAbility(role=creator_role, ability="trash", is_allowed=True))
+    for ability in model.relevant_abilities:
+        if ability.startswith('view '):
+            role_abilities.append(RoleAbility(role=default_role, ability=ability, is_allowed=True))
+        role_abilities.append(RoleAbility(role=creator_role, ability=ability, is_allowed=True))
 
 print 'Saving role settings...'
 for key, value in deme_settings.iteritems():
