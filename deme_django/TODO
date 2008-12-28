@@ -24,9 +24,9 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Each item should specify which *global* permission abilities it introduces
 * figure out import deal on deme_django.cms and just cms
 * start using verbose_name to have nice displays of item type names
-  - Maybe each item should specify which permissions can be applied to it
 * Modifying TextDocuments needs to be able to move around located comments
 * The "crumbs" at the top of pages like TextAdvertisements and TextComments are wrong, since they have multiple inheritance
 * Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
