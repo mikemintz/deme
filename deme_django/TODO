@@ -42,6 +42,7 @@ Performance
   - we'll try http://docs.djangoproject.com/en/dev/howto/initial-data/#howto-initial-data
 * Asynchronous notifications
 * See if permissions speed up with more postgres memory
+* It would save space if we could have blank names, and somehow the viewer would always display 'Untitled' by default
 
 Features
 --------
