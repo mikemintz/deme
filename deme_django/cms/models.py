@@ -126,7 +126,7 @@ class ItemVersion(models.Model):
                 cur_item.copy_fields_from_itemversion(new_latest_untrashed_version)
                 cur_item.trashed = True
                 cur_item.save()
-                cur_item.after_completely_trash(agent)
+                cur_item.after_trash(agent)
             else:
                 cur_item.copy_fields_from_itemversion(new_latest_untrashed_version)
                 cur_item.save()
@@ -224,7 +224,7 @@ class Item(models.Model):
         self.trashed = True
         self.save()
         self.versions.all().update(trashed=True)
-        self.after_completely_trash(agent)
+        self.after_trash(agent)
     trash.alters_data = True
 
     @transaction.commit_on_success
@@ -300,9 +300,9 @@ class Item(models.Model):
         pass
     after_create.alters_data = True
 
-    def after_completely_trash(self, agent):
+    def after_trash(self, agent):
         pass
-    after_completely_trash.alters_data = True
+    after_trash.alters_data = True
 
     def after_untrash(self, agent):
         pass
@@ -433,10 +433,10 @@ class ItemSet(Item):
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         return Item.objects.filter(trashed=False, pk__in=recursive_memberships.values('child').query)
-    def after_completely_trash(self, agent):
-        super(ItemSet, self).after_completely_trash(agent)
+    def after_trash(self, agent):
+        super(ItemSet, self).after_trash(agent)
         RecursiveItemSetMembership.recursive_remove_itemset(self)
-    after_completely_trash.alters_data = True
+    after_trash.alters_data = True
     def after_untrash(self, agent):
         super(ItemSet, self).after_untrash(agent)
         RecursiveItemSetMembership.recursive_add_itemset(self)
@@ -477,14 +477,14 @@ class ItemSetMembership(Item):
         add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.itemset.latest_untrashed_itemversion().version_number, commented_item_index=None)
         add_member_comment_location.save_versioned(updater=self.creator)
     after_create.alters_data = True
-    def after_completely_trash(self, agent):
-        super(ItemSetMembership, self).after_completely_trash(agent)
+    def after_trash(self, agent):
+        super(ItemSetMembership, self).after_trash(agent)
         RecursiveItemSetMembership.recursive_remove_edge(self.itemset, self.item)
         remove_member_comment = RemoveMemberComment(commented_item=self.itemset, membership=self)
         remove_member_comment.save_versioned(updater=agent)
         remove_member_comment_location = CommentLocation(comment=remove_member_comment, commented_item_version_number=self.itemset.latest_untrashed_itemversion().version_number, commented_item_index=None)
         remove_member_comment_location.save_versioned(updater=agent)
-    after_completely_trash.alters_data = True
+    after_trash.alters_data = True
     def after_untrash(self, agent):
         super(ItemSetMembership, self).after_untrash(agent)
         RecursiveItemSetMembership.recursive_add_membership(self)
