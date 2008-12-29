@@ -112,42 +112,6 @@ class ItemVersion(models.Model):
         item_type = [x for x in all_models() if x.__name__ == self.item_type][0]
         return item_type.VERSION.objects.get(id=self.id)
 
-    @transaction.commit_on_success
-    def trash(self, agent):
-        if self.trashed:
-            return
-        cur_item = self.current_item.downcast()
-        latest_untrashed_version = cur_item.latest_untrashed_itemversion()
-        self.trashed = True
-        self.save()
-        if latest_untrashed_version.pk == self.pk:
-            new_latest_untrashed_version = cur_item.latest_untrashed_itemversion()
-            if new_latest_untrashed_version.trashed:
-                cur_item.copy_fields_from_itemversion(new_latest_untrashed_version)
-                cur_item.trashed = True
-                cur_item.save()
-                cur_item.after_trash(agent)
-            else:
-                cur_item.copy_fields_from_itemversion(new_latest_untrashed_version)
-                cur_item.save()
-    trash.alters_data = True
-
-    @transaction.commit_on_success
-    def untrash(self, agent):
-        if not self.trashed:
-            return
-        cur_item = self.current_item.downcast()
-        latest_untrashed_version = cur_item.latest_untrashed_itemversion()
-        self.trashed = False
-        self.save()
-        if latest_untrashed_version.trashed or self.version_number > latest_untrashed_version.version_number:
-            cur_item.copy_fields_from_itemversion(self.downcast())
-            cur_item.trashed = False
-            cur_item.save()
-            if latest_untrashed_version.trashed:
-                cur_item.after_untrash(agent)
-    untrash.alters_data = True
-
 
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
@@ -474,7 +438,7 @@ class ItemSetMembership(Item):
         RecursiveItemSetMembership.recursive_add_membership(self)
         add_member_comment = AddMemberComment(commented_item=self.itemset, membership=self)
         add_member_comment.save_versioned(updater=self.creator)
-        add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.itemset.latest_untrashed_itemversion().version_number, commented_item_index=None)
+        add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.itemset.versions.latest().version_number, commented_item_index=None)
         add_member_comment_location.save_versioned(updater=self.creator)
     after_create.alters_data = True
     def after_trash(self, agent):
@@ -482,7 +446,7 @@ class ItemSetMembership(Item):
         RecursiveItemSetMembership.recursive_remove_edge(self.itemset, self.item)
         remove_member_comment = RemoveMemberComment(commented_item=self.itemset, membership=self)
         remove_member_comment.save_versioned(updater=agent)
-        remove_member_comment_location = CommentLocation(comment=remove_member_comment, commented_item_version_number=self.itemset.latest_untrashed_itemversion().version_number, commented_item_index=None)
+        remove_member_comment_location = CommentLocation(comment=remove_member_comment, commented_item_version_number=self.itemset.versions.latest().version_number, commented_item_index=None)
         remove_member_comment_location.save_versioned(updater=agent)
     after_trash.alters_data = True
     def after_untrash(self, agent):
@@ -490,7 +454,7 @@ class ItemSetMembership(Item):
         RecursiveItemSetMembership.recursive_add_membership(self)
         add_member_comment = AddMemberComment(commented_item=self.itemset, membership=self)
         add_member_comment.save_versioned(updater=agent)
-        add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.itemset.latest_untrashed_itemversion().version_number, commented_item_index=None)
+        add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.itemset.versions.latest().version_number, commented_item_index=None)
         add_member_comment_location.save_versioned(updater=agent)
     after_untrash.alters_data = True
 

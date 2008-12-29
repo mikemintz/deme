@@ -323,8 +323,6 @@ class ItemHeader(template.Node):
         permissions_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'permissions'})
         edit_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'edit'}) + '?version=%s' % version_number
         copy_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'copy'}) + '?version=%s' % version_number
-        trash_version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'trash'}) + '?version=%s' % version_number
-        untrash_version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'untrash'}) + '?version=%s' % version_number
         trash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'trash'})
         untrash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'untrash'})
 
@@ -342,10 +340,6 @@ class ItemHeader(template.Node):
                 result.append('<a href="%s">Untrash</a>' % untrash_url)
             else:
                 result.append('<a href="%s">Trash</a>' % trash_url)
-            if item.version_trashed:
-                result.append('<a href="%s">Untrash Version</a>' % untrash_version_url)
-            else:
-                result.append('<a href="%s">Trash Version</a>' % trash_version_url)
         result.append('</div>')
         for inherited_item_type in item_type_inheritance:
             result.append('<a href="%s">%ss</a> &raquo;' % (reverse('resource_collection', kwargs={'viewer': inherited_item_type.lower()}), inherited_item_type))

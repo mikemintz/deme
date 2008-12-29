@@ -166,9 +166,9 @@ def get_viewer_class_for_viewer_name(viewer_name):
 
 def get_versioned_item(item, version_number):
     if version_number is None:
-        itemversion = item.latest_untrashed_itemversion()
+        itemversion = type(item).VERSION.objects.filter(current_item=item).latest()
     else:
-        itemversion = type(item).VERSION.objects.get(current_item=item.pk, version_number=version_number)
+        itemversion = type(item).VERSION.objects.get(current_item=item, version_number=version_number)
         #TODO use copy_fields_from_itemversion here
         for name in itemversion._meta.get_all_field_names():
             if name in ['item_type', 'trashed', 'current_item', 'version_number']: # special fields
@@ -609,10 +609,7 @@ The agent currently logged in is not allowed to use this application. Please log
             can_trash = True
         if not (can_do_everything or can_trash):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to trash this item")
-        if 'version' in self.request.GET:
-            self.item.versions.get(version_number=self.item.version_number).trash(self.cur_agent)
-        else:
-            self.item.trash(self.cur_agent)
+        self.item.trash(self.cur_agent)
         return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
 
     def entry_untrash(self):
@@ -623,10 +620,7 @@ The agent currently logged in is not allowed to use this application. Please log
             can_trash = True
         if not (can_do_everything or can_trash):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to untrash this item")
-        if 'version' in self.request.GET:
-            self.item.versions.get(version_number=self.item.version_number).untrash(self.cur_agent)
-        else:
-            self.item.untrash(self.cur_agent)
+        self.item.untrash(self.cur_agent)
         return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
 
     def entry_permissions(self):
