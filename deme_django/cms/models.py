@@ -551,7 +551,6 @@ class Comment(Document):
         direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
         deep_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items_and_itemsets().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
         subscribed_email_contact_methods = EmailContactMethod.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('contact_method').query) | Q(pk__in=deep_subscriptions.values('contact_method').query))
-        print subscribed_email_contact_methods
         messages = [self.notification_email(email_contact_method) for email_contact_method in subscribed_email_contact_methods]
         messages = [x for x in messages if x is not None]
         if messages:
