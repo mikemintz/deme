@@ -38,7 +38,7 @@ def main():
         return 
     comment = cms.models.TextComment(commented_item=item, name=subject, body=body)
     comment.save_versioned(updater=email_contact_method.agent)
-    comment_location = cms.models.CommentLocation(name="Untitled CommentLocation", comment=comment, commented_item_version_number=item.versions.latest().version_number, commented_item_index=None)
+    comment_location = cms.models.CommentLocation(comment=comment, commented_item_version_number=item.versions.latest().version_number, commented_item_index=None)
     comment_location.save_versioned(updater=email_contact_method.agent)
 
 
