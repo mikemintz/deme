@@ -25,7 +25,6 @@ Code correctness/consistency/bugs
 ---------------------------------
 * figure out import deal on deme_django.cms and just cms
 * start using verbose_name to have nice displays of item type names
-* Modifying TextDocuments needs to be able to move around located comments
 * The "crumbs" at the top of pages like TextAdvertisements and TextComments are wrong, since they have multiple inheritance
 * Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
   - http://code.djangoproject.com/ticket/2227

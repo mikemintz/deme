@@ -987,10 +987,6 @@ class TextDocumentViewer(ItemViewer):
         return HttpResponse(template.render(self.context))
 
 
-class HtmlDocumentViewer(TextDocumentViewer):
-    item_type = cms.models.HtmlDocument
-    viewer_name = 'htmldocument'
-
     def entry_edit(self):
         can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
@@ -1007,8 +1003,12 @@ class HtmlDocumentViewer(TextDocumentViewer):
         comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=self.item.pk, commented_item_version_number=self.item.version_number, commented_item_index__isnull=False).order_by('-commented_item_index')
         body_as_list = list(self.item.body)
         for comment_location in comment_locations:
+            if issubclass(self.item_type, cms.models.HtmlDocument):
+                virtual_comment = '<img id="comment_location_%s" src="/static/spacer.gif" title="Comment %s" style="margin: 0 2px 0 2px; background: #ddd; border: 1px dotted #777; height: 10px; width: 10px;"/>' % (comment_location.comment.pk, comment_location.comment.pk)
+            else:
+                virtual_comment = '<deme_comment_location id="%s"/>' % comment_location.comment.pk
             i = comment_location.commented_item_index
-            body_as_list[i:i] = '<img id="comment_location_%s" src="/static/spacer.gif" title="Comment %s" style="margin: 0 2px 0 2px; background: #ddd; border: 1px dotted #777; height: 10px; width: 10px;"/>' % (comment_location.comment.pk, comment_location.comment.pk)
+            body_as_list[i:i] = virtual_comment
         self.item.body = ''.join(body_as_list)
 
         form = form_class(instance=self.item)
@@ -1043,7 +1043,11 @@ class HtmlDocumentViewer(TextDocumentViewer):
                     comment_id = m.group(1)
                     new_comment_locations.append((index, comment_id))
                     return ''
-                new_item.body, n_subs = re.subn(r'(?i)<img[^>]+comment_location_(\d+)[^>]*>', repl, new_item.body, 1)
+                if issubclass(self.item_type, cms.models.HtmlDocument):
+                    virtual_comment_re = r'(?i)<img[^>]+comment_location_(\d+)[^>]*>'
+                else:
+                    virtual_comment_re = r'<deme_comment_location id="(\d+)"/>'
+                new_item.body, n_subs = re.subn(virtual_comment_re, repl, new_item.body, 1)
                 if n_subs == 0:
                     break
             
