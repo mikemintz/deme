@@ -798,11 +798,11 @@ class WebsiteContactMethod(ContactMethod):
     url = models.CharField(max_length=255)
 
 
-class IMContactMethod(ContactMethod):
+class AIMContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view im', 'edit im'])
-    relevant_global_abilities = frozenset(['create IMContactMethod'])
-    im = models.CharField(max_length=255)
+    relevant_abilities = ContactMethod.relevant_abilities | set(['view screen_name', 'edit screen_name'])
+    relevant_global_abilities = frozenset(['create AIMContactMethod'])
+    screen_name = models.CharField(max_length=255)
 
 
 class AddressContactMethod(ContactMethod):
