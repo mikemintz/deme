@@ -607,29 +607,34 @@ class Comment(Document):
 
         # Finally put together the message
         if isinstance(self, TextComment):
-            subject = '[%s] %s' % (topmost_item_name, comment_name)
-            body = '%s wrote a comment in %s\n%s\n\n%s' % (creator_name, topmost_item_name, topmost_item_url, comment_body)
+            subject = 'Re: %s (%s)' % (topmost_item_name, comment_name)
+            body = '%s commented on %s\n%s\n\n%s' % (creator_name, topmost_item_name, topmost_item_url, comment_body)
         elif isinstance(self, EditComment):
-            subject = '[%s] Edited' % (commented_item_name,)
+            subject = 'Re: %s (Edited)' % (commented_item_name,)
             body = '%s edited %s\n%s' % (creator_name, commented_item_name, commented_item_url)
         elif isinstance(self, TrashComment):
-            subject = '[%s] Trashed' % (commented_item_name,)
+            subject = 'Re: %s (Trashed)' % (commented_item_name,)
             body = '%s trashed %s\n%s' % (creator_name, commented_item_name, commented_item_url)
         elif isinstance(self, UntrashComment):
-            subject = '[%s] Untrashed' % (commented_item_name,)
+            subject = 'Re: %s (Untrashed)' % (commented_item_name,)
             body = '%s untrashed %s\n%s' % (creator_name, commented_item_name, commented_item_url)
         elif isinstance(self, AddMemberComment):
-            subject = '[%s] Member Added' % (commented_item_name,)
+            subject = 'Re: %s (Member Added)' % (commented_item_name,)
             body = '%s added a member to %s\n%s' % (creator_name, commented_item_name, commented_item_url)
         elif isinstance(self, RemoveMemberComment):
-            subject = '[%s] Member Removed' % (commented_item_name,)
+            subject = 'Re: %s (Member Removed)' % (commented_item_name,)
             body = '%s removed a member from %s\n%s' % (creator_name, commented_item_name, commented_item_url)
         else:
             return None
         from_email_address = '%s@%s' % (self.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
         from_email = formataddr((creator_name, from_email_address))
         reply_to = formataddr((comment_name, from_email_address))
-        headers = {'Reply-To': reply_to}
+        headers = {}
+        headers['Reply-To'] = reply_to
+        messageid = lambda x: '<%s-%s@%s>' % (x.pk, x.created_at.strftime("%Y%m%d%H%M%S"), settings.NOTIFICATION_EMAIL_HOSTNAME)
+        headers['Message-ID'] = messageid(self)
+        headers['In-Reply-To'] = messageid(self.commented_item)
+        headers['References'] = '%s %s' % (messageid(topmost_item), messageid(self.commented_item))
         return EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((agent.name, email_contact_method.email))], headers=headers)
 
 
