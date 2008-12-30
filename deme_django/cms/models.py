@@ -516,7 +516,7 @@ class Comment(Document):
         comment_class_names = [model.__name__ for model in all_models() if issubclass(model, Comment)]
         return Item.objects.filter(pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query).exclude(item_type__in=comment_class_names).get()
     def all_commented_items(self):
-        return Item.objects.filter(trashed=False, pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query)
+        return Item.objects.filter(pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query)
     def all_commented_items_and_itemsets(self, recursive_filter=None):
         parent_item_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
         parent_items = Q(pk__in=parent_item_pks_query)
@@ -548,10 +548,10 @@ class Comment(Document):
             comment_type_q = Q(notify_edit=True)
         else:
             comment_type_q = Q(pk__isnull=False)
-        #TODO if an item is trashed, comments on it won't get emailed as notifications
         direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
         deep_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items_and_itemsets().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
         subscribed_email_contact_methods = EmailContactMethod.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('contact_method').query) | Q(pk__in=deep_subscriptions.values('contact_method').query))
+        print subscribed_email_contact_methods
         messages = [self.notification_email(email_contact_method) for email_contact_method in subscribed_email_contact_methods]
         messages = [x for x in messages if x is not None]
         if messages:
