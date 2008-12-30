@@ -63,8 +63,9 @@ class ItemMetaClass(ModelBase):
         result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
         version_name = "%sVersion" % name
         version_bases = tuple([x.VERSION for x in bases])
-        def convert_to_version(key, value):
-            if isinstance(value, models.Field):
+        version_attrs = {}
+        for key, value in attrs_copy.iteritems():
+            if isinstance(value, models.Field) and value.editable and key not in result.immutable_fields:
                 # We don't want to waste time indexing versions, except things specified in ItemVersion like version_number and current_item
                 value.db_index = False
                 if value.rel and value.rel.related_name:
@@ -74,15 +75,8 @@ class ItemMetaClass(ModelBase):
                 # Just keep it the same
                 pass
             else:
-                raise Exception("wtf119283913: %s -> %s" % (key, value))
-            return key, value
-        def is_valid_in_version(key, value):
-            if key == '__module__':
-                return True
-            if isinstance(value, models.Field) and value.editable and key not in result.immutable_fields:
-                return True
-            return False
-        version_attrs = dict([convert_to_version(k,v) for k,v in attrs_copy.iteritems() if is_valid_in_version(k,v)])
+                continue
+            version_attrs[key] = value
         version_result = super(ItemMetaClass, cls).__new__(cls, version_name, version_bases, version_attrs)
         result.VERSION = version_result
         version_result.NOTVERSION = result
