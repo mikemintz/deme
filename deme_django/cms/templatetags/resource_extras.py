@@ -258,7 +258,7 @@ def ifagentcanglobal(parser, token):
 
 # remember this includes trashed comments, which should be displayed differently after calling this
 def comment_dicts_for_item(item, version_number, context, include_recursive_itemset_comments):
-    comment_subclasses = [cms.models.TextComment, cms.models.EditComment, cms.models.AddMemberComment, cms.models.RemoveMemberComment]
+    comment_subclasses = [cms.models.TextComment, cms.models.EditComment, cms.models.TrashComment, cms.models.UntrashComment, cms.models.AddMemberComment, cms.models.RemoveMemberComment]
     comments = []
     if include_recursive_itemset_comments:
         if agentcan_global_helper(context, 'do_everything'):
@@ -501,6 +501,10 @@ class CommentBox(template.Node):
                             result.append('[PERMISSION DENIED]')
                     elif isinstance(comment, cms.models.EditComment):
                         result.append('Edited')
+                    elif isinstance(comment, cms.models.TrashComment):
+                        result.append('Trashed')
+                    elif isinstance(comment, cms.models.UntrashComment):
+                        result.append('Untrashed')
                     elif isinstance(comment, cms.models.AddMemberComment):
                         result.append('Added Member')
                     elif isinstance(comment, cms.models.RemoveMemberComment):

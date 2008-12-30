@@ -265,11 +265,19 @@ class Item(models.Model):
     after_create.alters_data = True
 
     def after_trash(self, agent):
-        pass
+        # Create a TrashComment
+        trash_comment = TrashComment(commented_item=self)
+        trash_comment.save_versioned(updater=agent)
+        trash_comment_location = CommentLocation(comment=trash_comment, commented_item_version_number=self.versions.latest().version_number, commented_item_index=None)
+        trash_comment_location.save_versioned(updater=agent)
     after_trash.alters_data = True
 
     def after_untrash(self, agent):
-        pass
+        # Create an UntrashComment
+        untrash_comment = UntrashComment(commented_item=self)
+        untrash_comment.save_versioned(updater=agent)
+        untrash_comment_location = CommentLocation(comment=untrash_comment, commented_item_version_number=self.versions.latest().version_number, commented_item_index=None)
+        untrash_comment_location.save_versioned(updater=agent)
     after_untrash.alters_data = True
 
 
@@ -530,12 +538,17 @@ class Comment(Document):
             comment_type_q = Q(notify_text=True)
         elif isinstance(self, EditComment):
             comment_type_q = Q(notify_edit=True)
+        elif isinstance(self, TrashComment):
+            comment_type_q = Q(notify_edit=True)
+        elif isinstance(self, UntrashComment):
+            comment_type_q = Q(notify_edit=True)
         elif isinstance(self, AddMemberComment):
             comment_type_q = Q(notify_edit=True)
         elif isinstance(self, RemoveMemberComment):
             comment_type_q = Q(notify_edit=True)
         else:
             comment_type_q = Q(pk__isnull=False)
+        #TODO if an item is trashed, comments on it won't get emailed as notifications
         direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
         deep_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items_and_itemsets().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
         subscribed_email_contact_methods = EmailContactMethod.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('contact_method').query) | Q(pk__in=deep_subscriptions.values('contact_method').query))
@@ -554,6 +567,10 @@ class Comment(Document):
         if isinstance(self, TextComment):
             comment_type_q = Q(notify_text=True)
         elif isinstance(self, EditComment):
+            comment_type_q = Q(notify_edit=True)
+        elif isinstance(self, TrashComment):
+            comment_type_q = Q(notify_edit=True)
+        elif isinstance(self, UntrashComment):
             comment_type_q = Q(notify_edit=True)
         elif isinstance(self, AddMemberComment):
             comment_type_q = Q(notify_edit=True)
@@ -596,6 +613,12 @@ class Comment(Document):
         elif isinstance(self, EditComment):
             subject = '[%s] Edited' % (commented_item_name,)
             body = '%s edited %s\n%s' % (creator_name, commented_item_name, commented_item_url)
+        elif isinstance(self, TrashComment):
+            subject = '[%s] Trashed' % (commented_item_name,)
+            body = '%s trashed %s\n%s' % (creator_name, commented_item_name, commented_item_url)
+        elif isinstance(self, UntrashComment):
+            subject = '[%s] Untrashed' % (commented_item_name,)
+            body = '%s untrashed %s\n%s' % (creator_name, commented_item_name, commented_item_url)
         elif isinstance(self, AddMemberComment):
             subject = '[%s] Member Added' % (commented_item_name,)
             body = '%s added a member to %s\n%s' % (creator_name, commented_item_name, commented_item_url)
@@ -632,6 +655,18 @@ class EditComment(Comment):
     immutable_fields = Comment.immutable_fields
     relevant_abilities = Comment.relevant_abilities
     relevant_global_abilities = frozenset(['create EditComment'])
+
+
+class TrashComment(Comment):
+    immutable_fields = Comment.immutable_fields
+    relevant_abilities = Comment.relevant_abilities
+    relevant_global_abilities = frozenset(['create TrashComment'])
+
+
+class UntrashComment(Comment):
+    immutable_fields = Comment.immutable_fields
+    relevant_abilities = Comment.relevant_abilities
+    relevant_global_abilities = frozenset(['create UntrashComment'])
 
 
 class AddMemberComment(Comment):

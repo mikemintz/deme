@@ -20,8 +20,7 @@ Symsys module
 
 Ontology changes
 ----------------
-* Add more automatic generated comments (like Trash, Untrash)
-  - Consider removing the ability to trash versions (then this will be much simpler)
+* Add more automatic generated comments (are there any more for now?)
 
 Code correctness/consistency/bugs
 ---------------------------------
