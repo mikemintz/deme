@@ -59,7 +59,6 @@ class ItemVersion(models.Model):
     description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='item_versions_as_updater')
     updated_at = models.DateTimeField(editable=False)
-    trashed = models.BooleanField(default=False, editable=False)
 
     class Meta:
         unique_together = (('current_item', 'version_number'),)
@@ -145,10 +144,8 @@ class Item(models.Model):
     def trash(self, agent):
         if self.trashed:
             return
-        self.copy_fields_from_itemversion(self.versions.latest().downcast())
         self.trashed = True
         self.save()
-        self.versions.all().update(trashed=True)
         self.after_trash(agent)
     trash.alters_data = True
 
@@ -156,10 +153,8 @@ class Item(models.Model):
     def untrash(self, agent):
         if not self.trashed:
             return
-        self.copy_fields_from_itemversion(self.versions.latest().downcast())
         self.trashed = False
         self.save()
-        self.versions.all().update(trashed=False)
         self.after_untrash(agent)
     untrash.alters_data = True
 
@@ -188,7 +183,6 @@ class Item(models.Model):
             self.updated_at = updated_at
         else:
             self.updated_at = save_time
-        self.trashed = False
         self.save()
 
         # Create the new item version
@@ -252,6 +246,8 @@ class DemeSetting(Item):
     def get(cls, key):
         try:
             setting = cls.objects.get(key=key)
+            if setting.trashed:
+                return None
             return setting.value
         except ObjectDoesNotExist:
             return None
@@ -262,8 +258,11 @@ class DemeSetting(Item):
             setting = cls.objects.get(key=key)
         except ObjectDoesNotExist:
             setting = cls(name=key, key=key)
-        setting.value = value
-        setting.save_versioned(updater=admin)
+        if setting.value != value:
+            setting.value = value
+            setting.save_versioned(updater=admin)
+        if setting.trashed:
+            setting.untrash(admin)
 
 
 class Agent(Item):

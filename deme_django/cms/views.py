@@ -191,7 +191,6 @@ def get_versioned_item(item, version_number):
                 obj = getattr(itemversion, name)
             setattr(item, name, obj)
     item.version_number = itemversion.version_number
-    item.version_trashed = itemversion.trashed
     return item
 
 class ItemViewer(object):

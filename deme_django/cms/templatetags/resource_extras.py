@@ -401,8 +401,6 @@ class ItemHeader(template.Node):
 
         if item.trashed:
             result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is trashed</div>')
-        elif item.version_trashed:
-            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This version is trashed</div>')
 
         return '\n'.join(result)
 
