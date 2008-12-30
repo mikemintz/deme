@@ -62,7 +62,7 @@ def get_current_site(request):
         return cms.models.Site.objects.filter(site_domains_as_site__hostname=hostname)[0:1].get()
     except ObjectDoesNotExist:
         try:
-            return cms.models.Site.objects.filter(is_default_site=True)[0:1].get()
+            return cms.models.Site.objects.get(pk=cms.models.DemeSetting.get('cms.default_site'))
         except ObjectDoesNotExist:
             raise Exception("You must create a default Site")
 

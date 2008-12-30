@@ -9,7 +9,6 @@ from django.core.mail import SMTPConnection, EmailMessage
 from email.utils import formataddr
 from django.core.urlresolvers import reverse
 import settings
-from fields import IsDefaultField
 
 from django.db.models.base import ModelBase
 from copy import deepcopy
@@ -814,9 +813,8 @@ class ViewerRequest(Item):
 
 class Site(ViewerRequest):
     immutable_fields = ViewerRequest.immutable_fields
-    relevant_abilities = ViewerRequest.relevant_abilities | set(['view is_default_site', 'view default_layout', 'edit is_default_site', 'edit default_layout'])
+    relevant_abilities = ViewerRequest.relevant_abilities | set(['view default_layout', 'edit default_layout'])
     relevant_global_abilities = frozenset(['create Site'])
-    is_default_site = IsDefaultField(default=None)
     default_layout = models.ForeignKey('DjangoTemplateDocument', related_name='sites_as_default_layout', null=True, blank=True)
 
 
