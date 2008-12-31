@@ -24,7 +24,6 @@ Ontology changes
 Code correctness/consistency/bugs
 ---------------------------------
 * Make more sensible permissions:
-  - no 'create TextComment' but yes 'comment_on'. also no 'create Comment' for Comment and any automatic subclass
   - no 'create [Global]Permission', just require do_everything or modify_permissions
   - no viewing or editing permission fields: it should all go through the permissions interface
   - no permissions on Roles and RoleAbilities, there should be a Role modifying interface that requires do_everything
