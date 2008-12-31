@@ -76,7 +76,7 @@ class ItemVersion(models.Model):
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
     immutable_fields = frozenset()
-    relevant_abilities = frozenset(['comment_on', 'trash', 'login_as', 'modify_permissions', 'view name', 'view description', 'view updater', 'view updated_at', 'view creator', 'view created_at', 'edit name', 'edit description'])
+    relevant_abilities = frozenset(['comment_on', 'trash', 'modify_permissions', 'view name', 'view description', 'view updater', 'view updated_at', 'view creator', 'view created_at', 'edit name', 'edit description'])
     relevant_global_abilities = frozenset(['do_something', 'do_everything', 'create Item'])
     item_type = models.CharField(max_length=255, default='Item', editable=False)
     name = models.CharField(max_length=255, default="Untitled")
@@ -267,7 +267,7 @@ class DemeSetting(Item):
 
 class Agent(Item):
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities | set(['view last_online_at', 'edit last_online_at'])
+    relevant_abilities = Item.relevant_abilities | set(['login_as', 'view last_online_at', 'edit last_online_at'])
     relevant_global_abilities = frozenset(['create Agent'])
     last_online_at = models.DateTimeField(null=True, blank=True) # TODO it's a little sketchy how this gets set without save_versioned(), so maybe reverting to an old version will reset this to NULL
     #TODO last_online_at should be not editable or immutable and fix the 'edit last_online_at' ability?
