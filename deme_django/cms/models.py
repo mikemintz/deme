@@ -567,22 +567,22 @@ class Comment(Document):
 
         # Finally put together the message
         if isinstance(self, TextComment):
-            subject = 'Re: %s (%s)' % (topmost_item_name, comment_name)
+            subject = 'Re: [%s] %s' % (comment_name, topmost_item_name)
             body = '%s commented on %s\n%s\n\n%s' % (creator_name, topmost_item_name, topmost_item_url, comment_body)
         elif isinstance(self, EditComment):
-            subject = 'Re: %s (Edited)' % (commented_item_name,)
+            subject = 'Re: [Edited] %s' % (commented_item_name,)
             body = '%s edited %s\n%s' % (creator_name, commented_item_name, commented_item_url)
         elif isinstance(self, TrashComment):
-            subject = 'Re: %s (Trashed)' % (commented_item_name,)
+            subject = 'Re: [Trashed] %s' % (commented_item_name,)
             body = '%s trashed %s\n%s' % (creator_name, commented_item_name, commented_item_url)
         elif isinstance(self, UntrashComment):
-            subject = 'Re: %s (Untrashed)' % (commented_item_name,)
+            subject = 'Re: [Untrashed] %s' % (commented_item_name,)
             body = '%s untrashed %s\n%s' % (creator_name, commented_item_name, commented_item_url)
         elif isinstance(self, AddMemberComment):
-            subject = 'Re: %s (Member Added)' % (commented_item_name,)
+            subject = 'Re: [Member Added] %s' % (commented_item_name,)
             body = '%s added a member to %s\n%s' % (creator_name, commented_item_name, commented_item_url)
         elif isinstance(self, RemoveMemberComment):
-            subject = 'Re: %s (Member Removed)' % (commented_item_name,)
+            subject = 'Re: [Member Removed] %s' % (commented_item_name,)
             body = '%s removed a member from %s\n%s' % (creator_name, commented_item_name, commented_item_url)
         else:
             return None
