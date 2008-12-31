@@ -16,13 +16,29 @@ Symsys module
 * change honors_advisor and honors_second_reader to symsysaffiliate pointers (problem is some aren't symsys affiliates)
 * come up with specification for new symsys layout
 * Make granular permissions on AddressContactMethods
+* Figure out how to port mailing lists over
 
 Ontology changes
 ----------------
-* Add more automatic generated comments (are there any more for now?)
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Make more sensible permissions:
+  - no 'create TextComment' but yes 'comment_on'. also no 'create Comment' for Comment and any automatic subclass
+  - no 'create [Global]Permission', just require do_everything or modify_permissions
+  - no viewing or editing permission fields: it should all go through the permissions interface
+  - no permissions on Roles and RoleAbilities, there should be a Role modifying interface that requires do_everything
+  - figure out perms for viewer aliases
+  - figure out CommentLocations
+  - Rather than permission to create ContactMethods and Subscriptions and AuthenticationMethods, there is permission to add_contact_method Agent
+  - Make sure if you try to create an Excerpt of something, you have permission to view its body
+  - Do we really need permissions to `create TextDocument` and other documents that are harmless to create?
+  - Figure out ItemSets and ItemSetMemberships
+  - Nobody should create Folios, it should all be automatic
+  - Nobody should create AnonymousAgent
+  - Nobody should create DemeSetting, it should require do_everything
+  - Do we need `create Item` and `create Document` and `create Advertisement` and other abstract types
+  - Don't put creator_roles on things that just require do_everything. Don't put any roles on things that have no more permissions (like [Global]Permissions)
 * figure out import deal on deme_django.cms and just cms
 * start using verbose_name to have nice displays of item type names
 * The "crumbs" at the top of pages like TextAdvertisements and TextComments are wrong, since they have multiple inheritance
