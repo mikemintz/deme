@@ -76,7 +76,7 @@ class ItemVersion(models.Model):
 class Item(models.Model):
     __metaclass__ = ItemMetaClass
     immutable_fields = frozenset()
-    relevant_abilities = frozenset(['trash', 'login_as', 'modify_permissions', 'view name', 'view description', 'view updater', 'view updated_at', 'view creator', 'view created_at', 'edit name', 'edit description'])
+    relevant_abilities = frozenset(['comment_on', 'trash', 'login_as', 'modify_permissions', 'view name', 'view description', 'view updater', 'view updated_at', 'view creator', 'view created_at', 'edit name', 'edit description'])
     relevant_global_abilities = frozenset(['do_something', 'do_everything', 'create Item'])
     item_type = models.CharField(max_length=255, default='Item', editable=False)
     name = models.CharField(max_length=255, default="Untitled")
@@ -470,7 +470,7 @@ class ImageDocument(FileDocument):
 class Comment(Document):
     immutable_fields = Document.immutable_fields | set(['commented_item'])
     relevant_abilities = Document.relevant_abilities | set(['view commented_item'])
-    relevant_global_abilities = frozenset(['create Comment'])
+    relevant_global_abilities = frozenset()
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
     def topmost_commented_item(self):
         comment_class_names = [model.__name__ for model in all_models() if issubclass(model, Comment)]
@@ -612,38 +612,38 @@ class CommentLocation(Item):
 class TextComment(TextDocument, Comment):
     immutable_fields = TextDocument.immutable_fields | Comment.immutable_fields
     relevant_abilities = TextDocument.relevant_abilities | Comment.relevant_abilities
-    relevant_global_abilities = frozenset(['create TextComment'])
+    relevant_global_abilities = frozenset()
 
 
 class EditComment(Comment):
     immutable_fields = Comment.immutable_fields
     relevant_abilities = Comment.relevant_abilities
-    relevant_global_abilities = frozenset(['create EditComment'])
+    relevant_global_abilities = frozenset()
 
 
 class TrashComment(Comment):
     immutable_fields = Comment.immutable_fields
     relevant_abilities = Comment.relevant_abilities
-    relevant_global_abilities = frozenset(['create TrashComment'])
+    relevant_global_abilities = frozenset()
 
 
 class UntrashComment(Comment):
     immutable_fields = Comment.immutable_fields
     relevant_abilities = Comment.relevant_abilities
-    relevant_global_abilities = frozenset(['create UntrashComment'])
+    relevant_global_abilities = frozenset()
 
 
 class AddMemberComment(Comment):
     immutable_fields = Comment.immutable_fields | set(['membership'])
     relevant_abilities = Comment.relevant_abilities | set(['view membership'])
-    relevant_global_abilities = frozenset(['create AddMemberComment'])
+    relevant_global_abilities = frozenset()
     membership = models.ForeignKey(ItemSetMembership, related_name="add_member_comments_as_membership")
 
 
 class RemoveMemberComment(Comment):
     immutable_fields = Comment.immutable_fields | set(['membership'])
     relevant_abilities = Comment.relevant_abilities | set(['view membership'])
-    relevant_global_abilities = frozenset(['create RemoveMemberComment'])
+    relevant_global_abilities = frozenset()
     membership = models.ForeignKey(ItemSetMembership, related_name="remove_member_comments_as_membership")
 
 

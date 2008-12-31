@@ -36,7 +36,7 @@ for model in all_models():
     deme_settings["cms.default_role.%s" % model.__name__] = default_role.pk
     deme_settings["cms.creator_role.%s" % model.__name__] = creator_role.pk
     for ability in model.relevant_abilities:
-        if ability.startswith('view '):
+        if ability.startswith('view ') or ability == 'comment_on':
             role_abilities.append(RoleAbility(role=default_role, ability=ability, is_allowed=True))
         role_abilities.append(RoleAbility(role=creator_role, ability=ability, is_allowed=True))
 
@@ -162,7 +162,6 @@ ItemSetMembership(item=todd_person, itemset=discuss_group).save_versioned(update
 
 DefaultGlobalPermission(ability='do_something', is_allowed=True).save_versioned(updater=admin)
 #AgentGlobalPermission(agent=anonymous_agent, ability='do_something', is_allowed=False).save_versioned(updater=admin)
-DefaultGlobalPermission(ability='create TextComment', is_allowed=True).save_versioned(updater=admin)
 DefaultGlobalPermission(ability='create HtmlDocument', is_allowed=True).save_versioned(updater=admin)
 
 DefaultPermission(item=admin, ability='login_as', is_allowed=True).save_versioned(updater=admin)

@@ -210,6 +210,7 @@ div#section_body, div#section_comments, div#section_combined {
 <div id="parse_errors" style="display: none;">
 </div>
 
+{% ifagentcan 'comment_on' '' item %}
 <div id="add_located_comment_div">
 <a href="#" onclick="add_located_comment(); return false;">[+] Add Located Comment</a>
 </div>
@@ -218,6 +219,7 @@ div#section_body, div#section_comments, div#section_combined {
 Now just select text where you want to comment or
 <a href="#" onclick="cancel_add_located_comment(); return false;">Cancel</a>
 </div>
+{% endifagentcan %}
 
 <div id="add_highlight_div">
 <a href="#" onclick="add_highlight(); return false;">[+] Add Highlight</a>

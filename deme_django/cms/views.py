@@ -398,7 +398,7 @@ The agent currently logged in is not allowed to use this application. Please log
         can_create = 'create %s' % self.item_type.__name__ in self.get_global_abilities_for_agent(self.cur_agent)
         if not (can_do_everything or can_create):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type) and (can_do_everything or 'create %s' % model.__name__ in self.get_global_abilities_for_agent(self.cur_agent))]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
         form_class = get_form_class_for_item_type('create', self.item_type)
@@ -422,7 +422,7 @@ The agent currently logged in is not allowed to use this application. Please log
             redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type) and (can_do_everything or 'create %s' % model.__name__ in self.get_global_abilities_for_agent(self.cur_agent))]
             model_names.sort()
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
@@ -513,7 +513,7 @@ The agent currently logged in is not allowed to use this application. Please log
     def entry_edit(self):
         can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
-        can_edit = any(x[0] == 'edit' for x in abilities_for_item)
+        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and 'modify_permissions' in self.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
             can_edit = True
         if not (can_do_everything or can_edit):
@@ -521,11 +521,11 @@ The agent currently logged in is not allowed to use this application. Please log
         if can_do_everything:
             form_class = get_form_class_for_item_type('update', self.item_type)
         else:
-            fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
+            fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
             form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
         form = form_class(instance=self.item)
         if not can_do_everything:
-            fields_can_view = set([x[1] for x in abilities_for_item if x[0] == 'view'])
+            fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
             initial_fields_set = set(form.initial.iterkeys())
             fields_must_blank = initial_fields_set - fields_can_view
             for field_name in fields_must_blank:
@@ -545,7 +545,7 @@ The agent currently logged in is not allowed to use this application. Please log
         if can_do_everything:
             fields_to_copy = [field_name for field_name in form_class.base_fields]
         else:
-            fields_can_view = [x[1] for x in abilities_for_item if x[0] == 'view']
+            fields_can_view = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view']
             fields_to_copy = [field_name for field_name in form_class.base_fields if field_name in fields_can_view]
         form_initial = {}
         for field_name in fields_to_copy:
@@ -559,7 +559,7 @@ The agent currently logged in is not allowed to use this application. Please log
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
-        model_names = [model.__name__ for model in resource_name_dict.itervalues()]
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type) and (can_do_everything or 'create %s' % model.__name__ in self.get_global_abilities_for_agent(self.cur_agent))]
         model_names.sort()
         self.context['model_names'] = model_names
         self.context['action_is_entry_copy'] = True
@@ -570,13 +570,13 @@ The agent currently logged in is not allowed to use this application. Please log
     def entry_update(self):
         can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
-        can_edit = any(x[0] == 'edit' for x in abilities_for_item)
+        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and 'modify_permissions' in self.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
             can_edit = True
         if not (can_do_everything or can_edit):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         new_item = self.item
-        fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
+        fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x[0] == 'edit']
         form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
@@ -587,9 +587,6 @@ The agent currently logged in is not allowed to use this application. Please log
             template = loader.get_template('item/edit.html')
             self.context['form'] = form
             self.context['query_string'] = self.request.META['QUERY_STRING']
-            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, type(self.item))]
-            model_names.sort()
-            self.context['model_names'] = model_names
             return HttpResponse(template.render(self.context))
 
     def entry_trash(self):
@@ -981,13 +978,13 @@ class TextDocumentViewer(ItemViewer):
     def entry_edit(self):
         can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
-        can_edit = any(x[0] == 'edit' for x in abilities_for_item)
+        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not (can_do_everything or can_edit):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         if can_do_everything:
             form_class = get_form_class_for_item_type('update', self.item_type)
         else:
-            fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
+            fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
             form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
 
 
@@ -1004,7 +1001,7 @@ class TextDocumentViewer(ItemViewer):
 
         form = form_class(instance=self.item)
         if not can_do_everything:
-            fields_can_view = set([x[1] for x in abilities_for_item if x[0] == 'view'])
+            fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
             initial_fields_set = set(form.initial.iterkeys())
             fields_must_blank = initial_fields_set - fields_can_view
             for field_name in fields_must_blank:
@@ -1017,11 +1014,11 @@ class TextDocumentViewer(ItemViewer):
     def entry_update(self):
         can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
         abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
-        can_edit = any(x[0] == 'edit' for x in abilities_for_item)
+        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not (can_do_everything or can_edit):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         new_item = self.item
-        fields_can_edit = [x[1] for x in abilities_for_item if x[0] == 'edit']
+        fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
         form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
@@ -1097,10 +1094,14 @@ class TextCommentViewer(TextDocumentViewer):
     viewer_name = 'textcomment'
 
     def collection_new(self):
+        try:
+            commented_item = cms.models.Item.objects.get(pk=self.request.GET.get('commented_item'))
+        except:
+            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
         can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        can_create = 'create %s' % self.item_type.__name__ in self.get_global_abilities_for_agent(self.cur_agent)
-        if not (can_do_everything or can_create):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
+        can_comment_on = 'comment_on' in self.get_abilities_for_agent_and_item(self.cur_agent, commented_item)
+        if not (can_do_everything or can_comment_on):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to comment on this item")
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
@@ -1113,10 +1114,14 @@ class TextCommentViewer(TextDocumentViewer):
         return HttpResponse(template.render(self.context))
 
     def collection_create(self):
+        try:
+            commented_item = cms.models.Item.objects.get(pk=self.request.POST.get('commented_item'))
+        except:
+            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
         can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        can_create = 'create %s' % self.item_type.__name__ in self.get_global_abilities_for_agent(self.cur_agent)
-        if not (can_do_everything or can_create):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
+        can_comment_on = 'comment_on' in self.get_abilities_for_agent_and_item(self.cur_agent, commented_item)
+        if not (can_do_everything or can_comment_on):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to comment on this item")
         form_class = NewTextCommentForm
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():

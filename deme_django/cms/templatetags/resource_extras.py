@@ -451,7 +451,10 @@ class CommentBox(template.Node):
 
         result = []
         result.append("""<div class="comment_box">""")
-        result.append("""<div class="comment_box_header"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Add Comment</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), item.pk, version_number, urlquote(full_path)))
+        result.append("""<div class="comment_box_header">""")
+        if agentcan_helper(context, 'comment_on', item):
+            result.append("""<a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Add Comment</a>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), item.pk, version_number, urlquote(full_path)))
+        result.append("""</div>""")
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
