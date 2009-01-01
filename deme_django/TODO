@@ -40,7 +40,6 @@ Code correctness/consistency/bugs
 * The "crumbs" at the top of pages like TextAdvertisements and TextComments are wrong, since they have multiple inheritance
 * Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
   - http://code.djangoproject.com/ticket/2227
-* Figure out what editable is that immutable_fields is not
 * Maybe EditComment could specify the old_version and new_version (although it's not easy to determine old_version in all cases)
 
 Performance
