@@ -15,6 +15,7 @@ from django.core.exceptions import ObjectDoesNotExist
 #TODO error handling (always send back an email, preferrably with same thread, on error)
 #TODO attachments? handle html formatting?
 #TODO use transactions to make the CommentLocation save at the same time as the Comment
+#TODO the subject line isn't always getting read
 
 def main():
     msg = email.message_from_file(sys.stdin)
