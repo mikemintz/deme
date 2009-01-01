@@ -38,18 +38,19 @@ class AjaxModelChoiceWidget(forms.Widget):
         if attrs is None: attrs = {}
         ajax_url = reverse('resource_collection', kwargs={'viewer': model.__name__.lower(), 'format': 'json'})
         result = """
-        <input type="hidden" id="%(id)s_hidden" name="%(name)s" value="%(value)s" />
-        <input type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" autocomplete="off" />
-        <div id="%(id)s_search_results" class="ajax_choice_results" style="display: none;"></div>
+        <input type="hidden" name="%(name)s" value="%(value)s" />
+        <input class="ajax_choice_field" type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" autocomplete="off" />
+        <div class="ajax_choice_results" style="display: none;"></div>
         <script type="text/javascript">
         fn = function(){
           var ajax_observer = null;
           var search_onchange = function(e, value) {
-            var results_div = $('%(id)s_search_results');
+            var hidden_input = $(e).previousSiblings()[0];
+            var results_div = $(e).nextSiblings()[0];
             if (value == '') {
               $A(results_div.childNodes).each(Element.remove);
               $(results_div).hide();
-              $('%(id)s_hidden').value = '';
+              hidden_input.value = '';
               return;
             }
             var url = '%(ajax_url)s?q=' + encodeURIComponent(value);
@@ -64,10 +65,10 @@ class AjaxModelChoiceWidget(forms.Widget):
                   option.className = 'ajax_choice_option';
                   option.innerHTML = result[0];
                   $(option).observe('click', function(event){
-                    ajax_observer.stop();
-                    $('%(id)s').value = result[0];
-                    ajax_observer = new Form.Element.Observer('%(id)s', 0.5, search_onchange);
-                    $('%(id)s_hidden').value = result[1];
+                    e.ajax_observer.stop();
+                    e.value = result[0];
+                    e.ajax_observer = new Form.Element.Observer(e, 0.25, search_onchange);
+                    hidden_input.value = result[1];
                     $A(results_div.childNodes).each(Element.remove);
                     $(results_div).hide();
                   });
@@ -77,7 +78,12 @@ class AjaxModelChoiceWidget(forms.Widget):
               }
             });
           };
-          ajax_observer = new Form.Element.Observer('%(id)s', 0.25, search_onchange);
+          $$('.ajax_choice_field').each(function(input){
+            if (!input.hasClassName('ajax_choice_field_activated')) {
+              input.addClassName('ajax_choice_field_activated');
+              input.ajax_observer = new Form.Element.Observer(input, 0.25, search_onchange);
+            }
+          });
         };
         fn();
         </script>
@@ -92,6 +98,12 @@ class HiddenModelChoiceField(forms.ModelChoiceField):
 
 class TextModelChoiceField(forms.ModelChoiceField):
     widget = forms.TextInput
+
+class NewMembershipForm(forms.ModelForm):
+    item = AjaxModelChoiceField(cms.models.Item.objects)
+    class Meta:
+        model = cms.models.Membership
+        fields = ['item']
 
 class NewTextCommentForm(forms.ModelForm):
     commented_item = HiddenModelChoiceField(cms.models.Item.objects)
@@ -939,7 +951,43 @@ class ItemSetViewer(ItemViewer):
         memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'))
         self.context['memberships'] = memberships
         template = loader.get_template('itemset/show.html')
+        self.context['addmember_form'] = NewMembershipForm()
         return HttpResponse(template.render(self.context))
+
+
+    def entry_addmember(self):
+        if not self.cur_agent_can('modify_membership', self.item):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify membership of this ItemSet")
+        try:
+            member = cms.models.Item.objects.get(pk=self.request.POST.get('item'))
+        except:
+            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
+        try:
+            membership = cms.models.Membership.objects.get(itemset=self.item, item=member)
+            if membership.trashed:
+                membership.untrash(self.cur_agent)
+        except:
+            membership = cms.models.Membership(itemset=self.item, item=member)
+            membership.save_versioned(updater=self.cur_agent)
+        redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
+
+
+    def entry_removemember(self):
+        if not self.cur_agent_can('modify_membership', self.item):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify membership of this ItemSet")
+        try:
+            member = cms.models.Item.objects.get(pk=self.request.POST.get('item'))
+        except:
+            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
+        try:
+            membership = cms.models.Membership.objects.get(itemset=self.item, item=member)
+            if not membership.trashed:
+                membership.trash(self.cur_agent)
+        except:
+            pass
+        redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
 
 
 class ImageDocument(ItemViewer):
