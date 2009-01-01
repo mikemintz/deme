@@ -7,23 +7,23 @@
 {% itemheader %}
 
 <div style="margin-bottom: 10px;">
-    <a href="{% url resource_collection viewer="itemsetmembership",collection_action="new" %}?itemset={{ item.pk }}&redirect={{ full_path|urlencode }}">[Add Item]</a>
+    <a href="{% url resource_collection viewer="membership",collection_action="new" %}?itemset={{ item.pk }}&redirect={{ full_path|urlencode }}">[Add Item]</a>
 </div>
 
-{% if itemset_memberships %}
+{% if memberships %}
 <table class="list">
     <tr>
         <th>Name</th>
         <th>Membership</th>
     </tr>
-    {% for itemset_membership in itemset_memberships %}
+    {% for membership in memberships %}
     <tr class="{% cycle 'even' 'odd' %}">
-        {% ifagentcan 'view' 'name' itemset_membership.item %}
-        <td><a href="{% show_resource_url itemset_membership.item %}">{{ itemset_membership.item.name }}</a></td>
+        {% ifagentcan 'view' 'name' membership.item %}
+        <td><a href="{% show_resource_url membership.item %}">{{ membership.item.name }}</a></td>
         {% else %}
-        <td><a href="{% show_resource_url itemset_membership.item %}">[PERMISSION DENIED]</a></td>
+        <td><a href="{% show_resource_url membership.item %}">[PERMISSION DENIED]</a></td>
         {% endifagentcan %}
-        <td><a href="{% show_resource_url itemset_membership %}">{{ itemset_membership.pk }}</a></td>
+        <td><a href="{% show_resource_url membership %}">{{ membership.pk }}</a></td>
     </tr>
     {% endfor %}
 </table>

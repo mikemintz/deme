@@ -178,7 +178,7 @@ def filter_agents_for_item_and_ability(item, ability):
                     perm_q["%s%s%s" % (agentitemsetdefault, role, is_allowed)] = Q(pk__in=query)
                 elif agentitemsetdefault == 'itemset':
                     itemset_query = permission_class.objects.filter(**args).values('itemset_id').query
-                    query = RecursiveItemSetMembership.objects.filter(parent__pk__in=itemset_query).values('child_id').query
+                    query = RecursiveMembership.objects.filter(parent__pk__in=itemset_query).values('child_id').query
                     perm_q["%s%s%s" % (agentitemsetdefault, role, is_allowed)] = Q(pk__in=query)
                 else:
                     default_perm_exists = (len(permission_class.objects.filter(**args)[:1]) > 0)

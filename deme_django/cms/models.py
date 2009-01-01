@@ -102,7 +102,7 @@ class Item(models.Model):
         return result
 
     def all_containing_itemsets(self, recursive_filter=None):
-        recursive_memberships = RecursiveItemSetMembership.objects.filter(child=self)
+        recursive_memberships = RecursiveMembership.objects.filter(child=self)
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         return ItemSet.objects.filter(trashed=False, pk__in=recursive_memberships.values('parent').query)
@@ -360,17 +360,17 @@ class ItemSet(Item):
     relevant_abilities = Item.relevant_abilities
     relevant_global_abilities = frozenset(['create ItemSet'])
     def all_contained_itemset_members(self, recursive_filter=None):
-        recursive_memberships = RecursiveItemSetMembership.objects.filter(parent=self)
+        recursive_memberships = RecursiveMembership.objects.filter(parent=self)
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         return Item.objects.filter(trashed=False, pk__in=recursive_memberships.values('child').query)
     def after_trash(self, agent):
         super(ItemSet, self).after_trash(agent)
-        RecursiveItemSetMembership.recursive_remove_itemset(self)
+        RecursiveMembership.recursive_remove_itemset(self)
     after_trash.alters_data = True
     def after_untrash(self, agent):
         super(ItemSet, self).after_untrash(agent)
-        RecursiveItemSetMembership.recursive_add_itemset(self)
+        RecursiveMembership.recursive_add_itemset(self)
     after_untrash.alters_data = True
 
 
@@ -392,33 +392,33 @@ class Folio(ItemSet):
     group = models.ForeignKey(Group, related_name='folios_as_group', unique=True, editable=False)
 
 
-class ItemSetMembership(Item):
+class Membership(Item):
     immutable_fields = Item.immutable_fields | set(['item', 'itemset'])
     relevant_abilities = Item.relevant_abilities | set(['view item', 'view itemset'])
-    relevant_global_abilities = frozenset(['create ItemSetMembership'])
-    item = models.ForeignKey(Item, related_name='itemset_memberships_as_item')
-    itemset = models.ForeignKey(ItemSet, related_name='itemset_memberships_as_itemset')
+    relevant_global_abilities = frozenset(['create Membership'])
+    item = models.ForeignKey(Item, related_name='memberships_as_item')
+    itemset = models.ForeignKey(ItemSet, related_name='memberships_as_itemset')
     class Meta:
         unique_together = (('item', 'itemset'),)
     def after_create(self):
-        super(ItemSetMembership, self).after_create()
-        RecursiveItemSetMembership.recursive_add_membership(self)
+        super(Membership, self).after_create()
+        RecursiveMembership.recursive_add_membership(self)
         add_member_comment = AddMemberComment(commented_item=self.itemset, membership=self)
         add_member_comment.save_versioned(updater=self.creator)
         add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.itemset.versions.latest().version_number, commented_item_index=None)
         add_member_comment_location.save_versioned(updater=self.creator)
     after_create.alters_data = True
     def after_trash(self, agent):
-        super(ItemSetMembership, self).after_trash(agent)
-        RecursiveItemSetMembership.recursive_remove_edge(self.itemset, self.item)
+        super(Membership, self).after_trash(agent)
+        RecursiveMembership.recursive_remove_edge(self.itemset, self.item)
         remove_member_comment = RemoveMemberComment(commented_item=self.itemset, membership=self)
         remove_member_comment.save_versioned(updater=agent)
         remove_member_comment_location = CommentLocation(comment=remove_member_comment, commented_item_version_number=self.itemset.versions.latest().version_number, commented_item_index=None)
         remove_member_comment_location.save_versioned(updater=agent)
     after_trash.alters_data = True
     def after_untrash(self, agent):
-        super(ItemSetMembership, self).after_untrash(agent)
-        RecursiveItemSetMembership.recursive_add_membership(self)
+        super(Membership, self).after_untrash(agent)
+        RecursiveMembership.recursive_add_membership(self)
         add_member_comment = AddMemberComment(commented_item=self.itemset, membership=self)
         add_member_comment.save_versioned(updater=agent)
         add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.itemset.versions.latest().version_number, commented_item_index=None)
@@ -480,7 +480,7 @@ class Comment(Item):
         parent_item_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
         parent_items = Q(pk__in=parent_item_pks_query)
 
-        recursive_memberships = RecursiveItemSetMembership.objects.filter(child__in=parent_item_pks_query)
+        recursive_memberships = RecursiveMembership.objects.filter(child__in=parent_item_pks_query)
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         parent_item_itemsets = Q(pk__in=recursive_memberships.values('parent').query)
@@ -541,7 +541,7 @@ class Comment(Item):
             if can_do_everything:
                 recursive_filter = None
             else:
-                visible_memberships = ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(agent, 'view itemset'), permission_functions.filter_for_agent_and_ability(agent, 'view item'))
+                visible_memberships = Membership.objects.filter(permission_functions.filter_for_agent_and_ability(agent, 'view itemset'), permission_functions.filter_for_agent_and_ability(agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             possible_parents = self.all_commented_items_and_itemsets(recursive_filter)
             deep_subscriptions = Subscription.objects.filter(item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
@@ -636,14 +636,14 @@ class AddMemberComment(Comment):
     immutable_fields = Comment.immutable_fields | set(['membership'])
     relevant_abilities = Comment.relevant_abilities | set(['view membership'])
     relevant_global_abilities = frozenset()
-    membership = models.ForeignKey(ItemSetMembership, related_name="add_member_comments_as_membership")
+    membership = models.ForeignKey(Membership, related_name="add_member_comments_as_membership")
 
 
 class RemoveMemberComment(Comment):
     immutable_fields = Comment.immutable_fields | set(['membership'])
     relevant_abilities = Comment.relevant_abilities | set(['view membership'])
     relevant_global_abilities = frozenset()
-    membership = models.ForeignKey(ItemSetMembership, related_name="remove_member_comments_as_membership")
+    membership = models.ForeignKey(Membership, related_name="remove_member_comments_as_membership")
 
 
 class Excerpt(Item):
@@ -662,10 +662,10 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
     length = models.PositiveIntegerField()
 
 
-class RecursiveItemSetMembership(models.Model):
-    parent = models.ForeignKey(ItemSet, related_name='recursive_itemset_memberships_as_parent')
-    child = models.ForeignKey(Item, related_name='recursive_itemset_memberships_as_child')
-    child_memberships = models.ManyToManyField(ItemSetMembership)
+class RecursiveMembership(models.Model):
+    parent = models.ForeignKey(ItemSet, related_name='recursive_memberships_as_parent')
+    child = models.ForeignKey(Item, related_name='recursive_memberships_as_child')
+    child_memberships = models.ManyToManyField(Membership)
     class Meta:
         unique_together = (('parent', 'child'),)
     @classmethod
@@ -673,43 +673,43 @@ class RecursiveItemSetMembership(models.Model):
         parent = membership.itemset
         child = membership.item
         # first connect parent to child
-        recursive_itemset_membership, created = RecursiveItemSetMembership.objects.get_or_create(parent=parent, child=child)
-        recursive_itemset_membership.child_memberships.add(membership)
+        recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=parent, child=child)
+        recursive_membership.child_memberships.add(membership)
         # second connect ancestors to child, via parent
-        ancestor_recursive_memberships = RecursiveItemSetMembership.objects.filter(child=parent)
+        ancestor_recursive_memberships = RecursiveMembership.objects.filter(child=parent)
         for ancestor_recursive_membership in ancestor_recursive_memberships:
-            recursive_itemset_membership, created = RecursiveItemSetMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent, child=child)
-            recursive_itemset_membership.child_memberships.add(membership)
+            recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent, child=child)
+            recursive_membership.child_memberships.add(membership)
         # third connect parent and ancestors to all descendants
-        descendant_recursive_memberships = RecursiveItemSetMembership.objects.filter(parent=child)
+        descendant_recursive_memberships = RecursiveMembership.objects.filter(parent=child)
         for descendant_recursive_membership in descendant_recursive_memberships:
             child_memberships = descendant_recursive_membership.child_memberships.all()
             for ancestor_recursive_membership in ancestor_recursive_memberships:
-                recursive_itemset_membership, created = RecursiveItemSetMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent, child=descendant_recursive_membership.child)
+                recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent, child=descendant_recursive_membership.child)
                 for child_membership in child_memberships:
-                    recursive_itemset_membership.child_memberships.add(child_membership)
-            recursive_itemset_membership, created = RecursiveItemSetMembership.objects.get_or_create(parent=parent, child=descendant_recursive_membership.child)
+                    recursive_membership.child_memberships.add(child_membership)
+            recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=parent, child=descendant_recursive_membership.child)
             for child_membership in child_memberships:
-                recursive_itemset_membership.child_memberships.add(child_membership)
+                recursive_membership.child_memberships.add(child_membership)
     @classmethod
     def recursive_remove_edge(cls, parent, child):
-        ancestors = ItemSet.objects.filter(Q(pk__in=RecursiveItemSetMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
-        descendants = Item.objects.filter(Q(pk__in=RecursiveItemSetMembership.objects.filter(parent=child).values('child').query) | Q(pk=child.pk))
-        edges = RecursiveItemSetMembership.objects.filter(parent__pk__in=ancestors.values('pk').query, child__pk__in=descendants.values('pk').query)
+        ancestors = ItemSet.objects.filter(Q(pk__in=RecursiveMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
+        descendants = Item.objects.filter(Q(pk__in=RecursiveMembership.objects.filter(parent=child).values('child').query) | Q(pk=child.pk))
+        edges = RecursiveMembership.objects.filter(parent__pk__in=ancestors.values('pk').query, child__pk__in=descendants.values('pk').query)
         # first remove all connections between ancestors and descendants
         edges.delete()
         # now add back any real connections between ancestors and descendants that aren't trashed
-        memberships = ItemSetMembership.objects.filter(trashed=False, itemset__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(itemset=parent, item=child)
+        memberships = Membership.objects.filter(trashed=False, itemset__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(itemset=parent, item=child)
         for membership in memberships:
-            RecursiveItemSetMembership.recursive_add_membership(membership)
+            RecursiveMembership.recursive_add_membership(membership)
     @classmethod
     def recursive_add_itemset(cls, itemset):
-        memberships = ItemSetMembership.objects.filter(Q(itemset=itemset) | Q(item=itemset), trashed=False)
+        memberships = Membership.objects.filter(Q(itemset=itemset) | Q(item=itemset), trashed=False)
         for membership in memberships:
-            RecursiveItemSetMembership.recursive_add_membership(membership)
+            RecursiveMembership.recursive_add_membership(membership)
     @classmethod
     def recursive_remove_itemset(cls, itemset):
-        RecursiveItemSetMembership.recursive_remove_edge(itemset, itemset)
+        RecursiveMembership.recursive_remove_edge(itemset, itemset)
 
 
 class RecursiveCommentMembership(models.Model):

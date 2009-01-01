@@ -68,7 +68,7 @@ def icon_url(item_type, size=32):
         icon = 'apps/kblackbox'
     elif item_type == cms.models.ItemSet:
         icon = 'filesystems/folder_blue'
-    elif item_type == cms.models.ItemSetMembership:
+    elif item_type == cms.models.Membership:
         icon = 'filesystems/folder_documents'
     elif item_type == cms.models.Permission or item_type == cms.models.GlobalPermission:
         icon = 'apps/proxy'
@@ -248,7 +248,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
         if agentcan_global_helper(context, 'do_everything'):
             recursive_filter = None
         else:
-            visible_memberships = cms.models.ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(context['cur_agent'], 'view itemset'), permission_functions.filter_for_agent_and_ability(context['cur_agent'], 'view item'))
+            visible_memberships = cms.models.Membership.objects.filter(permission_functions.filter_for_agent_and_ability(context['cur_agent'], 'view itemset'), permission_functions.filter_for_agent_and_ability(context['cur_agent'], 'view item'))
             recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
         members_and_me_pks_query = cms.models.Item.objects.filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_itemset_members(recursive_filter).values('pk').query)).values('pk').query
         for comment_subclass in comment_subclasses:

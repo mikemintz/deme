@@ -379,7 +379,7 @@ The agent currently logged in is not allowed to use this application. Please log
             if self.cur_agent_can_global('do_everything'):
                 recursive_filter = None
             else:
-                visible_memberships = cms.models.ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'), permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
+                visible_memberships = cms.models.Membership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'), permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=itemset.all_contained_itemset_members(recursive_filter).values('pk').query)
         if self.cur_agent_can_global('do_everything'):
@@ -932,12 +932,12 @@ class ItemSetViewer(ItemViewer):
     viewer_name = 'itemset'
 
     def entry_show(self):
-        itemset_memberships = self.item.itemset_memberships_as_itemset
-        itemset_memberships = itemset_memberships.filter(trashed=False)
-        itemset_memberships = itemset_memberships.filter(item__trashed=False)
-        itemset_memberships = itemset_memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
-        itemset_memberships = itemset_memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'))
-        self.context['itemset_memberships'] = itemset_memberships
+        memberships = self.item.memberships_as_itemset
+        memberships = memberships.filter(trashed=False)
+        memberships = memberships.filter(item__trashed=False)
+        memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
+        memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'))
+        self.context['memberships'] = memberships
         template = loader.get_template('itemset/show.html')
         return HttpResponse(template.render(self.context))
 
