@@ -273,7 +273,6 @@ class ItemViewer(object):
             except ObjectDoesNotExist:
                 self.item = None
         self.context = Context()
-        self.context['request'] = self.request # for NOW
         self.context['action'] = self.action
         self.context['item'] = self.item
         self.context['item_type'] = self.item_type.__name__
@@ -282,6 +281,7 @@ class ItemViewer(object):
         self.cur_agent = cur_agent
         self.context['cur_agent'] = self.cur_agent
         self.context['_permission_cache'] = self.permission_cache
+        self.context['_viewer'] = self
         set_default_layout(self.context, current_site, cur_agent)
 
     def init_from_div(self, original_viewer, action, viewer_name, item, cur_agent):
@@ -294,7 +294,6 @@ class ItemViewer(object):
         self.item = item
         self.action = action
         self.context = Context()
-        self.context['request'] = self.request # for NOW
         self.context['layout'] = 'blank.html'
         self.context['action'] = self.action
         self.context['item'] = self.item
@@ -304,6 +303,7 @@ class ItemViewer(object):
         self.cur_agent = cur_agent
         self.context['cur_agent'] = self.cur_agent
         self.context['_permission_cache'] = self.permission_cache
+        self.context['_viewer'] = self
 
     def dispatch(self):
         if not self.cur_agent_can_global('do_something'):

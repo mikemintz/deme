@@ -534,7 +534,7 @@ class EmbeddedItem(template.Node):
         item = item.downcast()
         item = get_versioned_item(item, None)
         viewer = viewer_class()
-        viewer.init_from_div(context['request'], 'show', item.item_type.lower(), item, context['cur_agent'])
+        viewer.init_from_div(context['_viewer'], 'show', item.item_type.lower(), item, context['cur_agent'])
         return """<div style="padding: 10px; border: thick solid #aaa;">%s</div>""" % viewer.dispatch().content
 
 
