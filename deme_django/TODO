@@ -33,7 +33,6 @@ Code correctness/consistency/bugs
   - Make sure if you try to create an Excerpt of something, you have permission to view its body
   - Do we really need permissions to `create TextDocument` and other documents that are harmless to create?
   - Figure out ItemSets and ItemSetMemberships
-  - Nobody should create Folios, it should all be automatic
   - Nobody should create DemeSetting, it should require do_everything
   - Don't put creator_roles on things that just require do_everything. Don't put any roles on things that have no more permissions (like [Global]Permissions)
 * figure out import deal on deme_django.cms and just cms

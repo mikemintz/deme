@@ -388,7 +388,7 @@ class Group(ItemSet):
 class Folio(ItemSet):
     immutable_fields = ItemSet.immutable_fields | set(['group'])
     relevant_abilities = ItemSet.relevant_abilities | set(['view group'])
-    relevant_global_abilities = frozenset(['create Folio'])
+    relevant_global_abilities = frozenset()
     group = models.ForeignKey(Group, related_name='folios_as_group', unique=True, editable=False)
 
 
