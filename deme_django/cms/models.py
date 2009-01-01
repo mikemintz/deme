@@ -77,7 +77,7 @@ class Item(models.Model):
     __metaclass__ = ItemMetaClass
     immutable_fields = frozenset()
     relevant_abilities = frozenset(['comment_on', 'trash', 'modify_permissions', 'view name', 'view description', 'view updater', 'view updated_at', 'view creator', 'view created_at', 'edit name', 'edit description'])
-    relevant_global_abilities = frozenset(['do_something', 'do_everything', 'create Item'])
+    relevant_global_abilities = frozenset(['do_something', 'do_everything'])
     item_type = models.CharField(max_length=255, default='Item', editable=False)
     name = models.CharField(max_length=255, default="Untitled")
     description = models.CharField(max_length=255, blank=True)
@@ -281,7 +281,7 @@ class AnonymousAgent(Agent):
 class AuthenticationMethod(Item):
     immutable_fields = Item.immutable_fields | set(['agent'])
     relevant_abilities = Item.relevant_abilities | set(['view agent'])
-    relevant_global_abilities = frozenset(['create AuthenticationMethod'])
+    relevant_global_abilities = frozenset()
     agent = models.ForeignKey(Agent, related_name='authenticationmethods_as_agent')
 
 
@@ -429,7 +429,7 @@ class ItemSetMembership(Item):
 class Document(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
-    relevant_global_abilities = frozenset(['create Document'])
+    relevant_global_abilities = frozenset()
 
 
 class TextDocument(Document):
@@ -649,7 +649,7 @@ class RemoveMemberComment(Comment):
 class Excerpt(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
-    relevant_global_abilities = frozenset(['create Excerpt'])
+    relevant_global_abilities = frozenset()
 
 
 class TextDocumentExcerpt(Excerpt, TextDocument):
@@ -729,7 +729,7 @@ class RecursiveCommentMembership(models.Model):
 class ContactMethod(Item):
     immutable_fields = Item.immutable_fields | set(['agent'])
     relevant_abilities = Item.relevant_abilities | set(['view agent'])
-    relevant_global_abilities = frozenset(['create ContactMethod'])
+    relevant_global_abilities = frozenset()
     agent = models.ForeignKey(Agent, related_name='contactmethods_as_agent')
 
 
@@ -901,13 +901,13 @@ class RoleAbility(Item):
 class Permission(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
-    relevant_global_abilities = frozenset(['create Permission'])
+    relevant_global_abilities = frozenset()
 
 
 class GlobalPermission(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
-    relevant_global_abilities = frozenset(['create GlobalPermission'])
+    relevant_global_abilities = frozenset()
 
 
 class AgentGlobalPermission(GlobalPermission):

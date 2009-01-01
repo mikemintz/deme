@@ -62,7 +62,7 @@ class Event(HtmlDocument):
 class Advertisement(Document):
     immutable_fields = Document.immutable_fields
     relevant_abilities = Document.relevant_abilities | set(['view contact_info', 'view expires_at', 'edit contact_info', 'edit expires_at'])
-    relevant_global_abilities = frozenset(['create Advertisement'])
+    relevant_global_abilities = frozenset()
     contact_info = models.TextField()
     expires_at = models.DateTimeField(blank=True, null=True)
 
