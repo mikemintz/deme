@@ -34,6 +34,7 @@ def render_error(cur_agent, current_site, full_path, request_class, title, body)
     context = Context()
     context['cur_agent'] = cur_agent
     context['full_path'] = full_path
+    context['_permission_cache'] = PermissionCache()
     set_default_layout(context, current_site, cur_agent)
     return request_class(template.render(context))
 
@@ -111,8 +112,7 @@ def login(request, *args, **kwargs):
             context['redirect_url'] = request.GET['redirect']
             context['full_path'] = request.get_full_path()
             context['cur_agent'] = cur_agent
-            context['_global_ability_cache'] = {}
-            context['_item_ability_cache'] = {}
+            context['_permission_cache'] = PermissionCache()
             if can_do_everything:
                 context['login_as_agents'] = cms.models.Agent.objects.filter(trashed=False).order_by('name')
             else:
@@ -189,6 +189,7 @@ def codegraph(request, *args, **kwargs):
     context = Context()
     context['cur_agent'] = cur_agent
     context['full_path'] = request.get_full_path()
+    context['_permission_cache'] = PermissionCache()
     set_default_layout(context, current_site, cur_agent)
     return HttpResponse(template.render(context))
 

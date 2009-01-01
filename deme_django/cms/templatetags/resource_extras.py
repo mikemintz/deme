@@ -124,37 +124,21 @@ def list_results_navigator(item_type, itemset, search_query, trashed, offset, li
 
 def agentcan_global_helper(context, ability, wildcard_suffix=False):
     agent = context['cur_agent']
-    global_abilities = context['_global_ability_cache'].get(agent.pk)
-    if global_abilities is None:
-        global_abilities = permission_functions.get_global_abilities_for_agent(agent)
-        context['_global_ability_cache'][agent.pk] = global_abilities
-    if 'do_everything' in global_abilities:
-        return True
+    permission_cache = context['_permission_cache']
+    global_abilities = permission_cache.get_global_abilities_for_agent(agent)
     if wildcard_suffix:
-        if any(x.startswith(ability) for x in global_abilities):
-            return True
+        return any(x.startswith(ability) for x in global_abilities)
     else:
-        if ability in global_abilities:
-            return True
-    return False
+        return ability in global_abilities
 
 def agentcan_helper(context, ability, item, wildcard_suffix=False):
     agent = context['cur_agent']
-    if agentcan_global_helper(context, 'do_everything'):
-        return True
-    if isinstance(item, cms.models.Permission) and hasattr(item, 'item') and not isinstance(item.item, cms.models.Permission) and agentcan_helper(context, 'modify_permissions', item.item):
-        return True
-    abilities_for_item = context['_item_ability_cache'].get((agent.pk, item.pk))
-    if abilities_for_item is None:
-        abilities_for_item = permission_functions.get_abilities_for_agent_and_item(agent, item)
-        context['_item_ability_cache'][(agent.pk, item.pk)] = abilities_for_item
+    permission_cache = context['_permission_cache']
+    abilities_for_item = permission_cache.get_abilities_for_agent_and_item(agent, item)
     if wildcard_suffix:
-        if any(x.startswith(ability) for x in abilities_for_item):
-            return True
+        return any(x.startswith(ability) for x in abilities_for_item)
     else:
-        if ability in abilities_for_item:
-            return True
-    return False
+        return ability in abilities_for_item
 
 class IfAgentCan(template.Node):
     def __init__(self, ability, ability_parameter, item, nodelist_true, nodelist_false):

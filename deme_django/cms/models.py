@@ -267,7 +267,7 @@ class DemeSetting(Item):
 
 class Agent(Item):
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities | set(['login_as', 'view last_online_at', 'edit last_online_at'])
+    relevant_abilities = Item.relevant_abilities | set(['login_as', 'view last_online_at'])
     relevant_global_abilities = frozenset(['create Agent'])
     last_online_at = models.DateTimeField(null=True, blank=True, editable=False)
 

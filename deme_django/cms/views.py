@@ -132,7 +132,7 @@ class ViewerMetaClass(type):
         return result
 
 def set_default_layout(context, site, cur_agent):
-    can_do_everything = 'do_everything' in permission_functions.get_global_abilities_for_agent(context['cur_agent'])
+    permission_cache = context['_permission_cache']
     cur_node = site.default_layout
     while cur_node is not None:
         next_node = cur_node.layout
@@ -143,7 +143,7 @@ def set_default_layout(context, site, cur_agent):
                 extends_string = "{% extends 'default_layout.html' %}\n"
         else:
             extends_string = "{%% extends layout%s %%}\n" % next_node.pk
-        if can_do_everything or ('view layout' in permission_functions.get_abilities_for_agent_and_item(context['cur_agent'], cur_node) and 'view body' in permission_functions.get_abilities_for_agent_and_item(context['cur_agent'], cur_node)):
+        if 'view layout' in permission_cache.get_abilities_for_agent_and_item(context['cur_agent'], cur_node) and 'view body' in permission_cache.get_abilities_for_agent_and_item(context['cur_agent'], cur_node):
             template_string = extends_string + cur_node.body
         else:
             template_string = "{% extends 'default_layout.html' %}\n"
@@ -152,7 +152,7 @@ def set_default_layout(context, site, cur_agent):
         t = loader.get_template_from_string(template_string)
         context['layout%d' % cur_node.pk] = t
         cur_node = next_node
-    if can_do_everything or 'view default_layout' in permission_functions.get_abilities_for_agent_and_item(context['cur_agent'], site):
+    if 'view default_layout' in permission_cache.get_abilities_for_agent_and_item(context['cur_agent'], site):
         if site.default_layout:
             context['layout'] = context['layout%s' % site.default_layout.pk]
         else:
@@ -193,11 +193,8 @@ def get_versioned_item(item, version_number):
     item.version_number = itemversion.version_number
     return item
 
-class ItemViewer(object):
-    __metaclass__ = ViewerMetaClass
 
-    item_type = cms.models.Item
-    viewer_name = 'item'
+class PermissionCache(object):
 
     def __init__(self):
         self._global_ability_cache = {}
@@ -207,15 +204,36 @@ class ItemViewer(object):
         result = self._global_ability_cache.get(agent.pk)
         if result is None:
             result = permission_functions.get_global_abilities_for_agent(agent)
+            if 'do_everything' in result:
+                result = [x[0] for x in cms.models.POSSIBLE_GLOBAL_ABILITIES]
             self._global_ability_cache[agent.pk] = result
         return result
 
     def get_abilities_for_agent_and_item(self, agent, item):
         result = self._item_ability_cache.get((agent.pk, item.pk))
         if result is None:
-            result = permission_functions.get_abilities_for_agent_and_item(agent, item)
+            if 'do_everything' in self.get_global_abilities_for_agent(agent):
+                result = list(type(item).relevant_abilities)
+            else:
+                result = permission_functions.get_abilities_for_agent_and_item(agent, item)
             self._item_ability_cache[(agent.pk, item.pk)] = result
         return result
+
+
+class ItemViewer(object):
+    __metaclass__ = ViewerMetaClass
+
+    item_type = cms.models.Item
+    viewer_name = 'item'
+
+    def __init__(self):
+        pass
+
+    def cur_agent_can_global(self, ability):
+        return ability in self.permission_cache.get_global_abilities_for_agent(self.cur_agent)
+
+    def cur_agent_can(self, ability, item):
+        return ability in self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, item)
 
     def render_error(self, request_class, title, body):
         template = loader.get_template_from_string("""
@@ -228,6 +246,7 @@ class ItemViewer(object):
         return request_class(template.render(self.context))
 
     def init_from_http(self, request, cur_agent, current_site, url_info):
+        self.permission_cache = PermissionCache()
         self.viewer_name = url_info.get('viewer')
         self.format = url_info.get('format', 'html')
         self.method = (request.REQUEST.get('_method', None) or request.method).upper()
@@ -262,12 +281,12 @@ class ItemViewer(object):
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = cur_agent
         self.context['cur_agent'] = self.cur_agent
-        self.context['_global_ability_cache'] = self._global_ability_cache
-        self.context['_item_ability_cache'] = self._item_ability_cache
+        self.context['_permission_cache'] = self.permission_cache
         set_default_layout(self.context, current_site, cur_agent)
 
-    def init_from_div(self, original_request, action, viewer_name, item, cur_agent):
-        self.request = original_request
+    def init_from_div(self, original_viewer, action, viewer_name, item, cur_agent):
+        self.permission_cache = original_viewer.permission_cache
+        self.request = original_viewer.request
         self.viewer_name = viewer_name
         self.format = 'html'
         self.method = 'GET'
@@ -284,11 +303,10 @@ class ItemViewer(object):
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = cur_agent
         self.context['cur_agent'] = self.cur_agent
-        self.context['_global_ability_cache'] = self._global_ability_cache
-        self.context['_item_ability_cache'] = self._item_ability_cache
+        self.context['_permission_cache'] = self.permission_cache
 
     def dispatch(self):
-        if 'do_something' not in permission_functions.get_global_abilities_for_agent(self.cur_agent) and 'do_everything' not in permission_functions.get_global_abilities_for_agent(self.cur_agent):
+        if not self.cur_agent_can_global('do_something'):
             template = loader.get_template_from_string("""
 {% extends layout %}
 {% load resource_extras %}
@@ -358,13 +376,13 @@ The agent currently logged in is not allowed to use this application. Please log
             #     search_filter = search_filter | Q(body__icontains=q)
             items = items.filter(search_filter)
         if isinstance(itemset, cms.models.ItemSet):
-            if 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent):
+            if self.cur_agent_can_global('do_everything'):
                 recursive_filter = None
             else:
                 visible_memberships = cms.models.ItemSetMembership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'), permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=itemset.all_contained_itemset_members(recursive_filter).values('pk').query)
-        if 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent):
+        if self.cur_agent_can_global('do_everything'):
             listable_items = items
         else:
             listable_items = items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name'))
@@ -394,11 +412,10 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        can_create = 'create %s' % self.item_type.__name__ in self.get_global_abilities_for_agent(self.cur_agent)
-        if not (can_do_everything or can_create):
+        can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
+        if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type) and (can_do_everything or 'create %s' % model.__name__ in self.get_global_abilities_for_agent(self.cur_agent))]
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
         form_class = get_form_class_for_item_type('create', self.item_type)
@@ -410,9 +427,8 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponse(template.render(self.context))
 
     def collection_create(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        can_create = 'create %s' % self.item_type.__name__ in self.get_global_abilities_for_agent(self.cur_agent)
-        if not (can_do_everything or can_create):
+        can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
+        if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
         form_class = get_form_class_for_item_type('create', self.item_type)
         form = form_class(self.request.POST, self.request.FILES)
@@ -422,7 +438,7 @@ The agent currently logged in is not allowed to use this application. Please log
             redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type) and (can_do_everything or 'create %s' % model.__name__ in self.get_global_abilities_for_agent(self.cur_agent))]
+            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
             model_names.sort()
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
@@ -431,8 +447,6 @@ The agent currently logged in is not allowed to use this application. Please log
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         def get_fields_for_item(item):
             fields = []
             for name in item._meta.get_all_field_names():
@@ -461,9 +475,9 @@ The agent currently logged in is not allowed to use this application. Please log
                     obj = getattr(item, name)
                     info['field_type'] = 'regular'
                 info['obj'] = obj
-                info['can_view'] = 'view %s' % name in abilities_for_item or can_do_everything
+                info['can_view'] = self.cur_agent_can('view %s' % name, self.item)
                 if info['field_type'] == 'entry' and obj is not None:
-                    info['can_view_name'] = can_do_everything or ('view name' in self.get_abilities_for_agent_and_item(self.cur_agent, obj))
+                    info['can_view_name'] = self.cur_agent_can('view name', obj)
                 fields.append(info)
             return fields
         template = loader.get_template('item/show.html')
@@ -472,8 +486,6 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponse(template.render(self.context))
 
     def entry_relationships(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         relationship_sets = []
         for this_item in [self.item]:
             for name in sorted(this_item._meta.get_all_field_names()):
@@ -492,7 +504,7 @@ The agent currently logged in is not allowed to use this application. Please log
                 viewable_items = manager.filter(trashed=False)
                 if viewable_items.count() == 0:
                     continue
-                if can_do_everything:
+                if self.cur_agent_can_global('do_everything'):
                     relationship_set['items'] = [{'item': item, 'can_view_name': True} for item in viewable_items]
                 else:
                     if issubclass(field.model, cms.models.Item.VERSION):
@@ -507,46 +519,35 @@ The agent currently logged in is not allowed to use this application. Please log
                 relationship_sets.append(relationship_set)
         template = loader.get_template('item/relationships.html')
         self.context['relationship_sets'] = relationship_sets
-        self.context['abilities'] = sorted(self.get_abilities_for_agent_and_item(self.cur_agent, self.item))
+        self.context['abilities'] = sorted(self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item))
         return HttpResponse(template.render(self.context))
 
     def entry_edit(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        abilities_for_item = self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and 'modify_permissions' in self.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
+        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and 'modify_permissions' in self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
             can_edit = True
-        if not (can_do_everything or can_edit):
+        if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
-        if can_do_everything:
-            form_class = get_form_class_for_item_type('update', self.item_type)
-        else:
-            fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
-            form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
+        fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
+        form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
         form = form_class(instance=self.item)
-        if not can_do_everything:
-            fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
-            initial_fields_set = set(form.initial.iterkeys())
-            fields_must_blank = initial_fields_set - fields_can_view
-            for field_name in fields_must_blank:
-                del form.initial[field_name]
+        fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
+        initial_fields_set = set(form.initial.iterkeys())
+        fields_must_blank = initial_fields_set - fields_can_view
+        for field_name in fields_must_blank:
+            del form.initial[field_name]
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']
         return HttpResponse(template.render(self.context))
 
     def entry_copy(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        can_create = 'create %s' % self.item_type.__name__ in self.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
-        if not (can_do_everything or can_create):
+        can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
+        if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
         form_class = get_form_class_for_item_type('create', self.item_type)
-        if can_do_everything:
-            fields_to_copy = [field_name for field_name in form_class.base_fields]
-        else:
-            fields_can_view = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view']
-            fields_to_copy = [field_name for field_name in form_class.base_fields if field_name in fields_can_view]
+        fields_to_copy = [field_name for field_name in form_class.base_fields if self.cur_agent_can('view %s' % field_name, self.item)]
         form_initial = {}
         for field_name in fields_to_copy:
             try:
@@ -559,7 +560,7 @@ The agent currently logged in is not allowed to use this application. Please log
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type) and (can_do_everything or 'create %s' % model.__name__ in self.get_global_abilities_for_agent(self.cur_agent))]
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
         model_names.sort()
         self.context['model_names'] = model_names
         self.context['action_is_entry_copy'] = True
@@ -568,12 +569,11 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponse(template.render(self.context))
 
     def entry_update(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        abilities_for_item = self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and 'modify_permissions' in self.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
+        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and 'modify_permissions' in self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
             can_edit = True
-        if not (can_do_everything or can_edit):
+        if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x[0] == 'edit']
@@ -590,32 +590,26 @@ The agent currently logged in is not allowed to use this application. Please log
             return HttpResponse(template.render(self.context))
 
     def entry_trash(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
-        can_trash = 'trash' in abilities_for_item
-        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and 'modify_permissions' in self.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
+        can_trash = self.cur_agent_can('trash', self.item)
+        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and self.cur_agent_can('modify_permissions', self.item.item):
             can_trash = True
-        if not (can_do_everything or can_trash):
+        if not can_trash:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to trash this item")
         self.item.trash(self.cur_agent)
         return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
 
     def entry_untrash(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
-        can_trash = 'trash' in abilities_for_item
-        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and 'modify_permissions' in self.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
+        can_trash = self.cur_agent_can('trash', self.item)
+        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and self.cur_agent_can('modify_permissions', self.item.item):
             can_trash = True
-        if not (can_do_everything or can_trash):
+        if not can_trash:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to untrash this item")
         self.item.untrash(self.cur_agent)
         return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
 
     def entry_permissions(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
-        can_modify_permissions = 'modify_permissions' in abilities_for_item
-        if not (can_do_everything or can_modify_permissions):
+        can_modify_permissions = self.cur_agent_can('modify_permissions', self.item)
+        if not can_modify_permissions:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
 
         def formfield_callback(f):
@@ -763,8 +757,7 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponse(template.render(self.context))
 
     def collection_globalpermissions(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        if not can_do_everything:
+        if not self.cur_agent_can_global('do_everything'):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify global permissions")
 
         def formfield_callback(f):
@@ -915,9 +908,8 @@ class GroupViewer(ItemViewer):
     viewer_name = 'group'
 
     def collection_create(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        can_create = 'create %s' % self.item_type.__name__ in self.get_global_abilities_for_agent(self.cur_agent)
-        if not (can_do_everything or can_create):
+        can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
+        if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
         form_class = get_form_class_for_item_type('create', self.item_type)
         form = form_class(self.request.POST, self.request.FILES)
@@ -931,10 +923,11 @@ class GroupViewer(ItemViewer):
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
+        #TODO permission to know folio is associated with group?
         folio = get_versioned_item(self.item.folios_as_group.get(), None)
         folio_viewer_class = get_viewer_class_for_viewer_name('itemset')
         folio_viewer = folio_viewer_class()
-        folio_viewer.init_from_div(self.request, 'show', 'itemset', folio, self.cur_agent)
+        folio_viewer.init_from_div(self, 'show', 'itemset', folio, self.cur_agent)
         folio_html = folio_viewer.dispatch().content
         self.context['folio_html'] = folio_html
         template = loader.get_template('group/show.html')
@@ -976,16 +969,12 @@ class TextDocumentViewer(ItemViewer):
 
 
     def entry_edit(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        abilities_for_item = self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if not (can_do_everything or can_edit):
+        if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
-        if can_do_everything:
-            form_class = get_form_class_for_item_type('update', self.item_type)
-        else:
-            fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
-            form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
+        fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
+        form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
 
 
         comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=self.item.pk, commented_item_version_number=self.item.version_number, commented_item_index__isnull=False).order_by('-commented_item_index')
@@ -1000,22 +989,20 @@ class TextDocumentViewer(ItemViewer):
         self.item.body = ''.join(body_as_list)
 
         form = form_class(instance=self.item)
-        if not can_do_everything:
-            fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
-            initial_fields_set = set(form.initial.iterkeys())
-            fields_must_blank = initial_fields_set - fields_can_view
-            for field_name in fields_must_blank:
-                del form.initial[field_name]
+        fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
+        initial_fields_set = set(form.initial.iterkeys())
+        fields_must_blank = initial_fields_set - fields_can_view
+        for field_name in fields_must_blank:
+            del form.initial[field_name]
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']
         return HttpResponse(template.render(self.context))
 
     def entry_update(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        abilities_for_item = self.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        abilities_for_item = self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if not (can_do_everything or can_edit):
+        if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
@@ -1065,14 +1052,13 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
     viewer_name = 'djangotemplatedocument'
 
     def entry_render(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
         cur_node = self.item
         while cur_node is not None:
             next_node = cur_node.layout
             if cur_node.override_default_layout:
                 template_string = cur_node.body
             else:
-                if can_do_everything or ('view layout' in self.get_abilities_for_agent_and_item(self.cur_agent, cur_node) and 'view body' in self.get_abilities_for_agent_and_item(self.cur_agent, cur_node)):
+                if self.cur_agent_can('view layout', cur_node) and self.cur_agent_can('view body', cur_node):
                     template_string = '{%% extends layout%s %%}\n%s' % (next_node.pk if next_node else '', cur_node.body)
                 else:
                     template_string = "{%% extends 'default_layout.html' %%}\n%s" % (cur_node.body,)
@@ -1098,9 +1084,8 @@ class TextCommentViewer(TextDocumentViewer):
             commented_item = cms.models.Item.objects.get(pk=self.request.GET.get('commented_item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        can_comment_on = 'comment_on' in self.get_abilities_for_agent_and_item(self.cur_agent, commented_item)
-        if not (can_do_everything or can_comment_on):
+        can_comment_on = self.cur_agent_can('comment_on', commented_item)
+        if not can_comment_on:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to comment on this item")
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
@@ -1118,9 +1103,8 @@ class TextCommentViewer(TextDocumentViewer):
             commented_item = cms.models.Item.objects.get(pk=self.request.POST.get('commented_item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        can_comment_on = 'comment_on' in self.get_abilities_for_agent_and_item(self.cur_agent, commented_item)
-        if not (can_do_everything or can_comment_on):
+        can_comment_on = self.cur_agent_can('comment_on', commented_item)
+        if not can_comment_on:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to comment on this item")
         form_class = NewTextCommentForm
         form = form_class(self.request.POST, self.request.FILES)
@@ -1153,9 +1137,8 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
     viewer_name = 'textdocumentexcerpt'
 
     def collection_new(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        can_create = 'create %s' % self.item_type.__name__ in self.get_global_abilities_for_agent(self.cur_agent)
-        if not (can_do_everything or can_create):
+        can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
+        if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
         model_names.sort()
@@ -1169,9 +1152,8 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
         return HttpResponse(template.render(self.context))
 
     def collection_create(self):
-        can_do_everything = 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent)
-        can_create = 'create %s' % self.item_type.__name__ in self.get_global_abilities_for_agent(self.cur_agent)
-        if not (can_do_everything or can_create):
+        can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
+        if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
         form_class = NewTextDocumentExcerptForm
         form = form_class(self.request.POST, self.request.FILES)

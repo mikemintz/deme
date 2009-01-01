@@ -37,7 +37,6 @@ Code correctness/consistency/bugs
   - Nobody should create DemeSetting, it should require do_everything
   - Do we need `create Item` and `create Document` and `create Advertisement` and other abstract types
   - Don't put creator_roles on things that just require do_everything. Don't put any roles on things that have no more permissions (like [Global]Permissions)
-  - Don't even let Admin with do_everything do things like 'create AnonymousAgent' or other things that could mess things up
 * figure out import deal on deme_django.cms and just cms
 * start using verbose_name to have nice displays of item type names
 * The "crumbs" at the top of pages like TextAdvertisements and TextComments are wrong, since they have multiple inheritance
