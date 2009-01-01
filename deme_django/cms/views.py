@@ -487,36 +487,29 @@ The agent currently logged in is not allowed to use this application. Please log
 
     def entry_relationships(self):
         relationship_sets = []
-        for this_item in [self.item]:
-            for name in sorted(this_item._meta.get_all_field_names()):
-                field, model, direct, m2m = this_item._meta.get_field_by_name(name)
-                if type(field).__name__ != 'RelatedObject':
-                    continue
-                if type(field.field).__name__ != 'ForeignKey':
-                    continue
-                if issubclass(field.model, cms.models.Permission):
-                    continue
-                if not issubclass(field.model, cms.models.Item):
-                    continue
-                manager = getattr(this_item, name)
-                relationship_set = {}
-                relationship_set['name'] = name
-                viewable_items = manager.filter(trashed=False)
-                if viewable_items.count() == 0:
-                    continue
-                if self.cur_agent_can_global('do_everything'):
-                    relationship_set['items'] = [{'item': item, 'can_view_name': True} for item in viewable_items]
-                else:
-                    if issubclass(field.model, cms.models.Item.VERSION):
-                        viewable_current_items = cms.models.Item.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view %s' % field.field.name)).values('pk').query
-                        name_viewable_current_items = cms.models.Item.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name')).values('pk').query
-                        viewable_items = viewable_items.filter(current_item__in=viewable_current_items)
-                        ids_can_view_name = set(viewable_items.filter(current_item__in=name_viewable_current_items).values_list('pk', flat=True))
-                    else:
-                        viewable_items = viewable_items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view %s' % field.field.name))
-                        ids_can_view_name = set(viewable_items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name')).values_list('pk', flat=True))
-                    relationship_set['items'] = [{'item': item, 'can_view_name': item.pk in ids_can_view_name} for item in viewable_items]
-                relationship_sets.append(relationship_set)
+        for name in sorted(self.item._meta.get_all_field_names()):
+            field, model, direct, m2m = self.item._meta.get_field_by_name(name)
+            if type(field).__name__ != 'RelatedObject':
+                continue
+            if type(field.field).__name__ != 'ForeignKey':
+                continue
+            if issubclass(field.model, cms.models.Permission):
+                continue
+            if not issubclass(field.model, cms.models.Item):
+                continue
+            manager = getattr(self.item, name)
+            relationship_set = {}
+            relationship_set['name'] = name
+            viewable_items = manager.filter(trashed=False)
+            if viewable_items.count() == 0:
+                continue
+            if self.cur_agent_can_global('do_everything'):
+                relationship_set['items'] = [{'item': item, 'can_view_name': True} for item in viewable_items]
+            else:
+                viewable_items = viewable_items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view %s' % field.field.name))
+                ids_can_view_name = set(viewable_items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name')).values_list('pk', flat=True))
+                relationship_set['items'] = [{'item': item, 'can_view_name': item.pk in ids_can_view_name} for item in viewable_items]
+            relationship_sets.append(relationship_set)
         template = loader.get_template('item/relationships.html')
         self.context['relationship_sets'] = relationship_sets
         self.context['abilities'] = sorted(self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item))
