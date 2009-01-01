@@ -269,8 +269,7 @@ class Agent(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities | set(['login_as', 'view last_online_at', 'edit last_online_at'])
     relevant_global_abilities = frozenset(['create Agent'])
-    last_online_at = models.DateTimeField(null=True, blank=True) # TODO it's a little sketchy how this gets set without save_versioned(), so maybe reverting to an old version will reset this to NULL
-    #TODO last_online_at should be not editable or immutable and fix the 'edit last_online_at' ability?
+    last_online_at = models.DateTimeField(null=True, blank=True, editable=False)
 
 
 class AnonymousAgent(Agent):
