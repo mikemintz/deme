@@ -467,9 +467,9 @@ class ImageDocument(FileDocument):
     relevant_global_abilities = frozenset(['create ImageDocument'])
 
 
-class Comment(Document):
-    immutable_fields = Document.immutable_fields | set(['commented_item'])
-    relevant_abilities = Document.relevant_abilities | set(['view commented_item'])
+class Comment(Item):
+    immutable_fields = Item.immutable_fields | set(['commented_item'])
+    relevant_abilities = Item.relevant_abilities | set(['view commented_item'])
     relevant_global_abilities = frozenset()
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
     def topmost_commented_item(self):
