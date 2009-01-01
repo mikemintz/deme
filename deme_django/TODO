@@ -29,7 +29,6 @@ Code correctness/consistency/bugs
   - figure out perms for viewer aliases
   - figure out CommentLocations
   - Rather than permission to create ContactMethods and Subscriptions and AuthenticationMethods, there is permission to add_contact_method Agent
-  - Make sure if you try to create an Excerpt of something, you have permission to view its body
   - Do we really need permissions to `create TextDocument` and other documents that are harmless to create?
   - Figure out ItemSets and ItemSetMemberships
   - Nobody should create DemeSetting, it should require do_everything

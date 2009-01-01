@@ -1130,6 +1130,12 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
     viewer_name = 'textdocumentexcerpt'
 
     def collection_new(self):
+        try:
+            text_document = cms.models.TextDocument.objects.get(pk=self.request.GET.get('text_document'))
+        except:
+            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are excerpting from")
+        if not self.cur_agent_can('view body', text_document):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to view the body of this item")
         can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
         if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
@@ -1145,6 +1151,12 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
         return HttpResponse(template.render(self.context))
 
     def collection_create(self):
+        try:
+            text_document = cms.models.TextDocument.objects.get(pk=self.request.GET.get('text_document'))
+        except:
+            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are excerpting from")
+        if not self.cur_agent_can('view body', text_document):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to view the body of this item")
         can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
         if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
