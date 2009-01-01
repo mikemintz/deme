@@ -276,7 +276,7 @@ class Agent(Item):
 class AnonymousAgent(Agent):
     immutable_fields = Agent.immutable_fields
     relevant_abilities = Agent.relevant_abilities
-    relevant_global_abilities = frozenset(['create AnonymousAgent'])
+    relevant_global_abilities = frozenset()
 
 
 class AuthenticationMethod(Item):
