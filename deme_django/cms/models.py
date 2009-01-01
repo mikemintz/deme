@@ -654,7 +654,7 @@ class Excerpt(Item):
 
 class TextDocumentExcerpt(Excerpt, TextDocument):
     immutable_fields = Excerpt.immutable_fields | TextDocument.immutable_fields | set(['text_document','text_document_version_number', 'start_index', 'length', 'body'])
-    relevant_abilities = Excerpt.relevant_abilities | TextDocument.relevant_abilities | set(['view text_document', 'view text_document_version_number', 'view start_index', 'view length']) #TODO minus 'edit body'?
+    relevant_abilities = (Excerpt.relevant_abilities | TextDocument.relevant_abilities | set(['view text_document', 'view text_document_version_number', 'view start_index', 'view length'])) - set(['edit body'])
     relevant_global_abilities = frozenset(['create TextDocumentExcerpt'])
     text_document = models.ForeignKey(TextDocument, related_name='text_document_excerpts_as_text_document')
     text_document_version_number = models.PositiveIntegerField()
