@@ -13,14 +13,14 @@ class SymsysAffiliateViewer(ItemViewer):
     def entry_show(self):
         template = loader.get_template('symsysaffiliate/show.html')
         visible_memberships = cms.models.Membership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'), permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
-        if 'do_everything' in self.get_global_abilities_for_agent(self.cur_agent):
+        if self.cur_agent_can_global('do_everything'):
             recursive_filter = None
         else:
             visible_memberships = cms.models.Membership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'), permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
             recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
         self.context['containing_itemsets'] = self.item.all_containing_itemsets(recursive_filter)
         self.context['contact_methods'] = self.item.contactmethods_as_agent.filter(trashed=False)
-        if 'do_everything' not in self.get_global_abilities_for_agent(self.cur_agent):
+        if not self.cur_agent_can_global('do_everything'):
             self.context['contact_methods'] = self.context['contact_methods'].filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view agent'))
         return HttpResponse(template.render(self.context))
 
