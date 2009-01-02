@@ -391,7 +391,7 @@ The agent currently logged in is not allowed to use this application. Please log
             if self.cur_agent_can_global('do_everything'):
                 recursive_filter = None
             else:
-                visible_memberships = cms.models.Membership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'), permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
+                visible_memberships = cms.models.Membership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=itemset.all_contained_itemset_members(recursive_filter).values('pk').query)
         if self.cur_agent_can_global('do_everything'):
@@ -942,7 +942,6 @@ class ItemSetViewer(ItemViewer):
         memberships = memberships.filter(item__trashed=False)
         if not self.cur_agent_can_global('do_everything'):
             memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
-            memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'))
         memberships = memberships.select_related('item')
         if self.cur_agent_can_global('do_everything'):
             self.context['memberships'] = [{'membership': x, 'can_view_name': True} for x in memberships]
