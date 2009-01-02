@@ -943,7 +943,7 @@ class ItemSetViewer(ItemViewer):
         memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
         memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'))
         memberships = memberships.select_related('item')
-        memberships_can_view_name_pks = set(memberships.filter(item__pk__in=cms.models.Item.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name')).values('pk').query).values_list('pk', flat=True))
+        memberships_can_view_name_pks = set(self.item.memberships_as_itemset.filter(trashed=False, item__pk__in=cms.models.Item.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name')).values('pk').query).values_list('pk', flat=True))
         self.context['memberships'] = [{'membership': x, 'can_view_name': x.pk in memberships_can_view_name_pks} for x in memberships]
         self.context['cur_agent_in_itemset'] = bool(self.item.memberships_as_itemset.filter(trashed=False, item=self.cur_agent))
         self.context['addmember_form'] = NewMembershipForm()
