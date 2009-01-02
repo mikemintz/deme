@@ -29,7 +29,6 @@ Code correctness/consistency/bugs
   - figure out perms for viewer aliases
   - figure out CommentLocations
   - Rather than permission to create ContactMethods and Subscriptions and AuthenticationMethods, there is permission to add_contact_method Agent
-  - Do we really need permissions to `create TextDocument` and other documents that are harmless to create?
   - Nobody should create DemeSetting, it should require do_everything
   - Don't put creator_roles on things that just require do_everything. Don't put any roles on things that have no more permissions (like [Global]Permissions)
 * figure out import deal on deme_django.cms and just cms
