@@ -928,13 +928,6 @@ class GroupViewer(ItemViewer):
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
-        #TODO permission to know folio is associated with group?
-        folio = get_versioned_item(self.item.folios_as_group.get(), None)
-        folio_viewer_class = get_viewer_class_for_viewer_name('itemset')
-        folio_viewer = folio_viewer_class()
-        folio_viewer.init_from_div(self, 'show', 'itemset', folio, self.cur_agent)
-        folio_html = folio_viewer.dispatch().content
-        self.context['folio_html'] = folio_html
         template = loader.get_template('group/show.html')
         return HttpResponse(template.render(self.context))
 
