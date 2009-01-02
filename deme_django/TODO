@@ -42,7 +42,6 @@ Code correctness/consistency/bugs
 
 Performance
 -----------
-* Speed up itemset view by doing filter permissions rather than per-item
 * add indexes on things besides foreign keys, like name, description (for search)
   - Maybe Postgres has some nice full-text indexing for good searching
 * we need multi-column indexes for permissions
