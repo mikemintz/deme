@@ -940,11 +940,15 @@ class ItemSetViewer(ItemViewer):
         memberships = self.item.memberships_as_itemset
         memberships = memberships.filter(trashed=False)
         memberships = memberships.filter(item__trashed=False)
-        memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
-        memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'))
+        if not self.cur_agent_can_global('do_everything'):
+            memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
+            memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'))
         memberships = memberships.select_related('item')
-        memberships_can_view_name_pks = set(self.item.memberships_as_itemset.filter(trashed=False, item__pk__in=cms.models.Item.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name')).values('pk').query).values_list('pk', flat=True))
-        self.context['memberships'] = [{'membership': x, 'can_view_name': x.pk in memberships_can_view_name_pks} for x in memberships]
+        if self.cur_agent_can_global('do_everything'):
+            self.context['memberships'] = [{'membership': x, 'can_view_name': True} for x in memberships]
+        else:
+            memberships_can_view_name_pks = set(self.item.memberships_as_itemset.filter(trashed=False, item__pk__in=cms.models.Item.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name')).values('pk').query).values_list('pk', flat=True))
+            self.context['memberships'] = [{'membership': x, 'can_view_name': x.pk in memberships_can_view_name_pks} for x in memberships]
         self.context['cur_agent_in_itemset'] = bool(self.item.memberships_as_itemset.filter(trashed=False, item=self.cur_agent))
         self.context['addmember_form'] = NewMembershipForm()
         template = loader.get_template('itemset/show.html')
