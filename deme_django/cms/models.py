@@ -357,7 +357,7 @@ class Person(Agent):
 
 class ItemSet(Item):
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities | set(['modify_membership'])
+    relevant_abilities = Item.relevant_abilities | set(['modify_membership', 'add_self', 'remove_self'])
     relevant_global_abilities = frozenset(['create ItemSet'])
     def all_contained_itemset_members(self, recursive_filter=None):
         recursive_memberships = RecursiveMembership.objects.filter(parent=self)
@@ -394,7 +394,7 @@ class Folio(ItemSet):
 
 class Membership(Item):
     immutable_fields = Item.immutable_fields | set(['item', 'itemset'])
-    relevant_abilities = Item.relevant_abilities | set(['view item', 'view itemset'])
+    relevant_abilities = (Item.relevant_abilities | set(['view item', 'view itemset'])) - set(['trash'])
     relevant_global_abilities = frozenset()
     item = models.ForeignKey(Item, related_name='memberships_as_item')
     itemset = models.ForeignKey(ItemSet, related_name='memberships_as_itemset')

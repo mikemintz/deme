@@ -24,7 +24,7 @@ Ontology changes
 Code correctness/consistency/bugs
 ---------------------------------
 * Make more sensible permissions:
-  - Figure out Membership.trash and how agents can self-join/leave itemsets and groups
+  - Figure out Membership view permissions (there should probably just be one permission to view the link, not two)
   - no viewing or editing permission fields: it should all go through the permissions interface
   - no permissions on Roles and RoleAbilities, there should be a Role modifying interface that requires do_everything
   - figure out perms for viewer aliases

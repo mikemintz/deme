@@ -950,18 +950,19 @@ class ItemSetViewer(ItemViewer):
         memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
         memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view itemset'))
         self.context['memberships'] = memberships
-        template = loader.get_template('itemset/show.html')
+        self.context['cur_agent_in_itemset'] = bool(self.item.memberships_as_itemset.filter(trashed=False, item=self.cur_agent))
         self.context['addmember_form'] = NewMembershipForm()
+        template = loader.get_template('itemset/show.html')
         return HttpResponse(template.render(self.context))
 
 
     def entry_addmember(self):
-        if not self.cur_agent_can('modify_membership', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify membership of this ItemSet")
         try:
             member = cms.models.Item.objects.get(pk=self.request.POST.get('item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
+        if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('add_self', self.item))):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add this member to this ItemSet")
         try:
             membership = cms.models.Membership.objects.get(itemset=self.item, item=member)
             if membership.trashed:
@@ -974,12 +975,12 @@ class ItemSetViewer(ItemViewer):
 
 
     def entry_removemember(self):
-        if not self.cur_agent_can('modify_membership', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify membership of this ItemSet")
         try:
             member = cms.models.Item.objects.get(pk=self.request.POST.get('item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
+        if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('remove_self', self.item))):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to remove this member from this ItemSet")
         try:
             membership = cms.models.Membership.objects.get(itemset=self.item, item=member)
             if not membership.trashed:
