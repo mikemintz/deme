@@ -26,7 +26,7 @@ Code correctness/consistency/bugs
 * Make more sensible permissions:
   - no permissions on Roles and RoleAbilities, there should be a Role modifying interface that requires do_everything
   - figure out SiteDomains
-  - Don't put creator_roles on things that just require do_everything (i.e. things without 'create %s').
+  - Don't put creator_roles on things that just require do_everything
   - Don't put any roles on things that have no more permissions (like [Global]Permissions)
 * figure out import deal on deme_django.cms and just cms
 * start using verbose_name to have nice displays of item type names
