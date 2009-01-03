@@ -44,6 +44,9 @@ table.list > tbody > tr.odd > td {
 
 table.twocol {
 }
+table.twocol tr {
+    vertical-align: top;
+}
 table.twocol tr th {
     padding: 3px;
     font-weight: bold;

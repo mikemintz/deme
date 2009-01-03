@@ -99,6 +99,13 @@ class HiddenModelChoiceField(forms.ModelChoiceField):
 class TextModelChoiceField(forms.ModelChoiceField):
     widget = forms.TextInput
 
+class AddSubPathForm(forms.ModelForm):
+    aliased_item = super(models.ForeignKey, cms.models.CustomUrl._meta.get_field_by_name('aliased_item')[0]).formfield(queryset=cms.models.CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.to._default_manager.complex_filter(cms.models.CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=cms.models.CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.field_name)
+    parent_url = super(models.ForeignKey, cms.models.CustomUrl._meta.get_field_by_name('parent_url')[0]).formfield(queryset=cms.models.CustomUrl._meta.get_field_by_name('parent_url')[0].rel.to._default_manager.complex_filter(cms.models.CustomUrl._meta.get_field_by_name('parent_url')[0].rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=cms.models.CustomUrl._meta.get_field_by_name('parent_url')[0].rel.field_name)
+    class Meta:
+        model = cms.models.CustomUrl
+        fields = ['aliased_item', 'viewer', 'action', 'query_string', 'format', 'parent_url', 'path']
+
 class NewMembershipForm(forms.ModelForm):
     item = AjaxModelChoiceField(cms.models.Item.objects)
     class Meta:
@@ -927,6 +934,48 @@ class GroupViewer(ItemViewer):
     def entry_show(self):
         template = loader.get_template('group/show.html')
         return HttpResponse(template.render(self.context))
+
+
+class ViewerRequestViewer(ItemViewer):
+    item_type = cms.models.ViewerRequest
+    viewer_name = 'viewerrequest'
+
+    def entry_show(self):
+        site, custom_urls = self.item.calculate_full_path()
+        self.context['site'] = site
+        self.context['custom_urls'] = custom_urls
+        self.context['child_urls'] = self.item.child_urls.filter(trashed=False)
+        self.context['addsubpath_form'] = AddSubPathForm(initial={'parent_url':self.item.pk})
+        template = loader.get_template('viewerrequest/show.html')
+        return HttpResponse(template.render(self.context))
+
+
+    def entry_addsubpath(self):
+        form = AddSubPathForm(self.request.POST, self.request.FILES)
+        if form.data['parent_url'] != str(self.item.pk):
+            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the parent url you are extending")
+        if not self.cur_agent_can('add_sub_path', self.item):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add a sub path to this url")
+        try:
+            custom_url = cms.models.CustomUrl.objects.get(parent_url=self.item, path=form.data['path'])
+            form = AddSubPathForm(self.request.POST, self.request.FILES, instance=custom_url)
+        except:
+            pass
+        if form.is_valid():
+            new_item = form.save(commit=False)
+            new_item.save_versioned(updater=self.cur_agent)
+            if custom_url.trashed:
+                custom_url.untrash(self.cur_agent)
+            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+            return HttpResponseRedirect(redirect)
+        else:
+            site, custom_urls = self.item.calculate_full_path()
+            self.context['site'] = site
+            self.context['custom_urls'] = custom_urls
+            self.context['child_urls'] = self.item.child_urls.filter(trashed=False)
+            self.context['addsubpath_form'] = form
+            template = loader.get_template('viewerrequest/show.html')
+            return HttpResponse(template.render(self.context))
 
 
 class ItemSetViewer(ItemViewer):

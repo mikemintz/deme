@@ -441,7 +441,7 @@ class TextDocument(Document):
 
 class DjangoTemplateDocument(TextDocument):
     immutable_fields = TextDocument.immutable_fields
-    relevant_abilities = TextDocument.relevant_abilities | set(['edit layout', 'edit override_default_layout'])
+    relevant_abilities = TextDocument.relevant_abilities | set(['view layout', 'view override_default_layout', 'edit layout', 'edit override_default_layout'])
     relevant_global_abilities = frozenset(['create DjangoTemplateDocument'])
     layout = models.ForeignKey('DjangoTemplateDocument', related_name='djangotemplatedocuments_as_layout', null=True, blank=True)
     override_default_layout = models.BooleanField(default=False)
@@ -736,7 +736,7 @@ class Subscription(Item):
 
 class ViewerRequest(Item):
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities | set(['add_sub_path', 'edit aliased_item', 'edit viewer', 'edit action', 'edit query_string', 'edit format'])
+    relevant_abilities = Item.relevant_abilities | set(['add_sub_path', 'view aliased_item', 'view viewer', 'view action', 'view query_string', 'view format', 'edit aliased_item', 'edit viewer', 'edit action', 'edit query_string', 'edit format'])
     relevant_global_abilities = frozenset()
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
     viewer = models.CharField(max_length=255)
@@ -744,18 +744,18 @@ class ViewerRequest(Item):
     query_string = models.CharField(max_length=1024, null=True, blank=True)
     format = models.CharField(max_length=255, default='html')
     def calculate_full_path(self):
-        """Return a tuple (site, path) where path looks like '/a/b/c'"""
+        """Return a tuple (site, custom_urls) where custom_urls is a list."""
         req = self.downcast()
         if isinstance(req, Site):
-            return (req, '')
+            return (req, [])
         elif isinstance(req, CustomUrl):
             parent_path = req.parent_url.calculate_full_path()
-            return (parent_path[0], '%s/%s' % (parent_path[1], req.path))
+            return (parent_path[0], parent_path[1] + [req])
 
 
 class Site(ViewerRequest):
     immutable_fields = ViewerRequest.immutable_fields
-    relevant_abilities = ViewerRequest.relevant_abilities | set()
+    relevant_abilities = ViewerRequest.relevant_abilities | set(['view default_layout', 'edit default_layout'])
     relevant_global_abilities = frozenset(['create Site'])
     default_layout = models.ForeignKey('DjangoTemplateDocument', related_name='sites_as_default_layout', null=True, blank=True)
 
@@ -772,7 +772,7 @@ class SiteDomain(Item):
 
 class CustomUrl(ViewerRequest):
     immutable_fields = ViewerRequest.immutable_fields | set(['parent_url', 'path'])
-    relevant_abilities = ViewerRequest.relevant_abilities | set()
+    relevant_abilities = ViewerRequest.relevant_abilities | set(['view parent_url', 'view path'])
     relevant_global_abilities = frozenset()
     parent_url = models.ForeignKey('ViewerRequest', related_name='child_urls')
     path = models.CharField(max_length=255)
