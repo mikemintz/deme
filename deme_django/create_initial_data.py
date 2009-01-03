@@ -76,7 +76,7 @@ anonymous_agent.save_versioned(updater=admin)
 
 default_site = Site(name="Default Site", viewer='item', action='list', aliased_item=None, query_string='')
 default_site.save_versioned(updater=admin)
-DemeSetting.set('cms.default_site', default_site.pk)
+DemeSetting.set('cms.default_site', default_site.pk, agent=admin)
 
 if len(sys.argv) < 2 or sys.argv[1] != 'test':
     sys.exit(0)

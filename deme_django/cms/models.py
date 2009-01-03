@@ -252,17 +252,16 @@ class DemeSetting(Item):
         except ObjectDoesNotExist:
             return None
     @classmethod
-    def set(cls, key, value):
-        admin = Agent.objects.get(pk=1)
+    def set(cls, key, value, agent):
         try:
             setting = cls.objects.get(key=key)
         except ObjectDoesNotExist:
             setting = cls(name=key, key=key)
         if setting.value != value:
             setting.value = value
-            setting.save_versioned(updater=admin)
+            setting.save_versioned(updater=agent)
         if setting.trashed:
-            setting.untrash(admin)
+            setting.untrash(agent)
 
 
 class Agent(Item):

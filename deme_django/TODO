@@ -27,7 +27,6 @@ Code correctness/consistency/bugs
   - no viewing or editing permission fields: it should all go through the permissions interface
   - no permissions on Roles and RoleAbilities, there should be a Role modifying interface that requires do_everything
   - figure out SiteDomains
-  - Rather than permission to create ContactMethods and Subscriptions and AuthenticationMethods, there is permission to add_contact_method Agent
   - Nobody should create DemeSetting, it should require do_everything
   - Don't put creator_roles on things that just require do_everything. Don't put any roles on things that have no more permissions (like [Global]Permissions)
 * figure out import deal on deme_django.cms and just cms
@@ -55,6 +54,7 @@ Features
 Interface
 ---------
 * There should be a full interface for specifying CommentLocations
+* Interface to add ContactMethods, Subscriptions, and AuthenticationMethods to Agents
 
 Documentation
 -------------
