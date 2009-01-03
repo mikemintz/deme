@@ -78,6 +78,7 @@ class Item(models.Model):
     immutable_fields = frozenset()
     relevant_abilities = frozenset(['comment_on', 'trash', 'modify_permissions', 'view name', 'view description', 'view updater', 'view updated_at', 'view creator', 'view created_at', 'edit name', 'edit description'])
     relevant_global_abilities = frozenset(['do_something', 'do_everything'])
+    version_number = models.PositiveIntegerField(default=1, editable=False)
     item_type = models.CharField(max_length=255, default='Item', editable=False)
     name = models.CharField(max_length=255, default="Untitled")
     description = models.CharField(max_length=255, blank=True)
@@ -183,16 +184,17 @@ class Item(models.Model):
             self.updated_at = updated_at
         else:
             self.updated_at = save_time
+        if not is_new and not overwrite_latest_version:
+            self.version_number = self.version_number + 1
         self.save()
 
         # Create the new item version
-        latest_version_number = 0 if is_new else ItemVersion.objects.filter(current_item__pk=self.pk).order_by('-version_number')[0].version_number
         if overwrite_latest_version and not is_new:
-            new_version = self.__class__.VERSION.objects.get(current_item=self, version_number=latest_version_number)
+            new_version = self.__class__.VERSION.objects.get(current_item=self, version_number=self.version_number)
         else:
             new_version = self.__class__.VERSION()
             new_version.current_item_id = self.pk
-            new_version.version_number = latest_version_number + 1
+            new_version.version_number = self.version_number
         self.copy_fields_to_itemversion(new_version)
         new_version.save()
 

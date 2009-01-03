@@ -186,7 +186,7 @@ def get_versioned_item(item, version_number):
         itemversion = type(item).VERSION.objects.get(current_item=item, version_number=version_number)
         #TODO use copy_fields_from_itemversion here
         for name in itemversion._meta.get_all_field_names():
-            if name in ['item_type', 'trashed', 'current_item', 'version_number']: # special fields
+            if name in ['item_type', 'trashed', 'current_item']: # special fields
                 continue
             field, model, direct, m2m = itemversion._meta.get_field_by_name(name)
             if hasattr(field, 'primary_key') and field.primary_key:
@@ -205,7 +205,6 @@ def get_versioned_item(item, version_number):
             else:
                 obj = getattr(itemversion, name)
             setattr(item, name, obj)
-    item.version_number = itemversion.version_number
     return item
 
 

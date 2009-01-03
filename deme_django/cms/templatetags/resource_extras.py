@@ -256,7 +256,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
         comment_pks = cms.models.RecursiveCommentMembership.objects.filter(parent=item).values_list('child', flat=True)
     if comment_pks:
         for comment_subclass in comment_subclasses:
-            comments.extend(comment_subclass.objects.filter(pk__in=comment_pks))
+            comments.extend(comment_subclass.objects.filter(pk__in=comment_pks).select_related('creator'))
     relevant_comment_locations = dict((x.comment_id, x) for x in cms.models.CommentLocation.objects.filter(commented_item_version_number=version_number, comment__pk__in=comment_pks))
     comments.sort(key=lambda x: x.created_at)
     pk_to_comment_info = {}
@@ -504,7 +504,7 @@ class CommentBox(template.Node):
                     continue
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
-                result.append("""<div style="float: right;"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), comment.pk, comment.versions.latest().version_number, urlquote(full_path)))
+                result.append("""<div style="float: right;"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
                 if agentcan_helper(context, 'view name', comment):
                     result.append("""<a href="%s">%s</a>""" % (show_resource_url(comment), escape(comment.name)))
                 else:
@@ -554,7 +554,8 @@ class CommentBox(template.Node):
                     result.append("</div>")
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
-        add_comments_to_div(comment_dicts_for_item(item, version_number, context, isinstance(item, cms.models.ItemSet)))
+        comment_dicts = comment_dicts_for_item(item, version_number, context, isinstance(item, cms.models.ItemSet))
+        add_comments_to_div(comment_dicts)
         result.append("</div>")
         return '\n'.join(result)
 
