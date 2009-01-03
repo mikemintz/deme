@@ -505,10 +505,22 @@ class CommentBox(template.Node):
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
                 result.append("""<div style="float: right;"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
-                if agentcan_helper(context, 'view name', comment):
-                    result.append("""<a href="%s">%s</a>""" % (show_resource_url(comment), escape(comment.name)))
+                if isinstance(comment, cms.models.EditComment):
+                    comment_name = '[Edited]'
+                elif isinstance(comment, cms.models.TrashComment):
+                    comment_name = '[Trashed]'
+                elif isinstance(comment, cms.models.UntrashComment):
+                    comment_name = '[Untrashed]'
+                elif isinstance(comment, cms.models.AddMemberComment):
+                    comment_name = '[Added Member]'
+                elif isinstance(comment, cms.models.RemoveMemberComment):
+                    comment_name = '[Removed Member]'
                 else:
-                    result.append('[PERMISSION DENIED]')
+                    if agentcan_helper(context, 'view name', comment):
+                        comment_name = escape(comment.name)
+                    else:
+                        comment_name = '[PERMISSION DENIED]'
+                result.append("""<a href="%s">%s</a>""" % (show_resource_url(comment), comment_name))
                 if agentcan_helper(context, 'view creator', comment):
                     if agentcan_helper(context, 'view name', comment.creator):
                         result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), escape(comment.creator.name)))
@@ -521,6 +533,11 @@ class CommentBox(template.Node):
                         result.append('for <a href="%s">%s</a>' % (show_resource_url(comment.commented_item), escape(comment.commented_item.name)))
                     else:
                         result.append('for <a href="%s">[PERMISSION DENIED]</a>' % (show_resource_url(comment.commented_item)))
+                if agentcan_helper(context, 'view created_at', comment):
+                    from django.utils.timesince import timesince
+                    result.append('%s ago' % timesince(comment.created_at))
+                else:
+                    result.append('at [PERMISSION DENIED]')
                 if item.pk == comment.commented_item.pk and not comment_location:
                     result.append("[INACTIVE]")
                 result.append("</div>")
@@ -538,19 +555,40 @@ class CommentBox(template.Node):
                     result.append("""<div class="comment_body">""")
                     if isinstance(comment, cms.models.TextComment):
                         if agentcan_helper(context, 'view body', comment):
-                            result.append(escape(comment.body).replace('\n', '<br />'))
+                            comment_body = escape(comment.body).replace('\n', '<br />')
                         else:
-                            result.append('[PERMISSION DENIED]')
+                            comment_body = '[PERMISSION DENIED]'
                     elif isinstance(comment, cms.models.EditComment):
-                        result.append('Edited')
+                        comment_body = ''
                     elif isinstance(comment, cms.models.TrashComment):
-                        result.append('Trashed')
+                        comment_body = ''
                     elif isinstance(comment, cms.models.UntrashComment):
-                        result.append('Untrashed')
+                        comment_body = ''
                     elif isinstance(comment, cms.models.AddMemberComment):
-                        result.append('Added Member')
+                        if agentcan_helper(context, 'view membership', comment):
+                            if agentcan_helper(context, 'view item', comment.membership):
+                                if agentcan_helper(context, 'view name', comment.membership.item):
+                                    comment_body = '<a href="%s">%s</a> with <a href="%s">Membership %s</a>' % (show_resource_url(comment.membership.item), escape(comment.membership.item.name), show_resource_url(comment.membership), comment.membership.pk)
+                                else:
+                                    comment_body = '<a href="%s">Item %s</a> with <a href="%s">Membership %s</a>' % (show_resource_url(comment.membership.item), comment.membership.item.pk, show_resource_url(comment.membership), comment.membership.pk)
+                            else:
+                                comment_body = '<a href="%s">Membership %s</a>' % (show_resource_url(comment.membership), comment.membership.pk)
+                        else:
+                            comment_body = ''
                     elif isinstance(comment, cms.models.RemoveMemberComment):
-                        result.append('Removed Member')
+                        if agentcan_helper(context, 'view membership', comment):
+                            if agentcan_helper(context, 'view item', comment.membership):
+                                if agentcan_helper(context, 'view name', comment.membership.item):
+                                    comment_body = '<a href="%s">%s</a> with <a href="%s">Membership %s</a>' % (show_resource_url(comment.membership.item), escape(comment.membership.item.name), show_resource_url(comment.membership), comment.membership.pk)
+                                else:
+                                    comment_body = '<a href="%s">Item %s</a> with <a href="%s">Membership %s</a>' % (show_resource_url(comment.membership.item), comment.membership.item.pk, show_resource_url(comment.membership), comment.membership.pk)
+                            else:
+                                comment_body = '<a href="%s">Membership %s</a>' % (show_resource_url(comment.membership), comment.membership.pk)
+                        else:
+                            comment_body = ''
+                    else:
+                        comment_body = ''
+                    result.append(comment_body)
                     result.append("</div>")
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
