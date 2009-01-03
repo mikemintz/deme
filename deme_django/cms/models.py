@@ -600,7 +600,7 @@ class Comment(Item):
 class CommentLocation(Item):
     immutable_fields = Item.immutable_fields | set(['comment', 'commented_item_version_number'])
     relevant = Item.relevant_abilities | set(['view comment', 'view commented_item_version_number', 'view commented_item_index', 'edit commented_item_index'])
-    relevant_global_abilities = frozenset(['create CommentLocation'])
+    relevant_global_abilities = frozenset()
     comment = models.ForeignKey(Comment, related_name='comment_locations_as_comment')
     commented_item_version_number = models.PositiveIntegerField()
     commented_item_index = models.PositiveIntegerField(null=True, blank=True)

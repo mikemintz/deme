@@ -1116,11 +1116,16 @@ class TextDocumentViewer(ItemViewer):
 
             new_item_version_number = new_item.versions.latest().version_number
             for index, comment_id in new_comment_locations:
-                comment_location = cms.models.CommentLocation()
-                comment_location.comment = cms.models.Comment.objects.get(pk=comment_id)
-                comment_location.commented_item_index = index
-                comment_location.commented_item_version_number = new_item_version_number
-                comment_location.save_versioned(updater=self.cur_agent)
+                try:
+                    comment = cms.models.Comment.objects.get(pk=comment_id)
+                except:
+                    comment = None
+                if comment and comment.commented_item.pk == self.item.pk:
+                    comment_location = cms.models.CommentLocation()
+                    comment_location.comment = comment
+                    comment_location.commented_item_index = index
+                    comment_location.commented_item_version_number = new_item_version_number
+                    comment_location.save_versioned(updater=self.cur_agent)
 
             return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
