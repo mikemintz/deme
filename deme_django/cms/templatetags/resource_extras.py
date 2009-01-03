@@ -276,7 +276,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
             result.append(child)
     return result
 
-class ItemHeader(template.Node):
+class EntryHeader(template.Node):
     def __init__(self, page_name):
         if page_name:
             self.page_name = template.Variable(page_name)
@@ -284,7 +284,7 @@ class ItemHeader(template.Node):
             self.page_name = None
 
     def __repr__(self):
-        return "<ItemHeaderNode>"
+        return "<EntryHeaderNode>"
 
     def render(self, context):
         if self.page_name is None:
@@ -390,7 +390,7 @@ class ItemHeader(template.Node):
         return '\n'.join(result)
 
 @register.tag
-def itemheader(parser, token):
+def entryheader(parser, token):
     bits = list(token.split_contents())
     if len(bits) < 1 or len(bits) > 2:
         raise template.TemplateSyntaxError, "%r takes zero or one arguments" % bits[0]
@@ -398,7 +398,66 @@ def itemheader(parser, token):
         page_name = bits[1]
     else:
         page_name = None
-    return ItemHeader(page_name)
+    return EntryHeader(page_name)
+
+
+class CollectionHeader(template.Node):
+    def __init__(self, page_name):
+        if page_name:
+            self.page_name = template.Variable(page_name)
+        else:
+            self.page_name = None
+
+    def __repr__(self):
+        return "<CollectionHeaderNode>"
+
+    def render(self, context):
+        if self.page_name is None:
+            page_name = None
+        else:
+            try:
+                page_name = self.page_name.resolve(context)
+            except template.VariableDoesNotExist:
+                if settings.DEBUG:
+                    return "[Couldn't resolve page_name variable]"
+                else:
+                    return '' # Fail silently for invalid variables.
+
+        item_type = context['item_type']
+        item_type_inheritance = context['item_type_inheritance']
+
+        result = []
+
+        new_url = reverse('resource_collection', kwargs={'viewer': item_type.lower(), 'collection_action': "new"})
+
+        result.append('<div class="crumbs">')
+        result.append('<div style="float: right;">')
+        if agentcan_global_helper(context, 'create %s' % item_type):
+            result.append('<a href="%s">New %s</a>' % (new_url, item_type))
+        result.append('</div>')
+        for i, inherited_item_type in enumerate(item_type_inheritance):
+            link = '<a href="%s">%ss</a>' % (reverse('resource_collection', kwargs={'viewer': inherited_item_type.lower()}), inherited_item_type)
+            if i > 0:
+                link = '&raquo; %s' % link
+            result.append(link)
+        if page_name is not None:
+            result.append('&raquo; ')
+            result.append(page_name)
+
+        result.append('</div>')
+
+        return '\n'.join(result)
+
+@register.tag
+def collectionheader(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) < 1 or len(bits) > 2:
+        raise template.TemplateSyntaxError, "%r takes zero or one arguments" % bits[0]
+    if len(bits) == 2:
+        page_name = bits[1]
+    else:
+        page_name = None
+    return CollectionHeader(page_name)
 
 
 @register.simple_tag

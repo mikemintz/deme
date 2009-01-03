@@ -473,7 +473,7 @@ The agent currently logged in is not allowed to use this application. Please log
                 model_class = model_class.NOTVERSION if issubclass(model_class, cms.models.Item.VERSION) else model_class
                 model_name = model_class.__name__
                 if model_name == 'Item':
-                    continue # things in Item are boring, since they're already part of the layout (itemheader)
+                    continue # things in Item are boring, since they're already part of the layout (entryheader)
                 info = {'model_name': model_name, 'name': name, 'format': type(field).__name__}
                 if type(field).__name__ == 'ForeignKey':
                     try:

@@ -4,21 +4,7 @@
 {% block title %}<img src="{{ item_type|icon_url:48 }}" /> List {{ item_type }}s{% endblock %}
 {% block content %}
 
-<div class="crumbs">
-    {% ifagentcanglobal 'create' item_type %}
-    <div style="float: right;">
-        [+] <a href="{% url resource_collection viewer=item_type|lower,collection_action="new" %}">New {{ item_type }}</a>
-    </div>
-    {% endifagentcanglobal %}
-    {% for inherited_item_type in item_type_inheritance %}
-    {% ifequal inherited_item_type item_type %}
-    {{ inherited_item_type }}s
-    {% else %}
-    <a href="{% url resource_collection viewer=inherited_item_type|lower %}">{{ inherited_item_type }}s</a>
-    &raquo;
-    {% endifequal %}
-    {% endfor %}
-</div>
+{% collectionheader %}
 
 <div style="border: thin solid #aaa; background: #eee; padding: 10px; margin-bottom: 10px;">
 <form method="get" name="list_filter_form">

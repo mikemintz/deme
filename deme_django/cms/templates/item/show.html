@@ -4,7 +4,7 @@
 {% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
-{% itemheader %}
+{% entryheader %}
 
 <table class="twocol">
     {% for field in fields|dictsort:"name" %}

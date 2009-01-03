@@ -16,13 +16,11 @@ tinyMCE.init({
 });
 </script>    
 
-<div class="crumbs">
-    {% for inherited_item_type in item_type_inheritance %}
-    <a href="{% url resource_collection viewer=inherited_item_type|lower %}">{{ inherited_item_type }}s</a>
-    &raquo;
-    {% endfor %}
-    {% if action_is_entry_copy %}Copy{% else %}New{% endif %}
-</div>
+{% if action_is_entry_copy %}
+{% collectionheader "Copy" %}
+{% else %}
+{% collectionheader "New" %}
+{% endif %}
 
 <div>
     {% if redirect %}

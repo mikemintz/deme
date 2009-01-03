@@ -6,21 +6,7 @@
 
 <script type="text/javascript" src="/static/javascripts/prototype.js"></script>
 
-<div class="crumbs">
-    {% ifagentcanglobal 'create' item_type %}
-    <div style="float: right;">
-        [+] <a href="{% url resource_collection viewer=item_type|lower,collection_action="new" %}">New {{ item_type }}</a>
-    </div>
-    {% endifagentcanglobal %}
-    {% for inherited_item_type in item_type_inheritance %}
-    {% ifequal inherited_item_type item_type %}
-    {{ inherited_item_type }}s
-    {% else %}
-    <a href="{% url resource_collection viewer=inherited_item_type|lower %}">{{ inherited_item_type }}s</a>
-    &raquo;
-    {% endifequal %}
-    {% endfor %}
-</div>
+{% collectionheader "Global Permissions" %}
 
 <div style="margin-bottom: 5px;">
     <div><a href="#" onclick="$('new_agent_form').toggle(); return false;">[+] Agent</a></div>
