@@ -1,0 +1,71 @@
+{% extends layout %}
+{% load resource_extras %}
+{% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
+{% block content %}
+
+<script type="text/javascript" src="/static/javascripts/prototype.js"></script>
+
+{% itemheader %}
+
+{% ifagentcan 'add_sub_path' '' item %}
+<div style="margin-bottom: 10px;">
+    <a href="#" onclick="$('add_sub_path_form').toggle(); return false;">Add sub path</a>
+    <form id="add_sub_path_form" style="display: none;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer=item_type|lower,entry_action="addsubpath",noun=item.pk %}?redirect={% show_resource_url item %}" class="item_form">
+        <table>
+            {{ addsubpath_form.as_table }}
+        </table>
+        <input type="submit" />
+    </form>
+</div>
+{% endifagentcan %}
+
+<table class="twocol">
+    {% if custom_urls %}
+    <tr>
+        <th>Path</th>
+        <td>&lt;<a href="{% show_resource_url site %}">{% ifagentcan 'view' 'name' site %}{{ site.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a>&gt;{% for custom_url in custom_urls %}/<a href="{% show_resource_url custom_url %}">{{ custom_url.path }}</a>{% endfor %}</td>
+    </tr>
+    {% endif %}
+    {% if item.default_layout %}
+    <tr>
+        <th>Default Layout</th>
+        <td><a href="{% show_resource_url item.default_layout %}">{% ifagentcan 'view' 'name' item.default_layout %}{{ item.default_layout.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a></td>
+    </tr>
+    {% endif %}
+    {% if child_urls %}
+    <tr>
+        <th>Children</th>
+        <td>{% for child in child_urls %}<a href="{% show_resource_url child %}">{{ child.path }}</a><br />{% endfor %}</td>
+    </tr>
+    {% endif %}
+    {% if item.aliased_item %}
+    <tr>
+        <th>Aliased Item</th>
+        <td><a href="{% show_resource_url item.aliased_item %}">{% ifagentcan 'view' 'name' item.aliased_item %}{{ item.aliased_item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a></td>
+    </tr>
+    {% endif %}
+    <tr>
+        <th>Viewer</th>
+        <td><a href="{% url resource_collection viewer=item.viewer %}">{{ item.viewer }}</a></td>
+    </tr>
+    <tr>
+        <th>Action</th>
+        <td>{{ item.action }}</td>
+    </tr>
+    {% if item.query_string %}
+    <tr>
+        <th>Query String</th>
+        <td>{{ item.query_string }}</td>
+    </tr>
+    {% endif %}
+    <tr>
+        <th>Format</th>
+        <td>{{ item.format }}</td>
+    </tr>
+</table>
+
+{% commentbox %}
+
+{% endblock content %}
+
