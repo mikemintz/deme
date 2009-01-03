@@ -300,7 +300,7 @@ class EntryHeader(template.Node):
 
         item = context['item']
         version_number = item.version_number
-        item_type_inheritance = context['item_type_inheritance']
+        item_type_inheritance = [x.__name__ for x in reversed(context['_viewer'].item_type.mro()) if issubclass(x, cms.models.Item)]
 
         result = []
 
@@ -424,7 +424,7 @@ class CollectionHeader(template.Node):
                     return '' # Fail silently for invalid variables.
 
         item_type = context['item_type']
-        item_type_inheritance = context['item_type_inheritance']
+        item_type_inheritance = [x.__name__ for x in reversed(context['_viewer'].item_type.mro()) if issubclass(x, cms.models.Item)]
 
         result = []
 

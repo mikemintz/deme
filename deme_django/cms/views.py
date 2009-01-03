@@ -292,7 +292,6 @@ class ItemViewer(object):
         self.context['action'] = self.action
         self.context['item'] = self.item
         self.context['item_type'] = self.item_type.__name__
-        self.context['item_type_inheritance'] = [x.__name__ for x in reversed(self.item_type.mro()) if issubclass(x, cms.models.Item)]
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = cur_agent
         self.context['cur_agent'] = self.cur_agent
@@ -314,7 +313,6 @@ class ItemViewer(object):
         self.context['action'] = self.action
         self.context['item'] = self.item
         self.context['item_type'] = self.item_type.__name__
-        self.context['item_type_inheritance'] = [x.__name__ for x in reversed(self.item_type.mro()) if issubclass(x, cms.models.Item)]
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = cur_agent
         self.context['cur_agent'] = self.cur_agent
