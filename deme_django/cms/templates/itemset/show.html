@@ -45,11 +45,7 @@
     {% for membership_info in memberships %}
     <tr class="{% cycle 'even' 'odd' %}">
         <td>
-        {% if membership_info.can_view_name %}
-        <a href="{% show_resource_url membership_info.membership.item %}">{{ membership_info.membership.item.name }}</a>
-        {% else %}
-        <a href="{% show_resource_url membership_info.membership.item %}">[PERMISSION DENIED]</a>
-        {% endif %}
+            <a href="{% show_resource_url membership_info.membership.item %}">{% if membership_info.can_view_name %}{{ membership_info.membership.item.name }}{% else %}[PERMISSION DENIED]{% endif %}</a>
         </td>
         <td>
             <a href="{% show_resource_url membership_info.membership %}">{{ membership_info.membership.pk }}</a>

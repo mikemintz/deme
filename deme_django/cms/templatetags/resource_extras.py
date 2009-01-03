@@ -257,14 +257,12 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
     if comment_pks:
         for comment_subclass in comment_subclasses:
             comments.extend(comment_subclass.objects.filter(pk__in=comment_pks))
+    relevant_comment_locations = dict((x.comment_id, x) for x in cms.models.CommentLocation.objects.filter(commented_item_version_number=version_number, comment__pk__in=comment_pks))
     comments.sort(key=lambda x: x.created_at)
     pk_to_comment_info = {}
     for comment in comments:
         comment_info = {'comment': comment, 'subcomments': []}
-        try:
-            comment_info['comment_location'] = comment.comment_locations_as_comment.get(commented_item_version_number=version_number)
-        except ObjectDoesNotExist:
-            comment_info['comment_location'] = None
+        comment_info['comment_location'] = relevant_comment_locations.get(comment.pk, None)
         pk_to_comment_info[comment.pk] = comment_info
     result = []
     for comment in comments:

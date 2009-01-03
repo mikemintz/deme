@@ -23,6 +23,8 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* consider making permissions NO LONGER items. we get no benefit anymore?
+* consider making permissions have one column per ability. now that we store all possible abilities, it's easier to migrate.
 * Make more sensible permissions:
   - no permissions on Roles and RoleAbilities, there should be a Role modifying interface that requires do_everything
   - figure out SiteDomains
