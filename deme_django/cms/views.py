@@ -155,7 +155,7 @@ def set_default_layout(context, site, cur_agent):
                 extends_string = "{% extends 'default_layout.html' %}\n"
         else:
             extends_string = "{%% extends layout%s %%}\n" % next_node.pk
-        if 'view layout' in permission_cache.get_abilities_for_agent_and_item(context['cur_agent'], cur_node) and 'view body' in permission_cache.get_abilities_for_agent_and_item(context['cur_agent'], cur_node):
+        if 'view body' in permission_cache.get_abilities_for_agent_and_item(context['cur_agent'], cur_node):
             template_string = extends_string + cur_node.body
         else:
             template_string = "{% extends 'default_layout.html' %}\n"
@@ -164,14 +164,10 @@ def set_default_layout(context, site, cur_agent):
         t = loader.get_template_from_string(template_string)
         context['layout%d' % cur_node.pk] = t
         cur_node = next_node
-    if 'view default_layout' in permission_cache.get_abilities_for_agent_and_item(context['cur_agent'], site):
-        if site.default_layout:
-            context['layout'] = context['layout%s' % site.default_layout.pk]
-        else:
-            context['layout'] = 'default_layout.html'
+    if site.default_layout:
+        context['layout'] = context['layout%s' % site.default_layout.pk]
     else:
         context['layout'] = 'default_layout.html'
-        context['layout_permissions_problem'] = True
 
 def get_viewer_class_for_viewer_name(viewer_name):
     return ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
@@ -215,19 +211,20 @@ class PermissionCache(object):
     def get_global_abilities_for_agent(self, agent):
         result = self._global_ability_cache.get(agent.pk)
         if result is None:
-            result = permission_functions.get_global_abilities_for_agent(agent)
+            result = set(permission_functions.get_global_abilities_for_agent(agent))
             if 'do_everything' in result:
-                result = [x[0] for x in cms.models.POSSIBLE_GLOBAL_ABILITIES]
+                result = set([x[0] for x in cms.models.POSSIBLE_GLOBAL_ABILITIES])
+            else:
+                result = result & set([x[0] for x in cms.models.POSSIBLE_GLOBAL_ABILITIES])
             self._global_ability_cache[agent.pk] = result
         return result
 
     def get_abilities_for_agent_and_item(self, agent, item):
         result = self._item_ability_cache.get((agent.pk, item.pk))
         if result is None:
-            if 'do_everything' in self.get_global_abilities_for_agent(agent):
-                result = list(type(item).relevant_abilities)
-            else:
-                result = permission_functions.get_abilities_for_agent_and_item(agent, item)
+            result = type(item).relevant_abilities
+            if 'do_everything' not in self.get_global_abilities_for_agent(agent):
+                result = result & set(permission_functions.get_abilities_for_agent_and_item(agent, item))
             self._item_ability_cache[(agent.pk, item.pk)] = result
         return result
 
@@ -1098,7 +1095,7 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
             if cur_node.override_default_layout:
                 template_string = cur_node.body
             else:
-                if self.cur_agent_can('view layout', cur_node) and self.cur_agent_can('view body', cur_node):
+                if self.cur_agent_can('view body', cur_node):
                     template_string = '{%% extends layout%s %%}\n%s' % (next_node.pk if next_node else '', cur_node.body)
                 else:
                     template_string = "{%% extends 'default_layout.html' %%}\n%s" % (cur_node.body,)
