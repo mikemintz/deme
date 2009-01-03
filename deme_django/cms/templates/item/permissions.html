@@ -45,10 +45,20 @@
         <td><a href="{% show_resource_url agent_datum.agent %}">{{ agent_datum.agent.name }}</a></td>
         <td>
             {% for p in agent_datum.role_permissions %}
-                <div><a href="{% show_resource_url p %}">{{ p.role.name }}</a></div>
+                <div>
+                    <a href="{% show_resource_url p.role %}">{{ p.role.name }}</a>
+                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",entry_action="trash",noun=p.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                        <input type="submit" value="Remove" />
+                    </form>
+                </div>
             {% endfor %}
             {% for p in agent_datum.permissions %}
-                <div><a href="{% show_resource_url p %}">{% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}</a></div>
+                <div>
+                    {% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}
+                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",entry_action="trash",noun=p.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                        <input type="submit" value="Remove" />
+                    </form>
+                </div>
             {% endfor %}
         </td>
         <td>
@@ -79,10 +89,20 @@
         <td><a href="{% show_resource_url itemset_datum.itemset %}">{{ itemset_datum.itemset.name }}</a></td>
         <td>
             {% for p in itemset_datum.role_permissions %}
-                <div><a href="{% show_resource_url p %}">{{ p.role.name }}</a></div>
+                <div>
+                    <a href="{% show_resource_url p.role %}">{{ p.role.name }}</a>
+                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",entry_action="trash",noun=p.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                        <input type="submit" value="Remove" />
+                    </form>
+                </div>
             {% endfor %}
             {% for p in itemset_datum.permissions %}
-                <div><a href="{% show_resource_url p %}">{% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}</a></div>
+                <div>
+                    {% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}
+                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",entry_action="trash",noun=p.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                        <input type="submit" value="Remove" />
+                    </form>
+                </div>
             {% endfor %}
         </td>
         <td>
@@ -112,10 +132,20 @@
         <td></td>
         <td>
             {% for p in default_data.role_permissions %}
-                <div><a href="{% show_resource_url p %}">{{ p.role.name }}</a></div>
+                <div>
+                    <a href="{% show_resource_url p.role %}">{{ p.role.name }}</a>
+                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",entry_action="trash",noun=p.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                        <input type="submit" value="Remove" />
+                    </form>
+                </div>
             {% endfor %}
             {% for p in default_data.permissions %}
-                <div><a href="{% show_resource_url p %}">{% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}</a></div>
+                <div>
+                    {% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}
+                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",entry_action="trash",noun=p.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                        <input type="submit" value="Remove" />
+                    </form>
+                </div>
             {% endfor %}
         </td>
         <td>

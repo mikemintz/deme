@@ -27,7 +27,7 @@ role_abilities = []
 deme_settings = {}
 for model in all_models():
     #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
-    if issubclass(model, Permission):
+    if issubclass(model, Permission) or issubclass(model, GlobalPermission):
         continue
     default_role = Role(name="%s Default" % model.__name__)
     creator_role = Role(name="%s Creator" % model.__name__)

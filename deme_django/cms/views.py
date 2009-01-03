@@ -532,8 +532,6 @@ The agent currently logged in is not allowed to use this application. Please log
     def entry_edit(self):
         abilities_for_item = self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and 'modify_permissions' in self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
-            can_edit = True
         if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
@@ -578,8 +576,6 @@ The agent currently logged in is not allowed to use this application. Please log
     def entry_update(self):
         abilities_for_item = self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and 'modify_permissions' in self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item.item):
-            can_edit = True
         if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         new_item = self.item
@@ -598,21 +594,27 @@ The agent currently logged in is not allowed to use this application. Please log
 
     def entry_trash(self):
         can_trash = self.cur_agent_can('trash', self.item)
-        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and self.cur_agent_can('modify_permissions', self.item.item):
+        if isinstance(self.item, cms.models.Permission) and self.cur_agent_can('modify_permissions', self.item.item):
+            can_trash = True
+        if isinstance(self.item, cms.models.GlobalPermission) and self.cur_agent_can_global('do_everything'):
             can_trash = True
         if not can_trash:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to trash this item")
         self.item.trash(self.cur_agent)
-        return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
 
     def entry_untrash(self):
         can_trash = self.cur_agent_can('trash', self.item)
-        if isinstance(self.item, cms.models.Permission) and hasattr(self.item, 'item') and self.cur_agent_can('modify_permissions', self.item.item):
+        if isinstance(self.item, cms.models.Permission) and self.cur_agent_can('modify_permissions', self.item.item):
+            can_trash = True
+        if isinstance(self.item, cms.models.GlobalPermission) and self.cur_agent_can_global('do_everything'):
             can_trash = True
         if not can_trash:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to untrash this item")
         self.item.untrash(self.cur_agent)
-        return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
 
     def entry_permissions(self):
         can_modify_permissions = self.cur_agent_can('modify_permissions', self.item)
@@ -806,7 +808,7 @@ The agent currently logged in is not allowed to use this application. Please log
                 item.save_versioned(updater=self.cur_agent)
                 redirect = self.request.GET['redirect']
                 return HttpResponseRedirect(redirect)
-            elif form.non_field_errors(): # there may have been a duplicate
+            else:
                 model = form._meta.model
                 fields = form._meta.fields
                 existing_permission = model.objects
