@@ -308,8 +308,8 @@ class EntryHeader(template.Node):
         permissions_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'permissions'})
         edit_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'edit'}) + '?version=%s' % version_number
         copy_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'copy'}) + '?version=%s' % version_number
-        trash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'trash'})
-        untrash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'untrash'})
+        trash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'trash'}) + '?redirect=%s' % urlquote(context['full_path'])
+        untrash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'untrash'}) + '?redirect=%s' % urlquote(context['full_path'])
 
         result.append('<div class="crumbs">')
         result.append('<div style="float: right;">')
@@ -321,10 +321,9 @@ class EntryHeader(template.Node):
         if agentcan_global_helper(context, 'create %s' % item.item_type):
             result.append('<a href="%s">Copy</a>' % copy_url)
         if agentcan_helper(context, 'trash', item):
-            if item.trashed:
-                result.append('<a href="%s">Untrash</a>' % untrash_url)
-            else:
-                result.append('<a href="%s">Trash</a>' % trash_url)
+            result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % (untrash_url if item.trashed else trash_url))
+            result.append("""<a href="#" onclick="this.parentNode.submit(); return false;">%s</a>""" % ("Untrash" if item.trashed else "Trash"))
+            result.append("""</form>""")
         result.append('</div>')
         for inherited_item_type in item_type_inheritance:
             result.append('<a href="%s">%ss</a> &raquo;' % (reverse('resource_collection', kwargs={'viewer': inherited_item_type.lower()}), inherited_item_type))

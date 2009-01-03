@@ -271,12 +271,12 @@ class ItemViewer(object):
         if self.noun == None:
             self.action = url_info.get('collection_action')
             if self.action == None:
-                self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'delete'}.get(self.method, 'list')
+                self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'trash'}.get(self.method, 'list')
             self.item = None
         else:
             self.action = url_info.get('entry_action')
             if self.action == None:
-                self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'delete'}.get(self.method, 'show')
+                self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'trash'}.get(self.method, 'show')
             try:
                 self.item = cms.models.Item.objects.get(pk=self.noun)
                 if self.item:
@@ -593,6 +593,8 @@ The agent currently logged in is not allowed to use this application. Please log
             return HttpResponse(template.render(self.context))
 
     def entry_trash(self):
+        if self.method == 'GET':
+            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         can_trash = self.cur_agent_can('trash', self.item)
         if isinstance(self.item, cms.models.Permission) and self.cur_agent_can('modify_permissions', self.item.item):
             can_trash = True
@@ -605,6 +607,8 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponseRedirect(redirect)
 
     def entry_untrash(self):
+        if self.method == 'GET':
+            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         can_trash = self.cur_agent_can('trash', self.item)
         if isinstance(self.item, cms.models.Permission) and self.cur_agent_can('modify_permissions', self.item.item):
             can_trash = True
