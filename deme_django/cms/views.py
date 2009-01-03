@@ -484,10 +484,7 @@ The agent currently logged in is not allowed to use this application. Please log
                     obj = getattr(item, name)
                     info['field_type'] = 'regular'
                 info['obj'] = obj
-                if 'view %s' % name in self.item_type.relevant_abilities:
-                    info['can_view'] = self.cur_agent_can('view %s' % name, self.item)
-                else:
-                    info['can_view'] = True
+                info['can_view'] = self.cur_agent_can('view %s' % name, self.item)
                 if info['field_type'] == 'entry' and obj is not None:
                     info['can_view_name'] = self.cur_agent_can('view name', obj)
                 fields.append(info)
