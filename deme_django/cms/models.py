@@ -267,7 +267,7 @@ class DemeSetting(Item):
 
 class Agent(Item):
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities | set(['login_as', 'view last_online_at'])
+    relevant_abilities = Item.relevant_abilities | set(['add_contact_method', 'add_subscription', 'add_authentication_method', 'login_as', 'view last_online_at'])
     relevant_global_abilities = frozenset(['create Agent'])
     last_online_at = models.DateTimeField(null=True, blank=True, editable=False)
 
@@ -323,7 +323,7 @@ def get_hexdigest(algorithm, salt, raw_password):
 class PasswordAuthenticationMethod(AuthenticationMethod):
     immutable_fields = AuthenticationMethod.immutable_fields
     relevant_abilities = AuthenticationMethod.relevant_abilities | set(['view username', 'view password', 'view password_question', 'view password_answer', 'edit username', 'edit password', 'edit password_question', 'edit password_answer'])
-    relevant_global_abilities = frozenset(['create PasswordAuthenticationMethod'])
+    relevant_global_abilities = frozenset()
     username = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=128)
     password_question = models.CharField(max_length=255, blank=True)
@@ -672,42 +672,42 @@ class ContactMethod(Item):
 class EmailContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view email', 'edit email'])
-    relevant_global_abilities = frozenset(['create EmailContactMethod'])
+    relevant_global_abilities = frozenset()
     email = models.EmailField(max_length=320)
 
 
 class PhoneContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view phone', 'edit phone'])
-    relevant_global_abilities = frozenset(['create PhoneContactMethod'])
+    relevant_global_abilities = frozenset()
     phone = models.CharField(max_length=20)
 
 
 class FaxContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view fax', 'edit fax'])
-    relevant_global_abilities = frozenset(['create FaxContactMethod'])
+    relevant_global_abilities = frozenset()
     fax = models.CharField(max_length=20)
 
 
 class WebsiteContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view url', 'edit url'])
-    relevant_global_abilities = frozenset(['create WebsiteContactMethod'])
+    relevant_global_abilities = frozenset()
     url = models.CharField(max_length=255)
 
 
 class AIMContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view screen_name', 'edit screen_name'])
-    relevant_global_abilities = frozenset(['create AIMContactMethod'])
+    relevant_global_abilities = frozenset()
     screen_name = models.CharField(max_length=255)
 
 
 class AddressContactMethod(ContactMethod):
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view street1', 'view street2', 'view city', 'view state', 'view country', 'view zip', 'edit street1', 'edit street2', 'edit city', 'edit state', 'edit country', 'edit zip'])
-    relevant_global_abilities = frozenset(['create AddressContactMethod'])
+    relevant_global_abilities = frozenset()
     street1 = models.CharField(max_length=255, blank=True)
     street2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=255, blank=True)
@@ -719,7 +719,7 @@ class AddressContactMethod(ContactMethod):
 class Subscription(Item):
     immutable_fields = Item.immutable_fields | set(['contact_method', 'item'])
     relevant_abilities = Item.relevant_abilities | set(['view contact_method', 'view item', 'view deep', 'view notify_text', 'view notify_edit', 'edit deep', 'edit notify_text', 'edit notify_edit'])
-    relevant_global_abilities = frozenset(['create Subscription'])
+    relevant_global_abilities = frozenset()
     contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions_as_contact_method')
     item = models.ForeignKey(Item, related_name='subscriptions_as_item')
     deep = models.BooleanField(default=False)
