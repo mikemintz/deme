@@ -1035,7 +1035,7 @@ class ItemSetViewer(ItemViewer):
         return HttpResponseRedirect(redirect)
 
 
-class ImageDocument(ItemViewer):
+class ImageDocumentViewer(ItemViewer):
     item_type = cms.models.ImageDocument
     viewer_name = 'imagedocument'
 
@@ -1281,6 +1281,26 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
 
     #TODO copy/edit/update excerpts
 
+
+class DemeSettingViewer(ItemViewer):
+    item_type = cms.models.DemeSetting
+    viewer_name = 'demesetting'
+
+    def collection_modify(self):
+        if not self.cur_agent_can_global('do_everything'):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify DemeSettings")
+        self.context['deme_settings'] = cms.models.DemeSetting.objects.filter(trashed=False).order_by('key')
+        template = loader.get_template('demesetting/modify.html')
+        return HttpResponse(template.render(self.context))
+
+    def collection_addsetting(self):
+        if not self.cur_agent_can_global('do_everything'):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify DemeSettings")
+        key = self.request.POST.get('key')
+        value = self.request.POST.get('value')
+        cms.models.DemeSetting.set(key, value, self.cur_agent)
+        redirect = self.request.GET.get('redirect', reverse('resource_collection', kwargs={'viewer': self.viewer_name, 'collection_action': 'modify'}))
+        return HttpResponseRedirect(redirect)
 
 # let's dynamically create default viewers for the ones we don't have
 for item_type in cms.models.all_models():

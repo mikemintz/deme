@@ -239,7 +239,7 @@ class Item(models.Model):
 class DemeSetting(Item):
     immutable_fields = Item.immutable_fields | set(['key'])
     relevant_abilities = Item.relevant_abilities | set(['view key', 'view value', 'edit value'])
-    relevant_global_abilities = frozenset(['create DemeSetting'])
+    relevant_global_abilities = frozenset()
     key = models.CharField(max_length=255, unique=True)
     value = models.CharField(max_length=255, blank=True)
     @classmethod
