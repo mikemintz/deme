@@ -278,8 +278,12 @@ var DemeHighlighting = function(){
         // Get the deme offset for the invisible spans
         DemeHighlighting.tag_highlight_endpoints_with_offset($('docbody'), body_str, is_escaped, start_id, end_id);
 
-        //TODO we should probably get rid of all things like commentref from contents. alternatively, construct contents ourselves since we know start_span and end_span
-        return {start_offset: start_span.deme_text_offset, end_offset: end_span.deme_text_offset, contents: contents};
+        if (start_span.deme_text_offset && end_span.deme_text_offset) {
+            //TODO we should probably get rid of all things like commentref from contents. alternatively, construct contents ourselves since we know start_span and end_span
+            return {start_offset: start_span.deme_text_offset, end_offset: end_span.deme_text_offset, contents: contents};
+        } else {
+            return null;
+        }
     };
  
     return pub;
