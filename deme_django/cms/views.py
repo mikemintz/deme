@@ -120,16 +120,11 @@ class NewTextCommentForm(forms.ModelForm):
         model = cms.models.TextComment
         fields = ['name', 'description', 'body', 'commented_item']
 
-class NewTextDocumentExcerptForm(forms.ModelForm):
-    text_document = HiddenModelChoiceField(cms.models.TextDocument.objects)
-    text_document_version_number = forms.IntegerField(widget=forms.HiddenInput())
-    start_index = forms.IntegerField(widget=forms.HiddenInput())
-    length = forms.IntegerField(widget=forms.HiddenInput())
-    class Meta:
-        model = cms.models.TextDocumentExcerpt
-        fields = ['name', 'description', 'text_document', 'text_document_version_number', 'start_index', 'length']
-
 def get_form_class_for_item_type(update_or_create, item_type, fields=None):
+    # For now, this is how we prevent manual creation of TextDocumentExcerpts
+    if issubclass(item_type, cms.models.TextDocumentExcerpt):
+        return forms.models.modelform_factory(item_type, fields=['name'])
+
     exclude = []
     for field in item_type._meta.fields:
         if (field.rel and field.rel.parent_link) or (update_or_create == 'update' and field.name in item_type.immutable_fields):
@@ -1231,58 +1226,6 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
     item_type = cms.models.TextDocumentExcerpt
     viewer_name = 'textdocumentexcerpt'
 
-    def collection_new(self):
-        try:
-            text_document = cms.models.TextDocument.objects.get(pk=self.request.GET.get('text_document'))
-        except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are excerpting from")
-        if not self.cur_agent_can('view body', text_document):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to view the body of this item")
-        can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
-        if not can_create:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
-        model_names.sort()
-        form_initial = dict(self.request.GET.items())
-        form_class = NewTextDocumentExcerptForm
-        form = form_class(initial=form_initial)
-        template = loader.get_template('item/new.html')
-        self.context['model_names'] = model_names
-        self.context['form'] = form
-        self.context['redirect'] = self.request.GET.get('redirect')
-        return HttpResponse(template.render(self.context))
-
-    def collection_create(self):
-        try:
-            text_document = cms.models.TextDocument.objects.get(pk=self.request.GET.get('text_document'))
-        except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are excerpting from")
-        if not self.cur_agent_can('view body', text_document):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to view the body of this item")
-        can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
-        if not can_create:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        form_class = NewTextDocumentExcerptForm
-        form = form_class(self.request.POST, self.request.FILES)
-        if form.is_valid():
-            start_index = form.cleaned_data['start_index']
-            length = form.cleaned_data['length']
-            text_document = get_versioned_item(form.cleaned_data['text_document'], form.cleaned_data['text_document_version_number'])
-            body = text_document.body[start_index:start_index+length]
-            item = form.save(commit=False)
-            item.body = body
-            item.save_versioned(updater=self.cur_agent)
-            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
-            return HttpResponseRedirect(redirect)
-        else:
-            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
-            model_names.sort()
-            template = loader.get_template('item/new.html')
-            self.context['model_names'] = model_names
-            self.context['form'] = form
-            self.context['redirect'] = self.request.GET.get('redirect')
-            return HttpResponse(template.render(self.context))
-
     def collection_createmultiexcerpt(self):
         if not self.cur_agent_can_global('create %s' % self.item_type.__name__):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
@@ -1314,8 +1257,6 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
             cms.models.Membership(item=excerpt, itemset=itemset).save_versioned(updater=self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': 'itemset', 'noun': itemset.pk}))
         return HttpResponseRedirect(redirect)
-
-    #TODO copy/edit/update excerpts
 
 
 class DemeSettingViewer(ItemViewer):
