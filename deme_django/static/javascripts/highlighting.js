@@ -11,6 +11,16 @@ var DemeHighlighting = function(){
         //TODO better error handling when we call parse_error()
         var traverse_text = function(text, wrapper){
             while (text.length > 0) {
+                if (!is_escaped) {
+                    //TODO we don't skip over <script> and <style> sections
+                    while (remaining_body_str.length > 0 && remaining_body_str[0] == '<') {
+                        if (remaining_body_str.substring(0, 4) == '<!--') {
+                            increment_body_str(remaining_body_str.indexOf('-->') + 3);
+                        } else {
+                            increment_body_str(remaining_body_str.indexOf('>') + 1);
+                        }
+                    }
+                }
                 var whiteSpaceBodyMatch = whitespace_regex.exec(remaining_body_str);
                 var whiteSpaceTextMatch = whitespace_regex.exec(text);
                 var bodyStartsWithWhiteSpace = (whiteSpaceBodyMatch != null && whiteSpaceBodyMatch.index == 0);
@@ -53,7 +63,7 @@ var DemeHighlighting = function(){
                             return false;
                         }
                         var bodyChar = remaining_body_str.substring(body_i, body_i+1);
-                        if (bodyChar == '&') {
+                        if (!is_escaped && bodyChar == '&') {
                             var semicolonIndex = remaining_body_str.indexOf(';', body_i+1);
                             if (semicolonIndex == -1) {
                                 parse_error('error @ ' + body_str_index + ': found ampersand without semicolon');
@@ -96,44 +106,40 @@ var DemeHighlighting = function(){
                     element_callback(node, body_str_index);
                     if (!node.hasClassName('commentref')) {
                         // match the start tag
-                        var startTagPattern = new RegExp("[.\\s]*<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "i");
-                        var startTagMatch = startTagPattern.exec(remaining_body_str);
-                        if (is_escaped || startTagMatch == null) {
-                            var success = traverse_fn(node.childNodes, false);
-                            if (!success) return false;
-                        } else {
-                            increment_body_str(startTagMatch.index + startTagMatch[0].length);
-                            //TODO maybe there are tags besides img, like object or embed
+                        if (!is_escaped) {
                             if (node.tagName == 'IMG') {
-                                token_wrapper_callback(node, body_str_index - startTagMatch[0].length);
-                            }
-                            var success = traverse_fn(node.childNodes, false);
-                            if (!success) return false;
-
-                            // match the optional end tag
-                            var endTagPattern = new RegExp("\\s*<\\s*/\\s*" + node.tagName + "[^>]*>", "i");
-                            var endTagMatch = endTagPattern.exec(remaining_body_str);
-                            // we only want to match the end tag if it occurs RIGHT here
-                            if (endTagMatch != null && endTagMatch.index == 0) {
-                                increment_body_str(endTagMatch[0].length);
+                                var startTagPattern = new RegExp("[.\\s]*<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "i");
+                                var startTagMatch = startTagPattern.exec(remaining_body_str);
+                                if (startTagMatch) {
+                                    token_wrapper_callback(node, body_str_index - startTagMatch[0].length);
+                                }
                             }
                         }
+                        var success = traverse_fn(node.childNodes, false);
+                        if (!success) return false;
                     }
+                } else if (node.nodeType == Node.COMMENT_NODE) {
+                    // We can safely ignore comment nodes, since they are skipped over in body_str
+                } else if (node.nodeType == Node.ATTRIBUTE_NODE) {
+                    parse_error('error @ ' + body_str_index + ': do not know how to process Node.ATTRIBUTE_NODE');
+                } else if (node.nodeType == Node.CDATA_SECTION_NODE) {
+                    parse_error('error @ ' + body_str_index + ': do not know how to process Node.CDATA_SECTION_NODE');
+                } else if (node.nodeType == Node.ENTITY_REFERENCE_NODE) {
+                    parse_error('error @ ' + body_str_index + ': do not know how to process Node.ENTITY_REFERENCE_NODE');
+                } else if (node.nodeType == Node.ENTITY_NODE) {
+                    parse_error('error @ ' + body_str_index + ': do not know how to process Node.ENTITY_NODE');
+                } else if (node.nodeType == Node.PROCESSING_INSTRUCTION_NODE) {
+                    parse_error('error @ ' + body_str_index + ': do not know how to process Node.PROCESSING_INSTRUCTION_NODE');
+                } else if (node.nodeType == Node.DOCUMENT_NODE) {
+                    parse_error('error @ ' + body_str_index + ': do not know how to process Node.DOCUMENT_NODE');
+                } else if (node.nodeType == Node.DOCUMENT_TYPE_NODE) {
+                    parse_error('error @ ' + body_str_index + ': do not know how to process Node.DOCUMENT_TYPE_NODE');
+                } else if (node.nodeType == Node.DOCUMENT_FRAGMENT_NODE) {
+                    parse_error('error @ ' + body_str_index + ': do not know how to process Node.DOCUMENT_FRAGMENT_NODE');
+                } else if (node.nodeType == Node.NOTATION_NODE) {
+                    parse_error('error @ ' + body_str_index + ': do not know how to process Node.NOTATION_NODE');
                 } else {
-                    /* TODO we need to handle all possible element types (comments are known to be possible), both here and highlighting
-                        ELEMENT_NODE
-                        ATTRIBUTE_NODE
-                        TEXT_NODE
-                        CDATA_SECTION_NODE
-                        ENTITY_REFERENCE_NODE
-                        ENTITY_NODE
-                        PROCESSING_INSTRUCTION_NODE
-                        COMMENT_NODE
-                        DOCUMENT_NODE
-                        DOCUMENT_TYPE_NODE
-                        DOCUMENT_FRAGMENT_NODE
-                        NOTATION_NODE
-                    */
+                    parse_error('error @ ' + body_str_index + ': do not know how to process node.nodeType = ' + node.nodeType);
                 }
             }
             return true;
@@ -152,7 +158,7 @@ var DemeHighlighting = function(){
         };
         var element_callback = function(node, body_str_index){
         };
-        var whitespace_regex = /((&nbsp;)|(\s))+/i;
+        var whitespace_regex = (is_escaped ? /\s+/ : /((&nbsp;)|(\s))+/i);
         return pub.scan_for_offsets(docbody_clone, body_str, is_escaped, parse_error, whitespace_regex, token_wrapper_callback, element_callback, true);
     };
 
@@ -165,7 +171,7 @@ var DemeHighlighting = function(){
                 node.deme_text_offset = body_str_index;
             }
         };
-        var whitespace_regex = /((&nbsp;)|(\s))+/i;
+        var whitespace_regex = (is_escaped ? /\s+/ : /((&nbsp;)|(\s))+/i);
         return pub.scan_for_offsets(docbody_clone, body_str, is_escaped, parse_error, whitespace_regex, token_wrapper_callback, element_callback, false);
     };
 
