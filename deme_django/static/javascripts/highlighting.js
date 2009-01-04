@@ -175,7 +175,7 @@ var DemeHighlighting = function(){
         return pub.scan_for_offsets(docbody_clone, body_str, is_escaped, parse_error, whitespace_regex, token_wrapper_callback, element_callback, false);
     };
 
-    pub.get_current_highlight = function() {
+    pub.get_current_highlight = function(docbody, body_str){
         //TODO: we should clone the whole body before doing any of this so we don't screw anything up by splitting text and inserting spans
         var id = (Math.random() + '').split('.')[1];
         var start_id = "deme_highlight_start_" + id;
@@ -184,16 +184,6 @@ var DemeHighlighting = function(){
         var end_span = null;
         var contents = null;
         if (Prototype.Browser.IE) {
-            //TODO: understand getOwnerDoc
-            var getOwnerDoc = function(hint) {
-                if (!hint) return document; // lame!
-                if (/document$/i.test(hint.nodeName))
-                    return hint; // hint *is* a document object
-                else if (hint.ownerDocument)
-                    return hint.ownerDocument;
-                else // rare case: eventually hit the document root
-                    return getOwnerDoc(hint.parentNode);
-            };
             var range = window.document.selection.createRange();
             if (range.htmlText != "") {
                 function offset(r, id) {
@@ -209,13 +199,14 @@ var DemeHighlighting = function(){
 
                 try { offset(r1, start_id); offset(r2, end_id); }
                 catch (e) { alert("ERROR! 12398123"); return null; }
-                start_span = getOwnerDoc(r1.parentElement()).getElementById(start_id);
-                end_span = getOwnerDoc(r2.parentElement()).getElementById(end_id);
+                start_span = document.getElementById(start_id);
+                end_span = document.getElementById(end_id);
                 contents = document.createElement('div');
                 contents.innerHTML = range.htmlText;
             } else {
                 return null;
             }
+            window.document.selection.createRange().collapse(true);
         } else {
             // Get the endpoints
             var range = window.getSelection();
@@ -273,17 +264,57 @@ var DemeHighlighting = function(){
             } else {
                 insert_span(end_span, endpoints.end.node, endpoints.end.offset);
             }
+            window.getSelection().removeAllRanges();
         }
 
         // Get the deme offset for the invisible spans
-        DemeHighlighting.tag_highlight_endpoints_with_offset($('docbody'), body_str, is_escaped, start_id, end_id);
+        DemeHighlighting.tag_highlight_endpoints_with_offset(docbody, body_str, is_escaped, start_id, end_id);
 
-        if (start_span.deme_text_offset && end_span.deme_text_offset) {
-            //TODO we should probably get rid of all things like commentref from contents. alternatively, construct contents ourselves since we know start_span and end_span
-            return {start_offset: start_span.deme_text_offset, end_offset: end_span.deme_text_offset, contents: contents};
-        } else {
-            return null;
+        var node_cmp = function(x, y){
+            var node_array = function(node){
+                if (!node || !node.parentNode) return [];
+                var result = node_array(node.parentNode);
+                for (var i in node.parentNode.childNodes) {
+                    if (node.parentNode.childNodes[i] == node) {
+                        result.push(i);
+                        break;
+                    }
+                }
+                return result;
+            };
+            var x_arr = node_array(x);
+            var y_arr = node_array(y);
+            for (var i in x_arr) {
+                if (i >= y_arr.length) {
+                    return 0; // one is inside the other
+                } else if (x_arr[i] < y_arr[i]) {
+                    return -1; // x is before y
+                } else if (x_arr[i] > y_arr[i]) {
+                    return 1; // y is before x
+                }
+            }
+            return 0; // one is inside the other
+        };
+
+        if (!start_span.deme_text_offset) {
+            if (node_cmp(start_span, docbody) == 1) {
+                return null; // start_span is after docbody
+            } else {
+                start_span.deme_text_offset = 0;
+            }
         }
+
+        if (!end_span.deme_text_offset) {
+            if (node_cmp(end_span, docbody) == -1) {
+                return null; // end_span is before docbody
+            } else {
+                end_span.deme_text_offset = body_str.length;
+            }
+        }
+
+        //TODO we should probably get rid of all things like commentref from contents. alternatively, construct contents ourselves since we know start_span and end_span
+        //TODO it would definitely be best if we just constructed contents ourselves
+        return {start_offset: start_span.deme_text_offset, end_offset: end_span.deme_text_offset, contents: contents};
     };
  
     return pub;

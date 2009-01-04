@@ -84,28 +84,49 @@
         $('adding_located_comment_div').hide();
     }
 
-    function highlight_mouseup_handler(e) {
-        var selection = DemeHighlighting.get_current_highlight();
-        if (selection) {
-            cancel_add_highlight();
-            //alert(body_str.substring(selection.start_offset, selection.end_offset));
-            //$('docbody').parentNode.insertBefore(selection.contents, $('docbody'));
-            var length = selection.end_offset - selection.start_offset;
-            var url = '{% url resource_collection viewer="textdocumentexcerpt",collection_action="new" %}?text_document={{ item.pk }}&text_document_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&start_index=' + selection.start_offset + '&length=' + length;
-            window.location = url;
-        }
-    }
- 
-    function add_highlight() {
-        $('docbody').observe('mouseup', highlight_mouseup_handler);
+    function start_highlighting() {
+        $('docbody').observe('mouseup', add_current_highlight);
         $('add_highlight_div').hide();
         $('adding_highlight_div').show();
     }
  
-    function cancel_add_highlight() {
-        $('docbody').stopObserving('mouseup', highlight_mouseup_handler);
+    function cancel_highlighting() {
+        $('docbody').stopObserving('mouseup', add_current_highlight);
         $('add_highlight_div').show();
         $('adding_highlight_div').hide();
+    }
+
+    function add_current_highlight() {
+        var docbody = $('docbody');
+        var selection = DemeHighlighting.get_current_highlight(docbody, body_str);
+        if (selection) {
+            var text_excerpt = body_str.substring(selection.start_offset, selection.end_offset);
+            var length = selection.end_offset - selection.start_offset;
+            var form_div = document.createElement('div');
+            form_div.style.border = 'thin solid #aaa';
+            form_div.style.padding = '5px';
+            form_div.style.margin = '5px';
+            var input = document.createElement('input');
+            input.setAttribute('type', 'hidden');
+            input.setAttribute('name', 'excerpt');
+            input.setAttribute('value', '{{ item.pk }} {{ item.version_number }} ' + selection.start_offset + ' ' + length);
+            form_div.appendChild(input);
+            var remove_button = document.createElement('button');
+            remove_button.appendChild(document.createTextNode('Remove'));
+            remove_button.setAttribute('type', 'button');
+            remove_button.style.cssFloat = 'right';
+            remove_button.style.styleFloat = 'right';
+            remove_button.onclick = function(){$(remove_button.parentNode).remove(); return false;};
+            form_div.appendChild(remove_button);
+            form_div.appendChild(selection.contents);
+            $('excerpt_form').appendChild(form_div);
+            //var url = '{% url resource_collection viewer="textdocumentexcerpt",collection_action="new" %}?text_document={{ item.pk }}&text_document_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&start_index=' + selection.start_offset + '&length=' + length;
+            //window.location = url;
+        }
+    }
+
+    function submit_highlights() {
+        $('excerpt_form').submit();
     }
 </script>
 
@@ -204,6 +225,7 @@ div#section_body, div#section_comments, div#section_combined {
 <div id="parse_errors" style="display: none;">
 </div>
 
+{% ifagentcan 'view' 'body' item %}
 {% ifagentcan 'comment_on' '' item %}
 <div id="add_located_comment_div">
 <a href="#" onclick="add_located_comment(); return false;">[+] Add Located Comment</a>
@@ -216,22 +238,22 @@ Now just select text where you want to comment or
 {% endifagentcan %}
 
 <div id="add_highlight_div">
-<a href="#" onclick="add_highlight(); return false;">[+] Add Highlight</a>
+<a href="#" onclick="start_highlighting(); return false;">[+] Highlight</a>
 </div>
 
 <div id="adding_highlight_div" style="display: none;">
-Now just select text you want to highlight or
-<a href="#" onclick="cancel_add_highlight(); return false;">Cancel</a>
+Now just select text you want to highlight.
+When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); return false;">submit them</a> or <a href="#" onclick="cancel_highlighting(); return false;">cancel</a>.
+
+<form id="excerpt_form" method="post" enctype="multipart/form-data" action="{% url resource_collection viewer="textdocumentexcerpt",collection_action="createmultiexcerpt" %}">
+</form>
 </div>
 
-<div><a href="#" onclick="$$('.commentref').each(function(e){e.toggle()}); return false;">Toggle Comments</a></div>
+<div><a href="#" onclick="$$('.commentref').each(function(e){e.toggle()}); return false;">Toggle Inline Comments</a></div>
 
-{% ifagentcan 'view' 'body' item %}
 <div id="docbody" style="padding: 10px;">{% display_body_with_inline_comments item is_html %}</div>
 {% else %}
-<div id="docbody" style="padding: 10px;">
 [PERMISSION DENIED]
-</div>
 {% endifagentcan %}
 
 </div>

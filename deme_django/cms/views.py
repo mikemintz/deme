@@ -1283,6 +1283,38 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
             self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
 
+    def collection_createmultiexcerpt(self):
+        if not self.cur_agent_can_global('create %s' % self.item_type.__name__):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
+        if not self.cur_agent_can_global('create ItemSet'):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create ItemSets")
+        excerpts = []
+        for excerpt_form_datum in self.request.POST.getlist('excerpt'):
+            try:
+                text_document_id, text_document_version_number, start_index, length = excerpt_form_datum.split(' ')
+                start_index = int(start_index)
+                length = int(length)
+            except ValueError:
+                return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not parse the excerpt data in the form")
+            try:
+                text_document = get_versioned_item(cms.models.TextDocument.objects.get(pk=text_document_id), text_document_version_number)
+            except:
+                return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not find the specified TextDocument")
+            if not self.cur_agent_can('view body', text_document):
+                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to view the body of this item")
+            body = text_document.body[start_index:start_index+length]
+            excerpt = cms.models.TextDocumentExcerpt(body=body, text_document=text_document, text_document_version_number=text_document_version_number, start_index=start_index, length=length)
+            excerpts.append(excerpt)
+        if not excerpts:
+            return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "You must submit at least one excerpt")
+        itemset = cms.models.ItemSet()
+        itemset.save_versioned(updater=self.cur_agent)
+        for excerpt in excerpts:
+            excerpt.save_versioned(updater=self.cur_agent)
+            cms.models.Membership(item=excerpt, itemset=itemset).save_versioned(updater=self.cur_agent)
+        redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': 'itemset', 'noun': itemset.pk}))
+        return HttpResponseRedirect(redirect)
+
     #TODO copy/edit/update excerpts
 
 

@@ -163,5 +163,7 @@ Membership(item=todd_person, itemset=discuss_group).save_versioned(updater=admin
 DefaultGlobalPermission(ability='do_something', is_allowed=True).save_versioned(updater=admin)
 #AgentGlobalPermission(agent=anonymous_agent, ability='do_something', is_allowed=False).save_versioned(updater=admin)
 DefaultGlobalPermission(ability='create HtmlDocument', is_allowed=True).save_versioned(updater=admin)
+DefaultGlobalPermission(ability='create TextDocumentExcerpt', is_allowed=True).save_versioned(updater=admin)
+DefaultGlobalPermission(ability='create ItemSet', is_allowed=True).save_versioned(updater=admin)
 
 DefaultPermission(item=admin, ability='login_as', is_allowed=True).save_versioned(updater=admin)
