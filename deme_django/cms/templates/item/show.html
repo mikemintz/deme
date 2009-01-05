@@ -13,7 +13,7 @@
     <tr>
         <th>{{ field.name|title }}</th>
         <td>
-            {% if field.can_view %}
+            {% ifagentcan 'view' field.name item %}
                 {% ifequal field.field_type 'regular' %}
                 {% ifequal field.format 'FileField' %}
                 <a href="/static/media/{{ field.obj }}">{{ field.obj }}</a>
@@ -28,18 +28,18 @@
 
                 {% ifequal field.field_type 'entry' %}
                 {% if field.obj %}
-                {% if field.can_view_name %}
+                {% ifagentcan 'view' 'name' field.obj %}
                 <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
                 {% else %}
                 <div><a href="{% show_resource_url field.obj %}">PERMISSION DENIED</a></div>
-                {% endif %}
+                {% endifagentcan %}
                 {% else %}
                 NULL
                 {% endif %}
                 {% endifequal %}
             {% else %}
                 PERMISSION DENIED
-            {% endif %}
+            {% endifagentcan %}
         </td>
     </tr>
     {% endifequal %}

@@ -455,9 +455,6 @@ The agent currently logged in is not allowed to use this application. Please log
                     obj = getattr(item, name)
                     info['field_type'] = 'regular'
                 info['obj'] = obj
-                info['can_view'] = self.cur_agent_can('view %s' % name, self.item)
-                if info['field_type'] == 'entry' and obj is not None:
-                    info['can_view_name'] = self.cur_agent_can('view name', obj)
                 fields.append(info)
             return fields
         template = loader.get_template('item/show.html')
@@ -483,12 +480,10 @@ The agent currently logged in is not allowed to use this application. Please log
             viewable_items = manager.filter(trashed=False)
             if viewable_items.count() == 0:
                 continue
-            if self.cur_agent_can_global('do_everything'):
-                relationship_set['items'] = [{'item': item, 'can_view_name': True} for item in viewable_items]
-            else:
+            self.permission_cache.learn_ability_for_queryset(self.cur_agent, 'view name', viewable_items)
+            if not self.cur_agent_can_global('do_everything'):
                 viewable_items = viewable_items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view %s' % field.field.name))
-                ids_can_view_name = set(viewable_items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name')).values_list('pk', flat=True))
-                relationship_set['items'] = [{'item': item, 'can_view_name': item.pk in ids_can_view_name} for item in viewable_items]
+            relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)
         template = loader.get_template('item/relationships.html')
         self.context['relationship_sets'] = relationship_sets
