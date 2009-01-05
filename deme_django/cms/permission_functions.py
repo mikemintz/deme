@@ -15,6 +15,10 @@ class PermissionCache(object):
         return ability in self.cached_global_abilities_for_agent(agent)
 
     def agent_can(self, agent, ability, item):
+        if item.pk in self._ability_yes_cache.get((agent.pk, ability), set()):
+            return True
+        if item.pk in self._ability_no_cache.get((agent.pk, ability), set()):
+            return False
         return ability in self.cached_abilities_for_agent_and_item(agent, item)
 
     def cached_global_abilities_for_agent(self, agent):
@@ -36,6 +40,12 @@ class PermissionCache(object):
                 result = result & set(calculate_abilities_for_agent_and_item(agent, item))
             self._item_ability_cache[(agent.pk, item.pk)] = result
         return result
+
+    def learn_ability_for_queryset(self, agent, ability, queryset):
+        yes_pks = set(queryset.filter(filter_for_agent_and_ability(agent, ability)).values_list('pk', flat=True))
+        no_pks = set(queryset.values_list('pk', flat=True)) - yes_pks
+        self._ability_yes_cache.setdefault((agent.pk, ability), set()).update(yes_pks)
+        self._ability_no_cache.setdefault((agent.pk, ability), set()).update(no_pks)
 
 
 ################################################################################

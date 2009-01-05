@@ -125,20 +125,20 @@ def list_results_navigator(item_type, itemset, search_query, trashed, offset, li
 def agentcan_global_helper(context, ability, wildcard_suffix=False):
     agent = context['cur_agent']
     permission_cache = context['_permission_cache']
-    global_abilities = permission_cache.cached_global_abilities_for_agent(agent)
     if wildcard_suffix:
+        global_abilities = permission_cache.cached_global_abilities_for_agent(agent)
         return any(x.startswith(ability) for x in global_abilities)
     else:
-        return ability in global_abilities
+        return permission_cache.agent_can_global(agent, ability)
 
 def agentcan_helper(context, ability, item, wildcard_suffix=False):
     agent = context['cur_agent']
     permission_cache = context['_permission_cache']
-    abilities_for_item = permission_cache.cached_abilities_for_agent_and_item(agent, item)
     if wildcard_suffix:
+        abilities_for_item = permission_cache.cached_abilities_for_agent_and_item(agent, item)
         return any(x.startswith(ability) for x in abilities_for_item)
     else:
-        return ability in abilities_for_item
+        return permission_cache.agent_can(agent, ability, item)
 
 class IfAgentCan(template.Node):
     def __init__(self, ability, ability_parameter, item, nodelist_true, nodelist_false):
@@ -255,8 +255,22 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
     else:
         comment_pks = cms.models.RecursiveCommentMembership.objects.filter(parent=item).values_list('child', flat=True)
     if comment_pks:
+        context['_viewer'].permission_cache.learn_ability_for_queryset(context['cur_agent'], 'view created_at', cms.models.Comment.objects.filter(pk__in=comment_pks))
+        context['_viewer'].permission_cache.learn_ability_for_queryset(context['cur_agent'], 'view creator', cms.models.Comment.objects.filter(pk__in=comment_pks))
+        context['_viewer'].permission_cache.learn_ability_for_queryset(context['cur_agent'], 'view name', cms.models.Agent.objects.filter(pk__in=cms.models.Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
         for comment_subclass in comment_subclasses:
-            comments.extend(comment_subclass.objects.filter(pk__in=comment_pks).select_related('creator'))
+            new_comments = comment_subclass.objects.filter(pk__in=comment_pks)
+            related_fields = ['creator']
+            if include_recursive_itemset_comments:
+                related_fields.extend(['commented_item'])
+            if new_comments:
+                if comment_subclass in [cms.models.AddMemberComment, cms.models.RemoveMemberComment]:
+                    context['_viewer'].permission_cache.learn_ability_for_queryset(context['cur_agent'], 'view membership', new_comments)
+                    context['_viewer'].permission_cache.learn_ability_for_queryset(context['cur_agent'], 'view item', cms.models.Membership.objects.filter(pk__in=new_comments.values('membership_id').query))
+                    context['_viewer'].permission_cache.learn_ability_for_queryset(context['cur_agent'], 'view name', cms.models.Item.objects.filter(pk__in=cms.models.Membership.objects.filter(pk__in=new_comments.values('membership_id').query).values('item_id').query))
+                    related_fields.extend(['membership', 'membership__item'])
+            new_comments = new_comments.select_related(*related_fields)
+            comments.extend(new_comments)
     relevant_comment_locations = dict((x.comment_id, x) for x in cms.models.CommentLocation.objects.filter(commented_item_version_number=version_number, comment__pk__in=comment_pks))
     comments.sort(key=lambda x: x.created_at)
     pk_to_comment_info = {}
@@ -267,7 +281,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
     result = []
     for comment in comments:
         child = pk_to_comment_info[comment.pk]
-        parent = pk_to_comment_info.get(comment.commented_item.pk)
+        parent = pk_to_comment_info.get(comment.commented_item_id)
         if parent:
             parent['subcomments'].append(child)
         else:
@@ -526,7 +540,7 @@ class CommentBox(template.Node):
                         result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), 'PERMISSION DENIED'))
                 else:
                     result.append('by [PERMISSION DENIED]')
-                if item.pk != comment.commented_item.pk and nesting_level == 0:
+                if item.pk != comment.commented_item_id and nesting_level == 0:
                     if agentcan_helper(context, 'view name', comment.commented_item):
                         result.append('for <a href="%s">%s</a>' % (show_resource_url(comment.commented_item), escape(comment.commented_item.name)))
                     else:
@@ -536,29 +550,33 @@ class CommentBox(template.Node):
                     result.append('%s ago' % timesince(comment.created_at))
                 else:
                     result.append('at [PERMISSION DENIED]')
-                if item.pk == comment.commented_item.pk and not comment_location:
+                if item.pk == comment.commented_item_id and not comment_location:
                     result.append("[INACTIVE]")
                 result.append("</div>")
                 if comment.trashed:
                     comment_description = ''
                     comment_body = '[TRASHED]'
                 else:
-                    if agentcan_helper(context, 'view description', comment):
-                        comment_description = escape(comment.description)
-                    else:
-                        comment_description = '[PERMISSION DENIED]'
                     if isinstance(comment, cms.models.TextComment):
                         if agentcan_helper(context, 'view body', comment):
                             comment_body = escape(comment.body).replace('\n', '<br />')
                         else:
                             comment_body = '[PERMISSION DENIED]'
+                        if agentcan_helper(context, 'view description', comment):
+                            comment_description = escape(comment.description)
+                        else:
+                            comment_description = '[PERMISSION DENIED]'
                     elif isinstance(comment, cms.models.EditComment):
+                        comment_description = ''
                         comment_body = ''
                     elif isinstance(comment, cms.models.TrashComment):
+                        comment_description = ''
                         comment_body = ''
                     elif isinstance(comment, cms.models.UntrashComment):
+                        comment_description = ''
                         comment_body = ''
                     elif isinstance(comment, cms.models.AddMemberComment):
+                        comment_description = ''
                         if agentcan_helper(context, 'view membership', comment):
                             if agentcan_helper(context, 'view item', comment.membership):
                                 if agentcan_helper(context, 'view name', comment.membership.item):
@@ -570,6 +588,7 @@ class CommentBox(template.Node):
                         else:
                             comment_body = ''
                     elif isinstance(comment, cms.models.RemoveMemberComment):
+                        comment_description = ''
                         if agentcan_helper(context, 'view membership', comment):
                             if agentcan_helper(context, 'view item', comment.membership):
                                 if agentcan_helper(context, 'view name', comment.membership.item):
@@ -581,6 +600,7 @@ class CommentBox(template.Node):
                         else:
                             comment_body = ''
                     else:
+                        comment_description = ''
                         comment_body = ''
                 result.append("""<div class="comment_description">%s</div><div class="comment_body">%s</div>""" % (comment_description, comment_body))
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
