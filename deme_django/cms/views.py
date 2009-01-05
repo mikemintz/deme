@@ -203,33 +203,6 @@ def get_versioned_item(item, version_number):
     return item
 
 
-class PermissionCache(object):
-
-    def __init__(self):
-        self._global_ability_cache = {}
-        self._item_ability_cache = {}
-
-    def get_global_abilities_for_agent(self, agent):
-        result = self._global_ability_cache.get(agent.pk)
-        if result is None:
-            result = set(permission_functions.get_global_abilities_for_agent(agent))
-            if 'do_everything' in result:
-                result = set([x[0] for x in cms.models.POSSIBLE_GLOBAL_ABILITIES])
-            else:
-                result = result & set([x[0] for x in cms.models.POSSIBLE_GLOBAL_ABILITIES])
-            self._global_ability_cache[agent.pk] = result
-        return result
-
-    def get_abilities_for_agent_and_item(self, agent, item):
-        result = self._item_ability_cache.get((agent.pk, item.pk))
-        if result is None:
-            result = type(item).relevant_abilities
-            if 'do_everything' not in self.get_global_abilities_for_agent(agent):
-                result = result & set(permission_functions.get_abilities_for_agent_and_item(agent, item))
-            self._item_ability_cache[(agent.pk, item.pk)] = result
-        return result
-
-
 class ItemViewer(object):
     __metaclass__ = ViewerMetaClass
 
@@ -256,7 +229,7 @@ class ItemViewer(object):
         return request_class(template.render(self.context))
 
     def init_from_http(self, request, cur_agent, current_site, url_info):
-        self.permission_cache = PermissionCache()
+        self.permission_cache = permission_functions.PermissionCache()
         self.viewer_name = url_info.get('viewer')
         self.format = url_info.get('format', 'html')
         self.method = (request.REQUEST.get('_method', None) or request.method).upper()

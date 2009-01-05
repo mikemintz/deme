@@ -3,6 +3,33 @@ from django.db.models import Q
 from itertools import chain
 
 
+class PermissionCache(object):
+
+    def __init__(self):
+        self._global_ability_cache = {}
+        self._item_ability_cache = {}
+
+    def get_global_abilities_for_agent(self, agent):
+        result = self._global_ability_cache.get(agent.pk)
+        if result is None:
+            result = set(get_global_abilities_for_agent(agent))
+            if 'do_everything' in result:
+                result = set([x[0] for x in POSSIBLE_GLOBAL_ABILITIES])
+            else:
+                result = result & set([x[0] for x in POSSIBLE_GLOBAL_ABILITIES])
+            self._global_ability_cache[agent.pk] = result
+        return result
+
+    def get_abilities_for_agent_and_item(self, agent, item):
+        result = self._item_ability_cache.get((agent.pk, item.pk))
+        if result is None:
+            result = type(item).relevant_abilities
+            if 'do_everything' not in self.get_global_abilities_for_agent(agent):
+                result = result & set(get_abilities_for_agent_and_item(agent, item))
+            self._item_ability_cache[(agent.pk, item.pk)] = result
+        return result
+
+
 ################################################################################
 # Global permissions
 ################################################################################
