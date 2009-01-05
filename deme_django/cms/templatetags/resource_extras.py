@@ -12,7 +12,7 @@ register = template.Library()
 
 @register.simple_tag
 def show_resource_url(item, version_number=None):
-    if isinstance(item, cms.models.ItemVersion):
+    if isinstance(item, cms.models.Item.VERSION):
         return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}) + '?version=%s' % item.version_number
     elif isinstance(item, cms.models.Item):
         if version_number is not None:

@@ -1,17 +1,16 @@
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
 from django.template import Context, loader
-import cms.models
+from cms.models import *
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.utils import datastructures
 import datetime
 import random
-
-from cms.views import *
+from cms.views import set_default_layout, get_viewer_class_for_viewer_name
 import permission_functions
+import os
 
 # import module viewers
-import os
 modules_dir = os.path.join(os.path.dirname(__file__), '..', 'modules')
 for module_name in os.listdir(modules_dir):
     if module_name.startswith('.'):
@@ -43,26 +42,26 @@ def get_logged_in_agent(request):
     cur_agent = None
     if cur_agent_id != None:
         try:
-            cur_agent = cms.models.Agent.objects.get(pk=cur_agent_id).downcast()
+            cur_agent = Agent.objects.get(pk=cur_agent_id).downcast()
         except ObjectDoesNotExist:
             if 'cur_agent_id' in request.session:
                 del request.session['cur_agent_id']
     if not cur_agent:
         try:
-            cur_agent = cms.models.AnonymousAgent.objects.all()[0:1].get()
+            cur_agent = AnonymousAgent.objects.all()[0:1].get()
         except ObjectDoesNotExist:
             raise Exception("You must create an anonymous agent")
-    cms.models.Agent.objects.filter(pk=cur_agent.pk).update(last_online_at=datetime.datetime.now())
+    Agent.objects.filter(pk=cur_agent.pk).update(last_online_at=datetime.datetime.now())
     return cur_agent
 
 
 def get_current_site(request):
     hostname = request.META['HTTP_HOST'].split(':')[0]
     try:
-        return cms.models.Site.objects.filter(site_domains_as_site__hostname=hostname)[0:1].get()
+        return Site.objects.filter(site_domains_as_site__hostname=hostname)[0:1].get()
     except ObjectDoesNotExist:
         try:
-            return cms.models.Site.objects.get(pk=cms.models.DemeSetting.get('cms.default_site'))
+            return Site.objects.get(pk=DemeSetting.get('cms.default_site'))
         except ObjectDoesNotExist:
             raise Exception("You must create a default Site")
 
@@ -98,9 +97,9 @@ def login(request, *args, **kwargs):
     can_do_everything = permission_cache.agent_can_global(cur_agent, 'do_everything')
     if request.method == 'GET':
         if 'getencryptionmethod' in request.GET:
-            nonce = cms.models.get_hexdigest('sha1', str(random.random()), str(random.random()))[:5]
+            nonce = get_hexdigest('sha1', str(random.random()), str(random.random()))[:5]
             try:
-                password_authentication_method = cms.models.PasswordAuthenticationMethod.objects.get(username=request.GET['getencryptionmethod'])
+                password_authentication_method = PasswordAuthenticationMethod.objects.get(username=request.GET['getencryptionmethod'])
                 algo, salt, hsh = password_authentication_method.password.split('$')
                 json_data = simplejson.dumps({'nonce':nonce, 'algo':algo, 'salt':salt}, separators=(',',':'))
             except:
@@ -115,9 +114,9 @@ def login(request, *args, **kwargs):
             context['cur_agent'] = cur_agent
             context['_permission_cache'] = permission_cache
             if can_do_everything:
-                context['login_as_agents'] = cms.models.Agent.objects.filter(trashed=False).order_by('name')
+                context['login_as_agents'] = Agent.objects.filter(trashed=False).order_by('name')
             else:
-                context['login_as_agents'] = cms.models.Agent.objects.filter(trashed=False).filter(permission_functions.filter_for_agent_and_ability(cur_agent, 'login_as')).order_by('name')
+                context['login_as_agents'] = Agent.objects.filter(trashed=False).filter(permission_functions.filter_for_agent_and_ability(cur_agent, 'login_as')).order_by('name')
             set_default_layout(context, current_site, cur_agent)
             return HttpResponse(template.render(context))
     else:
@@ -129,7 +128,7 @@ def login(request, *args, **kwargs):
             username = request.POST['username']
             hashed_password = request.POST['hashed_password']
             try:
-                password_authentication_method = cms.models.PasswordAuthenticationMethod.objects.get(username=username)
+                password_authentication_method = PasswordAuthenticationMethod.objects.get(username=username)
             except ObjectDoesNotExist:
                 return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Username", "No person has this username")
             if password_authentication_method.agent.trashed: 
@@ -145,7 +144,7 @@ def login(request, *args, **kwargs):
                 if key.startswith('login_as_'):
                     new_agent_id = key.split('login_as_')[1]
                     try:
-                        new_agent = cms.models.Agent.objects.get(pk=new_agent_id)
+                        new_agent = Agent.objects.get(pk=new_agent_id)
                     except ObjectDoesNotExist:
                         return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Agent ID", "There is no agent with the id you specified")
                     if new_agent.trashed:
@@ -199,7 +198,7 @@ def alias(request, *args, **kwargs):
     custom_url = current_site
     try:
         for path_part in path_parts:
-            custom_url = cms.models.CustomUrl.objects.filter(path=path_part, parent_url=custom_url)[0:1].get()
+            custom_url = CustomUrl.objects.filter(path=path_part, parent_url=custom_url)[0:1].get()
     except ObjectDoesNotExist:
         return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseNotFound, "Alias Not Found", "We could not find any alias matching your URL http://%s%s." % (request.META['HTTP_HOST'], request.path))
     item = custom_url.aliased_item

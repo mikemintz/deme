@@ -1,22 +1,19 @@
-# Create your views here.
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
 from django.template import Context, loader
 from django.db import models
 from django.db.models import Q
-import cms.models
+from cms.models import *
 from django import forms
 from django.utils import simplejson
 from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
-import logging
 import permission_functions
 import re
 
 ### MODELS ###
 
 resource_name_dict = {}
-for model in cms.models.all_models():
+for model in all_models():
     resource_name_dict[model.__name__.lower()] = model
 
 
@@ -25,10 +22,10 @@ class AjaxModelChoiceWidget(forms.Widget):
         model = self.choices.queryset.model
         #field = self.choices.field
         try:
-            if issubclass(model, cms.models.Item):
-                value_item = cms.models.Item.objects.get(pk=value)
-            elif issubclass(model, cms.models.ItemVersion):
-                value_item = cms.models.ItemVersion.objects.get(pk=value)
+            if issubclass(model, Item):
+                value_item = Item.objects.get(pk=value)
+            elif issubclass(model, Item.VERSION):
+                value_item = Item.VERSION.objects.get(pk=value)
             else:
                 value_item = None
         except:
@@ -100,29 +97,29 @@ class TextModelChoiceField(forms.ModelChoiceField):
     widget = forms.TextInput
 
 class AddSubPathForm(forms.ModelForm):
-    aliased_item = super(models.ForeignKey, cms.models.CustomUrl._meta.get_field_by_name('aliased_item')[0]).formfield(queryset=cms.models.CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.to._default_manager.complex_filter(cms.models.CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=cms.models.CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.field_name)
-    parent_url = super(models.ForeignKey, cms.models.CustomUrl._meta.get_field_by_name('parent_url')[0]).formfield(queryset=cms.models.CustomUrl._meta.get_field_by_name('parent_url')[0].rel.to._default_manager.complex_filter(cms.models.CustomUrl._meta.get_field_by_name('parent_url')[0].rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=cms.models.CustomUrl._meta.get_field_by_name('parent_url')[0].rel.field_name)
+    aliased_item = super(models.ForeignKey, CustomUrl._meta.get_field_by_name('aliased_item')[0]).formfield(queryset=CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.to._default_manager.complex_filter(CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.field_name)
+    parent_url = super(models.ForeignKey, CustomUrl._meta.get_field_by_name('parent_url')[0]).formfield(queryset=CustomUrl._meta.get_field_by_name('parent_url')[0].rel.to._default_manager.complex_filter(CustomUrl._meta.get_field_by_name('parent_url')[0].rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=CustomUrl._meta.get_field_by_name('parent_url')[0].rel.field_name)
     class Meta:
-        model = cms.models.CustomUrl
+        model = CustomUrl
         fields = ['aliased_item', 'viewer', 'action', 'query_string', 'format', 'parent_url', 'path']
 
 class NewMembershipForm(forms.ModelForm):
-    item = AjaxModelChoiceField(cms.models.Item.objects)
+    item = AjaxModelChoiceField(Item.objects)
     class Meta:
-        model = cms.models.Membership
+        model = Membership
         fields = ['item']
 
 class NewTextCommentForm(forms.ModelForm):
-    commented_item = HiddenModelChoiceField(cms.models.Item.objects)
+    commented_item = HiddenModelChoiceField(Item.objects)
     commented_item_version_number = forms.IntegerField(widget=forms.HiddenInput())
     commented_item_index = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     class Meta:
-        model = cms.models.TextComment
+        model = TextComment
         fields = ['name', 'description', 'body', 'commented_item']
 
 def get_form_class_for_item_type(update_or_create, item_type, fields=None):
     # For now, this is how we prevent manual creation of TextDocumentExcerpts
-    if issubclass(item_type, cms.models.TextDocumentExcerpt):
+    if issubclass(item_type, TextDocumentExcerpt):
         return forms.models.modelform_factory(item_type, fields=['name'])
 
     exclude = []
@@ -206,7 +203,7 @@ def get_versioned_item(item, version_number):
 class ItemViewer(object):
     __metaclass__ = ViewerMetaClass
 
-    item_type = cms.models.Item
+    item_type = Item
     viewer_name = 'item'
 
     def __init__(self):
@@ -245,7 +242,7 @@ class ItemViewer(object):
             if self.action == None:
                 self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'trash'}.get(self.method, 'show')
             try:
-                self.item = cms.models.Item.objects.get(pk=self.noun)
+                self.item = Item.objects.get(pk=self.noun)
                 if self.item:
                     self.item = self.item.downcast()
                 if 'version' in self.request.REQUEST:
@@ -331,7 +328,7 @@ The agent currently logged in is not allowed to use this application. Please log
 
     def collection_list(self):
         if self.request.GET.get('itemset'):
-            itemset = cms.models.Item.objects.get(pk=self.request.GET.get('itemset')).downcast()
+            itemset = Item.objects.get(pk=self.request.GET.get('itemset')).downcast()
         else:
             itemset = None
         offset = int(self.request.GET.get('offset', 0))
@@ -346,18 +343,18 @@ The agent currently logged in is not allowed to use this application. Please log
             search_filter = Q(name__icontains=q)
             # This is commented out because it's too simplistic, and does not respect permissions.
             # search_filter = search_filter | Q(description__icontains=q)
-            # if self.item_type == cms.models.Item:
+            # if self.item_type == Item:
             #     search_filter = search_filter | Q(document__textdocument__body__icontains=q)
-            # elif self.item_type == cms.models.Document:
+            # elif self.item_type == Document:
             #     search_filter = search_filter | Q(textdocument__body__icontains=q)
-            # elif issubclass(self.item_type, cms.models.TextDocument):
+            # elif issubclass(self.item_type, TextDocument):
             #     search_filter = search_filter | Q(body__icontains=q)
             items = items.filter(search_filter)
-        if isinstance(itemset, cms.models.ItemSet):
+        if isinstance(itemset, ItemSet):
             if self.cur_agent_can_global('do_everything'):
                 recursive_filter = None
             else:
-                visible_memberships = cms.models.Membership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
+                visible_memberships = Membership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=itemset.all_contained_itemset_members(recursive_filter).values('pk').query)
         if self.cur_agent_can_global('do_everything'):
@@ -386,7 +383,7 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['list_end_i'] = min(offset + limit, n_listable_items)
         self.context['trashed'] = trashed
         self.context['itemset'] = itemset
-        self.context['all_itemsets'] = cms.models.ItemSet.objects.filter(trashed=False).filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name')).order_by('name')
+        self.context['all_itemsets'] = ItemSet.objects.filter(trashed=False).filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name')).order_by('name')
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
@@ -401,7 +398,7 @@ The agent currently logged in is not allowed to use this application. Please log
         template = loader.get_template('item/new.html')
         self.context['model_names'] = model_names
         self.context['form'] = form
-        self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
+        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
@@ -422,7 +419,7 @@ The agent currently logged in is not allowed to use this application. Please log
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
             self.context['form'] = form
-            self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
+            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
             self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
 
@@ -434,7 +431,7 @@ The agent currently logged in is not allowed to use this application. Please log
                     continue
                 field, model, direct, m2m = item._meta.get_field_by_name(name)
                 model_class = type(item) if model == None else model
-                model_class = model_class.NOTVERSION if issubclass(model_class, cms.models.Item.VERSION) else model_class
+                model_class = model_class.NOTVERSION if issubclass(model_class, Item.VERSION) else model_class
                 model_name = model_class.__name__
                 if model_name == 'Item':
                     continue # things in Item are boring, since they're already part of the layout (entryheader)
@@ -470,9 +467,9 @@ The agent currently logged in is not allowed to use this application. Please log
                 continue
             if type(field.field).__name__ != 'ForeignKey':
                 continue
-            if issubclass(field.model, cms.models.Permission):
+            if issubclass(field.model, Permission):
                 continue
-            if not issubclass(field.model, cms.models.Item):
+            if not issubclass(field.model, Item):
                 continue
             manager = getattr(self.item, name)
             relationship_set = {}
@@ -506,7 +503,7 @@ The agent currently logged in is not allowed to use this application. Please log
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']
-        self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
+        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
     def entry_copy(self):
@@ -531,7 +528,7 @@ The agent currently logged in is not allowed to use this application. Please log
         model_names.sort()
         self.context['model_names'] = model_names
         self.context['action_is_entry_copy'] = True
-        self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
+        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
         if 'redirect' in self.request.GET:
             self.context['redirect'] = self.request.GET['redirect']
         return HttpResponse(template.render(self.context))
@@ -553,16 +550,16 @@ The agent currently logged in is not allowed to use this application. Please log
             template = loader.get_template('item/edit.html')
             self.context['form'] = form
             self.context['query_string'] = self.request.META['QUERY_STRING']
-            self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
+            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
             return HttpResponse(template.render(self.context))
 
     def entry_trash(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         can_trash = self.cur_agent_can('trash', self.item)
-        if isinstance(self.item, cms.models.Permission) and self.cur_agent_can('modify_permissions', self.item.item):
+        if isinstance(self.item, Permission) and self.cur_agent_can('modify_permissions', self.item.item):
             can_trash = True
-        if isinstance(self.item, cms.models.GlobalPermission) and self.cur_agent_can_global('do_everything'):
+        if isinstance(self.item, GlobalPermission) and self.cur_agent_can_global('do_everything'):
             can_trash = True
         if not can_trash:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to trash this item")
@@ -574,9 +571,9 @@ The agent currently logged in is not allowed to use this application. Please log
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         can_trash = self.cur_agent_can('trash', self.item)
-        if isinstance(self.item, cms.models.Permission) and self.cur_agent_can('modify_permissions', self.item.item):
+        if isinstance(self.item, Permission) and self.cur_agent_can('modify_permissions', self.item.item):
             can_trash = True
-        if isinstance(self.item, cms.models.GlobalPermission) and self.cur_agent_can_global('do_everything'):
+        if isinstance(self.item, GlobalPermission) and self.cur_agent_can_global('do_everything'):
             can_trash = True
         if not can_trash:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to untrash this item")
@@ -597,12 +594,12 @@ The agent currently logged in is not allowed to use this application. Please log
             else:
                 return f.formfield()
 
-        agent_permission_form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['agent', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        agent_role_permission_form_class = forms.models.modelform_factory(cms.models.AgentRolePermission, fields=['agent', 'item', 'role'], formfield_callback=formfield_callback)
-        itemset_permission_form_class = forms.models.modelform_factory(cms.models.ItemSetPermission, fields=['itemset', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        itemset_role_permission_form_class = forms.models.modelform_factory(cms.models.ItemSetRolePermission, fields=['itemset', 'item', 'role'], formfield_callback=formfield_callback)
-        default_permission_form_class = forms.models.modelform_factory(cms.models.DefaultPermission, fields=['item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        default_role_permission_form_class = forms.models.modelform_factory(cms.models.DefaultRolePermission, fields=['item', 'role'], formfield_callback=formfield_callback)
+        agent_permission_form_class = forms.models.modelform_factory(AgentPermission, fields=['agent', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
+        agent_role_permission_form_class = forms.models.modelform_factory(AgentRolePermission, fields=['agent', 'item', 'role'], formfield_callback=formfield_callback)
+        itemset_permission_form_class = forms.models.modelform_factory(ItemSetPermission, fields=['itemset', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
+        itemset_role_permission_form_class = forms.models.modelform_factory(ItemSetRolePermission, fields=['itemset', 'item', 'role'], formfield_callback=formfield_callback)
+        default_permission_form_class = forms.models.modelform_factory(DefaultPermission, fields=['item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
+        default_role_permission_form_class = forms.models.modelform_factory(DefaultRolePermission, fields=['item', 'role'], formfield_callback=formfield_callback)
 
         if self.method == 'POST':
             form_type = self.request.GET.get('formtype')
@@ -669,8 +666,8 @@ The agent currently logged in is not allowed to use this application. Please log
         agent_role_permissions = self.item.agent_role_permissions_as_item.order_by('role__name')
         itemset_role_permissions = self.item.itemset_role_permissions_as_item.order_by('role__name')
         default_role_permissions = self.item.default_role_permissions_as_item.order_by('role__name')
-        agents = cms.models.Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
-        itemsets = cms.models.ItemSet.objects.filter(Q(pk__in=itemset_permissions.values('itemset__pk').query) | Q(pk__in=itemset_role_permissions.values('itemset__pk').query) | Q(pk=self.request.GET.get('itemset', 0))).order_by('name')
+        agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
+        itemsets = ItemSet.objects.filter(Q(pk__in=itemset_permissions.values('itemset__pk').query) | Q(pk__in=itemset_role_permissions.values('itemset__pk').query) | Q(pk=self.request.GET.get('itemset', 0))).order_by('name')
 
         agent_data = []
         for agent in agents:
@@ -721,8 +718,8 @@ The agent currently logged in is not allowed to use this application. Please log
                 default_data['role_permission_form'] = form
                 default_data['role_permission_form_invalid'] = True
 
-        new_agent_form_class = forms.models.modelform_factory(cms.models.AgentPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
-        new_itemset_form_class = forms.models.modelform_factory(cms.models.ItemSetPermission, fields=['itemset'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_agent_form_class = forms.models.modelform_factory(AgentPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_itemset_form_class = forms.models.modelform_factory(ItemSetPermission, fields=['itemset'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
 
         template = loader.get_template('item/permissions.html')
         self.context['agent_data'] = agent_data
@@ -744,12 +741,12 @@ The agent currently logged in is not allowed to use this application. Please log
             else:
                 return f.formfield()
 
-        agent_permission_form_class = forms.models.modelform_factory(cms.models.AgentGlobalPermission, fields=['agent', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        agent_role_permission_form_class = forms.models.modelform_factory(cms.models.AgentGlobalRolePermission, fields=['agent', 'global_role'], formfield_callback=formfield_callback)
-        itemset_permission_form_class = forms.models.modelform_factory(cms.models.ItemSetGlobalPermission, fields=['itemset', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        itemset_role_permission_form_class = forms.models.modelform_factory(cms.models.ItemSetGlobalRolePermission, fields=['itemset', 'global_role'], formfield_callback=formfield_callback)
-        default_permission_form_class = forms.models.modelform_factory(cms.models.DefaultGlobalPermission, fields=['ability', 'is_allowed'], formfield_callback=formfield_callback)
-        default_role_permission_form_class = forms.models.modelform_factory(cms.models.DefaultGlobalRolePermission, fields=['global_role'], formfield_callback=formfield_callback)
+        agent_permission_form_class = forms.models.modelform_factory(AgentGlobalPermission, fields=['agent', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
+        agent_role_permission_form_class = forms.models.modelform_factory(AgentGlobalRolePermission, fields=['agent', 'global_role'], formfield_callback=formfield_callback)
+        itemset_permission_form_class = forms.models.modelform_factory(ItemSetGlobalPermission, fields=['itemset', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
+        itemset_role_permission_form_class = forms.models.modelform_factory(ItemSetGlobalRolePermission, fields=['itemset', 'global_role'], formfield_callback=formfield_callback)
+        default_permission_form_class = forms.models.modelform_factory(DefaultGlobalPermission, fields=['ability', 'is_allowed'], formfield_callback=formfield_callback)
+        default_role_permission_form_class = forms.models.modelform_factory(DefaultGlobalRolePermission, fields=['global_role'], formfield_callback=formfield_callback)
 
         if self.method == 'POST':
             form_type = self.request.GET.get('formtype')
@@ -770,7 +767,7 @@ The agent currently logged in is not allowed to use this application. Please log
 
             if self.request.POST.get('permission_to_delete') is not None:
                 permission = form_class._meta.model.objects.get(pk=self.request.POST.get('permission_to_delete'))
-                if isinstance(permission, cms.models.AgentGlobalPermission) and permission.agent.pk == 1 and permission.ability == 'do_everything':
+                if isinstance(permission, AgentGlobalPermission) and permission.agent.pk == 1 and permission.ability == 'do_everything':
                     # Don't delete the admin permission, it may be difficult to get back.
                     pass
                 else:
@@ -803,7 +800,7 @@ The agent currently logged in is not allowed to use this application. Please log
                 except ObjectDoesNotExist:
                     existing_permission = None
                 if existing_permission:
-                    if isinstance(existing_permission, cms.models.AgentGlobalPermission) and existing_permission.agent.pk == 1 and existing_permission.ability == 'do_everything':
+                    if isinstance(existing_permission, AgentGlobalPermission) and existing_permission.agent.pk == 1 and existing_permission.ability == 'do_everything':
                         # Don't delete the admin permission, it may be difficult to get back.
                         pass
                     else:
@@ -816,14 +813,14 @@ The agent currently logged in is not allowed to use this application. Please log
                     # we'll display it in the regular page below as an invalid form
                     pass
 
-        agent_permissions = cms.models.AgentGlobalPermission.objects.order_by('ability')
-        itemset_permissions = cms.models.ItemSetGlobalPermission.objects.order_by('ability')
-        default_permissions = cms.models.DefaultGlobalPermission.objects.order_by('ability')
-        agent_role_permissions = cms.models.AgentGlobalRolePermission.objects.order_by('global_role__name')
-        itemset_role_permissions = cms.models.ItemSetGlobalRolePermission.objects.order_by('global_role__name')
-        default_role_permissions = cms.models.DefaultGlobalRolePermission.objects.order_by('global_role__name')
-        agents = cms.models.Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
-        itemsets = cms.models.ItemSet.objects.filter(Q(pk__in=itemset_permissions.values('itemset__pk').query) | Q(pk__in=itemset_role_permissions.values('itemset__pk').query) | Q(pk=self.request.GET.get('itemset', 0))).order_by('name')
+        agent_permissions = AgentGlobalPermission.objects.order_by('ability')
+        itemset_permissions = ItemSetGlobalPermission.objects.order_by('ability')
+        default_permissions = DefaultGlobalPermission.objects.order_by('ability')
+        agent_role_permissions = AgentGlobalRolePermission.objects.order_by('global_role__name')
+        itemset_role_permissions = ItemSetGlobalRolePermission.objects.order_by('global_role__name')
+        default_role_permissions = DefaultGlobalRolePermission.objects.order_by('global_role__name')
+        agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
+        itemsets = ItemSet.objects.filter(Q(pk__in=itemset_permissions.values('itemset__pk').query) | Q(pk__in=itemset_role_permissions.values('itemset__pk').query) | Q(pk=self.request.GET.get('itemset', 0))).order_by('name')
 
         agent_data = []
         for agent in agents:
@@ -874,8 +871,8 @@ The agent currently logged in is not allowed to use this application. Please log
                 default_data['role_permission_form'] = form
                 default_data['role_permission_form_invalid'] = True
 
-        new_agent_form_class = forms.models.modelform_factory(cms.models.AgentGlobalPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
-        new_itemset_form_class = forms.models.modelform_factory(cms.models.ItemSetGlobalPermission, fields=['itemset'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_agent_form_class = forms.models.modelform_factory(AgentGlobalPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_itemset_form_class = forms.models.modelform_factory(ItemSetGlobalPermission, fields=['itemset'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
 
         template = loader.get_template('item/globalpermissions.html')
         self.context['agent_data'] = agent_data
@@ -887,7 +884,7 @@ The agent currently logged in is not allowed to use this application. Please log
 
 
 class GroupViewer(ItemViewer):
-    item_type = cms.models.Group
+    item_type = Group
     viewer_name = 'group'
 
     def collection_create(self):
@@ -903,7 +900,7 @@ class GroupViewer(ItemViewer):
         else:
             template = loader.get_template('item/new.html')
             self.context['form'] = form
-            self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
+            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
@@ -912,7 +909,7 @@ class GroupViewer(ItemViewer):
 
 
 class ViewerRequestViewer(ItemViewer):
-    item_type = cms.models.ViewerRequest
+    item_type = ViewerRequest
     viewer_name = 'viewerrequest'
 
     def entry_show(self):
@@ -932,7 +929,7 @@ class ViewerRequestViewer(ItemViewer):
         if not self.cur_agent_can('add_sub_path', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add a sub path to this url")
         try:
-            custom_url = cms.models.CustomUrl.objects.get(parent_url=self.item, path=form.data['path'])
+            custom_url = CustomUrl.objects.get(parent_url=self.item, path=form.data['path'])
             form = AddSubPathForm(self.request.POST, self.request.FILES, instance=custom_url)
         except:
             pass
@@ -954,7 +951,7 @@ class ViewerRequestViewer(ItemViewer):
 
 
 class ItemSetViewer(ItemViewer):
-    item_type = cms.models.ItemSet
+    item_type = ItemSet
     viewer_name = 'itemset'
 
     def entry_show(self):
@@ -965,7 +962,7 @@ class ItemSetViewer(ItemViewer):
             memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
         memberships = memberships.select_related('item')
         if memberships:
-            self.permission_cache.learn_ability_for_queryset(self.cur_agent, 'view name', cms.models.Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+            self.permission_cache.learn_ability_for_queryset(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
         self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can(self.cur_agent, 'view name', x.item), x.item.name))
         self.context['cur_agent_in_itemset'] = bool(self.item.memberships_as_itemset.filter(trashed=False, item=self.cur_agent))
         self.context['addmember_form'] = NewMembershipForm()
@@ -975,17 +972,17 @@ class ItemSetViewer(ItemViewer):
 
     def entry_addmember(self):
         try:
-            member = cms.models.Item.objects.get(pk=self.request.POST.get('item'))
+            member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('add_self', self.item))):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add this member to this ItemSet")
         try:
-            membership = cms.models.Membership.objects.get(itemset=self.item, item=member)
+            membership = Membership.objects.get(itemset=self.item, item=member)
             if membership.trashed:
                 membership.untrash(self.cur_agent)
         except:
-            membership = cms.models.Membership(itemset=self.item, item=member)
+            membership = Membership(itemset=self.item, item=member)
             membership.save_versioned(updater=self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
@@ -993,13 +990,13 @@ class ItemSetViewer(ItemViewer):
 
     def entry_removemember(self):
         try:
-            member = cms.models.Item.objects.get(pk=self.request.POST.get('item'))
+            member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('remove_self', self.item))):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to remove this member from this ItemSet")
         try:
-            membership = cms.models.Membership.objects.get(itemset=self.item, item=member)
+            membership = Membership.objects.get(itemset=self.item, item=member)
             if not membership.trashed:
                 membership.trash(self.cur_agent)
         except:
@@ -1009,7 +1006,7 @@ class ItemSetViewer(ItemViewer):
 
 
 class ImageDocumentViewer(ItemViewer):
-    item_type = cms.models.ImageDocument
+    item_type = ImageDocument
     viewer_name = 'imagedocument'
 
     def entry_show(self):
@@ -1018,12 +1015,12 @@ class ImageDocumentViewer(ItemViewer):
 
 
 class TextDocumentViewer(ItemViewer):
-    item_type = cms.models.TextDocument
+    item_type = TextDocument
     viewer_name = 'textdocument'
 
     def entry_show(self):
         template = loader.get_template('textdocument/show.html')
-        self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
+        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
 
@@ -1036,10 +1033,10 @@ class TextDocumentViewer(ItemViewer):
         form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
 
 
-        comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=self.item.pk, commented_item_version_number=self.item.version_number, commented_item_index__isnull=False).order_by('-commented_item_index')
+        comment_locations = CommentLocation.objects.filter(comment__commented_item=self.item.pk, commented_item_version_number=self.item.version_number, commented_item_index__isnull=False).order_by('-commented_item_index')
         body_as_list = list(self.item.body)
         for comment_location in comment_locations:
-            if issubclass(self.item_type, cms.models.HtmlDocument):
+            if issubclass(self.item_type, HtmlDocument):
                 virtual_comment = '<img id="comment_location_%s" src="/static/spacer.gif" title="Comment %s" style="margin: 0 2px 0 2px; background: #ddd; border: 1px dotted #777; height: 10px; width: 10px;"/>' % (comment_location.comment.pk, comment_location.comment.pk)
             else:
                 virtual_comment = '<deme_comment_location id="%s"/>' % comment_location.comment.pk
@@ -1056,7 +1053,7 @@ class TextDocumentViewer(ItemViewer):
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']
-        self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
+        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
     def entry_update(self):
@@ -1078,7 +1075,7 @@ class TextDocumentViewer(ItemViewer):
                     comment_id = m.group(1)
                     new_comment_locations.append((index, comment_id))
                     return ''
-                if issubclass(self.item_type, cms.models.HtmlDocument):
+                if issubclass(self.item_type, HtmlDocument):
                     virtual_comment_re = r'(?i)<img[^>]+comment_location_(\d+)[^>]*>'
                 else:
                     virtual_comment_re = r'<deme_comment_location id="(\d+)"/>'
@@ -1091,11 +1088,11 @@ class TextDocumentViewer(ItemViewer):
             new_item_version_number = new_item.versions.latest().version_number
             for index, comment_id in new_comment_locations:
                 try:
-                    comment = cms.models.Comment.objects.get(pk=comment_id)
+                    comment = Comment.objects.get(pk=comment_id)
                 except:
                     comment = None
                 if comment and comment.commented_item.pk == self.item.pk:
-                    comment_location = cms.models.CommentLocation()
+                    comment_location = CommentLocation()
                     comment_location.comment = comment
                     comment_location.commented_item_index = index
                     comment_location.commented_item_version_number = new_item_version_number
@@ -1106,12 +1103,12 @@ class TextDocumentViewer(ItemViewer):
             template = loader.get_template('item/edit.html')
             self.context['form'] = form
             self.context['query_string'] = self.request.META['QUERY_STRING']
-            self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
+            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
             return HttpResponse(template.render(self.context))
 
 
 class DjangoTemplateDocumentViewer(TextDocumentViewer):
-    item_type = cms.models.DjangoTemplateDocument
+    item_type = DjangoTemplateDocument
     viewer_name = 'djangotemplatedocument'
 
     def entry_render(self):
@@ -1139,12 +1136,12 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
 class TextCommentViewer(TextDocumentViewer):
     __metaclass__ = ViewerMetaClass
 
-    item_type = cms.models.TextComment
+    item_type = TextComment
     viewer_name = 'textcomment'
 
     def collection_new(self):
         try:
-            commented_item = cms.models.Item.objects.get(pk=self.request.GET.get('commented_item'))
+            commented_item = Item.objects.get(pk=self.request.GET.get('commented_item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
         can_comment_on = self.cur_agent_can('comment_on', commented_item)
@@ -1158,13 +1155,13 @@ class TextCommentViewer(TextDocumentViewer):
         template = loader.get_template('item/new.html')
         self.context['model_names'] = model_names
         self.context['form'] = form
-        self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
+        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
     def collection_create(self):
         try:
-            commented_item = cms.models.Item.objects.get(pk=self.request.POST.get('commented_item'))
+            commented_item = Item.objects.get(pk=self.request.POST.get('commented_item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
         can_comment_on = self.cur_agent_can('comment_on', commented_item)
@@ -1178,7 +1175,7 @@ class TextCommentViewer(TextDocumentViewer):
             commented_item_index = form.cleaned_data['commented_item_index']
             item = form.save(commit=False)
             item.save_versioned(updater=self.cur_agent)
-            comment_location = cms.models.CommentLocation(comment=item, commented_item_version_number=commented_item_version_number, commented_item_index=commented_item_index)
+            comment_location = CommentLocation(comment=item, commented_item_version_number=commented_item_version_number, commented_item_index=commented_item_index)
             comment_location.save_versioned(updater=self.cur_agent)
             redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
@@ -1188,7 +1185,7 @@ class TextCommentViewer(TextDocumentViewer):
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
             self.context['form'] = form
-            self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
+            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
             self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
 
@@ -1198,7 +1195,7 @@ class TextCommentViewer(TextDocumentViewer):
 class TextDocumentExcerptViewer(TextDocumentViewer):
     __metaclass__ = ViewerMetaClass
 
-    item_type = cms.models.TextDocumentExcerpt
+    item_type = TextDocumentExcerpt
     viewer_name = 'textdocumentexcerpt'
 
     def collection_createmultiexcerpt(self):
@@ -1215,33 +1212,33 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
             except ValueError:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not parse the excerpt data in the form")
             try:
-                text_document = get_versioned_item(cms.models.TextDocument.objects.get(pk=text_document_id), text_document_version_number)
+                text_document = get_versioned_item(TextDocument.objects.get(pk=text_document_id), text_document_version_number)
             except:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not find the specified TextDocument")
             if not self.cur_agent_can('view body', text_document):
                 return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to view the body of this item")
             body = text_document.body[start_index:start_index+length]
-            excerpt = cms.models.TextDocumentExcerpt(body=body, text_document=text_document, text_document_version_number=text_document_version_number, start_index=start_index, length=length)
+            excerpt = TextDocumentExcerpt(body=body, text_document=text_document, text_document_version_number=text_document_version_number, start_index=start_index, length=length)
             excerpts.append(excerpt)
         if not excerpts:
             return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "You must submit at least one excerpt")
-        itemset = cms.models.ItemSet()
+        itemset = ItemSet()
         itemset.save_versioned(updater=self.cur_agent)
         for excerpt in excerpts:
             excerpt.save_versioned(updater=self.cur_agent)
-            cms.models.Membership(item=excerpt, itemset=itemset).save_versioned(updater=self.cur_agent)
+            Membership(item=excerpt, itemset=itemset).save_versioned(updater=self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': 'itemset', 'noun': itemset.pk}))
         return HttpResponseRedirect(redirect)
 
 
 class DemeSettingViewer(ItemViewer):
-    item_type = cms.models.DemeSetting
+    item_type = DemeSetting
     viewer_name = 'demesetting'
 
     def collection_modify(self):
         if not self.cur_agent_can_global('do_everything'):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify DemeSettings")
-        self.context['deme_settings'] = cms.models.DemeSetting.objects.filter(trashed=False).order_by('key')
+        self.context['deme_settings'] = DemeSetting.objects.filter(trashed=False).order_by('key')
         template = loader.get_template('demesetting/modify.html')
         return HttpResponse(template.render(self.context))
 
@@ -1250,16 +1247,16 @@ class DemeSettingViewer(ItemViewer):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify DemeSettings")
         key = self.request.POST.get('key')
         value = self.request.POST.get('value')
-        cms.models.DemeSetting.set(key, value, self.cur_agent)
+        DemeSetting.set(key, value, self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('resource_collection', kwargs={'viewer': self.viewer_name, 'collection_action': 'modify'}))
         return HttpResponseRedirect(redirect)
 
 # let's dynamically create default viewers for the ones we don't have
-for item_type in cms.models.all_models():
+for item_type in all_models():
     viewer_name = item_type.__name__.lower()
     if viewer_name not in ViewerMetaClass.viewer_name_dict:
         parent_item_type_with_viewer = item_type
-        while issubclass(parent_item_type_with_viewer, cms.models.Item):
+        while issubclass(parent_item_type_with_viewer, Item):
             parent_viewer_class = ViewerMetaClass.viewer_name_dict.get(parent_item_type_with_viewer.__name__.lower(), None)
             if parent_viewer_class:
                 break

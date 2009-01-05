@@ -1,21 +1,18 @@
 from django.db import models
 from django.db.models import Q
 from django.db import transaction
-from django.db import connection
 import datetime
 from django.core.exceptions import ObjectDoesNotExist
-import django.db.models.loading
 from django.core.mail import SMTPConnection, EmailMessage
 from email.utils import formataddr
 from django.core.urlresolvers import reverse
 import settings
-
-from django.db.models.base import ModelBase
 from copy import deepcopy
 import hashlib
 
+__all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'ItemSet', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'CommentLocation', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'ItemSetGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'ItemSetGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'ItemSetPermission', 'DefaultPermission', 'AgentRolePermission', 'ItemSetRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_hexdigest', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
 
-class ItemMetaClass(ModelBase):
+class ItemMetaClass(models.base.ModelBase):
     def __new__(cls, name, bases, attrs):
         if name in ['Item', 'ItemVersion']:
             # No point in indexing updater in versions
@@ -1018,6 +1015,6 @@ class RecursiveMembership(models.Model):
 ################################################################################
 
 def all_models():
-    result = [x for x in django.db.models.loading.get_models() if issubclass(x, Item)]
+    result = [x for x in models.loading.get_models() if issubclass(x, Item)]
     return result
 
