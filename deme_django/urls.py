@@ -17,8 +17,6 @@ if settings.DJANGO_SERVES_STATIC_FILES:
     )
 
 urlpatterns += patterns('',
-    # Uncomment this for admin:
-    # (r'^admin/', include('django.contrib.admin.urls')),
     (r'', include('deme_django.cms.urls')),
 )
 
