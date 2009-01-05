@@ -520,7 +520,7 @@ class Comment(Item):
     def notification_email(self, email_contact_method):
         agent = email_contact_method.agent
         import permission_functions
-        can_do_everything = 'do_everything' in permission_functions.get_global_abilities_for_agent(agent)
+        can_do_everything = 'do_everything' in permission_functions.calculate_global_abilities_for_agent(agent)
 
         # First, decide if we're allowed to get this notification at all
         if isinstance(self, TextComment):
@@ -554,10 +554,10 @@ class Comment(Item):
         topmost_item = self.topmost_commented_item()
         commented_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': commented_item.item_type.lower(), 'noun': commented_item.pk}))
         topmost_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': topmost_item.item_type.lower(), 'noun': topmost_item.pk}))
-        abilities_for_comment = permission_functions.get_abilities_for_agent_and_item(agent, self)
-        abilities_for_commented_item = permission_functions.get_abilities_for_agent_and_item(agent, commented_item)
-        abilities_for_topmost_item = permission_functions.get_abilities_for_agent_and_item(agent, topmost_item)
-        abilities_for_comment_creator = permission_functions.get_abilities_for_agent_and_item(agent, self.creator)
+        abilities_for_comment = permission_functions.calculate_abilities_for_agent_and_item(agent, self)
+        abilities_for_commented_item = permission_functions.calculate_abilities_for_agent_and_item(agent, commented_item)
+        abilities_for_topmost_item = permission_functions.calculate_abilities_for_agent_and_item(agent, topmost_item)
+        abilities_for_comment_creator = permission_functions.calculate_abilities_for_agent_and_item(agent, self.creator)
         comment_name = self.name if can_do_everything or 'view name' in abilities_for_comment else 'PERMISSION DENIED'
         if isinstance(self, TextComment):
             comment_body = self.body if can_do_everything or 'view body' in abilities_for_comment else 'PERMISSION DENIED'

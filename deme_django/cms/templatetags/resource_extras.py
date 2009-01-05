@@ -125,7 +125,7 @@ def list_results_navigator(item_type, itemset, search_query, trashed, offset, li
 def agentcan_global_helper(context, ability, wildcard_suffix=False):
     agent = context['cur_agent']
     permission_cache = context['_permission_cache']
-    global_abilities = permission_cache.get_global_abilities_for_agent(agent)
+    global_abilities = permission_cache.cached_global_abilities_for_agent(agent)
     if wildcard_suffix:
         return any(x.startswith(ability) for x in global_abilities)
     else:
@@ -134,7 +134,7 @@ def agentcan_global_helper(context, ability, wildcard_suffix=False):
 def agentcan_helper(context, ability, item, wildcard_suffix=False):
     agent = context['cur_agent']
     permission_cache = context['_permission_cache']
-    abilities_for_item = permission_cache.get_abilities_for_agent_and_item(agent, item)
+    abilities_for_item = permission_cache.cached_abilities_for_agent_and_item(agent, item)
     if wildcard_suffix:
         return any(x.startswith(ability) for x in abilities_for_item)
     else:

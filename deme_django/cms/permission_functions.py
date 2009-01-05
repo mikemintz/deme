@@ -8,11 +8,19 @@ class PermissionCache(object):
     def __init__(self):
         self._global_ability_cache = {}
         self._item_ability_cache = {}
+        self._ability_yes_cache = {}
+        self._ability_no_cache = {}
 
-    def get_global_abilities_for_agent(self, agent):
+    def agent_can_global(self, agent, ability):
+        return ability in self.cached_global_abilities_for_agent(agent)
+
+    def agent_can(self, agent, ability, item):
+        return ability in self.cached_abilities_for_agent_and_item(agent, item)
+
+    def cached_global_abilities_for_agent(self, agent):
         result = self._global_ability_cache.get(agent.pk)
         if result is None:
-            result = set(get_global_abilities_for_agent(agent))
+            result = set(calculate_global_abilities_for_agent(agent))
             if 'do_everything' in result:
                 result = set([x[0] for x in POSSIBLE_GLOBAL_ABILITIES])
             else:
@@ -20,12 +28,12 @@ class PermissionCache(object):
             self._global_ability_cache[agent.pk] = result
         return result
 
-    def get_abilities_for_agent_and_item(self, agent, item):
+    def cached_abilities_for_agent_and_item(self, agent, item):
         result = self._item_ability_cache.get((agent.pk, item.pk))
         if result is None:
             result = type(item).relevant_abilities
-            if 'do_everything' not in self.get_global_abilities_for_agent(agent):
-                result = result & set(get_abilities_for_agent_and_item(agent, item))
+            if 'do_everything' not in self.cached_global_abilities_for_agent(agent):
+                result = result & set(calculate_abilities_for_agent_and_item(agent, item))
             self._item_ability_cache[(agent.pk, item.pk)] = result
         return result
 
@@ -56,7 +64,7 @@ def get_global_permissions_for_agent(agent):
     return (agent_perms, itemset_perms, default_perms)
 
 
-def get_global_abilities_for_agent(agent):
+def calculate_global_abilities_for_agent(agent):
     roles_triple = get_global_roles_for_agent(agent)
     permissions_triple = get_global_permissions_for_agent(agent)
     abilities_yes = set()
@@ -116,7 +124,7 @@ def get_permissions_for_agent_and_item(agent, item):
     return (agent_perms, itemset_perms, default_perms)
 
 
-def get_abilities_for_agent_and_item(agent, item):
+def calculate_abilities_for_agent_and_item(agent, item):
     """
     Return a set of ability strings
     """

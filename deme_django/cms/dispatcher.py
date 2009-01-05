@@ -94,7 +94,8 @@ def invalidresource(request, *args, **kwargs):
 def login(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)
     current_site = get_current_site(request)
-    can_do_everything = 'do_everything' in permission_functions.get_global_abilities_for_agent(cur_agent)
+    permission_cache = permission_functions.PermissionCache()
+    can_do_everything = permission_cache.agent_can_global(cur_agent, 'do_everything')
     if request.method == 'GET':
         if 'getencryptionmethod' in request.GET:
             nonce = cms.models.get_hexdigest('sha1', str(random.random()), str(random.random()))[:5]
@@ -112,7 +113,7 @@ def login(request, *args, **kwargs):
             context['redirect_url'] = request.GET['redirect']
             context['full_path'] = request.get_full_path()
             context['cur_agent'] = cur_agent
-            context['_permission_cache'] = permission_functions.PermissionCache()
+            context['_permission_cache'] = permission_cache
             if can_do_everything:
                 context['login_as_agents'] = cms.models.Agent.objects.filter(trashed=False).order_by('name')
             else:
@@ -149,7 +150,7 @@ def login(request, *args, **kwargs):
                         return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Agent ID", "There is no agent with the id you specified")
                     if new_agent.trashed:
                         return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Trashed Agent", "The agent you are trying to log in as is trashed")
-                    if can_do_everything or 'login_as' in permission_functions.get_abilities_for_agent_and_item(cur_agent, new_agent):
+                    if permission_cache.agent_can(cur_agent, 'login_as', new_agent):
                         request.session['cur_agent_id'] = new_agent.pk
                         return HttpResponseRedirect(redirect_url)
                     else:

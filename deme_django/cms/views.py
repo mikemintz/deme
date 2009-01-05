@@ -157,7 +157,7 @@ def set_default_layout(context, site, cur_agent):
                 extends_string = "{% extends 'default_layout.html' %}\n"
         else:
             extends_string = "{%% extends layout%s %%}\n" % next_node.pk
-        if 'view body' in permission_cache.get_abilities_for_agent_and_item(context['cur_agent'], cur_node):
+        if 'view body' in permission_cache.cached_abilities_for_agent_and_item(context['cur_agent'], cur_node):
             template_string = extends_string + cur_node.body
         else:
             template_string = "{% extends 'default_layout.html' %}\n"
@@ -213,10 +213,10 @@ class ItemViewer(object):
         pass
 
     def cur_agent_can_global(self, ability):
-        return ability in self.permission_cache.get_global_abilities_for_agent(self.cur_agent)
+        return self.permission_cache.agent_can_global(self.cur_agent, ability)
 
     def cur_agent_can(self, ability, item):
-        return ability in self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, item)
+        return self.permission_cache.agent_can(self.cur_agent, ability, item)
 
     def render_error(self, request_class, title, body):
         template = loader.get_template_from_string("""
@@ -492,11 +492,11 @@ The agent currently logged in is not allowed to use this application. Please log
             relationship_sets.append(relationship_set)
         template = loader.get_template('item/relationships.html')
         self.context['relationship_sets'] = relationship_sets
-        self.context['abilities'] = sorted(self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item))
+        self.context['abilities'] = sorted(self.permission_cache.cached_abilities_for_agent_and_item(self.cur_agent, self.item))
         return HttpResponse(template.render(self.context))
 
     def entry_edit(self):
-        abilities_for_item = self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        abilities_for_item = self.permission_cache.cached_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
@@ -542,7 +542,7 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponse(template.render(self.context))
 
     def entry_update(self):
-        abilities_for_item = self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        abilities_for_item = self.permission_cache.cached_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
@@ -1036,7 +1036,7 @@ class TextDocumentViewer(ItemViewer):
 
 
     def entry_edit(self):
-        abilities_for_item = self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        abilities_for_item = self.permission_cache.cached_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
@@ -1068,7 +1068,7 @@ class TextDocumentViewer(ItemViewer):
         return HttpResponse(template.render(self.context))
 
     def entry_update(self):
-        abilities_for_item = self.permission_cache.get_abilities_for_agent_and_item(self.cur_agent, self.item)
+        abilities_for_item = self.permission_cache.cached_abilities_for_agent_and_item(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
