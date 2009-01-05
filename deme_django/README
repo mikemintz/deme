@@ -40,7 +40,7 @@ the following to the end of /etc/postfix/master.cf:
 
 # Deme incoming mail
 deme      unix  -       n       n       -       -       pipe
-  flags= user=www-data argv=/var/www/deme/deme_django/incoming_email.py
+  flags= user=www-data argv=/var/www/deme/deme_django/script/incoming_email.py
 
 I then added the following to the end of /etc/postfix/main.cf:
 
