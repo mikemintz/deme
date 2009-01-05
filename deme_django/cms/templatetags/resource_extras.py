@@ -500,8 +500,6 @@ class CommentBox(template.Node):
             for comment_info in comments:
                 comment = comment_info['comment']
                 comment_location = comment_info['comment_location']
-                if not agentcan_helper(context, 'view commented_item', comment):
-                    continue
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
                 result.append("""<div style="float: right;"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
@@ -542,17 +540,13 @@ class CommentBox(template.Node):
                     result.append("[INACTIVE]")
                 result.append("</div>")
                 if comment.trashed:
-                    result.append("""<div class="comment_body">""")
-                    result.append("[TRASHED]")
-                    result.append("</div>")
+                    comment_description = ''
+                    comment_body = '[TRASHED]'
                 else:
-                    result.append("""<div class="comment_description">""")
                     if agentcan_helper(context, 'view description', comment):
-                        result.append(escape(comment.description))
+                        comment_description = escape(comment.description)
                     else:
-                        result.append('[PERMISSION DENIED]')
-                    result.append("</div>")
-                    result.append("""<div class="comment_body">""")
+                        comment_description = '[PERMISSION DENIED]'
                     if isinstance(comment, cms.models.TextComment):
                         if agentcan_helper(context, 'view body', comment):
                             comment_body = escape(comment.body).replace('\n', '<br />')
@@ -588,8 +582,7 @@ class CommentBox(template.Node):
                             comment_body = ''
                     else:
                         comment_body = ''
-                    result.append(comment_body)
-                    result.append("</div>")
+                result.append("""<div class="comment_description">%s</div><div class="comment_body">%s</div>""" % (comment_description, comment_body))
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
         comment_dicts = comment_dicts_for_item(item, version_number, context, isinstance(item, cms.models.ItemSet))

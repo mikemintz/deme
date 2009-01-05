@@ -1,5 +1,6 @@
 from cms.models import *
 from django.db.models import Q
+from itertools import chain
 
 
 ################################################################################
@@ -12,9 +13,9 @@ def get_global_roles_for_agent(agent):
         raise Exception("You must create an anonymous user")
     my_itemset_ids = agent.all_containing_itemsets().values('pk').query
     role_manager = GlobalRole.objects.filter(trashed=False)
-    agent_roles = role_manager.filter(agent_global_role_permissions_as_global_role__agent=agent)
-    itemset_roles = role_manager.filter(itemset_global_role_permissions_as_global_role__pk__in=my_itemset_ids)
-    default_roles = role_manager.filter(default_global_role_permissions_as_global_role__pk__isnull=False)
+    agent_roles = role_manager.filter(pk__in=AgentGlobalRolePermission.objects.filter(agent=agent).values('global_role_id').query)
+    itemset_roles = role_manager.filter(pk__in=ItemSetGlobalRolePermission.objects.filter(itemset__pk__in=my_itemset_ids).values('global_role_id').query)
+    default_roles = role_manager.filter(pk__in=DefaultGlobalRolePermission.objects.values('global_role_id').query)
     return (agent_roles, itemset_roles, default_roles)
 
 
@@ -37,11 +38,10 @@ def get_global_abilities_for_agent(agent):
     for role_list, permission_list in zip(roles_triple, permissions_triple):
         cur_abilities_yes = set()
         cur_abilities_no = set()
-        role_abilities = GlobalRoleAbility.objects.filter(trashed=False, global_role__in=role_list).all()
-        import itertools
-        for role_ability_or_permission in itertools.chain(role_abilities, permission_list):
-            ability = role_ability_or_permission.ability
-            is_allowed = role_ability_or_permission.is_allowed
+        role_abilities = GlobalRoleAbility.objects.filter(trashed=False, global_role__pk__in=role_list.values('pk').query)
+        for role_ability_or_permission in chain(role_abilities.values('ability', 'is_allowed'), permission_list.values('ability', 'is_allowed')):
+            ability = role_ability_or_permission['ability']
+            is_allowed = role_ability_or_permission['is_allowed']
             if is_allowed:
                 cur_abilities_yes.add(ability)
             else:
@@ -70,11 +70,9 @@ def get_roles_for_agent_and_item(agent, item):
         raise Exception("You must create an anonymous user")
     my_itemset_ids = agent.all_containing_itemsets().values('pk').query
     role_manager = Role.objects.filter(trashed=False)
-    agent_roles = role_manager.filter(agent_role_permissions_as_role__item=item,
-                                      agent_role_permissions_as_role__agent=agent)
-    itemset_roles = role_manager.filter(itemset_role_permissions_as_role__item=item,
-                                      itemset_role_permissions_as_role__itemset__pk__in=my_itemset_ids)
-    default_roles = role_manager.filter(default_role_permissions_as_role__item=item)
+    agent_roles = role_manager.filter(pk__in=AgentRolePermission.objects.filter(item=item, agent=agent).values('role_id').query)
+    itemset_roles = role_manager.filter(pk__in=ItemSetRolePermission.objects.filter(item=item, itemset__pk__in=my_itemset_ids).values('role_id').query)
+    default_roles = role_manager.filter(pk__in=DefaultRolePermission.objects.filter(item=item).values('role_id').query)
     return (agent_roles, itemset_roles, default_roles)
 
 
@@ -102,11 +100,10 @@ def get_abilities_for_agent_and_item(agent, item):
     for role_list, permission_list in zip(roles_triple, permissions_triple):
         cur_abilities_yes = set()
         cur_abilities_no = set()
-        role_abilities = RoleAbility.objects.filter(trashed=False, role__in=role_list).all()
-        import itertools
-        for role_ability_or_permission in itertools.chain(role_abilities, permission_list):
-            ability = role_ability_or_permission.ability
-            is_allowed = role_ability_or_permission.is_allowed
+        role_abilities = RoleAbility.objects.filter(trashed=False, role__pk__in=role_list.values('pk').query)
+        for role_ability_or_permission in chain(role_abilities.values('ability', 'is_allowed'), permission_list.values('ability', 'is_allowed')):
+            ability = role_ability_or_permission['ability']
+            is_allowed = role_ability_or_permission['is_allowed']
             if is_allowed:
                 cur_abilities_yes.add(ability)
             else:
