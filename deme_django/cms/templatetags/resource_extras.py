@@ -316,12 +316,12 @@ class EntryHeader(template.Node):
 
         result = []
 
-        relationships_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'relationships'}) + '?version=%s' % version_number
-        permissions_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'permissions'})
-        edit_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'edit'}) + '?version=%s' % version_number
-        copy_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'copy'}) + '?version=%s' % version_number
-        trash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'trash'}) + '?redirect=%s' % urlquote(context['full_path'])
-        untrash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': 'untrash'}) + '?redirect=%s' % urlquote(context['full_path'])
+        relationships_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'relationships'}) + '?version=%s' % version_number
+        permissions_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'permissions'})
+        edit_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % version_number
+        copy_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'copy'}) + '?version=%s' % version_number
+        trash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'trash'}) + '?redirect=%s' % urlquote(context['full_path'])
+        untrash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'untrash'}) + '?redirect=%s' % urlquote(context['full_path'])
 
         result.append('<div class="crumbs">')
         result.append('<div style="float: right;">')
@@ -346,7 +346,7 @@ class EntryHeader(template.Node):
         result.append('&raquo; ')
         result.append('<select id="id_item_type" name="item_type" onchange="window.location = this.value;">')
         for other_itemversion in item.versions.all():
-            version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'entry_action': context['action']}) + '?version=%s' % other_itemversion.version_number
+            version_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': context['action']}) + '?version=%s' % other_itemversion.version_number
             result.append('<option value="%s"%s>Version %s</option>' % (version_url, ' selected="selected"' if other_itemversion.version_number == version_number else '', other_itemversion.version_number))
         result.append('</select>')
         if page_name is not None:
@@ -439,7 +439,7 @@ class CollectionHeader(template.Node):
 
         result = []
 
-        new_url = reverse('resource_collection', kwargs={'viewer': item_type.lower(), 'collection_action': "new"})
+        new_url = reverse('resource_collection', kwargs={'viewer': item_type.lower(), 'action': "new"})
 
         result.append('<div class="crumbs">')
         result.append('<div style="float: right;">')
@@ -508,7 +508,7 @@ class CommentBox(template.Node):
         result.append("""<div class="comment_box">""")
         result.append("""<div class="comment_box_header">""")
         if agentcan_helper(context, 'comment_on', item):
-            result.append("""<a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Add Comment</a>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), item.pk, version_number, urlquote(full_path)))
+            result.append("""<a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Add Comment</a>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'action': 'new'}), item.pk, version_number, urlquote(full_path)))
         result.append("""</div>""")
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
@@ -516,7 +516,7 @@ class CommentBox(template.Node):
                 comment_location = comment_info['comment_location']
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
-                result.append("""<div style="float: right;"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'collection_action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
+                result.append("""<div style="float: right;"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
                 if isinstance(comment, cms.models.EditComment):
                     comment_name = '[Edited]'
                 elif isinstance(comment, cms.models.TrashComment):

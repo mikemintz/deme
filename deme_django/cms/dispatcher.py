@@ -202,12 +202,10 @@ def alias(request, *args, **kwargs):
     kwargs['format'] = custom_url.format
     if item:
         kwargs['noun'] = str(item.pk)
-        kwargs['collection_action'] = None
-        kwargs['entry_action'] = custom_url.action
+        kwargs['action'] = custom_url.action
     else:
         kwargs['noun'] = None
-        kwargs['collection_action'] = custom_url.action
-        kwargs['entry_action'] = None
+        kwargs['action'] = custom_url.action
     query_dict = QueryDict(custom_url.query_string).copy()
     query_dict.update(request.GET)
     request.GET = query_dict

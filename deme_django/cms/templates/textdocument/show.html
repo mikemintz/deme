@@ -61,7 +61,7 @@
             targ = targ.parentNode;
         var tokenWrapper = $(targ);
         var index = tokenWrapper.deme_text_offset;
-        var url = '{% url resource_collection viewer="textcomment",collection_action="new" %}?commented_item={{ item.pk }}&commented_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&commented_item_index=' + index;
+        var url = '{% url resource_collection viewer="textcomment",action="new" %}?commented_item={{ item.pk }}&commented_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&commented_item_index=' + index;
         window.location = url;
         return false;
     }
@@ -120,7 +120,7 @@
             form_div.appendChild(remove_button);
             form_div.appendChild(selection.contents);
             $('excerpt_form').appendChild(form_div);
-            //var url = '{% url resource_collection viewer="textdocumentexcerpt",collection_action="new" %}?text_document={{ item.pk }}&text_document_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&start_index=' + selection.start_offset + '&length=' + length;
+            //var url = '{% url resource_collection viewer="textdocumentexcerpt",action="new" %}?text_document={{ item.pk }}&text_document_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&start_index=' + selection.start_offset + '&length=' + length;
             //window.location = url;
         }
     }
@@ -246,7 +246,7 @@ Now just select text where you want to comment or
 <div id="adding_highlight_div" style="display: none;">
 Now just select text you want to highlight.
 When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); return false;">submit them</a> or <a href="#" onclick="cancel_highlighting(); return false;">cancel</a>.
-<form id="excerpt_form" method="post" enctype="multipart/form-data" action="{% url resource_collection viewer="textdocumentexcerpt",collection_action="createmultiexcerpt" %}">
+<form id="excerpt_form" method="post" enctype="multipart/form-data" action="{% url resource_collection viewer="textdocumentexcerpt",action="createmultiexcerpt" %}">
 </form>
 </div>
 {% endifagentcanglobal %}

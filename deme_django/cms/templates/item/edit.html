@@ -19,7 +19,7 @@ tinyMCE.init({
 {% entryheader 'Edit' %}
 
 <div>
-    <form method="post" enctype="multipart/form-data" action="{% url resource_entry viewer=item_type|lower,noun=item.pk,entry_action="update" %}?version={{ item.version_number }}" class="item_form">
+    <form method="post" enctype="multipart/form-data" action="{% url resource_entry viewer=item_type|lower,noun=item.pk,action="update" %}?version={{ item.version_number }}" class="item_form">
         <table>
             {{ form.as_table }}
         </table>

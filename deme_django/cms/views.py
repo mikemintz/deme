@@ -231,14 +231,13 @@ class ItemViewer(object):
         self.format = url_info.get('format', 'html')
         self.method = (request.REQUEST.get('_method', None) or request.method).upper()
         self.request = request # FOR NOW
+        self.action = url_info.get('action')
         self.noun = url_info.get('noun')
         if self.noun == None:
-            self.action = url_info.get('collection_action')
             if self.action == None:
                 self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'trash'}.get(self.method, 'list')
             self.item = None
         else:
-            self.action = url_info.get('entry_action')
             if self.action == None:
                 self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'trash'}.get(self.method, 'show')
             try:
@@ -1248,7 +1247,7 @@ class DemeSettingViewer(ItemViewer):
         key = self.request.POST.get('key')
         value = self.request.POST.get('value')
         DemeSetting.set(key, value, self.cur_agent)
-        redirect = self.request.GET.get('redirect', reverse('resource_collection', kwargs={'viewer': self.viewer_name, 'collection_action': 'modify'}))
+        redirect = self.request.GET.get('redirect', reverse('resource_collection', kwargs={'viewer': self.viewer_name, 'action': 'modify'}))
         return HttpResponseRedirect(redirect)
 
 # let's dynamically create default viewers for the ones we don't have
