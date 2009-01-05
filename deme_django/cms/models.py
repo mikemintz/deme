@@ -8,9 +8,10 @@ from email.utils import formataddr
 from django.core.urlresolvers import reverse
 import settings
 from copy import deepcopy
+import random
 import hashlib
 
-__all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'ItemSet', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'CommentLocation', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'ItemSetGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'ItemSetGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'ItemSetPermission', 'DefaultPermission', 'AgentRolePermission', 'ItemSetRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_hexdigest', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
+__all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'ItemSet', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'CommentLocation', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'ItemSetGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'ItemSetGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'ItemSetPermission', 'DefaultPermission', 'AgentRolePermission', 'ItemSetRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_hexdigest', 'get_random_hash', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
 
 class ItemMetaClass(models.base.ModelBase):
     def __new__(cls, name, bases, attrs):
@@ -318,6 +319,9 @@ def get_hexdigest(algorithm, salt, raw_password):
         return mysql_pre41_password(raw_password)
     raise ValueError("Got unknown password algorithm type in password.")
 
+def get_random_hash():
+    return get_hexdigest('sha1', str(random.random()), str(random.random()))
+
 class PasswordAuthenticationMethod(AuthenticationMethod):
     immutable_fields = AuthenticationMethod.immutable_fields
     relevant_abilities = AuthenticationMethod.relevant_abilities | set(['view username', 'view password', 'view password_question', 'view password_answer', 'edit username', 'edit password', 'edit password_question', 'edit password_answer'])
@@ -328,9 +332,8 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
     password_answer = models.CharField(max_length=255, blank=True)
 
     def set_password(self, raw_password):
-        import random
         algo = 'sha1'
-        salt = get_hexdigest(algo, str(random.random()), str(random.random()))[:5]
+        salt = get_random_hash()[:5]
         hsh = get_hexdigest(algo, salt, raw_password)
         self.password = '%s$%s$%s' % (algo, salt, hsh)
     set_password.alters_data = True

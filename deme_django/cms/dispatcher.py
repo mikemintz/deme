@@ -5,7 +5,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.utils import datastructures, simplejson
 import datetime
-import random
 from cms.views import set_default_layout, get_viewer_class_for_viewer_name
 import permission_functions
 import os
@@ -94,7 +93,7 @@ def authenticate(request, *args, **kwargs):
     can_do_everything = permission_cache.agent_can_global(cur_agent, 'do_everything')
     if request.method == 'GET':
         if 'getencryptionmethod' in request.GET:
-            nonce = get_hexdigest('sha1', str(random.random()), str(random.random()))[:5]
+            nonce = get_random_hash()[:5]
             try:
                 password_authentication_method = PasswordAuthenticationMethod.objects.get(username=request.GET['getencryptionmethod'])
                 algo, salt, hsh = password_authentication_method.password.split('$')
