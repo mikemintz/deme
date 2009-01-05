@@ -969,12 +969,9 @@ class ItemSetViewer(ItemViewer):
         if not self.cur_agent_can_global('do_everything'):
             memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
         memberships = memberships.select_related('item')
-        if self.cur_agent_can_global('do_everything'):
-            self.context['memberships'] = [{'membership': x, 'can_view_name': True} for x in memberships]
-        else:
-            memberships_can_view_name_pks = set(self.item.memberships_as_itemset.filter(trashed=False, item__pk__in=cms.models.Item.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name')).values('pk').query).values_list('pk', flat=True))
-            self.context['memberships'] = [{'membership': x, 'can_view_name': x.pk in memberships_can_view_name_pks} for x in memberships]
-        self.context['memberships'].sort(key=lambda x: (not x['can_view_name'], x['membership'].item.name))
+        if memberships:
+            self.permission_cache.learn_ability_for_queryset(self.cur_agent, 'view name', cms.models.Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+        self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can(self.cur_agent, 'view name', x.item), x.item.name))
         self.context['cur_agent_in_itemset'] = bool(self.item.memberships_as_itemset.filter(trashed=False, item=self.cur_agent))
         self.context['addmember_form'] = NewMembershipForm()
         template = loader.get_template('itemset/show.html')

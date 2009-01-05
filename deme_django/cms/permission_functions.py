@@ -42,10 +42,11 @@ class PermissionCache(object):
         return result
 
     def learn_ability_for_queryset(self, agent, ability, queryset):
-        yes_pks = set(queryset.filter(filter_for_agent_and_ability(agent, ability)).values_list('pk', flat=True))
-        no_pks = set(queryset.values_list('pk', flat=True)) - yes_pks
-        self._ability_yes_cache.setdefault((agent.pk, ability), set()).update(yes_pks)
-        self._ability_no_cache.setdefault((agent.pk, ability), set()).update(no_pks)
+        if not self.agent_can_global(agent, 'do_everything'):
+            yes_pks = set(queryset.filter(filter_for_agent_and_ability(agent, ability)).values_list('pk', flat=True))
+            no_pks = set(queryset.values_list('pk', flat=True)) - yes_pks
+            self._ability_yes_cache.setdefault((agent.pk, ability), set()).update(yes_pks)
+            self._ability_no_cache.setdefault((agent.pk, ability), set()).update(no_pks)
 
 
 ################################################################################
