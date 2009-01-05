@@ -5,16 +5,16 @@
 {% block content %}
 
 <script type="text/javascript" src="/static/javascripts/prototype.js"></script>
+{% if is_html %}
 <script type="text/javascript" src="/static/javascripts/tinymce/jscripts/tiny_mce/tiny_mce.js"></script>
 <script type="text/javascript">
 tinyMCE.init({
-  {% ifequal item_type "HtmlDocument" %}
-  mode: "textareas",
+  mode: "exact",
+  elements: "body",
   theme: "simple"
-  {% else %}
-  {% endifequal %}
 });
 </script>    
+{% endif %}
 
 {% entryheader 'Edit' %}
 

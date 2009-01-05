@@ -431,6 +431,7 @@ The agent currently logged in is not allowed to use this application. Please log
         template = loader.get_template('item/new.html')
         self.context['model_names'] = model_names
         self.context['form'] = form
+        self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
@@ -451,6 +452,7 @@ The agent currently logged in is not allowed to use this application. Please log
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
             self.context['form'] = form
+            self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
             self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
 
@@ -539,6 +541,7 @@ The agent currently logged in is not allowed to use this application. Please log
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']
+        self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
         return HttpResponse(template.render(self.context))
 
     def entry_copy(self):
@@ -563,6 +566,7 @@ The agent currently logged in is not allowed to use this application. Please log
         model_names.sort()
         self.context['model_names'] = model_names
         self.context['action_is_entry_copy'] = True
+        self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
         if 'redirect' in self.request.GET:
             self.context['redirect'] = self.request.GET['redirect']
         return HttpResponse(template.render(self.context))
@@ -584,6 +588,7 @@ The agent currently logged in is not allowed to use this application. Please log
             template = loader.get_template('item/edit.html')
             self.context['form'] = form
             self.context['query_string'] = self.request.META['QUERY_STRING']
+            self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
             return HttpResponse(template.render(self.context))
 
     def entry_trash(self):
@@ -933,6 +938,7 @@ class GroupViewer(ItemViewer):
         else:
             template = loader.get_template('item/new.html')
             self.context['form'] = form
+            self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
@@ -1088,6 +1094,7 @@ class TextDocumentViewer(ItemViewer):
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']
+        self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
         return HttpResponse(template.render(self.context))
 
     def entry_update(self):
@@ -1137,9 +1144,7 @@ class TextDocumentViewer(ItemViewer):
             template = loader.get_template('item/edit.html')
             self.context['form'] = form
             self.context['query_string'] = self.request.META['QUERY_STRING']
-            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, type(self.item))]
-            model_names.sort()
-            self.context['model_names'] = model_names
+            self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
             return HttpResponse(template.render(self.context))
 
 
@@ -1191,6 +1196,7 @@ class TextCommentViewer(TextDocumentViewer):
         template = loader.get_template('item/new.html')
         self.context['model_names'] = model_names
         self.context['form'] = form
+        self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
@@ -1220,6 +1226,7 @@ class TextCommentViewer(TextDocumentViewer):
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
             self.context['form'] = form
+            self.context['is_html'] = issubclass(self.item_type, cms.models.HtmlDocument)
             self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
 
