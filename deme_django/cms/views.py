@@ -336,9 +336,6 @@ The agent currently logged in is not allowed to use this application. Please log
                     return self.render_item_not_found()
                 elif self.action == 'copy':
                     pass
-                elif (self.action == 'edit' or self.action == 'update'):
-                    if self.item_type != type(self.item):
-                        return self.render_item_not_found()
                 else:
                     if not isinstance(self.item, self.item_type):
                         return self.render_item_not_found()
