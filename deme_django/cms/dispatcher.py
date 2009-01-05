@@ -9,14 +9,11 @@ import random
 from cms.views import set_default_layout, get_viewer_class_for_viewer_name
 import permission_functions
 import os
+import subprocess
+from django.conf import settings
 
 # import module viewers
-modules_dir = os.path.join(os.path.dirname(__file__), '..', 'modules')
-for module_name in os.listdir(modules_dir):
-    if module_name.startswith('.'):
-        continue
-    if module_name.startswith('_'):
-        continue
+for module_name in settings.MODULE_NAMES:
     __import__('modules.%s.views' % module_name)
 
 
@@ -165,8 +162,6 @@ def logout(request, *args, **kwargs):
 def codegraph(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)
     current_site = get_current_site(request)
-    import os
-    import subprocess
     models_filename = os.path.join(os.path.dirname(__file__), 'models.py')
     codegraph_filename = os.path.join(os.path.dirname(__file__), '..', 'static', 'codegraph.png')
     models_mtime = os.stat(models_filename)[8]

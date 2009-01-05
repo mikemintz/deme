@@ -1,5 +1,4 @@
 import os
-import os.path
 
 # Django settings for deme_django project.
 
@@ -87,11 +86,14 @@ INSTALLED_APPS = (
     'deme_django.cms',
 )
 
-modules_dir = os.path.join(os.path.dirname(__file__), 'modules')
+MODULES_DIR = os.path.join(os.path.dirname(__file__), 'modules')
+MODULE_NAMES = []
 for module_name in os.listdir(modules_dir):
     if module_name.startswith('.'):
         continue
     if module_name.startswith('_'):
         continue
+    MODULE_NAMES.append(module_name)
+for module_name in MODULE_NAMES:
     INSTALLED_APPS += ('deme_django.modules.%s' % module_name,)
 
