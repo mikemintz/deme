@@ -23,7 +23,7 @@
 
     function encrypt_password() {
         var raw_password = document.forms['password_form']['password'].value;
-        var url = '/meta/login?getencryptionmethod=' + document.forms['password_form']['username'].value;
+        var url = '{% url authenticate %}?getencryptionmethod=' + document.forms['password_form']['username'].value;
         new Ajax.Request(url, {method: 'get', onSuccess: function(transport) {
             var algo = transport.responseJSON.algo;
             var salt = transport.responseJSON.salt;
@@ -46,14 +46,14 @@
     </div>
 </form>
 
-<form name="real_password_form" action="/meta/login?redirect={{ redirect_url|urlencode }}" method="post">
+<form name="real_password_form" action="{% url authenticate %}?redirect={{ redirect_url|urlencode }}" method="post">
     <input type="hidden" name="login_type" value="password" />
     <input type="hidden" name="username" />
     <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
 </form>
 
 {% if login_as_agents %}
-<form action="/meta/login?redirect={{ redirect_url|urlencode }}" method="post">
+<form action="{% url authenticate %}?redirect={{ redirect_url|urlencode }}" method="post">
 <div style="margin-top: 15px;">
     <input type="hidden" name="login_type" value="login_as" />
     You can also login as one of the following agents:

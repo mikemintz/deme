@@ -3,7 +3,7 @@ from django.template import Context, loader
 from cms.models import *
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
-from django.utils import datastructures
+from django.utils import datastructures, simplejson
 import datetime
 import random
 from cms.views import set_default_layout, get_viewer_class_for_viewer_name
@@ -82,12 +82,12 @@ def resource(request, *args, **kwargs):
         return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseNotFound, "Viewer Not Found", "We could not find any viewer matching your URL.")
 
 
-def invalidresource(request, *args, **kwargs):
+def invalidurl(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)
     current_site = get_current_site(request)
-    return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseNotFound, "Invalid Resource URL", "The resource URL you typed in is invalid.")
+    return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseNotFound, "Invalid URL", "The URL you typed in is invalid.")
 
-def login(request, *args, **kwargs):
+def authenticate(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)
     current_site = get_current_site(request)
     permission_cache = permission_functions.PermissionCache()
@@ -119,7 +119,11 @@ def login(request, *args, **kwargs):
     else:
         redirect_url = request.GET['redirect']
         login_type = request.POST['login_type']
-        if login_type == 'password':
+        if login_type == 'logout':
+            if 'cur_agent_id' in request.session:
+                del request.session['cur_agent_id']
+            return HttpResponseRedirect(redirect_url)
+        elif login_type == 'password':
             nonce = request.session['login_nonce']
             del request.session['login_nonce']
             username = request.POST['username']
@@ -152,12 +156,6 @@ def login(request, *args, **kwargs):
                     else:
                         return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Permission Denied", "You do not have permission to login as this agent")
         return render_error(cur_agent, current_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Login Request", "The login_type field on your form was invalid")
-
-def logout(request, *args, **kwargs):
-    redirect_url = request.GET['redirect']
-    if 'cur_agent_id' in request.session:
-        del request.session['cur_agent_id']
-    return HttpResponseRedirect(redirect_url)
 
 def codegraph(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)
