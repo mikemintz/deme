@@ -157,7 +157,7 @@ def set_default_layout(context, site, cur_agent):
                 extends_string = "{% extends 'default_layout.html' %}\n"
         else:
             extends_string = "{%% extends layout%s %%}\n" % next_node.pk
-        if 'view body' in permission_cache.cached_abilities_for_agent_and_item(context['cur_agent'], cur_node):
+        if permission_cache.agent_can(context['cur_agent'], 'view body', cur_node):
             template_string = extends_string + cur_node.body
         else:
             template_string = "{% extends 'default_layout.html' %}\n"
