@@ -47,7 +47,8 @@
             {% for p in agent_datum.role_permissions %}
                 <div>
                     <a href="{% show_resource_url p.role %}">{{ p.role.name }}</a>
-                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",entry_action="trash",noun=p.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",noun=item.pk,entry_action="permissions" %}?formtype=agentrolepermission&redirect={{ full_path|urlencode }}&formprefix={{ agent_datum.role_permission_form.prefix|urlencode }}" class="item_form">
+                        <input type="hidden" name="permission_to_delete" value="{{ p.pk }}" />
                         <input type="submit" value="Remove" />
                     </form>
                 </div>
@@ -55,7 +56,8 @@
             {% for p in agent_datum.permissions %}
                 <div>
                     {% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}
-                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",entry_action="trash",noun=p.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",noun=item.pk,entry_action="permissions" %}?formtype=agentpermission&redirect={{ full_path|urlencode }}&formprefix={{ agent_datum.permission_form.prefix|urlencode }}" class="item_form">
+                        <input type="hidden" name="permission_to_delete" value="{{ p.pk }}" />
                         <input type="submit" value="Remove" />
                     </form>
                 </div>
@@ -91,7 +93,8 @@
             {% for p in itemset_datum.role_permissions %}
                 <div>
                     <a href="{% show_resource_url p.role %}">{{ p.role.name }}</a>
-                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",entry_action="trash",noun=p.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",noun=item.pk,entry_action="permissions" %}?formtype=itemsetrolepermission&redirect={{ full_path|urlencode }}&formprefix={{ itemset_datum.role_permission_form.prefix|urlencode }}" class="item_form">
+                        <input type="hidden" name="permission_to_delete" value="{{ p.pk }}" />
                         <input type="submit" value="Remove" />
                     </form>
                 </div>
@@ -99,7 +102,8 @@
             {% for p in itemset_datum.permissions %}
                 <div>
                     {% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}
-                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",entry_action="trash",noun=p.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",noun=item.pk,entry_action="permissions" %}?formtype=itemsetpermission&redirect={{ full_path|urlencode }}&formprefix={{ itemset_datum.permission_form.prefix|urlencode }}" class="item_form">
+                        <input type="hidden" name="permission_to_delete" value="{{ p.pk }}" />
                         <input type="submit" value="Remove" />
                     </form>
                 </div>
@@ -134,7 +138,8 @@
             {% for p in default_data.role_permissions %}
                 <div>
                     <a href="{% show_resource_url p.role %}">{{ p.role.name }}</a>
-                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",entry_action="trash",noun=p.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",noun=item.pk,entry_action="permissions" %}?formtype=defaultrolepermission&redirect={{ full_path|urlencode }}&formprefix={{ default_data.role_permission_form.prefix|urlencode }}" class="item_form">
+                        <input type="hidden" name="permission_to_delete" value="{{ p.pk }}" />
                         <input type="submit" value="Remove" />
                     </form>
                 </div>
@@ -142,7 +147,8 @@
             {% for p in default_data.permissions %}
                 <div>
                     {% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}
-                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",entry_action="trash",noun=p.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                    <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",noun=item.pk,entry_action="permissions" %}?formtype=defaultpermission&redirect={{ full_path|urlencode }}&formprefix={{ default_data.permission_form.prefix|urlencode }}" class="item_form">
+                        <input type="hidden" name="permission_to_delete" value="{{ p.pk }}" />
                         <input type="submit" value="Remove" />
                     </form>
                 </div>

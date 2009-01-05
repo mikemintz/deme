@@ -25,20 +25,13 @@ field_name_map = {
     'EmailField': 'Email Address',
 }
 
-def gen_dotcode(show_fields, include_permissions):
+def gen_dotcode(show_fields):
     dotcode = []
     dotcode.append('digraph structs {')
     dotcode.append('  ranksep=1.5; nodesep=1.5;')
     all_models = models.all_models()
     if show_fields:
         all_models = all_models + [models.Item.VERSION]
-    if not include_permissions:
-        all_models = [x for x in all_models if not issubclass(x, models.Permission)]
-        all_models = [x for x in all_models if not issubclass(x, models.GlobalPermission)]
-        all_models = [x for x in all_models if not issubclass(x, models.Role)]
-        all_models = [x for x in all_models if not issubclass(x, models.GlobalRole)]
-        all_models = [x for x in all_models if not issubclass(x, models.RoleAbility)]
-        all_models = [x for x in all_models if not issubclass(x, models.GlobalRoleAbility)]
     for model in all_models:
         field_names = []
         field_types = []
@@ -84,8 +77,6 @@ def run_dot_to_file(dotcode, filename):
     f.close()
 
 
-run_dot_to_file(gen_dotcode(show_fields=True, include_permissions=True), os.path.join(os.path.dirname(__file__), 'static', 'codegraph.png'))
-run_dot_to_file(gen_dotcode(show_fields=True, include_permissions=False), os.path.join(os.path.dirname(__file__), 'static', 'codegraph_noperms.png'))
-run_dot_to_file(gen_dotcode(show_fields=False, include_permissions=True), os.path.join(os.path.dirname(__file__), 'static', 'codegraph_basic.png'))
-run_dot_to_file(gen_dotcode(show_fields=False, include_permissions=False), os.path.join(os.path.dirname(__file__), 'static', 'codegraph_basic_noperms.png'))
+run_dot_to_file(gen_dotcode(show_fields=True), os.path.join(os.path.dirname(__file__), 'static', 'codegraph.png'))
+run_dot_to_file(gen_dotcode(show_fields=False), os.path.join(os.path.dirname(__file__), 'static', 'codegraph_basic.png'))
 

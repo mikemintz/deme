@@ -182,10 +182,8 @@ def codegraph(request, *args, **kwargs):
         {%% block content %%}
         <div><a href="/static/codegraph.png?%d">Code graph</a></div>
         <div><a href="/static/codegraph_basic.png?%d">Code graph (basic)</a></div>
-        <div><a href="/static/codegraph_noperms.png?%d">Code graph (no perms)</a></div>
-        <div><a href="/static/codegraph_basic_noperms.png?%d">Code graph (basic) (no perms)</a></div>
         {%% endblock %%}
-    """ % (models_mtime, models_mtime, models_mtime, models_mtime))
+    """ % (models_mtime, models_mtime))
     context = Context()
     context['cur_agent'] = cur_agent
     context['full_path'] = request.get_full_path()

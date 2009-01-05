@@ -53,23 +53,23 @@ print 'Creating permissions for role settings...'
 for deme_setting in DemeSetting.objects.all():
     default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.DemeSetting"))
     creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.DemeSetting"))
-    DefaultRolePermission(item=deme_setting, role=default_role).save_versioned(updater=admin)
-    AgentRolePermission(agent=admin, item=deme_setting, role=creator_role).save_versioned(updater=admin)
+    DefaultRolePermission(item=deme_setting, role=default_role).save()
+    AgentRolePermission(agent=admin, item=deme_setting, role=creator_role).save()
 
 print 'Creating permissions for roles...'
 for role in Role.objects.all():
     default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.Role"))
     creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.Role"))
-    DefaultRolePermission(item=role, role=default_role).save_versioned(updater=admin)
-    AgentRolePermission(agent=admin, item=role, role=creator_role).save_versioned(updater=admin)
+    DefaultRolePermission(item=role, role=default_role).save()
+    AgentRolePermission(agent=admin, item=role, role=creator_role).save()
 
 print 'Creating permissions for admin...'
-DefaultRolePermission(item=admin, role=Role.objects.get(pk=DemeSetting.get("cms.default_role.Agent"))).save_versioned(updater=admin)
-AgentRolePermission(agent=admin, item=admin, role=Role.objects.get(pk=DemeSetting.get("cms.creator_role.Agent"))).save_versioned(updater=admin)
+DefaultRolePermission(item=admin, role=Role.objects.get(pk=DemeSetting.get("cms.default_role.Agent"))).save()
+AgentRolePermission(agent=admin, item=admin, role=Role.objects.get(pk=DemeSetting.get("cms.creator_role.Agent"))).save()
 
 print 'Other stuff...'
 
-AgentGlobalPermission(ability='do_everything', is_allowed=True, agent=admin).save_versioned(updater=admin)
+AgentGlobalPermission(ability='do_everything', is_allowed=True, agent=admin).save()
 
 anonymous_agent = AnonymousAgent(name='Anonymous')
 anonymous_agent.save_versioned(updater=admin)
@@ -160,10 +160,10 @@ discuss_group.save_versioned(updater=admin)
 Membership(item=mike_person, itemset=discuss_group).save_versioned(updater=admin)
 Membership(item=todd_person, itemset=discuss_group).save_versioned(updater=admin)
 
-DefaultGlobalPermission(ability='do_something', is_allowed=True).save_versioned(updater=admin)
-#AgentGlobalPermission(agent=anonymous_agent, ability='do_something', is_allowed=False).save_versioned(updater=admin)
-DefaultGlobalPermission(ability='create HtmlDocument', is_allowed=True).save_versioned(updater=admin)
-DefaultGlobalPermission(ability='create TextDocumentExcerpt', is_allowed=True).save_versioned(updater=admin)
-DefaultGlobalPermission(ability='create ItemSet', is_allowed=True).save_versioned(updater=admin)
+DefaultGlobalPermission(ability='do_something', is_allowed=True).save()
+#AgentGlobalPermission(agent=anonymous_agent, ability='do_something', is_allowed=False).save()
+DefaultGlobalPermission(ability='create HtmlDocument', is_allowed=True).save()
+DefaultGlobalPermission(ability='create TextDocumentExcerpt', is_allowed=True).save()
+DefaultGlobalPermission(ability='create ItemSet', is_allowed=True).save()
 
-DefaultPermission(item=admin, ability='login_as', is_allowed=True).save_versioned(updater=admin)
+DefaultPermission(item=admin, ability='login_as', is_allowed=True).save()

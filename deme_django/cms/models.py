@@ -203,8 +203,8 @@ class Item(models.Model):
         if create_permissions and is_new and not issubclass(self.__class__, Permission) and not issubclass(self.__class__, GlobalPermission):
             default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.%s" % self.__class__.__name__))
             creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.%s" % self.__class__.__name__))
-            DefaultRolePermission(item=self, role=default_role).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
-            AgentRolePermission(agent=updater, item=self, role=creator_role).save_versioned(updater=updater, created_at=created_at, updated_at=updated_at)
+            DefaultRolePermission(item=self, role=default_role).save()
+            AgentRolePermission(agent=updater, item=self, role=creator_role).save()
 
         # Create an EditComment if we're making an edit
         if not is_new and not overwrite_latest_version:
@@ -843,22 +843,17 @@ class RoleAbility(Item):
         unique_together = (('role', 'ability'),)
 
 
-class Permission(Item):
-    immutable_fields = Item.immutable_fields
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
+class Permission(models.Model):
+    class Meta:
+        abstract = True
 
 
-class GlobalPermission(Item):
-    immutable_fields = Item.immutable_fields
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
+class GlobalPermission(models.Model):
+    class Meta:
+        abstract = True
 
 
 class AgentGlobalPermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields | set(['agent', 'ability'])
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
     agent = models.ForeignKey(Agent, related_name='agent_global_permissions_as_agent')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -867,9 +862,6 @@ class AgentGlobalPermission(GlobalPermission):
 
 
 class ItemSetGlobalPermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields | set(['itemset', 'ability'])
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
     itemset = models.ForeignKey(ItemSet, related_name='itemset_global_permissions_as_itemset')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -878,9 +870,6 @@ class ItemSetGlobalPermission(GlobalPermission):
 
 
 class DefaultGlobalPermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields | set(['ability'])
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
@@ -888,9 +877,6 @@ class DefaultGlobalPermission(GlobalPermission):
 
 
 class AgentGlobalRolePermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields | set(['agent', 'global_role'])
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
     agent = models.ForeignKey(Agent, related_name='agent_global_role_permissions_as_agent')
     global_role = models.ForeignKey(GlobalRole, related_name='agent_global_role_permissions_as_global_role')
     class Meta:
@@ -898,9 +884,6 @@ class AgentGlobalRolePermission(GlobalPermission):
 
 
 class ItemSetGlobalRolePermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields | set(['itemset', 'global_role'])
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
     itemset = models.ForeignKey(ItemSet, related_name='itemset_global_role_permissions_as_itemset')
     global_role = models.ForeignKey(GlobalRole, related_name='itemset_global_role_permissions_as_global_role')
     class Meta:
@@ -908,18 +891,12 @@ class ItemSetGlobalRolePermission(GlobalPermission):
 
 
 class DefaultGlobalRolePermission(GlobalPermission):
-    immutable_fields = GlobalPermission.immutable_fields | set(['global_role'])
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
     global_role = models.ForeignKey(GlobalRole, related_name='default_global_role_permissions_as_global_role')
     class Meta:
         unique_together = (('global_role',),)
 
 
 class AgentPermission(Permission):
-    immutable_fields = Permission.immutable_fields | set(['agent', 'item', 'ability'])
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
     agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent')
     item = models.ForeignKey(Item, related_name='agent_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
@@ -929,9 +906,6 @@ class AgentPermission(Permission):
 
 
 class ItemSetPermission(Permission):
-    immutable_fields = Permission.immutable_fields | set(['itemset', 'item', 'ability'])
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
     itemset = models.ForeignKey(ItemSet, related_name='itemset_permissions_as_itemset')
     item = models.ForeignKey(Item, related_name='itemset_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
@@ -941,9 +915,6 @@ class ItemSetPermission(Permission):
 
 
 class DefaultPermission(Permission):
-    immutable_fields = Permission.immutable_fields | set(['item', 'ability'])
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
     item = models.ForeignKey(Item, related_name='default_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
@@ -952,9 +923,6 @@ class DefaultPermission(Permission):
 
 
 class AgentRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields | set(['agent', 'item', 'role'])
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
     agent = models.ForeignKey(Agent, related_name='agent_role_permissions_as_agent')
     item = models.ForeignKey(Item, related_name='agent_role_permissions_as_item')
     role = models.ForeignKey(Role, related_name='agent_role_permissions_as_role')
@@ -963,9 +931,6 @@ class AgentRolePermission(Permission):
 
 
 class ItemSetRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields | set(['itemset', 'item', 'role'])
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
     itemset = models.ForeignKey(ItemSet, related_name='itemset_role_permissions_as_itemset')
     item = models.ForeignKey(Item, related_name='itemset_role_permissions_as_item')
     role = models.ForeignKey(Role, related_name='itemset_role_permissions_as_role')
@@ -974,9 +939,6 @@ class ItemSetRolePermission(Permission):
 
 
 class DefaultRolePermission(Permission):
-    immutable_fields = Permission.immutable_fields | set(['item', 'role'])
-    relevant_abilities = frozenset()
-    relevant_global_abilities = frozenset()
     item = models.ForeignKey(Item, related_name='default_role_permissions_as_item')
     role = models.ForeignKey(Role, related_name='default_role_permissions_as_role')
     class Meta:

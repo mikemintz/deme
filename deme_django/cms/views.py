@@ -651,11 +651,16 @@ The agent currently logged in is not allowed to use this application. Please log
             else:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Type', "You submitted a permission form with an invalid formtype parameter")
 
+            if self.request.POST.get('permission_to_delete') is not None:
+                permission = form_class._meta.model.objects.get(pk=self.request.POST.get('permission_to_delete'))
+                permission.delete()
+                redirect = self.request.GET['redirect']
+                return HttpResponseRedirect(redirect)
+
             form = form_class(self.request.POST, self.request.FILES, prefix=self.request.GET['formprefix'])
             if form.is_valid():
                 item = form.save(commit=False)
-                item.name = "Untitled Permission"
-                item.save_versioned(updater=self.cur_agent)
+                item.save()
                 redirect = self.request.GET['redirect']
                 return HttpResponseRedirect(redirect)
             elif form.non_field_errors(): # there may have been a duplicate
@@ -679,27 +684,21 @@ The agent currently logged in is not allowed to use this application. Please log
                 except ObjectDoesNotExist:
                     existing_permission = None
                 if existing_permission:
-                    something_changed = False
-                    if existing_permission.trashed:
-                        existing_permission.untrash(self.cur_agent)
-                        something_changed = True
                     if 'is_allowed' in fields and existing_permission.is_allowed != form['is_allowed'].data:
                         existing_permission.is_allowed = form['is_allowed'].data
-                        existing_permission.save_versioned(updater=self.cur_agent)
-                        something_changed = True
-                    # Regardless of whether something_changed, it was a success
+                        existing_permission.save()
                     redirect = self.request.GET['redirect']
                     return HttpResponseRedirect(redirect)
                 else:
                     # we'll display it in the regular page below as an invalid form
                     pass
 
-        agent_permissions = self.item.agent_permissions_as_item.filter(trashed=False)
-        itemset_permissions = self.item.itemset_permissions_as_item.filter(trashed=False)
-        default_permissions = self.item.default_permissions_as_item.filter(trashed=False)
-        agent_role_permissions = self.item.agent_role_permissions_as_item.filter(trashed=False)
-        itemset_role_permissions = self.item.itemset_role_permissions_as_item.filter(trashed=False)
-        default_role_permissions = self.item.default_role_permissions_as_item.filter(trashed=False)
+        agent_permissions = self.item.agent_permissions_as_item.order_by('ability')
+        itemset_permissions = self.item.itemset_permissions_as_item.order_by('ability')
+        default_permissions = self.item.default_permissions_as_item.order_by('ability')
+        agent_role_permissions = self.item.agent_role_permissions_as_item.order_by('role__name')
+        itemset_role_permissions = self.item.itemset_role_permissions_as_item.order_by('role__name')
+        default_role_permissions = self.item.default_role_permissions_as_item.order_by('role__name')
         agents = cms.models.Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
         itemsets = cms.models.ItemSet.objects.filter(Q(pk__in=itemset_permissions.values('itemset__pk').query) | Q(pk__in=itemset_role_permissions.values('itemset__pk').query) | Q(pk=self.request.GET.get('itemset', 0))).order_by('name')
 
@@ -799,11 +798,20 @@ The agent currently logged in is not allowed to use this application. Please log
             else:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Type', "You submitted a permission form with an invalid formtype parameter")
 
+            if self.request.POST.get('permission_to_delete') is not None:
+                permission = form_class._meta.model.objects.get(pk=self.request.POST.get('permission_to_delete'))
+                if isinstance(permission, cms.models.AgentGlobalPermission) and permission.agent.pk == 1 and permission.ability == 'do_everything':
+                    # Don't delete the admin permission, it may be difficult to get back.
+                    pass
+                else:
+                    permission.delete()
+                redirect = self.request.GET['redirect']
+                return HttpResponseRedirect(redirect)
+
             form = form_class(self.request.POST, self.request.FILES, prefix=self.request.GET['formprefix'])
             if form.is_valid():
                 item = form.save(commit=False)
-                item.name = "Untitled Permission"
-                item.save_versioned(updater=self.cur_agent)
+                item.save()
                 redirect = self.request.GET['redirect']
                 return HttpResponseRedirect(redirect)
             else:
@@ -825,27 +833,25 @@ The agent currently logged in is not allowed to use this application. Please log
                 except ObjectDoesNotExist:
                     existing_permission = None
                 if existing_permission:
-                    something_changed = False
-                    if existing_permission.trashed:
-                        existing_permission.untrash(self.cur_agent)
-                        something_changed = True
-                    if 'is_allowed' in fields and existing_permission.is_allowed != form['is_allowed'].data:
-                        existing_permission.is_allowed = form['is_allowed'].data
-                        existing_permission.save_versioned(updater=self.cur_agent)
-                        something_changed = True
-                    # Regardless of whether something_changed, it was a success
+                    if isinstance(existing_permission, cms.models.AgentGlobalPermission) and existing_permission.agent.pk == 1 and existing_permission.ability == 'do_everything':
+                        # Don't delete the admin permission, it may be difficult to get back.
+                        pass
+                    else:
+                        if 'is_allowed' in fields and existing_permission.is_allowed != form['is_allowed'].data:
+                            existing_permission.is_allowed = form['is_allowed'].data
+                            existing_permission.save()
                     redirect = self.request.GET['redirect']
                     return HttpResponseRedirect(redirect)
                 else:
                     # we'll display it in the regular page below as an invalid form
                     pass
 
-        agent_permissions = cms.models.AgentGlobalPermission.objects.filter(trashed=False)
-        itemset_permissions = cms.models.ItemSetGlobalPermission.objects.filter(trashed=False)
-        default_permissions = cms.models.DefaultGlobalPermission.objects.filter(trashed=False)
-        agent_role_permissions = cms.models.AgentGlobalRolePermission.objects.filter(trashed=False)
-        itemset_role_permissions = cms.models.ItemSetGlobalRolePermission.objects.filter(trashed=False)
-        default_role_permissions = cms.models.DefaultGlobalRolePermission.objects.filter(trashed=False)
+        agent_permissions = cms.models.AgentGlobalPermission.objects.order_by('ability')
+        itemset_permissions = cms.models.ItemSetGlobalPermission.objects.order_by('ability')
+        default_permissions = cms.models.DefaultGlobalPermission.objects.order_by('ability')
+        agent_role_permissions = cms.models.AgentGlobalRolePermission.objects.order_by('global_role__name')
+        itemset_role_permissions = cms.models.ItemSetGlobalRolePermission.objects.order_by('global_role__name')
+        default_role_permissions = cms.models.DefaultGlobalRolePermission.objects.order_by('global_role__name')
         agents = cms.models.Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
         itemsets = cms.models.ItemSet.objects.filter(Q(pk__in=itemset_permissions.values('itemset__pk').query) | Q(pk__in=itemset_role_permissions.values('itemset__pk').query) | Q(pk=self.request.GET.get('itemset', 0))).order_by('name')
 

@@ -12,12 +12,9 @@ def get_global_roles_for_agent(agent):
         raise Exception("You must create an anonymous user")
     my_itemset_ids = agent.all_containing_itemsets().values('pk').query
     role_manager = GlobalRole.objects.filter(trashed=False)
-    agent_roles = role_manager.filter(agent_global_role_permissions_as_global_role__agent=agent,
-                                      agent_global_role_permissions_as_global_role__trashed=False)
-    itemset_roles = role_manager.filter(itemset_global_role_permissions_as_global_role__pk__in=my_itemset_ids,
-                                      itemset_global_role_permissions_as_global_role__trashed=False)
-    default_roles = role_manager.filter(default_global_role_permissions_as_global_role__pk__isnull=False,
-                                        default_global_role_permissions_as_global_role__trashed=False)
+    agent_roles = role_manager.filter(agent_global_role_permissions_as_global_role__agent=agent)
+    itemset_roles = role_manager.filter(itemset_global_role_permissions_as_global_role__pk__in=my_itemset_ids)
+    default_roles = role_manager.filter(default_global_role_permissions_as_global_role__pk__isnull=False)
     return (agent_roles, itemset_roles, default_roles)
 
 
@@ -25,9 +22,9 @@ def get_global_permissions_for_agent(agent):
     if not agent:
         raise Exception("You must create an anonymous user")
     my_itemset_ids = agent.all_containing_itemsets().values('pk').query
-    agent_perms = AgentGlobalPermission.objects.filter(trashed=False, agent=agent)
-    itemset_perms = ItemSetGlobalPermission.objects.filter(trashed=False, itemset__pk__in=my_itemset_ids)
-    default_perms = DefaultGlobalPermission.objects.filter(trashed=False)
+    agent_perms = AgentGlobalPermission.objects.filter(agent=agent)
+    itemset_perms = ItemSetGlobalPermission.objects.filter(itemset__pk__in=my_itemset_ids)
+    default_perms = DefaultGlobalPermission.objects.all()
     return (agent_perms, itemset_perms, default_perms)
 
 
@@ -74,13 +71,10 @@ def get_roles_for_agent_and_item(agent, item):
     my_itemset_ids = agent.all_containing_itemsets().values('pk').query
     role_manager = Role.objects.filter(trashed=False)
     agent_roles = role_manager.filter(agent_role_permissions_as_role__item=item,
-                                      agent_role_permissions_as_role__agent=agent,
-                                      agent_role_permissions_as_role__trashed=False)
+                                      agent_role_permissions_as_role__agent=agent)
     itemset_roles = role_manager.filter(itemset_role_permissions_as_role__item=item,
-                                      itemset_role_permissions_as_role__itemset__pk__in=my_itemset_ids,
-                                      itemset_role_permissions_as_role__trashed=False)
-    default_roles = role_manager.filter(default_role_permissions_as_role__item=item,
-                                        default_role_permissions_as_role__trashed=False)
+                                      itemset_role_permissions_as_role__itemset__pk__in=my_itemset_ids)
+    default_roles = role_manager.filter(default_role_permissions_as_role__item=item)
     return (agent_roles, itemset_roles, default_roles)
 
 
@@ -91,9 +85,9 @@ def get_permissions_for_agent_and_item(agent, item):
     if not agent:
         raise Exception("You must create an anonymous user")
     my_itemset_ids = agent.all_containing_itemsets().values('pk').query
-    agent_perms = AgentPermission.objects.filter(item=item, agent=agent, trashed=False)
-    itemset_perms = ItemSetPermission.objects.filter(item=item, itemset__pk__in=my_itemset_ids, trashed=False)
-    default_perms = DefaultPermission.objects.filter(item=item, trashed=False)
+    agent_perms = AgentPermission.objects.filter(item=item, agent=agent)
+    itemset_perms = ItemSetPermission.objects.filter(item=item, itemset__pk__in=my_itemset_ids)
+    default_perms = DefaultPermission.objects.filter(item=item)
     return (agent_perms, itemset_perms, default_perms)
 
 
@@ -138,7 +132,7 @@ def filter_for_agent_and_ability(agent, ability):
         for role in ['role', '']:
             for is_allowed in ['yes', 'no']:
                 permission_class = eval("%s%sPermission" % ({'agent':'Agent','itemset':'ItemSet','default':'Default'}[agentitemsetdefault], role.capitalize()))
-                args = {'trashed': False}
+                args = {}
                 if role == 'role':
                     args['role__pk__in'] = (relevant_yes_role_ids if is_allowed == 'yes' else relevant_no_role_ids)
                 else:
@@ -167,7 +161,7 @@ def filter_agents_for_item_and_ability(item, ability):
         for role in ['role', '']:
             for is_allowed in ['yes', 'no']:
                 permission_class = eval("%s%sPermission" % ({'agent':'Agent','itemset':'ItemSet','default':'Default'}[agentitemsetdefault], role.capitalize()))
-                args = {'trashed': False, 'item': item}
+                args = {'item': item}
                 if role == 'role':
                     args['role__pk__in'] = (relevant_yes_role_ids if is_allowed == 'yes' else relevant_no_role_ids)
                 else:
