@@ -126,7 +126,7 @@ def agentcan_global_helper(context, ability, wildcard_suffix=False):
     agent = context['cur_agent']
     permission_cache = context['_permission_cache']
     if wildcard_suffix:
-        global_abilities = permission_cache.cached_global_abilities_for_agent(agent)
+        global_abilities = permission_cache.global_abilities(agent)
         return any(x.startswith(ability) for x in global_abilities)
     else:
         return permission_cache.agent_can_global(agent, ability)
@@ -135,7 +135,7 @@ def agentcan_helper(context, ability, item, wildcard_suffix=False):
     agent = context['cur_agent']
     permission_cache = context['_permission_cache']
     if wildcard_suffix:
-        abilities_for_item = permission_cache.cached_abilities_for_agent_and_item(agent, item)
+        abilities_for_item = permission_cache.item_abilities(agent, item)
         return any(x.startswith(ability) for x in abilities_for_item)
     else:
         return permission_cache.agent_can(agent, ability, item)
@@ -248,16 +248,16 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
         if agentcan_global_helper(context, 'do_everything'):
             recursive_filter = None
         else:
-            visible_memberships = cms.models.Membership.objects.filter(permission_functions.filter_for_agent_and_ability(context['cur_agent'], 'view item'))
+            visible_memberships = cms.models.Membership.objects.filter(permission_functions.filter_items_by_permission(context['cur_agent'], 'view item'))
             recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
         members_and_me_pks_query = cms.models.Item.objects.filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_itemset_members(recursive_filter).values('pk').query)).values('pk').query
         comment_pks = cms.models.RecursiveCommentMembership.objects.filter(parent__in=members_and_me_pks_query).values_list('child', flat=True)
     else:
         comment_pks = cms.models.RecursiveCommentMembership.objects.filter(parent=item).values_list('child', flat=True)
     if comment_pks:
-        context['_viewer'].permission_cache.learn_ability_for_queryset(context['cur_agent'], 'view created_at', cms.models.Comment.objects.filter(pk__in=comment_pks))
-        context['_viewer'].permission_cache.learn_ability_for_queryset(context['cur_agent'], 'view creator', cms.models.Comment.objects.filter(pk__in=comment_pks))
-        context['_viewer'].permission_cache.learn_ability_for_queryset(context['cur_agent'], 'view name', cms.models.Agent.objects.filter(pk__in=cms.models.Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
+        context['_viewer'].permission_cache.mass_learn(context['cur_agent'], 'view created_at', cms.models.Comment.objects.filter(pk__in=comment_pks))
+        context['_viewer'].permission_cache.mass_learn(context['cur_agent'], 'view creator', cms.models.Comment.objects.filter(pk__in=comment_pks))
+        context['_viewer'].permission_cache.mass_learn(context['cur_agent'], 'view name', cms.models.Agent.objects.filter(pk__in=cms.models.Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
         for comment_subclass in comment_subclasses:
             new_comments = comment_subclass.objects.filter(pk__in=comment_pks)
             related_fields = ['creator']
@@ -265,9 +265,9 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
                 related_fields.extend(['commented_item'])
             if new_comments:
                 if comment_subclass in [cms.models.AddMemberComment, cms.models.RemoveMemberComment]:
-                    context['_viewer'].permission_cache.learn_ability_for_queryset(context['cur_agent'], 'view membership', new_comments)
-                    context['_viewer'].permission_cache.learn_ability_for_queryset(context['cur_agent'], 'view item', cms.models.Membership.objects.filter(pk__in=new_comments.values('membership_id').query))
-                    context['_viewer'].permission_cache.learn_ability_for_queryset(context['cur_agent'], 'view name', cms.models.Item.objects.filter(pk__in=cms.models.Membership.objects.filter(pk__in=new_comments.values('membership_id').query).values('item_id').query))
+                    context['_viewer'].permission_cache.mass_learn(context['cur_agent'], 'view membership', new_comments)
+                    context['_viewer'].permission_cache.mass_learn(context['cur_agent'], 'view item', cms.models.Membership.objects.filter(pk__in=new_comments.values('membership_id').query))
+                    context['_viewer'].permission_cache.mass_learn(context['cur_agent'], 'view name', cms.models.Item.objects.filter(pk__in=cms.models.Membership.objects.filter(pk__in=new_comments.values('membership_id').query).values('item_id').query))
                     related_fields.extend(['membership', 'membership__item'])
             new_comments = new_comments.select_related(*related_fields)
             comments.extend(new_comments)

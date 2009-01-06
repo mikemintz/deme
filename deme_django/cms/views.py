@@ -285,15 +285,13 @@ class ItemViewer(object):
     def dispatch(self):
         if not self.cur_agent_can_global('do_something'):
             template = loader.get_template_from_string("""
-{% extends layout %}
-{% load resource_extras %}
-{% block title %}Not Allowed{% endblock %}
-{% block content %}
-
-The agent currently logged in is not allowed to use this application. Please log in as another agent.
-
-{% endblock content %}
-""")
+            {% extends layout %}
+            {% load resource_extras %}
+            {% block title %}Not Allowed{% endblock %}
+            {% block content %}
+            The agent currently logged in is not allowed to use this application. Please log in as another agent.
+            {% endblock content %}
+            """)
             return HttpResponse(template.render(self.context))
         if self.noun == None:
             action_method = getattr(self, 'collection_%s' % self.action, None)
@@ -353,13 +351,13 @@ The agent currently logged in is not allowed to use this application. Please log
             if self.cur_agent_can_global('do_everything'):
                 recursive_filter = None
             else:
-                visible_memberships = Membership.objects.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
+                visible_memberships = Membership.objects.filter(permission_functions.filter_items_by_permission(self.cur_agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=itemset.all_contained_itemset_members(recursive_filter).values('pk').query)
         if self.cur_agent_can_global('do_everything'):
             listable_items = items
         else:
-            listable_items = items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name'))
+            listable_items = items.filter(permission_functions.filter_items_by_permission(self.cur_agent, 'view name'))
         n_opposite_trashed_items = listable_items.filter(trashed=(not trashed)).count()
         listable_items = listable_items.filter(trashed=trashed)
         listable_items = listable_items.order_by('id')
@@ -382,7 +380,7 @@ The agent currently logged in is not allowed to use this application. Please log
         self.context['list_end_i'] = min(offset + limit, n_listable_items)
         self.context['trashed'] = trashed
         self.context['itemset'] = itemset
-        self.context['all_itemsets'] = ItemSet.objects.filter(trashed=False).filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view name')).order_by('name')
+        self.context['all_itemsets'] = ItemSet.objects.filter(trashed=False).filter(permission_functions.filter_items_by_permission(self.cur_agent, 'view name')).order_by('name')
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
@@ -476,18 +474,18 @@ The agent currently logged in is not allowed to use this application. Please log
             viewable_items = manager.filter(trashed=False)
             if viewable_items.count() == 0:
                 continue
-            self.permission_cache.learn_ability_for_queryset(self.cur_agent, 'view name', viewable_items)
+            self.permission_cache.mass_learn(self.cur_agent, 'view name', viewable_items)
             if not self.cur_agent_can_global('do_everything'):
-                viewable_items = viewable_items.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view %s' % field.field.name))
+                viewable_items = viewable_items.filter(permission_functions.filter_items_by_permission(self.cur_agent, 'view %s' % field.field.name))
             relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)
         template = loader.get_template('item/relationships.html')
         self.context['relationship_sets'] = relationship_sets
-        self.context['abilities'] = sorted(self.permission_cache.cached_abilities_for_agent_and_item(self.cur_agent, self.item))
+        self.context['abilities'] = sorted(self.permission_cache.item_abilities(self.cur_agent, self.item))
         return HttpResponse(template.render(self.context))
 
     def entry_edit(self):
-        abilities_for_item = self.permission_cache.cached_abilities_for_agent_and_item(self.cur_agent, self.item)
+        abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
@@ -533,7 +531,7 @@ The agent currently logged in is not allowed to use this application. Please log
         return HttpResponse(template.render(self.context))
 
     def entry_update(self):
-        abilities_for_item = self.permission_cache.cached_abilities_for_agent_and_item(self.cur_agent, self.item)
+        abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
@@ -958,10 +956,10 @@ class ItemSetViewer(ItemViewer):
         memberships = memberships.filter(trashed=False)
         memberships = memberships.filter(item__trashed=False)
         if not self.cur_agent_can_global('do_everything'):
-            memberships = memberships.filter(permission_functions.filter_for_agent_and_ability(self.cur_agent, 'view item'))
+            memberships = memberships.filter(permission_functions.filter_items_by_permission(self.cur_agent, 'view item'))
         memberships = memberships.select_related('item')
         if memberships:
-            self.permission_cache.learn_ability_for_queryset(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+            self.permission_cache.mass_learn(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
         self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can(self.cur_agent, 'view name', x.item), x.item.name))
         self.context['cur_agent_in_itemset'] = bool(self.item.memberships_as_itemset.filter(trashed=False, item=self.cur_agent))
         self.context['addmember_form'] = NewMembershipForm()
@@ -1024,7 +1022,7 @@ class TextDocumentViewer(ItemViewer):
 
 
     def entry_edit(self):
-        abilities_for_item = self.permission_cache.cached_abilities_for_agent_and_item(self.cur_agent, self.item)
+        abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
@@ -1056,7 +1054,7 @@ class TextDocumentViewer(ItemViewer):
         return HttpResponse(template.render(self.context))
 
     def entry_update(self):
-        abilities_for_item = self.permission_cache.cached_abilities_for_agent_and_item(self.cur_agent, self.item)
+        abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")

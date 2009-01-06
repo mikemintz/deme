@@ -12,16 +12,16 @@ class PermissionCache(object):
         self._ability_no_cache = {}
 
     def agent_can_global(self, agent, ability):
-        return ability in self.cached_global_abilities_for_agent(agent)
+        return ability in self.global_abilities(agent)
 
     def agent_can(self, agent, ability, item):
         if item.pk in self._ability_yes_cache.get((agent.pk, ability), set()):
             return True
         if item.pk in self._ability_no_cache.get((agent.pk, ability), set()):
             return False
-        return ability in self.cached_abilities_for_agent_and_item(agent, item)
+        return ability in self.item_abilities(agent, item)
 
-    def cached_global_abilities_for_agent(self, agent):
+    def global_abilities(self, agent):
         result = self._global_ability_cache.get(agent.pk)
         if result is None:
             result = set(calculate_global_abilities_for_agent(agent))
@@ -32,18 +32,18 @@ class PermissionCache(object):
             self._global_ability_cache[agent.pk] = result
         return result
 
-    def cached_abilities_for_agent_and_item(self, agent, item):
+    def item_abilities(self, agent, item):
         result = self._item_ability_cache.get((agent.pk, item.pk))
         if result is None:
             result = type(item).relevant_abilities
-            if 'do_everything' not in self.cached_global_abilities_for_agent(agent):
+            if 'do_everything' not in self.global_abilities(agent):
                 result = result & set(calculate_abilities_for_agent_and_item(agent, item))
             self._item_ability_cache[(agent.pk, item.pk)] = result
         return result
 
-    def learn_ability_for_queryset(self, agent, ability, queryset):
+    def mass_learn(self, agent, ability, queryset):
         if not self.agent_can_global(agent, 'do_everything'):
-            yes_pks = set(queryset.filter(filter_for_agent_and_ability(agent, ability)).values_list('pk', flat=True))
+            yes_pks = set(queryset.filter(filter_items_by_permission(agent, ability)).values_list('pk', flat=True))
             no_pks = set(queryset.values_list('pk', flat=True)) - yes_pks
             self._ability_yes_cache.setdefault((agent.pk, ability), set()).update(yes_pks)
             self._ability_no_cache.setdefault((agent.pk, ability), set()).update(no_pks)
@@ -54,7 +54,7 @@ class PermissionCache(object):
 ################################################################################
 
 
-def get_global_roles_for_agent(agent):
+def calculate_global_roles_for_agent(agent):
     if not agent:
         raise Exception("You must create an anonymous user")
     my_itemset_ids = agent.all_containing_itemsets().values('pk').query
@@ -65,7 +65,7 @@ def get_global_roles_for_agent(agent):
     return (agent_roles, itemset_roles, default_roles)
 
 
-def get_global_permissions_for_agent(agent):
+def calculate_global_permissions_for_agent(agent):
     if not agent:
         raise Exception("You must create an anonymous user")
     my_itemset_ids = agent.all_containing_itemsets().values('pk').query
@@ -76,8 +76,8 @@ def get_global_permissions_for_agent(agent):
 
 
 def calculate_global_abilities_for_agent(agent):
-    roles_triple = get_global_roles_for_agent(agent)
-    permissions_triple = get_global_permissions_for_agent(agent)
+    roles_triple = calculate_global_roles_for_agent(agent)
+    permissions_triple = calculate_global_permissions_for_agent(agent)
     abilities_yes = set()
     abilities_no = set()
     abilities_unset = set([x[0] for x in POSSIBLE_GLOBAL_ABILITIES])
@@ -108,7 +108,7 @@ def calculate_global_abilities_for_agent(agent):
 ################################################################################
 
 
-def get_roles_for_agent_and_item(agent, item):
+def calculate_roles_for_agent_and_item(agent, item):
     """
     Return a triple (user_role_list, itemset_role_list, default_role_list)
     """
@@ -122,7 +122,7 @@ def get_roles_for_agent_and_item(agent, item):
     return (agent_roles, itemset_roles, default_roles)
 
 
-def get_permissions_for_agent_and_item(agent, item):
+def calculate_permissions_for_agent_and_item(agent, item):
     """
     Return a triple (user_permission_list, itemset_permission_list, default_permission_list)
     """
@@ -139,8 +139,8 @@ def calculate_abilities_for_agent_and_item(agent, item):
     """
     Return a set of ability strings
     """
-    roles_triple = get_roles_for_agent_and_item(agent, item)
-    permissions_triple = get_permissions_for_agent_and_item(agent, item)
+    roles_triple = calculate_roles_for_agent_and_item(agent, item)
+    permissions_triple = calculate_permissions_for_agent_and_item(agent, item)
     abilities_yes = set()
     abilities_no = set()
     for role_list, permission_list in zip(roles_triple, permissions_triple):
@@ -165,7 +165,7 @@ def calculate_abilities_for_agent_and_item(agent, item):
     return abilities_yes
 
 
-def filter_for_agent_and_ability(agent, ability):
+def filter_items_by_permission(agent, ability):
     my_itemset_ids = agent.all_containing_itemsets().values('pk').query
     relevant_yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=True).values('role_id').query
     relevant_no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=False).values('role_id').query
@@ -195,7 +195,7 @@ def filter_for_agent_and_ability(agent, ability):
            (~perm_q['agentno'] & ~perm_q['itemsetno'] & ~perm_q['agentroleno'] & ~perm_q['itemsetroleno'] & perm_q['defaultyes']) |\
            (~perm_q['agentno'] & ~perm_q['itemsetno'] & ~perm_q['agentroleno'] & ~perm_q['itemsetroleno'] & perm_q['defaultroleyes'])
 
-def filter_agents_for_item_and_ability(item, ability):
+def filter_agents_by_permission(item, ability):
     relevant_yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=True).values('role_id').query
     relevant_no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=False).values('role_id').query
 

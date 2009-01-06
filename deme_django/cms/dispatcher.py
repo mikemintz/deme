@@ -111,8 +111,8 @@ def authenticate(request, *args, **kwargs):
             if permission_cache.agent_can_global(cur_agent, 'do_everything'):
                 context['login_as_agents'] = Agent.objects.filter(trashed=False).order_by('name')
             else:
-                context['login_as_agents'] = Agent.objects.filter(trashed=False).filter(permission_functions.filter_for_agent_and_ability(cur_agent, 'login_as')).order_by('name')
-                context['_permission_cache'].learn_ability_for_queryset(cur_agent, 'view name', context['login_as_agents'])
+                context['login_as_agents'] = Agent.objects.filter(trashed=False).filter(permission_functions.filter_items_by_permission(cur_agent, 'login_as')).order_by('name')
+                context['_permission_cache'].mass_learn(cur_agent, 'view name', context['login_as_agents'])
             set_default_layout(context, current_site, cur_agent)
             return HttpResponse(template.render(context))
     else:
@@ -169,12 +169,12 @@ def codegraph(request, *args, **kwargs):
     if models_mtime > codegraph_mtime:
         subprocess.call(os.path.join(os.path.dirname(__file__), '..', 'gen_graph.py'), shell=True)
     template = loader.get_template_from_string("""
-        {%% extends layout %%}
-        {%% block title %%}Deme Code Graphs{%% endblock %%}
-        {%% block content %%}
-        <div><a href="/static/codegraph.png?%d">Code graph</a></div>
-        <div><a href="/static/codegraph_basic.png?%d">Code graph (basic)</a></div>
-        {%% endblock %%}
+    {%% extends layout %%}
+    {%% block title %%}Deme Code Graphs{%% endblock %%}
+    {%% block content %%}
+    <div><a href="/static/codegraph.png?%d">Code graph</a></div>
+    <div><a href="/static/codegraph_basic.png?%d">Code graph (basic)</a></div>
+    {%% endblock %%}
     """ % (models_mtime, models_mtime))
     context = Context()
     context['cur_agent'] = cur_agent

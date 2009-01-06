@@ -542,7 +542,7 @@ class Comment(Item):
             if can_do_everything:
                 recursive_filter = None
             else:
-                visible_memberships = Membership.objects.filter(permission_functions.filter_for_agent_and_ability(agent, 'view itemset'), permission_functions.filter_for_agent_and_ability(agent, 'view item'))
+                visible_memberships = Membership.objects.filter(permission_functions.filter_items_by_permission(agent, 'view itemset'), permission_functions.filter_items_by_permission(agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             possible_parents = self.all_commented_items_and_itemsets(recursive_filter)
             deep_subscriptions = Subscription.objects.filter(item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
