@@ -2,7 +2,7 @@ from django.core.urlresolvers import reverse
 from django import template
 from django.db.models import Q
 import cms.models
-from cms import permission_functions
+from cms import permissions
 from django.utils.http import urlquote
 from django.utils.html import escape, urlize
 from django.core.exceptions import ObjectDoesNotExist
@@ -248,7 +248,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
         if agentcan_global_helper(context, 'do_everything'):
             recursive_filter = None
         else:
-            visible_memberships = cms.models.Membership.objects.filter(permission_functions.filter_items_by_permission(context['cur_agent'], 'view item'))
+            visible_memberships = cms.models.Membership.objects.filter(permissions.filter_items_by_permission(context['cur_agent'], 'view item'))
             recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
         members_and_me_pks_query = cms.models.Item.objects.filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_itemset_members(recursive_filter).values('pk').query)).values('pk').query
         comment_pks = cms.models.RecursiveCommentMembership.objects.filter(parent__in=members_and_me_pks_query).values_list('child', flat=True)

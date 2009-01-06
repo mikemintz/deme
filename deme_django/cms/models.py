@@ -519,8 +519,8 @@ class Comment(Item):
     after_create.alters_data = True
     def notification_email(self, email_contact_method):
         agent = email_contact_method.agent
-        import permission_functions
-        can_do_everything = 'do_everything' in permission_functions.calculate_global_abilities_for_agent(agent)
+        import permissions
+        can_do_everything = 'do_everything' in permissions.calculate_global_abilities_for_agent(agent)
 
         # First, decide if we're allowed to get this notification at all
         if isinstance(self, TextComment):
@@ -542,7 +542,7 @@ class Comment(Item):
             if can_do_everything:
                 recursive_filter = None
             else:
-                visible_memberships = Membership.objects.filter(permission_functions.filter_items_by_permission(agent, 'view itemset'), permission_functions.filter_items_by_permission(agent, 'view item'))
+                visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(agent, 'view itemset'), permissions.filter_items_by_permission(agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             possible_parents = self.all_commented_items_and_itemsets(recursive_filter)
             deep_subscriptions = Subscription.objects.filter(item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
@@ -554,10 +554,10 @@ class Comment(Item):
         topmost_item = self.topmost_commented_item()
         commented_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': commented_item.item_type.lower(), 'noun': commented_item.pk}))
         topmost_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': topmost_item.item_type.lower(), 'noun': topmost_item.pk}))
-        abilities_for_comment = permission_functions.calculate_abilities_for_agent_and_item(agent, self)
-        abilities_for_commented_item = permission_functions.calculate_abilities_for_agent_and_item(agent, commented_item)
-        abilities_for_topmost_item = permission_functions.calculate_abilities_for_agent_and_item(agent, topmost_item)
-        abilities_for_comment_creator = permission_functions.calculate_abilities_for_agent_and_item(agent, self.creator)
+        abilities_for_comment = permissions.calculate_abilities_for_agent_and_item(agent, self)
+        abilities_for_commented_item = permissions.calculate_abilities_for_agent_and_item(agent, commented_item)
+        abilities_for_topmost_item = permissions.calculate_abilities_for_agent_and_item(agent, topmost_item)
+        abilities_for_comment_creator = permissions.calculate_abilities_for_agent_and_item(agent, self.creator)
         comment_name = self.name if can_do_everything or 'view name' in abilities_for_comment else 'PERMISSION DENIED'
         if isinstance(self, TextComment):
             comment_body = self.body if can_do_everything or 'view body' in abilities_for_comment else 'PERMISSION DENIED'

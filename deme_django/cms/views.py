@@ -7,7 +7,7 @@ from cms.models import *
 from django import forms
 from django.utils import simplejson
 from django.core.exceptions import ObjectDoesNotExist
-import permission_functions
+import permissions
 import re
 
 ### MODELS ###
@@ -226,7 +226,7 @@ class ItemViewer(object):
         return request_class(template.render(self.context))
 
     def init_from_http(self, request, cur_agent, current_site, url_info):
-        self.permission_cache = permission_functions.PermissionCache()
+        self.permission_cache = permissions.PermissionCache()
         self.viewer_name = url_info.get('viewer')
         self.format = url_info.get('format', 'html')
         self.method = (request.REQUEST.get('_method', None) or request.method).upper()
@@ -351,13 +351,13 @@ class ItemViewer(object):
             if self.cur_agent_can_global('do_everything'):
                 recursive_filter = None
             else:
-                visible_memberships = Membership.objects.filter(permission_functions.filter_items_by_permission(self.cur_agent, 'view item'))
+                visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(self.cur_agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=itemset.all_contained_itemset_members(recursive_filter).values('pk').query)
         if self.cur_agent_can_global('do_everything'):
             listable_items = items
         else:
-            listable_items = items.filter(permission_functions.filter_items_by_permission(self.cur_agent, 'view name'))
+            listable_items = items.filter(permissions.filter_items_by_permission(self.cur_agent, 'view name'))
         n_opposite_trashed_items = listable_items.filter(trashed=(not trashed)).count()
         listable_items = listable_items.filter(trashed=trashed)
         listable_items = listable_items.order_by('id')
@@ -380,7 +380,7 @@ class ItemViewer(object):
         self.context['list_end_i'] = min(offset + limit, n_listable_items)
         self.context['trashed'] = trashed
         self.context['itemset'] = itemset
-        self.context['all_itemsets'] = ItemSet.objects.filter(trashed=False).filter(permission_functions.filter_items_by_permission(self.cur_agent, 'view name')).order_by('name')
+        self.context['all_itemsets'] = ItemSet.objects.filter(trashed=False).filter(permissions.filter_items_by_permission(self.cur_agent, 'view name')).order_by('name')
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
@@ -476,7 +476,7 @@ class ItemViewer(object):
                 continue
             self.permission_cache.mass_learn(self.cur_agent, 'view name', viewable_items)
             if not self.cur_agent_can_global('do_everything'):
-                viewable_items = viewable_items.filter(permission_functions.filter_items_by_permission(self.cur_agent, 'view %s' % field.field.name))
+                viewable_items = viewable_items.filter(permissions.filter_items_by_permission(self.cur_agent, 'view %s' % field.field.name))
             relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)
         template = loader.get_template('item/relationships.html')
@@ -956,7 +956,7 @@ class ItemSetViewer(ItemViewer):
         memberships = memberships.filter(trashed=False)
         memberships = memberships.filter(item__trashed=False)
         if not self.cur_agent_can_global('do_everything'):
-            memberships = memberships.filter(permission_functions.filter_items_by_permission(self.cur_agent, 'view item'))
+            memberships = memberships.filter(permissions.filter_items_by_permission(self.cur_agent, 'view item'))
         memberships = memberships.select_related('item')
         if memberships:
             self.permission_cache.mass_learn(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
