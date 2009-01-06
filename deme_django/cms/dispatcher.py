@@ -90,7 +90,6 @@ def authenticate(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)
     current_site = get_current_site(request)
     permission_cache = permission_functions.PermissionCache()
-    can_do_everything = permission_cache.agent_can_global(cur_agent, 'do_everything')
     if request.method == 'GET':
         if 'getencryptionmethod' in request.GET:
             nonce = get_random_hash()[:5]
@@ -109,10 +108,11 @@ def authenticate(request, *args, **kwargs):
             context['full_path'] = request.get_full_path()
             context['cur_agent'] = cur_agent
             context['_permission_cache'] = permission_cache
-            if can_do_everything:
+            if permission_cache.agent_can_global(cur_agent, 'do_everything'):
                 context['login_as_agents'] = Agent.objects.filter(trashed=False).order_by('name')
             else:
                 context['login_as_agents'] = Agent.objects.filter(trashed=False).filter(permission_functions.filter_for_agent_and_ability(cur_agent, 'login_as')).order_by('name')
+                context['_permission_cache'].learn_ability_for_queryset(cur_agent, 'view name', context['login_as_agents'])
             set_default_layout(context, current_site, cur_agent)
             return HttpResponse(template.render(context))
     else:
