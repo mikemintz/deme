@@ -10,7 +10,9 @@ from django.core.exceptions import ObjectDoesNotExist
 import permissions
 import re
 
-### MODELS ###
+###############################################################################
+# Models, forms, and fields
+###############################################################################
 
 resource_name_dict = {}
 for model in all_models():
@@ -133,7 +135,10 @@ def get_form_class_for_item_type(update_or_create, item_type, fields=None):
             return f.formfield()
     return forms.models.modelform_factory(item_type, exclude=exclude, fields=fields, formfield_callback=formfield_callback)
 
-### VIEWERS ###
+
+###############################################################################
+# Viewer helper functions
+###############################################################################
 
 class ViewerMetaClass(type):
     viewer_name_dict = {}
@@ -142,9 +147,11 @@ class ViewerMetaClass(type):
         ViewerMetaClass.viewer_name_dict[attrs['viewer_name']] = result
         return result
 
-def set_default_layout(context, site, cur_agent):
+def set_default_layout(context):
+    cur_agent = context['cur_agent']
+    cur_site = context['cur_site']
     permission_cache = context['_permission_cache']
-    cur_node = site.default_layout
+    cur_node = cur_site.default_layout
     while cur_node is not None:
         next_node = cur_node.layout
         if next_node is None:
@@ -163,8 +170,8 @@ def set_default_layout(context, site, cur_agent):
         t = loader.get_template_from_string(template_string)
         context['layout%d' % cur_node.pk] = t
         cur_node = next_node
-    if site.default_layout:
-        context['layout'] = context['layout%s' % site.default_layout.pk]
+    if cur_site.default_layout:
+        context['layout'] = context['layout%s' % cur_site.default_layout.pk]
     else:
         context['layout'] = 'default_layout.html'
 
@@ -200,6 +207,10 @@ def get_versioned_item(item, version_number):
     return item
 
 
+###############################################################################
+# Viewers
+###############################################################################
+
 class ItemViewer(object):
     __metaclass__ = ViewerMetaClass
 
@@ -225,7 +236,7 @@ class ItemViewer(object):
         """ % (title, body))
         return request_class(template.render(self.context))
 
-    def init_from_http(self, request, cur_agent, current_site, url_info):
+    def init_from_http(self, request, cur_agent, cur_site, url_info):
         self.permission_cache = permissions.PermissionCache()
         self.viewer_name = url_info.get('viewer')
         self.format = url_info.get('format', 'html')
@@ -257,12 +268,14 @@ class ItemViewer(object):
         self.context['item_type'] = self.item_type.__name__
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = cur_agent
+        self.cur_site = cur_site
         self.context['cur_agent'] = self.cur_agent
+        self.context['cur_site'] = self.cur_site
         self.context['_permission_cache'] = self.permission_cache
         self.context['_viewer'] = self
-        set_default_layout(self.context, current_site, cur_agent)
+        set_default_layout(self.context)
 
-    def init_from_div(self, original_viewer, action, viewer_name, item, cur_agent):
+    def init_from_div(self, original_viewer, action, viewer_name, item):
         self.permission_cache = original_viewer.permission_cache
         self.request = original_viewer.request
         self.viewer_name = viewer_name
@@ -272,15 +285,17 @@ class ItemViewer(object):
         self.item = item
         self.action = action
         self.context = Context()
-        self.context['layout'] = 'blank.html'
         self.context['action'] = self.action
         self.context['item'] = self.item
         self.context['item_type'] = self.item_type.__name__
         self.context['full_path'] = self.request.get_full_path()
-        self.cur_agent = cur_agent
+        self.cur_agent = original_viewer.cur_agent
+        self.cur_site = original_viewer.cur_site
         self.context['cur_agent'] = self.cur_agent
+        self.context['cur_site'] = self.cur_site
         self.context['_permission_cache'] = self.permission_cache
         self.context['_viewer'] = self
+        self.context['layout'] = 'blank.html'
 
     def dispatch(self):
         if not self.cur_agent_can_global('do_something'):
@@ -1248,7 +1263,8 @@ class DemeSettingViewer(ItemViewer):
         redirect = self.request.GET.get('redirect', reverse('resource_collection', kwargs={'viewer': self.viewer_name, 'action': 'modify'}))
         return HttpResponseRedirect(redirect)
 
-# let's dynamically create default viewers for the ones we don't have
+
+# Dynamically create default viewers for the ones we don't have.
 for item_type in all_models():
     viewer_name = item_type.__name__.lower()
     if viewer_name not in ViewerMetaClass.viewer_name_dict:
