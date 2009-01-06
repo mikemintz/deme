@@ -49,9 +49,9 @@ class PermissionCache(object):
             self._ability_no_cache.setdefault((agent.pk, ability), set()).update(no_pks)
 
 
-################################################################################
+###############################################################################
 # Global permissions
-################################################################################
+###############################################################################
 
 
 def calculate_global_roles_for_agent(agent):
@@ -103,9 +103,9 @@ def calculate_global_abilities_for_agent(agent):
     return abilities_yes
 
 
-################################################################################
+###############################################################################
 # Item permissions
-################################################################################
+###############################################################################
 
 
 def calculate_roles_for_agent_and_item(agent, item):
@@ -163,6 +163,11 @@ def calculate_abilities_for_agent_and_item(agent, item):
                 abilities_no.add(x)
     # anything left over is effectively "no"
     return abilities_yes
+
+
+###############################################################################
+# Permission QuerySet filters
+###############################################################################
 
 
 def filter_items_by_permission(agent, ability):

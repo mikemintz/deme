@@ -15,9 +15,9 @@ import os.path
 if Item.objects.count() != 0:
     raise AssertionError, 'You cannot run ./create_initial_data.py on a non-empty database'
 
-################################################################################
+###############################################################################
 # Necessary items
-################################################################################
+###############################################################################
 
 admin = Agent(name="Admin")
 admin.save_versioned(first_agent=True, create_permissions=False)
@@ -79,9 +79,9 @@ DemeSetting.set('cms.default_site', default_site.pk, agent=admin)
 if len(sys.argv) < 2 or sys.argv[1] != 'test':
     sys.exit(0)
 
-################################################################################
+###############################################################################
 # Just testing here:
-################################################################################
+###############################################################################
 
 # Set the default layout
 default_layout_code = open(os.path.join(os.path.dirname(__file__), 'cms', 'templates', 'default_layout.html')).read()

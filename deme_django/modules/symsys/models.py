@@ -1,6 +1,8 @@
 from cms.models import *
 from django.db import models
 
+__all__ = ['SymsysAffiliate', 'Event', 'Advertisement', 'TextAdvertisement', 'HtmlAdvertisement']
+
 class SymsysAffiliate(Person):
     immutable_fields = Person.immutable_fields
     relevant_abilities = Person.relevant_abilities | set(['view suid', 'view original_first_name', 'view original_middle_names', 'view original_last_name', 'view original_suffix', 'view first_affiliation_year', 'view bs_graduation_year', 'view ms_graduation_year', 'view academic_title', 'view admin_title', 'view advisor', 'view honors_advisor', 'view honors_second_reader', 'view w_organization', 'view w_position', 'view background', 'view doing_now', 'view interests', 'view publications', 'view office_hours', 'view about', 'view other_degrees', 'view indivdesignedconc', 'view honors_thesis_title', 'view honors_thesis_filename', 'view honors_thesis_url', 'view ms_thesis_title', 'view ms_thesis_filename', 'view ms_thesis_url', 'view ms_idt', 'view then_image', 'view now_image', 'edit suid', 'edit original_first_name', 'edit original_middle_names', 'edit original_last_name', 'edit original_suffix', 'edit first_affiliation_year', 'edit bs_graduation_year', 'edit ms_graduation_year', 'edit academic_title', 'edit admin_title', 'edit advisor', 'edit honors_advisor', 'edit honors_second_reader', 'edit w_organization', 'edit w_position', 'edit background', 'edit doing_now', 'edit interests', 'edit publications', 'edit office_hours', 'edit about', 'edit other_degrees', 'edit indivdesignedconc', 'edit honors_thesis_title', 'edit honors_thesis_filename', 'edit honors_thesis_url', 'edit ms_thesis_title', 'edit ms_thesis_filename', 'edit ms_thesis_url', 'edit ms_idt', 'edit then_image', 'edit now_image'])
