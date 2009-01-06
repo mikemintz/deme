@@ -16,7 +16,9 @@ for module_name in settings.MODULE_NAMES:
     __import__('modules.%s.views' % module_name)
 
 
-### HELPER FUNCTIONS ###
+###############################################################################
+# Helper functions
+###############################################################################
 
 def render_error(cur_agent, current_site, full_path, request_class, title, body):
     template = loader.get_template_from_string("""
@@ -62,7 +64,9 @@ def get_current_site(request):
             raise Exception("You must create a default Site")
 
 
-### VIEWS ###
+###############################################################################
+# Views
+###############################################################################
 
 def resource(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)

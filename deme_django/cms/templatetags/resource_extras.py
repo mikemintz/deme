@@ -242,6 +242,7 @@ def ifagentcanglobal(parser, token):
 
 # remember this includes trashed comments, which should be displayed differently after calling this
 def comment_dicts_for_item(item, version_number, context, include_recursive_itemset_comments):
+    permission_cache = context['_permission_cache']
     comment_subclasses = [cms.models.TextComment, cms.models.EditComment, cms.models.TrashComment, cms.models.UntrashComment, cms.models.AddMemberComment, cms.models.RemoveMemberComment]
     comments = []
     if include_recursive_itemset_comments:
@@ -255,9 +256,9 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
     else:
         comment_pks = cms.models.RecursiveCommentMembership.objects.filter(parent=item).values_list('child', flat=True)
     if comment_pks:
-        context['_viewer'].permission_cache.mass_learn(context['cur_agent'], 'view created_at', cms.models.Comment.objects.filter(pk__in=comment_pks))
-        context['_viewer'].permission_cache.mass_learn(context['cur_agent'], 'view creator', cms.models.Comment.objects.filter(pk__in=comment_pks))
-        context['_viewer'].permission_cache.mass_learn(context['cur_agent'], 'view name', cms.models.Agent.objects.filter(pk__in=cms.models.Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
+        permission_cache.mass_learn(context['cur_agent'], 'view created_at', cms.models.Comment.objects.filter(pk__in=comment_pks))
+        permission_cache.mass_learn(context['cur_agent'], 'view creator', cms.models.Comment.objects.filter(pk__in=comment_pks))
+        permission_cache.mass_learn(context['cur_agent'], 'view name', cms.models.Agent.objects.filter(pk__in=cms.models.Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
         for comment_subclass in comment_subclasses:
             new_comments = comment_subclass.objects.filter(pk__in=comment_pks)
             related_fields = ['creator']
@@ -265,9 +266,9 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
                 related_fields.extend(['commented_item'])
             if new_comments:
                 if comment_subclass in [cms.models.AddMemberComment, cms.models.RemoveMemberComment]:
-                    context['_viewer'].permission_cache.mass_learn(context['cur_agent'], 'view membership', new_comments)
-                    context['_viewer'].permission_cache.mass_learn(context['cur_agent'], 'view item', cms.models.Membership.objects.filter(pk__in=new_comments.values('membership_id').query))
-                    context['_viewer'].permission_cache.mass_learn(context['cur_agent'], 'view name', cms.models.Item.objects.filter(pk__in=cms.models.Membership.objects.filter(pk__in=new_comments.values('membership_id').query).values('item_id').query))
+                    permission_cache.mass_learn(context['cur_agent'], 'view membership', new_comments)
+                    permission_cache.mass_learn(context['cur_agent'], 'view item', cms.models.Membership.objects.filter(pk__in=new_comments.values('membership_id').query))
+                    permission_cache.mass_learn(context['cur_agent'], 'view name', cms.models.Item.objects.filter(pk__in=cms.models.Membership.objects.filter(pk__in=new_comments.values('membership_id').query).values('item_id').query))
                     related_fields.extend(['membership', 'membership__item'])
             new_comments = new_comments.select_related(*related_fields)
             comments.extend(new_comments)
