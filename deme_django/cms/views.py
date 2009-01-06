@@ -175,6 +175,29 @@ def set_default_layout(context):
     else:
         context['layout'] = 'default_layout.html'
 
+def error_response(cur_agent, cur_site, full_path, request_class, title, body):
+    """
+    Return an HttpResponse (of type request_class) that displays a simple
+    error page with the specified title and body.
+    
+    You must supply cur_agent, cur_site, and full_path so that the error page
+    can be rendered within the expected layout.
+    """
+    template = loader.get_template_from_string("""
+    {%% extends layout %%}
+    {%% load resource_extras %%}
+    {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
+    {%% block title %%}<img src="{{ "error"|icon_url:48 }}" /> %s{%% endblock %%}
+    {%% block content %%}%s{%% endblock content %%}
+    """ % (title, body))
+    context = Context()
+    context['cur_agent'] = cur_agent
+    context['cur_site'] = cur_site
+    context['full_path'] = full_path
+    context['_permission_cache'] = permissions.PermissionCache()
+    set_default_layout(context)
+    return request_class(template.render(context))
+
 def get_viewer_class_for_viewer_name(viewer_name):
     return ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
 
@@ -227,14 +250,7 @@ class ItemViewer(object):
         return self.permission_cache.agent_can(self.cur_agent, ability, item)
 
     def render_error(self, request_class, title, body):
-        template = loader.get_template_from_string("""
-        {%% extends layout %%}
-        {%% load resource_extras %%}
-        {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
-        {%% block title %%}<img src="{{ "error"|icon_url:48 }}" /> %s{%% endblock %%}
-        {%% block content %%}%s{%% endblock content %%}
-        """ % (title, body))
-        return request_class(template.render(self.context))
+        return error_response(self.cur_agent, self.cur_site, self.context['full_path'], request_class, title, body)
 
     def init_from_http(self, request, cur_agent, cur_site, url_info):
         self.permission_cache = permissions.PermissionCache()

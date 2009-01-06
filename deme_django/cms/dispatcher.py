@@ -5,7 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.utils import datastructures, simplejson
 import datetime
-from cms.views import set_default_layout, get_viewer_class_for_viewer_name
+from cms.views import set_default_layout, error_response, get_viewer_class_for_viewer_name
 import permissions
 import os
 import subprocess
@@ -19,22 +19,6 @@ for module_name in settings.MODULE_NAMES:
 ###############################################################################
 # Helper functions
 ###############################################################################
-
-def render_error(cur_agent, cur_site, full_path, request_class, title, body):
-    template = loader.get_template_from_string("""
-    {%% extends layout %%}
-    {%% load resource_extras %%}
-    {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
-    {%% block title %%}<img src="{{ "error"|icon_url:48 }}" /> %s{%% endblock %%}
-    {%% block content %%}%s{%% endblock content %%}
-    """ % (title, body))
-    context = Context()
-    context['cur_agent'] = cur_agent
-    context['cur_site'] = cur_site
-    context['full_path'] = full_path
-    context['_permission_cache'] = permissions.PermissionCache()
-    set_default_layout(context)
-    return request_class(template.render(context))
 
 def get_logged_in_agent(request):
     cur_agent_id = request.session.get('cur_agent_id', None)
@@ -79,17 +63,17 @@ def resource(request, *args, **kwargs):
         viewer.init_from_http(request, cur_agent, cur_site, kwargs)
         response = viewer.dispatch()
         if response == None:
-            return render_error(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound, "Action Not Found", "We could not find any action matching your URL.")
+            return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound, "Action Not Found", "We could not find any action matching your URL.")
         else:
             return response
     else:
-        return render_error(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound, "Viewer Not Found", "We could not find any viewer matching your URL.")
+        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound, "Viewer Not Found", "We could not find any viewer matching your URL.")
 
 
 def invalidurl(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)
     cur_site = get_current_site(request)
-    return render_error(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound, "Invalid URL", "The URL you typed in is invalid.")
+    return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound, "Invalid URL", "The URL you typed in is invalid.")
 
 def authenticate(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)
@@ -136,15 +120,15 @@ def authenticate(request, *args, **kwargs):
             try:
                 password_authentication_method = PasswordAuthenticationMethod.objects.get(username=username)
             except ObjectDoesNotExist:
-                return render_error(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Username", "No person has this username")
+                return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Username", "No person has this username")
             if password_authentication_method.agent.trashed: 
-                return render_error(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Trashed Agent", "The agent you are trying to log in as is trashed")
+                return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Trashed Agent", "The agent you are trying to log in as is trashed")
             if password_authentication_method.check_nonced_password(hashed_password, nonce):
                 new_agent = password_authentication_method.agent
                 request.session['cur_agent_id'] = new_agent.pk
                 return HttpResponseRedirect(redirect_url)
             else:
-                return render_error(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Password", "The password you typed was not correct for this username")
+                return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Password", "The password you typed was not correct for this username")
         elif login_type == 'login_as':
             for key in request.POST.iterkeys():
                 if key.startswith('login_as_'):
@@ -152,15 +136,15 @@ def authenticate(request, *args, **kwargs):
                     try:
                         new_agent = Agent.objects.get(pk=new_agent_id)
                     except ObjectDoesNotExist:
-                        return render_error(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Agent ID", "There is no agent with the id you specified")
+                        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Agent ID", "There is no agent with the id you specified")
                     if new_agent.trashed:
-                        return render_error(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Trashed Agent", "The agent you are trying to log in as is trashed")
+                        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Trashed Agent", "The agent you are trying to log in as is trashed")
                     if permission_cache.agent_can(cur_agent, 'login_as', new_agent):
                         request.session['cur_agent_id'] = new_agent.pk
                         return HttpResponseRedirect(redirect_url)
                     else:
-                        return render_error(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Permission Denied", "You do not have permission to login as this agent")
-        return render_error(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Login Request", "The login_type field on your form was invalid")
+                        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Permission Denied", "You do not have permission to login as this agent")
+        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Login Request", "The login_type field on your form was invalid")
 
 def codegraph(request, *args, **kwargs):
     cur_agent = get_logged_in_agent(request)
@@ -199,7 +183,7 @@ def alias(request, *args, **kwargs):
         for path_part in path_parts:
             custom_url = CustomUrl.objects.filter(path=path_part, parent_url=custom_url)[0:1].get()
     except ObjectDoesNotExist:
-        return render_error(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound, "Alias Not Found", "We could not find any alias matching your URL http://%s%s." % (request.META['HTTP_HOST'], request.path))
+        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound, "Alias Not Found", "We could not find any alias matching your URL http://%s%s." % (request.META['HTTP_HOST'], request.path))
     item = custom_url.aliased_item
     kwargs = {}
     kwargs['viewer'] = custom_url.viewer
