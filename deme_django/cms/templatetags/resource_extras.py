@@ -66,7 +66,7 @@ def icon_url(item_type, size=32):
         icon = 'mimetypes/images'
     elif item_type == cms.models.Item:
         icon = 'apps/kblackbox'
-    elif item_type == cms.models.ItemSet:
+    elif item_type == cms.models.Collection:
         icon = 'filesystems/folder_blue'
     elif item_type == cms.models.Membership:
         icon = 'filesystems/folder_documents'
@@ -95,7 +95,7 @@ def icon_url(item_type, size=32):
     return "/static/crystal_project/%dx%d/%s.png" % (size, size, icon)
 
 @register.simple_tag
-def list_results_navigator(item_type, itemset, search_query, trashed, offset, limit, n_results, max_pages):
+def list_results_navigator(item_type, collection, search_query, trashed, offset, limit, n_results, max_pages):
     if n_results <= limit:
         return ''
     url_prefix = reverse('resource_collection', kwargs={'viewer': item_type.lower()}) + '?limit=%s&' % limit
@@ -103,8 +103,8 @@ def list_results_navigator(item_type, itemset, search_query, trashed, offset, li
         url_prefix += 'q=%s&' % search_query
     if trashed:
         url_prefix += 'trashed=1&'
-    if itemset:
-        url_prefix += 'itemset=%s&' % itemset.pk
+    if collection:
+        url_prefix += 'collection=%s&' % collection.pk
     result = []
     if offset > 0:
         new_offset = max(0, offset - limit)
@@ -241,17 +241,17 @@ def ifagentcanglobal(parser, token):
     return IfAgentCanGlobal(bits[1], bits[2], nodelist_true, nodelist_false)
 
 # remember this includes trashed comments, which should be displayed differently after calling this
-def comment_dicts_for_item(item, version_number, context, include_recursive_itemset_comments):
+def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments):
     permission_cache = context['_permission_cache']
     comment_subclasses = [cms.models.TextComment, cms.models.EditComment, cms.models.TrashComment, cms.models.UntrashComment, cms.models.AddMemberComment, cms.models.RemoveMemberComment]
     comments = []
-    if include_recursive_itemset_comments:
+    if include_recursive_collection_comments:
         if agentcan_global_helper(context, 'do_everything'):
             recursive_filter = None
         else:
             visible_memberships = cms.models.Membership.objects.filter(permissions.filter_items_by_permission(context['cur_agent'], 'view item'))
             recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
-        members_and_me_pks_query = cms.models.Item.objects.filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_itemset_members(recursive_filter).values('pk').query)).values('pk').query
+        members_and_me_pks_query = cms.models.Item.objects.filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_collection_members(recursive_filter).values('pk').query)).values('pk').query
         comment_pks = cms.models.RecursiveCommentMembership.objects.filter(parent__in=members_and_me_pks_query).values_list('child', flat=True)
     else:
         comment_pks = cms.models.RecursiveCommentMembership.objects.filter(parent=item).values_list('child', flat=True)
@@ -262,7 +262,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_item
         for comment_subclass in comment_subclasses:
             new_comments = comment_subclass.objects.filter(pk__in=comment_pks)
             related_fields = ['creator']
-            if include_recursive_itemset_comments:
+            if include_recursive_collection_comments:
                 related_fields.extend(['commented_item'])
             if new_comments:
                 if comment_subclass in [cms.models.AddMemberComment, cms.models.RemoveMemberComment]:
@@ -606,7 +606,7 @@ class CommentBox(template.Node):
                 result.append("""<div class="comment_description">%s</div><div class="comment_body">%s</div>""" % (comment_description, comment_body))
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
-        comment_dicts = comment_dicts_for_item(item, version_number, context, isinstance(item, cms.models.ItemSet))
+        comment_dicts = comment_dicts_for_item(item, version_number, context, isinstance(item, cms.models.Collection))
         add_comments_to_div(comment_dicts)
         result.append("</div>")
         return '\n'.join(result)

@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
+# Set up the Django Enviroment
 from django.core.management import setup_environ
-import settings
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from deme_django import settings
 setup_environ(settings)
 
 import cms.models
 import email
-import sys
 from django.core.mail import send_mail
 from django.core.exceptions import ObjectDoesNotExist
 

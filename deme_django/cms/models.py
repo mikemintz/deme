@@ -11,7 +11,7 @@ from copy import deepcopy
 import random
 import hashlib
 
-__all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'ItemSet', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'CommentLocation', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'ItemSetGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'ItemSetGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'ItemSetPermission', 'DefaultPermission', 'AgentRolePermission', 'ItemSetRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_hexdigest', 'get_random_hash', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
+__all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'Collection', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'CommentLocation', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'CollectionGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'CollectionGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'CollectionPermission', 'DefaultPermission', 'AgentRolePermission', 'CollectionRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_hexdigest', 'get_random_hash', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
 
 class ItemMetaClass(models.base.ModelBase):
     def __new__(cls, name, bases, attrs):
@@ -100,11 +100,11 @@ class Item(models.Model):
             result = type(self).VERSION.objects.filter(current_item=self).latest()
         return result
 
-    def all_containing_itemsets(self, recursive_filter=None):
+    def all_containing_collections(self, recursive_filter=None):
         recursive_memberships = RecursiveMembership.objects.filter(child=self)
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
-        return ItemSet.objects.filter(trashed=False, pk__in=recursive_memberships.values('parent').query)
+        return Collection.objects.filter(trashed=False, pk__in=recursive_memberships.values('parent').query)
 
     def all_comments(self):
         return Comment.objects.filter(trashed=False, pk__in=RecursiveCommentMembership.objects.filter(parent=self).values('child').query)
@@ -356,28 +356,28 @@ class Person(Agent):
     suffix = models.CharField(max_length=255, blank=True)
 
 
-class ItemSet(Item):
+class Collection(Item):
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities | set(['modify_membership', 'add_self', 'remove_self'])
-    relevant_global_abilities = frozenset(['create ItemSet'])
-    def all_contained_itemset_members(self, recursive_filter=None):
+    relevant_global_abilities = frozenset(['create Collection'])
+    def all_contained_collection_members(self, recursive_filter=None):
         recursive_memberships = RecursiveMembership.objects.filter(parent=self)
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         return Item.objects.filter(trashed=False, pk__in=recursive_memberships.values('child').query)
     def after_trash(self, agent):
-        super(ItemSet, self).after_trash(agent)
-        RecursiveMembership.recursive_remove_itemset(self)
+        super(Collection, self).after_trash(agent)
+        RecursiveMembership.recursive_remove_collection(self)
     after_trash.alters_data = True
     def after_untrash(self, agent):
-        super(ItemSet, self).after_untrash(agent)
-        RecursiveMembership.recursive_add_itemset(self)
+        super(Collection, self).after_untrash(agent)
+        RecursiveMembership.recursive_add_collection(self)
     after_untrash.alters_data = True
 
 
-class Group(ItemSet):
-    immutable_fields = ItemSet.immutable_fields
-    relevant_abilities = ItemSet.relevant_abilities
+class Group(Collection):
+    immutable_fields = Collection.immutable_fields
+    relevant_abilities = Collection.relevant_abilities
     relevant_global_abilities = frozenset(['create Group'])
     def after_create(self):
         super(Group, self).after_create()
@@ -386,43 +386,43 @@ class Group(ItemSet):
     after_create.alters_data = True
 
 
-class Folio(ItemSet):
-    immutable_fields = ItemSet.immutable_fields | set(['group'])
-    relevant_abilities = ItemSet.relevant_abilities | set(['view group'])
+class Folio(Collection):
+    immutable_fields = Collection.immutable_fields | set(['group'])
+    relevant_abilities = Collection.relevant_abilities | set(['view group'])
     relevant_global_abilities = frozenset()
     group = models.ForeignKey(Group, related_name='folios_as_group', unique=True, editable=False)
 
 
 class Membership(Item):
-    immutable_fields = Item.immutable_fields | set(['item', 'itemset'])
-    relevant_abilities = (Item.relevant_abilities | set(['view item', 'view itemset'])) - set(['trash'])
+    immutable_fields = Item.immutable_fields | set(['item', 'collection'])
+    relevant_abilities = (Item.relevant_abilities | set(['view item', 'view collection'])) - set(['trash'])
     relevant_global_abilities = frozenset()
     item = models.ForeignKey(Item, related_name='memberships_as_item')
-    itemset = models.ForeignKey(ItemSet, related_name='memberships_as_itemset')
+    collection = models.ForeignKey(Collection, related_name='memberships_as_collection')
     class Meta:
-        unique_together = (('item', 'itemset'),)
+        unique_together = (('item', 'collection'),)
     def after_create(self):
         super(Membership, self).after_create()
         RecursiveMembership.recursive_add_membership(self)
-        add_member_comment = AddMemberComment(commented_item=self.itemset, membership=self)
+        add_member_comment = AddMemberComment(commented_item=self.collection, membership=self)
         add_member_comment.save_versioned(updater=self.creator)
-        add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.itemset.versions.latest().version_number, commented_item_index=None)
+        add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.collection.versions.latest().version_number, commented_item_index=None)
         add_member_comment_location.save_versioned(updater=self.creator)
     after_create.alters_data = True
     def after_trash(self, agent):
         super(Membership, self).after_trash(agent)
-        RecursiveMembership.recursive_remove_edge(self.itemset, self.item)
-        remove_member_comment = RemoveMemberComment(commented_item=self.itemset, membership=self)
+        RecursiveMembership.recursive_remove_edge(self.collection, self.item)
+        remove_member_comment = RemoveMemberComment(commented_item=self.collection, membership=self)
         remove_member_comment.save_versioned(updater=agent)
-        remove_member_comment_location = CommentLocation(comment=remove_member_comment, commented_item_version_number=self.itemset.versions.latest().version_number, commented_item_index=None)
+        remove_member_comment_location = CommentLocation(comment=remove_member_comment, commented_item_version_number=self.collection.versions.latest().version_number, commented_item_index=None)
         remove_member_comment_location.save_versioned(updater=agent)
     after_trash.alters_data = True
     def after_untrash(self, agent):
         super(Membership, self).after_untrash(agent)
         RecursiveMembership.recursive_add_membership(self)
-        add_member_comment = AddMemberComment(commented_item=self.itemset, membership=self)
+        add_member_comment = AddMemberComment(commented_item=self.collection, membership=self)
         add_member_comment.save_versioned(updater=agent)
-        add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.itemset.versions.latest().version_number, commented_item_index=None)
+        add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.collection.versions.latest().version_number, commented_item_index=None)
         add_member_comment_location.save_versioned(updater=agent)
     after_untrash.alters_data = True
 
@@ -477,16 +477,16 @@ class Comment(Item):
         return Item.objects.filter(pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query).exclude(item_type__in=comment_class_names).get()
     def all_commented_items(self):
         return Item.objects.filter(pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query)
-    def all_commented_items_and_itemsets(self, recursive_filter=None):
+    def all_commented_items_and_collections(self, recursive_filter=None):
         parent_item_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
         parent_items = Q(pk__in=parent_item_pks_query)
 
         recursive_memberships = RecursiveMembership.objects.filter(child__in=parent_item_pks_query)
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
-        parent_item_itemsets = Q(pk__in=recursive_memberships.values('parent').query)
+        parent_item_collections = Q(pk__in=recursive_memberships.values('parent').query)
 
-        return Item.objects.filter(parent_items | parent_item_itemsets, trashed=False)
+        return Item.objects.filter(parent_items | parent_item_collections, trashed=False)
     def after_create(self):
         super(Comment, self).after_create()
 
@@ -509,7 +509,7 @@ class Comment(Item):
         else:
             comment_type_q = Q(pk__isnull=False)
         direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
-        deep_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items_and_itemsets().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
+        deep_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items_and_collections().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
         subscribed_email_contact_methods = EmailContactMethod.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('contact_method').query) | Q(pk__in=deep_subscriptions.values('contact_method').query))
         messages = [self.notification_email(email_contact_method) for email_contact_method in subscribed_email_contact_methods]
         messages = [x for x in messages if x is not None]
@@ -542,9 +542,9 @@ class Comment(Item):
             if can_do_everything:
                 recursive_filter = None
             else:
-                visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(agent, 'view itemset'), permissions.filter_items_by_permission(agent, 'view item'))
+                visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(agent, 'view collection'), permissions.filter_items_by_permission(agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
-            possible_parents = self.all_commented_items_and_itemsets(recursive_filter)
+            possible_parents = self.all_commented_items_and_collections(recursive_filter)
             deep_subscriptions = Subscription.objects.filter(item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
             if not deep_subscriptions:
                 return None
@@ -861,12 +861,12 @@ class AgentGlobalPermission(GlobalPermission):
         unique_together = (('agent', 'ability'),)
 
 
-class ItemSetGlobalPermission(GlobalPermission):
-    itemset = models.ForeignKey(ItemSet, related_name='itemset_global_permissions_as_itemset')
+class CollectionGlobalPermission(GlobalPermission):
+    collection = models.ForeignKey(Collection, related_name='collection_global_permissions_as_collection')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
-        unique_together = (('itemset', 'ability'),)
+        unique_together = (('collection', 'ability'),)
 
 
 class DefaultGlobalPermission(GlobalPermission):
@@ -883,11 +883,11 @@ class AgentGlobalRolePermission(GlobalPermission):
         unique_together = (('agent', 'global_role'),)
 
 
-class ItemSetGlobalRolePermission(GlobalPermission):
-    itemset = models.ForeignKey(ItemSet, related_name='itemset_global_role_permissions_as_itemset')
-    global_role = models.ForeignKey(GlobalRole, related_name='itemset_global_role_permissions_as_global_role')
+class CollectionGlobalRolePermission(GlobalPermission):
+    collection = models.ForeignKey(Collection, related_name='collection_global_role_permissions_as_collection')
+    global_role = models.ForeignKey(GlobalRole, related_name='collection_global_role_permissions_as_global_role')
     class Meta:
-        unique_together = (('itemset', 'global_role'),)
+        unique_together = (('collection', 'global_role'),)
 
 
 class DefaultGlobalRolePermission(GlobalPermission):
@@ -905,13 +905,13 @@ class AgentPermission(Permission):
         unique_together = (('agent', 'item', 'ability'),)
 
 
-class ItemSetPermission(Permission):
-    itemset = models.ForeignKey(ItemSet, related_name='itemset_permissions_as_itemset')
-    item = models.ForeignKey(Item, related_name='itemset_permissions_as_item')
+class CollectionPermission(Permission):
+    collection = models.ForeignKey(Collection, related_name='collection_permissions_as_collection')
+    item = models.ForeignKey(Item, related_name='collection_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
-        unique_together = (('itemset', 'item', 'ability'),)
+        unique_together = (('collection', 'item', 'ability'),)
 
 
 class DefaultPermission(Permission):
@@ -930,12 +930,12 @@ class AgentRolePermission(Permission):
         unique_together = (('agent', 'item', 'role'),)
 
 
-class ItemSetRolePermission(Permission):
-    itemset = models.ForeignKey(ItemSet, related_name='itemset_role_permissions_as_itemset')
-    item = models.ForeignKey(Item, related_name='itemset_role_permissions_as_item')
-    role = models.ForeignKey(Role, related_name='itemset_role_permissions_as_role')
+class CollectionRolePermission(Permission):
+    collection = models.ForeignKey(Collection, related_name='collection_role_permissions_as_collection')
+    item = models.ForeignKey(Item, related_name='collection_role_permissions_as_item')
+    role = models.ForeignKey(Role, related_name='collection_role_permissions_as_role')
     class Meta:
-        unique_together = (('itemset', 'item', 'role'),)
+        unique_together = (('collection', 'item', 'role'),)
 
 
 class DefaultRolePermission(Permission):
@@ -964,14 +964,14 @@ class RecursiveCommentMembership(models.Model):
 
 
 class RecursiveMembership(models.Model):
-    parent = models.ForeignKey(ItemSet, related_name='recursive_memberships_as_parent')
+    parent = models.ForeignKey(Collection, related_name='recursive_memberships_as_parent')
     child = models.ForeignKey(Item, related_name='recursive_memberships_as_child')
     child_memberships = models.ManyToManyField(Membership)
     class Meta:
         unique_together = (('parent', 'child'),)
     @classmethod
     def recursive_add_membership(cls, membership):
-        parent = membership.itemset
+        parent = membership.collection
         child = membership.item
         # first connect parent to child
         recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=parent, child=child)
@@ -994,23 +994,23 @@ class RecursiveMembership(models.Model):
                 recursive_membership.child_memberships.add(child_membership)
     @classmethod
     def recursive_remove_edge(cls, parent, child):
-        ancestors = ItemSet.objects.filter(Q(pk__in=RecursiveMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
+        ancestors = Collection.objects.filter(Q(pk__in=RecursiveMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
         descendants = Item.objects.filter(Q(pk__in=RecursiveMembership.objects.filter(parent=child).values('child').query) | Q(pk=child.pk))
         edges = RecursiveMembership.objects.filter(parent__pk__in=ancestors.values('pk').query, child__pk__in=descendants.values('pk').query)
         # first remove all connections between ancestors and descendants
         edges.delete()
         # now add back any real connections between ancestors and descendants that aren't trashed
-        memberships = Membership.objects.filter(trashed=False, itemset__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(itemset=parent, item=child)
+        memberships = Membership.objects.filter(trashed=False, collection__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(collection=parent, item=child)
         for membership in memberships:
             RecursiveMembership.recursive_add_membership(membership)
     @classmethod
-    def recursive_add_itemset(cls, itemset):
-        memberships = Membership.objects.filter(Q(itemset=itemset) | Q(item=itemset), trashed=False)
+    def recursive_add_collection(cls, collection):
+        memberships = Membership.objects.filter(Q(collection=collection) | Q(item=collection), trashed=False)
         for membership in memberships:
             RecursiveMembership.recursive_add_membership(membership)
     @classmethod
-    def recursive_remove_itemset(cls, itemset):
-        RecursiveMembership.recursive_remove_edge(itemset, itemset)
+    def recursive_remove_collection(cls, collection):
+        RecursiveMembership.recursive_remove_edge(collection, collection)
 
 
 ###############################################################################

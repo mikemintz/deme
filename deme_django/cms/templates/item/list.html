@@ -30,17 +30,17 @@
             Item Set Filter:
         </th>
         <td>
-            <select name="itemset">
-                {% if itemset %}
+            <select name="collection">
+                {% if collection %}
                 <option value=""></option>
                 {% else %}
                 <option value="" selected="selected"></option>
                 {% endif %}
-                {% for other_itemset in all_itemsets %}
-                {% ifequal other_itemset.pk itemset.pk %}
-                <option value="{{ other_itemset.pk }}" selected="selected">{{ other_itemset.name }}</option>
+                {% for other_collection in all_collections %}
+                {% ifequal other_collection.pk collection.pk %}
+                <option value="{{ other_collection.pk }}" selected="selected">{{ other_collection.name }}</option>
                 {% else %}
-                <option value="{{ other_itemset.pk }}">{{ other_itemset.name }}</option>
+                <option value="{{ other_collection.pk }}">{{ other_collection.name }}</option>
                 {% endifequal %}
                 {% endfor %}
             </select>
@@ -65,7 +65,7 @@
 </div>
 
 <div style="margin-top: 10px; margin-bottom: 10px; text-align: center;">
-    {% list_results_navigator item_type itemset search_query trashed offset limit n_listable_items 10 %}
+    {% list_results_navigator item_type collection search_query trashed offset limit n_listable_items 10 %}
 </div>
 
 <table class="list" width="100%">
@@ -83,7 +83,7 @@
 {% endif %}
 
 <div style="margin-top: 10px; text-align: center;">
-    {% list_results_navigator item_type itemset search_query trashed offset limit n_listable_items 10 %}
+    {% list_results_navigator item_type collection search_query trashed offset limit n_listable_items 10 %}
 </div>
 
 {% endblock content %}

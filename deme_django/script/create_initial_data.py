@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
+# Set up the Django Enviroment
 from django.core.management import setup_environ
-import settings
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from deme_django import settings
 setup_environ(settings)
 
 from cms.models import *
@@ -9,8 +14,6 @@ from django import db
 import subprocess
 import re
 import time
-import sys
-import os.path
 
 if Item.objects.count() != 0:
     raise AssertionError, 'You cannot run ./create_initial_data.py on a non-empty database'
@@ -84,7 +87,7 @@ if len(sys.argv) < 2 or sys.argv[1] != 'test':
 ###############################################################################
 
 # Set the default layout
-default_layout_code = open(os.path.join(os.path.dirname(__file__), 'cms', 'templates', 'default_layout.html')).read()
+default_layout_code = open(os.path.join(os.path.dirname(__file__), '..', 'cms', 'templates', 'default_layout.html')).read()
 default_layout = DjangoTemplateDocument(override_default_layout=True, name='Deme Layout', body=default_layout_code)
 default_layout.save_versioned(updater=admin)
 
@@ -149,19 +152,19 @@ hello_url.save_versioned(updater=admin)
 
 symsys_group = Group(name="Symsys Group")
 symsys_group.save_versioned(updater=admin)
-Membership(item=mike_person, itemset=symsys_group).save_versioned(updater=admin)
-Membership(item=todd_person, itemset=symsys_group).save_versioned(updater=admin)
-Membership(item=reid_person, itemset=symsys_group).save_versioned(updater=admin)
+Membership(item=mike_person, collection=symsys_group).save_versioned(updater=admin)
+Membership(item=todd_person, collection=symsys_group).save_versioned(updater=admin)
+Membership(item=reid_person, collection=symsys_group).save_versioned(updater=admin)
 
 discuss_group = Group(name="Deme Dev Discussion")
 discuss_group.save_versioned(updater=admin)
-Membership(item=mike_person, itemset=discuss_group).save_versioned(updater=admin)
-Membership(item=todd_person, itemset=discuss_group).save_versioned(updater=admin)
+Membership(item=mike_person, collection=discuss_group).save_versioned(updater=admin)
+Membership(item=todd_person, collection=discuss_group).save_versioned(updater=admin)
 
 DefaultGlobalPermission(ability='do_something', is_allowed=True).save()
 #AgentGlobalPermission(agent=anonymous_agent, ability='do_something', is_allowed=False).save()
 DefaultGlobalPermission(ability='create HtmlDocument', is_allowed=True).save()
 DefaultGlobalPermission(ability='create TextDocumentExcerpt', is_allowed=True).save()
-DefaultGlobalPermission(ability='create ItemSet', is_allowed=True).save()
+DefaultGlobalPermission(ability='create Collection', is_allowed=True).save()
 
 DefaultPermission(item=admin, ability='login_as', is_allowed=True).save()

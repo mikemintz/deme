@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
 # Set up the Django Enviroment
-from django.core.management import setup_environ 
-import settings 
+from django.core.management import setup_environ
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from deme_django import settings
 setup_environ(settings)
 
-import os
 import subprocess
 import itertools
 from deme_django.cms import models
@@ -77,6 +80,6 @@ def run_dot_to_file(dotcode, filename):
     f.close()
 
 
-run_dot_to_file(gen_dotcode(show_fields=True), os.path.join(os.path.dirname(__file__), 'static', 'codegraph.png'))
-run_dot_to_file(gen_dotcode(show_fields=False), os.path.join(os.path.dirname(__file__), 'static', 'codegraph_basic.png'))
+run_dot_to_file(gen_dotcode(show_fields=True), os.path.join(os.path.dirname(__file__), '..', 'static', 'codegraph.png'))
+run_dot_to_file(gen_dotcode(show_fields=False), os.path.join(os.path.dirname(__file__), '..', 'static', 'codegraph_basic.png'))
 

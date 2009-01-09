@@ -355,10 +355,10 @@ class ItemViewer(object):
         return self.render_error(HttpResponseNotFound, title, body)
 
     def collection_list(self):
-        if self.request.GET.get('itemset'):
-            itemset = Item.objects.get(pk=self.request.GET.get('itemset')).downcast()
+        if self.request.GET.get('collection'):
+            collection = Item.objects.get(pk=self.request.GET.get('collection')).downcast()
         else:
-            itemset = None
+            collection = None
         offset = int(self.request.GET.get('offset', 0))
         limit = int(self.request.GET.get('limit', 100))
         trashed = self.request.GET.get('trashed', None) == '1'
@@ -378,13 +378,13 @@ class ItemViewer(object):
             # elif issubclass(self.item_type, TextDocument):
             #     search_filter = search_filter | Q(body__icontains=q)
             items = items.filter(search_filter)
-        if isinstance(itemset, ItemSet):
+        if isinstance(collection, Collection):
             if self.cur_agent_can_global('do_everything'):
                 recursive_filter = None
             else:
                 visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(self.cur_agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
-            items = items.filter(pk__in=itemset.all_contained_itemset_members(recursive_filter).values('pk').query)
+            items = items.filter(pk__in=collection.all_contained_collection_members(recursive_filter).values('pk').query)
         if self.cur_agent_can_global('do_everything'):
             listable_items = items
         else:
@@ -410,8 +410,8 @@ class ItemViewer(object):
         self.context['list_start_i'] = offset + 1
         self.context['list_end_i'] = min(offset + limit, n_listable_items)
         self.context['trashed'] = trashed
-        self.context['itemset'] = itemset
-        self.context['all_itemsets'] = ItemSet.objects.filter(trashed=False).filter(permissions.filter_items_by_permission(self.cur_agent, 'view name')).order_by('name')
+        self.context['collection'] = collection
+        self.context['all_collections'] = Collection.objects.filter(trashed=False).filter(permissions.filter_items_by_permission(self.cur_agent, 'view name')).order_by('name')
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
@@ -615,7 +615,7 @@ class ItemViewer(object):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
 
         def formfield_callback(f):
-            if f.name in ['agent', 'itemset', 'item']:
+            if f.name in ['agent', 'collection', 'item']:
                 return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=f.rel.field_name)
             if isinstance(f, models.ForeignKey):
                 return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
@@ -624,8 +624,8 @@ class ItemViewer(object):
 
         agent_permission_form_class = forms.models.modelform_factory(AgentPermission, fields=['agent', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
         agent_role_permission_form_class = forms.models.modelform_factory(AgentRolePermission, fields=['agent', 'item', 'role'], formfield_callback=formfield_callback)
-        itemset_permission_form_class = forms.models.modelform_factory(ItemSetPermission, fields=['itemset', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        itemset_role_permission_form_class = forms.models.modelform_factory(ItemSetRolePermission, fields=['itemset', 'item', 'role'], formfield_callback=formfield_callback)
+        collection_permission_form_class = forms.models.modelform_factory(CollectionPermission, fields=['collection', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
+        collection_role_permission_form_class = forms.models.modelform_factory(CollectionRolePermission, fields=['collection', 'item', 'role'], formfield_callback=formfield_callback)
         default_permission_form_class = forms.models.modelform_factory(DefaultPermission, fields=['item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
         default_role_permission_form_class = forms.models.modelform_factory(DefaultRolePermission, fields=['item', 'role'], formfield_callback=formfield_callback)
 
@@ -635,10 +635,10 @@ class ItemViewer(object):
                 form_class = agent_permission_form_class
             elif form_type == 'agentrolepermission':
                 form_class = agent_role_permission_form_class
-            elif form_type == 'itemsetpermission':
-                form_class = itemset_permission_form_class
-            elif form_type == 'itemsetrolepermission':
-                form_class = itemset_role_permission_form_class
+            elif form_type == 'collectionpermission':
+                form_class = collection_permission_form_class
+            elif form_type == 'collectionrolepermission':
+                form_class = collection_role_permission_form_class
             elif form_type == 'defaultpermission':
                 form_class = default_permission_form_class
             elif form_type == 'defaultrolepermission':
@@ -666,8 +666,8 @@ class ItemViewer(object):
                     data = form[field].data
                     if field == 'agent':
                         existing_permission = existing_permission.filter(agent__pk=data)
-                    elif field == 'itemset':
-                        existing_permission = existing_permission.filter(itemset__pk=data)
+                    elif field == 'collection':
+                        existing_permission = existing_permission.filter(collection__pk=data)
                     elif field == 'item':
                         existing_permission = existing_permission.filter(item__pk=data)
                     elif field == 'role':
@@ -689,13 +689,13 @@ class ItemViewer(object):
                     pass
 
         agent_permissions = self.item.agent_permissions_as_item.order_by('ability')
-        itemset_permissions = self.item.itemset_permissions_as_item.order_by('ability')
+        collection_permissions = self.item.collection_permissions_as_item.order_by('ability')
         default_permissions = self.item.default_permissions_as_item.order_by('ability')
         agent_role_permissions = self.item.agent_role_permissions_as_item.order_by('role__name')
-        itemset_role_permissions = self.item.itemset_role_permissions_as_item.order_by('role__name')
+        collection_role_permissions = self.item.collection_role_permissions_as_item.order_by('role__name')
         default_role_permissions = self.item.default_role_permissions_as_item.order_by('role__name')
         agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
-        itemsets = ItemSet.objects.filter(Q(pk__in=itemset_permissions.values('itemset__pk').query) | Q(pk__in=itemset_role_permissions.values('itemset__pk').query) | Q(pk=self.request.GET.get('itemset', 0))).order_by('name')
+        collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk__in=collection_role_permissions.values('collection__pk').query) | Q(pk=self.request.GET.get('collection', 0))).order_by('name')
 
         agent_data = []
         for agent in agents:
@@ -706,15 +706,15 @@ class ItemViewer(object):
             agent_datum['permission_form'] = agent_permission_form_class(prefix="agent%s" % agent.pk, initial={'item': self.item.pk, 'agent': agent.pk})
             agent_datum['role_permission_form'] = agent_role_permission_form_class(prefix="roleagent%s" % agent.pk, initial={'item': self.item.pk, 'agent': agent.pk})
             agent_data.append(agent_datum)
-        itemset_data = []
-        for itemset in itemsets:
-            itemset_datum = {}
-            itemset_datum['itemset'] = itemset
-            itemset_datum['permissions'] = itemset_permissions.filter(itemset=itemset)
-            itemset_datum['role_permissions'] = itemset_role_permissions.filter(itemset=itemset)
-            itemset_datum['permission_form'] = itemset_permission_form_class(prefix="itemset%s" % itemset.pk, initial={'item': self.item.pk, 'itemset': itemset.pk})
-            itemset_datum['role_permission_form'] = itemset_role_permission_form_class(prefix="roleitemset%s" % itemset.pk, initial={'item': self.item.pk, 'itemset': itemset.pk})
-            itemset_data.append(itemset_datum)
+        collection_data = []
+        for collection in collections:
+            collection_datum = {}
+            collection_datum['collection'] = collection
+            collection_datum['permissions'] = collection_permissions.filter(collection=collection)
+            collection_datum['role_permissions'] = collection_role_permissions.filter(collection=collection)
+            collection_datum['permission_form'] = collection_permission_form_class(prefix="collection%s" % collection.pk, initial={'item': self.item.pk, 'collection': collection.pk})
+            collection_datum['role_permission_form'] = collection_role_permission_form_class(prefix="rolecollection%s" % collection.pk, initial={'item': self.item.pk, 'collection': collection.pk})
+            collection_data.append(collection_datum)
         default_data = {}
         default_data['permissions'] = default_permissions
         default_data['role_permissions'] = default_role_permissions
@@ -731,14 +731,14 @@ class ItemViewer(object):
                 agent_datum = [datum for datum in agent_data if str(datum['agent'].pk) == form['agent'].data][0]
                 agent_datum['role_permission_form'] = form
                 agent_datum['role_permission_form_invalid'] = True
-            elif form_type == 'itemsetpermission':
-                itemset_datum = [datum for datum in itemset_data if str(datum['itemset'].pk) == form['itemset'].data][0]
-                itemset_datum['permission_form'] = form
-                itemset_datum['permission_form_invalid'] = True
-            elif form_type == 'itemsetrolepermission':
-                itemset_datum = [datum for datum in itemset_data if str(datum['itemset'].pk) == form['itemset'].data][0]
-                itemset_datum['role_permission_form'] = form
-                itemset_datum['role_permission_form_invalid'] = True
+            elif form_type == 'collectionpermission':
+                collection_datum = [datum for datum in collection_data if str(datum['collection'].pk) == form['collection'].data][0]
+                collection_datum['permission_form'] = form
+                collection_datum['permission_form_invalid'] = True
+            elif form_type == 'collectionrolepermission':
+                collection_datum = [datum for datum in collection_data if str(datum['collection'].pk) == form['collection'].data][0]
+                collection_datum['role_permission_form'] = form
+                collection_datum['role_permission_form_invalid'] = True
             elif form_type == 'defaultpermission':
                 default_data['permission_form'] = form
                 default_data['permission_form_invalid'] = True
@@ -747,14 +747,14 @@ class ItemViewer(object):
                 default_data['role_permission_form_invalid'] = True
 
         new_agent_form_class = forms.models.modelform_factory(AgentPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
-        new_itemset_form_class = forms.models.modelform_factory(ItemSetPermission, fields=['itemset'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_collection_form_class = forms.models.modelform_factory(CollectionPermission, fields=['collection'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
 
         template = loader.get_template('item/permissions.html')
         self.context['agent_data'] = agent_data
-        self.context['itemset_data'] = itemset_data
+        self.context['collection_data'] = collection_data
         self.context['default_data'] = default_data
         self.context['new_agent_form'] = new_agent_form_class()
-        self.context['new_itemset_form'] = new_itemset_form_class()
+        self.context['new_collection_form'] = new_collection_form_class()
         return HttpResponse(template.render(self.context))
 
     def collection_globalpermissions(self):
@@ -762,7 +762,7 @@ class ItemViewer(object):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify global permissions")
 
         def formfield_callback(f):
-            if f.name in ['agent', 'itemset', 'item']:
+            if f.name in ['agent', 'collection', 'item']:
                 return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=f.rel.field_name)
             if isinstance(f, models.ForeignKey):
                 return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
@@ -771,8 +771,8 @@ class ItemViewer(object):
 
         agent_permission_form_class = forms.models.modelform_factory(AgentGlobalPermission, fields=['agent', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
         agent_role_permission_form_class = forms.models.modelform_factory(AgentGlobalRolePermission, fields=['agent', 'global_role'], formfield_callback=formfield_callback)
-        itemset_permission_form_class = forms.models.modelform_factory(ItemSetGlobalPermission, fields=['itemset', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        itemset_role_permission_form_class = forms.models.modelform_factory(ItemSetGlobalRolePermission, fields=['itemset', 'global_role'], formfield_callback=formfield_callback)
+        collection_permission_form_class = forms.models.modelform_factory(CollectionGlobalPermission, fields=['collection', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
+        collection_role_permission_form_class = forms.models.modelform_factory(CollectionGlobalRolePermission, fields=['collection', 'global_role'], formfield_callback=formfield_callback)
         default_permission_form_class = forms.models.modelform_factory(DefaultGlobalPermission, fields=['ability', 'is_allowed'], formfield_callback=formfield_callback)
         default_role_permission_form_class = forms.models.modelform_factory(DefaultGlobalRolePermission, fields=['global_role'], formfield_callback=formfield_callback)
 
@@ -782,10 +782,10 @@ class ItemViewer(object):
                 form_class = agent_permission_form_class
             elif form_type == 'agentrolepermission':
                 form_class = agent_role_permission_form_class
-            elif form_type == 'itemsetpermission':
-                form_class = itemset_permission_form_class
-            elif form_type == 'itemsetrolepermission':
-                form_class = itemset_role_permission_form_class
+            elif form_type == 'collectionpermission':
+                form_class = collection_permission_form_class
+            elif form_type == 'collectionrolepermission':
+                form_class = collection_role_permission_form_class
             elif form_type == 'defaultpermission':
                 form_class = default_permission_form_class
             elif form_type == 'defaultrolepermission':
@@ -817,8 +817,8 @@ class ItemViewer(object):
                     data = form[field].data
                     if field == 'agent':
                         existing_permission = existing_permission.filter(agent__pk=data)
-                    elif field == 'itemset':
-                        existing_permission = existing_permission.filter(itemset__pk=data)
+                    elif field == 'collection':
+                        existing_permission = existing_permission.filter(collection__pk=data)
                     elif field == 'global_role':
                         existing_permission = existing_permission.filter(global_role__pk=data)
                     elif field == 'ability':
@@ -842,13 +842,13 @@ class ItemViewer(object):
                     pass
 
         agent_permissions = AgentGlobalPermission.objects.order_by('ability')
-        itemset_permissions = ItemSetGlobalPermission.objects.order_by('ability')
+        collection_permissions = CollectionGlobalPermission.objects.order_by('ability')
         default_permissions = DefaultGlobalPermission.objects.order_by('ability')
         agent_role_permissions = AgentGlobalRolePermission.objects.order_by('global_role__name')
-        itemset_role_permissions = ItemSetGlobalRolePermission.objects.order_by('global_role__name')
+        collection_role_permissions = CollectionGlobalRolePermission.objects.order_by('global_role__name')
         default_role_permissions = DefaultGlobalRolePermission.objects.order_by('global_role__name')
         agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
-        itemsets = ItemSet.objects.filter(Q(pk__in=itemset_permissions.values('itemset__pk').query) | Q(pk__in=itemset_role_permissions.values('itemset__pk').query) | Q(pk=self.request.GET.get('itemset', 0))).order_by('name')
+        collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk__in=collection_role_permissions.values('collection__pk').query) | Q(pk=self.request.GET.get('collection', 0))).order_by('name')
 
         agent_data = []
         for agent in agents:
@@ -859,15 +859,15 @@ class ItemViewer(object):
             agent_datum['permission_form'] = agent_permission_form_class(prefix="agent%s" % agent.pk, initial={'agent': agent.pk})
             agent_datum['role_permission_form'] = agent_role_permission_form_class(prefix="roleagent%s" % agent.pk, initial={'agent': agent.pk})
             agent_data.append(agent_datum)
-        itemset_data = []
-        for itemset in itemsets:
-            itemset_datum = {}
-            itemset_datum['itemset'] = itemset
-            itemset_datum['permissions'] = itemset_permissions.filter(itemset=itemset)
-            itemset_datum['role_permissions'] = itemset_role_permissions.filter(itemset=itemset)
-            itemset_datum['permission_form'] = itemset_permission_form_class(prefix="itemset%s" % itemset.pk, initial={'itemset': itemset.pk})
-            itemset_datum['role_permission_form'] = itemset_role_permission_form_class(prefix="roleitemset%s" % itemset.pk, initial={'itemset': itemset.pk})
-            itemset_data.append(itemset_datum)
+        collection_data = []
+        for collection in collections:
+            collection_datum = {}
+            collection_datum['collection'] = collection
+            collection_datum['permissions'] = collection_permissions.filter(collection=collection)
+            collection_datum['role_permissions'] = collection_role_permissions.filter(collection=collection)
+            collection_datum['permission_form'] = collection_permission_form_class(prefix="collection%s" % collection.pk, initial={'collection': collection.pk})
+            collection_datum['role_permission_form'] = collection_role_permission_form_class(prefix="rolecollection%s" % collection.pk, initial={'collection': collection.pk})
+            collection_data.append(collection_datum)
         default_data = {}
         default_data['permissions'] = default_permissions
         default_data['role_permissions'] = default_role_permissions
@@ -884,14 +884,14 @@ class ItemViewer(object):
                 agent_datum = [datum for datum in agent_data if str(datum['agent'].pk) == form['agent'].data][0]
                 agent_datum['role_permission_form'] = form
                 agent_datum['role_permission_form_invalid'] = True
-            elif form_type == 'itemsetpermission':
-                itemset_datum = [datum for datum in itemset_data if str(datum['itemset'].pk) == form['itemset'].data][0]
-                itemset_datum['permission_form'] = form
-                itemset_datum['permission_form_invalid'] = True
-            elif form_type == 'itemsetrolepermission':
-                itemset_datum = [datum for datum in itemset_data if str(datum['itemset'].pk) == form['itemset'].data][0]
-                itemset_datum['role_permission_form'] = form
-                itemset_datum['role_permission_form_invalid'] = True
+            elif form_type == 'collectionpermission':
+                collection_datum = [datum for datum in collection_data if str(datum['collection'].pk) == form['collection'].data][0]
+                collection_datum['permission_form'] = form
+                collection_datum['permission_form_invalid'] = True
+            elif form_type == 'collectionrolepermission':
+                collection_datum = [datum for datum in collection_data if str(datum['collection'].pk) == form['collection'].data][0]
+                collection_datum['role_permission_form'] = form
+                collection_datum['role_permission_form_invalid'] = True
             elif form_type == 'defaultpermission':
                 default_data['permission_form'] = form
                 default_data['permission_form_invalid'] = True
@@ -900,14 +900,14 @@ class ItemViewer(object):
                 default_data['role_permission_form_invalid'] = True
 
         new_agent_form_class = forms.models.modelform_factory(AgentGlobalPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
-        new_itemset_form_class = forms.models.modelform_factory(ItemSetGlobalPermission, fields=['itemset'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_collection_form_class = forms.models.modelform_factory(CollectionGlobalPermission, fields=['collection'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
 
         template = loader.get_template('item/globalpermissions.html')
         self.context['agent_data'] = agent_data
-        self.context['itemset_data'] = itemset_data
+        self.context['collection_data'] = collection_data
         self.context['default_data'] = default_data
         self.context['new_agent_form'] = new_agent_form_class()
-        self.context['new_itemset_form'] = new_itemset_form_class()
+        self.context['new_collection_form'] = new_collection_form_class()
         return HttpResponse(template.render(self.context))
 
 
@@ -978,12 +978,12 @@ class ViewerRequestViewer(ItemViewer):
             return HttpResponse(template.render(self.context))
 
 
-class ItemSetViewer(ItemViewer):
-    item_type = ItemSet
-    viewer_name = 'itemset'
+class CollectionViewer(ItemViewer):
+    item_type = Collection
+    viewer_name = 'collection'
 
     def entry_show(self):
-        memberships = self.item.memberships_as_itemset
+        memberships = self.item.memberships_as_collection
         memberships = memberships.filter(trashed=False)
         memberships = memberships.filter(item__trashed=False)
         if not self.cur_agent_can_global('do_everything'):
@@ -992,9 +992,9 @@ class ItemSetViewer(ItemViewer):
         if memberships:
             self.permission_cache.mass_learn(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
         self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can(self.cur_agent, 'view name', x.item), x.item.name))
-        self.context['cur_agent_in_itemset'] = bool(self.item.memberships_as_itemset.filter(trashed=False, item=self.cur_agent))
+        self.context['cur_agent_in_collection'] = bool(self.item.memberships_as_collection.filter(trashed=False, item=self.cur_agent))
         self.context['addmember_form'] = NewMembershipForm()
-        template = loader.get_template('itemset/show.html')
+        template = loader.get_template('collection/show.html')
         return HttpResponse(template.render(self.context))
 
 
@@ -1004,13 +1004,13 @@ class ItemSetViewer(ItemViewer):
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('add_self', self.item))):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add this member to this ItemSet")
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add this member to this Collection")
         try:
-            membership = Membership.objects.get(itemset=self.item, item=member)
+            membership = Membership.objects.get(collection=self.item, item=member)
             if membership.trashed:
                 membership.untrash(self.cur_agent)
         except:
-            membership = Membership(itemset=self.item, item=member)
+            membership = Membership(collection=self.item, item=member)
             membership.save_versioned(updater=self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
@@ -1022,9 +1022,9 @@ class ItemSetViewer(ItemViewer):
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('remove_self', self.item))):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to remove this member from this ItemSet")
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to remove this member from this Collection")
         try:
-            membership = Membership.objects.get(itemset=self.item, item=member)
+            membership = Membership.objects.get(collection=self.item, item=member)
             if not membership.trashed:
                 membership.trash(self.cur_agent)
         except:
@@ -1229,8 +1229,8 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
     def collection_createmultiexcerpt(self):
         if not self.cur_agent_can_global('create %s' % self.item_type.__name__):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        if not self.cur_agent_can_global('create ItemSet'):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create ItemSets")
+        if not self.cur_agent_can_global('create Collection'):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create Collections")
         excerpts = []
         for excerpt_form_datum in self.request.POST.getlist('excerpt'):
             try:
@@ -1250,12 +1250,12 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
             excerpts.append(excerpt)
         if not excerpts:
             return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "You must submit at least one excerpt")
-        itemset = ItemSet()
-        itemset.save_versioned(updater=self.cur_agent)
+        collection = Collection()
+        collection.save_versioned(updater=self.cur_agent)
         for excerpt in excerpts:
             excerpt.save_versioned(updater=self.cur_agent)
-            Membership(item=excerpt, itemset=itemset).save_versioned(updater=self.cur_agent)
-        redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': 'itemset', 'noun': itemset.pk}))
+            Membership(item=excerpt, collection=collection).save_versioned(updater=self.cur_agent)
+        redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': 'collection', 'noun': collection.pk}))
         return HttpResponseRedirect(redirect)
 
 

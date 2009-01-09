@@ -95,40 +95,40 @@ class PermissionCache(object):
 
 def calculate_global_roles_for_agent(agent):
     """
-    Return tuple (agent_roles, itemset_roles, default_roles).
+    Return tuple (agent_roles, collection_roles, default_roles).
     
     Each role list is a QuerySet for untrashed GlobalRoles. The agent_roles
-    queryset contains roles that were assigned directly to agent, itemset_roles
-    contains roles that were assigned to ItemSets that agent is in (directly or
+    queryset contains roles that were assigned directly to agent, collection_roles
+    contains roles that were assigned to Collections that agent is in (directly or
     indirectly), and default_roles contains all roles that were assigned to
     everyone by default.
     """
-    my_itemset_ids = agent.all_containing_itemsets().values('pk').query
+    my_collection_ids = agent.all_containing_collections().values('pk').query
     agent_role_permissions = AgentGlobalRolePermission.objects.filter(agent=agent)
-    itemset_role_permissions = ItemSetGlobalRolePermission.objects.filter(itemset__pk__in=my_itemset_ids)
+    collection_role_permissions = CollectionGlobalRolePermission.objects.filter(collection__pk__in=my_collection_ids)
     default_role_permissions = DefaultGlobalRolePermission.objects
     role_manager = GlobalRole.objects.filter(trashed=False)
     agent_roles = role_manager.filter(pk__in=agent_role_permissions.values('global_role_id').query)
-    itemset_roles = role_manager.filter(pk__in=itemset_role_permissions.values('global_role_id').query)
+    collection_roles = role_manager.filter(pk__in=collection_role_permissions.values('global_role_id').query)
     default_roles = role_manager.filter(pk__in=default_role_permissions.values('global_role_id').query)
-    return (agent_roles, itemset_roles, default_roles)
+    return (agent_roles, collection_roles, default_roles)
 
 
 def calculate_global_permissions_for_agent(agent):
     """
-    Return tuple (agent_permissions, itemset_permissions, default_permissions).
+    Return tuple (agent_permissions, collection_permissions, default_permissions).
     
     Each permission list is a QuerySet for untrashed GlobalPermissions. The
     agent_permissions queryset contains permissions that were assigned directly
-    to agent, itemset_permissions contains permissions that were assigned to
-    ItemSets that agent is in (directly or indirectly), and default_permissions
+    to agent, collection_permissions contains permissions that were assigned to
+    Collections that agent is in (directly or indirectly), and default_permissions
     contains all permissions that were assigned to everyone by default.
     """
-    my_itemset_ids = agent.all_containing_itemsets().values('pk').query
+    my_collection_ids = agent.all_containing_collections().values('pk').query
     agent_perms = AgentGlobalPermission.objects.filter(agent=agent)
-    itemset_perms = ItemSetGlobalPermission.objects.filter(itemset__pk__in=my_itemset_ids)
+    collection_perms = CollectionGlobalPermission.objects.filter(collection__pk__in=my_collection_ids)
     default_perms = DefaultGlobalPermission.objects.all()
-    return (agent_perms, itemset_perms, default_perms)
+    return (agent_perms, collection_perms, default_perms)
 
 
 def calculate_global_abilities_for_agent(agent):
@@ -139,7 +139,7 @@ def calculate_global_abilities_for_agent(agent):
       1. The agent was directly assigned a role or permission that contains
          this ability with is_allowed=True.
       2. All of the following holds:
-         a. An ItemSet that the agent is in (directly or indirectly) was
+         a. An Collection that the agent is in (directly or indirectly) was
             assigned a role or permission that contains this ability with
             is_allowed=True.
          b. The agent was NOT directly assigned a role or permission that
@@ -147,7 +147,7 @@ def calculate_global_abilities_for_agent(agent):
       3. All of the following holds:
          a. There is a default role or permission that contains this ability
             with is_allowed=True.
-         b. NO ItemSet that the agent is in (directly or indirectly) was
+         b. NO Collection that the agent is in (directly or indirectly) was
             assigned a role or permission that contains this ability with
             is_allowed=False.
          c. The agent was NOT directly assigned a role or permission that
@@ -157,7 +157,7 @@ def calculate_global_abilities_for_agent(agent):
     permissions_triple = calculate_global_permissions_for_agent(agent)
     abilities_yes = set()
     abilities_no = set()
-    # Iterate once for each level: agent, itemset, default
+    # Iterate once for each level: agent, collection, default
     for roles, permissions in zip(roles_triple, permissions_triple):
         # Populate cur_abilities_yes and cur_abilities_no with the specified
         # abilities at this level.
@@ -190,42 +190,42 @@ def calculate_global_abilities_for_agent(agent):
 
 def calculate_roles_for_agent_and_item(agent, item):
     """
-    Return tuple (agent_roles, itemset_roles, default_roles).
+    Return tuple (agent_roles, collection_roles, default_roles).
     
     Each role list is a QuerySet for untrashed Roles. The agent_roles queryset
-    contains roles that were assigned directly to agent/item, itemset_roles
-    contains roles that were assigned to ItemSets that agent is in (directly or
+    contains roles that were assigned directly to agent/item, collection_roles
+    contains roles that were assigned to Collections that agent is in (directly or
     indirectly), and default_roles contains all roles that were assigned to
     everyone by default.
     """
-    my_itemset_ids = agent.all_containing_itemsets().values('pk').query
+    my_collection_ids = agent.all_containing_collections().values('pk').query
     agent_role_permissions = AgentRolePermission.objects.filter(item=item, agent=agent)
-    itemset_role_permissions = ItemSetRolePermission.objects.filter(item=item, itemset__pk__in=my_itemset_ids)
+    collection_role_permissions = CollectionRolePermission.objects.filter(item=item, collection__pk__in=my_collection_ids)
     default_role_permissions = DefaultRolePermission.objects
     role_manager = Role.objects.filter(trashed=False)
     agent_roles = role_manager.filter(pk__in=agent_role_permissions.values('role_id').query)
-    itemset_roles = role_manager.filter(pk__in=itemset_role_permissions.values('role_id').query)
+    collection_roles = role_manager.filter(pk__in=collection_role_permissions.values('role_id').query)
     default_roles = role_manager.filter(pk__in=default_role_permissions.filter(item=item).values('role_id').query)
-    return (agent_roles, itemset_roles, default_roles)
+    return (agent_roles, collection_roles, default_roles)
 
 
 def calculate_permissions_for_agent_and_item(agent, item):
     """
-    Return tuple (agent_permissions, itemset_permissions, default_permissions).
+    Return tuple (agent_permissions, collection_permissions, default_permissions).
     
     Each permission list is a QuerySet for untrashed Permissions. The
     agent_permissions queryset contains permissions that were assigned directly
-    to agent/item, itemset_permissions contains permissions that were assigned
-    to ItemSets that agent is in (directly or indirectly), and
+    to agent/item, collection_permissions contains permissions that were assigned
+    to Collections that agent is in (directly or indirectly), and
     default_permissions contains all permissions that were assigned to everyone by
     default.
     """
 
-    my_itemset_ids = agent.all_containing_itemsets().values('pk').query
+    my_collection_ids = agent.all_containing_collections().values('pk').query
     agent_perms = AgentPermission.objects.filter(item=item, agent=agent)
-    itemset_perms = ItemSetPermission.objects.filter(item=item, itemset__pk__in=my_itemset_ids)
+    collection_perms = CollectionPermission.objects.filter(item=item, collection__pk__in=my_collection_ids)
     default_perms = DefaultPermission.objects.filter(item=item)
-    return (agent_perms, itemset_perms, default_perms)
+    return (agent_perms, collection_perms, default_perms)
 
 
 def calculate_abilities_for_agent_and_item(agent, item):
@@ -236,7 +236,7 @@ def calculate_abilities_for_agent_and_item(agent, item):
       1. The agent was directly assigned a role or permission that contains
          this ability with is_allowed=True.
       2. All of the following holds:
-         a. An ItemSet that the agent is in (directly or indirectly) was
+         a. An Collection that the agent is in (directly or indirectly) was
             assigned a role or permission that contains this ability with
             is_allowed=True.
          b. The agent was NOT directly assigned a role or permission that
@@ -244,7 +244,7 @@ def calculate_abilities_for_agent_and_item(agent, item):
       3. All of the following holds:
          a. There is a default role or permission that contains this ability
             with is_allowed=True.
-         b. NO ItemSet that the agent is in (directly or indirectly) was
+         b. NO Collection that the agent is in (directly or indirectly) was
             assigned a role or permission that contains this ability with
             is_allowed=False.
          c. The agent was NOT directly assigned a role or permission that
@@ -254,7 +254,7 @@ def calculate_abilities_for_agent_and_item(agent, item):
     permissions_triple = calculate_permissions_for_agent_and_item(agent, item)
     abilities_yes = set()
     abilities_no = set()
-    # Iterate once for each level: agent, itemset, default
+    # Iterate once for each level: agent, collection, default
     for roles, permissions in zip(roles_triple, permissions_triple):
         # Populate cur_abilities_yes and cur_abilities_no with the specified
         # abilities at this level.
@@ -295,21 +295,21 @@ def filter_items_by_permission(agent, ability):
     
     This can result in the database query becoming expensive.
     """
-    my_itemset_ids = agent.all_containing_itemsets().values('pk').query
+    my_collection_ids = agent.all_containing_collections().values('pk').query
     yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=True).values('role_id').query
     no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=False).values('role_id').query
 
     # p contains all Q objects for all 12 combinations of level, role, is_allowed
     p = {}
-    for permission_class in [AgentPermission, ItemSetPermission, DefaultPermission,
-                             AgentRolePermission, ItemSetRolePermission, DefaultRolePermission]:
+    for permission_class in [AgentPermission, CollectionPermission, DefaultPermission,
+                             AgentRolePermission, CollectionRolePermission, DefaultRolePermission]:
         for is_allowed in [True, False]:
             # Figure out what kind of permission this is
             is_role = 'role' in permission_class._meta.get_all_field_names()
             if 'agent' in permission_class._meta.get_all_field_names():
                 level = 'agent'
-            elif 'itemset' in permission_class._meta.get_all_field_names():
-                level = 'itemset'
+            elif 'collection' in permission_class._meta.get_all_field_names():
+                level = 'collection'
             else:
                 level = 'default'
             # Generate a Q object for this particular permission and is_allowed
@@ -321,8 +321,8 @@ def filter_items_by_permission(agent, ability):
                 args['is_allowed'] = is_allowed
             if level == 'agent':
                 args['agent'] = agent
-            elif level == 'itemset':
-                args['itemset__pk__in'] = my_itemset_ids
+            elif level == 'collection':
+                args['collection__pk__in'] = my_collection_ids
             query = permission_class.objects.filter(**args).values('item_id').query
             q_name = "%s%s%s" % (level, 'role' if is_role else '', 'yes' if is_allowed else 'no')
             p[q_name] = Q(pk__in=query)
@@ -331,10 +331,10 @@ def filter_items_by_permission(agent, ability):
     # calculate_abilities_for_agent_and_item
     return p['agentyes'] |\
            p['agentroleyes'] |\
-           (~p['agentno'] & ~p['agentroleno'] & p['itemsetyes']) |\
-           (~p['agentno'] & ~p['agentroleno'] & p['itemsetroleyes']) |\
-           (~p['agentno'] & ~p['itemsetno'] & ~p['agentroleno'] & ~p['itemsetroleno'] & p['defaultyes']) |\
-           (~p['agentno'] & ~p['itemsetno'] & ~p['agentroleno'] & ~p['itemsetroleno'] & p['defaultroleyes'])
+           (~p['agentno'] & ~p['agentroleno'] & p['collectionyes']) |\
+           (~p['agentno'] & ~p['agentroleno'] & p['collectionroleyes']) |\
+           (~p['agentno'] & ~p['collectionno'] & ~p['agentroleno'] & ~p['collectionroleno'] & p['defaultyes']) |\
+           (~p['agentno'] & ~p['collectionno'] & ~p['agentroleno'] & ~p['collectionroleno'] & p['defaultroleyes'])
 
 def filter_agents_by_permission(item, ability):
     """
@@ -351,15 +351,15 @@ def filter_agents_by_permission(item, ability):
 
     # p contains all Q objects for all 12 combinations of level, role, is_allowed
     p = {}
-    for permission_class in [AgentPermission, ItemSetPermission, DefaultPermission,
-                             AgentRolePermission, ItemSetRolePermission, DefaultRolePermission]:
+    for permission_class in [AgentPermission, CollectionPermission, DefaultPermission,
+                             AgentRolePermission, CollectionRolePermission, DefaultRolePermission]:
         for is_allowed in [True, False]:
             # Figure out what kind of permission this is
             is_role = 'role' in permission_class._meta.get_all_field_names()
             if 'agent' in permission_class._meta.get_all_field_names():
                 level = 'agent'
-            elif 'itemset' in permission_class._meta.get_all_field_names():
-                level = 'itemset'
+            elif 'collection' in permission_class._meta.get_all_field_names():
+                level = 'collection'
             else:
                 level = 'default'
             # Generate a Q object for this particular permission and is_allowed
@@ -371,9 +371,9 @@ def filter_agents_by_permission(item, ability):
                 args['is_allowed'] = is_allowed
             if level == 'agent':
                 query = permission_class.objects.filter(**args).values('agent_id').query
-            elif level == 'itemset':
-                itemset_query = permission_class.objects.filter(**args).values('itemset_id').query
-                query = RecursiveMembership.objects.filter(parent__pk__in=itemset_query).values('child_id').query
+            elif level == 'collection':
+                collection_query = permission_class.objects.filter(**args).values('collection_id').query
+                query = RecursiveMembership.objects.filter(parent__pk__in=collection_query).values('child_id').query
             else:
                 default_perm_exists = (len(permission_class.objects.filter(**args)[:1]) > 0)
                 query = (Agent.objects if default_perm_exists else Agent.objects.filter(pk__isnull=True)).values('pk').query
@@ -384,8 +384,8 @@ def filter_agents_by_permission(item, ability):
     # calculate_abilities_for_agent_and_item
     return p['agentyes'] |\
            p['agentroleyes'] |\
-           (~p['agentno'] & ~p['agentroleno'] & p['itemsetyes']) |\
-           (~p['agentno'] & ~p['agentroleno'] & p['itemsetroleyes']) |\
-           (~p['agentno'] & ~p['itemsetno'] & ~p['agentroleno'] & ~p['itemsetroleno'] & p['defaultyes']) |\
-           (~p['agentno'] & ~p['itemsetno'] & ~p['agentroleno'] & ~p['itemsetroleno'] & p['defaultroleyes'])
+           (~p['agentno'] & ~p['agentroleno'] & p['collectionyes']) |\
+           (~p['agentno'] & ~p['agentroleno'] & p['collectionroleyes']) |\
+           (~p['agentno'] & ~p['collectionno'] & ~p['agentroleno'] & ~p['collectionroleno'] & p['defaultyes']) |\
+           (~p['agentno'] & ~p['collectionno'] & ~p['agentroleno'] & ~p['collectionroleno'] & p['defaultroleyes'])
 

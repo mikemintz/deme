@@ -21,6 +21,11 @@ for module_name in settings.MODULE_NAMES:
 ###############################################################################
 
 def get_logged_in_agent(request):
+    """
+    Return the currently logged in Agent (based on the cur_agent_id parameter
+    in request.session), or return the AnonymousAgent if the cur_agent_id is
+    missing or invalid.
+    """
     cur_agent_id = request.session.get('cur_agent_id', None)
     cur_agent = None
     if cur_agent_id != None:

@@ -316,10 +316,10 @@
     {% endifagentcan %}
 
     {# TODO display them as fields, rather than a silly list #}
-    {% for itemset in containing_itemsets %}
+    {% for collection in containing_collections %}
     <tr>
         <th>Item Set:</th>
-        <td><a href="{% show_resource_url itemset %}">{{ itemset.name }}</a></td>
+        <td><a href="{% show_resource_url collection %}">{{ collection.name }}</a></td>
     </tr>
     {% endfor %}
 
