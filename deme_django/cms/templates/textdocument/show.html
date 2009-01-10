@@ -227,6 +227,7 @@ div#section_body, div#section_comments, div#section_combined {
 
 {% ifagentcan 'view' 'body' item %}
 {% ifagentcan 'comment_on' '' item %}
+{% ifagentcan 'add_transclusion' '' item %}
 <div id="add_located_comment_div">
 <a href="#" onclick="add_located_comment(); return false;">[+] Add Located Comment</a>
 </div>
@@ -235,6 +236,7 @@ div#section_body, div#section_comments, div#section_combined {
 Now just select text where you want to comment or
 <a href="#" onclick="cancel_add_located_comment(); return false;">Cancel</a>
 </div>
+{% endifagentcan %}
 {% endifagentcan %}
 
 {% ifagentcanglobal 'create' 'TextDocumentExcerpt' %}

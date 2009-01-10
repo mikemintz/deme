@@ -1203,7 +1203,7 @@ class TextCommentViewer(TextDocumentViewer):
             item = form.save(commit=False)
             item.save_versioned(updater=self.cur_agent)
             commented_item = item.commented_item.downcast()
-            if isinstance(commented_item, TextDocument) and commented_item_index is not None:
+            if isinstance(commented_item, TextDocument) and commented_item_index is not None and self.permission_cache.agent_can(self.cur_agent, 'add_transclusion', commented_item):
                 transclusion = Transclusion(from_item=commented_item, from_item_version_number=item.commented_item_version_number, from_item_index=commented_item_index, to_item=item)
                 transclusion.save_versioned(updater=self.cur_agent)
             redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))

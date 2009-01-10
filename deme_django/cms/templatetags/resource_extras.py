@@ -298,7 +298,6 @@ class EntryHeader(template.Node):
         return "<EntryHeaderNode>"
 
     def render(self, context):
-        print context
         if self.page_name is None:
             page_name = None
         else:

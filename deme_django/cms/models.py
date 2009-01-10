@@ -423,7 +423,7 @@ class Document(Item):
 
 class TextDocument(Document):
     immutable_fields = Document.immutable_fields
-    relevant_abilities = Document.relevant_abilities | set(['view body', 'edit body'])
+    relevant_abilities = Document.relevant_abilities | set(['view body', 'edit body', 'add_transclusion'])
     relevant_global_abilities = frozenset(['create TextDocument'])
     body = models.TextField(blank=True)
 

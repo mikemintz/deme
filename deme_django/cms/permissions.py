@@ -64,7 +64,8 @@ class PermissionCache(object):
         """
         result = self._item_ability_cache.get((agent.pk, item.pk))
         if result is None:
-            result = type(item).relevant_abilities
+            item_type = [x for x in all_models() if x.__name__ == item.item_type][0]
+            result = item_type.relevant_abilities
             if 'do_everything' not in self.global_abilities(agent):
                 result &= calculate_abilities_for_agent_and_item(agent, item)
             self._item_ability_cache[(agent.pk, item.pk)] = result
