@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 from django import template
 from django.db.models import Q
-import cms.models
+from cms.models import *
 from cms import permissions
 from django.utils.http import urlquote
 from django.utils.html import escape, urlize
@@ -12,9 +12,9 @@ register = template.Library()
 
 @register.simple_tag
 def show_resource_url(item, version_number=None):
-    if isinstance(item, cms.models.Item.VERSION):
+    if isinstance(item, Item.VERSION):
         return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}) + '?version=%s' % item.version_number
-    elif isinstance(item, cms.models.Item):
+    elif isinstance(item, Item):
         if version_number is not None:
             return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}) + '?version=%s' % version_number
         else:
@@ -26,7 +26,7 @@ def show_resource_url(item, version_number=None):
 def icon_url(item_type, size=32):
     if item_type != 'error' and isinstance(item_type, basestring):
         try:
-            item_type = [x for x in cms.models.all_models() if x.__name__ == item_type][0]
+            item_type = [x for x in all_models() if x.__name__ == item_type][0]
         except IndexError:
             pass
 
@@ -34,64 +34,64 @@ def icon_url(item_type, size=32):
         icon = 'apps/error'
     elif not isinstance(item_type, type):
         return icon_url(type(item_type), size)
-    elif issubclass(item_type, cms.models.Item.VERSION):
+    elif issubclass(item_type, Item.VERSION):
         return icon_url(item_type.NOTVERSION, size)
-    elif item_type == cms.models.Agent:
+    elif item_type == Agent:
         icon = 'apps/personal'
-    elif item_type == cms.models.AuthenticationMethod:
+    elif item_type == AuthenticationMethod:
         icon = 'apps/password'
-    elif item_type == cms.models.ContactMethod:
+    elif item_type == ContactMethod:
         icon = 'apps/kontact'
-    elif item_type == cms.models.CustomUrl:
+    elif item_type == CustomUrl:
         icon = 'mimetypes/message'
-    elif item_type == cms.models.Comment:
+    elif item_type == Comment:
         icon = 'apps/filetypes'
-    elif item_type == cms.models.Document:
+    elif item_type == Document:
         icon = 'mimetypes/empty'
-    elif item_type == cms.models.DjangoTemplateDocument:
+    elif item_type == DjangoTemplateDocument:
         icon = 'mimetypes/html'
-    elif item_type == cms.models.EmailContactMethod:
+    elif item_type == EmailContactMethod:
         icon = 'apps/kmail'
-    elif item_type == cms.models.Excerpt:
+    elif item_type == Excerpt:
         icon = 'mimetypes/shellscript'
-    elif item_type == cms.models.FileDocument:
+    elif item_type == FileDocument:
         icon = 'mimetypes/misc'
-    elif item_type == cms.models.Folio:
+    elif item_type == Folio:
         icon = 'apps/kfm'
-    elif item_type == cms.models.Group:
+    elif item_type == Group:
         icon = 'apps/Login Manager'
-    elif item_type == cms.models.ImageDocument:
+    elif item_type == ImageDocument:
         icon = 'mimetypes/images'
-    elif item_type == cms.models.Item:
+    elif item_type == Item:
         icon = 'apps/kblackbox'
-    elif item_type == cms.models.Collection:
+    elif item_type == Collection:
         icon = 'filesystems/folder_blue'
-    elif item_type == cms.models.Membership:
+    elif item_type == Membership:
         icon = 'filesystems/folder_documents'
-    elif item_type == cms.models.Permission or item_type == cms.models.GlobalPermission:
+    elif item_type == Permission or item_type == GlobalPermission:
         icon = 'apps/proxy'
-    elif item_type == cms.models.Person:
+    elif item_type == Person:
         icon = 'apps/access'
-    elif item_type == cms.models.Role or item_type == cms.models.GlobalRole:
+    elif item_type == Role or item_type == GlobalRole:
         icon = 'apps/lassist'
-    elif item_type == cms.models.RoleAbility or item_type == cms.models.GlobalRoleAbility:
+    elif item_type == RoleAbility or item_type == GlobalRoleAbility:
         icon = 'apps/ksysv'
-    elif item_type == cms.models.Site:
+    elif item_type == Site:
         icon = 'devices/nfs_unmount'
-    elif item_type == cms.models.SiteDomain:
+    elif item_type == SiteDomain:
         icon = 'devices/modem'
-    elif item_type == cms.models.Subscription:
+    elif item_type == Subscription:
         icon = 'apps/knewsticker'
-    elif item_type == cms.models.TextDocument:
+    elif item_type == TextDocument:
         icon = 'mimetypes/txt'
-    elif item_type == cms.models.Transclusion:
+    elif item_type == Transclusion:
         icon = 'apps/knotes'
-    elif item_type == cms.models.ViewerRequest:
+    elif item_type == ViewerRequest:
         icon = 'mimetypes/message'
-    elif issubclass(item_type, cms.models.Item):
+    elif issubclass(item_type, Item):
         return icon_url(item_type.__base__, size)
     else:
-        return icon_url(cms.models.Item, size)
+        return icon_url(Item, size)
     return "/static/crystal_project/%dx%d/%s.png" % (size, size, icon)
 
 @register.simple_tag
@@ -243,32 +243,32 @@ def ifagentcanglobal(parser, token):
 # remember this includes trashed comments, which should be displayed differently after calling this
 def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments):
     permission_cache = context['_permission_cache']
-    comment_subclasses = [cms.models.TextComment, cms.models.EditComment, cms.models.TrashComment, cms.models.UntrashComment, cms.models.AddMemberComment, cms.models.RemoveMemberComment]
+    comment_subclasses = [TextComment, EditComment, TrashComment, UntrashComment, AddMemberComment, RemoveMemberComment]
     comments = []
     if include_recursive_collection_comments:
         if agentcan_global_helper(context, 'do_everything'):
             recursive_filter = None
         else:
-            visible_memberships = cms.models.Membership.objects.filter(permissions.filter_items_by_permission(context['cur_agent'], 'view item'))
+            visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(context['cur_agent'], 'view item'))
             recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
-        members_and_me_pks_query = cms.models.Item.objects.filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_collection_members(recursive_filter).values('pk').query)).values('pk').query
-        comment_pks = cms.models.RecursiveCommentMembership.objects.filter(parent__in=members_and_me_pks_query).values_list('child', flat=True)
+        members_and_me_pks_query = Item.objects.filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_collection_members(recursive_filter).values('pk').query)).values('pk').query
+        comment_pks = RecursiveCommentMembership.objects.filter(parent__in=members_and_me_pks_query).values_list('child', flat=True)
     else:
-        comment_pks = cms.models.RecursiveCommentMembership.objects.filter(parent=item).values_list('child', flat=True)
+        comment_pks = RecursiveCommentMembership.objects.filter(parent=item).values_list('child', flat=True)
     if comment_pks:
-        permission_cache.mass_learn(context['cur_agent'], 'view created_at', cms.models.Comment.objects.filter(pk__in=comment_pks))
-        permission_cache.mass_learn(context['cur_agent'], 'view creator', cms.models.Comment.objects.filter(pk__in=comment_pks))
-        permission_cache.mass_learn(context['cur_agent'], 'view name', cms.models.Agent.objects.filter(pk__in=cms.models.Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
+        permission_cache.mass_learn(context['cur_agent'], 'view created_at', Comment.objects.filter(pk__in=comment_pks))
+        permission_cache.mass_learn(context['cur_agent'], 'view creator', Comment.objects.filter(pk__in=comment_pks))
+        permission_cache.mass_learn(context['cur_agent'], 'view name', Agent.objects.filter(pk__in=Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
         for comment_subclass in comment_subclasses:
             new_comments = comment_subclass.objects.filter(pk__in=comment_pks)
             related_fields = ['creator']
             if include_recursive_collection_comments:
                 related_fields.extend(['commented_item'])
             if new_comments:
-                if comment_subclass in [cms.models.AddMemberComment, cms.models.RemoveMemberComment]:
+                if comment_subclass in [AddMemberComment, RemoveMemberComment]:
                     permission_cache.mass_learn(context['cur_agent'], 'view membership', new_comments)
-                    permission_cache.mass_learn(context['cur_agent'], 'view item', cms.models.Membership.objects.filter(pk__in=new_comments.values('membership_id').query))
-                    permission_cache.mass_learn(context['cur_agent'], 'view name', cms.models.Item.objects.filter(pk__in=cms.models.Membership.objects.filter(pk__in=new_comments.values('membership_id').query).values('item_id').query))
+                    permission_cache.mass_learn(context['cur_agent'], 'view item', Membership.objects.filter(pk__in=new_comments.values('membership_id').query))
+                    permission_cache.mass_learn(context['cur_agent'], 'view name', Item.objects.filter(pk__in=Membership.objects.filter(pk__in=new_comments.values('membership_id').query).values('item_id').query))
                     related_fields.extend(['membership', 'membership__item'])
             new_comments = new_comments.select_related(*related_fields)
             comments.extend(new_comments)
@@ -311,7 +311,7 @@ class EntryHeader(template.Node):
 
         item = context['item']
         version_number = item.version_number
-        item_type_inheritance = [x.__name__ for x in reversed(context['_viewer'].item_type.mro()) if issubclass(x, cms.models.Item)]
+        item_type_inheritance = [x.__name__ for x in reversed(context['_viewer'].item_type.mro()) if issubclass(x, Item)]
 
         result = []
 
@@ -434,7 +434,7 @@ class CollectionHeader(template.Node):
                     return '' # Fail silently for invalid variables.
 
         item_type = context['item_type']
-        item_type_inheritance = [x.__name__ for x in reversed(context['_viewer'].item_type.mro()) if issubclass(x, cms.models.Item)]
+        item_type_inheritance = [x.__name__ for x in reversed(context['_viewer'].item_type.mro()) if issubclass(x, Item)]
 
         result = []
 
@@ -479,7 +479,7 @@ def display_body_with_inline_transclusions(item, is_html):
         format = lambda text: text
     else:
         format = lambda text: urlize(escape(text)).replace('\n', '<br />')
-    transclusions = cms.models.Transclusion.objects.filter(from_item=item, from_item_version_number=item.version_number, trashed=False, to_item__trashed=False).order_by('-from_item_index')
+    transclusions = Transclusion.objects.filter(from_item=item, from_item_version_number=item.version_number, trashed=False, to_item__trashed=False).order_by('-from_item_index')
     result = []
     last_i = None
     for transclusion in transclusions:
@@ -515,15 +515,15 @@ class CommentBox(template.Node):
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
                 result.append("""<div style="float: right;"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
-                if isinstance(comment, cms.models.EditComment):
+                if isinstance(comment, EditComment):
                     comment_name = '[Edited]'
-                elif isinstance(comment, cms.models.TrashComment):
+                elif isinstance(comment, TrashComment):
                     comment_name = '[Trashed]'
-                elif isinstance(comment, cms.models.UntrashComment):
+                elif isinstance(comment, UntrashComment):
                     comment_name = '[Untrashed]'
-                elif isinstance(comment, cms.models.AddMemberComment):
+                elif isinstance(comment, AddMemberComment):
                     comment_name = '[Added Member]'
-                elif isinstance(comment, cms.models.RemoveMemberComment):
+                elif isinstance(comment, RemoveMemberComment):
                     comment_name = '[Removed Member]'
                 else:
                     if agentcan_helper(context, 'view name', comment):
@@ -553,7 +553,7 @@ class CommentBox(template.Node):
                     comment_description = ''
                     comment_body = '[TRASHED]'
                 else:
-                    if isinstance(comment, cms.models.TextComment):
+                    if isinstance(comment, TextComment):
                         if agentcan_helper(context, 'view body', comment):
                             comment_body = escape(comment.body).replace('\n', '<br />')
                         else:
@@ -562,16 +562,16 @@ class CommentBox(template.Node):
                             comment_description = escape(comment.description)
                         else:
                             comment_description = '[PERMISSION DENIED]'
-                    elif isinstance(comment, cms.models.EditComment):
+                    elif isinstance(comment, EditComment):
                         comment_description = ''
                         comment_body = ''
-                    elif isinstance(comment, cms.models.TrashComment):
+                    elif isinstance(comment, TrashComment):
                         comment_description = ''
                         comment_body = ''
-                    elif isinstance(comment, cms.models.UntrashComment):
+                    elif isinstance(comment, UntrashComment):
                         comment_description = ''
                         comment_body = ''
-                    elif isinstance(comment, cms.models.AddMemberComment):
+                    elif isinstance(comment, AddMemberComment):
                         comment_description = ''
                         if agentcan_helper(context, 'view membership', comment):
                             if agentcan_helper(context, 'view item', comment.membership):
@@ -583,7 +583,7 @@ class CommentBox(template.Node):
                                 comment_body = '<a href="%s">Membership %s</a>' % (show_resource_url(comment.membership), comment.membership.pk)
                         else:
                             comment_body = ''
-                    elif isinstance(comment, cms.models.RemoveMemberComment):
+                    elif isinstance(comment, RemoveMemberComment):
                         comment_description = ''
                         if agentcan_helper(context, 'view membership', comment):
                             if agentcan_helper(context, 'view item', comment.membership):
@@ -601,7 +601,7 @@ class CommentBox(template.Node):
                 result.append("""<div class="comment_description">%s</div><div class="comment_body">%s</div>""" % (comment_description, comment_body))
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
-        comment_dicts = comment_dicts_for_item(item, version_number, context, isinstance(item, cms.models.Collection))
+        comment_dicts = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection))
         add_comments_to_div(comment_dicts)
         result.append("</div>")
         return '\n'.join(result)
@@ -631,10 +631,10 @@ class EmbeddedItem(template.Node):
         item = self.item.resolve(context)
         if isinstance(item, basestring):
             try:
-                item = cms.models.Item.objects.get(pk=item)
+                item = Item.objects.get(pk=item)
             except ObjectDoesNotExist:
                 item = None
-        if not isinstance(item, cms.models.Item):
+        if not isinstance(item, Item):
             return ''
         item = item.downcast()
         item = get_versioned_item(item, None)
