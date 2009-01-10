@@ -148,12 +148,11 @@ var DemeHighlighting = function(){
         return docbody;
     };
 
-    pub.tokenize = function(docbody, body_str, is_escaped, parse_error, token_mouseover, token_mouseout, token_click){
+    pub.tokenize = function(docbody, body_str, is_escaped, parse_error, token_classname, token_click){
         var docbody_clone = $(docbody.cloneNode(true));
         var token_wrapper_callback = function(tokenWrapper, body_str_index){
             tokenWrapper.deme_text_offset = body_str_index;
-            tokenWrapper.onmouseover = token_mouseover;
-            tokenWrapper.onmouseout = token_mouseout;
+            tokenWrapper.className = token_classname;
             tokenWrapper.onclick = token_click;
         };
         var element_callback = function(node, body_str_index){

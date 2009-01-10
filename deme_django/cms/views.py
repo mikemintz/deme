@@ -1221,6 +1221,57 @@ class TextCommentViewer(TextDocumentViewer):
     #TODO copy/edit/update comments
 
 
+class TransclusionViewer(ItemViewer):
+    __metaclass__ = ViewerMetaClass
+
+    item_type = Transclusion
+    viewer_name = 'transclusion'
+
+    def collection_new(self):
+        try:
+            from_item = Item.objects.get(pk=self.request.GET.get('from_item'))
+        except:
+            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are adding a transclusion to")
+        can_add_transclusion = self.cur_agent_can('add_transclusion', from_item)
+        if not can_add_transclusion:
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add transclusions to this item")
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+        model_names.sort()
+        form_initial = dict(self.request.GET.items())
+        form_class = get_form_class_for_item_type('create', self.item_type)
+        form = form_class(initial=form_initial)
+        template = loader.get_template('item/new.html')
+        self.context['model_names'] = model_names
+        self.context['form'] = form
+        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+        self.context['redirect'] = self.request.GET.get('redirect')
+        return HttpResponse(template.render(self.context))
+
+    def collection_create(self):
+        form_class = get_form_class_for_item_type('create', self.item_type)
+        form = form_class(self.request.POST, self.request.FILES)
+        if form.is_valid():
+            #TODO use transactions to make the Transclusion save at the same time as the Comment
+            item = form.save(commit=False)
+            can_add_transclusion = self.cur_agent_can('add_transclusion', item.from_item)
+            if not can_add_transclusion:
+                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add transclusions to this item")
+            item.save_versioned(updater=self.cur_agent)
+            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
+            return HttpResponseRedirect(redirect)
+        else:
+            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+            model_names.sort()
+            template = loader.get_template('item/new.html')
+            self.context['model_names'] = model_names
+            self.context['form'] = form
+            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+            self.context['redirect'] = self.request.GET.get('redirect')
+            return HttpResponse(template.render(self.context))
+
+    #TODO copy/edit/update transclusions
+
+
 class TextDocumentExcerptViewer(TextDocumentViewer):
     __metaclass__ = ViewerMetaClass
 

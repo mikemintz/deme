@@ -10,7 +10,7 @@
 {% entryheader %}
 
 <style type="text/css">
-    .located_token_hover {
+    .transclude_token:hover {
         cursor: pointer;
         border-left: 2px solid #f00;
         margin-left: -3px;
@@ -30,29 +30,7 @@
         $('parse_errors').appendChild(div);
     }
 
-    function located_token_mouseover(e) {
-        var targ;
-        if (!e) var e = window.event;
-        if (e.target) targ = e.target;
-        else if (e.srcElement) targ = e.srcElement;
-        if (targ.nodeType == 3) // defeat Safari bug
-            targ = targ.parentNode;
-        var tokenWrapper = $(targ);
-        tokenWrapper.addClassName('located_token_hover');
-    }
-
-    function located_token_mouseout(e) {
-        var targ;
-        if (!e) var e = window.event;
-        if (e.target) targ = e.target;
-        else if (e.srcElement) targ = e.srcElement;
-        if (targ.nodeType == 3) // defeat Safari bug
-            targ = targ.parentNode;
-        var tokenWrapper = $(targ);
-        tokenWrapper.removeClassName('located_token_hover');
-    }
-
-    function located_token_click(e) {
+    function located_comment_token_click(e) {
         var targ;
         if (!e) var e = window.event;
         if (e.target) targ = e.target;
@@ -66,10 +44,24 @@
         return false;
     }
 
+    function transclusion_token_click(e) {
+        var targ;
+        if (!e) var e = window.event;
+        if (e.target) targ = e.target;
+        else if (e.srcElement) targ = e.srcElement;
+        if (targ.nodeType == 3) // defeat Safari bug
+            targ = targ.parentNode;
+        var tokenWrapper = $(targ);
+        var index = tokenWrapper.deme_text_offset;
+        var url = '{% url resource_collection viewer="transclusion",action="new" %}?from_item={{ item.pk }}&from_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&from_item_index=' + index;
+        window.location = url;
+        return false;
+    }
+
     function add_located_comment() {
         var docbody = $('docbody');
-        var docbody_clone = DemeHighlighting.tokenize(docbody, body_str, is_escaped, parse_error, located_token_mouseover, located_token_mouseout, located_token_click);
-        docbody_clone.setAttribute('id', 'docbody_clone');
+        var docbody_clone = DemeHighlighting.tokenize(docbody, body_str, is_escaped, parse_error, 'transclude_token', located_comment_token_click);
+        docbody_clone.setAttribute('id', 'docbody_clone_located_comment');
         docbody.hide();
         docbody.parentNode.insertBefore(docbody_clone, docbody);
 
@@ -79,9 +71,27 @@
 
     function cancel_add_located_comment() {
         $('docbody').show();
-        $('docbody_clone').remove();
+        $('docbody_clone_located_comment').remove();
         $('add_located_comment_div').show();
         $('adding_located_comment_div').hide();
+    }
+
+    function add_transclusion() {
+        var docbody = $('docbody');
+        var docbody_clone = DemeHighlighting.tokenize(docbody, body_str, is_escaped, parse_error, 'transclude_token', transclusion_token_click);
+        docbody_clone.setAttribute('id', 'docbody_clone_transclusion');
+        docbody.hide();
+        docbody.parentNode.insertBefore(docbody_clone, docbody);
+
+        $('add_transclusion_div').hide();
+        $('adding_transclusion_div').show();
+    }
+
+    function cancel_add_transclusion() {
+        $('docbody').show();
+        $('docbody_clone_transclusion').remove();
+        $('add_transclusion_div').show();
+        $('adding_transclusion_div').hide();
     }
 
     function start_highlighting() {
@@ -226,17 +236,27 @@ div#section_body, div#section_comments, div#section_combined {
 </div>
 
 {% ifagentcan 'view' 'body' item %}
-{% ifagentcan 'comment_on' '' item %}
-{% ifagentcan 'add_transclusion' '' item %}
-<div id="add_located_comment_div">
-<a href="#" onclick="add_located_comment(); return false;">[+] Add Located Comment</a>
-</div>
 
+{% ifagentcan 'add_transclusion' '' item %}
+
+{% ifagentcan 'comment_on' '' item %}
+<div id="add_located_comment_div">
+<a href="#" onclick="add_located_comment(); return false;">[+] Located Comment</a>
+</div>
 <div id="adding_located_comment_div" style="display: none;">
 Now just select text where you want to comment or
 <a href="#" onclick="cancel_add_located_comment(); return false;">Cancel</a>
 </div>
 {% endifagentcan %}
+
+<div id="add_transclusion_div">
+<a href="#" onclick="add_transclusion(); return false;">[+] Transclusion</a>
+</div>
+<div id="adding_transclusion_div" style="display: none;">
+Now just select text where you want to add a Transclusion or
+<a href="#" onclick="cancel_add_transclusion(); return false;">Cancel</a>
+</div>
+
 {% endifagentcan %}
 
 {% ifagentcanglobal 'create' 'TextDocumentExcerpt' %}
