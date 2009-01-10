@@ -4,6 +4,12 @@
 
 * Change the path to incoming_email.py on deme.stanford.edu
 
+Jan-8 notes
+-----------
+* announce list == manually created subscriptions with special permissions, such that you cannot unsubscribe, and announcements are just comments on the group
+* make nice web layout for deme in general
+* yes, change permissions to be one row
+
 Nov-21 notes (automatic comments and subscriptions)
 ---------------------------------------------------
 * Customizable email template per site that gets sent out for each comment (notification)
@@ -56,6 +62,7 @@ Interface
 ---------
 * There should be a full interface for specifying CommentLocations
 * Interface to add ContactMethods, Subscriptions, and AuthenticationMethods to Agents
+* Interface to add transclusions other than comments
 
 Documentation
 -------------
