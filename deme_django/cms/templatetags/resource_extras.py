@@ -46,8 +46,6 @@ def icon_url(item_type, size=32):
         icon = 'mimetypes/message'
     elif item_type == cms.models.Comment:
         icon = 'apps/filetypes'
-    elif item_type == cms.models.CommentLocation:
-        icon = 'apps/knotes'
     elif item_type == cms.models.Document:
         icon = 'mimetypes/empty'
     elif item_type == cms.models.DjangoTemplateDocument:
@@ -86,6 +84,8 @@ def icon_url(item_type, size=32):
         icon = 'apps/knewsticker'
     elif item_type == cms.models.TextDocument:
         icon = 'mimetypes/txt'
+    elif item_type == cms.models.Transclusion:
+        icon = 'apps/knotes'
     elif item_type == cms.models.ViewerRequest:
         icon = 'mimetypes/message'
     elif issubclass(item_type, cms.models.Item):
@@ -272,12 +272,10 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
                     related_fields.extend(['membership', 'membership__item'])
             new_comments = new_comments.select_related(*related_fields)
             comments.extend(new_comments)
-    relevant_comment_locations = dict((x.comment_id, x) for x in cms.models.CommentLocation.objects.filter(commented_item_version_number=version_number, comment__pk__in=comment_pks))
     comments.sort(key=lambda x: x.created_at)
     pk_to_comment_info = {}
     for comment in comments:
         comment_info = {'comment': comment, 'subcomments': []}
-        comment_info['comment_location'] = relevant_comment_locations.get(comment.pk, None)
         pk_to_comment_info[comment.pk] = comment_info
     result = []
     for comment in comments:
@@ -300,6 +298,7 @@ class EntryHeader(template.Node):
         return "<EntryHeaderNode>"
 
     def render(self, context):
+        print context
         if self.page_name is None:
             page_name = None
         else:
@@ -473,21 +472,21 @@ def collectionheader(parser, token):
 
 
 @register.simple_tag
-def display_body_with_inline_comments(item, is_html):
-    #TODO permissions? you should be able to see any CommentLocation, but maybe not the id of the comment it refers to
+def display_body_with_inline_transclusions(item, is_html):
+    #TODO permissions? you should be able to see any Transclusion, but maybe not the id of the comment it refers to
     #TODO don't insert these in bad places, like inside a tag <img <a href="....> />
-    #TODO when you insert a comment in the middle of a tag like <b>hi <COMMENT></b> then it gets the style, this is bad
+    #TODO when you insert a transclusion in the middle of a tag like <b>hi <COMMENT></b> then it gets the style, this is bad
     if is_html:
         format = lambda text: text
     else:
         format = lambda text: urlize(escape(text)).replace('\n', '<br />')
-    comment_locations = cms.models.CommentLocation.objects.filter(comment__commented_item=item, commented_item_version_number=item.version_number, commented_item_index__isnull=False, trashed=False, comment__trashed=False).order_by('-commented_item_index')
+    transclusions = cms.models.Transclusion.objects.filter(from_item=item, from_item_version_number=item.version_number, trashed=False, to_item__trashed=False).order_by('-from_item_index')
     result = []
     last_i = None
-    for comment_location in comment_locations:
-        i = comment_location.commented_item_index
+    for transclusion in transclusions:
+        i = transclusion.from_item_index
         result.insert(0, format(item.body[i:last_i]))
-        result.insert(0, '<a href="%s" class="commentref">%s</a>' % (show_resource_url(comment_location.comment), escape(comment_location.comment.name)))
+        result.insert(0, '<a href="%s" class="commentref">%s</a>' % (show_resource_url(transclusion.to_item), escape(transclusion.to_item.name)))
         last_i = i
     result.insert(0, format(item.body[0:last_i]))
     return ''.join(result)
@@ -514,7 +513,6 @@ class CommentBox(template.Node):
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
-                comment_location = comment_info['comment_location']
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
                 result.append("""<div style="float: right;"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
@@ -551,8 +549,6 @@ class CommentBox(template.Node):
                     result.append('%s ago' % timesince(comment.created_at))
                 else:
                     result.append('at [PERMISSION DENIED]')
-                if item.pk == comment.commented_item_id and not comment_location:
-                    result.append("[INACTIVE]")
                 result.append("</div>")
                 if comment.trashed:
                     comment_description = ''

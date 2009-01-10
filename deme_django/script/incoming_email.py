@@ -18,7 +18,6 @@ from django.core.exceptions import ObjectDoesNotExist
 #TODO permissions (can person even create this comment)
 #TODO error handling (always send back an email, preferrably with same thread, on error)
 #TODO attachments? handle html formatting?
-#TODO use transactions to make the CommentLocation save at the same time as the Comment
 #TODO the subject line isn't always getting read
 
 def main():
@@ -41,10 +40,8 @@ def main():
     except ObjectDoesNotExist:
         send_mail('Re: %s' % subject, 'Error: Deme could not create your comment "%s" because there does not exist an item with id %s' % (subject, item_id), to_email, [from_email])
         return 
-    comment = cms.models.TextComment(commented_item=item, name=subject, body=body)
+    comment = cms.models.TextComment(commented_item=item, commented_item_version=item.version_number, name=subject, body=body)
     comment.save_versioned(updater=email_contact_method.agent)
-    comment_location = cms.models.CommentLocation(comment=comment, commented_item_version_number=item.versions.latest().version_number, commented_item_index=None)
-    comment_location.save_versioned(updater=email_contact_method.agent)
 
 
 if __name__ == '__main__':

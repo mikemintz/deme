@@ -11,7 +11,7 @@ from copy import deepcopy
 import random
 import hashlib
 
-__all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'Collection', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'CommentLocation', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'CollectionGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'CollectionGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'CollectionPermission', 'DefaultPermission', 'AgentRolePermission', 'CollectionRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_hexdigest', 'get_random_hash', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
+__all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'Collection', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'Transclusion', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'CollectionGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'CollectionGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'CollectionPermission', 'DefaultPermission', 'AgentRolePermission', 'CollectionRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_hexdigest', 'get_random_hash', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
 
 class ItemMetaClass(models.base.ModelBase):
     def __new__(cls, name, bases, attrs):
@@ -206,10 +206,8 @@ class Item(models.Model):
 
         # Create an EditComment if we're making an edit
         if not is_new and not overwrite_latest_version:
-            edit_comment = EditComment(commented_item=self)
+            edit_comment = EditComment(commented_item=self, commented_item_version_number=self.version_number)
             edit_comment.save_versioned(updater=updater)
-            edit_comment_location = CommentLocation(comment=edit_comment, commented_item_version_number=new_version.version_number, commented_item_index=None)
-            edit_comment_location.save_versioned(updater=updater)
 
         if is_new:
             self.after_create()
@@ -221,18 +219,14 @@ class Item(models.Model):
 
     def after_trash(self, agent):
         # Create a TrashComment
-        trash_comment = TrashComment(commented_item=self)
+        trash_comment = TrashComment(commented_item=self, commented_item_version_number=self.version_number)
         trash_comment.save_versioned(updater=agent)
-        trash_comment_location = CommentLocation(comment=trash_comment, commented_item_version_number=self.versions.latest().version_number, commented_item_index=None)
-        trash_comment_location.save_versioned(updater=agent)
     after_trash.alters_data = True
 
     def after_untrash(self, agent):
         # Create an UntrashComment
-        untrash_comment = UntrashComment(commented_item=self)
+        untrash_comment = UntrashComment(commented_item=self, commented_item_version_number=self.version_number)
         untrash_comment.save_versioned(updater=agent)
-        untrash_comment_location = CommentLocation(comment=untrash_comment, commented_item_version_number=self.versions.latest().version_number, commented_item_index=None)
-        untrash_comment_location.save_versioned(updater=agent)
     after_untrash.alters_data = True
 
 
@@ -404,26 +398,20 @@ class Membership(Item):
     def after_create(self):
         super(Membership, self).after_create()
         RecursiveMembership.recursive_add_membership(self)
-        add_member_comment = AddMemberComment(commented_item=self.collection, membership=self)
+        add_member_comment = AddMemberComment(commented_item=self.collection, commented_item_version_number=self.collection.version_number, membership=self)
         add_member_comment.save_versioned(updater=self.creator)
-        add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.collection.versions.latest().version_number, commented_item_index=None)
-        add_member_comment_location.save_versioned(updater=self.creator)
     after_create.alters_data = True
     def after_trash(self, agent):
         super(Membership, self).after_trash(agent)
         RecursiveMembership.recursive_remove_edge(self.collection, self.item)
-        remove_member_comment = RemoveMemberComment(commented_item=self.collection, membership=self)
+        remove_member_comment = RemoveMemberComment(commented_item=self.collection, commented_item_version_number=self.collection.version_number, membership=self)
         remove_member_comment.save_versioned(updater=agent)
-        remove_member_comment_location = CommentLocation(comment=remove_member_comment, commented_item_version_number=self.collection.versions.latest().version_number, commented_item_index=None)
-        remove_member_comment_location.save_versioned(updater=agent)
     after_trash.alters_data = True
     def after_untrash(self, agent):
         super(Membership, self).after_untrash(agent)
         RecursiveMembership.recursive_add_membership(self)
-        add_member_comment = AddMemberComment(commented_item=self.collection, membership=self)
+        add_member_comment = AddMemberComment(commented_item=self.collection, commented_item_version_number=self.collection.version_number, membership=self)
         add_member_comment.save_versioned(updater=agent)
-        add_member_comment_location = CommentLocation(comment=add_member_comment, commented_item_version_number=self.collection.versions.latest().version_number, commented_item_index=None)
-        add_member_comment_location.save_versioned(updater=agent)
     after_untrash.alters_data = True
 
 
@@ -438,6 +426,16 @@ class TextDocument(Document):
     relevant_abilities = Document.relevant_abilities | set(['view body', 'edit body'])
     relevant_global_abilities = frozenset(['create TextDocument'])
     body = models.TextField(blank=True)
+
+
+class Transclusion(Item):
+    immutable_fields = Item.immutable_fields | set(['from_item', 'from_item_version_number', 'to_item'])
+    relevant_abilities = Item.relevant_abilities | set(['view from_item', 'view from_item_version_number', 'view from_item_index', 'view to_item', 'edit commented_item_index'])
+    relevant_global_abilities = frozenset()
+    from_item = models.ForeignKey(TextDocument, related_name='transclusions_from_self')
+    from_item_version_number = models.PositiveIntegerField()
+    from_item_index = models.PositiveIntegerField()
+    to_item = models.ForeignKey(Item, related_name='transclusions_to_self')
 
 
 class DjangoTemplateDocument(TextDocument):
@@ -472,6 +470,7 @@ class Comment(Item):
     relevant_abilities = Item.relevant_abilities | set(['view commented_item'])
     relevant_global_abilities = frozenset()
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
+    commented_item_version_number = models.PositiveIntegerField()
     def topmost_commented_item(self):
         comment_class_names = [model.__name__ for model in all_models() if issubclass(model, Comment)]
         return Item.objects.filter(pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query).exclude(item_type__in=comment_class_names).get()
@@ -596,17 +595,6 @@ class Comment(Item):
         headers['In-Reply-To'] = messageid(self.commented_item)
         headers['References'] = '%s %s' % (messageid(topmost_item), messageid(self.commented_item))
         return EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((agent.name, email_contact_method.email))], headers=headers)
-
-
-class CommentLocation(Item):
-    immutable_fields = Item.immutable_fields | set(['comment', 'commented_item_version_number'])
-    relevant_abilities = Item.relevant_abilities | set(['view comment', 'view commented_item_version_number', 'view commented_item_index', 'edit commented_item_index'])
-    relevant_global_abilities = frozenset()
-    comment = models.ForeignKey(Comment, related_name='comment_locations_as_comment')
-    commented_item_version_number = models.PositiveIntegerField()
-    commented_item_index = models.PositiveIntegerField(null=True, blank=True)
-    class Meta:
-        unique_together = (('comment', 'commented_item_version_number'),)
 
 
 class TextComment(TextDocument, Comment):

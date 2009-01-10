@@ -117,7 +117,7 @@ class NewTextCommentForm(forms.ModelForm):
     commented_item_index = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     class Meta:
         model = TextComment
-        fields = ['name', 'description', 'body', 'commented_item']
+        fields = ['name', 'description', 'body', 'commented_item', 'commented_item_version_number']
 
 def get_form_class_for_item_type(update_or_create, item_type, fields=None):
     # For now, this is how we prevent manual creation of TextDocumentExcerpts
@@ -344,7 +344,7 @@ class ItemViewer(object):
     def render_item_not_found(self):
         if self.item:
             title = "%s Not Found" % self.item_type.__name__
-            body = 'You cannot view item %s in this viewer. Try viewing it in the <a href="{%% show_resource_url item %%}">{{ item.item_type }} viewer</a>.' % self.noun
+            body = 'You cannot view item %s in this viewer. Try viewing it in the <a href="%s">%s viewer</a>.' % (self.noun, reverse('resource_entry', kwargs={'viewer': self.item.item_type.lower(), 'noun': self.item.pk}), self.item.item_type)
         else:
             title = "Item Not Found"
             version = self.request.GET.get('version')
@@ -1061,15 +1061,15 @@ class TextDocumentViewer(ItemViewer):
         form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
 
 
-        comment_locations = CommentLocation.objects.filter(comment__commented_item=self.item.pk, commented_item_version_number=self.item.version_number, commented_item_index__isnull=False).order_by('-commented_item_index')
+        transclusions = Transclusion.objects.filter(from_item=self.item, from_item_version_number=self.item.version_number).order_by('-from_item_index')
         body_as_list = list(self.item.body)
-        for comment_location in comment_locations:
+        for transclusion in transclusions:
             if issubclass(self.item_type, HtmlDocument):
-                virtual_comment = '<img id="comment_location_%s" src="/static/spacer.gif" title="Comment %s" style="margin: 0 2px 0 2px; background: #ddd; border: 1px dotted #777; height: 10px; width: 10px;"/>' % (comment_location.comment.pk, comment_location.comment.pk)
+                transclusion_text = '<img id="transclusion_%s" src="/static/spacer.gif" title="Comment %s" style="margin: 0 2px 0 2px; background: #ddd; border: 1px dotted #777; height: 10px; width: 10px;"/>' % (transclusion.to_item_id, transclusion.to_item_id)
             else:
-                virtual_comment = '<deme_comment_location id="%s"/>' % comment_location.comment.pk
-            i = comment_location.commented_item_index
-            body_as_list[i:i] = virtual_comment
+                transclusion_text = '<deme_transclusion id="%s"/>' % transclusion.to_item_id
+            i = transclusion.from_item_index
+            body_as_list[i:i] = transclusion_text
         self.item.body = ''.join(body_as_list)
 
         form = form_class(instance=self.item)
@@ -1096,35 +1096,35 @@ class TextDocumentViewer(ItemViewer):
         if form.is_valid():
             new_item = form.save(commit=False)
 
-            new_comment_locations = []
+            new_transclusions = []
             while True:
                 def repl(m):
                     index = m.start()
-                    comment_id = m.group(1)
-                    new_comment_locations.append((index, comment_id))
+                    to_item_id = m.group(1)
+                    new_transclusions.append((index, to_item_id))
                     return ''
                 if issubclass(self.item_type, HtmlDocument):
-                    virtual_comment_re = r'(?i)<img[^>]+comment_location_(\d+)[^>]*>'
+                    transclusion_re = r'(?i)<img[^>]+transclusion_(\d+)[^>]*>'
                 else:
-                    virtual_comment_re = r'<deme_comment_location id="(\d+)"/>'
-                new_item.body, n_subs = re.subn(virtual_comment_re, repl, new_item.body, 1)
+                    transclusion_re = r'<deme_transclusion id="(\d+)"/>'
+                new_item.body, n_subs = re.subn(transclusion_re, repl, new_item.body, 1)
                 if n_subs == 0:
                     break
             
             new_item.save_versioned(updater=self.cur_agent)
 
-            new_item_version_number = new_item.versions.latest().version_number
-            for index, comment_id in new_comment_locations:
+            for index, to_item_id in new_transclusions:
                 try:
-                    comment = Comment.objects.get(pk=comment_id)
+                    to_item = Item.objects.get(pk=to_item_id)
                 except:
-                    comment = None
-                if comment and comment.commented_item.pk == self.item.pk:
-                    comment_location = CommentLocation()
-                    comment_location.comment = comment
-                    comment_location.commented_item_index = index
-                    comment_location.commented_item_version_number = new_item_version_number
-                    comment_location.save_versioned(updater=self.cur_agent)
+                    to_item = None
+                if to_item:
+                    transclusion = Transclusion()
+                    transclusion.from_item = new_item
+                    transclusion.from_item_index = index
+                    transclusion.from_item_version_number = new_item.version_number
+                    transclusion.to_item = to_item
+                    transclusion.save_versioned(updater=self.cur_agent)
 
             return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
@@ -1198,13 +1198,14 @@ class TextCommentViewer(TextDocumentViewer):
         form_class = NewTextCommentForm
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
-            #TODO use transactions to make the CommentLocation save at the same time as the Comment
-            commented_item_version_number = form.cleaned_data['commented_item_version_number']
+            #TODO use transactions to make the Transclusion save at the same time as the Comment
             commented_item_index = form.cleaned_data['commented_item_index']
             item = form.save(commit=False)
             item.save_versioned(updater=self.cur_agent)
-            comment_location = CommentLocation(comment=item, commented_item_version_number=commented_item_version_number, commented_item_index=commented_item_index)
-            comment_location.save_versioned(updater=self.cur_agent)
+            commented_item = item.commented_item.downcast()
+            if isinstance(commented_item, TextDocument) and commented_item_index is not None:
+                transclusion = Transclusion(from_item=commented_item, from_item_version_number=item.commented_item_version_number, from_item_index=commented_item_index, to_item=item)
+                transclusion.save_versioned(updater=self.cur_agent)
             redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
