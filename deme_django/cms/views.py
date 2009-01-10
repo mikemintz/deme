@@ -252,14 +252,13 @@ class ItemViewer(object):
     def render_error(self, request_class, title, body):
         return error_response(self.cur_agent, self.cur_site, self.context['full_path'], request_class, title, body)
 
-    def init_from_http(self, request, cur_agent, cur_site, url_info):
+    def init_from_http(self, request, cur_agent, cur_site, action, noun, format):
         self.permission_cache = permissions.PermissionCache()
-        self.viewer_name = url_info.get('viewer')
-        self.format = url_info.get('format', 'html')
+        self.action = action
+        self.noun = noun
+        self.format = format or 'html'
         self.method = (request.REQUEST.get('_method', None) or request.method).upper()
         self.request = request # FOR NOW
-        self.action = url_info.get('action')
-        self.noun = url_info.get('noun')
         if self.noun == None:
             if self.action == None:
                 self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'trash'}.get(self.method, 'list')
@@ -291,10 +290,9 @@ class ItemViewer(object):
         self.context['_viewer'] = self
         set_default_layout(self.context)
 
-    def init_from_div(self, original_viewer, action, viewer_name, item):
+    def init_from_div(self, original_viewer, action, item):
         self.permission_cache = original_viewer.permission_cache
         self.request = original_viewer.request
-        self.viewer_name = viewer_name
         self.format = 'html'
         self.method = 'GET'
         self.noun = item.pk

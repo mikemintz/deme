@@ -25,10 +25,12 @@ def get_logged_in_agent(request):
     Return the currently logged in Agent (based on the cur_agent_id parameter
     in request.session), or return the AnonymousAgent if the cur_agent_id is
     missing or invalid.
+    
+    Also update last_online_at for the resulting Agent to the current time.
     """
     cur_agent_id = request.session.get('cur_agent_id', None)
     cur_agent = None
-    if cur_agent_id != None:
+    if cur_agent_id is not None:
         try:
             cur_agent = Agent.objects.get(pk=cur_agent_id).downcast()
         except ObjectDoesNotExist:
@@ -44,6 +46,11 @@ def get_logged_in_agent(request):
 
 
 def get_current_site(request):
+    """
+    Return the Site that corresponds to the URL in the request, or return the
+    default site (based on the DemeSetting cms.default_site) if no Site
+    matches.
+    """
     hostname = request.META['HTTP_HOST'].split(':')[0]
     try:
         return Site.objects.filter(site_domains_as_site__hostname=hostname)[0:1].get()
@@ -59,28 +66,47 @@ def get_current_site(request):
 ###############################################################################
 
 def resource(request, *args, **kwargs):
+    """
+    This is the view that takes care of all valid URLs starting with
+    "/resource/". It finds the appropriate viewer and dispatches the request
+    to it.
+    """
     cur_agent = get_logged_in_agent(request)
     cur_site = get_current_site(request)
     viewer_name = kwargs['viewer']
+    action = kwargs.get('action')
+    noun = kwargs.get('noun')
+    format = kwargs.get('format')
     viewer_class = get_viewer_class_for_viewer_name(viewer_name)
     if viewer_class:
         viewer = viewer_class()
-        viewer.init_from_http(request, cur_agent, cur_site, kwargs)
+        viewer.init_from_http(request, cur_agent, cur_site, action, noun, format)
         response = viewer.dispatch()
-        if response == None:
-            return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound, "Action Not Found", "We could not find any action matching your URL.")
+        if response is None:
+            return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound,
+                                  "Action Not Found", "We could not find any action matching your URL.")
         else:
             return response
     else:
-        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound, "Viewer Not Found", "We could not find any viewer matching your URL.")
+        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound,
+                              "Viewer Not Found", "We could not find any viewer matching your URL.")
 
 
 def invalidurl(request, *args, **kwargs):
+    """
+    This is the view that takes care of all URLs that don't match any expected
+    pattern.
+    """
     cur_agent = get_logged_in_agent(request)
     cur_site = get_current_site(request)
-    return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound, "Invalid URL", "The URL you typed in is invalid.")
+    return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound,
+                          "Invalid URL", "The URL you typed in is invalid.")
 
 def authenticate(request, *args, **kwargs):
+    """
+    This is the view that takes care of all URLs starting with
+    "/meta/authenticate".
+    """
     cur_agent = get_logged_in_agent(request)
     cur_site = get_current_site(request)
     permission_cache = permissions.PermissionCache()
