@@ -51,7 +51,7 @@ def get_current_site(request):
     default site (based on the DemeSetting cms.default_site) if no Site
     matches.
     """
-    hostname = request.META['HTTP_HOST'].split(':')[0]
+    hostname = request.get_host().split(':')[0]
     try:
         return Site.objects.filter(site_domains_as_site__hostname=hostname)[0:1].get()
     except ObjectDoesNotExist:
@@ -111,38 +111,45 @@ def authenticate(request, *args, **kwargs):
     cur_site = get_current_site(request)
     permission_cache = permissions.PermissionCache()
     if request.method == 'GET':
+        # If getencryptionmethod is a key in the query string, return a JSON
+        # response with the details about the PasswordAuthenticationMethod
+        # necessary for JavaScript to encrypt the password.
         if 'getencryptionmethod' in request.GET:
+            username = request.GET['getencryptionmethod']
             nonce = get_random_hash()[:5]
-            try:
-                password_authentication_method = PasswordAuthenticationMethod.objects.get(username=request.GET['getencryptionmethod'])
-                algo, salt, hsh = password_authentication_method.password.split('$')
-                json_data = simplejson.dumps({'nonce':nonce, 'algo':algo, 'salt':salt}, separators=(',',':'))
-            except:
-                json_data = simplejson.dumps({'nonce':nonce, 'algo':'sha1', 'salt':'x'}, separators=(',',':'))
             request.session['login_nonce'] = nonce
+            try:
+                password = PasswordAuthenticationMethod.objects.get(username=username).password
+                algo, salt, hsh = password.split('$')
+                response_data = {'nonce':nonce, 'algo':algo, 'salt':salt}
+            except ObjectDoesNotExist:
+                response_data = {'nonce':nonce, 'algo':'sha1', 'salt':'x'}
+            json_data = simplejson.dumps(response_data, separators=(',',':'))
             return HttpResponse(json_data, mimetype='application/json')
+        # Otherwise, return the login.html page.
         else:
+            login_as_agents = Agent.objects.filter(trashed=False).order_by('name')
+            if not permission_cache.agent_can_global(cur_agent, 'do_everything'):
+                login_as_agents = login_as_agents.filter(permissions.filter_items_by_permission(cur_agent, 'login_as'))
+                permission_cache.mass_learn(cur_agent, 'view name', login_as_agents)
             template = loader.get_template('login.html')
             context = Context()
-            context['redirect_url'] = request.GET['redirect']
+            context['redirect'] = request.GET['redirect']
             context['full_path'] = request.get_full_path()
             context['cur_agent'] = cur_agent
             context['cur_site'] = cur_site
             context['_permission_cache'] = permission_cache
-            if permission_cache.agent_can_global(cur_agent, 'do_everything'):
-                context['login_as_agents'] = Agent.objects.filter(trashed=False).order_by('name')
-            else:
-                context['login_as_agents'] = Agent.objects.filter(trashed=False).filter(permissions.filter_items_by_permission(cur_agent, 'login_as')).order_by('name')
-                context['_permission_cache'].mass_learn(cur_agent, 'view name', context['login_as_agents'])
+            context['login_as_agents'] = login_as_agents
             set_default_layout(context)
             return HttpResponse(template.render(context))
     else:
-        redirect_url = request.GET['redirect']
+        # The user just submitted a login form, so we try to authenticate.
+        redirect = request.GET['redirect']
         login_type = request.POST['login_type']
         if login_type == 'logout':
             if 'cur_agent_id' in request.session:
                 del request.session['cur_agent_id']
-            return HttpResponseRedirect(redirect_url)
+            return HttpResponseRedirect(redirect)
         elif login_type == 'password':
             nonce = request.session['login_nonce']
             del request.session['login_nonce']
@@ -151,15 +158,20 @@ def authenticate(request, *args, **kwargs):
             try:
                 password_authentication_method = PasswordAuthenticationMethod.objects.get(username=username)
             except ObjectDoesNotExist:
-                return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Username", "No person has this username")
+                # No PasswordAuthenticationMethod has this username.
+                return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest,
+                                      "Authentication Failed", "There was a problem with your login form")
             if password_authentication_method.agent.trashed: 
-                return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Trashed Agent", "The agent you are trying to log in as is trashed")
+                # The Agent corresponding to this PasswordAuthenticationMethod is trashed.
+                return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest,
+                                      "Authentication Failed", "There was a problem with your login form")
             if password_authentication_method.check_nonced_password(hashed_password, nonce):
-                new_agent = password_authentication_method.agent
-                request.session['cur_agent_id'] = new_agent.pk
-                return HttpResponseRedirect(redirect_url)
+                request.session['cur_agent_id'] = password_authentication_method.agent.pk
+                return HttpResponseRedirect(redirect)
             else:
-                return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Password", "The password you typed was not correct for this username")
+                # The password given does not correspond to the PasswordAuthenticationMethod.
+                return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest,
+                                      "Authentication Failed", "There was a problem with your login form")
         elif login_type == 'login_as':
             for key in request.POST.iterkeys():
                 if key.startswith('login_as_'):
@@ -167,19 +179,33 @@ def authenticate(request, *args, **kwargs):
                     try:
                         new_agent = Agent.objects.get(pk=new_agent_id)
                     except ObjectDoesNotExist:
-                        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Agent ID", "There is no agent with the id you specified")
+                        # There is no Agent with the specified id.
+                        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest,
+                                              "Authentication Failed", "There was a problem with your login form")
                     if new_agent.trashed:
-                        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Trashed Agent", "The agent you are trying to log in as is trashed")
+                        # The specified agent is trashed.
+                        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest,
+                                              "Authentication Failed", "There was a problem with your login form")
                     if permission_cache.agent_can(cur_agent, 'login_as', new_agent):
                         request.session['cur_agent_id'] = new_agent.pk
-                        return HttpResponseRedirect(redirect_url)
+                        return HttpResponseRedirect(redirect)
                     else:
-                        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Permission Denied", "You do not have permission to login as this agent")
-        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest, "Invalid Login Request", "The login_type field on your form was invalid")
+                        # The current agent does not have permission to login_as the specified agent.
+                        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest,
+                                              "Authentication Failed", "There was a problem with your login form")
+        # Invalid login_type parameter.
+        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseBadRequest,
+                              "Authentication Failed", "There was a problem with your login form")
 
 def codegraph(request, *args, **kwargs):
+    """
+    This is the view that takes care of "/meta/codegraph", displaying a graph
+    of the Deme item type ontology.
+    """
     cur_agent = get_logged_in_agent(request)
     cur_site = get_current_site(request)
+    # If cms/models.py was modified after static/codegraph.png was,
+    # re-render the graph before displaying this page.
     models_filename = os.path.join(os.path.dirname(__file__), 'models.py')
     codegraph_filename = os.path.join(os.path.dirname(__file__), '..', 'static', 'codegraph.png')
     models_mtime = os.stat(models_filename)[8]
@@ -191,7 +217,7 @@ def codegraph(request, *args, **kwargs):
         subprocess.call(os.path.join(os.path.dirname(__file__), '..', 'gen_graph.py'), shell=True)
     template = loader.get_template_from_string("""
     {%% extends layout %%}
-    {%% block title %%}Deme Code Graphs{%% endblock %%}
+    {%% block title %%}Deme Code Graph{%% endblock %%}
     {%% block content %%}
     <div><a href="/static/codegraph.png?%d">Code graph</a></div>
     <div><a href="/static/codegraph_basic.png?%d">Code graph (basic)</a></div>
@@ -206,28 +232,37 @@ def codegraph(request, *args, **kwargs):
     return HttpResponse(template.render(context))
 
 def alias(request, *args, **kwargs):
+    """
+    This is the view that takes care of all URLs other than those beginning
+    with "/static/", "/meta/", "/resource/", and those URLs taken by modules.
+    
+    It checks all of the ViewerRequests to see if any match the current URL,
+    and if so, simulates a request to the given viewer.
+    """
     cur_agent = get_logged_in_agent(request)
     cur_site = get_current_site(request)
-    path_parts = [x for x in request.path.split('/') if x]
-    custom_url = cur_site
+    path_parts = [x for x in request.path.split('/') if x] # Reduce consecutive slashes
+    viewer_request = cur_site
     try:
         for path_part in path_parts:
-            custom_url = CustomUrl.objects.filter(path=path_part, parent_url=custom_url)[0:1].get()
+            viewer_request = CustomUrl.objects.get(path=path_part, parent_url=viewer_request)
     except ObjectDoesNotExist:
-        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound, "Alias Not Found", "We could not find any alias matching your URL http://%s%s." % (request.META['HTTP_HOST'], request.path))
-    item = custom_url.aliased_item
+        return error_response(cur_agent, cur_site, request.get_full_path(), HttpResponseNotFound,
+                              "Alias Not Found", "We could not find any alias matching your URL http://%s%s." % (request.get_host(), request.path))
+    item = viewer_request.aliased_item
     kwargs = {}
-    kwargs['viewer'] = custom_url.viewer
-    kwargs['format'] = custom_url.format
+    kwargs['viewer'] = viewer_request.viewer
+    kwargs['format'] = viewer_request.format
     if item:
         kwargs['noun'] = str(item.pk)
-        kwargs['action'] = custom_url.action
+        kwargs['action'] = viewer_request.action
     else:
         kwargs['noun'] = None
-        kwargs['action'] = custom_url.action
-    query_dict = QueryDict(custom_url.query_string).copy()
+        kwargs['action'] = viewer_request.action
+    query_dict = QueryDict(viewer_request.query_string).copy()
     query_dict.update(request.GET)
     request.GET = query_dict
+    # Set the REQUEST dict
     request._request = datastructures.MergeDict(request.POST, request.GET)
     return resource(request, **kwargs)
 
