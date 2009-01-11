@@ -270,11 +270,7 @@ class ItemViewer(object):
                 self.item = Item.objects.get(pk=self.noun)
                 if self.item:
                     self.item = self.item.downcast()
-                if 'version' in self.request.REQUEST:
-                    version_number = self.request.REQUEST['version']
-                    self.item = get_versioned_item(self.item, version_number)
-                else:
-                    self.item = get_versioned_item(self.item, None)
+                self.item = get_versioned_item(self.item, self.request.GET.get('version'))
             except ObjectDoesNotExist:
                 self.item = None
         self.context = Context()
