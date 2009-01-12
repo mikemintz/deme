@@ -83,7 +83,7 @@ INSTALLED_APPS = (
 
 MODULES_DIR = os.path.join(os.path.dirname(__file__), 'modules')
 MODULE_NAMES = []
-for module_name in os.listdir(modules_dir):
+for module_name in os.listdir(MODULES_DIR):
     if module_name.startswith('.'):
         continue
     if module_name.startswith('_'):
@@ -91,4 +91,3 @@ for module_name in os.listdir(modules_dir):
     MODULE_NAMES.append(module_name)
 for module_name in MODULE_NAMES:
     INSTALLED_APPS += ('deme_django.modules.%s' % module_name,)
-
