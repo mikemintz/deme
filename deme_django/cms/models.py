@@ -532,7 +532,7 @@ class TextDocument(Document):
 
 class Transclusion(Item):
     immutable_fields = Item.immutable_fields | set(['from_item', 'from_item_version_number', 'to_item'])
-    relevant_abilities = Item.relevant_abilities | set(['view from_item', 'view from_item_version_number', 'view from_item_index', 'view to_item', 'edit commented_item_index'])
+    relevant_abilities = Item.relevant_abilities | set(['view from_item', 'view from_item_version_number', 'view from_item_index', 'view to_item', 'edit from_item_index'])
     relevant_global_abilities = frozenset()
     from_item = models.ForeignKey(TextDocument, related_name='transclusions_from_self')
     from_item_version_number = models.PositiveIntegerField()
@@ -569,7 +569,7 @@ class ImageDocument(FileDocument):
 
 class Comment(Item):
     immutable_fields = Item.immutable_fields | set(['commented_item'])
-    relevant_abilities = Item.relevant_abilities | set(['view commented_item'])
+    relevant_abilities = Item.relevant_abilities | set(['view commented_item', 'view commented_item_version_number'])
     relevant_global_abilities = frozenset()
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
     commented_item_version_number = models.PositiveIntegerField()
