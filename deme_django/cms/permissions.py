@@ -64,7 +64,7 @@ class PermissionCache(object):
         """
         result = self._item_ability_cache.get((agent.pk, item.pk))
         if result is None:
-            item_type = [x for x in all_models() if x.__name__ == item.item_type][0]
+            item_type = get_model_with_name(item.item_type)
             result = item_type.relevant_abilities
             if 'do_everything' not in self.global_abilities(agent):
                 result &= calculate_abilities_for_agent_and_item(agent, item)
@@ -104,7 +104,7 @@ def calculate_global_roles_for_agent(agent):
     indirectly), and default_roles contains all roles that were assigned to
     everyone by default.
     """
-    my_collection_ids = agent.all_containing_collections().values('pk').query
+    my_collection_ids = agent.ancestor_collections().values('pk').query
     agent_role_permissions = AgentGlobalRolePermission.objects.filter(agent=agent)
     collection_role_permissions = CollectionGlobalRolePermission.objects.filter(collection__pk__in=my_collection_ids)
     default_role_permissions = DefaultGlobalRolePermission.objects
@@ -125,7 +125,7 @@ def calculate_global_permissions_for_agent(agent):
     Collections that agent is in (directly or indirectly), and default_permissions
     contains all permissions that were assigned to everyone by default.
     """
-    my_collection_ids = agent.all_containing_collections().values('pk').query
+    my_collection_ids = agent.ancestor_collections().values('pk').query
     agent_perms = AgentGlobalPermission.objects.filter(agent=agent)
     collection_perms = CollectionGlobalPermission.objects.filter(collection__pk__in=my_collection_ids)
     default_perms = DefaultGlobalPermission.objects.all()
@@ -199,7 +199,7 @@ def calculate_roles_for_agent_and_item(agent, item):
     indirectly), and default_roles contains all roles that were assigned to
     everyone by default.
     """
-    my_collection_ids = agent.all_containing_collections().values('pk').query
+    my_collection_ids = agent.ancestor_collections().values('pk').query
     agent_role_permissions = AgentRolePermission.objects.filter(item=item, agent=agent)
     collection_role_permissions = CollectionRolePermission.objects.filter(item=item, collection__pk__in=my_collection_ids)
     default_role_permissions = DefaultRolePermission.objects
@@ -222,7 +222,7 @@ def calculate_permissions_for_agent_and_item(agent, item):
     default.
     """
 
-    my_collection_ids = agent.all_containing_collections().values('pk').query
+    my_collection_ids = agent.ancestor_collections().values('pk').query
     agent_perms = AgentPermission.objects.filter(item=item, agent=agent)
     collection_perms = CollectionPermission.objects.filter(item=item, collection__pk__in=my_collection_ids)
     default_perms = DefaultPermission.objects.filter(item=item)
@@ -296,7 +296,7 @@ def filter_items_by_permission(agent, ability):
     
     This can result in the database query becoming expensive.
     """
-    my_collection_ids = agent.all_containing_collections().values('pk').query
+    my_collection_ids = agent.ancestor_collections().values('pk').query
     yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=True).values('role_id').query
     no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=False).values('role_id').query
 

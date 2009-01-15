@@ -23,7 +23,7 @@ if Item.objects.count() != 0:
 ###############################################################################
 
 admin = Agent(name="Admin")
-admin.save_versioned(first_agent=True, create_permissions=False)
+admin.save_versioned(updater=None, first_agent=True, create_permissions=False)
 
 print 'Creating roles...'
 role_abilities = []

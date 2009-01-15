@@ -36,6 +36,7 @@ Code correctness/consistency/bugs
   - no permissions on Roles and RoleAbilities, there should be a Role modifying interface that requires do_everything
   - figure out SiteDomains
   - Don't put creator_roles on things that just require do_everything
+  - Figure out better scheme for default created roles
 * figure out import deal on deme_django.cms and just cms
 * start using verbose_name to have nice displays of item type names
 * The "crumbs" at the top of pages like TextAdvertisements and TextComments are wrong, since they have multiple inheritance
@@ -83,6 +84,7 @@ Unusual things to remember
   - This also assumes that `trashed` can only change in trash() and untrash(), and items are always created untrashed
 * Don't forget to update crystal icons for new models
 * If someone has permission to edit the body of an item, we allow them to add transclusions in some situations (TextDocumentViewer.edit)
+* We do not [knowingly] support OneToOneFields and ManyToManyFields in item types
 
 
 

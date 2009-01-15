@@ -10,7 +10,11 @@ import copy
 import random
 import hashlib
 
-__all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'Collection', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'Transclusion', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'CollectionGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'CollectionGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'CollectionPermission', 'DefaultPermission', 'AgentRolePermission', 'CollectionRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_hexdigest', 'get_random_hash', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
+__all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'Collection', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'Transclusion', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'CollectionGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'CollectionGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'CollectionPermission', 'DefaultPermission', 'AgentRolePermission', 'CollectionRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_model_with_name', 'get_hexdigest', 'get_random_hash', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
+
+###############################################################################
+# Item framework
+###############################################################################
 
 class ItemMetaClass(models.base.ModelBase):
     """
@@ -62,13 +66,16 @@ class ItemMetaClass(models.base.ModelBase):
 
 
 class ItemVersion(models.Model):
+    """
+    Versioned class for Item, and superclass of all versioned classes.
+    """
     __metaclass__ = ItemMetaClass
-    current_item = models.ForeignKey('Item', related_name='versions', editable=False)
-    version_number = models.PositiveIntegerField(default=1, editable=False, db_index=True)
-    item_type = models.CharField(max_length=255, default='Item', editable=False)
+    current_item = models.ForeignKey('Item', related_name='versions')
+    version_number = models.PositiveIntegerField(default=1, db_index=True)
+    item_type = models.CharField(max_length=255, default='Item')
     name = models.CharField(max_length=255, default="Untitled")
     description = models.CharField(max_length=255, blank=True)
-    updater = models.ForeignKey('Agent', related_name='item_versions_as_updater')
+    updater = models.ForeignKey('Agent', related_name='version_items_as_updater')
     updated_at = models.DateTimeField(editable=False)
 
     class Meta:
@@ -80,22 +87,34 @@ class ItemVersion(models.Model):
         return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.name)
 
     def downcast(self):
-        item_type = [x for x in all_models() if x.__name__ == self.item_type][0]
-        return item_type.Version.objects.get(id=self.id)
+        """
+        Return this item version as an instance of the actual item type.
+        
+        For example, if the current item is an Agent, this will return an
+        AgentVersion, even though self is an ItemVersion. This method always
+        makes a single database query.
+        """
+        item_type = get_model_with_name(self.item_type)
+        return item_type.Version.objects.get(pk=self.pk)
 
 
 class Item(models.Model):
+    """
+    Superclass of all item types.
+    """
     __metaclass__ = ItemMetaClass
     immutable_fields = frozenset()
-    relevant_abilities = frozenset(['comment_on', 'trash', 'modify_permissions', 'view name', 'view description', 'view updater', 'view updated_at', 'view creator', 'view created_at', 'edit name', 'edit description'])
+    relevant_abilities = frozenset(['comment_on', 'trash', 'modify_permissions', 'view name',
+                                    'view description', 'view updater', 'view creator',
+                                    'view updated_at', 'view created_at', 'edit name', 'edit description'])
     relevant_global_abilities = frozenset(['do_something', 'do_everything'])
     version_number = models.PositiveIntegerField(default=1, editable=False)
     item_type = models.CharField(max_length=255, default='Item', editable=False)
     name = models.CharField(max_length=255, default="Untitled")
     description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='items_as_updater', editable=False)
-    updated_at = models.DateTimeField(editable=False)
     creator = models.ForeignKey('Agent', related_name='items_as_creator', editable=False)
+    updated_at = models.DateTimeField(editable=False)
     created_at = models.DateTimeField(editable=False)
     trashed = models.BooleanField(default=False, editable=False, db_index=True)
 
@@ -103,57 +122,83 @@ class Item(models.Model):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.name)
 
     def downcast(self):
-        item_type = [x for x in all_models() if x.__name__ == self.item_type][0]
+        """
+        Return this item as an instance of the actual item type.
+        
+        For example, if the current item is an Agent, this will return an
+        Agent, even though self is an Item. This method always makes a
+        single database query.
+        """
+        item_type = get_model_with_name(self.item_type)
         return item_type.objects.get(id=self.id)
 
-    def latest_untrashed_itemversion(self):
-        try:
-            result = type(self).Version.objects.filter(current_item=self, trashed=False).latest()
-        except ObjectDoesNotExist:
-            result = type(self).Version.objects.filter(current_item=self).latest()
-        return result
-
-    def all_containing_collections(self, recursive_filter=None):
+    def ancestor_collections(self, recursive_filter=None):
+        """
+        Return all untrashed Collections containing self directly or
+        indirectly.
+        
+        A Collection does not indirectly contain itself by default.
+        
+        If a recursive_filter is specified, use it to filter which
+        RecursiveMemberships can be used to infer self's membership in a
+        collection. Often, one will use a permission filter so that only those
+        RecursiveMemberships that the Agent is allowed to view will be used.
+        """
         recursive_memberships = RecursiveMembership.objects.filter(child=self)
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         return Collection.objects.filter(trashed=False, pk__in=recursive_memberships.values('parent').query)
 
     def all_comments(self):
-        return Comment.objects.filter(trashed=False, pk__in=RecursiveCommentMembership.objects.filter(parent=self).values('child').query)
+        """
+        Return all untrashed Comments made directly or indirectly on self.
+        """
+        recursive_comment_membership = RecursiveCommentMembership.objects.filter(parent=self)
+        return Comment.objects.filter(trashed=False, pk__in=recursive_comment_membership.values('child').query)
 
-    def copy_fields_from_itemversion(self, itemversion):
+    def copy_fields_from_version(self, version_number):
+        """
+        Set the fields of self to what they were at the given version number.
+        This method does not make any database writes.
+        """
+        itemversion = type(self).Version.objects.get(current_item=self, version_number=version_number)
         fields = {}
         for field in itemversion._meta.fields:
-            if field.primary_key:
-                continue
-            if type(field).__name__ == 'OneToOneField':
-                continue
-            try:
-                fields[field.name] = getattr(itemversion, field.name)
-            except ObjectDoesNotExist:
-                fields[field.name] = None
+            if not field.primary_key:
+                try:
+                    fields[field.name] = getattr(itemversion, field.name)
+                except ObjectDoesNotExist:
+                    fields[field.name] = None
         for key, val in fields.iteritems():
             setattr(self, key, val)
-    copy_fields_from_itemversion.alters_data = True
+    copy_fields_from_version.alters_data = True
 
     def copy_fields_to_itemversion(self, itemversion):
+        """
+        Sets the fields of the itemversion from self's fields. This method
+        does not make any database writes.
+        
+        This method may use self.version_number to calculate a delta
+        (although it does not currently).
+        """
+        itemversion.current_item_id = self.pk
         fields = {}
         for field in self._meta.fields:
-            if field.primary_key:
-                continue
-            if type(field).__name__ == 'OneToOneField':
-                continue
-            try:
-                fields[field.name] = getattr(self, field.name)
-            except ObjectDoesNotExist:
-                fields[field.name] = None
+            if not field.primary_key:
+                try:
+                    fields[field.name] = getattr(self, field.name)
+                except ObjectDoesNotExist:
+                    fields[field.name] = None
         for key, val in fields.iteritems():
             setattr(itemversion, key, val)
     copy_fields_to_itemversion.alters_data = True
 
     @transaction.commit_on_success
     def trash(self, agent):
+        """
+        Trash the current Item (the specified agent was responsible). This
+        will call after_trash() if the item was previously untrashed.
+        """
         if self.trashed:
             return
         self.trashed = True
@@ -163,6 +208,10 @@ class Item(models.Model):
 
     @transaction.commit_on_success
     def untrash(self, agent):
+        """
+        Untrash the current Item (the specified agent was responsible). This
+        will call after_untrash() if the item was previously trashed.
+        """
         if not self.trashed:
             return
         self.trashed = False
@@ -171,8 +220,30 @@ class Item(models.Model):
     untrash.alters_data = True
 
     @transaction.commit_on_success
-    def save_versioned(self, updater=None, first_agent=False, create_permissions=True, created_at=None, updated_at=None, overwrite_latest_version=False):
-        save_time = datetime.datetime.now()
+    def save_versioned(self, updater, first_agent=False, create_permissions=True, created_at=None, updated_at=None, overwrite_latest_version=False):
+        """
+        Save the current item, making sure to keep track of versions.
+        
+        Use this method instead of save() because it will keep things
+        consistent with versions and special fields. This will set updated_at
+        to the current time (or the method parameter if specified), and set
+        created_at to the current time (or method parameter) if this is a
+        creation.
+        
+        If first_agent=True, then this method assumes you are creating the
+        first item (which should be an Agent). It is necessary to save the
+        first item as an Agent in this way so that every Item has a valid
+        updater and creator pointer.
+        
+        If create_permissions=True, then this method will automatically create
+        reasonable permissions.
+        TODO: figure out what those permissions should really be
+        
+        If overwrite_latest_version=True and this is an update, then this
+        method will not create a new version, and make it appear that the
+        latest version looked like this the whole time.
+        """
+        updated_at = updated_at or datetime.datetime.now()
         is_new = not self.pk
 
         # Update the item
@@ -182,38 +253,30 @@ class Item(models.Model):
             self.creator_id = 1
             self.updater = self
             self.updater_id = 1
-        if updater:
+        else:
             self.updater = updater
             if is_new:
                 self.creator = updater
-        if is_new:
-            if created_at:
-                self.created_at = created_at
-            else:
-                self.created_at = save_time
-        if updated_at:
-            self.updated_at = updated_at
-        else:
-            self.updated_at = save_time
+        self.updated_at = updated_at
+        if is_new or overwrite_latest_version:
+            self.created_at = created_at or updated_at
         if not is_new and not overwrite_latest_version:
             self.version_number = self.version_number + 1
         self.save()
 
         # Create the new item version
         if overwrite_latest_version and not is_new:
-            new_version = self.__class__.Version.objects.get(current_item=self, version_number=self.version_number)
+            new_version = type(self).Version.objects.get(current_item=self, version_number=self.version_number)
         else:
-            new_version = self.__class__.Version()
-            new_version.current_item_id = self.pk
-            new_version.version_number = self.version_number
+            new_version = type(self).Version()
         self.copy_fields_to_itemversion(new_version)
         new_version.save()
 
         # Create the permissions
         #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
         if create_permissions and is_new:
-            default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.%s" % self.__class__.__name__))
-            creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.%s" % self.__class__.__name__))
+            default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.%s" % type(self).__name__))
+            creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.%s" % type(self).__name__))
             DefaultRolePermission(item=self, role=default_role).save()
             AgentRolePermission(agent=updater, item=self, role=creator_role).save()
 
@@ -227,21 +290,47 @@ class Item(models.Model):
     save_versioned.alters_data = True
 
     def after_create(self):
+        """
+        This method gets called after the first version of an item is
+        created via save_versioned().
+        
+        Item types that want to trigger an action after creation should
+        override this method, making sure to put a call to super at the top,
+        like super(Membership, self).after_create()
+        """
         pass
     after_create.alters_data = True
 
     def after_trash(self, agent):
+        """
+        This method gets called after an item is trashed.
+        
+        Item types that want to trigger an action after trash should
+        override this method, making sure to put a call to super at the top,
+        like super(Membership, self).after_trash()
+        """
         # Create a TrashComment
         trash_comment = TrashComment(commented_item=self, commented_item_version_number=self.version_number)
         trash_comment.save_versioned(updater=agent)
     after_trash.alters_data = True
 
     def after_untrash(self, agent):
+        """
+        This method gets called after an item is untrashed.
+        
+        Item types that want to trigger an action after untrash should
+        override this method, making sure to put a call to super at the top,
+        like super(Membership, self).after_untrash()
+        """
         # Create an UntrashComment
         untrash_comment = UntrashComment(commented_item=self, commented_item_version_number=self.version_number)
         untrash_comment.save_versioned(updater=agent)
     after_untrash.alters_data = True
 
+
+###############################################################################
+# Various item types
+###############################################################################
 
 class DemeSetting(Item):
     immutable_fields = Item.immutable_fields | set(['key'])
@@ -759,7 +848,7 @@ class Site(ViewerRequest):
     immutable_fields = ViewerRequest.immutable_fields
     relevant_abilities = ViewerRequest.relevant_abilities | set(['view default_layout', 'edit default_layout'])
     relevant_global_abilities = frozenset(['create Site'])
-    default_layout = models.ForeignKey('DjangoTemplateDocument', related_name='sites_as_default_layout', null=True, blank=True)
+    default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_as_default_layout', null=True, blank=True)
 
 
 class SiteDomain(Item):
@@ -776,7 +865,7 @@ class CustomUrl(ViewerRequest):
     immutable_fields = ViewerRequest.immutable_fields | set(['parent_url', 'path'])
     relevant_abilities = ViewerRequest.relevant_abilities | set(['view parent_url', 'view path'])
     relevant_global_abilities = frozenset()
-    parent_url = models.ForeignKey('ViewerRequest', related_name='child_urls')
+    parent_url = models.ForeignKey(ViewerRequest, related_name='child_urls')
     path = models.CharField(max_length=255)
     class Meta:
         unique_together = (('parent_url', 'path'),)
@@ -1022,3 +1111,8 @@ def all_models():
     result = [x for x in models.loading.get_models() if issubclass(x, Item)]
     return result
 
+def get_model_with_name(name):
+    try:
+        return (x for x in all_models() if x.__name__ == name).next()
+    except StopIteration:
+        return None

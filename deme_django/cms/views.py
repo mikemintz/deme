@@ -202,31 +202,8 @@ def get_viewer_class_for_viewer_name(viewer_name):
     return ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
 
 def get_versioned_item(item, version_number):
-    if version_number is None:
-        itemversion = type(item).Version.objects.filter(current_item=item).latest()
-    else:
-        itemversion = type(item).Version.objects.get(current_item=item, version_number=version_number)
-        #TODO use copy_fields_from_itemversion here
-        for name in itemversion._meta.get_all_field_names():
-            if name in ['item_type', 'trashed', 'current_item']: # special fields
-                continue
-            field, model, direct, m2m = itemversion._meta.get_field_by_name(name)
-            if hasattr(field, 'primary_key') and field.primary_key:
-                continue
-            elif type(field).__name__ == 'OneToOneField':
-                continue
-            elif type(field).__name__ == 'ManyToManyField':
-                continue
-            elif type(field).__name__ == 'RelatedObject':
-                continue
-            elif type(field).__name__ == 'ForeignKey':
-                try:
-                    obj = getattr(itemversion, name)
-                except ObjectDoesNotExist:
-                    obj = None
-            else:
-                obj = getattr(itemversion, name)
-            setattr(item, name, obj)
+    if version_number is not None:
+        item.copy_fields_from_version(version_number)
     return item
 
 

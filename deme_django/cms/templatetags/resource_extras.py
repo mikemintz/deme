@@ -25,10 +25,7 @@ def show_resource_url(item, version_number=None):
 @register.filter
 def icon_url(item_type, size=32):
     if item_type != 'error' and isinstance(item_type, basestring):
-        try:
-            item_type = [x for x in all_models() if x.__name__ == item_type][0]
-        except IndexError:
-            pass
+        item_type = get_model_with_name(item_type) or Item
 
     if item_type == 'error':
         icon = 'apps/error'
