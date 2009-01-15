@@ -12,7 +12,7 @@ register = template.Library()
 
 @register.simple_tag
 def show_resource_url(item, version_number=None):
-    if isinstance(item, Item.VERSION):
+    if isinstance(item, Item.Version):
         return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}) + '?version=%s' % item.version_number
     elif isinstance(item, Item):
         if version_number is not None:
@@ -34,8 +34,8 @@ def icon_url(item_type, size=32):
         icon = 'apps/error'
     elif not isinstance(item_type, type):
         return icon_url(type(item_type), size)
-    elif issubclass(item_type, Item.VERSION):
-        return icon_url(item_type.NOTVERSION, size)
+    elif issubclass(item_type, Item.Version):
+        return icon_url(item_type.NotVersion, size)
     elif item_type == Agent:
         icon = 'apps/personal'
     elif item_type == AuthenticationMethod:

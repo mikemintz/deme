@@ -1,50 +1,63 @@
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
-from django.db import transaction
-import datetime
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import SMTPConnection, EmailMessage
-from email.utils import formataddr
 from django.core.urlresolvers import reverse
+from email.utils import formataddr
+import datetime
 import settings
-from copy import deepcopy
+import copy
 import random
 import hashlib
 
 __all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'Collection', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'Transclusion', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'CollectionGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'CollectionGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'CollectionPermission', 'DefaultPermission', 'AgentRolePermission', 'CollectionRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_hexdigest', 'get_random_hash', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
 
 class ItemMetaClass(models.base.ModelBase):
+    """
+    Metaclass for item types. Takes care of creating parallel versioned classes
+    for every item type.
+    """
     def __new__(cls, name, bases, attrs):
-        if name in ['Item', 'ItemVersion']:
-            # No point in indexing updater in versions
-            if name == 'ItemVersion':
-                attrs['updater'].db_index = False
+        # Fix up the ItemVersion and Item classes
+        if name == 'ItemVersion':
+            attrs['updater'].db_index = False # No point in indexing updater in versions
             result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
-            if name == 'Item':
-                result.VERSION = eval('ItemVersion')
-                eval('ItemVersion').NOTVERSION = result
             return result
-        attrs_copy = deepcopy(attrs)
+        if name == 'Item':
+            result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
+            result.Version = ItemVersion
+            ItemVersion.NotVersion = result
+            return result
+
+        # Create the non-versioned class
+        attrs_copy = copy.deepcopy(attrs)
         result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
-        version_name = "%sVersion" % name
-        version_bases = tuple([x.VERSION for x in bases])
-        version_attrs = {}
+
+        # Create the versioned class
+        version_name = name + "Version"
+        # Versioned classes inherit from other versioned classes
+        version_bases = tuple([x.Version for x in bases])
+        # Set the attrs for the versioned class
+        version_attrs = {'__module__': attrs_copy['__module__']}
+        # Copy over mutable fields
         for key, value in attrs_copy.iteritems():
             if isinstance(value, models.Field) and value.editable and key not in result.immutable_fields:
-                # We don't want to waste time indexing versions, except things specified in ItemVersion like version_number and current_item
+                # We don't want to waste time indexing versions, except things
+                # specified in ItemVersion like version_number and current_item
                 value.db_index = False
+                # Fix the related_name so we don't have conflicts with the
+                # non-versioned class.
                 if value.rel and value.rel.related_name:
                     value.rel.related_name = 'version_' + value.rel.related_name
+                # We don't want any fields in the versioned class to be unique
+                # since there will be conflicts.
                 value._unique = False
-            elif key == '__module__':
-                # Just keep it the same
-                pass
-            else:
-                continue
-            version_attrs[key] = value
+                version_attrs[key] = value
         version_result = super(ItemMetaClass, cls).__new__(cls, version_name, version_bases, version_attrs)
-        result.VERSION = version_result
-        version_result.NOTVERSION = result
+
+        # Set the Version field of the class to point to the versioned class
+        result.Version = version_result
+        version_result.NotVersion = result
         return result
 
 
@@ -68,7 +81,7 @@ class ItemVersion(models.Model):
 
     def downcast(self):
         item_type = [x for x in all_models() if x.__name__ == self.item_type][0]
-        return item_type.VERSION.objects.get(id=self.id)
+        return item_type.Version.objects.get(id=self.id)
 
 
 class Item(models.Model):
@@ -95,9 +108,9 @@ class Item(models.Model):
 
     def latest_untrashed_itemversion(self):
         try:
-            result = type(self).VERSION.objects.filter(current_item=self, trashed=False).latest()
+            result = type(self).Version.objects.filter(current_item=self, trashed=False).latest()
         except ObjectDoesNotExist:
-            result = type(self).VERSION.objects.filter(current_item=self).latest()
+            result = type(self).Version.objects.filter(current_item=self).latest()
         return result
 
     def all_containing_collections(self, recursive_filter=None):
@@ -188,9 +201,9 @@ class Item(models.Model):
 
         # Create the new item version
         if overwrite_latest_version and not is_new:
-            new_version = self.__class__.VERSION.objects.get(current_item=self, version_number=self.version_number)
+            new_version = self.__class__.Version.objects.get(current_item=self, version_number=self.version_number)
         else:
-            new_version = self.__class__.VERSION()
+            new_version = self.__class__.Version()
             new_version.current_item_id = self.pk
             new_version.version_number = self.version_number
         self.copy_fields_to_itemversion(new_version)

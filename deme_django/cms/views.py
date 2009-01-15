@@ -26,8 +26,8 @@ class AjaxModelChoiceWidget(forms.Widget):
         try:
             if issubclass(model, Item):
                 value_item = Item.objects.get(pk=value)
-            elif issubclass(model, Item.VERSION):
-                value_item = Item.VERSION.objects.get(pk=value)
+            elif issubclass(model, Item.Version):
+                value_item = Item.Version.objects.get(pk=value)
             else:
                 value_item = None
         except:
@@ -203,9 +203,9 @@ def get_viewer_class_for_viewer_name(viewer_name):
 
 def get_versioned_item(item, version_number):
     if version_number is None:
-        itemversion = type(item).VERSION.objects.filter(current_item=item).latest()
+        itemversion = type(item).Version.objects.filter(current_item=item).latest()
     else:
-        itemversion = type(item).VERSION.objects.get(current_item=item, version_number=version_number)
+        itemversion = type(item).Version.objects.get(current_item=item, version_number=version_number)
         #TODO use copy_fields_from_itemversion here
         for name in itemversion._meta.get_all_field_names():
             if name in ['item_type', 'trashed', 'current_item']: # special fields
@@ -453,7 +453,7 @@ class ItemViewer(object):
                     continue
                 field, model, direct, m2m = item._meta.get_field_by_name(name)
                 model_class = type(item) if model == None else model
-                model_class = model_class.NOTVERSION if issubclass(model_class, Item.VERSION) else model_class
+                model_class = model_class.NotVersion if issubclass(model_class, Item.Version) else model_class
                 model_name = model_class.__name__
                 if model_name == 'Item':
                     continue # things in Item are boring, since they're already part of the layout (entryheader)
