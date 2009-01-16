@@ -647,17 +647,32 @@ class Collection(Item):
     # Methods
 
     def all_contained_collection_members(self, recursive_filter=None):
+        """
+        Return a QuerySet for all items that are either directly or indirectly
+        contained by self (using RecursiveMembership).
+
+        If a recursive_filter is specified, use it to filter which
+        RecursiveMemberships can be used to infer an item's membership in this
+        collection. Often, one will use a permission filter so that only those
+        RecursiveMemberships that the Agent is allowed to view will be used.
+        """
         recursive_memberships = RecursiveMembership.objects.filter(parent=self)
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         return Item.objects.filter(pk__in=recursive_memberships.values('child').query)
 
     def after_trash(self, agent):
+        """
+        Update the RecursiveMembership to indicate this Collection is gone.
+        """
         super(Collection, self).after_trash(agent)
         RecursiveMembership.recursive_remove_collection(self)
     after_trash.alters_data = True
 
     def after_untrash(self, agent):
+        """
+        Update the RecursiveMembership to indicate this Collection is back.
+        """
         super(Collection, self).after_untrash(agent)
         RecursiveMembership.recursive_add_collection(self)
     after_untrash.alters_data = True
