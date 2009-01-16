@@ -954,7 +954,7 @@ class CollectionViewer(ItemViewer):
     viewer_name = 'collection'
 
     def entry_show(self):
-        memberships = self.item.memberships_as_collection
+        memberships = self.item.child_memberships
         memberships = memberships.filter(trashed=False)
         memberships = memberships.filter(item__trashed=False)
         if not self.cur_agent_can_global('do_everything'):
@@ -963,7 +963,7 @@ class CollectionViewer(ItemViewer):
         if memberships:
             self.permission_cache.mass_learn(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
         self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can(self.cur_agent, 'view name', x.item), x.item.name))
-        self.context['cur_agent_in_collection'] = bool(self.item.memberships_as_collection.filter(trashed=False, item=self.cur_agent))
+        self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(trashed=False, item=self.cur_agent))
         self.context['addmember_form'] = NewMembershipForm()
         template = loader.get_template('collection/show.html')
         return HttpResponse(template.render(self.context))

@@ -662,25 +662,23 @@ class Collection(Item):
         return Item.objects.filter(pk__in=recursive_memberships.values('child').query)
 
     def after_trash(self, agent):
-        """
-        Update the RecursiveMembership to indicate this Collection is gone.
-        """
         super(Collection, self).after_trash(agent)
+        # Update the RecursiveMembership to indicate this Collection is gone
         RecursiveMembership.recursive_remove_collection(self)
     after_trash.alters_data = True
 
     def after_untrash(self, agent):
-        """
-        Update the RecursiveMembership to indicate this Collection is back.
-        """
         super(Collection, self).after_untrash(agent)
+        # Update the RecursiveMembership to indicate this Collection exists
         RecursiveMembership.recursive_add_collection(self)
     after_untrash.alters_data = True
 
 
 class Group(Collection):
     """
-    TODO: write comment describing this item type
+    A group is a collection of Agents.
+    
+    A group has a folio that is used for collaboration among members.
     """
 
     # Setup
@@ -695,6 +693,7 @@ class Group(Collection):
 
     def after_create(self):
         super(Group, self).after_create()
+        # Create a folio for this group
         folio = Folio(group=self)
         folio.save_versioned(updater=self.updater)
     after_create.alters_data = True
@@ -702,7 +701,7 @@ class Group(Collection):
 
 class Folio(Collection):
     """
-    TODO: write comment describing this item type
+    A folio is a special collection that belongs to a group.
     """
 
     # Setup
@@ -714,12 +713,12 @@ class Folio(Collection):
         verbose_name_plural = _('folios')
 
     # Fields
-    group = models.ForeignKey(Group, related_name='folios_as_group', unique=True, editable=False)
+    group = models.ForeignKey(Group, related_name='folios', unique=True, editable=False, verbose_name=_('group'))
 
 
 class Membership(Item):
     """
-    TODO: write comment describing this item type
+    A Membership is a relationship between a collection and one of its items.
     """
 
     # Setup
@@ -732,28 +731,34 @@ class Membership(Item):
         unique_together = (('item', 'collection'),)
 
     # Fields
-    item = models.ForeignKey(Item, related_name='memberships_as_item')
-    collection = models.ForeignKey(Collection, related_name='memberships_as_collection')
+    item       = models.ForeignKey(Item, related_name='memberships', verbose_name=_('item'))
+    collection = models.ForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'))
 
     # Methods
 
     def after_create(self):
         super(Membership, self).after_create()
+        # Update the RecursiveMembership to indicate this Membership exists
         RecursiveMembership.recursive_add_membership(self)
+        # Create an AddMemberComment to indicate a member was added to the collection
         add_member_comment = AddMemberComment(commented_item=self.collection, commented_item_version_number=self.collection.version_number, membership=self)
         add_member_comment.save_versioned(updater=self.creator)
     after_create.alters_data = True
 
     def after_trash(self, agent):
         super(Membership, self).after_trash(agent)
+        # Update the RecursiveMembership to indicate this Membership is gone
         RecursiveMembership.recursive_remove_edge(self.collection, self.item)
+        # Create a RemoveMemberComment to indicate a member was removed from the collection
         remove_member_comment = RemoveMemberComment(commented_item=self.collection, commented_item_version_number=self.collection.version_number, membership=self)
         remove_member_comment.save_versioned(updater=agent)
     after_trash.alters_data = True
 
     def after_untrash(self, agent):
         super(Membership, self).after_untrash(agent)
+        # Update the RecursiveMembership to indicate this Membership exists
         RecursiveMembership.recursive_add_membership(self)
+        # Create an AddMemberComment to indicate a member was added to the collection
         add_member_comment = AddMemberComment(commented_item=self.collection, commented_item_version_number=self.collection.version_number, membership=self)
         add_member_comment.save_versioned(updater=agent)
     after_untrash.alters_data = True
