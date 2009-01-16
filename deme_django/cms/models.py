@@ -108,6 +108,11 @@ class Item(models.Model):
     """
     Superclass of all item types.
     
+    Since everything is an item, this item type provides a unique id across
+    all items. This item type also defines some important common structure to
+    all items, such as name, description, and details about its creation and
+    last update.
+    
     Every subclass should define the following attributes:
     - immutable_fields: a frozenset of strings representing the names of
       fields which may not be modified after creation (this differs from
@@ -376,13 +381,17 @@ class DemeSetting(Item):
         verbose_name_plural = _('Deme settings')
 
     # Fields
-    key = models.CharField(max_length=255, unique=True)
-    value = models.CharField(max_length=255, blank=True)
+    key   = models.CharField(_('key'), max_length=255, unique=True)
+    value = models.CharField(_('value'), max_length=255, blank=True)
 
     # Methods
 
     @classmethod
     def get(cls, key):
+        """
+        Return the value of the DemeSetting with the specified key, or None if
+        it is trashed or no such DemeSetting exists.
+        """
         try:
             setting = cls.objects.get(key=key)
             if setting.trashed:
@@ -393,6 +402,12 @@ class DemeSetting(Item):
 
     @classmethod
     def set(cls, key, value, agent):
+        """
+        Set the DemeSetting with the specified key to the specified value,
+        such that the agent is the creator/updater. This may result in
+        creating a new DemeSetting, updating an existing DemeSetting, or
+        untrashing a trashed DemeSetting.
+        """
         try:
             setting = cls.objects.get(key=key)
         except ObjectDoesNotExist:
@@ -406,24 +421,42 @@ class DemeSetting(Item):
 
 class Agent(Item):
     """
-    TODO: write comment describing this item type
+    This item type represents an agent that can "do" things. Often this will
+    be a person (see the Person subclass), but actions can also be performed by
+    other agents, such as bots and anonymous agents.
+    
+    Agents are unique in the following ways:
+    - Agents can be assigned permissions
+    - Agents show up in the creator and updater fields of other items
+    - Agents can authenticate with Deme using AuthenticationMethods
+    - Agents can be contacted via their ContactMethods
+    - Agents can subscribe to other items with Subscriptions
     """
 
     # Setup
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities | set(['add_contact_method', 'add_subscription', 'add_authentication_method', 'login_as', 'view last_online_at'])
+    relevant_abilities = Item.relevant_abilities | set(['add_contact_method', 'add_subscription',
+                                                        'add_authentication_method', 'login_as', 'view last_online_at'])
     relevant_global_abilities = frozenset(['create Agent'])
     class Meta:
         verbose_name = _('agent')
         verbose_name_plural = _('agents')
 
     # Fields
-    last_online_at = models.DateTimeField(null=True, blank=True, editable=False)
+    last_online_at = models.DateTimeField(_('last online at'), null=True, blank=True, editable=False)
 
 
 class AnonymousAgent(Agent):
     """
-    TODO: write comment describing this item type
+    This item type is the agent that users of Deme authenticate as by default.
+    
+    Because every action must be associated with a responsible Agent (e.g.,
+    updating an item), we require that users are authenticated as some Agent
+    at all times. So if a user never bothers logging in at the website, they
+    will automatically be logged in as an AnonymousAgent, even if the website
+    says "not logged in".
+    
+    There should be exactly one AnonymousAgent at all times.
     """
 
     # Setup
@@ -437,7 +470,16 @@ class AnonymousAgent(Agent):
 
 class AuthenticationMethod(Item):
     """
-    TODO: write comment describing this item type
+    This item type represents an Agent's credentials to login.
+    
+    For example, there might be a AuthenticationMethod representing my Facebook
+    account, a AuthenticationMethod representing my WebAuth account, and a
+    AuthenticationMethod representing my OpenID account. Rather than storing
+    the login credentials directly in a particular Agent, we allow agents to
+    have multiple authentication methods, so that they can login different
+    ways. In theory, AuthenticationMethods can also be used to sync profile
+    information through APIs. There are subclasses of AuthenticationMethod for
+    each different way of authenticating.
     """
 
     # Setup
@@ -449,12 +491,17 @@ class AuthenticationMethod(Item):
         verbose_name_plural = _('authentication methods')
 
     # Fields
-    agent = models.ForeignKey(Agent, related_name='authenticationmethods_as_agent')
+    agent = models.ForeignKey(Agent, related_name='authentication_methods', verbose_name=_('agent'))
 
 
 class PasswordAuthenticationMethod(AuthenticationMethod):
     """
-    TODO: write comment describing this item type
+    This is an AuthenticationMethod that allows a user to log on with a
+    username and a password.
+    
+    The username must be unique across the entire Deme installation. The
+    password field is formatted the same as in the User model of the Django
+    admin app (algo$salt$hash), and is thus not stored in plain text.
     """
 
     # Setup
@@ -466,14 +513,18 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
         verbose_name_plural = _('password authentication methods')
 
     # Fields
-    username = models.CharField(max_length=255, unique=True)
-    password = models.CharField(max_length=128)
-    password_question = models.CharField(max_length=255, blank=True)
-    password_answer = models.CharField(max_length=255, blank=True)
+    username          = models.CharField(_('username'), max_length=255, unique=True)
+    password          = models.CharField(_('password'), max_length=128)
+    password_question = models.CharField(_('password question'), max_length=255, blank=True)
+    password_answer   = models.CharField(_('password answer'), max_length=255, blank=True)
 
     # Methods
 
     def set_password(self, raw_password):
+        """
+        Set the password field by generating a salt and hashing the raw
+        password. This method does not make any database writes.
+        """
         algo = 'sha1'
         salt = PasswordAuthenticationMethod.get_random_hash()[:5]
         hsh = PasswordAuthenticationMethod.get_hexdigest(algo, salt, raw_password)
@@ -481,15 +532,35 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
     set_password.alters_data = True
 
     def check_password(self, raw_password):
+        """
+        Returns a boolean of whether the raw_password was correct. Handles
+        encryption formats behind the scenes.
+        """
         algo, salt, hsh = self.password.split('$')
         return hsh == PasswordAuthenticationMethod.get_hexdigest(algo, salt, raw_password)
 
     def check_nonced_password(self, hashed_password, nonce):
+        """
+        Return True if the specified nonced password matches the password field.
+        
+        This method is here to allow a browser to login over an insecure
+        connection. The browser is given the algorithm, the salt, and a random
+        nonce, and is supposed to generate the following string, which this
+        method generates and compares against:
+        - sha1(nonce, algo(salt, raw_password))
+        """
         algo, salt, hsh = self.password.split('$')
         return PasswordAuthenticationMethod.get_hexdigest('sha1', nonce, hsh) == hashed_password
 
     @classmethod
     def mysql_pre41_password(cls, raw_password):
+        """
+        Encrypt a password using the same algorithm MySQL used for PASSWORD()
+        prior to 4.1.
+        
+        This method is here to support migrations of account/password data
+        from websites that encrypted passwords this way.
+        """
         # ported to python from http://packages.debian.org/lenny/libcrypt-mysql-perl
         nr = 1345345333L
         add = 7
@@ -507,6 +578,10 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
 
     @classmethod
     def get_hexdigest(cls, algorithm, salt, raw_password):
+        """
+        Return a string of the hexdigest of the given plaintext password and salt
+        using the given algorithm ('sha1' or 'mysql_pre41_password').
+        """
         from django.utils.encoding import smart_str
         raw_password, salt = smart_str(raw_password), smart_str(salt)
         if algorithm == 'sha1':
@@ -517,6 +592,7 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
 
     @classmethod
     def get_random_hash(cls):
+        """Return a random 40-digit hexadecimal string. """
         return PasswordAuthenticationMethod.get_hexdigest('sha1', str(random.random()), str(random.random()))
 
 

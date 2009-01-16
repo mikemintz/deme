@@ -39,7 +39,7 @@ Code correctness/consistency/bugs
   - Don't put creator_roles on things that just require do_everything
   - Figure out better scheme for default created roles
 * figure out import deal on deme_django.cms and just cms
-* start using verbose_name to have nice displays of item type names
+* start using verbose_name to have nice displays of item type and field names (and keep it consistent when item_type is a string or a class)
 * The "crumbs" at the top of pages like TextAdvertisements and TextComments are wrong, since they have multiple inheritance
 * Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
   - http://code.djangoproject.com/ticket/2227
