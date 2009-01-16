@@ -88,6 +88,7 @@ class ItemVersion(models.Model):
     updated_at = models.DateTimeField()
 
     # Methods
+
     def __unicode__(self):
         return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.name)
 
@@ -141,6 +142,7 @@ class Item(models.Model):
     trashed        = models.BooleanField(_('trashed'), default=False, editable=False, db_index=True)
 
     # Methods
+
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.name)
 
@@ -356,11 +358,29 @@ class Item(models.Model):
 ###############################################################################
 
 class DemeSetting(Item):
+    """
+    This item type stores global settings for the Deme installation.
+    
+    Each DemeSetting has a unique key and an arbitrary value. Since values are
+    strings of limited size, settings that involve a lot of text (e.g., a
+    default layout) should have a value pointing to an item that contains the
+    data (e.g., the id of a document).
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields | set(['key'])
     relevant_abilities = Item.relevant_abilities | set(['view key', 'view value', 'edit value'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('deme setting')
+        verbose_name_plural = _('deme settings')
+
+    # Fields
     key = models.CharField(max_length=255, unique=True)
     value = models.CharField(max_length=255, blank=True)
+
+    # Methods
+
     @classmethod
     def get(cls, key):
         try:
@@ -370,6 +390,7 @@ class DemeSetting(Item):
             return setting.value
         except ObjectDoesNotExist:
             return None
+
     @classmethod
     def set(cls, key, value, agent):
         try:
@@ -384,22 +405,50 @@ class DemeSetting(Item):
 
 
 class Agent(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities | set(['add_contact_method', 'add_subscription', 'add_authentication_method', 'login_as', 'view last_online_at'])
     relevant_global_abilities = frozenset(['create Agent'])
+    class Meta:
+        verbose_name = _('agent')
+        verbose_name_plural = _('agents')
+
+    # Fields
     last_online_at = models.DateTimeField(null=True, blank=True, editable=False)
 
 
 class AnonymousAgent(Agent):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Agent.immutable_fields
     relevant_abilities = Agent.relevant_abilities
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('anonymous agent')
+        verbose_name_plural = _('anonymous agents')
 
 
 class AuthenticationMethod(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields | set(['agent'])
     relevant_abilities = Item.relevant_abilities | set(['view agent'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('authentication method')
+        verbose_name_plural = _('authentication methods')
+
+    # Fields
     agent = models.ForeignKey(Agent, related_name='authenticationmethods_as_agent')
 
 
@@ -442,13 +491,25 @@ def get_random_hash():
     return get_hexdigest('sha1', str(random.random()), str(random.random()))
 
 class PasswordAuthenticationMethod(AuthenticationMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = AuthenticationMethod.immutable_fields
     relevant_abilities = AuthenticationMethod.relevant_abilities | set(['view username', 'view password', 'view password_question', 'view password_answer', 'edit username', 'edit password', 'edit password_question', 'edit password_answer'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('password authentication method')
+        verbose_name_plural = _('password authentication methods')
+
+    # Fields
     username = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=128)
     password_question = models.CharField(max_length=255, blank=True)
     password_answer = models.CharField(max_length=255, blank=True)
+
+    # Methods
 
     def set_password(self, raw_password):
         algo = 'sha1'
@@ -466,9 +527,19 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
         return get_hexdigest('sha1', nonce, hsh) == hashed_password
 
 class Person(Agent):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Agent.immutable_fields
     relevant_abilities = Agent.relevant_abilities | set(['view first_name', 'view middle_names', 'view last_name', 'view suffix', 'edit first_name', 'edit middle_names', 'edit last_name', 'edit suffix'])
     relevant_global_abilities = frozenset(['create Person'])
+    class Meta:
+        verbose_name = _('person')
+        verbose_name_plural = _('people')
+
+    # Fields
     first_name = models.CharField(max_length=255)
     middle_names = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255)
@@ -476,18 +547,31 @@ class Person(Agent):
 
 
 class Collection(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities | set(['modify_membership', 'add_self', 'remove_self'])
     relevant_global_abilities = frozenset(['create Collection'])
+    class Meta:
+        verbose_name = _('collection')
+        verbose_name_plural = _('collections')
+
+    # Methods
+
     def all_contained_collection_members(self, recursive_filter=None):
         recursive_memberships = RecursiveMembership.objects.filter(parent=self)
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         return Item.objects.filter(trashed=False, pk__in=recursive_memberships.values('child').query)
+
     def after_trash(self, agent):
         super(Collection, self).after_trash(agent)
         RecursiveMembership.recursive_remove_collection(self)
     after_trash.alters_data = True
+
     def after_untrash(self, agent):
         super(Collection, self).after_untrash(agent)
         RecursiveMembership.recursive_add_collection(self)
@@ -495,9 +579,20 @@ class Collection(Item):
 
 
 class Group(Collection):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Collection.immutable_fields
     relevant_abilities = Collection.relevant_abilities
     relevant_global_abilities = frozenset(['create Group'])
+    class Meta:
+        verbose_name = _('group')
+        verbose_name_plural = _('groups')
+
+    # Methods
+
     def after_create(self):
         super(Group, self).after_create()
         folio = Folio(group=self)
@@ -506,32 +601,56 @@ class Group(Collection):
 
 
 class Folio(Collection):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Collection.immutable_fields | set(['group'])
     relevant_abilities = Collection.relevant_abilities | set(['view group'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('folio')
+        verbose_name_plural = _('folios')
+
+    # Fields
     group = models.ForeignKey(Group, related_name='folios_as_group', unique=True, editable=False)
 
 
 class Membership(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields | set(['item', 'collection'])
     relevant_abilities = (Item.relevant_abilities | set(['view item', 'view collection'])) - set(['trash'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('membership')
+        verbose_name_plural = _('memberships')
+        unique_together = (('item', 'collection'),)
+
+    # Fields
     item = models.ForeignKey(Item, related_name='memberships_as_item')
     collection = models.ForeignKey(Collection, related_name='memberships_as_collection')
-    class Meta:
-        unique_together = (('item', 'collection'),)
+
+    # Methods
+
     def after_create(self):
         super(Membership, self).after_create()
         RecursiveMembership.recursive_add_membership(self)
         add_member_comment = AddMemberComment(commented_item=self.collection, commented_item_version_number=self.collection.version_number, membership=self)
         add_member_comment.save_versioned(updater=self.creator)
     after_create.alters_data = True
+
     def after_trash(self, agent):
         super(Membership, self).after_trash(agent)
         RecursiveMembership.recursive_remove_edge(self.collection, self.item)
         remove_member_comment = RemoveMemberComment(commented_item=self.collection, commented_item_version_number=self.collection.version_number, membership=self)
         remove_member_comment.save_versioned(updater=agent)
     after_trash.alters_data = True
+
     def after_untrash(self, agent):
         super(Membership, self).after_untrash(agent)
         RecursiveMembership.recursive_add_membership(self)
@@ -541,22 +660,50 @@ class Membership(Item):
 
 
 class Document(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('document')
+        verbose_name_plural = _('documents')
 
 
 class TextDocument(Document):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Document.immutable_fields
     relevant_abilities = Document.relevant_abilities | set(['view body', 'edit body', 'add_transclusion'])
     relevant_global_abilities = frozenset(['create TextDocument'])
+    class Meta:
+        verbose_name = _('text document')
+        verbose_name_plural = _('text documents')
+
+    # Fields
     body = models.TextField(blank=True)
 
 
 class Transclusion(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields | set(['from_item', 'from_item_version_number', 'to_item'])
     relevant_abilities = Item.relevant_abilities | set(['view from_item', 'view from_item_version_number', 'view from_item_index', 'view to_item', 'edit from_item_index'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('transclusion')
+        verbose_name_plural = _('transclusions')
+
+    # Fields
     from_item = models.ForeignKey(TextDocument, related_name='transclusions_from_self')
     from_item_version_number = models.PositiveIntegerField()
     from_item_index = models.PositiveIntegerField()
@@ -564,43 +711,94 @@ class Transclusion(Item):
 
 
 class DjangoTemplateDocument(TextDocument):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = TextDocument.immutable_fields
     relevant_abilities = TextDocument.relevant_abilities | set(['view layout', 'view override_default_layout', 'edit layout', 'edit override_default_layout'])
     relevant_global_abilities = frozenset(['create DjangoTemplateDocument'])
+    class Meta:
+        verbose_name = _('django template document')
+        verbose_name_plural = _('django template documents')
+
+    # Fields
     layout = models.ForeignKey('DjangoTemplateDocument', related_name='djangotemplatedocuments_as_layout', null=True, blank=True)
     override_default_layout = models.BooleanField(default=False)
 
 
 class HtmlDocument(TextDocument):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = TextDocument.immutable_fields
     relevant_abilities = TextDocument.relevant_abilities
     relevant_global_abilities = frozenset(['create HtmlDocument'])
+    class Meta:
+        verbose_name = _('html document')
+        verbose_name_plural = _('html documents')
 
 
 class FileDocument(Document):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Document.immutable_fields
     relevant_abilities = Document.relevant_abilities | set(['view datafile', 'edit datafile'])
     relevant_global_abilities = frozenset(['create FileDocument'])
+    class Meta:
+        verbose_name = _('file document')
+        verbose_name_plural = _('file documents')
+
+    # Fields
     datafile = models.FileField(upload_to='filedocument/%Y/%m/%d', max_length=255)
 
 
 class ImageDocument(FileDocument):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = FileDocument.immutable_fields
     relevant_abilities = FileDocument.relevant_abilities
     relevant_global_abilities = frozenset(['create ImageDocument'])
+    class Meta:
+        verbose_name = _('image document')
+        verbose_name_plural = _('image documents')
 
 
 class Comment(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields | set(['commented_item'])
     relevant_abilities = Item.relevant_abilities | set(['view commented_item', 'view commented_item_version_number'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('comment')
+        verbose_name_plural = _('comments')
+
+    # Fields
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
     commented_item_version_number = models.PositiveIntegerField()
+
+    # Methods
+
     def topmost_commented_item(self):
         comment_class_names = [model.__name__ for model in all_models() if issubclass(model, Comment)]
         return Item.objects.filter(pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query).exclude(item_type__in=comment_class_names).get()
+
     def all_commented_items(self):
         return Item.objects.filter(pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query)
+
     def all_commented_items_and_collections(self, recursive_filter=None):
         parent_item_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
         parent_items = Q(pk__in=parent_item_pks_query)
@@ -611,6 +809,7 @@ class Comment(Item):
         parent_item_collections = Q(pk__in=recursive_memberships.values('parent').query)
 
         return Item.objects.filter(parent_items | parent_item_collections, trashed=False)
+
     def after_create(self):
         super(Comment, self).after_create()
 
@@ -641,6 +840,7 @@ class Comment(Item):
             smtp_connection = SMTPConnection()
             smtp_connection.send_messages(messages)
     after_create.alters_data = True
+
     def notification_email(self, email_contact_method):
         agent = email_contact_method.agent
         import permissions
@@ -723,53 +923,123 @@ class Comment(Item):
 
 
 class TextComment(TextDocument, Comment):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = TextDocument.immutable_fields | Comment.immutable_fields
     relevant_abilities = TextDocument.relevant_abilities | Comment.relevant_abilities
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('text comment')
+        verbose_name_plural = _('text comments')
 
 
 class EditComment(Comment):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Comment.immutable_fields
     relevant_abilities = Comment.relevant_abilities
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('edit comment')
+        verbose_name_plural = _('edit comments')
 
 
 class TrashComment(Comment):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Comment.immutable_fields
     relevant_abilities = Comment.relevant_abilities
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('trash comment')
+        verbose_name_plural = _('trash comments')
 
 
 class UntrashComment(Comment):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Comment.immutable_fields
     relevant_abilities = Comment.relevant_abilities
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('untrash comment')
+        verbose_name_plural = _('untrash comments')
 
 
 class AddMemberComment(Comment):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Comment.immutable_fields | set(['membership'])
     relevant_abilities = Comment.relevant_abilities | set(['view membership'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('add member comment')
+        verbose_name_plural = _('add member comments')
+
+    # Fields
     membership = models.ForeignKey(Membership, related_name="add_member_comments_as_membership")
 
 
 class RemoveMemberComment(Comment):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Comment.immutable_fields | set(['membership'])
     relevant_abilities = Comment.relevant_abilities | set(['view membership'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('remove member comment')
+        verbose_name_plural = _('remove member comments')
+
+    # Fields
     membership = models.ForeignKey(Membership, related_name="remove_member_comments_as_membership")
 
 
 class Excerpt(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('excerpt')
+        verbose_name_plural = _('excerpts')
 
 
 class TextDocumentExcerpt(Excerpt, TextDocument):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Excerpt.immutable_fields | TextDocument.immutable_fields | set(['text_document','text_document_version_number', 'start_index', 'length', 'body'])
     relevant_abilities = (Excerpt.relevant_abilities | TextDocument.relevant_abilities | set(['view text_document', 'view text_document_version_number', 'view start_index', 'view length'])) - set(['edit body'])
     relevant_global_abilities = frozenset(['create TextDocumentExcerpt'])
+    class Meta:
+        verbose_name = _('text document excerpt')
+        verbose_name_plural = _('text document excerpts')
+
+    # Fields
     text_document = models.ForeignKey(TextDocument, related_name='text_document_excerpts_as_text_document')
     text_document_version_number = models.PositiveIntegerField()
     start_index = models.PositiveIntegerField()
@@ -777,51 +1047,121 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
 
 
 class ContactMethod(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields | set(['agent'])
     relevant_abilities = Item.relevant_abilities | set(['view agent'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('contact method')
+        verbose_name_plural = _('contact methods')
+
+    # Fields
     agent = models.ForeignKey(Agent, related_name='contactmethods_as_agent')
 
 
 class EmailContactMethod(ContactMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view email', 'edit email'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('email contact method')
+        verbose_name_plural = _('email contact methods')
+
+    # Fields
     email = models.EmailField(max_length=320)
 
 
 class PhoneContactMethod(ContactMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view phone', 'edit phone'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('phone contact method')
+        verbose_name_plural = _('phone contact methods')
+
+    # Fields
     phone = models.CharField(max_length=20)
 
 
 class FaxContactMethod(ContactMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view fax', 'edit fax'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('fax contact method')
+        verbose_name_plural = _('fax contact methods')
+
+    # Fields
     fax = models.CharField(max_length=20)
 
 
 class WebsiteContactMethod(ContactMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view url', 'edit url'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('website contact method')
+        verbose_name_plural = _('website contact methods')
+
+    # Fields
     url = models.CharField(max_length=255)
 
 
 class AIMContactMethod(ContactMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view screen_name', 'edit screen_name'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('aim contact method')
+        verbose_name_plural = _('aim contact methods')
+
+    # Fields
     screen_name = models.CharField(max_length=255)
 
 
 class AddressContactMethod(ContactMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = ContactMethod.immutable_fields
     relevant_abilities = ContactMethod.relevant_abilities | set(['view street1', 'view street2', 'view city', 'view state', 'view country', 'view zip', 'edit street1', 'edit street2', 'edit city', 'edit state', 'edit country', 'edit zip'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('address contact method')
+        verbose_name_plural = _('address contact methods')
+
+    # Fields
     street1 = models.CharField(max_length=255, blank=True)
     street2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=255, blank=True)
@@ -831,16 +1171,25 @@ class AddressContactMethod(ContactMethod):
 
 
 class Subscription(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields | set(['contact_method', 'item'])
     relevant_abilities = Item.relevant_abilities | set(['view contact_method', 'view item', 'view deep', 'view notify_text', 'view notify_edit', 'edit deep', 'edit notify_text', 'edit notify_edit'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('subscription')
+        verbose_name_plural = _('subscriptions')
+        unique_together = (('contact_method', 'item'),)
+
+    # Fields
     contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions_as_contact_method')
     item = models.ForeignKey(Item, related_name='subscriptions_as_item')
     deep = models.BooleanField(default=False)
     notify_text = models.BooleanField(default=True)
     notify_edit = models.BooleanField(default=False)
-    class Meta:
-        unique_together = (('contact_method', 'item'),)
 
 
 ###############################################################################
@@ -849,14 +1198,27 @@ class Subscription(Item):
 
 
 class ViewerRequest(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities | set(['add_sub_path', 'view aliased_item', 'view viewer', 'view action', 'view query_string', 'view format', 'edit aliased_item', 'edit viewer', 'edit action', 'edit query_string', 'edit format'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('viewer request')
+        verbose_name_plural = _('viewer requests')
+
+    # Fields
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
     viewer = models.CharField(max_length=255)
     action = models.CharField(max_length=255)
     query_string = models.CharField(max_length=1024, null=True, blank=True)
     format = models.CharField(max_length=255, default='html')
+
+    # Methods
+
     def calculate_full_path(self):
         """Return a tuple (site, custom_urls) where custom_urls is a list."""
         req = self.downcast()
@@ -868,30 +1230,58 @@ class ViewerRequest(Item):
 
 
 class Site(ViewerRequest):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = ViewerRequest.immutable_fields
     relevant_abilities = ViewerRequest.relevant_abilities | set(['view default_layout', 'edit default_layout'])
     relevant_global_abilities = frozenset(['create Site'])
+    class Meta:
+        verbose_name = _('site')
+        verbose_name_plural = _('sites')
+
+    # Fields
     default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_as_default_layout', null=True, blank=True)
 
 
 class SiteDomain(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields | set(['hostname', 'site'])
     relevant_abilities = Item.relevant_abilities | set(['view hostname', 'view site'])
     relevant_global_abilities = frozenset(['create SiteDomain'])
+    class Meta:
+        verbose_name = _('site domain')
+        verbose_name_plural = _('site domains')
+        unique_together = (('site', 'hostname'),)
+
+    # Fields
     hostname = models.CharField(max_length=255)
     site = models.ForeignKey(Site, related_name='site_domains_as_site')
-    class Meta:
-        unique_together = (('site', 'hostname'),)
 
 
 class CustomUrl(ViewerRequest):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = ViewerRequest.immutable_fields | set(['parent_url', 'path'])
     relevant_abilities = ViewerRequest.relevant_abilities | set(['view parent_url', 'view path'])
     relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('custom url')
+        verbose_name_plural = _('custom urls')
+        unique_together = (('parent_url', 'path'),)
+
+    # Fields
     parent_url = models.ForeignKey(ViewerRequest, related_name='child_urls')
     path = models.CharField(max_length=255)
-    class Meta:
-        unique_together = (('parent_url', 'path'),)
 
 
 ###############################################################################
@@ -923,37 +1313,71 @@ POSSIBLE_GLOBAL_ABILITIES = POSSIBLE_GLOBAL_ABILITIES_ITER()
 
 
 class GlobalRole(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
     relevant_global_abilities = frozenset(['create GlobalRole'])
+    class Meta:
+        verbose_name = _('global role')
+        verbose_name_plural = _('global roles')
 
 
 class Role(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields
     relevant_abilities = Item.relevant_abilities
     relevant_global_abilities = frozenset(['create Role'])
+    class Meta:
+        verbose_name = _('role')
+        verbose_name_plural = _('roles')
 
 
 class GlobalRoleAbility(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields | set(['global_role', 'ability'])
     relevant_abilities = Item.relevant_abilities | set(['view global_role', 'view ability', 'view is_allowed', 'edit is_allowed'])
     relevant_global_abilities = frozenset(['create GlobalRoleAbility'])
+    class Meta:
+        verbose_name = _('global role ability')
+        verbose_name_plural = _('global role abilities')
+        unique_together = (('global_role', 'ability'),)
+
+    # Fields
     global_role = models.ForeignKey(GlobalRole, related_name='abilities_as_global_role')
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
-    class Meta:
-        unique_together = (('global_role', 'ability'),)
 
 
 class RoleAbility(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
     immutable_fields = Item.immutable_fields | set(['role', 'ability'])
     relevant_abilities = Item.relevant_abilities | set(['view role', 'view ability', 'view is_allowed', 'edit is_allowed'])
     relevant_global_abilities = frozenset(['create RoleAbility'])
+    class Meta:
+        verbose_name = _('role ability')
+        verbose_name_plural = _('role abilities')
+        unique_together = (('role', 'ability'),)
+
+    # Fields
     role = models.ForeignKey(Role, related_name='abilities_as_role')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
-    class Meta:
-        unique_together = (('role', 'ability'),)
 
 
 class Permission(models.Model):
