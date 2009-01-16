@@ -355,63 +355,8 @@ class Item(models.Model):
 
 
 ###############################################################################
-# Various item types
+# Agents and related item types
 ###############################################################################
-
-class DemeSetting(Item):
-    """
-    This item type stores global settings for the Deme installation.
-    
-    Each DemeSetting has a unique key and an arbitrary value. Since values are
-    strings of limited size, settings that involve a lot of text (e.g., a
-    default layout) should have a value pointing to an item that contains the
-    data (e.g., the id of a document).
-    """
-
-    # Setup
-    immutable_fields = Item.immutable_fields | set(['key'])
-    relevant_abilities = Item.relevant_abilities | set(['view key', 'view value', 'edit value'])
-    relevant_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('Deme setting')
-        verbose_name_plural = _('Deme settings')
-
-    # Fields
-    key   = models.CharField(_('key'), max_length=255, unique=True)
-    value = models.CharField(_('value'), max_length=255, blank=True)
-
-    @classmethod
-    def get(cls, key):
-        """
-        Return the value of the DemeSetting with the specified key, or None if
-        it is trashed or no such DemeSetting exists.
-        """
-        try:
-            setting = cls.objects.get(key=key)
-            if setting.trashed:
-                return None
-            return setting.value
-        except ObjectDoesNotExist:
-            return None
-
-    @classmethod
-    def set(cls, key, value, agent):
-        """
-        Set the DemeSetting with the specified key to the specified value,
-        such that the agent is the creator/updater. This may result in
-        creating a new DemeSetting, updating an existing DemeSetting, or
-        untrashing a trashed DemeSetting.
-        """
-        try:
-            setting = cls.objects.get(key=key)
-        except ObjectDoesNotExist:
-            setting = cls(name=key, key=key)
-        if setting.value != value:
-            setting.value = value
-            setting.save_versioned(updater=agent)
-        if setting.trashed:
-            setting.untrash(agent)
-
 
 class Agent(Item):
     """
@@ -609,6 +554,156 @@ class Person(Agent):
     suffix       = models.CharField(_('suffix'), max_length=255, blank=True)
 
 
+class ContactMethod(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
+    immutable_fields = Item.immutable_fields | set(['agent'])
+    relevant_abilities = Item.relevant_abilities | set(['view agent'])
+    relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('contact method')
+        verbose_name_plural = _('contact methods')
+
+    # Fields
+    agent = models.ForeignKey(Agent, related_name='contactmethods_as_agent')
+
+
+class EmailContactMethod(ContactMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
+    immutable_fields = ContactMethod.immutable_fields
+    relevant_abilities = ContactMethod.relevant_abilities | set(['view email', 'edit email'])
+    relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('email contact method')
+        verbose_name_plural = _('email contact methods')
+
+    # Fields
+    email = models.EmailField(max_length=320)
+
+
+class PhoneContactMethod(ContactMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
+    immutable_fields = ContactMethod.immutable_fields
+    relevant_abilities = ContactMethod.relevant_abilities | set(['view phone', 'edit phone'])
+    relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('phone contact method')
+        verbose_name_plural = _('phone contact methods')
+
+    # Fields
+    phone = models.CharField(max_length=20)
+
+
+class FaxContactMethod(ContactMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
+    immutable_fields = ContactMethod.immutable_fields
+    relevant_abilities = ContactMethod.relevant_abilities | set(['view fax', 'edit fax'])
+    relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('fax contact method')
+        verbose_name_plural = _('fax contact methods')
+
+    # Fields
+    fax = models.CharField(max_length=20)
+
+
+class WebsiteContactMethod(ContactMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
+    immutable_fields = ContactMethod.immutable_fields
+    relevant_abilities = ContactMethod.relevant_abilities | set(['view url', 'edit url'])
+    relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('website contact method')
+        verbose_name_plural = _('website contact methods')
+
+    # Fields
+    url = models.CharField(max_length=255)
+
+
+class AIMContactMethod(ContactMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
+    immutable_fields = ContactMethod.immutable_fields
+    relevant_abilities = ContactMethod.relevant_abilities | set(['view screen_name', 'edit screen_name'])
+    relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('AIM contact method')
+        verbose_name_plural = _('AIM contact methods')
+
+    # Fields
+    screen_name = models.CharField(max_length=255)
+
+
+class AddressContactMethod(ContactMethod):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
+    immutable_fields = ContactMethod.immutable_fields
+    relevant_abilities = ContactMethod.relevant_abilities | set(['view street1', 'view street2', 'view city', 'view state', 'view country', 'view zip', 'edit street1', 'edit street2', 'edit city', 'edit state', 'edit country', 'edit zip'])
+    relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('address contact method')
+        verbose_name_plural = _('address contact methods')
+
+    # Fields
+    street1 = models.CharField(max_length=255, blank=True)
+    street2 = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=255, blank=True)
+    state = models.CharField(max_length=255, blank=True)
+    country = models.CharField(max_length=255, blank=True)
+    zip = models.CharField(max_length=20, blank=True)
+
+
+class Subscription(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
+    immutable_fields = Item.immutable_fields | set(['contact_method', 'item'])
+    relevant_abilities = Item.relevant_abilities | set(['view contact_method', 'view item', 'view deep', 'view notify_text', 'view notify_edit', 'edit deep', 'edit notify_text', 'edit notify_edit'])
+    relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('subscription')
+        verbose_name_plural = _('subscriptions')
+        unique_together = (('contact_method', 'item'),)
+
+    # Fields
+    contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions_as_contact_method')
+    item = models.ForeignKey(Item, related_name='subscriptions_as_item')
+    deep = models.BooleanField(default=False)
+    notify_text = models.BooleanField(default=True)
+    notify_edit = models.BooleanField(default=False)
+
+
+###############################################################################
+# Collections and related item types
+###############################################################################
+
 class Collection(Item):
     """
     A Collection is an Item that represents an unordered set of other items.
@@ -750,6 +845,10 @@ class Membership(Item):
     after_untrash.alters_data = True
 
 
+###############################################################################
+# Documents
+###############################################################################
+
 class Document(Item):
     """
     A Document is an Item that is meant can be a unit of collaborative work.
@@ -782,26 +881,6 @@ class TextDocument(Document):
 
     # Fields
     body = models.TextField(_('body'), blank=True)
-
-
-class Transclusion(Item):
-    """
-    TODO: write comment describing this item type
-    """
-
-    # Setup
-    immutable_fields = Item.immutable_fields | set(['from_item', 'from_item_version_number', 'to_item'])
-    relevant_abilities = Item.relevant_abilities | set(['view from_item', 'view from_item_version_number', 'view from_item_index', 'view to_item', 'edit from_item_index'])
-    relevant_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('transclusion')
-        verbose_name_plural = _('transclusions')
-
-    # Fields
-    from_item = models.ForeignKey(TextDocument, related_name='transclusions_from_self')
-    from_item_version_number = models.PositiveIntegerField()
-    from_item_index = models.PositiveIntegerField()
-    to_item = models.ForeignKey(Item, related_name='transclusions_to_self')
 
 
 class DjangoTemplateDocument(TextDocument):
@@ -865,6 +944,30 @@ class ImageDocument(FileDocument):
     class Meta:
         verbose_name = _('image document')
         verbose_name_plural = _('image documents')
+
+
+###############################################################################
+# Annotations (Transclusions, Comments, and Excerpts)
+###############################################################################
+
+class Transclusion(Item):
+    """
+    TODO: write comment describing this item type
+    """
+
+    # Setup
+    immutable_fields = Item.immutable_fields | set(['from_item', 'from_item_version_number', 'to_item'])
+    relevant_abilities = Item.relevant_abilities | set(['view from_item', 'view from_item_version_number', 'view from_item_index', 'view to_item', 'edit from_item_index'])
+    relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('transclusion')
+        verbose_name_plural = _('transclusions')
+
+    # Fields
+    from_item = models.ForeignKey(TextDocument, related_name='transclusions_from_self')
+    from_item_version_number = models.PositiveIntegerField()
+    from_item_index = models.PositiveIntegerField()
+    to_item = models.ForeignKey(Item, related_name='transclusions_to_self')
 
 
 class Comment(Item):
@@ -1138,152 +1241,6 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
     length = models.PositiveIntegerField()
 
 
-class ContactMethod(Item):
-    """
-    TODO: write comment describing this item type
-    """
-
-    # Setup
-    immutable_fields = Item.immutable_fields | set(['agent'])
-    relevant_abilities = Item.relevant_abilities | set(['view agent'])
-    relevant_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('contact method')
-        verbose_name_plural = _('contact methods')
-
-    # Fields
-    agent = models.ForeignKey(Agent, related_name='contactmethods_as_agent')
-
-
-class EmailContactMethod(ContactMethod):
-    """
-    TODO: write comment describing this item type
-    """
-
-    # Setup
-    immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view email', 'edit email'])
-    relevant_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('email contact method')
-        verbose_name_plural = _('email contact methods')
-
-    # Fields
-    email = models.EmailField(max_length=320)
-
-
-class PhoneContactMethod(ContactMethod):
-    """
-    TODO: write comment describing this item type
-    """
-
-    # Setup
-    immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view phone', 'edit phone'])
-    relevant_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('phone contact method')
-        verbose_name_plural = _('phone contact methods')
-
-    # Fields
-    phone = models.CharField(max_length=20)
-
-
-class FaxContactMethod(ContactMethod):
-    """
-    TODO: write comment describing this item type
-    """
-
-    # Setup
-    immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view fax', 'edit fax'])
-    relevant_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('fax contact method')
-        verbose_name_plural = _('fax contact methods')
-
-    # Fields
-    fax = models.CharField(max_length=20)
-
-
-class WebsiteContactMethod(ContactMethod):
-    """
-    TODO: write comment describing this item type
-    """
-
-    # Setup
-    immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view url', 'edit url'])
-    relevant_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('website contact method')
-        verbose_name_plural = _('website contact methods')
-
-    # Fields
-    url = models.CharField(max_length=255)
-
-
-class AIMContactMethod(ContactMethod):
-    """
-    TODO: write comment describing this item type
-    """
-
-    # Setup
-    immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view screen_name', 'edit screen_name'])
-    relevant_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('AIM contact method')
-        verbose_name_plural = _('AIM contact methods')
-
-    # Fields
-    screen_name = models.CharField(max_length=255)
-
-
-class AddressContactMethod(ContactMethod):
-    """
-    TODO: write comment describing this item type
-    """
-
-    # Setup
-    immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view street1', 'view street2', 'view city', 'view state', 'view country', 'view zip', 'edit street1', 'edit street2', 'edit city', 'edit state', 'edit country', 'edit zip'])
-    relevant_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('address contact method')
-        verbose_name_plural = _('address contact methods')
-
-    # Fields
-    street1 = models.CharField(max_length=255, blank=True)
-    street2 = models.CharField(max_length=255, blank=True)
-    city = models.CharField(max_length=255, blank=True)
-    state = models.CharField(max_length=255, blank=True)
-    country = models.CharField(max_length=255, blank=True)
-    zip = models.CharField(max_length=20, blank=True)
-
-
-class Subscription(Item):
-    """
-    TODO: write comment describing this item type
-    """
-
-    # Setup
-    immutable_fields = Item.immutable_fields | set(['contact_method', 'item'])
-    relevant_abilities = Item.relevant_abilities | set(['view contact_method', 'view item', 'view deep', 'view notify_text', 'view notify_edit', 'edit deep', 'edit notify_text', 'edit notify_edit'])
-    relevant_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('subscription')
-        verbose_name_plural = _('subscriptions')
-        unique_together = (('contact_method', 'item'),)
-
-    # Fields
-    contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions_as_contact_method')
-    item = models.ForeignKey(Item, related_name='subscriptions_as_item')
-    deep = models.BooleanField(default=False)
-    notify_text = models.BooleanField(default=True)
-    notify_edit = models.BooleanField(default=False)
-
-
 ###############################################################################
 # Viewer aliases
 ###############################################################################
@@ -1372,6 +1329,65 @@ class CustomUrl(ViewerRequest):
     # Fields
     parent_url = models.ForeignKey(ViewerRequest, related_name='child_urls')
     path = models.CharField(max_length=255)
+
+
+###############################################################################
+# Misc item types
+###############################################################################
+
+class DemeSetting(Item):
+    """
+    This item type stores global settings for the Deme installation.
+    
+    Each DemeSetting has a unique key and an arbitrary value. Since values are
+    strings of limited size, settings that involve a lot of text (e.g., a
+    default layout) should have a value pointing to an item that contains the
+    data (e.g., the id of a document).
+    """
+
+    # Setup
+    immutable_fields = Item.immutable_fields | set(['key'])
+    relevant_abilities = Item.relevant_abilities | set(['view key', 'view value', 'edit value'])
+    relevant_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('Deme setting')
+        verbose_name_plural = _('Deme settings')
+
+    # Fields
+    key   = models.CharField(_('key'), max_length=255, unique=True)
+    value = models.CharField(_('value'), max_length=255, blank=True)
+
+    @classmethod
+    def get(cls, key):
+        """
+        Return the value of the DemeSetting with the specified key, or None if
+        it is trashed or no such DemeSetting exists.
+        """
+        try:
+            setting = cls.objects.get(key=key)
+            if setting.trashed:
+                return None
+            return setting.value
+        except ObjectDoesNotExist:
+            return None
+
+    @classmethod
+    def set(cls, key, value, agent):
+        """
+        Set the DemeSetting with the specified key to the specified value,
+        such that the agent is the creator/updater. This may result in
+        creating a new DemeSetting, updating an existing DemeSetting, or
+        untrashing a trashed DemeSetting.
+        """
+        try:
+            setting = cls.objects.get(key=key)
+        except ObjectDoesNotExist:
+            setting = cls(name=key, key=key)
+        if setting.value != value:
+            setting.value = value
+            setting.save_versioned(updater=agent)
+        if setting.trashed:
+            setting.untrash(agent)
 
 
 ###############################################################################
