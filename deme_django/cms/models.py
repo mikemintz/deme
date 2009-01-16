@@ -11,7 +11,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'Collection', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'Transclusion', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'CollectionGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'CollectionGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'CollectionPermission', 'DefaultPermission', 'AgentRolePermission', 'CollectionRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_model_with_name', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
+__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentGlobalRolePermission', 'AgentPermission', 'AgentRolePermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionGlobalRolePermission', 'CollectionPermission', 'CollectionRolePermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DefaultGlobalPermission', 'DefaultGlobalRolePermission', 'DefaultPermission', 'DefaultRolePermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'GlobalRole', 'GlobalRoleAbility', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'Permission', 'Person', 'PhoneContactMethod', 'RecursiveCommentMembership', 'RecursiveMembership', 'RemoveMemberComment', 'Role', 'RoleAbility', 'Site', 'SiteDomain', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_models', 'get_model_with_name']
 
 ###############################################################################
 # Item framework
@@ -556,7 +556,9 @@ class Person(Agent):
 
 class ContactMethod(Item):
     """
-    TODO: write comment describing this item type
+    A ContactMethod belongs to an Agent and contains details on how to contact
+    them. Like Document, ContactMethod is meant to be abstract, so users should
+    always create subclasses rather than creating raw ContactMethods.
     """
 
     # Setup
@@ -568,12 +570,12 @@ class ContactMethod(Item):
         verbose_name_plural = _('contact methods')
 
     # Fields
-    agent = models.ForeignKey(Agent, related_name='contactmethods_as_agent')
+    agent = models.ForeignKey(Agent, related_name='contact_methods', verbose_name=_('agent'))
 
 
 class EmailContactMethod(ContactMethod):
     """
-    TODO: write comment describing this item type
+    An EmailContactMethod is a ContactMethod that specifies an email address.
     """
 
     # Setup
@@ -585,12 +587,12 @@ class EmailContactMethod(ContactMethod):
         verbose_name_plural = _('email contact methods')
 
     # Fields
-    email = models.EmailField(max_length=320)
+    email = models.EmailField(_('email address'), max_length=320)
 
 
 class PhoneContactMethod(ContactMethod):
     """
-    TODO: write comment describing this item type
+    A PhoneContactMethod is a ContactMethod that specifies a phone number.
     """
 
     # Setup
@@ -602,12 +604,12 @@ class PhoneContactMethod(ContactMethod):
         verbose_name_plural = _('phone contact methods')
 
     # Fields
-    phone = models.CharField(max_length=20)
+    phone = models.CharField(_('phone number'), max_length=20)
 
 
 class FaxContactMethod(ContactMethod):
     """
-    TODO: write comment describing this item type
+    A FaxContactMethod is a ContactMethod that specifies a fax number.
     """
 
     # Setup
@@ -619,12 +621,12 @@ class FaxContactMethod(ContactMethod):
         verbose_name_plural = _('fax contact methods')
 
     # Fields
-    fax = models.CharField(max_length=20)
+    fax = models.CharField(_('fax number'), max_length=20)
 
 
 class WebsiteContactMethod(ContactMethod):
     """
-    TODO: write comment describing this item type
+    A WebsiteContactMethod is a ContactMethod that specifies a website URL.
     """
 
     # Setup
@@ -636,12 +638,12 @@ class WebsiteContactMethod(ContactMethod):
         verbose_name_plural = _('website contact methods')
 
     # Fields
-    url = models.CharField(max_length=255)
+    url = models.CharField(_('website URL'), max_length=255)
 
 
 class AIMContactMethod(ContactMethod):
     """
-    TODO: write comment describing this item type
+    An AIMContactMethod is a ContactMethod that specifies an AIM screen name.
     """
 
     # Setup
@@ -653,34 +655,48 @@ class AIMContactMethod(ContactMethod):
         verbose_name_plural = _('AIM contact methods')
 
     # Fields
-    screen_name = models.CharField(max_length=255)
+    screen_name = models.CharField(_('AIM screen name'), max_length=255)
 
 
 class AddressContactMethod(ContactMethod):
     """
-    TODO: write comment describing this item type
+    An AddressContactMethod is a ContactMethod that specifies a physical
+    address (or mailing address).
     """
 
     # Setup
     immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view street1', 'view street2', 'view city', 'view state', 'view country', 'view zip', 'edit street1', 'edit street2', 'edit city', 'edit state', 'edit country', 'edit zip'])
+    relevant_abilities = ContactMethod.relevant_abilities | set(['view street1', 'view street2', 'view city', 'view state',
+                                                                 'view country', 'view zip', 'edit street1', 'edit street2',
+                                                                 'edit city', 'edit state', 'edit country', 'edit zip'])
     relevant_global_abilities = frozenset()
     class Meta:
         verbose_name = _('address contact method')
         verbose_name_plural = _('address contact methods')
 
     # Fields
-    street1 = models.CharField(max_length=255, blank=True)
-    street2 = models.CharField(max_length=255, blank=True)
-    city = models.CharField(max_length=255, blank=True)
-    state = models.CharField(max_length=255, blank=True)
-    country = models.CharField(max_length=255, blank=True)
-    zip = models.CharField(max_length=20, blank=True)
+    street1 = models.CharField(_('street 1'), max_length=255, blank=True)
+    street2 = models.CharField(_('street 2'), max_length=255, blank=True)
+    city    = models.CharField(_('city'), max_length=255, blank=True)
+    state   = models.CharField(_('state'), max_length=255, blank=True)
+    country = models.CharField(_('country'), max_length=255, blank=True)
+    zip     = models.CharField(_('zip code'), max_length=20, blank=True)
 
 
 class Subscription(Item):
     """
-    TODO: write comment describing this item type
+    A Subscription is a relationship between an Item and a ContactMethod,
+    indicating that all comments on the item should be sent to the contact
+    method as notifications.
+    
+    If deep=True and the item is a Collection, then comments on all items in
+    the collection (direct or indirect) will be sent in addition to comments on
+    the collection itself.
+    
+    If notify_text=True, TextComments will be included.
+
+    If notify_edit=True, EditComments, TrashComments, UntrashComments,
+    AddMemberComments, and RemoveMemberComments will be included.
     """
 
     # Setup
@@ -693,11 +709,11 @@ class Subscription(Item):
         unique_together = (('contact_method', 'item'),)
 
     # Fields
-    contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions_as_contact_method')
-    item = models.ForeignKey(Item, related_name='subscriptions_as_item')
-    deep = models.BooleanField(default=False)
-    notify_text = models.BooleanField(default=True)
-    notify_edit = models.BooleanField(default=False)
+    contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'))
+    item           = models.ForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'))
+    deep           = models.BooleanField('deep subscription', default=False)
+    notify_text    = models.BooleanField('notify about text comments', default=True)
+    notify_edit    = models.BooleanField('notify about edits', default=False)
 
 
 ###############################################################################
@@ -885,25 +901,29 @@ class TextDocument(Document):
 
 class DjangoTemplateDocument(TextDocument):
     """
-    TODO: write comment describing this item type
+    This item type is a TextDocument that stores Django template code. It can
+    display a fully customized page on Deme. This is primarily useful for
+    customizing the layout of some or all pages, but it can also be used to
+    make pages that can display content not possible in other Documents.
     """
 
     # Setup
     immutable_fields = TextDocument.immutable_fields
-    relevant_abilities = TextDocument.relevant_abilities | set(['view layout', 'view override_default_layout', 'edit layout', 'edit override_default_layout'])
+    relevant_abilities = TextDocument.relevant_abilities | set(['view layout', 'view override_default_layout',
+                                                                'edit layout', 'edit override_default_layout'])
     relevant_global_abilities = frozenset(['create DjangoTemplateDocument'])
     class Meta:
         verbose_name = _('Django template document')
         verbose_name_plural = _('Django template documents')
 
     # Fields
-    layout = models.ForeignKey('DjangoTemplateDocument', related_name='djangotemplatedocuments_as_layout', null=True, blank=True)
-    override_default_layout = models.BooleanField(default=False)
+    layout = models.ForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, verbose_name=_('layout'))
+    override_default_layout = models.BooleanField(_('override default layout'), default=False)
 
 
 class HtmlDocument(TextDocument):
     """
-    TODO: write comment describing this item type
+    An HtmlDocument is a TextDocument that renders its body as HTML.
     """
 
     # Setup
@@ -917,7 +937,13 @@ class HtmlDocument(TextDocument):
 
 class FileDocument(Document):
     """
-    TODO: write comment describing this item type
+    A FileDocument is a Document that stores a file on the filesystem (could be
+    an MP3 or a Microsoft Word Document). It is intended for all binary data,
+    which does not belong in a TextDocument (even though it is technically
+    possible).
+    
+    Subclasses of FileDocument may be able to understand various
+    file formats and add metadata and extra functionality.
     """
 
     # Setup
@@ -929,12 +955,16 @@ class FileDocument(Document):
         verbose_name_plural = _('file documents')
 
     # Fields
-    datafile = models.FileField(upload_to='filedocument/%Y/%m/%d', max_length=255)
+    datafile = models.FileField(_('data file'), upload_to='filedocument/%Y/%m/%d', max_length=255)
 
 
 class ImageDocument(FileDocument):
     """
-    TODO: write comment describing this item type
+    An ImageDocument is a FileDocument that stores an image.
+    
+    Right now, the only difference is that viewers know the file can be
+    displayed as an image. In the future, this may add metadata like EXIF data
+    and thumbnails.
     """
 
     # Setup
