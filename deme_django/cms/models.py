@@ -1063,6 +1063,27 @@ class Comment(Item):
 
         return Item.objects.filter(thread_parent_filter | collection_filter)
 
+    def subscription_filter_for_comment_type(self):
+        """
+        Return a filter (Q node) for Subscriptions that are supposed to be
+        notified about this comment type. Only the item type is considered
+        (e.g., whether it's a TextComment or and EditComment).
+        """
+        if isinstance(self, TextComment):
+            return Q(notify_text=True)
+        elif isinstance(self, EditComment):
+            return Q(notify_edit=True)
+        elif isinstance(self, TrashComment):
+            return Q(notify_edit=True)
+        elif isinstance(self, UntrashComment):
+            return Q(notify_edit=True)
+        elif isinstance(self, AddMemberComment):
+            return Q(notify_edit=True)
+        elif isinstance(self, RemoveMemberComment):
+            return Q(notify_edit=True)
+        else:
+            return Q(pk__isnull=False)
+
     def notification_email(self, email_contact_method):
         """
         Return an EmailMessage with the notification that should be sent to the
@@ -1073,20 +1094,7 @@ class Comment(Item):
         can_do_everything = 'do_everything' in permissions.calculate_global_abilities_for_agent(agent)
 
         # First, decide if we're allowed to get this notification at all
-        if isinstance(self, TextComment):
-            comment_type_q = Q(notify_text=True)
-        elif isinstance(self, EditComment):
-            comment_type_q = Q(notify_edit=True)
-        elif isinstance(self, TrashComment):
-            comment_type_q = Q(notify_edit=True)
-        elif isinstance(self, UntrashComment):
-            comment_type_q = Q(notify_edit=True)
-        elif isinstance(self, AddMemberComment):
-            comment_type_q = Q(notify_edit=True)
-        elif isinstance(self, RemoveMemberComment):
-            comment_type_q = Q(notify_edit=True)
-        else:
-            comment_type_q = Q(pk__isnull=False)
+        comment_type_q = self.subscription_filter_for_comment_type()
         direct_subscriptions = Subscription.objects.filter(item__trashed=False, item__in=self.all_parents_in_thread().values('pk').query, trashed=False).filter(comment_type_q)
         if not direct_subscriptions:
             if can_do_everything:
@@ -1154,20 +1162,7 @@ class Comment(Item):
         RecursiveCommentMembership.recursive_add_comment(self)
 
         # Email everyone subscribed to items this comment is relevant for
-        if isinstance(self, TextComment):
-            comment_type_q = Q(notify_text=True)
-        elif isinstance(self, EditComment):
-            comment_type_q = Q(notify_edit=True)
-        elif isinstance(self, TrashComment):
-            comment_type_q = Q(notify_edit=True)
-        elif isinstance(self, UntrashComment):
-            comment_type_q = Q(notify_edit=True)
-        elif isinstance(self, AddMemberComment):
-            comment_type_q = Q(notify_edit=True)
-        elif isinstance(self, RemoveMemberComment):
-            comment_type_q = Q(notify_edit=True)
-        else:
-            comment_type_q = Q(pk__isnull=False)
+        comment_type_q = self.subscription_filter_for_comment_type()
         direct_subscriptions = Subscription.objects.filter(comment_type_q,
                                                            item__trashed=False,
                                                            item__in=self.all_parents_in_thread().values('pk').query,

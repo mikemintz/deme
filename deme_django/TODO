@@ -30,6 +30,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Code cleanup: finish looking at Comment.notification_email, then do the rest of the item types in cms/models.py with TODO comment, then do non-models in models.py, then do remaining files
 * Consider adding ManyToManyFields with "through"
 * Discuss with Todd whether we should make most text fields rich text, or just htmldocument.body
 * consider making permissions have one column per ability. now that we store all possible abilities, it's easier to migrate.
