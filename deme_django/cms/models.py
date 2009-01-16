@@ -650,7 +650,7 @@ class Collection(Item):
         recursive_memberships = RecursiveMembership.objects.filter(parent=self)
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
-        return Item.objects.filter(trashed=False, pk__in=recursive_memberships.values('child').query)
+        return Item.objects.filter(pk__in=recursive_memberships.values('child').query)
 
     def after_trash(self, agent):
         super(Collection, self).after_trash(agent)
