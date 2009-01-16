@@ -1028,31 +1028,49 @@ class Comment(Item):
     item_version_number = models.PositiveIntegerField(_('item version number'))
 
     def original_item(self):
+        """
+        Return the original item that was commented on in this thread.
+        
+        For example, if this is a reply to a reply to a comment on X, this
+        method will return X. This method uses the RecursiveCommentMembership
+        table.
+        """
         parent_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
         comment_pks_query = Comment.objects.all().values('pk').query
         return Item.objects.exclude(pk__in=comment_pks_query).get(pk__in=parent_pks_query)
 
-    def all_parents_in_thread(self):
-        return Item.objects.filter(pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query)
+    def all_parents_in_thread(self, include_parent_collections=False, recursive_filter=None):
+        """
+        Return a QuerySet of all direct and indirect parents in this thread.
+        
+        If include_parent_collections=True, also include all Collections
+        containing self or parents in this thread, either through direct or
+        indirect membership. If a recursive_filter is specified, use it to
+        filter which RecursiveMemberships can be used to infer an item's
+        membership in this collection. Often, one will use a permission filter
+        so that only those RecursiveMemberships that the Agent is allowed to
+        view will be used.
+        """
+        thread_parent_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
+        thread_parent_filter = Q(pk__in=thread_parent_pks_query)
+        if not include_parent_collections:
+            return Item.objects.filter(thread_parent_filter)
 
-    def all_parents_in_thread_and_collections(self, recursive_filter=None):
-        parent_item_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
-        parent_items = Q(pk__in=parent_item_pks_query)
-
-        recursive_memberships = RecursiveMembership.objects.filter(child__in=parent_item_pks_query)
+        recursive_memberships = RecursiveMembership.objects.filter(child__in=thread_parent_pks_query)
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
-        parent_item_collections = Q(pk__in=recursive_memberships.values('parent').query)
+        collection_filter = Q(pk__in=recursive_memberships.values('parent').query)
 
-        return Item.objects.filter(parent_items | parent_item_collections, trashed=False)
+        #TODO does trashed=False really belong here? if so, document it. otherwise, take it out.
+        return Item.objects.filter(thread_parent_filter | collection_filter, trashed=False)
 
     def after_create(self):
         super(Comment, self).after_create()
 
-        # Update RecursiveCommentMembership
+        # Update the RecursiveCommentMembership to indicate this Comment exists
         RecursiveCommentMembership.recursive_add_comment(self)
 
-        # email everyone subscribed to items this comment is relevant for
+        # Email everyone subscribed to items this comment is relevant for
         if isinstance(self, TextComment):
             comment_type_q = Q(notify_text=True)
         elif isinstance(self, EditComment):
@@ -1068,7 +1086,7 @@ class Comment(Item):
         else:
             comment_type_q = Q(pk__isnull=False)
         direct_subscriptions = Subscription.objects.filter(item__in=self.all_parents_in_thread().values('pk').query, trashed=False).filter(comment_type_q)
-        deep_subscriptions = Subscription.objects.filter(item__in=self.all_parents_in_thread_and_collections().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
+        deep_subscriptions = Subscription.objects.filter(item__in=self.all_parents_in_thread(include_parent_collections=True).values('pk').query, deep=True, trashed=False).filter(comment_type_q)
         subscribed_email_contact_methods = EmailContactMethod.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('contact_method').query) | Q(pk__in=deep_subscriptions.values('contact_method').query))
         messages = [self.notification_email(email_contact_method) for email_contact_method in subscribed_email_contact_methods]
         messages = [x for x in messages if x is not None]
@@ -1104,7 +1122,7 @@ class Comment(Item):
             else:
                 visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(agent, 'view collection'), permissions.filter_items_by_permission(agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
-            possible_parents = self.all_parents_in_thread_and_collections(recursive_filter)
+            possible_parents = self.all_parents_in_thread(include_parent_collections=True, recursive_filter=recursive_filter)
             deep_subscriptions = Subscription.objects.filter(item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
             if not deep_subscriptions:
                 return None
