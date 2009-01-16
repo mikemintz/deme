@@ -752,7 +752,10 @@ class Membership(Item):
 
 class Document(Item):
     """
-    TODO: write comment describing this item type
+    A Document is an Item that is meant can be a unit of collaborative work.
+    
+    Document is meant to be abstract, so users should always create subclasses
+    rather than creating raw Documents.
     """
 
     # Setup
@@ -766,7 +769,7 @@ class Document(Item):
 
 class TextDocument(Document):
     """
-    TODO: write comment describing this item type
+    A TextDocument is a Document that has a body that stores arbitrary text.
     """
 
     # Setup
@@ -778,7 +781,7 @@ class TextDocument(Document):
         verbose_name_plural = _('text documents')
 
     # Fields
-    body = models.TextField(blank=True)
+    body = models.TextField(_('body'), blank=True)
 
 
 class Transclusion(Item):
