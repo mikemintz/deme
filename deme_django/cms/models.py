@@ -372,8 +372,8 @@ class DemeSetting(Item):
     relevant_abilities = Item.relevant_abilities | set(['view key', 'view value', 'edit value'])
     relevant_global_abilities = frozenset()
     class Meta:
-        verbose_name = _('deme setting')
-        verbose_name_plural = _('deme settings')
+        verbose_name = _('Deme setting')
+        verbose_name_plural = _('Deme settings')
 
     # Fields
     key = models.CharField(max_length=255, unique=True)
@@ -724,8 +724,8 @@ class DjangoTemplateDocument(TextDocument):
     relevant_abilities = TextDocument.relevant_abilities | set(['view layout', 'view override_default_layout', 'edit layout', 'edit override_default_layout'])
     relevant_global_abilities = frozenset(['create DjangoTemplateDocument'])
     class Meta:
-        verbose_name = _('django template document')
-        verbose_name_plural = _('django template documents')
+        verbose_name = _('Django template document')
+        verbose_name_plural = _('Django template documents')
 
     # Fields
     layout = models.ForeignKey('DjangoTemplateDocument', related_name='djangotemplatedocuments_as_layout', null=True, blank=True)
@@ -742,8 +742,8 @@ class HtmlDocument(TextDocument):
     relevant_abilities = TextDocument.relevant_abilities
     relevant_global_abilities = frozenset(['create HtmlDocument'])
     class Meta:
-        verbose_name = _('html document')
-        verbose_name_plural = _('html documents')
+        verbose_name = _('HTML document')
+        verbose_name_plural = _('HTML documents')
 
 
 class FileDocument(Document):
@@ -1145,8 +1145,8 @@ class AIMContactMethod(ContactMethod):
     relevant_abilities = ContactMethod.relevant_abilities | set(['view screen_name', 'edit screen_name'])
     relevant_global_abilities = frozenset()
     class Meta:
-        verbose_name = _('aim contact method')
-        verbose_name_plural = _('aim contact methods')
+        verbose_name = _('AIM contact method')
+        verbose_name_plural = _('AIM contact methods')
 
     # Fields
     screen_name = models.CharField(max_length=255)
@@ -1279,8 +1279,8 @@ class CustomUrl(ViewerRequest):
     relevant_abilities = ViewerRequest.relevant_abilities | set(['view parent_url', 'view path'])
     relevant_global_abilities = frozenset()
     class Meta:
-        verbose_name = _('custom url')
-        verbose_name_plural = _('custom urls')
+        verbose_name = _('custom URL')
+        verbose_name_plural = _('custom URLs')
         unique_together = (('parent_url', 'path'),)
 
     # Fields
