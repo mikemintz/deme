@@ -308,7 +308,7 @@ class Item(models.Model):
 
         # Create an EditComment if we're making an edit
         if not is_new and not overwrite_latest_version:
-            edit_comment = EditComment(commented_item=self, commented_item_version_number=self.version_number)
+            edit_comment = EditComment(item=self, item_version_number=self.version_number)
             edit_comment.save_versioned(updater=updater)
 
         if is_new:
@@ -336,7 +336,7 @@ class Item(models.Model):
         like super(Membership, self).after_trash()
         """
         # Create a TrashComment
-        trash_comment = TrashComment(commented_item=self, commented_item_version_number=self.version_number)
+        trash_comment = TrashComment(item=self, item_version_number=self.version_number)
         trash_comment.save_versioned(updater=agent)
     after_trash.alters_data = True
 
@@ -349,7 +349,7 @@ class Item(models.Model):
         like super(Membership, self).after_untrash()
         """
         # Create an UntrashComment
-        untrash_comment = UntrashComment(commented_item=self, commented_item_version_number=self.version_number)
+        untrash_comment = UntrashComment(item=self, item_version_number=self.version_number)
         untrash_comment.save_versioned(updater=agent)
     after_untrash.alters_data = True
 
@@ -838,7 +838,7 @@ class Membership(Item):
         # Update the RecursiveMembership to indicate this Membership exists
         RecursiveMembership.recursive_add_membership(self)
         # Create an AddMemberComment to indicate a member was added to the collection
-        add_member_comment = AddMemberComment(commented_item=self.collection, commented_item_version_number=self.collection.version_number, membership=self)
+        add_member_comment = AddMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
         add_member_comment.save_versioned(updater=self.creator)
     after_create.alters_data = True
 
@@ -847,7 +847,7 @@ class Membership(Item):
         # Update the RecursiveMembership to indicate this Membership is gone
         RecursiveMembership.recursive_remove_edge(self.collection, self.item)
         # Create a RemoveMemberComment to indicate a member was removed from the collection
-        remove_member_comment = RemoveMemberComment(commented_item=self.collection, commented_item_version_number=self.collection.version_number, membership=self)
+        remove_member_comment = RemoveMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
         remove_member_comment.save_versioned(updater=agent)
     after_trash.alters_data = True
 
@@ -856,7 +856,7 @@ class Membership(Item):
         # Update the RecursiveMembership to indicate this Membership exists
         RecursiveMembership.recursive_add_membership(self)
         # Create an AddMemberComment to indicate a member was added to the collection
-        add_member_comment = AddMemberComment(commented_item=self.collection, commented_item_version_number=self.collection.version_number, membership=self)
+        add_member_comment = AddMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
         add_member_comment.save_versioned(updater=agent)
     after_untrash.alters_data = True
 
@@ -1016,26 +1016,26 @@ class Comment(Item):
     """
 
     # Setup
-    immutable_fields = Item.immutable_fields | set(['commented_item'])
-    relevant_abilities = Item.relevant_abilities | set(['view commented_item', 'view commented_item_version_number'])
+    immutable_fields = Item.immutable_fields | set(['item'])
+    relevant_abilities = Item.relevant_abilities | set(['view item', 'view item_version_number'])
     relevant_global_abilities = frozenset()
     class Meta:
         verbose_name = _('comment')
         verbose_name_plural = _('comments')
 
     # Fields
-    commented_item                = models.ForeignKey(Item, related_name='comments', verbose_name=_('commented_item'))
-    commented_item_version_number = models.PositiveIntegerField(_('commented_item_version_number'))
+    item                = models.ForeignKey(Item, related_name='comments', verbose_name=_('item'))
+    item_version_number = models.PositiveIntegerField(_('item version number'))
 
-    def topmost_commented_item(self):
+    def original_item(self):
         parent_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
         comment_pks_query = Comment.objects.all().values('pk').query
         return Item.objects.exclude(pk__in=comment_pks_query).get(pk__in=parent_pks_query)
 
-    def all_commented_items(self):
+    def all_parents_in_thread(self):
         return Item.objects.filter(pk__in=RecursiveCommentMembership.objects.filter(child=self).values('parent').query)
 
-    def all_commented_items_and_collections(self, recursive_filter=None):
+    def all_parents_in_thread_and_collections(self, recursive_filter=None):
         parent_item_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
         parent_items = Q(pk__in=parent_item_pks_query)
 
@@ -1067,8 +1067,8 @@ class Comment(Item):
             comment_type_q = Q(notify_edit=True)
         else:
             comment_type_q = Q(pk__isnull=False)
-        direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
-        deep_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items_and_collections().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
+        direct_subscriptions = Subscription.objects.filter(item__in=self.all_parents_in_thread().values('pk').query, trashed=False).filter(comment_type_q)
+        deep_subscriptions = Subscription.objects.filter(item__in=self.all_parents_in_thread_and_collections().values('pk').query, deep=True, trashed=False).filter(comment_type_q)
         subscribed_email_contact_methods = EmailContactMethod.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('contact_method').query) | Q(pk__in=deep_subscriptions.values('contact_method').query))
         messages = [self.notification_email(email_contact_method) for email_contact_method in subscribed_email_contact_methods]
         messages = [x for x in messages if x is not None]
@@ -1097,31 +1097,31 @@ class Comment(Item):
             comment_type_q = Q(notify_edit=True)
         else:
             comment_type_q = Q(pk__isnull=False)
-        direct_subscriptions = Subscription.objects.filter(item__in=self.all_commented_items().values('pk').query, trashed=False).filter(comment_type_q)
+        direct_subscriptions = Subscription.objects.filter(item__in=self.all_parents_in_thread().values('pk').query, trashed=False).filter(comment_type_q)
         if not direct_subscriptions:
             if can_do_everything:
                 recursive_filter = None
             else:
                 visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(agent, 'view collection'), permissions.filter_items_by_permission(agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
-            possible_parents = self.all_commented_items_and_collections(recursive_filter)
+            possible_parents = self.all_parents_in_thread_and_collections(recursive_filter)
             deep_subscriptions = Subscription.objects.filter(item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
             if not deep_subscriptions:
                 return None
 
         # Now get the fields we are allowed to view
-        commented_item = self.commented_item
-        topmost_item = self.topmost_commented_item()
-        commented_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': commented_item.item_type.lower(), 'noun': commented_item.pk}))
+        item = self.item
+        topmost_item = self.original_item()
+        item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}))
         topmost_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': topmost_item.item_type.lower(), 'noun': topmost_item.pk}))
         abilities_for_comment = permissions.calculate_abilities_for_agent_and_item(agent, self)
-        abilities_for_commented_item = permissions.calculate_abilities_for_agent_and_item(agent, commented_item)
+        abilities_for_item = permissions.calculate_abilities_for_agent_and_item(agent, item)
         abilities_for_topmost_item = permissions.calculate_abilities_for_agent_and_item(agent, topmost_item)
         abilities_for_comment_creator = permissions.calculate_abilities_for_agent_and_item(agent, self.creator)
         comment_name = self.name if can_do_everything or 'view name' in abilities_for_comment else 'PERMISSION DENIED'
         if isinstance(self, TextComment):
             comment_body = self.body if can_do_everything or 'view body' in abilities_for_comment else 'PERMISSION DENIED'
-        commented_item_name = commented_item.name if can_do_everything or 'view name' in abilities_for_commented_item else 'PERMISSION DENIED'
+        item_name = item.name if can_do_everything or 'view name' in abilities_for_item else 'PERMISSION DENIED'
         topmost_item_name = topmost_item.name if can_do_everything or 'view name' in abilities_for_topmost_item else 'PERMISSION DENIED'
         creator_name = self.creator.name if can_do_everything or 'view name' in abilities_for_comment_creator else 'PERMISSION DENIED'
 
@@ -1130,20 +1130,20 @@ class Comment(Item):
             subject = 'Re: [%s] %s' % (comment_name, topmost_item_name)
             body = '%s commented on %s\n%s\n\n%s' % (creator_name, topmost_item_name, topmost_item_url, comment_body)
         elif isinstance(self, EditComment):
-            subject = 'Re: [Edited] %s' % (commented_item_name,)
-            body = '%s edited %s\n%s' % (creator_name, commented_item_name, commented_item_url)
+            subject = 'Re: [Edited] %s' % (item_name,)
+            body = '%s edited %s\n%s' % (creator_name, item_name, item_url)
         elif isinstance(self, TrashComment):
-            subject = 'Re: [Trashed] %s' % (commented_item_name,)
-            body = '%s trashed %s\n%s' % (creator_name, commented_item_name, commented_item_url)
+            subject = 'Re: [Trashed] %s' % (item_name,)
+            body = '%s trashed %s\n%s' % (creator_name, item_name, item_url)
         elif isinstance(self, UntrashComment):
-            subject = 'Re: [Untrashed] %s' % (commented_item_name,)
-            body = '%s untrashed %s\n%s' % (creator_name, commented_item_name, commented_item_url)
+            subject = 'Re: [Untrashed] %s' % (item_name,)
+            body = '%s untrashed %s\n%s' % (creator_name, item_name, item_url)
         elif isinstance(self, AddMemberComment):
-            subject = 'Re: [Member Added] %s' % (commented_item_name,)
-            body = '%s added a member to %s\n%s' % (creator_name, commented_item_name, commented_item_url)
+            subject = 'Re: [Member Added] %s' % (item_name,)
+            body = '%s added a member to %s\n%s' % (creator_name, item_name, item_url)
         elif isinstance(self, RemoveMemberComment):
-            subject = 'Re: [Member Removed] %s' % (commented_item_name,)
-            body = '%s removed a member from %s\n%s' % (creator_name, commented_item_name, commented_item_url)
+            subject = 'Re: [Member Removed] %s' % (item_name,)
+            body = '%s removed a member from %s\n%s' % (creator_name, item_name, item_url)
         else:
             return None
         from_email_address = '%s@%s' % (self.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
@@ -1153,8 +1153,8 @@ class Comment(Item):
         headers['Reply-To'] = reply_to
         messageid = lambda x: '<%s-%s@%s>' % (x.pk, x.created_at.strftime("%Y%m%d%H%M%S"), settings.NOTIFICATION_EMAIL_HOSTNAME)
         headers['Message-ID'] = messageid(self)
-        headers['In-Reply-To'] = messageid(self.commented_item)
-        headers['References'] = '%s %s' % (messageid(topmost_item), messageid(self.commented_item))
+        headers['In-Reply-To'] = messageid(self.item)
+        headers['References'] = '%s %s' % (messageid(topmost_item), messageid(self.item))
         return EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((agent.name, email_contact_method.email))], headers=headers)
 
 
@@ -1640,7 +1640,7 @@ class RecursiveCommentMembership(models.Model):
         unique_together = (('parent', 'child'),)
     @classmethod
     def recursive_add_comment(cls, comment):
-        parent = comment.commented_item
+        parent = comment.item
         ancestors = Item.objects.filter(Q(pk__in=RecursiveCommentMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
         for ancestor in ancestors:
             recursive_comment_membership = RecursiveCommentMembership(parent=ancestor, child=comment)

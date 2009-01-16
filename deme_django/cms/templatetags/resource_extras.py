@@ -260,7 +260,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
             new_comments = comment_subclass.objects.filter(pk__in=comment_pks)
             related_fields = ['creator']
             if include_recursive_collection_comments:
-                related_fields.extend(['commented_item'])
+                related_fields.extend(['item'])
             if new_comments:
                 if comment_subclass in [AddMemberComment, RemoveMemberComment]:
                     permission_cache.mass_learn(context['cur_agent'], 'view membership', new_comments)
@@ -277,7 +277,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
     result = []
     for comment in comments:
         child = pk_to_comment_info[comment.pk]
-        parent = pk_to_comment_info.get(comment.commented_item_id)
+        parent = pk_to_comment_info.get(comment.item_id)
         if parent:
             parent['subcomments'].append(child)
         else:
@@ -504,14 +504,14 @@ class CommentBox(template.Node):
         result.append("""<div class="comment_box">""")
         result.append("""<div class="comment_box_header">""")
         if agentcan_helper(context, 'comment_on', item):
-            result.append("""<a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Add Comment</a>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'action': 'new'}), item.pk, version_number, urlquote(full_path)))
+            result.append("""<a href="%s?item=%s&item_version_number=%s&redirect=%s">[+] Add Comment</a>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'action': 'new'}), item.pk, version_number, urlquote(full_path)))
         result.append("""</div>""")
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
-                result.append("""<div style="float: right;"><a href="%s?commented_item=%s&commented_item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
+                result.append("""<div style="float: right;"><a href="%s?item=%s&item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
                 if isinstance(comment, EditComment):
                     comment_name = '[Edited]'
                 elif isinstance(comment, TrashComment):
@@ -535,11 +535,11 @@ class CommentBox(template.Node):
                         result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), 'PERMISSION DENIED'))
                 else:
                     result.append('by [PERMISSION DENIED]')
-                if item.pk != comment.commented_item_id and nesting_level == 0:
-                    if agentcan_helper(context, 'view name', comment.commented_item):
-                        result.append('for <a href="%s">%s</a>' % (show_resource_url(comment.commented_item), escape(comment.commented_item.name)))
+                if item.pk != comment.item_id and nesting_level == 0:
+                    if agentcan_helper(context, 'view name', comment.item):
+                        result.append('for <a href="%s">%s</a>' % (show_resource_url(comment.item), escape(comment.item.name)))
                     else:
-                        result.append('for <a href="%s">[PERMISSION DENIED]</a>' % (show_resource_url(comment.commented_item)))
+                        result.append('for <a href="%s">[PERMISSION DENIED]</a>' % (show_resource_url(comment.item)))
                 if agentcan_helper(context, 'view created_at', comment):
                     from django.utils.timesince import timesince
                     result.append('%s ago' % timesince(comment.created_at))

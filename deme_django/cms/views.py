@@ -112,12 +112,12 @@ class NewMembershipForm(forms.ModelForm):
         fields = ['item']
 
 class NewTextCommentForm(forms.ModelForm):
-    commented_item = HiddenModelChoiceField(Item.objects)
-    commented_item_version_number = forms.IntegerField(widget=forms.HiddenInput())
-    commented_item_index = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    item = HiddenModelChoiceField(Item.objects)
+    item_version_number = forms.IntegerField(widget=forms.HiddenInput())
+    item_index = forms.IntegerField(widget=forms.HiddenInput(), required=False)
     class Meta:
         model = TextComment
-        fields = ['name', 'description', 'body', 'commented_item', 'commented_item_version_number']
+        fields = ['name', 'description', 'body', 'item', 'item_version_number']
 
 def get_form_class_for_item_type(update_or_create, item_type, fields=None):
     # For now, this is how we prevent manual creation of TextDocumentExcerpts
@@ -1140,10 +1140,10 @@ class TextCommentViewer(TextDocumentViewer):
 
     def collection_new(self):
         try:
-            commented_item = Item.objects.get(pk=self.request.GET.get('commented_item'))
+            item = Item.objects.get(pk=self.request.GET.get('item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
-        can_comment_on = self.cur_agent_can('comment_on', commented_item)
+        can_comment_on = self.cur_agent_can('comment_on', item)
         if not can_comment_on:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to comment on this item")
         model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
@@ -1160,24 +1160,24 @@ class TextCommentViewer(TextDocumentViewer):
 
     def collection_create(self):
         try:
-            commented_item = Item.objects.get(pk=self.request.POST.get('commented_item'))
+            item = Item.objects.get(pk=self.request.POST.get('item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
-        can_comment_on = self.cur_agent_can('comment_on', commented_item)
+        can_comment_on = self.cur_agent_can('comment_on', item)
         if not can_comment_on:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to comment on this item")
         form_class = NewTextCommentForm
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             #TODO use transactions to make the Transclusion save at the same time as the Comment
-            commented_item_index = form.cleaned_data['commented_item_index']
-            item = form.save(commit=False)
-            item.save_versioned(updater=self.cur_agent)
-            commented_item = item.commented_item.downcast()
-            if isinstance(commented_item, TextDocument) and commented_item_index is not None and self.permission_cache.agent_can(self.cur_agent, 'add_transclusion', commented_item):
-                transclusion = Transclusion(from_item=commented_item, from_item_version_number=item.commented_item_version_number, from_item_index=commented_item_index, to_item=item)
+            item_index = form.cleaned_data['item_index']
+            comment = form.save(commit=False)
+            comment.save_versioned(updater=self.cur_agent)
+            item = comment.item.downcast()
+            if isinstance(item, TextDocument) and item_index is not None and self.permission_cache.agent_can(self.cur_agent, 'add_transclusion', item):
+                transclusion = Transclusion(from_item=item, from_item_version_number=comment.item_version_number, from_item_index=item_index, to_item=comment)
                 transclusion.save_versioned(updater=self.cur_agent)
-            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
+            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
         else:
             model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]

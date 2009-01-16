@@ -39,7 +39,7 @@
             targ = targ.parentNode;
         var tokenWrapper = $(targ);
         var index = tokenWrapper.deme_text_offset;
-        var url = '{% url resource_collection viewer="textcomment",action="new" %}?commented_item={{ item.pk }}&commented_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&commented_item_index=' + index;
+        var url = '{% url resource_collection viewer="textcomment",action="new" %}?item={{ item.pk }}&item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&item_index=' + index;
         window.location = url;
         return false;
     }
