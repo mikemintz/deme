@@ -1061,8 +1061,7 @@ class Comment(Item):
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         collection_filter = Q(pk__in=recursive_memberships.values('parent').query)
 
-        #TODO does trashed=False really belong here? if so, document it. otherwise, take it out.
-        return Item.objects.filter(thread_parent_filter | collection_filter, trashed=False)
+        return Item.objects.filter(thread_parent_filter | collection_filter)
 
     def after_create(self):
         super(Comment, self).after_create()
@@ -1085,10 +1084,19 @@ class Comment(Item):
             comment_type_q = Q(notify_edit=True)
         else:
             comment_type_q = Q(pk__isnull=False)
-        direct_subscriptions = Subscription.objects.filter(item__in=self.all_parents_in_thread().values('pk').query, trashed=False).filter(comment_type_q)
-        deep_subscriptions = Subscription.objects.filter(item__in=self.all_parents_in_thread(include_parent_collections=True).values('pk').query, deep=True, trashed=False).filter(comment_type_q)
-        subscribed_email_contact_methods = EmailContactMethod.objects.filter(trashed=False).filter(Q(pk__in=direct_subscriptions.values('contact_method').query) | Q(pk__in=deep_subscriptions.values('contact_method').query))
-        messages = [self.notification_email(email_contact_method) for email_contact_method in subscribed_email_contact_methods]
+        direct_subscriptions = Subscription.objects.filter(comment_type_q,
+                                                           item__trashed=False,
+                                                           item__in=self.all_parents_in_thread().values('pk').query,
+                                                           trashed=False)
+        deep_subscriptions = Subscription.objects.filter(comment_type_q,
+                                                         item__trashed=False,
+                                                         item__in=self.all_parents_in_thread(include_parent_collections=True).values('pk').query,
+                                                         deep=True,
+                                                         trashed=False)
+        direct_q = Q(pk__in=direct_subscriptions.values('contact_method').query)
+        deep_q = Q(pk__in=deep_subscriptions.values('contact_method').query)
+        email_contact_methods = EmailContactMethod.objects.filter(direct_q | deep_q, trashed=False)
+        messages = [self.notification_email(email_contact_method) for email_contact_method in email_contact_methods]
         messages = [x for x in messages if x is not None]
         if messages:
             smtp_connection = SMTPConnection()
@@ -1096,6 +1104,10 @@ class Comment(Item):
     after_create.alters_data = True
 
     def notification_email(self, email_contact_method):
+        """
+        Return an EmailMessage with the notification that should be sent to the
+        specified EmailContactMethod.
+        """
         agent = email_contact_method.agent
         import permissions
         can_do_everything = 'do_everything' in permissions.calculate_global_abilities_for_agent(agent)
@@ -1115,7 +1127,7 @@ class Comment(Item):
             comment_type_q = Q(notify_edit=True)
         else:
             comment_type_q = Q(pk__isnull=False)
-        direct_subscriptions = Subscription.objects.filter(item__in=self.all_parents_in_thread().values('pk').query, trashed=False).filter(comment_type_q)
+        direct_subscriptions = Subscription.objects.filter(item__trashed=False, item__in=self.all_parents_in_thread().values('pk').query, trashed=False).filter(comment_type_q)
         if not direct_subscriptions:
             if can_do_everything:
                 recursive_filter = None
@@ -1123,7 +1135,7 @@ class Comment(Item):
                 visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(agent, 'view collection'), permissions.filter_items_by_permission(agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             possible_parents = self.all_parents_in_thread(include_parent_collections=True, recursive_filter=recursive_filter)
-            deep_subscriptions = Subscription.objects.filter(item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
+            deep_subscriptions = Subscription.objects.filter(item__trashed=False, item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
             if not deep_subscriptions:
                 return None
 
