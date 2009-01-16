@@ -214,7 +214,7 @@ def codegraph(request, *args, **kwargs):
     except OSError, e:
         codegraph_mtime = 0
     if models_mtime > codegraph_mtime:
-        subprocess.call(os.path.join(os.path.dirname(__file__), '..', 'gen_graph.py'), shell=True)
+        subprocess.call(os.path.join(os.path.dirname(__file__), '..', 'script', 'gen_graph.py'), shell=True)
     template = loader.get_template_from_string("""
     {%% extends layout %%}
     {%% block title %%}Deme Code Graph{%% endblock %%}
