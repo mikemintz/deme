@@ -87,8 +87,6 @@ class ItemVersion(models.Model):
     updater = models.ForeignKey('Agent', related_name='version_items_updated')
     updated_at = models.DateTimeField()
 
-    # Methods
-
     def __unicode__(self):
         return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.name)
 
@@ -145,8 +143,6 @@ class Item(models.Model):
     updated_at     = models.DateTimeField(_('updated at'), editable=False)
     created_at     = models.DateTimeField(_('created at'), editable=False)
     trashed        = models.BooleanField(_('trashed'), default=False, editable=False, db_index=True)
-
-    # Methods
 
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.name)
@@ -384,8 +380,6 @@ class DemeSetting(Item):
     key   = models.CharField(_('key'), max_length=255, unique=True)
     value = models.CharField(_('value'), max_length=255, blank=True)
 
-    # Methods
-
     @classmethod
     def get(cls, key):
         """
@@ -518,8 +512,6 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
     password_question = models.CharField(_('password question'), max_length=255, blank=True)
     password_answer   = models.CharField(_('password answer'), max_length=255, blank=True)
 
-    # Methods
-
     def set_password(self, raw_password):
         """
         Set the password field by generating a salt and hashing the raw
@@ -644,8 +636,6 @@ class Collection(Item):
         verbose_name = _('collection')
         verbose_name_plural = _('collections')
 
-    # Methods
-
     def all_contained_collection_members(self, recursive_filter=None):
         """
         Return a QuerySet for all items that are either directly or indirectly
@@ -689,8 +679,6 @@ class Group(Collection):
         verbose_name = _('group')
         verbose_name_plural = _('groups')
 
-    # Methods
-
     def after_create(self):
         super(Group, self).after_create()
         # Create a folio for this group
@@ -733,8 +721,6 @@ class Membership(Item):
     # Fields
     item       = models.ForeignKey(Item, related_name='memberships', verbose_name=_('item'))
     collection = models.ForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'))
-
-    # Methods
 
     def after_create(self):
         super(Membership, self).after_create()
@@ -894,8 +880,6 @@ class Comment(Item):
     # Fields
     commented_item = models.ForeignKey(Item, related_name='comments_as_item')
     commented_item_version_number = models.PositiveIntegerField()
-
-    # Methods
 
     def topmost_commented_item(self):
         comment_class_names = [model.__name__ for model in all_models() if issubclass(model, Comment)]
@@ -1321,8 +1305,6 @@ class ViewerRequest(Item):
     action = models.CharField(max_length=255)
     query_string = models.CharField(max_length=1024, null=True, blank=True)
     format = models.CharField(max_length=255, default='html')
-
-    # Methods
 
     def calculate_full_path(self):
         """Return a tuple (site, custom_urls) where custom_urls is a list."""
