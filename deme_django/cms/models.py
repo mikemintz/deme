@@ -11,7 +11,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'Collection', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'Transclusion', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'CollectionGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'CollectionGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'CollectionPermission', 'DefaultPermission', 'AgentRolePermission', 'CollectionRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_model_with_name', 'get_hexdigest', 'get_random_hash', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
+__all__ = ['Item', 'DemeSetting', 'Agent', 'AnonymousAgent', 'AuthenticationMethod', 'PasswordAuthenticationMethod', 'Person', 'Collection', 'Group', 'Folio', 'Membership', 'Document', 'TextDocument', 'Transclusion', 'DjangoTemplateDocument', 'HtmlDocument', 'FileDocument', 'ImageDocument', 'Comment', 'TextComment', 'EditComment', 'TrashComment', 'UntrashComment', 'AddMemberComment', 'RemoveMemberComment', 'Excerpt', 'TextDocumentExcerpt', 'ContactMethod', 'EmailContactMethod', 'PhoneContactMethod', 'FaxContactMethod', 'WebsiteContactMethod', 'AIMContactMethod', 'AddressContactMethod', 'Subscription', 'ViewerRequest', 'Site', 'SiteDomain', 'CustomUrl', 'GlobalRole', 'Role', 'GlobalRoleAbility', 'RoleAbility', 'Permission', 'GlobalPermission', 'AgentGlobalPermission', 'CollectionGlobalPermission', 'DefaultGlobalPermission', 'AgentGlobalRolePermission', 'CollectionGlobalRolePermission', 'DefaultGlobalRolePermission', 'AgentPermission', 'CollectionPermission', 'DefaultPermission', 'AgentRolePermission', 'CollectionRolePermission', 'DefaultRolePermission', 'RecursiveCommentMembership', 'RecursiveMembership', 'all_models', 'get_model_with_name', 'POSSIBLE_GLOBAL_ABILITIES', 'POSSIBLE_ABILITIES']
 
 ###############################################################################
 # Item framework
@@ -452,44 +452,6 @@ class AuthenticationMethod(Item):
     agent = models.ForeignKey(Agent, related_name='authenticationmethods_as_agent')
 
 
-# ported to python from http://packages.debian.org/lenny/libcrypt-mysql-perl
-def mysql_pre41_password(raw_password):
-    nr = 1345345333L
-    add = 7
-    nr2 = 0x12345671L
-    for ch in raw_password:
-        if ch == ' ' or ch == '\t':
-            continue # skip spaces in raw_password
-        tmp = ord(ch)
-        nr ^= (((nr & 63) + add) * tmp) + (nr << 8)
-        nr2 += (nr2 << 8) ^ nr
-        add += tmp
-    result1 = nr & ((1L << 31) - 1L) # Don't use sign bit (str2int)
-    result2 = nr2 & ((1L << 31) - 1L)
-    return "%08lx%08lx" % (result1, result2)
-
-def get_hexdigest(algorithm, salt, raw_password):
-    from django.utils.encoding import smart_str
-    raw_password, salt = smart_str(raw_password), smart_str(salt)
-    if algorithm == 'crypt':
-        raise ValueError('"crypt" password algorithm not supported in this version of Deme')
-        # try:
-        #     import crypt
-        # except ImportError:
-        #     raise ValueError('"crypt" password algorithm not supported in this environment')
-        # return crypt.crypt(raw_password, salt)
-    if algorithm == 'md5':
-        raise ValueError('"md5" password algorithm not supported in this version of Deme')
-        # return hashlib.md5(salt + raw_password).hexdigest()
-    elif algorithm == 'sha1':
-        return hashlib.sha1(salt + raw_password).hexdigest()
-    elif algorithm == 'mysql_pre41_password':
-        return mysql_pre41_password(raw_password)
-    raise ValueError("Got unknown password algorithm type in password.")
-
-def get_random_hash():
-    return get_hexdigest('sha1', str(random.random()), str(random.random()))
-
 class PasswordAuthenticationMethod(AuthenticationMethod):
     """
     TODO: write comment describing this item type
@@ -513,18 +475,60 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
 
     def set_password(self, raw_password):
         algo = 'sha1'
-        salt = get_random_hash()[:5]
-        hsh = get_hexdigest(algo, salt, raw_password)
+        salt = PasswordAuthenticationMethod.get_random_hash()[:5]
+        hsh = PasswordAuthenticationMethod.get_hexdigest(algo, salt, raw_password)
         self.password = '%s$%s$%s' % (algo, salt, hsh)
     set_password.alters_data = True
 
     def check_password(self, raw_password):
         algo, salt, hsh = self.password.split('$')
-        return hsh == get_hexdigest(algo, salt, raw_password)
+        return hsh == PasswordAuthenticationMethod.get_hexdigest(algo, salt, raw_password)
 
     def check_nonced_password(self, hashed_password, nonce):
         algo, salt, hsh = self.password.split('$')
-        return get_hexdigest('sha1', nonce, hsh) == hashed_password
+        return PasswordAuthenticationMethod.get_hexdigest('sha1', nonce, hsh) == hashed_password
+
+    @classmethod
+    def mysql_pre41_password(cls, raw_password):
+        # ported to python from http://packages.debian.org/lenny/libcrypt-mysql-perl
+        nr = 1345345333L
+        add = 7
+        nr2 = 0x12345671L
+        for ch in raw_password:
+            if ch == ' ' or ch == '\t':
+                continue # skip spaces in raw_password
+            tmp = ord(ch)
+            nr ^= (((nr & 63) + add) * tmp) + (nr << 8)
+            nr2 += (nr2 << 8) ^ nr
+            add += tmp
+        result1 = nr & ((1L << 31) - 1L) # Don't use sign bit (str2int)
+        result2 = nr2 & ((1L << 31) - 1L)
+        return "%08lx%08lx" % (result1, result2)
+
+    @classmethod
+    def get_hexdigest(cls, algorithm, salt, raw_password):
+        from django.utils.encoding import smart_str
+        raw_password, salt = smart_str(raw_password), smart_str(salt)
+        if algorithm == 'crypt':
+            raise ValueError('"crypt" password algorithm not supported in this version of Deme')
+            # try:
+            #     import crypt
+            # except ImportError:
+            #     raise ValueError('"crypt" password algorithm not supported in this environment')
+            # return crypt.crypt(raw_password, salt)
+        if algorithm == 'md5':
+            raise ValueError('"md5" password algorithm not supported in this version of Deme')
+            # return hashlib.md5(salt + raw_password).hexdigest()
+        elif algorithm == 'sha1':
+            return hashlib.sha1(salt + raw_password).hexdigest()
+        elif algorithm == 'mysql_pre41_password':
+            return PasswordAuthenticationMethod.mysql_pre41_password(raw_password)
+        raise ValueError("Got unknown password algorithm type in password.")
+
+    @classmethod
+    def get_random_hash(cls):
+        return PasswordAuthenticationMethod.get_hexdigest('sha1', str(random.random()), str(random.random()))
+
 
 class Person(Agent):
     """

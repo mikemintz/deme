@@ -116,7 +116,7 @@ def authenticate(request, *args, **kwargs):
         # necessary for JavaScript to encrypt the password.
         if 'getencryptionmethod' in request.GET:
             username = request.GET['getencryptionmethod']
-            nonce = get_random_hash()[:5]
+            nonce = PasswordAuthenticationMethod.get_random_hash()[:5]
             request.session['login_nonce'] = nonce
             try:
                 password = PasswordAuthenticationMethod.objects.get(username=username).password
