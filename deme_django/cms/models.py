@@ -598,27 +598,42 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
 
 class Person(Agent):
     """
-    TODO: write comment describing this item type
+    A Person is an Agent that represents a person in real life.
     """
 
     # Setup
     immutable_fields = Agent.immutable_fields
-    relevant_abilities = Agent.relevant_abilities | set(['view first_name', 'view middle_names', 'view last_name', 'view suffix', 'edit first_name', 'edit middle_names', 'edit last_name', 'edit suffix'])
+    relevant_abilities = Agent.relevant_abilities | set(['view first_name', 'view middle_names', 'view last_name', 'view suffix',
+                                                         'edit first_name', 'edit middle_names', 'edit last_name', 'edit suffix'])
     relevant_global_abilities = frozenset(['create Person'])
     class Meta:
         verbose_name = _('person')
         verbose_name_plural = _('people')
 
     # Fields
-    first_name = models.CharField(max_length=255)
-    middle_names = models.CharField(max_length=255, blank=True)
-    last_name = models.CharField(max_length=255)
-    suffix = models.CharField(max_length=255, blank=True)
+    first_name   = models.CharField(_('first name'), max_length=255)
+    middle_names = models.CharField(_('middle names'), max_length=255, blank=True)
+    last_name    = models.CharField(_('last name'), max_length=255)
+    suffix       = models.CharField(_('suffix'), max_length=255, blank=True)
 
 
 class Collection(Item):
     """
-    TODO: write comment describing this item type
+    A Collection is an Item that represents an unordered set of other items.
+    
+    Collections just use pointers from Memberships to represent their contents,
+    so multiple Collections can point to the same contained items.
+    
+    Collections "directly" contain items via Memberships, but they also
+    "indirectly" contain items via chained Memberships (see the
+    RecursiveMembership model). If Collection 1 directly contains Collection 2
+    which directly contains Item 3, then Collection 1 indirectly contains
+    Item 3.
+    
+    It is possible for there to be circular memberships. Collection 1 might
+    contain Collection 2 and Collection 2 might contain Collection 1. This
+    will not cause any errors: it simply means that Collection 1 indirectly
+    contains itself.
     """
 
     # Setup
