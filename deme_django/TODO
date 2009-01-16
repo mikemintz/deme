@@ -30,6 +30,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Consider adding ManyToManyFields with "through"
 * Discuss with Todd whether we should make most text fields rich text, or just htmldocument.body
 * consider making permissions have one column per ability. now that we store all possible abilities, it's easier to migrate.
 * Make more sensible permissions:
@@ -95,6 +96,7 @@ Unusual things to remember
 
 Distant Future (sorted by approximate order of planned implementation)
 ----------------------------------------------------------------------
+* Internationalize using ugettext_lazy
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * new subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group
 * Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore

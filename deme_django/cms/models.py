@@ -3,6 +3,7 @@ from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import SMTPConnection, EmailMessage
 from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext_lazy as _
 from email.utils import formataddr
 import datetime
 import settings
@@ -69,20 +70,24 @@ class ItemVersion(models.Model):
     """
     Versioned class for Item, and superclass of all versioned classes.
     """
-    __metaclass__ = ItemMetaClass
-    current_item = models.ForeignKey('Item', related_name='versions')
-    version_number = models.PositiveIntegerField(default=1, db_index=True)
-    item_type = models.CharField(max_length=255, default='Item')
-    name = models.CharField(max_length=255, default="Untitled")
-    description = models.CharField(max_length=255, blank=True)
-    updater = models.ForeignKey('Agent', related_name='version_items_as_updater')
-    updated_at = models.DateTimeField(editable=False)
 
+    # Setup
+    __metaclass__ = ItemMetaClass
     class Meta:
         unique_together = (('current_item', 'version_number'),)
         ordering = ['version_number']
-        get_latest_by = "version_number"
+        get_latest_by = 'version_number'
 
+    # Fields
+    current_item = models.ForeignKey('Item', related_name='versions')
+    version_number = models.PositiveIntegerField(db_index=True)
+    item_type = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    description = models.CharField(max_length=255, blank=True)
+    updater = models.ForeignKey('Agent', related_name='version_items_updated')
+    updated_at = models.DateTimeField()
+
+    # Methods
     def __unicode__(self):
         return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.name)
 
@@ -101,23 +106,41 @@ class ItemVersion(models.Model):
 class Item(models.Model):
     """
     Superclass of all item types.
+    
+    Every subclass should define the following attributes:
+    - immutable_fields: a frozenset of strings representing the names of
+      fields which may not be modified after creation (this differs from
+      editable=False in that immutable_fields may be customized by a user upon
+      creation, but uneditable fields are not to be edited in the front end)
+    - relevant_abilities: a frozenset of abilities that are relevant to this
+      item type
+    - relevant_global_abilities: a frozenset of global abilities that are
+      introduced by this item type
     """
+
+    # Setup
     __metaclass__ = ItemMetaClass
     immutable_fields = frozenset()
     relevant_abilities = frozenset(['comment_on', 'trash', 'modify_permissions', 'view name',
                                     'view description', 'view updater', 'view creator',
                                     'view updated_at', 'view created_at', 'edit name', 'edit description'])
     relevant_global_abilities = frozenset(['do_something', 'do_everything'])
-    version_number = models.PositiveIntegerField(default=1, editable=False)
-    item_type = models.CharField(max_length=255, default='Item', editable=False)
-    name = models.CharField(max_length=255, default="Untitled")
-    description = models.CharField(max_length=255, blank=True)
-    updater = models.ForeignKey('Agent', related_name='items_as_updater', editable=False)
-    creator = models.ForeignKey('Agent', related_name='items_as_creator', editable=False)
-    updated_at = models.DateTimeField(editable=False)
-    created_at = models.DateTimeField(editable=False)
-    trashed = models.BooleanField(default=False, editable=False, db_index=True)
+    class Meta:
+        verbose_name = _('item')
+        verbose_name_plural = _('items')
 
+    # Fields
+    version_number = models.PositiveIntegerField(_('version number'), default=1, editable=False)
+    item_type      = models.CharField(_('item type'), max_length=255, editable=False)
+    name           = models.CharField(_('name'), max_length=255, default='Untitled')
+    description    = models.CharField(_('description'), max_length=255, blank=True)
+    updater        = models.ForeignKey('Agent', related_name='items_updated', editable=False, verbose_name=_('updater'))
+    creator        = models.ForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
+    updated_at     = models.DateTimeField(_('updated at'), editable=False)
+    created_at     = models.DateTimeField(_('created at'), editable=False)
+    trashed        = models.BooleanField(_('trashed'), default=False, editable=False, db_index=True)
+
+    # Methods
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.name)
 
