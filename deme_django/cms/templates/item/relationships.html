@@ -26,9 +26,9 @@
     {% for relationship in relationship_set.items %}
     <tr class="{% cycle 'even' 'odd' %}">
         {% ifagentcan 'view' 'name' relationship %}
-            <td><a href="{% show_resource_url relationship %}">{{ relationship.name }}</a></td>
+            <td><a href="{{ relationship.get_absolute_url }}">{{ relationship.name }}</a></td>
         {% else %}
-            <td><a href="{% show_resource_url relationship %}">[PERMISSION DENIED]</a></td>
+            <td><a href="{{ relationship.get_absolute_url }}">[PERMISSION DENIED]</a></td>
         {% endifagentcan %}
     </tr>
     {% endfor %}

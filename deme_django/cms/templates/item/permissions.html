@@ -42,11 +42,11 @@
     {% for agent_datum in agent_data %}
     <tr class="{% cycle 'even' 'odd' as row_parity %}">
         <td>Agent</td>
-        <td><a href="{% show_resource_url agent_datum.agent %}">{{ agent_datum.agent.name }}</a></td>
+        <td><a href="{{ agent_datum.agent.get_absolute_url }}">{{ agent_datum.agent.name }}</a></td>
         <td>
             {% for p in agent_datum.role_permissions %}
                 <div>
-                    <a href="{% show_resource_url p.role %}">{{ p.role.name }}</a>
+                    <a href="{{ p.role.get_absolute_url }}">{{ p.role.name }}</a>
                     <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",noun=item.pk,action="permissions" %}?formtype=agentrolepermission&redirect={{ full_path|urlencode }}&formprefix={{ agent_datum.role_permission_form.prefix|urlencode }}" class="item_form">
                         <input type="hidden" name="permission_to_delete" value="{{ p.pk }}" />
                         <input type="submit" value="Remove" />
@@ -88,11 +88,11 @@
     {% for collection_datum in collection_data %}
     <tr class="{% cycle row_parity %}">
         <td>Collection</td>
-        <td><a href="{% show_resource_url collection_datum.collection %}">{{ collection_datum.collection.name }}</a></td>
+        <td><a href="{{ collection_datum.collection.get_absolute_url }}">{{ collection_datum.collection.name }}</a></td>
         <td>
             {% for p in collection_datum.role_permissions %}
                 <div>
-                    <a href="{% show_resource_url p.role %}">{{ p.role.name }}</a>
+                    <a href="{{ p.role.get_absolute_url }}">{{ p.role.name }}</a>
                     <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",noun=item.pk,action="permissions" %}?formtype=collectionrolepermission&redirect={{ full_path|urlencode }}&formprefix={{ collection_datum.role_permission_form.prefix|urlencode }}" class="item_form">
                         <input type="hidden" name="permission_to_delete" value="{{ p.pk }}" />
                         <input type="submit" value="Remove" />
@@ -137,7 +137,7 @@
         <td>
             {% for p in default_data.role_permissions %}
                 <div>
-                    <a href="{% show_resource_url p.role %}">{{ p.role.name }}</a>
+                    <a href="{{ p.role.get_absolute_url }}">{{ p.role.name }}</a>
                     <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer="item",noun=item.pk,action="permissions" %}?formtype=defaultrolepermission&redirect={{ full_path|urlencode }}&formprefix={{ default_data.role_permission_form.prefix|urlencode }}" class="item_form">
                         <input type="hidden" name="permission_to_delete" value="{{ p.pk }}" />
                         <input type="submit" value="Remove" />

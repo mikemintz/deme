@@ -20,7 +20,7 @@
     You are not logged in
     [<a href="{% url authenticate %}?redirect={{ full_path|urlencode }}">Login</a>]
     {% else %}
-    You are logged in as <a href="{% show_resource_url cur_agent %}">{{ cur_agent.name }}</a>
+    You are logged in as <a href="{{ cur_agent.get_absolute_url }}">{{ cur_agent.name }}</a>
     [<a href="#" onclick="document.forms['logout_form'].submit(); return false;">Logout</a>]
     [<a href="{% url authenticate %}?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]
     {% endifequal %}

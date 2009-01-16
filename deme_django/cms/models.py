@@ -147,6 +147,10 @@ class Item(models.Model):
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.name)
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ('resource_entry', (), {'viewer': self.item_type.lower(), 'noun': self.pk})
+
     def downcast(self):
         """
         Return this item as an instance of the actual item type.

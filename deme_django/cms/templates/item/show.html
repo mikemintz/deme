@@ -29,9 +29,9 @@
                 {% ifequal field.field_type 'entry' %}
                 {% if field.obj %}
                 {% ifagentcan 'view' 'name' field.obj %}
-                <div><a href="{% show_resource_url field.obj %}">{{ field.obj }}</a></div>
+                <div><a href="{{ field.obj.get_absolute_url }}">{{ field.obj }}</a></div>
                 {% else %}
-                <div><a href="{% show_resource_url field.obj %}">PERMISSION DENIED</a></div>
+                <div><a href="{{ field.obj.get_absolute_url }}">PERMISSION DENIED</a></div>
                 {% endifagentcan %}
                 {% else %}
                 NULL

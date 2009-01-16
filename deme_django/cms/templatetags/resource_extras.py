@@ -10,18 +10,6 @@ from django.conf import settings
 
 register = template.Library()
 
-@register.simple_tag
-def show_resource_url(item, version_number=None):
-    if isinstance(item, Item.Version):
-        return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}) + '?version=%s' % item.version_number
-    elif isinstance(item, Item):
-        if version_number is not None:
-            return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}) + '?version=%s' % version_number
-        else:
-            return reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk})
-    else:
-        return ''
-
 @register.filter
 def icon_url(item_type, size=32):
     if item_type != 'error' and isinstance(item_type, basestring):
@@ -336,9 +324,9 @@ class EntryHeader(template.Node):
         for inherited_item_type in item_type_inheritance:
             result.append('<a href="%s">%ss</a> &raquo;' % (reverse('resource_collection', kwargs={'viewer': inherited_item_type.lower()}), inherited_item_type))
         if agentcan_helper(context, 'view name', item):
-            result.append('<a href="%s">%s</a>' % (show_resource_url(item), escape(item.name)))
+            result.append('<a href="%s">%s</a>' % (item.get_absolute_url(), escape(item.name)))
         else:
-            result.append('<a href="%s">[PERMISSION DENIED]</a>' % show_resource_url(item))
+            result.append('<a href="%s">[PERMISSION DENIED]</a>' % item.get_absolute_url())
         result.append('&raquo; ')
         result.append('<select id="id_item_type" name="item_type" onchange="window.location = this.value;">')
         for other_itemversion in item.versions.all():
@@ -361,16 +349,16 @@ class EntryHeader(template.Node):
             updated_at_text = '[PERMISSION DENIED]'
         if agentcan_helper(context, 'view creator', item):
             if agentcan_helper(context, 'view name', item.creator):
-                creator_text = '<a href="%s">%s</a>' % (show_resource_url(item.creator), escape(item.creator.name))
+                creator_text = '<a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(item.creator.name))
             else:
-                creator_text = '<a href="%s">%s</a>' % (show_resource_url(item.creator), '[PERMISSION DENIED]')
+                creator_text = '<a href="%s">%s</a>' % (item.creator.get_absolute_url(), '[PERMISSION DENIED]')
         else:
             creator_text = '[PERMISSION DENIED]'
         if agentcan_helper(context, 'view updater', item):
             if agentcan_helper(context, 'view name', item.updater):
-                updater_text = '<a href="%s">%s</a>' % (show_resource_url(item.updater), escape(item.updater.name))
+                updater_text = '<a href="%s">%s</a>' % (item.updater.get_absolute_url(), escape(item.updater.name))
             else:
-                updater_text = '<a href="%s">%s</a>' % (show_resource_url(item.updater), '[PERMISSION DENIED]')
+                updater_text = '<a href="%s">%s</a>' % (item.updater.get_absolute_url(), '[PERMISSION DENIED]')
         else:
             updater_text = '[PERMISSION DENIED]'
         result.append('<div style="font-size: 8pt;">')
@@ -482,7 +470,7 @@ def display_body_with_inline_transclusions(item, is_html):
     for transclusion in transclusions:
         i = transclusion.from_item_index
         result.insert(0, format(item.body[i:last_i]))
-        result.insert(0, '<a href="%s" class="commentref">%s</a>' % (show_resource_url(transclusion.to_item), escape(transclusion.to_item.name)))
+        result.insert(0, '<a href="%s" class="commentref">%s</a>' % (transclusion.to_item.get_absolute_url(), escape(transclusion.to_item.name)))
         last_i = i
     result.insert(0, format(item.body[0:last_i]))
     return ''.join(result)
@@ -527,19 +515,19 @@ class CommentBox(template.Node):
                         comment_name = escape(comment.name)
                     else:
                         comment_name = '[PERMISSION DENIED]'
-                result.append("""<a href="%s">%s</a>""" % (show_resource_url(comment), comment_name))
+                result.append("""<a href="%s">%s</a>""" % (comment.get_absolute_url(), comment_name))
                 if agentcan_helper(context, 'view creator', comment):
                     if agentcan_helper(context, 'view name', comment.creator):
-                        result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), escape(comment.creator.name)))
+                        result.append("""by <a href="%s">%s</a>""" % (comment.creator.get_absolute_url(), escape(comment.creator.name)))
                     else:
-                        result.append("""by <a href="%s">%s</a>""" % (show_resource_url(comment.creator), 'PERMISSION DENIED'))
+                        result.append("""by <a href="%s">%s</a>""" % (comment.creator.get_absolute_url(), 'PERMISSION DENIED'))
                 else:
                     result.append('by [PERMISSION DENIED]')
                 if item.pk != comment.item_id and nesting_level == 0:
                     if agentcan_helper(context, 'view name', comment.item):
-                        result.append('for <a href="%s">%s</a>' % (show_resource_url(comment.item), escape(comment.item.name)))
+                        result.append('for <a href="%s">%s</a>' % (comment.item.get_absolute_url(), escape(comment.item.name)))
                     else:
-                        result.append('for <a href="%s">[PERMISSION DENIED]</a>' % (show_resource_url(comment.item)))
+                        result.append('for <a href="%s">[PERMISSION DENIED]</a>' % (comment.item.get_absolute_url()))
                 if agentcan_helper(context, 'view created_at', comment):
                     from django.utils.timesince import timesince
                     result.append('%s ago' % timesince(comment.created_at))
@@ -573,11 +561,11 @@ class CommentBox(template.Node):
                         if agentcan_helper(context, 'view membership', comment):
                             if agentcan_helper(context, 'view item', comment.membership):
                                 if agentcan_helper(context, 'view name', comment.membership.item):
-                                    comment_body = '<a href="%s">%s</a> with <a href="%s">Membership %s</a>' % (show_resource_url(comment.membership.item), escape(comment.membership.item.name), show_resource_url(comment.membership), comment.membership.pk)
+                                    comment_body = '<a href="%s">%s</a> with <a href="%s">Membership %s</a>' % (comment.membership.item.get_absolute_url(), escape(comment.membership.item.name), comment.membership.get_absolute_url(), comment.membership.pk)
                                 else:
-                                    comment_body = '<a href="%s">Item %s</a> with <a href="%s">Membership %s</a>' % (show_resource_url(comment.membership.item), comment.membership.item.pk, show_resource_url(comment.membership), comment.membership.pk)
+                                    comment_body = '<a href="%s">Item %s</a> with <a href="%s">Membership %s</a>' % (comment.membership.item.get_absolute_url(), comment.membership.item.pk, comment.membership.get_absolute_url(), comment.membership.pk)
                             else:
-                                comment_body = '<a href="%s">Membership %s</a>' % (show_resource_url(comment.membership), comment.membership.pk)
+                                comment_body = '<a href="%s">Membership %s</a>' % (comment.membership.get_absolute_url(), comment.membership.pk)
                         else:
                             comment_body = ''
                     elif isinstance(comment, RemoveMemberComment):
@@ -585,11 +573,11 @@ class CommentBox(template.Node):
                         if agentcan_helper(context, 'view membership', comment):
                             if agentcan_helper(context, 'view item', comment.membership):
                                 if agentcan_helper(context, 'view name', comment.membership.item):
-                                    comment_body = '<a href="%s">%s</a> with <a href="%s">Membership %s</a>' % (show_resource_url(comment.membership.item), escape(comment.membership.item.name), show_resource_url(comment.membership), comment.membership.pk)
+                                    comment_body = '<a href="%s">%s</a> with <a href="%s">Membership %s</a>' % (comment.membership.item.get_absolute_url(), escape(comment.membership.item.name), comment.membership.get_absolute_url(), comment.membership.pk)
                                 else:
-                                    comment_body = '<a href="%s">Item %s</a> with <a href="%s">Membership %s</a>' % (show_resource_url(comment.membership.item), comment.membership.item.pk, show_resource_url(comment.membership), comment.membership.pk)
+                                    comment_body = '<a href="%s">Item %s</a> with <a href="%s">Membership %s</a>' % (comment.membership.item.get_absolute_url(), comment.membership.item.pk, comment.membership.get_absolute_url(), comment.membership.pk)
                             else:
-                                comment_body = '<a href="%s">Membership %s</a>' % (show_resource_url(comment.membership), comment.membership.pk)
+                                comment_body = '<a href="%s">Membership %s</a>' % (comment.membership.get_absolute_url(), comment.membership.pk)
                         else:
                             comment_body = ''
                     else:
