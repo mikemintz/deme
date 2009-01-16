@@ -1063,46 +1063,6 @@ class Comment(Item):
 
         return Item.objects.filter(thread_parent_filter | collection_filter)
 
-    def after_create(self):
-        super(Comment, self).after_create()
-
-        # Update the RecursiveCommentMembership to indicate this Comment exists
-        RecursiveCommentMembership.recursive_add_comment(self)
-
-        # Email everyone subscribed to items this comment is relevant for
-        if isinstance(self, TextComment):
-            comment_type_q = Q(notify_text=True)
-        elif isinstance(self, EditComment):
-            comment_type_q = Q(notify_edit=True)
-        elif isinstance(self, TrashComment):
-            comment_type_q = Q(notify_edit=True)
-        elif isinstance(self, UntrashComment):
-            comment_type_q = Q(notify_edit=True)
-        elif isinstance(self, AddMemberComment):
-            comment_type_q = Q(notify_edit=True)
-        elif isinstance(self, RemoveMemberComment):
-            comment_type_q = Q(notify_edit=True)
-        else:
-            comment_type_q = Q(pk__isnull=False)
-        direct_subscriptions = Subscription.objects.filter(comment_type_q,
-                                                           item__trashed=False,
-                                                           item__in=self.all_parents_in_thread().values('pk').query,
-                                                           trashed=False)
-        deep_subscriptions = Subscription.objects.filter(comment_type_q,
-                                                         item__trashed=False,
-                                                         item__in=self.all_parents_in_thread(include_parent_collections=True).values('pk').query,
-                                                         deep=True,
-                                                         trashed=False)
-        direct_q = Q(pk__in=direct_subscriptions.values('contact_method').query)
-        deep_q = Q(pk__in=deep_subscriptions.values('contact_method').query)
-        email_contact_methods = EmailContactMethod.objects.filter(direct_q | deep_q, trashed=False)
-        messages = [self.notification_email(email_contact_method) for email_contact_method in email_contact_methods]
-        messages = [x for x in messages if x is not None]
-        if messages:
-            smtp_connection = SMTPConnection()
-            smtp_connection.send_messages(messages)
-    after_create.alters_data = True
-
     def notification_email(self, email_contact_method):
         """
         Return an EmailMessage with the notification that should be sent to the
@@ -1186,6 +1146,46 @@ class Comment(Item):
         headers['In-Reply-To'] = messageid(self.item)
         headers['References'] = '%s %s' % (messageid(topmost_item), messageid(self.item))
         return EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((agent.name, email_contact_method.email))], headers=headers)
+
+    def after_create(self):
+        super(Comment, self).after_create()
+
+        # Update the RecursiveCommentMembership to indicate this Comment exists
+        RecursiveCommentMembership.recursive_add_comment(self)
+
+        # Email everyone subscribed to items this comment is relevant for
+        if isinstance(self, TextComment):
+            comment_type_q = Q(notify_text=True)
+        elif isinstance(self, EditComment):
+            comment_type_q = Q(notify_edit=True)
+        elif isinstance(self, TrashComment):
+            comment_type_q = Q(notify_edit=True)
+        elif isinstance(self, UntrashComment):
+            comment_type_q = Q(notify_edit=True)
+        elif isinstance(self, AddMemberComment):
+            comment_type_q = Q(notify_edit=True)
+        elif isinstance(self, RemoveMemberComment):
+            comment_type_q = Q(notify_edit=True)
+        else:
+            comment_type_q = Q(pk__isnull=False)
+        direct_subscriptions = Subscription.objects.filter(comment_type_q,
+                                                           item__trashed=False,
+                                                           item__in=self.all_parents_in_thread().values('pk').query,
+                                                           trashed=False)
+        deep_subscriptions = Subscription.objects.filter(comment_type_q,
+                                                         item__trashed=False,
+                                                         item__in=self.all_parents_in_thread(include_parent_collections=True).values('pk').query,
+                                                         deep=True,
+                                                         trashed=False)
+        direct_q = Q(pk__in=direct_subscriptions.values('contact_method').query)
+        deep_q = Q(pk__in=deep_subscriptions.values('contact_method').query)
+        email_contact_methods = EmailContactMethod.objects.filter(direct_q | deep_q, trashed=False)
+        messages = [self.notification_email(email_contact_method) for email_contact_method in email_contact_methods]
+        messages = [x for x in messages if x is not None]
+        if messages:
+            smtp_connection = SMTPConnection()
+            smtp_connection.send_messages(messages)
+    after_create.alters_data = True
 
 
 class TextComment(TextDocument, Comment):
