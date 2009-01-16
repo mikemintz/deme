@@ -509,17 +509,7 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
     def get_hexdigest(cls, algorithm, salt, raw_password):
         from django.utils.encoding import smart_str
         raw_password, salt = smart_str(raw_password), smart_str(salt)
-        if algorithm == 'crypt':
-            raise ValueError('"crypt" password algorithm not supported in this version of Deme')
-            # try:
-            #     import crypt
-            # except ImportError:
-            #     raise ValueError('"crypt" password algorithm not supported in this environment')
-            # return crypt.crypt(raw_password, salt)
-        if algorithm == 'md5':
-            raise ValueError('"md5" password algorithm not supported in this version of Deme')
-            # return hashlib.md5(salt + raw_password).hexdigest()
-        elif algorithm == 'sha1':
+        if algorithm == 'sha1':
             return hashlib.sha1(salt + raw_password).hexdigest()
         elif algorithm == 'mysql_pre41_password':
             return PasswordAuthenticationMethod.mysql_pre41_password(raw_password)
