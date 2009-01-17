@@ -40,7 +40,7 @@ def main():
     except ObjectDoesNotExist:
         send_mail('Re: %s' % subject, 'Error: Deme could not create your comment "%s" because there does not exist an item with id %s' % (subject, item_id), to_email, [from_email])
         return 
-    comment = cms.models.TextComment(item=item, item_version=item.version_number, name=subject, body=body)
+    comment = cms.models.TextComment(item=item, item_version_number=item.version_number, name=subject, body=body)
     comment.save_versioned(updater=email_contact_method.agent)
 
 
