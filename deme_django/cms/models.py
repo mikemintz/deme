@@ -1104,13 +1104,13 @@ class Comment(Item):
         """
         agent = email_contact_method.agent
         import permissions
-        can_do_everything = 'do_everything' in permissions.calculate_global_abilities_for_agent(agent)
+        permission_cache = permissions.PermissionCache()
 
         # First, decide if we're allowed to get this notification at all
         comment_type_q = self.subscription_filter_for_comment_type()
         direct_subscriptions = Subscription.objects.filter(item__in=self.all_parents_in_thread().filter(trashed=False).values('pk').query, trashed=False).filter(comment_type_q)
         if not direct_subscriptions:
-            if can_do_everything:
+            if permission_cache.agent_can_global(agent, 'do_everything'):
                 recursive_filter = None
             else:
                 visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(agent, 'view item'))
@@ -1125,16 +1125,12 @@ class Comment(Item):
         topmost_item = self.original_item()
         item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}))
         topmost_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': topmost_item.item_type.lower(), 'noun': topmost_item.pk}))
-        abilities_for_comment = permissions.calculate_abilities_for_agent_and_item(agent, self)
-        abilities_for_item = permissions.calculate_abilities_for_agent_and_item(agent, item)
-        abilities_for_topmost_item = permissions.calculate_abilities_for_agent_and_item(agent, topmost_item)
-        abilities_for_comment_creator = permissions.calculate_abilities_for_agent_and_item(agent, self.creator)
-        comment_name = self.name if can_do_everything or 'view name' in abilities_for_comment else 'PERMISSION DENIED'
+        comment_name = self.name if permission_cache.agent_can(agent, 'view name', self) else 'PERMISSION DENIED'
         if isinstance(self, TextComment):
-            comment_body = self.body if can_do_everything or 'view body' in abilities_for_comment else 'PERMISSION DENIED'
-        item_name = item.name if can_do_everything or 'view name' in abilities_for_item else 'PERMISSION DENIED'
-        topmost_item_name = topmost_item.name if can_do_everything or 'view name' in abilities_for_topmost_item else 'PERMISSION DENIED'
-        creator_name = self.creator.name if can_do_everything or 'view name' in abilities_for_comment_creator else 'PERMISSION DENIED'
+            comment_body = self.body if permission_cache.agent_can(agent, 'view body', self) else 'PERMISSION DENIED'
+        item_name = item.name if permission_cache.agent_can(agent, 'view name', item) else 'PERMISSION DENIED'
+        topmost_item_name = topmost_item.name if permission_cache.agent_can(agent, 'view name', topmost_item) else 'PERMISSION DENIED'
+        creator_name = self.creator.name if permission_cache.agent_can(agent, 'view name', self.creator) else 'PERMISSION DENIED'
 
         # Finally put together the message
         if isinstance(self, TextComment):
