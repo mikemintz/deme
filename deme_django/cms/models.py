@@ -116,13 +116,14 @@ class Item(models.Model):
     last update.
     
     Every subclass should define the following attributes:
-    - immutable_fields: a frozenset of strings representing the names of
+    
+    * immutable_fields: a frozenset of strings representing the names of
       fields which may not be modified after creation (this differs from
       editable=False in that immutable_fields may be customized by a user upon
       creation, but uneditable fields are not to be edited in the front end)
-    - relevant_abilities: a frozenset of abilities that are relevant to this
+    * relevant_abilities: a frozenset of abilities that are relevant to this
       item type
-    - relevant_global_abilities: a frozenset of global abilities that are
+    * relevant_global_abilities: a frozenset of global abilities that are
       introduced by this item type
     """
 
@@ -231,26 +232,26 @@ class Item(models.Model):
     def trash(self, agent):
         """
         Trash the current Item (the specified agent was responsible). This
-        will call after_trash() if the item was previously untrashed.
+        will call _after_trash() if the item was previously untrashed.
         """
         if self.trashed:
             return
         self.trashed = True
         self.save()
-        self.after_trash(agent)
+        self._after_trash(agent)
     trash.alters_data = True
 
     @transaction.commit_on_success
     def untrash(self, agent):
         """
         Untrash the current Item (the specified agent was responsible). This
-        will call after_untrash() if the item was previously trashed.
+        will call _after_untrash() if the item was previously trashed.
         """
         if not self.trashed:
             return
         self.trashed = False
         self.save()
-        self.after_untrash(agent)
+        self._after_untrash(agent)
     untrash.alters_data = True
 
     @transaction.commit_on_success
@@ -320,46 +321,46 @@ class Item(models.Model):
             edit_comment.save_versioned(updater=updater)
 
         if is_new:
-            self.after_create()
+            self._after_create()
     save_versioned.alters_data = True
 
-    def after_create(self):
+    def _after_create(self):
         """
         This method gets called after the first version of an item is
         created via save_versioned().
         
         Item types that want to trigger an action after creation should
         override this method, making sure to put a call to super at the top,
-        like super(Membership, self).after_create()
+        like super(Membership, self)._after_create()
         """
         pass
-    after_create.alters_data = True
+    _after_create.alters_data = True
 
-    def after_trash(self, agent):
+    def _after_trash(self, agent):
         """
         This method gets called after an item is trashed.
         
         Item types that want to trigger an action after trash should
         override this method, making sure to put a call to super at the top,
-        like super(Membership, self).after_trash()
+        like super(Membership, self)._after_trash()
         """
         # Create a TrashComment
         trash_comment = TrashComment(item=self, item_version_number=self.version_number)
         trash_comment.save_versioned(updater=agent)
-    after_trash.alters_data = True
+    _after_trash.alters_data = True
 
-    def after_untrash(self, agent):
+    def _after_untrash(self, agent):
         """
         This method gets called after an item is untrashed.
         
         Item types that want to trigger an action after untrash should
         override this method, making sure to put a call to super at the top,
-        like super(Membership, self).after_untrash()
+        like super(Membership, self)._after_untrash()
         """
         # Create an UntrashComment
         untrash_comment = UntrashComment(item=self, item_version_number=self.version_number)
         untrash_comment.save_versioned(updater=agent)
-    after_untrash.alters_data = True
+    _after_untrash.alters_data = True
 
 
 ###############################################################################
@@ -373,11 +374,12 @@ class Agent(Item):
     other agents, such as bots and anonymous agents.
     
     Agents are unique in the following ways:
-    - Agents can be assigned permissions
-    - Agents show up in the creator and updater fields of other items
-    - Agents can authenticate with Deme using AuthenticationMethods
-    - Agents can be contacted via their ContactMethods
-    - Agents can subscribe to other items with Subscriptions
+    
+    * Agents can be assigned permissions
+    * Agents show up in the creator and updater fields of other items
+    * Agents can authenticate with Deme using AuthenticationMethods
+    * Agents can be contacted via their ContactMethods
+    * Agents can subscribe to other items with Subscriptions
     """
 
     # Setup
@@ -492,7 +494,8 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
         connection. The browser is given the algorithm, the salt, and a random
         nonce, and is supposed to generate the following string, which this
         method generates and compares against:
-        - sha1(nonce, algo(salt, raw_password))
+        
+            sha1(nonce, algo(salt, raw_password))
         """
         algo, salt, hsh = self.password.split('$')
         return PasswordAuthenticationMethod.get_hexdigest('sha1', nonce, hsh) == hashed_password
@@ -770,17 +773,17 @@ class Collection(Item):
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         return Item.objects.filter(pk__in=recursive_memberships.values('child').query)
 
-    def after_trash(self, agent):
-        super(Collection, self).after_trash(agent)
+    def _after_trash(self, agent):
+        super(Collection, self)._after_trash(agent)
         # Update the RecursiveMembership to indicate this Collection is gone
         RecursiveMembership.recursive_remove_collection(self)
-    after_trash.alters_data = True
+    _after_trash.alters_data = True
 
-    def after_untrash(self, agent):
-        super(Collection, self).after_untrash(agent)
+    def _after_untrash(self, agent):
+        super(Collection, self)._after_untrash(agent)
         # Update the RecursiveMembership to indicate this Collection exists
         RecursiveMembership.recursive_add_collection(self)
-    after_untrash.alters_data = True
+    _after_untrash.alters_data = True
 
 
 class Group(Collection):
@@ -798,12 +801,12 @@ class Group(Collection):
         verbose_name = _('group')
         verbose_name_plural = _('groups')
 
-    def after_create(self):
-        super(Group, self).after_create()
+    def _after_create(self):
+        super(Group, self)._after_create()
         # Create a folio for this group
         folio = Folio(group=self)
         folio.save_versioned(updater=self.updater)
-    after_create.alters_data = True
+    _after_create.alters_data = True
 
 
 class Folio(Collection):
@@ -841,32 +844,32 @@ class Membership(Item):
     item       = models.ForeignKey(Item, related_name='memberships', verbose_name=_('item'))
     collection = models.ForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'))
 
-    def after_create(self):
-        super(Membership, self).after_create()
+    def _after_create(self):
+        super(Membership, self)._after_create()
         # Update the RecursiveMembership to indicate this Membership exists
         RecursiveMembership.recursive_add_membership(self)
         # Create an AddMemberComment to indicate a member was added to the collection
         add_member_comment = AddMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
         add_member_comment.save_versioned(updater=self.creator)
-    after_create.alters_data = True
+    _after_create.alters_data = True
 
-    def after_trash(self, agent):
-        super(Membership, self).after_trash(agent)
+    def _after_trash(self, agent):
+        super(Membership, self)._after_trash(agent)
         # Update the RecursiveMembership to indicate this Membership is gone
         RecursiveMembership.recursive_remove_edge(self.collection, self.item)
         # Create a RemoveMemberComment to indicate a member was removed from the collection
         remove_member_comment = RemoveMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
         remove_member_comment.save_versioned(updater=agent)
-    after_trash.alters_data = True
+    _after_trash.alters_data = True
 
-    def after_untrash(self, agent):
-        super(Membership, self).after_untrash(agent)
+    def _after_untrash(self, agent):
+        super(Membership, self)._after_untrash(agent)
         # Update the RecursiveMembership to indicate this Membership exists
         RecursiveMembership.recursive_add_membership(self)
         # Create an AddMemberComment to indicate a member was added to the collection
         add_member_comment = AddMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
         add_member_comment.save_versioned(updater=agent)
-    after_untrash.alters_data = True
+    _after_untrash.alters_data = True
 
 
 ###############################################################################
@@ -1095,7 +1098,9 @@ class Comment(Item):
     def notification_email(self, email_contact_method):
         """
         Return an EmailMessage with the notification that should be sent to the
-        specified EmailContactMethod.
+        specified EmailContactMethod. If there is no Subscription, or the Agent
+        with the subscription is not allowed to receive the notification,
+        return None.
         """
         agent = email_contact_method.agent
         import permissions
@@ -1103,15 +1108,15 @@ class Comment(Item):
 
         # First, decide if we're allowed to get this notification at all
         comment_type_q = self.subscription_filter_for_comment_type()
-        direct_subscriptions = Subscription.objects.filter(item__trashed=False, item__in=self.all_parents_in_thread().values('pk').query, trashed=False).filter(comment_type_q)
+        direct_subscriptions = Subscription.objects.filter(item__in=self.all_parents_in_thread().filter(trashed=False).values('pk').query, trashed=False).filter(comment_type_q)
         if not direct_subscriptions:
             if can_do_everything:
                 recursive_filter = None
             else:
-                visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(agent, 'view collection'), permissions.filter_items_by_permission(agent, 'view item'))
+                visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
-            possible_parents = self.all_parents_in_thread(include_parent_collections=True, recursive_filter=recursive_filter)
-            deep_subscriptions = Subscription.objects.filter(item__trashed=False, item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
+            possible_parents = self.all_parents_in_thread(include_parent_collections=True, recursive_filter=recursive_filter).filter(trashed=False)
+            deep_subscriptions = Subscription.objects.filter(item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
             if not deep_subscriptions:
                 return None
 
@@ -1163,8 +1168,8 @@ class Comment(Item):
         headers['References'] = '%s %s' % (messageid(topmost_item), messageid(self.item))
         return EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((agent.name, email_contact_method.email))], headers=headers)
 
-    def after_create(self):
-        super(Comment, self).after_create()
+    def _after_create(self):
+        super(Comment, self)._after_create()
 
         # Update the RecursiveCommentMembership to indicate this Comment exists
         RecursiveCommentMembership.recursive_add_comment(self)
@@ -1172,12 +1177,10 @@ class Comment(Item):
         # Email everyone subscribed to items this comment is relevant for
         comment_type_q = self.subscription_filter_for_comment_type()
         direct_subscriptions = Subscription.objects.filter(comment_type_q,
-                                                           item__trashed=False,
-                                                           item__in=self.all_parents_in_thread().values('pk').query,
+                                                           item__in=self.all_parents_in_thread().filter(trashed=False).values('pk').query,
                                                            trashed=False)
         deep_subscriptions = Subscription.objects.filter(comment_type_q,
-                                                         item__trashed=False,
-                                                         item__in=self.all_parents_in_thread(include_parent_collections=True).values('pk').query,
+                                                         item__in=self.all_parents_in_thread(include_parent_collections=True).filter(trashed=False).values('pk').query,
                                                          deep=True,
                                                          trashed=False)
         direct_q = Q(pk__in=direct_subscriptions.values('contact_method').query)
@@ -1188,7 +1191,7 @@ class Comment(Item):
         if messages:
             smtp_connection = SMTPConnection()
             smtp_connection.send_messages(messages)
-    after_create.alters_data = True
+    _after_create.alters_data = True
 
 
 class TextComment(TextDocument, Comment):

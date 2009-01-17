@@ -19,6 +19,10 @@ Indices and tables
 
 .. automodule:: cms.models
    :members:
-   :undoc-members:
 
+.. automodule:: cms.dispatcher
+   :members:
+
+.. automodule:: cms.views
+   :members:
 
