@@ -295,8 +295,12 @@ class Item(models.Model):
         self.updated_at = updated_at
         if is_new or overwrite_latest_version:
             self.created_at = created_at or updated_at
-        if not is_new and not overwrite_latest_version:
-            self.version_number = self.version_number + 1
+        if not is_new:
+            latest_version_number = Item.objects.get(pk=self.pk).version_number
+            if overwrite_latest_version:
+                self.version_number = latest_version_number
+            else:
+                self.version_number = latest_version_number + 1
         self.save()
 
         # Create the new item version
