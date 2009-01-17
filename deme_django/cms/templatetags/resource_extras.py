@@ -300,6 +300,7 @@ class EntryHeader(template.Node):
 
         result = []
 
+        subscribe_url = reverse('resource_collection', kwargs={'viewer': 'subscription', 'action': 'new'}) + '?item=%s' % item.pk
         relationships_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'relationships'}) + '?version=%s' % version_number
         permissions_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'permissions'})
         edit_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % version_number
@@ -309,6 +310,7 @@ class EntryHeader(template.Node):
 
         result.append('<div class="crumbs">')
         result.append('<div style="float: right;">')
+        result.append('<a href="%s">Subscribe</a>' % subscribe_url)
         result.append('<a href="%s">Relationships</a>' % relationships_url)
         if agentcan_helper(context, 'modify_permissions', item):
             result.append('<a href="%s">Permissions</a>' % permissions_url)

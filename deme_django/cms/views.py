@@ -1303,6 +1303,45 @@ class DemeSettingViewer(ItemViewer):
         return HttpResponseRedirect(redirect)
 
 
+class SubscriptionViewer(ItemViewer):
+    item_type = Subscription
+    viewer_name = 'subscription'
+
+    def collection_new(self):
+        model_names = ['Subscription']
+        model_names.sort()
+        form_initial = dict(self.request.GET.items())
+        form_class = get_form_class_for_item_type('create', self.item_type)
+        form = form_class(initial=form_initial)
+        template = loader.get_template('item/new.html')
+        self.context['model_names'] = model_names
+        self.context['form'] = form
+        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+        self.context['redirect'] = self.request.GET.get('redirect')
+        return HttpResponse(template.render(self.context))
+
+    def collection_create(self):
+        form_class = get_form_class_for_item_type('create', self.item_type)
+        form = form_class(self.request.POST, self.request.FILES)
+        if form.is_valid():
+            item = form.save(commit=False)
+            can_add_subscription = self.cur_agent_can('add_subscription', item.contact_method)
+            if not can_add_subscription:
+                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add subscriptions to this contact method")
+            item.save_versioned(updater=self.cur_agent)
+            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
+            return HttpResponseRedirect(redirect)
+        else:
+            model_names = ['Subscription']
+            model_names.sort()
+            template = loader.get_template('item/new.html')
+            self.context['model_names'] = model_names
+            self.context['form'] = form
+            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+            self.context['redirect'] = self.request.GET.get('redirect')
+            return HttpResponse(template.render(self.context))
+
+
 # Dynamically create default viewers for the ones we don't have.
 for item_type in all_models():
     viewer_name = item_type.__name__.lower()

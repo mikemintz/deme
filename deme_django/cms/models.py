@@ -704,14 +704,15 @@ class Subscription(Item):
     the collection itself.
     
     If notify_text=True, TextComments will be included.
-
+    
     If notify_edit=True, EditComments, TrashComments, UntrashComments,
     AddMemberComments, and RemoveMemberComments will be included.
     """
 
     # Setup
     immutable_fields = Item.immutable_fields | set(['contact_method', 'item'])
-    relevant_abilities = Item.relevant_abilities | set(['view contact_method', 'view item', 'view deep', 'view notify_text', 'view notify_edit', 'edit deep', 'edit notify_text', 'edit notify_edit'])
+    relevant_abilities = Item.relevant_abilities | set(['view contact_method', 'view item', 'view deep', 'view notify_text',
+                                                        'view notify_edit', 'edit deep', 'edit notify_text', 'edit notify_edit'])
     relevant_global_abilities = frozenset()
     class Meta:
         verbose_name = _('subscription')
