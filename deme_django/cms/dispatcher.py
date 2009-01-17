@@ -1,3 +1,8 @@
+"""
+This module manages all of the views for items, viewer requests, and meta
+URLs, and directs them to the proper viewer.
+"""
+
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
 from django.template import Context, loader
 from cms.models import *
