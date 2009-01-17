@@ -12,71 +12,54 @@ register = template.Library()
 
 @register.filter
 def icon_url(item_type, size=32):
-    if item_type != 'error' and isinstance(item_type, basestring):
-        item_type = get_model_with_name(item_type) or Item
-
-    if item_type == 'error':
-        icon = 'apps/error'
-    elif not isinstance(item_type, type):
-        return icon_url(type(item_type), size)
-    elif issubclass(item_type, Item.Version):
-        return icon_url(item_type.NotVersion, size)
-    elif item_type == Agent:
-        icon = 'apps/personal'
-    elif item_type == AuthenticationMethod:
-        icon = 'apps/password'
-    elif item_type == ContactMethod:
-        icon = 'apps/kontact'
-    elif item_type == CustomUrl:
-        icon = 'mimetypes/message'
-    elif item_type == Comment:
-        icon = 'apps/filetypes'
-    elif item_type == Document:
-        icon = 'mimetypes/empty'
-    elif item_type == DjangoTemplateDocument:
-        icon = 'mimetypes/html'
-    elif item_type == EmailContactMethod:
-        icon = 'apps/kmail'
-    elif item_type == Excerpt:
-        icon = 'mimetypes/shellscript'
-    elif item_type == FileDocument:
-        icon = 'mimetypes/misc'
-    elif item_type == Folio:
-        icon = 'apps/kfm'
-    elif item_type == Group:
-        icon = 'apps/Login Manager'
-    elif item_type == ImageDocument:
-        icon = 'mimetypes/images'
-    elif item_type == Item:
-        icon = 'apps/kblackbox'
-    elif item_type == Collection:
-        icon = 'filesystems/folder_blue'
-    elif item_type == Membership:
-        icon = 'filesystems/folder_documents'
-    elif item_type == Permission or item_type == GlobalPermission:
-        icon = 'apps/proxy'
-    elif item_type == Person:
-        icon = 'apps/access'
-    elif item_type == Role or item_type == GlobalRole:
-        icon = 'apps/lassist'
-    elif item_type == RoleAbility or item_type == GlobalRoleAbility:
-        icon = 'apps/ksysv'
-    elif item_type == Site:
-        icon = 'devices/nfs_unmount'
-    elif item_type == SiteDomain:
-        icon = 'devices/modem'
-    elif item_type == Subscription:
-        icon = 'apps/knewsticker'
-    elif item_type == TextDocument:
-        icon = 'mimetypes/txt'
-    elif item_type == Transclusion:
-        icon = 'apps/knotes'
-    elif item_type == ViewerRequest:
-        icon = 'mimetypes/message'
-    elif issubclass(item_type, Item):
-        return icon_url(item_type.__base__, size)
+    """
+    Return a URL for an icon for the item type, size x size pixels.
+    
+    If item_type is the string 'error', return an error icon. Otherwise,
+    item_type can either be a string for the name of the item type, or it can
+    be a class. If nothing matches, return the generic Item icon.
+    
+    Not all sizes are available (look at static/crystal_project).
+    """
+    item_type_to_icon = {
+        'error': 'apps/error',
+        'Agent': 'apps/personal',
+        'AuthenticationMethod': 'apps/password',
+        'ContactMethod': 'apps/kontact',
+        'CustomUrl': 'mimetypes/message',
+        'Comment': 'apps/filetypes',
+        'DemeSetting': 'apps/advancedsettings',
+        'Document': 'mimetypes/empty',
+        'DjangoTemplateDocument': 'mimetypes/html',
+        'EmailContactMethod': 'apps/kmail',
+        'Excerpt': 'mimetypes/shellscript',
+        'FileDocument': 'mimetypes/misc',
+        'Folio': 'apps/kfm',
+        'Group': 'apps/Login Manager',
+        'ImageDocument': 'mimetypes/images',
+        'Item': 'apps/kblackbox',
+        'Collection': 'filesystems/folder_blue',
+        'Membership': 'filesystems/folder_documents',
+        'Permission or item_type == GlobalPermission': 'apps/proxy',
+        'Person': 'apps/access',
+        'Role or item_type == GlobalRole': 'apps/lassist',
+        'RoleAbility or item_type == GlobalRoleAbility': 'apps/ksysv',
+        'Site': 'devices/nfs_unmount',
+        'SiteDomain': 'devices/modem',
+        'Subscription': 'apps/knewsticker',
+        'TextDocument': 'mimetypes/txt',
+        'Transclusion': 'apps/knotes',
+        'ViewerRequest': 'mimetypes/message',
+    }
+    if isinstance(item_type, basestring):
+        pass
+    elif isinstance(item_type, Item):
+        item_type = type(item_type).__name__
+    elif isinstance(item_type, type):
+        item_type = item_type.__name__
     else:
-        return icon_url(Item, size)
+        item_type = 'Item'
+    icon = item_type_to_icon.get(item_type, item_type_to_icon['Item'])
     return "/static/crystal_project/%dx%d/%s.png" % (size, size, icon)
 
 @register.simple_tag

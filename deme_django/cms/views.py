@@ -234,7 +234,7 @@ class ItemViewer(object):
         self.action = action
         self.noun = noun
         self.format = format or 'html'
-        self.method = (request.REQUEST.get('_method', None) or request.method).upper()
+        self.method = (request.GET.get('_method', None) or request.method).upper()
         self.request = request # FOR NOW
         if self.noun == None:
             if self.action == None:
