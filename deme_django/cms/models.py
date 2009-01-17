@@ -1201,7 +1201,8 @@ class Comment(Item):
 
 class TextComment(TextDocument, Comment):
     """
-    TODO: write comment describing this item type
+    A TextComment is a Comment and a TextDocument combined. It is currently the
+    only form of user-generated comments.
     """
 
     # Setup
@@ -1215,7 +1216,10 @@ class TextComment(TextDocument, Comment):
 
 class EditComment(Comment):
     """
-    TODO: write comment describing this item type
+    An EditComment is a Comment that is automatically generated whenever
+    an agent edits an item. The commented item is the item that was edited,
+    and the commented item version number is the new version that was just
+    generated (as opposed to the previous version number).
     """
 
     # Setup
@@ -1229,7 +1233,10 @@ class EditComment(Comment):
 
 class TrashComment(Comment):
     """
-    TODO: write comment describing this item type
+    A TrashComment is a Comment that is automatically generated whenever
+    an agent trashes an item. The commented item is the item that was trashed,
+    and the commented item version number is the latest version number at the
+    time of the trashing.
     """
 
     # Setup
@@ -1243,7 +1250,10 @@ class TrashComment(Comment):
 
 class UntrashComment(Comment):
     """
-    TODO: write comment describing this item type
+    An UntrashComment is a Comment that is automatically generated whenever
+    an agent untrashes an item. The commented item is the item that was
+    trashed, and the commented item version number is the latest version number
+    at the time of the untrashing.
     """
 
     # Setup
@@ -1257,7 +1267,12 @@ class UntrashComment(Comment):
 
 class AddMemberComment(Comment):
     """
-    TODO: write comment describing this item type
+    An AddMemberComment is a Comment that is automatically generated whenever
+    an item is added to a collection. The commented item is the collection, and
+    the commented item version number is the latest version number at the time
+    of the add. The membership field points to the new Membership.
+    
+    This comment is generated when Memberships are created and untrashed.
     """
 
     # Setup
@@ -1269,12 +1284,17 @@ class AddMemberComment(Comment):
         verbose_name_plural = _('add member comments')
 
     # Fields
-    membership = models.ForeignKey(Membership, related_name="add_member_comments_as_membership")
+    membership = models.ForeignKey(Membership, related_name="add_member_comments", verbose_name=_('membership'))
 
 
 class RemoveMemberComment(Comment):
     """
-    TODO: write comment describing this item type
+    A RemoveMemberComment is a Comment that is automatically generated whenever
+    an item is removed from a collection. The commented item is the collection,
+    and the commented item version number is the latest version number at the
+    time of the remove. The membership field points to the old Membership.
+    
+    This comment is generated when Memberships are trashed.
     """
 
     # Setup
@@ -1286,7 +1306,7 @@ class RemoveMemberComment(Comment):
         verbose_name_plural = _('remove member comments')
 
     # Fields
-    membership = models.ForeignKey(Membership, related_name="remove_member_comments_as_membership")
+    membership = models.ForeignKey(Membership, related_name="remove_member_comments", verbose_name=_('membership'))
 
 
 class Excerpt(Item):
