@@ -384,8 +384,7 @@ class Agent(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities | set(['add_contact_method', 'add_subscription',
-                                                        'add_authentication_method', 'login_as', 'view last_online_at'])
+    relevant_abilities = Item.relevant_abilities | set(['add_contact_method', 'add_authentication_method', 'login_as', 'view last_online_at'])
     relevant_global_abilities = frozenset(['create Agent'])
     class Meta:
         verbose_name = _('agent')
@@ -574,7 +573,7 @@ class ContactMethod(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields | set(['agent'])
-    relevant_abilities = Item.relevant_abilities | set(['view agent'])
+    relevant_abilities = Item.relevant_abilities | set(['add_subscription', 'view agent'])
     relevant_global_abilities = frozenset()
     class Meta:
         verbose_name = _('contact method')
