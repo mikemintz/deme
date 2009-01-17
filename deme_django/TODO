@@ -35,6 +35,7 @@ Code correctness/consistency/bugs
 * Consider adding ManyToManyFields with "through"
 * Discuss with Todd whether we should make most text fields rich text, or just htmldocument.body
 * consider making permissions have one column per ability. now that we store all possible abilities, it's easier to migrate.
+  - I tried this, and ended up with about 150 columns, so the indexes were huge (100mb vs 5mb) and the queries were slower. To do this, we'd need a way that didn't involve one very large table with every permission in the column. At first it makes sense to have a parallel inheritance structure of permissions (from items), but if we want to get a list of permissions for an agent and we only know it's an item right now, we won't get them all. This can probably be dealt with: we'll just need to be careful what we do with "comprehensive" lists of permissions.
 * Make more sensible permissions:
   - no permissions on Roles and RoleAbilities, there should be a Role modifying interface that requires do_everything
   - figure out SiteDomains (consider replacing it with SiteAliases, where each Site has a single domain, but SiteAliases add additional domains)

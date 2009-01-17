@@ -1818,3 +1818,4 @@ def get_model_with_name(name):
         return (x for x in all_models() if x.__name__ == name).next()
     except StopIteration:
         return None
+

@@ -351,6 +351,7 @@ def filter_items_by_permission(agent, ability):
            (~p['agentno'] & ~p['collectionno'] & ~p['agentroleno'] & ~p['collectionroleno'] & p['defaultyes']) |\
            (~p['agentno'] & ~p['collectionno'] & ~p['agentroleno'] & ~p['collectionroleno'] & p['defaultroleyes'])
 
+
 def filter_agents_by_permission(item, ability):
     """
     Return a Q object that can be used as a QuerySet filter, specifying only

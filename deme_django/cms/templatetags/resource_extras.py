@@ -7,8 +7,47 @@ from django.utils.http import urlquote
 from django.utils.html import escape, urlize
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 
 register = template.Library()
+
+###############################################################################
+# Helper functions
+###############################################################################
+
+def agentcan_global_helper(context, ability, wildcard_suffix=False):
+    """
+    Return a boolean for whether the logged in agent has the specified global
+    ability. If wildcard_suffix=True, then return True if the agent has **any**
+    global ability whose first word is the specified ability.
+    """
+    agent = context['cur_agent']
+    permission_cache = context['_permission_cache']
+    if wildcard_suffix:
+        global_abilities = permission_cache.global_abilities(agent)
+        return any(x.startswith(ability) for x in global_abilities)
+    else:
+        return permission_cache.agent_can_global(agent, ability)
+
+
+def agentcan_helper(context, ability, item, wildcard_suffix=False):
+    """
+    Return a boolean for whether the logged in agent has the specified ability.
+    If wildcard_suffix=True, then return True if the agent has **any** ability
+    whose first word is the specified ability.
+    """
+    agent = context['cur_agent']
+    permission_cache = context['_permission_cache']
+    if wildcard_suffix:
+        abilities_for_item = permission_cache.item_abilities(agent, item)
+        return any(x.startswith(ability) for x in abilities_for_item)
+    else:
+        return permission_cache.agent_can(agent, ability, item)
+
+
+###############################################################################
+# Filters and templates
+###############################################################################
 
 @register.filter
 def icon_url(item_type, size=32):
@@ -83,39 +122,26 @@ def list_results_navigator(viewer, collection, search_query, trashed, offset, li
     if collection:
         url_prefix += 'collection=%s&' % collection.pk
     result = []
+    # Add a prev link
     if offset > 0:
         new_offset = max(0, offset - limit)
-        prev_link = '<a class="list_results_prev" href="%soffset=%d">&laquo; Prev</a>' % (url_prefix, new_offset)
-        result.append(prev_link)
+        prev_text = _('Prev')
+        link = u'<a class="list_results_prev" href="%soffset=%d">&laquo; %s</a>' % (url_prefix, new_offset, prev_text)
+        result.append(link)
+    # Add the page links
     for new_offset in xrange(max(0, offset - limit * max_pages), min(n_results - 1, offset + limit * max_pages), limit):
         if new_offset == offset:
-            step_link = '<span class="list_results_highlighted">%d</span>' % (1 + new_offset / limit,)
+            link = '<span class="list_results_highlighted">%d</span>' % (1 + new_offset / limit,)
         else:
-            step_link = '<a class="list_results_step" href="%soffset=%d">%d</a>' % (url_prefix, new_offset, 1 + new_offset / limit)
-        result.append(step_link)
-    if offset < n_results - limit:
+            link = '<a class="list_results_step" href="%soffset=%d">%d</a>' % (url_prefix, new_offset, 1 + new_offset / limit)
+        result.append(link)
+    # Add a next link
+    if offset + limit < n_results:
         new_offset = offset + limit
-        next_link = '<a class="list_results_next" href="%soffset=%d">Next &raquo;</a>' % (url_prefix, new_offset)
-        result.append(next_link)
+        next_text = _('Next')
+        link = u'<a class="list_results_next" href="%soffset=%d">%s &raquo;</a>' % (url_prefix, new_offset, next_text)
+        result.append(link)
     return ''.join(result)
-
-def agentcan_global_helper(context, ability, wildcard_suffix=False):
-    agent = context['cur_agent']
-    permission_cache = context['_permission_cache']
-    if wildcard_suffix:
-        global_abilities = permission_cache.global_abilities(agent)
-        return any(x.startswith(ability) for x in global_abilities)
-    else:
-        return permission_cache.agent_can_global(agent, ability)
-
-def agentcan_helper(context, ability, item, wildcard_suffix=False):
-    agent = context['cur_agent']
-    permission_cache = context['_permission_cache']
-    if wildcard_suffix:
-        abilities_for_item = permission_cache.item_abilities(agent, item)
-        return any(x.startswith(ability) for x in abilities_for_item)
-    else:
-        return permission_cache.agent_can(agent, ability, item)
 
 class IfAgentCan(template.Node):
     def __init__(self, ability, ability_parameter, item, nodelist_true, nodelist_false):
