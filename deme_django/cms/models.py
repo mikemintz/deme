@@ -1,3 +1,7 @@
+"""
+This module creates the item type framework, and defines the core item types.
+"""
+
 from django.db import models, transaction
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
