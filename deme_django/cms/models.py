@@ -1311,7 +1311,11 @@ class RemoveMemberComment(Comment):
 
 class Excerpt(Item):
     """
-    TODO: write comment describing this item type
+    An Excerpt is an Item that refers to a portion of another Item (or an
+    external resource, such as a webpage).
+    
+    Excerpt is meant to be abstract, so users should always create subclasses
+    rather than creating raw Excerpts.
     """
 
     # Setup
@@ -1325,22 +1329,31 @@ class Excerpt(Item):
 
 class TextDocumentExcerpt(Excerpt, TextDocument):
     """
-    TODO: write comment describing this item type
+    A TextDocumentExcerpt refers to a contiguous region of text in a version of
+    another TextDocument in Deme.
+    
+    The body field contains the excerpted region, and the start_index and
+    length identify the character position of this region within the specified
+    TextDocument.
     """
 
     # Setup
-    immutable_fields = Excerpt.immutable_fields | TextDocument.immutable_fields | set(['text_document','text_document_version_number', 'start_index', 'length', 'body'])
-    relevant_abilities = (Excerpt.relevant_abilities | TextDocument.relevant_abilities | set(['view text_document', 'view text_document_version_number', 'view start_index', 'view length'])) - set(['edit body'])
+    immutable_fields = Excerpt.immutable_fields \
+                     | TextDocument.immutable_fields \
+                     | set(['text_document','text_document_version_number', 'start_index', 'length', 'body'])
+    relevant_abilities = Excerpt.relevant_abilities \
+                       | (TextDocument.relevant_abilities - set(['edit body'])) \
+                       | set(['view text_document', 'view text_document_version_number', 'view start_index', 'view length']) 
     relevant_global_abilities = frozenset(['create TextDocumentExcerpt'])
     class Meta:
         verbose_name = _('text document excerpt')
         verbose_name_plural = _('text document excerpts')
 
     # Fields
-    text_document = models.ForeignKey(TextDocument, related_name='text_document_excerpts_as_text_document')
-    text_document_version_number = models.PositiveIntegerField()
-    start_index = models.PositiveIntegerField()
-    length = models.PositiveIntegerField()
+    text_document                = models.ForeignKey(TextDocument, related_name='text_document_excerpts', verbose_name=_('text document'))
+    text_document_version_number = models.PositiveIntegerField(_('text document version number'))
+    start_index                  = models.PositiveIntegerField(_('start index'))
+    length                       = models.PositiveIntegerField(_('length'))
 
 
 ###############################################################################
@@ -1350,23 +1363,34 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
 
 class ViewerRequest(Item):
     """
-    TODO: write comment describing this item type
+    A ViewerRequest is represents a particular action at a particular viewer
+    (basically a URL, although its stored more explicitly). It specifies a
+    viewer (just a string, since viewers are not Items), an action (like "view"
+    or "edit"), an item that is referred to (or null for collection-wide
+    actions), a query_string if you want to pass parameters to the viewer, and
+    a format.
+    
+    A ViewerRequest is supposed to be abstract, so users can only create Sites
+    and CustomUrls.
     """
 
     # Setup
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities | set(['add_sub_path', 'view aliased_item', 'view viewer', 'view action', 'view query_string', 'view format', 'edit aliased_item', 'edit viewer', 'edit action', 'edit query_string', 'edit format'])
+    relevant_abilities = Item.relevant_abilities | set(['add_sub_path', 'view aliased_item', 'view viewer', 'view action',
+                                                        'view query_string', 'view format', 'edit aliased_item', 'edit viewer',
+                                                        'edit action', 'edit query_string', 'edit format'])
     relevant_global_abilities = frozenset()
     class Meta:
         verbose_name = _('viewer request')
         verbose_name_plural = _('viewer requests')
 
     # Fields
-    aliased_item = models.ForeignKey(Item, related_name='viewer_requests_as_item', null=True, blank=True) #null should be collection
-    viewer = models.CharField(max_length=255)
-    action = models.CharField(max_length=255)
-    query_string = models.CharField(max_length=1024, null=True, blank=True)
-    format = models.CharField(max_length=255, default='html')
+    viewer       = models.CharField(_('viewer'), max_length=255)
+    action       = models.CharField(_('action'), max_length=255)
+    # If aliased_item is null, it is a collection action
+    aliased_item = models.ForeignKey(Item, related_name='viewer_requests', null=True, blank=True, verbose_name=_('aliased item'))
+    query_string = models.CharField(_('query string'), max_length=1024, null=True, blank=True)
+    format       = models.CharField(_('format'), max_length=255, default='html')
 
     def calculate_full_path(self):
         """Return a tuple (site, custom_urls) where custom_urls is a list."""
@@ -1380,7 +1404,15 @@ class ViewerRequest(Item):
 
 class Site(ViewerRequest):
     """
-    TODO: write comment describing this item type
+    A Site is a ViewerRequest that represents a logical website with URLs.
+    
+    A Site can have multiple SiteDomains, but ordinarily it would just have one
+    (multiple domains are useful if you want to enable www.example.com and
+    example.com). Multiple Sites on the same Deme installation share the same
+    Items with the same unique ids, but they resolve URLs differently so each
+    Site can have a different page for /mike. If you go to the base URL of a
+    site (like http://example.com/), you see the ViewerRequest that this Site
+    inherits from.
     """
 
     # Setup
@@ -1392,12 +1424,12 @@ class Site(ViewerRequest):
         verbose_name_plural = _('sites')
 
     # Fields
-    default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_as_default_layout', null=True, blank=True)
+    default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, verbose_name=_('default layout'))
 
 
 class SiteDomain(Item):
     """
-    TODO: write comment describing this item type
+    A SiteDomain represents a hostname for a Site.
     """
 
     # Setup
@@ -1410,13 +1442,19 @@ class SiteDomain(Item):
         unique_together = (('site', 'hostname'),)
 
     # Fields
-    hostname = models.CharField(max_length=255)
-    site = models.ForeignKey(Site, related_name='site_domains_as_site')
+    hostname = models.CharField(_('hostname'), max_length=255)
+    site     = models.ForeignKey(Site, related_name='site_domains', verbose_name=_('site'))
 
 
 class CustomUrl(ViewerRequest):
     """
-    TODO: write comment describing this item type
+    A CustomUrl is a ViewerRequest that represents a specific path.
+    
+    Each CustomUrl has a parent ViewerRequest (it will be the Site if this
+    CustomUrl is the first path component) and a string for the path component.
+    So when a user visits http://example.com/abc/def/ghi, Deme looks for a
+    CustomUrl with name "ghi" with a parent with name "def" with a parent with
+    name "abc" with a parent Site with a SiteDomain "example.com".
     """
 
     # Setup
@@ -1429,8 +1467,8 @@ class CustomUrl(ViewerRequest):
         unique_together = (('parent_url', 'path'),)
 
     # Fields
-    parent_url = models.ForeignKey(ViewerRequest, related_name='child_urls')
-    path = models.CharField(max_length=255)
+    parent_url = models.ForeignKey(ViewerRequest, related_name='child_urls', verbose_name=_('parent URL'))
+    path       = models.CharField(_('path'), max_length=255)
 
 
 ###############################################################################

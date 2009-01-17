@@ -53,7 +53,7 @@ def get_current_site(request):
     """
     hostname = request.get_host().split(':')[0]
     try:
-        return Site.objects.filter(site_domains_as_site__hostname=hostname)[0:1].get()
+        return Site.objects.filter(site_domains__hostname=hostname)[0:1].get()
     except ObjectDoesNotExist:
         try:
             return Site.objects.get(pk=DemeSetting.get('cms.default_site'))
