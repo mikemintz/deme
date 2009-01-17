@@ -235,7 +235,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
             recursive_filter = None
         else:
             visible_memberships = Membership.objects.filter(permission_cache.filter_items(context['cur_agent'], 'view item'))
-            recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
+            recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         members_and_me_pks_query = Item.objects.filter(trashed=False).filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_collection_members(recursive_filter).values('pk').query)).values('pk').query
         comment_pks = RecursiveCommentMembership.objects.filter(parent__in=members_and_me_pks_query).values_list('child', flat=True)
     else:

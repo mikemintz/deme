@@ -120,7 +120,7 @@ def calculate_global_roles_for_agent(agent):
     """
     my_collection_ids = agent.ancestor_collections().values('pk').query
     agent_role_permissions = AgentGlobalRolePermission.objects.filter(agent=agent)
-    collection_role_permissions = CollectionGlobalRolePermission.objects.filter(collection__pk__in=my_collection_ids)
+    collection_role_permissions = CollectionGlobalRolePermission.objects.filter(collection__in=my_collection_ids)
     default_role_permissions = DefaultGlobalRolePermission.objects
     role_manager = GlobalRole.objects.filter(trashed=False)
     agent_roles = role_manager.filter(pk__in=agent_role_permissions.values('global_role_id').query)
@@ -141,7 +141,7 @@ def calculate_global_permissions_for_agent(agent):
     """
     my_collection_ids = agent.ancestor_collections().values('pk').query
     agent_perms = AgentGlobalPermission.objects.filter(agent=agent)
-    collection_perms = CollectionGlobalPermission.objects.filter(collection__pk__in=my_collection_ids)
+    collection_perms = CollectionGlobalPermission.objects.filter(collection__in=my_collection_ids)
     default_perms = DefaultGlobalPermission.objects.all()
     return (agent_perms, collection_perms, default_perms)
 
@@ -178,7 +178,7 @@ def calculate_global_abilities_for_agent(agent):
         # abilities at this level.
         cur_abilities_yes = set()
         cur_abilities_no = set()
-        role_abilities = GlobalRoleAbility.objects.filter(trashed=False, global_role__pk__in=roles.values('pk').query)
+        role_abilities = GlobalRoleAbility.objects.filter(trashed=False, global_role__in=roles.values('pk').query)
         role_ability_records = role_abilities.values('ability', 'is_allowed')
         permission_ability_records = permissions.values('ability', 'is_allowed')
         for ability_record in chain(role_ability_records, permission_ability_records):
@@ -215,7 +215,7 @@ def calculate_roles_for_agent_and_item(agent, item):
     """
     my_collection_ids = agent.ancestor_collections().values('pk').query
     agent_role_permissions = AgentRolePermission.objects.filter(item=item, agent=agent)
-    collection_role_permissions = CollectionRolePermission.objects.filter(item=item, collection__pk__in=my_collection_ids)
+    collection_role_permissions = CollectionRolePermission.objects.filter(item=item, collection__in=my_collection_ids)
     default_role_permissions = DefaultRolePermission.objects
     role_manager = Role.objects.filter(trashed=False)
     agent_roles = role_manager.filter(pk__in=agent_role_permissions.values('role_id').query)
@@ -238,7 +238,7 @@ def calculate_permissions_for_agent_and_item(agent, item):
 
     my_collection_ids = agent.ancestor_collections().values('pk').query
     agent_perms = AgentPermission.objects.filter(item=item, agent=agent)
-    collection_perms = CollectionPermission.objects.filter(item=item, collection__pk__in=my_collection_ids)
+    collection_perms = CollectionPermission.objects.filter(item=item, collection__in=my_collection_ids)
     default_perms = DefaultPermission.objects.filter(item=item)
     return (agent_perms, collection_perms, default_perms)
 
@@ -275,7 +275,7 @@ def calculate_abilities_for_agent_and_item(agent, item):
         # abilities at this level.
         cur_abilities_yes = set()
         cur_abilities_no = set()
-        role_abilities = RoleAbility.objects.filter(trashed=False, role__pk__in=roles.values('pk').query)
+        role_abilities = RoleAbility.objects.filter(trashed=False, role__in=roles.values('pk').query)
         role_ability_records = role_abilities.values('ability', 'is_allowed')
         permission_ability_records = permissions.values('ability', 'is_allowed')
         for ability_record in chain(role_ability_records, permission_ability_records):
@@ -330,14 +330,14 @@ def filter_items_by_permission(agent, ability):
             # Generate a Q object for this particular permission and is_allowed
             args = {}
             if is_role:
-                args['role__pk__in'] = (yes_role_ids if is_allowed else no_role_ids)
+                args['role__in'] = (yes_role_ids if is_allowed else no_role_ids)
             else:
                 args['ability'] = ability
                 args['is_allowed'] = is_allowed
             if level == 'agent':
                 args['agent'] = agent
             elif level == 'collection':
-                args['collection__pk__in'] = my_collection_ids
+                args['collection__in'] = my_collection_ids
             query = permission_class.objects.filter(**args).values('item_id').query
             q_name = "%s%s%s" % (level, 'role' if is_role else '', 'yes' if is_allowed else 'no')
             p[q_name] = Q(pk__in=query)
@@ -380,7 +380,7 @@ def filter_agents_by_permission(item, ability):
             # Generate a Q object for this particular permission and is_allowed
             args = {'item': item}
             if is_role:
-                args['role__pk__in'] = (yes_role_ids if is_allowed else no_role_ids)
+                args['role__in'] = (yes_role_ids if is_allowed else no_role_ids)
             else:
                 args['ability'] = ability
                 args['is_allowed'] = is_allowed
@@ -388,7 +388,7 @@ def filter_agents_by_permission(item, ability):
                 query = permission_class.objects.filter(**args).values('agent_id').query
             elif level == 'collection':
                 collection_query = permission_class.objects.filter(**args).values('collection_id').query
-                query = RecursiveMembership.objects.filter(parent__pk__in=collection_query).values('child_id').query
+                query = RecursiveMembership.objects.filter(parent__in=collection_query).values('child_id').query
             else:
                 default_perm_exists = (len(permission_class.objects.filter(**args)[:1]) > 0)
                 query = (Agent.objects if default_perm_exists else Agent.objects.filter(pk__isnull=True)).values('pk').query

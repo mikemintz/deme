@@ -1112,18 +1112,19 @@ class Comment(Item):
 
         # First, decide if we're allowed to get this notification at all
         comment_type_q = self.subscription_filter_for_comment_type()
-        parent_pks_query = self.all_parents_in_thread().filter(trashed=False).values('pk').query
-        direct_subscriptions = Subscription.objects.filter(item__in=parent_pks_query, trashed=False).filter(comment_type_q)
-        if not direct_subscriptions:
+        def direct_subscriptions():
+            parent_pks_query = self.all_parents_in_thread().filter(trashed=False).values('pk').query
+            return Subscription.objects.filter(comment_type_q, item__in=parent_pks_query, trashed=False)
+        def deep_subscriptions():
             if permission_cache.agent_can_global(agent, 'do_everything'):
                 recursive_filter = None
             else:
                 visible_memberships = Membership.objects.filter(permission_cache.filter_items(agent, 'view item'))
-                recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
+                recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             parent_pks_query = self.all_parents_in_thread(True, recursive_filter).filter(trashed=False).values('pk').query
-            deep_subscriptions = Subscription.objects.filter(item__in=parent_pks_query, deep=True, trashed=False).filter(comment_type_q)
-            if not deep_subscriptions:
-                return None
+            return Subscription.objects.filter(comment_type_q, item__in=parent_pks_query, deep=True, trashed=False)
+        if not direct_subscriptions() and not deep_subscriptions():
+            return None
 
         # Now get the fields we are allowed to view
         item = self.item
@@ -1137,7 +1138,7 @@ class Comment(Item):
         topmost_item_name = topmost_item.name if permission_cache.agent_can(agent, 'view name', topmost_item) else 'PERMISSION DENIED'
         creator_name = self.creator.name if permission_cache.agent_can(agent, 'view name', self.creator) else 'PERMISSION DENIED'
 
-        # Finally put together the message
+        # Generate the subject and body
         if isinstance(self, TextComment):
             subject = 'Re: [%s] %s' % (comment_name, topmost_item_name)
             body = '%s commented on %s\n%s\n\n%s' % (creator_name, topmost_item_name, topmost_item_url, comment_body)
@@ -1158,16 +1159,19 @@ class Comment(Item):
             body = '%s removed a member from %s\n%s' % (creator_name, item_name, item_url)
         else:
             return None
+
+        # Finally, put together the EmailMessage
         from_email_address = '%s@%s' % (self.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
         from_email = formataddr((creator_name, from_email_address))
-        reply_to = formataddr((comment_name, from_email_address))
+        reply_to_email = formataddr((comment_name, from_email_address))
+        to_email = formataddr((agent.name, email_contact_method.email))
         headers = {}
-        headers['Reply-To'] = reply_to
+        headers['Reply-To'] = reply_to_email
         messageid = lambda x: '<%s-%s@%s>' % (x.pk, x.created_at.strftime("%Y%m%d%H%M%S"), settings.NOTIFICATION_EMAIL_HOSTNAME)
         headers['Message-ID'] = messageid(self)
         headers['In-Reply-To'] = messageid(self.item)
         headers['References'] = '%s %s' % (messageid(topmost_item), messageid(self.item))
-        return EmailMessage(subject=subject, body=body, from_email=from_email, to=[formataddr((agent.name, email_contact_method.email))], headers=headers)
+        return EmailMessage(subject=subject, body=body, from_email=from_email, to=[to_email], headers=headers)
 
     def _after_create(self):
         super(Comment, self)._after_create()
@@ -1717,7 +1721,7 @@ class RecursiveMembership(models.Model):
     def recursive_remove_edge(cls, parent, child):
         ancestors = Collection.objects.filter(Q(pk__in=RecursiveMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
         descendants = Item.objects.filter(Q(pk__in=RecursiveMembership.objects.filter(parent=child).values('child').query) | Q(pk=child.pk))
-        edges = RecursiveMembership.objects.filter(parent__pk__in=ancestors.values('pk').query, child__pk__in=descendants.values('pk').query)
+        edges = RecursiveMembership.objects.filter(parent__in=ancestors.values('pk').query, child__in=descendants.values('pk').query)
         # first remove all connections between ancestors and descendants
         edges.delete()
         # now add back any real connections between ancestors and descendants that aren't trashed

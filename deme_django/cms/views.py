@@ -354,7 +354,7 @@ class ItemViewer(object):
                 recursive_filter = None
             else:
                 visible_memberships = Membership.objects.filter(self.permission_cache.filter_items(self.cur_agent, 'view item'))
-                recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
+                recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=collection.all_contained_collection_members(recursive_filter).values('pk').query)
         listable_items = items.filter(self.permission_cache.filter_items(self.cur_agent, 'view name'))
         n_opposite_trashed_items = listable_items.filter(trashed=(not trashed)).count()
