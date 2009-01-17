@@ -1112,15 +1112,16 @@ class Comment(Item):
 
         # First, decide if we're allowed to get this notification at all
         comment_type_q = self.subscription_filter_for_comment_type()
-        direct_subscriptions = Subscription.objects.filter(item__in=self.all_parents_in_thread().filter(trashed=False).values('pk').query, trashed=False).filter(comment_type_q)
+        parent_pks_query = self.all_parents_in_thread().filter(trashed=False).values('pk').query
+        direct_subscriptions = Subscription.objects.filter(item__in=parent_pks_query, trashed=False).filter(comment_type_q)
         if not direct_subscriptions:
             if permission_cache.agent_can_global(agent, 'do_everything'):
                 recursive_filter = None
             else:
                 visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
-            possible_parents = self.all_parents_in_thread(include_parent_collections=True, recursive_filter=recursive_filter).filter(trashed=False)
-            deep_subscriptions = Subscription.objects.filter(item__in=possible_parents.values('pk').query, deep=True, trashed=False).filter(comment_type_q)
+            parent_pks_query = self.all_parents_in_thread(True, recursive_filter).filter(trashed=False).values('pk').query
+            deep_subscriptions = Subscription.objects.filter(item__in=parent_pks_query, deep=True, trashed=False).filter(comment_type_q)
             if not deep_subscriptions:
                 return None
 
@@ -1180,7 +1181,7 @@ class Comment(Item):
                                                            item__in=self.all_parents_in_thread().filter(trashed=False).values('pk').query,
                                                            trashed=False)
         deep_subscriptions = Subscription.objects.filter(comment_type_q,
-                                                         item__in=self.all_parents_in_thread(include_parent_collections=True).filter(trashed=False).values('pk').query,
+                                                         item__in=self.all_parents_in_thread(True).filter(trashed=False).values('pk').query,
                                                          deep=True,
                                                          trashed=False)
         direct_q = Q(pk__in=direct_subscriptions.values('contact_method').query)
