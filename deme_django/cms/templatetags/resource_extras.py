@@ -63,10 +63,19 @@ def icon_url(item_type, size=32):
     return "/static/crystal_project/%dx%d/%s.png" % (size, size, icon)
 
 @register.simple_tag
-def list_results_navigator(item_type, collection, search_query, trashed, offset, limit, n_results, max_pages):
+def list_results_navigator(viewer, collection, search_query, trashed, offset, limit, n_results, max_pages):
+    """
+    Make an HTML pagination navigator (page number links with prev and next
+    links on both sides).
+    
+    The prev link will have class="list_results_prev". The next link will have
+    class="list_results_next". Each page number link will have
+    class="list_results_step". The current page number will be in a span with
+    class="list_results_highlighted".
+    """
     if n_results <= limit:
         return ''
-    url_prefix = reverse('resource_collection', kwargs={'viewer': item_type.lower()}) + '?limit=%s&' % limit
+    url_prefix = reverse('resource_collection', kwargs={'viewer': viewer.lower()}) + '?limit=%s&' % limit
     if search_query:
         url_prefix += 'q=%s&' % search_query
     if trashed:
@@ -76,18 +85,18 @@ def list_results_navigator(item_type, collection, search_query, trashed, offset,
     result = []
     if offset > 0:
         new_offset = max(0, offset - limit)
-        prev_button = '<a class="list_results_prev" href="%soffset=%d">&laquo; Prev</a>' % (url_prefix, new_offset)
-        result.append(prev_button)
+        prev_link = '<a class="list_results_prev" href="%soffset=%d">&laquo; Prev</a>' % (url_prefix, new_offset)
+        result.append(prev_link)
     for new_offset in xrange(max(0, offset - limit * max_pages), min(n_results - 1, offset + limit * max_pages), limit):
         if new_offset == offset:
-            step_button = '<span class="list_results_highlighted">%d</span>' % (1 + new_offset / limit,)
+            step_link = '<span class="list_results_highlighted">%d</span>' % (1 + new_offset / limit,)
         else:
-            step_button = '<a class="list_results_step" href="%soffset=%d">%d</a>' % (url_prefix, new_offset, 1 + new_offset / limit)
-        result.append(step_button)
+            step_link = '<a class="list_results_step" href="%soffset=%d">%d</a>' % (url_prefix, new_offset, 1 + new_offset / limit)
+        result.append(step_link)
     if offset < n_results - limit:
         new_offset = offset + limit
-        next_button = '<a class="list_results_next" href="%soffset=%d">Next &raquo;</a>' % (url_prefix, new_offset)
-        result.append(next_button)
+        next_link = '<a class="list_results_next" href="%soffset=%d">Next &raquo;</a>' % (url_prefix, new_offset)
+        result.append(next_link)
     return ''.join(result)
 
 def agentcan_global_helper(context, ability, wildcard_suffix=False):
