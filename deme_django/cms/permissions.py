@@ -89,6 +89,20 @@ class PermissionCache(object):
             self._ability_yes_cache.setdefault((agent.pk, ability), set()).update(yes_ids)
             self._ability_no_cache.setdefault((agent.pk, ability), set()).update(no_ids)
 
+    def filter_items(self, agent, ability):
+        """
+        Return a Q object that can be used as a QuerySet filter, specifying only
+        those items that the agent has the ability for.
+        
+        Unlike filter_items_by_permission, this takes into account the fact that
+        agents with the global ability "do_everything" virtually have all item
+        abilities.
+        """
+        if self.agent_can_global(agent, 'do_everything'):
+            return Q()
+        else:
+            return filter_items_by_permission(agent, ability)
+
 
 ###############################################################################
 # Global permissions

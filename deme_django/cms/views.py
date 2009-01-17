@@ -353,13 +353,10 @@ class ItemViewer(object):
             if self.cur_agent_can_global('do_everything'):
                 recursive_filter = None
             else:
-                visible_memberships = Membership.objects.filter(permissions.filter_items_by_permission(self.cur_agent, 'view item'))
+                visible_memberships = Membership.objects.filter(self.permission_cache.filter_items(self.cur_agent, 'view item'))
                 recursive_filter = Q(child_memberships__pk__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=collection.all_contained_collection_members(recursive_filter).values('pk').query)
-        if self.cur_agent_can_global('do_everything'):
-            listable_items = items
-        else:
-            listable_items = items.filter(permissions.filter_items_by_permission(self.cur_agent, 'view name'))
+        listable_items = items.filter(self.permission_cache.filter_items(self.cur_agent, 'view name'))
         n_opposite_trashed_items = listable_items.filter(trashed=(not trashed)).count()
         listable_items = listable_items.filter(trashed=trashed)
         listable_items = listable_items.order_by('id')
@@ -382,7 +379,7 @@ class ItemViewer(object):
         self.context['list_end_i'] = min(offset + limit, n_listable_items)
         self.context['trashed'] = trashed
         self.context['collection'] = collection
-        self.context['all_collections'] = Collection.objects.filter(trashed=False).filter(permissions.filter_items_by_permission(self.cur_agent, 'view name')).order_by('name')
+        self.context['all_collections'] = Collection.objects.filter(trashed=False).filter(self.permission_cache.filter_items(self.cur_agent, 'view name')).order_by('name')
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
@@ -477,8 +474,7 @@ class ItemViewer(object):
             if viewable_items.count() == 0:
                 continue
             self.permission_cache.mass_learn(self.cur_agent, 'view name', viewable_items)
-            if not self.cur_agent_can_global('do_everything'):
-                viewable_items = viewable_items.filter(permissions.filter_items_by_permission(self.cur_agent, 'view %s' % field.field.name))
+            viewable_items = viewable_items.filter(self.permission_cache.filter_items(self.cur_agent, 'view %s' % field.field.name))
             relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)
         template = loader.get_template('item/relationships.html')
@@ -957,8 +953,7 @@ class CollectionViewer(ItemViewer):
         memberships = self.item.child_memberships
         memberships = memberships.filter(trashed=False)
         memberships = memberships.filter(item__trashed=False)
-        if not self.cur_agent_can_global('do_everything'):
-            memberships = memberships.filter(permissions.filter_items_by_permission(self.cur_agent, 'view item'))
+        memberships = memberships.filter(self.permission_cache.filter_items(self.cur_agent, 'view item'))
         memberships = memberships.select_related('item')
         if memberships:
             self.permission_cache.mass_learn(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))

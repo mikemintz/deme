@@ -129,9 +129,8 @@ def authenticate(request, *args, **kwargs):
         # Otherwise, return the login.html page.
         else:
             login_as_agents = Agent.objects.filter(trashed=False).order_by('name')
-            if not permission_cache.agent_can_global(cur_agent, 'do_everything'):
-                login_as_agents = login_as_agents.filter(permissions.filter_items_by_permission(cur_agent, 'login_as'))
-                permission_cache.mass_learn(cur_agent, 'view name', login_as_agents)
+            login_as_agents = login_as_agents.filter(permission_cache.filter_items(cur_agent, 'login_as'))
+            permission_cache.mass_learn(cur_agent, 'view name', login_as_agents)
             template = loader.get_template('login.html')
             context = Context()
             context['redirect'] = request.GET['redirect']
