@@ -30,7 +30,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
-* Code cleanup: do the rest of the item types in cms/models.py with TODO comment, then do non-models in models.py, then do remaining files
+* Code cleanup: do non-models in models.py, then do remaining files
 * It kind of seems like updater/updater_at is unnecessary, since you can derive it from EditComments, and when Versions become more abstract (with delta) then items_updated won't be possible in the current way
 * Consider adding ManyToManyFields with "through"
 * Discuss with Todd whether we should make most text fields rich text, or just htmldocument.body

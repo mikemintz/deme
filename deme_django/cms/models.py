@@ -1558,23 +1558,15 @@ POSSIBLE_ABILITIES = POSSIBLE_ABILITIES_ITER()
 POSSIBLE_GLOBAL_ABILITIES = POSSIBLE_GLOBAL_ABILITIES_ITER()
 
 
-class GlobalRole(Item):
-    """
-    TODO: write comment describing this item type
-    """
-
-    # Setup
-    immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities
-    relevant_global_abilities = frozenset(['create GlobalRole'])
-    class Meta:
-        verbose_name = _('global role')
-        verbose_name_plural = _('global roles')
-
-
 class Role(Item):
     """
-    TODO: write comment describing this item type
+    A Role is a list of abilities (encapsulated in RoleAbilities).
+    
+    Roles do not refer to specific items, but just specific abilities. One
+    example might be a "department admin" Role which has every ability for
+    department-related items turned on. Roles are not necessary for the
+    permission system, but they prevent users from having to manually configure
+    each ability they want to assign between an agent and an item.
     """
 
     # Setup
@@ -1586,29 +1578,25 @@ class Role(Item):
         verbose_name_plural = _('roles')
 
 
-class GlobalRoleAbility(Item):
+class GlobalRole(Item):
     """
-    TODO: write comment describing this item type
+    A GlobalRole is the same as a Role but for global permissions instead of
+    item permissions.
     """
 
     # Setup
-    immutable_fields = Item.immutable_fields | set(['global_role', 'ability'])
-    relevant_abilities = Item.relevant_abilities | set(['view global_role', 'view ability', 'view is_allowed', 'edit is_allowed'])
-    relevant_global_abilities = frozenset(['create GlobalRoleAbility'])
+    immutable_fields = Item.immutable_fields
+    relevant_abilities = Item.relevant_abilities
+    relevant_global_abilities = frozenset(['create GlobalRole'])
     class Meta:
-        verbose_name = _('global role ability')
-        verbose_name_plural = _('global role abilities')
-        unique_together = (('global_role', 'ability'),)
-
-    # Fields
-    global_role = models.ForeignKey(GlobalRole, related_name='abilities_as_global_role')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
+        verbose_name = _('global role')
+        verbose_name_plural = _('global roles')
 
 
 class RoleAbility(Item):
     """
-    TODO: write comment describing this item type
+    A RoleAbility belongs to a Role and specifies an ability string, as well as
+    a boolean for whether this ability is granted or denied.
     """
 
     # Setup
@@ -1621,9 +1609,30 @@ class RoleAbility(Item):
         unique_together = (('role', 'ability'),)
 
     # Fields
-    role = models.ForeignKey(Role, related_name='abilities_as_role')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
+    role       = models.ForeignKey(Role, related_name='role_abilities', verbose_name=_('role'))
+    ability    = models.CharField(_('ability'), max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
+    is_allowed = models.BooleanField(_('is allowed'), default=True, db_index=True)
+
+
+class GlobalRoleAbility(Item):
+    """
+    A GlobalRoleAbility is the same as a RoleAbility but for global permissions
+    instead of item permissions.
+    """
+
+    # Setup
+    immutable_fields = Item.immutable_fields | set(['global_role', 'ability'])
+    relevant_abilities = Item.relevant_abilities | set(['view global_role', 'view ability', 'view is_allowed', 'edit is_allowed'])
+    relevant_global_abilities = frozenset(['create GlobalRoleAbility'])
+    class Meta:
+        verbose_name = _('global role ability')
+        verbose_name_plural = _('global role abilities')
+        unique_together = (('global_role', 'ability'),)
+
+    # Fields
+    global_role = models.ForeignKey(GlobalRole, related_name='role_abilities', verbose_name=_('global role'))
+    ability     = models.CharField(_('ability'), max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
+    is_allowed  = models.BooleanField(_('is allowed'), default=True, db_index=True)
 
 
 class Permission(models.Model):
