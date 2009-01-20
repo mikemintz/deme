@@ -564,7 +564,7 @@ class ItemViewer(object):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         can_trash = self.cur_agent_can('trash', self.item)
-        if isinstance(self.item, Permission) and self.cur_agent_can('modify_permissions', self.item.item):
+        if isinstance(self.item, Permission) and self.cur_agent_can('do_everything', self.item.item):
             can_trash = True
         if isinstance(self.item, GlobalPermission) and self.cur_agent_can_global('do_everything'):
             can_trash = True
@@ -578,7 +578,7 @@ class ItemViewer(object):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         can_trash = self.cur_agent_can('trash', self.item)
-        if isinstance(self.item, Permission) and self.cur_agent_can('modify_permissions', self.item.item):
+        if isinstance(self.item, Permission) and self.cur_agent_can('do_everything', self.item.item):
             can_trash = True
         if isinstance(self.item, GlobalPermission) and self.cur_agent_can_global('do_everything'):
             can_trash = True
@@ -589,7 +589,7 @@ class ItemViewer(object):
         return HttpResponseRedirect(redirect)
 
     def entry_permissions(self):
-        can_modify_permissions = self.cur_agent_can('modify_permissions', self.item)
+        can_modify_permissions = self.cur_agent_can('do_everything', self.item)
         if not can_modify_permissions:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
 

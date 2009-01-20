@@ -65,9 +65,15 @@ class PermissionCache(object):
         result = self._item_ability_cache.get((agent.pk, item.pk))
         if result is None:
             item_type = get_model_with_name(item.item_type)
-            result = item_type.relevant_abilities
-            if 'do_everything' not in self.global_abilities(agent):
-                result &= calculate_abilities_for_agent_and_item(agent, item)
+            if 'do_everything' in self.global_abilities(agent):
+                result = item_type.relevant_abilities
+            else:
+                result = calculate_abilities_for_agent_and_item(agent, item)
+                print result
+                if 'do_everything' in result:
+                    result = item_type.relevant_abilities
+                else:
+                    result &= item_type.relevant_abilities
             self._item_ability_cache[(agent.pk, item.pk)] = result
         return result
 
@@ -306,13 +312,14 @@ def filter_items_by_permission(agent, ability):
     those items that the agent has the ability for.
     
     This does not take into account the fact that agents with the global
-    ability "do_everything" virtually have all item abilities.
+    ability "do_everything" virtually have all item abilities, but it does take
+    into account the item ability "do_everything".
     
     This can result in the database query becoming expensive.
     """
     my_collection_ids = agent.ancestor_collections().values('pk').query
-    yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=True).values('role_id').query
-    no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=False).values('role_id').query
+    yes_role_ids = RoleAbility.objects.filter(trashed=False, ability__in=[ability, 'do_everything'], is_allowed=True).values('role_id').query
+    no_role_ids = RoleAbility.objects.filter(trashed=False, ability__in=[ability, 'do_everything'], is_allowed=False).values('role_id').query
 
     # p contains all Q objects for all 12 combinations of level, role, is_allowed
     p = {}
@@ -332,7 +339,7 @@ def filter_items_by_permission(agent, ability):
             if is_role:
                 args['role__in'] = (yes_role_ids if is_allowed else no_role_ids)
             else:
-                args['ability'] = ability
+                args['ability__in'] = [ability, 'do_everything']
                 args['is_allowed'] = is_allowed
             if level == 'agent':
                 args['agent'] = agent
@@ -358,12 +365,13 @@ def filter_agents_by_permission(item, ability):
     those agents that have the ability for the item.
     
     This does not take into account the fact that agents with the global
-    ability "do_everything" virtually have all item abilities.
+    ability "do_everything" virtually have all item abilities, but it does take
+    into account the item ability "do_everything".
     
     This can result in the database query becoming expensive.
     """
-    yes_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=True).values('role_id').query
-    no_role_ids = RoleAbility.objects.filter(trashed=False, ability=ability, is_allowed=False).values('role_id').query
+    yes_role_ids = RoleAbility.objects.filter(trashed=False, ability__in=[ability, 'do_everything'], is_allowed=True).values('role_id').query
+    no_role_ids = RoleAbility.objects.filter(trashed=False, ability__in=[ability, 'do_everything'], is_allowed=False).values('role_id').query
 
     # p contains all Q objects for all 12 combinations of level, role, is_allowed
     p = {}
@@ -383,7 +391,7 @@ def filter_agents_by_permission(item, ability):
             if is_role:
                 args['role__in'] = (yes_role_ids if is_allowed else no_role_ids)
             else:
-                args['ability'] = ability
+                args['ability__in'] = [ability, 'do_everything']
                 args['is_allowed'] = is_allowed
             if level == 'agent':
                 query = permission_class.objects.filter(**args).values('agent_id').query

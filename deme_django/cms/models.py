@@ -130,7 +130,7 @@ class Item(models.Model):
     # Setup
     __metaclass__ = ItemMetaClass
     immutable_fields = frozenset()
-    relevant_abilities = frozenset(['comment_on', 'trash', 'modify_permissions', 'view name',
+    relevant_abilities = frozenset(['do_everything', 'comment_on', 'trash', 'view name',
                                     'view description', 'view updater', 'view creator',
                                     'view updated_at', 'view created_at', 'edit name', 'edit description'])
     relevant_global_abilities = frozenset(['do_something', 'do_everything'])
@@ -315,9 +315,8 @@ class Item(models.Model):
         #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
         if create_permissions and is_new:
             default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.%s" % type(self).__name__))
-            creator_role = Role.objects.get(pk=DemeSetting.get("cms.creator_role.%s" % type(self).__name__))
             DefaultRolePermission(item=self, role=default_role).save()
-            AgentRolePermission(agent=updater, item=self, role=creator_role).save()
+            AgentPermission(agent=updater, item=self, ability='do_everything', is_allowed=True).save()
 
         # Create an EditComment if we're making an edit
         if not is_new and not overwrite_latest_version:
