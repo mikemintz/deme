@@ -64,6 +64,10 @@ Features
 * edit locks
 * deleting items (i.e. blanking)
 
+Layout
+------
+* Links with borders look bad in safari, but buttons look fine!
+
 Interface
 ---------
 * There should be a full interface for specifying CommentLocations
