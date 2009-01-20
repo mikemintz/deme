@@ -69,7 +69,6 @@ class PermissionCache(object):
                 result = item_type.relevant_abilities
             else:
                 result = calculate_abilities_for_agent_and_item(agent, item)
-                print result
                 if 'do_everything' in result:
                     result = item_type.relevant_abilities
                 else:
