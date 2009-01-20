@@ -8,7 +8,7 @@
 
 <div style="border: thin solid #aaa; background: #eee; padding: 10px; margin-bottom: 10px;">
 <form method="get" name="list_filter_form">
-<table class="twocol">
+<table cellspacing="0" class="twocol">
     <tr>
         <th>
             Item Type Filter:
@@ -68,13 +68,13 @@
     {% list_results_navigator item_type collection search_query trashed offset limit n_listable_items 10 %}
 </div>
 
-<table class="list" width="100%">
+<table cellspacing="0" class="list" width="100%">
     <tr>
         <th>Name</th>
     </tr>
     {% for item in items %}
     <tr class="{% cycle 'even' 'odd' %}">
-        <td><img src="{{ item.item_type|icon_url:16 }}" /> <a href="{% url resource_entry viewer=item.item_type|lower,noun=item.pk %}">{{ item.name }}</a></td>
+        <td><a class="img_link" href="{% url resource_entry viewer=item.item_type|lower,noun=item.pk %}"><img src="{{ item.item_type|icon_url:16 }}" /><span>{{ item.name }}</span></a></td>
     </tr>
     {% endfor %}
 </table>

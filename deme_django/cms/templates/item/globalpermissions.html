@@ -12,7 +12,7 @@
     <div><a href="#" onclick="$('new_agent_form').toggle(); return false;">[+] Agent</a></div>
     <div id="new_agent_form" style="display: none;">
         <form method="get" class="item_form">
-            <table>
+            <table cellspacing="0">
                 {{ new_agent_form.as_table }}
             </table>
             <input type="submit" />
@@ -24,7 +24,7 @@
     <div><a href="#" onclick="$('new_collection_form').toggle(); return false;">[+] Collection</a></div>
     <div id="new_collection_form" style="display: none;">
         <form method="get" class="item_form">
-            <table>
+            <table cellspacing="0">
                 {{ new_collection_form.as_table }}
             </table>
             <input type="submit" />
@@ -32,7 +32,7 @@
     </div>
 </div>
 
-<table class="list">
+<table cellspacing="0" class="list">
     <tr>
         <th>Type</th>
         <th>Name</th>
@@ -67,7 +67,7 @@
             <div><a href="#" onclick="$('role_permission_form_{{ agent_datum.agent.pk }}').toggle(); return false;">[+] Role Permission</a></div>
             <div id="role_permission_form_{{ agent_datum.agent.pk }}" style="{% if agent_datum.role_permission_form_invalid %}{% else %}display: none;{% endif %}">
                 <form method="post" enctype="multipart/form-data" action="{% url resource_collection viewer="item",action="globalpermissions" %}?formtype=agentrolepermission&redirect={{ full_path|urlencode }}&formprefix={{ agent_datum.role_permission_form.prefix|urlencode }}" class="item_form">
-                    <table>
+                    <table cellspacing="0">
                         {{ agent_datum.role_permission_form.as_table }}
                     </table>
                     <input type="submit" />
@@ -76,7 +76,7 @@
             <div><a href="#" onclick="$('permission_form_{{ agent_datum.agent.pk }}').toggle(); return false;">[+] Permission</a></div>
             <div id="permission_form_{{ agent_datum.agent.pk }}" style="{% if agent_datum.permission_form_invalid %}{% else %}display: none;{% endif %}">
                 <form method="post" enctype="multipart/form-data" action="{% url resource_collection viewer="item",action="globalpermissions" %}?formtype=agentpermission&redirect={{ full_path|urlencode }}&formprefix={{ agent_datum.permission_form.prefix|urlencode }}" class="item_form">
-                    <table>
+                    <table cellspacing="0">
                         {{ agent_datum.permission_form.as_table }}
                     </table>
                     <input type="submit" />
@@ -113,7 +113,7 @@
             <div><a href="#" onclick="$('role_permission_form_{{ collection_datum.collection.pk }}').toggle(); return false;">[+] Role Permission</a></div>
             <div id="role_permission_form_{{ collection_datum.collection.pk }}" style="{% if collection_datum.role_permission_form_invalid %}{% else %}display: none;{% endif %}">
                 <form method="post" enctype="multipart/form-data" action="{% url resource_collection viewer="item",action="globalpermissions" %}?formtype=collectionrolepermission&redirect={{ full_path|urlencode }}&formprefix={{ collection_datum.role_permission_form.prefix|urlencode }}" class="item_form">
-                    <table>
+                    <table cellspacing="0">
                         {{ collection_datum.role_permission_form.as_table }}
                     </table>
                     <input type="submit" />
@@ -122,7 +122,7 @@
             <div><a href="#" onclick="$('permission_form_{{ collection_datum.collection.pk }}').toggle(); return false;">[+] Permission</a></div>
             <div id="permission_form_{{ collection_datum.collection.pk }}" style="{% if collection_datum.permission_form_invalid %}{% else %}display: none;{% endif %}">
                 <form method="post" enctype="multipart/form-data" action="{% url resource_collection viewer="item",action="globalpermissions" %}?formtype=collectionpermission&redirect={{ full_path|urlencode }}&formprefix={{ collection_datum.permission_form.prefix|urlencode }}" class="item_form">
-                    <table>
+                    <table cellspacing="0">
                         {{ collection_datum.permission_form.as_table }}
                     </table>
                     <input type="submit" />
@@ -158,7 +158,7 @@
             <div><a href="#" onclick="$('role_permission_form_default').toggle(); return false;">[+] Role Permission</a></div>
             <div id="role_permission_form_default" style="{% if default_data.role_permission_form_invalid %}{% else %}display: none;{% endif %}">
                 <form method="post" enctype="multipart/form-data" action="{% url resource_collection viewer="item",action="globalpermissions" %}?formtype=defaultrolepermission&redirect={{ full_path|urlencode }}&formprefix={{ default_data.role_permission_form.prefix|urlencode }}" class="item_form">
-                    <table>
+                    <table cellspacing="0">
                         {{ default_data.role_permission_form.as_table }}
                     </table>
                     <input type="submit" />
@@ -167,7 +167,7 @@
             <div><a href="#" onclick="$('permission_form_default').toggle(); return false;">[+] Permission</a></div>
             <div id="permission_form_default" style="{% if default_data.permission_form_invalid %}{% else %}display: none;{% endif %}">
                 <form method="post" enctype="multipart/form-data" action="{% url resource_collection viewer="item",action="globalpermissions" %}?formtype=defaultpermission&redirect={{ full_path|urlencode }}&formprefix={{ default_data.permission_form.prefix|urlencode }}" class="item_form">
-                    <table>
+                    <table cellspacing="0">
                         {{ default_data.permission_form.as_table }}
                     </table>
                     <input type="submit" />

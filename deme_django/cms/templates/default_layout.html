@@ -9,10 +9,12 @@
 </head>
 <body>
 
-<div style="border-bottom: 3px solid #246; margin-bottom: 10px; padding-bottom: 5px;">
+<div class="site">
 
-<div style="float: right; text-align: right;">
-    <div style="font-size: 9pt;">
+<div class="header">
+
+<div class="top_right">
+    <div class="top_right_text">
     <form name="logout_form" style="display: inline;" method="post" action="{% url authenticate %}?redirect={{ full_path|urlencode }}">
         <input type="hidden" name="login_type" value="logout" />
     </form>
@@ -25,7 +27,7 @@
     [<a href="{% url authenticate %}?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]
     {% endifequal %}
     </div>
-    <div style="margin-top: 10px;">
+    <div class="top_right_search">
     <form method="get" action="{% url resource_collection viewer="item" %}">
     <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
     </form>
@@ -37,7 +39,7 @@
             if (!search_box_changed) {
                 search_box_changed = true;
                 search_box.value = '';
-                search_box.style.color = '#000';
+                search_box.style.color = 'inherit';
             }
         };
         search_box.onblur = function(e){
@@ -51,30 +53,19 @@
     </script>
 </div>
 
-<h1 style="color: #369; float: left; margin: 0;">{% block title %}{% endblock %}</h1>
+<div class="title">{% block title %}{% endblock %}</div>
 
 <div style="clear: both;"></div>
-
 </div>
 
-<div style="width: 150px; float: left;">
-    <div style="background: #ddd; border: 1px solid #aaa; padding: 10px;">
-        <div>
-            <a href="/">Home</a>
-        </div>
-        <div>
-            <a href="{% url resource_collection viewer="item" %}">Items</a>
-        </div>
-        <div>
-            <a href="{% url codegraph %}">Codegraph</a>
-        </div>
-        <div>
-            <a href="/static/architecture.html">Architecture</a>
-        </div>
-    </div>
-</div>
+<ul class="tabnav">
+    <li{% ifequal full_path "/"%} class="tabhighlighted"{% endifequal %}><a href="/">Home</a></li>
+    <li{% ifequal action "list" %} class="tabhighlighted"{% endifequal %}><a href="{% url resource_collection viewer="item" %}">Items</a></li>
+    <li{% ifequal full_path "/meta/codegraph"%} class="tabhighlighted"{% endifequal %}><a href="{% url codegraph %}">Codegraph</a></li>
+    <li><a href="/static/architecture.html">Architecture</a></li>
+</ul>
 
-<div style="border: 1px solid #aaa; padding: 15px; margin-left: 160px;">
+<div class="content_box">
 {% if layout_permissions_problem %}
 <div style="color: #a00; padding: 15px; margin: 15px; border: thin dotted #a00; text-align: center;">
     Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.
@@ -84,11 +75,11 @@
 {% endblock %}
 </div>
 
-<div style="clear: both;">
+<div class="footer">
+    <p><a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a></p>
+    <p>Copyright &copy;2009 to Deme</p>
 </div>
 
-<div style="margin-top: 10px; border: 1px solid #aaa; background: #ddd; padding: 10px; text-align: center;">
-    Copyright &copy;2008 to Deme
 </div>
 
 </body>

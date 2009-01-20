@@ -28,7 +28,7 @@ tinyMCE.init({
     {% else %}
     <form method="post" enctype="multipart/form-data" action="{% url resource_collection viewer=item_type|lower,action="create" %}" class="item_form">
     {% endif %}
-        <table>
+        <table cellspacing="0">
             <tr>
                 <th>
                     <label for="id_item_type">Item Type:</label>
@@ -47,7 +47,7 @@ tinyMCE.init({
             </tr>
             {{ form.as_table }}
         </table>
-        <input type="submit" />
+        <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Create {{ item_type }}</span></button>
     </form>
 </div>
 

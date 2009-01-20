@@ -140,57 +140,9 @@
     }
 </script>
 
-<!-- Adapted from http://unraveled.com/projects/css_tabs/ -->
 <style type="text/css">
-
-/* begin css tabs */
-
-ul#tabnav { /* general settings */
-text-align: left; /* set to left, right or center */
-margin: 1em 0 0 0; /* set margins as desired */
-font: bold 11px verdana, arial, sans-serif; /* set font as desired */
-border-bottom: 1px solid #6c6; /* set border COLOR as desired */
-list-style-type: none;
-padding: 3px 10px 3px 10px; /* THIRD number must change with respect to padding-top (X) below */
-}
-
-ul#tabnav li { /* do not change */
-display: inline;
-}
-
-ul#tabnav li.tabhighlighted { /* settings for selected tab */
-border-bottom: 1px solid #fff; /* set border color to page background color */
-background-color: #fff; /* set background color to match above border color */
-}
-
-ul#tabnav li.tabhighlighted a { /* settings for selected tab link */
-background-color: #fff; /* set selected tab background color as desired */
-color: #000; /* set selected tab link color as desired */
-position: relative;
-top: 1px;
-padding-top: 4px; /* must change with respect to padding (X) above and below */
-}
-
-ul#tabnav li a { /* settings for all tab links */
-outline: none;
-padding: 3px 4px; /* set padding (tab size) as desired; FIRST number must change with respect to padding-top (X) above */
-border: 1px solid #6c6; /* set border COLOR as desired; usually matches border color specified in #tabnav */
-background-color: #cfc; /* set unselected tab background color as desired */
-color: #666; /* set unselected tab link color as desired */
-margin-right: 0px; /* set additional spacing between tabs as desired */
-text-decoration: none;
-border-bottom: none;
-}
-
-ul#tabnav a:hover { /* settings for hover effect */
-background: #fff; /* set desired hover color */
-}
-
-/* end css tabs */
-	
 div#section_body, div#section_comments, div#section_combined {
-    border: 1px solid #6c6;
-    border-top: none;
+    border: 1px solid #4040C4;
     padding: 10px;
 }
 </style>
@@ -198,7 +150,7 @@ div#section_body, div#section_comments, div#section_combined {
 <script type="text/javascript">
     function select_section_body() {
         $('section_body').appendChild($('section_body_inner'));
-        $$('ul#tabnav li.tabhighlighted').each(function(e){e.removeClassName('tabhighlighted')});
+        $$('ul#doctabnav li.tabhighlighted').each(function(e){e.removeClassName('tabhighlighted')});
         $('tab_body').addClassName('tabhighlighted');
         $('section_body').show();
         $('section_comments').hide();
@@ -206,7 +158,7 @@ div#section_body, div#section_comments, div#section_combined {
     }
     function select_section_comments() {
         $('section_comments').appendChild($('section_comments_inner'));
-        $$('ul#tabnav li.tabhighlighted').each(function(e){e.removeClassName('tabhighlighted')});
+        $$('ul#doctabnav li.tabhighlighted').each(function(e){e.removeClassName('tabhighlighted')});
         $('tab_comments').addClassName('tabhighlighted');
         $('section_body').hide();
         $('section_comments').show();
@@ -215,7 +167,7 @@ div#section_body, div#section_comments, div#section_combined {
     function select_section_combined() {
         $('body_side').appendChild($('section_body_inner'));
         $('comments_side').appendChild($('section_comments_inner'));
-        $$('ul#tabnav li.tabhighlighted').each(function(e){e.removeClassName('tabhighlighted')});
+        $$('ul#doctabnav li.tabhighlighted').each(function(e){e.removeClassName('tabhighlighted')});
         $('tab_combined').addClassName('tabhighlighted');
         $('section_body').hide();
         $('section_comments').hide();
@@ -223,7 +175,7 @@ div#section_body, div#section_comments, div#section_combined {
     }
 </script>
 
-<ul id="tabnav">
+<ul class="tabnav" id="doctabnav">
 	<li id="tab_body" class="tabhighlighted"><a href="#" onclick="select_section_body(); return false;">Document</a></li>
 	<li id="tab_combined"><a href="#" onclick="select_section_combined(); return false;">Side By Side</a></li>
 	<li id="tab_comments"><a href="#" onclick="select_section_comments(); return false;">Comments</a></li>

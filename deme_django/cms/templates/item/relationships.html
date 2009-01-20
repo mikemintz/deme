@@ -6,7 +6,7 @@
 
 {% entryheader 'Relationships' %}
 
-<table class="list" style="margin-bottom: 15px; width: 100%;">
+<table cellspacing="0" class="list" style="margin-bottom: 15px; width: 100%;">
     <tr>
         <th colspan="2">Your Abilities</th>
     </tr>
@@ -19,7 +19,7 @@
 
 {% for relationship_set in relationship_sets %}
 {% if relationship_set.items %}
-<table class="list" style="margin-bottom: 15px; width: 100%;">
+<table cellspacing="0" class="list" style="margin-bottom: 15px; width: 100%;">
     <tr>
         <th>{{ relationship_set.name|title }}</th>
     </tr>

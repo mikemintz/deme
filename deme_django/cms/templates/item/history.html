@@ -1,0 +1,33 @@
+{% extends layout %}
+{% load resource_extras %}
+{% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> History for {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
+{% block content %}
+
+{% entryheader 'History' %}
+
+<table cellspacing="0" class="list" style="margin-bottom: 15px; width: 100%;">
+<tr>
+    <th>Version</th>
+    <th>Updater</th>
+    <th>Date</th>
+</tr>
+{% for version in versions %}
+    <tr class="{% cycle 'even' 'odd' %}">
+        <td><a href="{{ version.get_absolute_url }}?version={{ version.version_number }}">Version {{ version.version_number }}</a></td>
+        {% ifagentcan 'view' 'updater' version %}
+        <td><a href="{{ version.updater.get_absolute_url }}">{% ifagentcan 'view' 'name' version.updater %}{{ version.updater.name }}{% else %}{{ version.updater.item_type }} {{ version.updater.pk }}{% endifagentcan %}</a></td>
+        {% else %}
+        <td></td>
+        {% endifagentcan %}
+        {% ifagentcan 'view' 'updated_at' version %}
+        <td><span title="{{ version.updated_at }}">{{ version.updated_at|timesince }} ago</span></td>
+        {% else %}
+        <td></td>
+        {% endifagentcan %}
+    </tr>
+{% endfor %}
+</table>
+
+{% endblock content %}
+

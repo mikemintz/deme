@@ -6,7 +6,7 @@
 
 {% entryheader %}
 
-<table class="twocol">
+<table cellspacing="0" class="twocol">
     {% for field in fields|dictsort:"name" %}
     {% ifequal field.field_type 'collection' %}
     {% else %}

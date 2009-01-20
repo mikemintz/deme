@@ -28,7 +28,7 @@
 <div style="margin-bottom: 10px;">
     Add an item:
     <form method="post" enctype="multipart/form-data" action="{% url resource_entry viewer=item_type|lower,action="addmember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
-        <table>
+        <table cellspacing="0">
             {{ addmember_form.as_table }}
         </table>
         <input type="submit" />
@@ -37,7 +37,7 @@
 {% endifagentcan %}
 
 {% if memberships %}
-<table class="list">
+<table cellspacing="0" class="list">
     <tr>
         <th>Name</th>
         <th>Membership</th>

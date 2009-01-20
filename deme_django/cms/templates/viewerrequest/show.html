@@ -12,7 +12,7 @@
 <div style="margin-bottom: 10px;">
     <a href="#" onclick="$('add_sub_path_form').toggle(); return false;">Add sub path</a>
     <form id="add_sub_path_form" style="display: none;" method="post" enctype="multipart/form-data" action="{% url resource_entry viewer=item_type|lower,action="addsubpath",noun=item.pk %}?redirect={{ item.get_absolute_url }}" class="item_form">
-        <table>
+        <table cellspacing="0">
             {{ addsubpath_form.as_table }}
         </table>
         <input type="submit" />
@@ -20,7 +20,7 @@
 </div>
 {% endifagentcan %}
 
-<table class="twocol">
+<table cellspacing="0" class="twocol">
     {% if custom_urls %}
     <tr>
         <th>Path</th>

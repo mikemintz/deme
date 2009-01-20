@@ -230,6 +230,7 @@ class ItemViewer(object):
         return error_response(self.cur_agent, self.cur_site, self.context['full_path'], request_class, title, body)
 
     def init_from_http(self, request, cur_agent, cur_site, action, noun, format):
+        self.context = Context()
         self.permission_cache = permissions.PermissionCache()
         self.action = action
         self.noun = noun
@@ -245,12 +246,11 @@ class ItemViewer(object):
                 self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'trash'}.get(self.method, 'show')
             try:
                 self.item = Item.objects.get(pk=self.noun)
-                if self.item:
-                    self.item = self.item.downcast()
+                self.item = self.item.downcast()
                 self.item = get_versioned_item(self.item, self.request.GET.get('version'))
+                self.context['specific_version'] = ('version' in self.request.GET)
             except ObjectDoesNotExist:
                 self.item = None
-        self.context = Context()
         self.context['action'] = self.action
         self.context['item'] = self.item
         self.context['item_type'] = self.item_type.__name__
@@ -274,6 +274,7 @@ class ItemViewer(object):
         self.context = Context()
         self.context['action'] = self.action
         self.context['item'] = self.item
+        self.context['specific_version'] = False
         self.context['item_type'] = self.item_type.__name__
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = original_viewer.cur_agent
@@ -453,6 +454,17 @@ class ItemViewer(object):
         template = loader.get_template('item/show.html')
         item_fields = get_fields_for_item(self.item)
         self.context['fields'] = item_fields
+        return HttpResponse(template.render(self.context))
+
+    def entry_history(self):
+        import copy
+        versions = []
+        for version_number in xrange(1, self.item.versions.latest().version_number + 1):
+            versioned_item = copy.deepcopy(self.item)
+            versioned_item.copy_fields_from_version(version_number)
+            versions.append(versioned_item)
+        template = loader.get_template('item/history.html')
+        self.context['versions'] = versions
         return HttpResponse(template.render(self.context))
 
     def entry_relationships(self):
