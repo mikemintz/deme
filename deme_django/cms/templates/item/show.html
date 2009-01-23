@@ -6,45 +6,7 @@
 
 {% entryheader %}
 
-<table cellspacing="0" class="twocol">
-    {% for field in fields|dictsort:"name" %}
-    {% ifequal field.field_type 'collection' %}
-    {% else %}
-    <tr>
-        <th>{{ field.name|title }}</th>
-        <td>
-            {% ifagentcan 'view' field.name item %}
-                {% ifequal field.field_type 'regular' %}
-                {% ifequal field.format 'FileField' %}
-                <a href="/static/media/{{ field.obj }}">{{ field.obj }}</a>
-                {% else %}
-                {% ifequal field.format 'TextField' %}
-                {{ field.obj|linebreaksbr|urlize }}
-                {% else %}
-                {{ field.obj }}
-                {% endifequal %}
-                {% endifequal %}
-                {% endifequal %}
-
-                {% ifequal field.field_type 'entry' %}
-                {% if field.obj %}
-                {% ifagentcan 'view' 'name' field.obj %}
-                <div><a href="{{ field.obj.get_absolute_url }}">{{ field.obj }}</a></div>
-                {% else %}
-                <div><a href="{{ field.obj.get_absolute_url }}">PERMISSION DENIED</a></div>
-                {% endifagentcan %}
-                {% else %}
-                NULL
-                {% endif %}
-                {% endifequal %}
-            {% else %}
-                PERMISSION DENIED
-            {% endifagentcan %}
-        </td>
-    </tr>
-    {% endifequal %}
-    {% endfor %}
-</table>
+{% subclassfields %}
 
 {% commentbox %}
 

@@ -328,7 +328,7 @@ class EntryHeader(template.Node):
 
         item = context['item']
         version_number = item.version_number
-        cur_item_type = context['_viewer'].item_type
+        cur_item_type = context['_viewer'].accepted_item_type
         item_type_inheritance = []
         while issubclass(cur_item_type, Item):
             item_type_inheritance.insert(0, cur_item_type.__name__)
@@ -464,7 +464,7 @@ class CollectionHeader(template.Node):
 
         item_type = context['item_type']
 
-        cur_item_type = context['_viewer'].item_type
+        cur_item_type = context['_viewer'].accepted_item_type
         item_type_inheritance = []
         while issubclass(cur_item_type, Item):
             item_type_inheritance.insert(0, cur_item_type.__name__)
@@ -634,6 +634,99 @@ def commentbox(parser, token):
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
     return CommentBox()
+
+
+class SubclassFieldsBox(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<SubclassFieldsBox>"
+
+    def render(self, context):
+        viewer = context['_viewer']
+        viewer_method_name = ('entry_' if viewer.noun else 'collection_') + viewer.action
+        viewer_where_action_defined = type(viewer)
+        while viewer_where_action_defined.__name__ != 'ItemViewer':
+            parent_viewer = viewer_where_action_defined.__base__
+            my_fn = getattr(viewer_where_action_defined, viewer_method_name)
+            parent_fn = getattr(parent_viewer, viewer_method_name)
+            if my_fn is None or parent_fn is None:
+                break
+            if my_fn.im_func is not parent_fn.im_func:
+                break
+            viewer_where_action_defined = parent_viewer
+        viewer_item_type = viewer_where_action_defined.accepted_item_type
+        print viewer_item_type
+        viewer_item_type_field_names = set(viewer_item_type._meta.get_all_field_names())
+        def get_fields_for_item(item):
+            fields = []
+            for name in item._meta.get_all_field_names():
+                if name in viewer_item_type_field_names:
+                    continue
+                field, model, direct, m2m = item._meta.get_field_by_name(name)
+                model_class = type(item) if model == None else model
+                model_class = model_class.NotVersion if issubclass(model_class, Item.Version) else model_class
+                model_name = model_class.__name__
+                info = {'model_name': model_name, 'name': name, 'format': type(field).__name__}
+                if type(field).__name__ == 'ForeignKey':
+                    try:
+                        obj = getattr(item, name)
+                    except ObjectDoesNotExist:
+                        obj = None
+                    info['field_type'] = 'entry'
+                elif type(field).__name__ == 'OneToOneField':
+                    continue
+                elif type(field).__name__ == 'ManyToManyField':
+                    continue
+                elif type(field).__name__ == 'RelatedObject':
+                    continue
+                else:
+                    obj = getattr(item, name)
+                    info['field_type'] = 'regular'
+                info['obj'] = obj
+                fields.append(info)
+            return fields
+        fields = get_fields_for_item(context['item'])
+        fields.sort(key=lambda x:x['name'])
+        if not fields:
+            return ''
+        result = []
+        result.append('<table cellspacing="0" class="twocol">')
+        for field in fields:
+            result.append('<tr>')
+            result.append('<th style="white-space: nowrap;">%s</th>' % field['name'].title().replace('_', ' '))
+            result.append('<td>')
+            if agentcan_helper(context, 'view %s' % field['name'], context['item']):
+                if field['field_type'] == 'entry':
+                    if field['obj']:
+                        if agentcan_helper(context, 'view name', field['obj']):
+                            result.append('<a href="%s">%s</a>' % (escape(field['obj'].get_absolute_url()), escape(field['obj'].name)))
+                        else:
+                            result.append('<a href="%s">[PERMISSION DENIED]</a>' % escape(field['obj'].get_absolute_url()))
+                    else:
+                        result.append('None')
+                else:
+                    if field['format'] == 'FileField':
+                        result.append('<a href="/static/media/%s">%s</a>' % (escape(field['obj']), escape(field['obj'])))
+                    elif field['format'] == 'TextField':
+                        result.append(urlize(escape(field['obj'])).replace('\n', '<br />'))
+                    else:
+                        result.append(escape(field['obj']))
+            else:
+                result.append('[PERMISSION DENIED]')
+            result.append('</td>')
+            result.append('</tr>')
+        result.append('</table>')
+        return '\n'.join(result)
+
+
+@register.tag
+def subclassfields(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return SubclassFieldsBox()
 
 
 class EmbeddedItem(template.Node):

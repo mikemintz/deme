@@ -214,7 +214,7 @@ def get_versioned_item(item, version_number):
 class ItemViewer(object):
     __metaclass__ = ViewerMetaClass
 
-    item_type = Item
+    accepted_item_type = Item
     viewer_name = 'item'
 
     def __init__(self):
@@ -253,7 +253,7 @@ class ItemViewer(object):
                 self.item = None
         self.context['action'] = self.action
         self.context['item'] = self.item
-        self.context['item_type'] = self.item_type.__name__
+        self.context['item_type'] = self.accepted_item_type.__name__
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = cur_agent
         self.cur_site = cur_site
@@ -275,7 +275,7 @@ class ItemViewer(object):
         self.context['action'] = self.action
         self.context['item'] = self.item
         self.context['specific_version'] = False
-        self.context['item_type'] = self.item_type.__name__
+        self.context['item_type'] = self.accepted_item_type.__name__
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = original_viewer.cur_agent
         self.cur_site = original_viewer.cur_site
@@ -307,7 +307,7 @@ class ItemViewer(object):
                 elif self.action == 'copy':
                     pass
                 else:
-                    if not isinstance(self.item, self.item_type):
+                    if not isinstance(self.item, self.accepted_item_type):
                         return self.render_item_not_found()
             return action_method()
         else:
@@ -315,7 +315,7 @@ class ItemViewer(object):
 
     def render_item_not_found(self):
         if self.item:
-            title = "%s Not Found" % self.item_type.__name__
+            title = "%s Not Found" % self.accepted_item_type.__name__
             body = 'You cannot view item %s in this viewer. Try viewing it in the <a href="%s">%s viewer</a>.' % (self.noun, reverse('resource_entry', kwargs={'viewer': self.item.item_type.lower(), 'noun': self.item.pk}), self.item.item_type)
         else:
             title = "Item Not Found"
@@ -334,20 +334,20 @@ class ItemViewer(object):
         offset = int(self.request.GET.get('offset', 0))
         limit = int(self.request.GET.get('limit', 100))
         trashed = self.request.GET.get('trashed', None) == '1'
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
         model_names.sort()
         self.context['search_query'] = self.request.GET.get('q', '')
-        items = self.item_type.objects
+        items = self.accepted_item_type.objects
         if self.context['search_query']:
             q = self.context['search_query']
             search_filter = Q(name__icontains=q)
             # This is commented out because it's too simplistic, and does not respect permissions.
             # search_filter = search_filter | Q(description__icontains=q)
-            # if self.item_type == Item:
+            # if self.accepted_item_type == Item:
             #     search_filter = search_filter | Q(document__textdocument__body__icontains=q)
-            # elif self.item_type == Document:
+            # elif self.accepted_item_type == Document:
             #     search_filter = search_filter | Q(textdocument__body__icontains=q)
-            # elif issubclass(self.item_type, TextDocument):
+            # elif issubclass(self.accepted_item_type, TextDocument):
             #     search_filter = search_filter | Q(body__icontains=q)
             items = items.filter(search_filter)
         if isinstance(collection, Collection):
@@ -384,26 +384,26 @@ class ItemViewer(object):
         return HttpResponse(template.render(self.context))
 
     def collection_new(self):
-        can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
+        can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
-        form_class = get_form_class_for_item_type('create', self.item_type)
+        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['model_names'] = model_names
         self.context['form'] = form
-        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
     def collection_create(self):
-        can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
+        can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        form_class = get_form_class_for_item_type('create', self.item_type)
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
+        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
@@ -411,49 +411,17 @@ class ItemViewer(object):
             redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
+            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
             model_names.sort()
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
             self.context['form'] = form
-            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
-        def get_fields_for_item(item):
-            fields = []
-            for name in item._meta.get_all_field_names():
-                if name in ['item_type', 'trashed', 'current_item', 'version_number']: # special fields
-                    continue
-                field, model, direct, m2m = item._meta.get_field_by_name(name)
-                model_class = type(item) if model == None else model
-                model_class = model_class.NotVersion if issubclass(model_class, Item.Version) else model_class
-                model_name = model_class.__name__
-                if model_name == 'Item':
-                    continue # things in Item are boring, since they're already part of the layout (entryheader)
-                info = {'model_name': model_name, 'name': name, 'format': type(field).__name__}
-                if type(field).__name__ == 'ForeignKey':
-                    try:
-                        obj = getattr(item, name)
-                    except ObjectDoesNotExist:
-                        obj = None
-                    info['field_type'] = 'entry'
-                elif type(field).__name__ == 'OneToOneField':
-                    continue
-                elif type(field).__name__ == 'ManyToManyField':
-                    continue
-                elif type(field).__name__ == 'RelatedObject':
-                    continue
-                else:
-                    obj = getattr(item, name)
-                    info['field_type'] = 'regular'
-                info['obj'] = obj
-                fields.append(info)
-            return fields
         template = loader.get_template('item/show.html')
-        item_fields = get_fields_for_item(self.item)
-        self.context['fields'] = item_fields
         return HttpResponse(template.render(self.context))
 
     def entry_history(self):
@@ -500,7 +468,7 @@ class ItemViewer(object):
         if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
-        form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
+        form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
         form = form_class(instance=self.item)
         fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
         initial_fields_set = set(form.initial.iterkeys())
@@ -510,14 +478,14 @@ class ItemViewer(object):
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']
-        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
     def entry_copy(self):
-        can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
+        can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        form_class = get_form_class_for_item_type('create', self.item_type)
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
+        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         fields_to_copy = [field_name for field_name in form_class.base_fields if self.cur_agent_can('view %s' % field_name, self.item)]
         form_initial = {}
         for field_name in fields_to_copy:
@@ -531,11 +499,11 @@ class ItemViewer(object):
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
         model_names.sort()
         self.context['model_names'] = model_names
         self.context['action_is_entry_copy'] = True
-        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         if 'redirect' in self.request.GET:
             self.context['redirect'] = self.request.GET['redirect']
         return HttpResponse(template.render(self.context))
@@ -547,7 +515,7 @@ class ItemViewer(object):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x[0] == 'edit']
-        form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
+        form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
             new_item = form.save(commit=False)
@@ -557,7 +525,7 @@ class ItemViewer(object):
             template = loader.get_template('item/edit.html')
             self.context['form'] = form
             self.context['query_string'] = self.request.META['QUERY_STRING']
-            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             return HttpResponse(template.render(self.context))
 
     def entry_trash(self):
@@ -891,14 +859,14 @@ class ItemViewer(object):
 
 
 class GroupViewer(ItemViewer):
-    item_type = Group
+    accepted_item_type = Group
     viewer_name = 'group'
 
     def collection_create(self):
-        can_create = self.cur_agent_can_global('create %s' % self.item_type.__name__)
+        can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
-        form_class = get_form_class_for_item_type('create', self.item_type)
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
+        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             new_item = form.save(commit=False)
@@ -907,7 +875,7 @@ class GroupViewer(ItemViewer):
         else:
             template = loader.get_template('item/new.html')
             self.context['form'] = form
-            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             return HttpResponse(template.render(self.context))
 
     def entry_show(self):
@@ -916,7 +884,7 @@ class GroupViewer(ItemViewer):
 
 
 class ViewerRequestViewer(ItemViewer):
-    item_type = ViewerRequest
+    accepted_item_type = ViewerRequest
     viewer_name = 'viewerrequest'
 
     def entry_show(self):
@@ -958,7 +926,7 @@ class ViewerRequestViewer(ItemViewer):
 
 
 class CollectionViewer(ItemViewer):
-    item_type = Collection
+    accepted_item_type = Collection
     viewer_name = 'collection'
 
     def entry_show(self):
@@ -1012,7 +980,7 @@ class CollectionViewer(ItemViewer):
 
 
 class ImageDocumentViewer(ItemViewer):
-    item_type = ImageDocument
+    accepted_item_type = ImageDocument
     viewer_name = 'imagedocument'
 
     def entry_show(self):
@@ -1021,12 +989,12 @@ class ImageDocumentViewer(ItemViewer):
 
 
 class TextDocumentViewer(ItemViewer):
-    item_type = TextDocument
+    accepted_item_type = TextDocument
     viewer_name = 'textdocument'
 
     def entry_show(self):
         template = loader.get_template('textdocument/show.html')
-        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
 
@@ -1036,13 +1004,13 @@ class TextDocumentViewer(ItemViewer):
         if not can_edit:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
-        form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
+        form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
 
 
         transclusions = Transclusion.objects.filter(from_item=self.item, from_item_version_number=self.item.version_number).order_by('-from_item_index')
         body_as_list = list(self.item.body)
         for transclusion in transclusions:
-            if issubclass(self.item_type, HtmlDocument):
+            if issubclass(self.accepted_item_type, HtmlDocument):
                 transclusion_text = '<img id="transclusion_%s" src="/static/spacer.gif" title="Comment %s" style="margin: 0 2px 0 2px; background: #ddd; border: 1px dotted #777; height: 10px; width: 10px;"/>' % (transclusion.to_item_id, transclusion.to_item_id)
             else:
                 transclusion_text = '<deme_transclusion id="%s"/>' % transclusion.to_item_id
@@ -1059,7 +1027,7 @@ class TextDocumentViewer(ItemViewer):
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']
-        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
     def entry_update(self):
@@ -1069,7 +1037,7 @@ class TextDocumentViewer(ItemViewer):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
-        form_class = get_form_class_for_item_type('update', self.item_type, fields_can_edit)
+        form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
             new_item = form.save(commit=False)
@@ -1081,7 +1049,7 @@ class TextDocumentViewer(ItemViewer):
                     to_item_id = m.group(1)
                     new_transclusions.append((index, to_item_id))
                     return ''
-                if issubclass(self.item_type, HtmlDocument):
+                if issubclass(self.accepted_item_type, HtmlDocument):
                     transclusion_re = r'(?i)<img[^>]+transclusion_(\d+)[^>]*>'
                 else:
                     transclusion_re = r'<deme_transclusion id="(\d+)"/>'
@@ -1109,12 +1077,12 @@ class TextDocumentViewer(ItemViewer):
             template = loader.get_template('item/edit.html')
             self.context['form'] = form
             self.context['query_string'] = self.request.META['QUERY_STRING']
-            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             return HttpResponse(template.render(self.context))
 
 
 class DjangoTemplateDocumentViewer(TextDocumentViewer):
-    item_type = DjangoTemplateDocument
+    accepted_item_type = DjangoTemplateDocument
     viewer_name = 'djangotemplatedocument'
 
     def entry_render(self):
@@ -1142,7 +1110,7 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
 class TextCommentViewer(TextDocumentViewer):
     __metaclass__ = ViewerMetaClass
 
-    item_type = TextComment
+    accepted_item_type = TextComment
     viewer_name = 'textcomment'
 
     def collection_new(self):
@@ -1153,7 +1121,7 @@ class TextCommentViewer(TextDocumentViewer):
         can_comment_on = self.cur_agent_can('comment_on', item)
         if not can_comment_on:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to comment on this item")
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
         form_class = NewTextCommentForm
@@ -1161,7 +1129,7 @@ class TextCommentViewer(TextDocumentViewer):
         template = loader.get_template('item/new.html')
         self.context['model_names'] = model_names
         self.context['form'] = form
-        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
@@ -1187,12 +1155,12 @@ class TextCommentViewer(TextDocumentViewer):
             redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
             model_names.sort()
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
             self.context['form'] = form
-            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
 
@@ -1202,7 +1170,7 @@ class TextCommentViewer(TextDocumentViewer):
 class TransclusionViewer(ItemViewer):
     __metaclass__ = ViewerMetaClass
 
-    item_type = Transclusion
+    accepted_item_type = Transclusion
     viewer_name = 'transclusion'
 
     def collection_new(self):
@@ -1213,20 +1181,20 @@ class TransclusionViewer(ItemViewer):
         can_add_transclusion = self.cur_agent_can('add_transclusion', from_item)
         if not can_add_transclusion:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add transclusions to this item")
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
-        form_class = get_form_class_for_item_type('create', self.item_type)
+        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['model_names'] = model_names
         self.context['form'] = form
-        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
     def collection_create(self):
-        form_class = get_form_class_for_item_type('create', self.item_type)
+        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             #TODO use transactions to make the Transclusion save at the same time as the Comment
@@ -1238,12 +1206,12 @@ class TransclusionViewer(ItemViewer):
             redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.item_type)]
+            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
             model_names.sort()
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
             self.context['form'] = form
-            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
 
@@ -1253,12 +1221,12 @@ class TransclusionViewer(ItemViewer):
 class TextDocumentExcerptViewer(TextDocumentViewer):
     __metaclass__ = ViewerMetaClass
 
-    item_type = TextDocumentExcerpt
+    accepted_item_type = TextDocumentExcerpt
     viewer_name = 'textdocumentexcerpt'
 
     def collection_createmultiexcerpt(self):
-        if not self.cur_agent_can_global('create %s' % self.item_type.__name__):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.item_type.__name__)
+        if not self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
         if not self.cur_agent_can_global('create Collection'):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create Collections")
         excerpts = []
@@ -1290,7 +1258,7 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
 
 
 class DemeSettingViewer(ItemViewer):
-    item_type = DemeSetting
+    accepted_item_type = DemeSetting
     viewer_name = 'demesetting'
 
     def collection_modify(self):
@@ -1311,24 +1279,24 @@ class DemeSettingViewer(ItemViewer):
 
 
 class SubscriptionViewer(ItemViewer):
-    item_type = Subscription
+    accepted_item_type = Subscription
     viewer_name = 'subscription'
 
     def collection_new(self):
         model_names = ['Subscription']
         model_names.sort()
         form_initial = dict(self.request.GET.items())
-        form_class = get_form_class_for_item_type('create', self.item_type)
+        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['model_names'] = model_names
         self.context['form'] = form
-        self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
     def collection_create(self):
-        form_class = get_form_class_for_item_type('create', self.item_type)
+        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
@@ -1344,7 +1312,7 @@ class SubscriptionViewer(ItemViewer):
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
             self.context['form'] = form
-            self.context['is_html'] = issubclass(self.item_type, HtmlDocument)
+            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
 
@@ -1362,7 +1330,7 @@ for item_type in all_models():
         if parent_viewer_class:
             viewer_class_name = '%sViewer' % item_type.__name__
             import new
-            viewer_class_def = new.classobj(viewer_class_name, (parent_viewer_class,), {'item_type': item_type, 'viewer_name': viewer_name})
+            viewer_class_def = new.classobj(viewer_class_name, (parent_viewer_class,), {'accepted_item_type': item_type, 'viewer_name': viewer_name})
             exec('global %s;%s = viewer_class_def'%(viewer_class_name, viewer_class_name))
         else:
             pass

@@ -7,7 +7,7 @@ from modules.symsys.models import *
 from django.db.models import Q
 
 class SymsysAffiliateViewer(ItemViewer):
-    item_type = SymsysAffiliate
+    accepted_item_type = SymsysAffiliate
     viewer_name = 'symsysaffiliate'
 
     def entry_show(self):

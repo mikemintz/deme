@@ -6,6 +6,8 @@
 
 {% entryheader %}
 
+{% subclassfields %}
+
 {% ifagentcan 'view' 'datafile' item %}
 <img src="/static/media/{{ item.datafile }}" />
 {% else %}
