@@ -1108,8 +1108,6 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
 
 
 class TextCommentViewer(TextDocumentViewer):
-    __metaclass__ = ViewerMetaClass
-
     accepted_item_type = TextComment
     viewer_name = 'textcomment'
 
@@ -1168,8 +1166,6 @@ class TextCommentViewer(TextDocumentViewer):
 
 
 class TransclusionViewer(ItemViewer):
-    __metaclass__ = ViewerMetaClass
-
     accepted_item_type = Transclusion
     viewer_name = 'transclusion'
 
@@ -1219,8 +1215,6 @@ class TransclusionViewer(ItemViewer):
 
 
 class TextDocumentExcerptViewer(TextDocumentViewer):
-    __metaclass__ = ViewerMetaClass
-
     accepted_item_type = TextDocumentExcerpt
     viewer_name = 'textdocumentexcerpt'
 
