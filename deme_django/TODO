@@ -32,9 +32,8 @@ Code correctness/consistency/bugs
 ---------------------------------
 * Abstract away from the viewer.request object lying around
 * We should probably rename collection_ and entry_ and maybe resource, since they aren't really unified
-* Code cleanup: do non-models in models.py, then do remaining files
+* Code cleanup: do permissions in models.py, then do views, templatetags, and templates
 * It kind of seems like updater/updater_at is unnecessary, since you can derive it from EditComments, and when Versions become more abstract (with delta) then items_updated won't be possible in the current way
-* Consider adding ManyToManyFields with "through"
 * Discuss with Todd whether we should make most text fields rich text, or just htmldocument.body
 * consider making permissions have one column per ability. now that we store all possible abilities, it's easier to migrate.
   - I tried this, and ended up with about 150 columns, so the indexes were huge (100mb vs 5mb) and the queries were slower. To do this, we'd need a way that didn't involve one very large table with every permission in the column. At first it makes sense to have a parallel inheritance structure of permissions (from items), but if we want to get a list of permissions for an agent and we only know it's an item right now, we won't get them all. This can probably be dealt with: we'll just need to be careful what we do with "comprehensive" lists of permissions.

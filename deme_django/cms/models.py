@@ -15,7 +15,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentGlobalRolePermission', 'AgentPermission', 'AgentRolePermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionGlobalRolePermission', 'CollectionPermission', 'CollectionRolePermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DefaultGlobalPermission', 'DefaultGlobalRolePermission', 'DefaultPermission', 'DefaultRolePermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'GlobalRole', 'GlobalRoleAbility', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'Permission', 'Person', 'PhoneContactMethod', 'RecursiveCommentMembership', 'RecursiveMembership', 'RemoveMemberComment', 'Role', 'RoleAbility', 'Site', 'SiteDomain', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
+__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentGlobalRolePermission', 'AgentPermission', 'AgentRolePermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionGlobalRolePermission', 'CollectionPermission', 'CollectionRolePermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DefaultGlobalPermission', 'DefaultGlobalRolePermission', 'DefaultPermission', 'DefaultRolePermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'GlobalRole', 'GlobalRoleAbility', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'Permission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Role', 'RoleAbility', 'Site', 'SiteDomain', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
 
 ###############################################################################
 # Item framework
@@ -176,7 +176,7 @@ class Item(models.Model):
         """
         Return all untrashed Comments made directly or indirectly on self.
         """
-        recursive_comment_membership = RecursiveCommentMembership.objects.filter(parent=self)
+        recursive_comment_membership = RecursiveComment.objects.filter(parent=self)
         return Comment.objects.filter(trashed=False, pk__in=recursive_comment_membership.values('child').query)
 
     def copy_fields_from_version(self, version_number):
@@ -1034,10 +1034,9 @@ class Comment(Item):
         Return the original item that was commented on in this thread.
         
         For example, if this is a reply to a reply to a comment on X, this
-        method will return X. This method uses the RecursiveCommentMembership
-        table.
+        method will return X. This method uses the RecursiveComment table.
         """
-        parent_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
+        parent_pks_query = RecursiveComment.objects.filter(child=self).values('parent').query
         comment_pks_query = Comment.objects.all().values('pk').query
         return Item.objects.exclude(pk__in=comment_pks_query).get(pk__in=parent_pks_query)
 
@@ -1053,7 +1052,7 @@ class Comment(Item):
         so that only those RecursiveMemberships that the Agent is allowed to
         view will be used.
         """
-        thread_parent_pks_query = RecursiveCommentMembership.objects.filter(child=self).values('parent').query
+        thread_parent_pks_query = RecursiveComment.objects.filter(child=self).values('parent').query
         thread_parent_filter = Q(pk__in=thread_parent_pks_query)
         if not include_parent_collections:
             return Item.objects.filter(thread_parent_filter)
@@ -1163,8 +1162,8 @@ class Comment(Item):
     def _after_create(self):
         super(Comment, self)._after_create()
 
-        # Update the RecursiveCommentMembership to indicate this Comment exists
-        RecursiveCommentMembership.recursive_add_comment(self)
+        # Update the RecursiveComment to indicate this Comment exists
+        RecursiveComment.recursive_add_comment(self)
 
         # Email everyone subscribed to items this comment is relevant for
         comment_type_q = self.subscription_filter_for_comment_type()
@@ -1728,67 +1727,126 @@ class DefaultRolePermission(Permission):
 # Recursive tables
 ###############################################################################
 
-class RecursiveCommentMembership(models.Model):
-    parent = models.ForeignKey(Item, related_name='recursive_comment_memberships_as_parent')
-    child = models.ForeignKey(Comment, related_name='recursive_comment_memberships_as_child')
+class RecursiveComment(models.Model):
+    """
+    This table contains all pairs (item, comment) such that comment is
+    directly or indirectly a comment on item.
+    
+    For example if A is an Item, B is a Comment on A, and C is a comment on B,
+    then this table will contain (A,B) (B,C) and (A,C).
+    """
+    parent = models.ForeignKey(Item, related_name='recursive_comments_as_parent', verbose_name=_('parent'))
+    child  = models.ForeignKey(Comment, related_name='recursive_comments_as_child', verbose_name=_('child'))
     class Meta:
         unique_together = (('parent', 'child'),)
+
     @classmethod
     def recursive_add_comment(cls, comment):
+        """
+        Update the table to reflect that the given comment was created.
+        """
         parent = comment.item
-        ancestors = Item.objects.filter(Q(pk__in=RecursiveCommentMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
+        ancestors = Item.objects.filter(Q(pk__in=RecursiveComment.objects.filter(child=parent).values('parent').query)
+                                        | Q(pk=parent.pk))
         for ancestor in ancestors:
-            recursive_comment_membership = RecursiveCommentMembership(parent=ancestor, child=comment)
-            recursive_comment_membership.save()
+            RecursiveComment(parent=ancestor, child=comment).save()
 
 
 class RecursiveMembership(models.Model):
-    parent = models.ForeignKey(Collection, related_name='recursive_memberships_as_parent')
-    child = models.ForeignKey(Item, related_name='recursive_memberships_as_child')
-    child_memberships = models.ManyToManyField(Membership)
+    """
+    This table contains all pairs (collection, item) such that item is directly
+    or indirectly a member of collection.
+    
+    Each RecursiveMembership row also contains a many-to-many set of
+    Memberships (child_memberships) such that there exists an path of
+    memberships from the child to the parent where the first membership in the
+    path is in child_memberships.
+    
+    When Collections or Memberships are trashed, this table is updated as if
+    the Collection or Membership did not exist.
+    
+    For example if A is a Collection, and B is a Collection (which is a member
+    of A), and C is an Item (which is a member of B), and D is an Item (which
+    is a member of A and B), then the table will contain:
+    
+    (A,B) child_memberships={(A,B)}
+    (B,C) child_memberships={(B,C)}
+    (A,C) child_memberships={(B,C)}
+    (A,D) child_memberships={(A,D),(B,D))}
+    (B,D) child_memberships={(B,D)}
+    """
+    parent            = models.ForeignKey(Collection, related_name='recursive_memberships_as_parent', verbose_name=_('parent'))
+    child             = models.ForeignKey(Item, related_name='recursive_memberships_as_child', verbose_name=_('child'))
+    child_memberships = models.ManyToManyField(Membership, verbose_name=_('child memberships'))
     class Meta:
         unique_together = (('parent', 'child'),)
+
     @classmethod
     def recursive_add_membership(cls, membership):
+        """
+        Update the table to reflect that the given membership was created (or
+        untrashed).
+        """
         parent = membership.collection
         child = membership.item
-        # first connect parent to child
+        # Connect parent to child
         recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=parent, child=child)
         recursive_membership.child_memberships.add(membership)
-        # second connect ancestors to child, via parent
+        # Connect ancestors to child, via parent
         ancestor_recursive_memberships = RecursiveMembership.objects.filter(child=parent)
         for ancestor_recursive_membership in ancestor_recursive_memberships:
             recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent, child=child)
             recursive_membership.child_memberships.add(membership)
-        # third connect parent and ancestors to all descendants
+        # Connect parent and ancestors to all descendants
         descendant_recursive_memberships = RecursiveMembership.objects.filter(parent=child)
         for descendant_recursive_membership in descendant_recursive_memberships:
             child_memberships = descendant_recursive_membership.child_memberships.all()
+            # Indirect ancestors
             for ancestor_recursive_membership in ancestor_recursive_memberships:
-                recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent, child=descendant_recursive_membership.child)
+                recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent,
+                                                                                          child=descendant_recursive_membership.child)
                 for child_membership in child_memberships:
                     recursive_membership.child_memberships.add(child_membership)
+            # Parent
             recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=parent, child=descendant_recursive_membership.child)
             for child_membership in child_memberships:
                 recursive_membership.child_memberships.add(child_membership)
+
     @classmethod
     def recursive_remove_edge(cls, parent, child):
-        ancestors = Collection.objects.filter(Q(pk__in=RecursiveMembership.objects.filter(child=parent).values('parent').query) | Q(pk=parent.pk))
-        descendants = Item.objects.filter(Q(pk__in=RecursiveMembership.objects.filter(parent=child).values('child').query) | Q(pk=child.pk))
+        """
+        Update the table to reflect that child is no longer directly a member
+        of parent.
+        """
+        ancestors = Collection.objects.filter(Q(pk__in=RecursiveMembership.objects.filter(child=parent).values('parent').query)
+                                              | Q(pk=parent.pk))
+        descendants = Item.objects.filter(Q(pk__in=RecursiveMembership.objects.filter(parent=child).values('child').query)
+                                          | Q(pk=child.pk))
         edges = RecursiveMembership.objects.filter(parent__in=ancestors.values('pk').query, child__in=descendants.values('pk').query)
-        # first remove all connections between ancestors and descendants
+        # Remove all connections between ancestors and descendants
         edges.delete()
-        # now add back any real connections between ancestors and descendants that aren't trashed
-        memberships = Membership.objects.filter(trashed=False, collection__in=ancestors.values('pk').query, item__in=descendants.values('pk').query).exclude(collection=parent, item=child)
+        # Add back any real connections between ancestors and descendants that aren't trashed
+        memberships = Membership.objects.filter(trashed=False,
+                                                collection__in=ancestors.values('pk').query,
+                                                item__in=descendants.values('pk').query).exclude(collection=parent, item=child)
         for membership in memberships:
             RecursiveMembership.recursive_add_membership(membership)
+
     @classmethod
     def recursive_add_collection(cls, collection):
+        """
+        Update the table to reflect that the given collection was created or
+        untrashed.
+        """
         memberships = Membership.objects.filter(Q(collection=collection) | Q(item=collection), trashed=False)
         for membership in memberships:
             RecursiveMembership.recursive_add_membership(membership)
+
     @classmethod
     def recursive_remove_collection(cls, collection):
+        """
+        Update the table to reflect that the given collection was trashed.
+        """
         RecursiveMembership.recursive_remove_edge(collection, collection)
 
 
