@@ -11,6 +11,7 @@ import permissions
 import re
 import os
 import subprocess
+import datetime
 
 ###############################################################################
 # Models, forms, and fields
@@ -142,6 +143,47 @@ def get_form_class_for_item_type(update_or_create, item_type, fields=None):
 # Viewer helper functions
 ###############################################################################
 
+def get_logged_in_agent(request):
+    """
+    Return the currently logged in Agent (based on the cur_agent_id parameter
+    in request.session), or return the AnonymousAgent if the cur_agent_id is
+    missing or invalid.
+    
+    Also update last_online_at for the resulting Agent to the current time.
+    """
+    cur_agent_id = request.session.get('cur_agent_id', None)
+    cur_agent = None
+    if cur_agent_id is not None:
+        try:
+            cur_agent = Agent.objects.get(pk=cur_agent_id).downcast()
+        except ObjectDoesNotExist:
+            if 'cur_agent_id' in request.session:
+                del request.session['cur_agent_id']
+    if not cur_agent:
+        try:
+            cur_agent = AnonymousAgent.objects.all()[0:1].get()
+        except ObjectDoesNotExist:
+            raise Exception("You must create an anonymous agent")
+    Agent.objects.filter(pk=cur_agent.pk).update(last_online_at=datetime.datetime.now())
+    return cur_agent
+
+
+def get_current_site(request):
+    """
+    Return the Site that corresponds to the URL in the request, or return the
+    default site (based on the DemeSetting cms.default_site) if no Site
+    matches.
+    """
+    hostname = request.get_host().split(':')[0]
+    try:
+        return Site.objects.filter(site_domains__hostname=hostname)[0:1].get()
+    except ObjectDoesNotExist:
+        try:
+            return Site.objects.get(pk=DemeSetting.get('cms.default_site'))
+        except ObjectDoesNotExist:
+            raise Exception("You must create a default Site")
+
+
 class ViewerMetaClass(type):
     viewer_name_dict = {}
     def __new__(cls, name, bases, attrs):
@@ -164,9 +206,22 @@ class Viewer(object):
         return self.permission_cache.agent_can(self.cur_agent, ability, item)
 
     def render_error(self, request_class, title, body):
+        """
+        Return an HttpResponse (of type request_class) that displays a simple
+        error page with the specified title and body.
+        """
+        template = loader.get_template_from_string("""
+        {%% extends layout %%}
+        {%% load resource_extras %%}
+        {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
+        {%% block title %%}<img src="{{ "error"|icon_url:48 }}" /> %s{%% endblock %%}
+        {%% block content %%}%s{%% endblock content %%}
+        """ % (title, body))
+        return request_class(template.render(self.context))
+
         return error_response(self.cur_agent, self.cur_site, self.context['full_path'], request_class, title, body)
 
-    def init_from_http(self, request, cur_agent, cur_site, action, noun, format):
+    def init_from_http(self, request, action, noun, format):
         self.context = Context()
         self.permission_cache = permissions.PermissionCache()
         self.action = action
@@ -193,13 +248,13 @@ class Viewer(object):
         self.context['viewer_name'] = self.viewer_name
         self.context['item_type'] = self.accepted_item_type.__name__
         self.context['full_path'] = self.request.get_full_path()
-        self.cur_agent = cur_agent
-        self.cur_site = cur_site
+        self.cur_agent = get_logged_in_agent(request)
+        self.cur_site = get_current_site(request)
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
         self.context['_permission_cache'] = self.permission_cache
         self.context['_viewer'] = self
-        set_default_layout(self.context)
+        self._set_default_layout()
 
     def init_from_div(self, original_viewer, action, item):
         self.permission_cache = original_viewer.permission_cache
@@ -265,60 +320,36 @@ class Viewer(object):
                 body = 'There is no item %s version %s.' % (self.noun, version)
         return self.render_error(HttpResponseNotFound, title, body)
 
-
-def set_default_layout(context):
-    cur_agent = context['cur_agent']
-    cur_site = context['cur_site']
-    permission_cache = context['_permission_cache']
-    cur_node = cur_site.default_layout
-    while cur_node is not None:
-        next_node = cur_node.layout
-        if next_node is None:
-            if cur_node.override_default_layout:
-                extends_string = ''
+    def _set_default_layout(self):
+        cur_node = self.cur_site.default_layout
+        while cur_node is not None:
+            next_node = cur_node.layout
+            if next_node is None:
+                if cur_node.override_default_layout:
+                    extends_string = ''
+                else:
+                    extends_string = "{% extends 'default_layout.html' %}\n"
             else:
-                extends_string = "{% extends 'default_layout.html' %}\n"
+                extends_string = "{%% extends layout%s %%}\n" % next_node.pk
+            if self.permission_cache.agent_can(self.cur_agent, 'view body', cur_node):
+                template_string = extends_string + cur_node.body
+            else:
+                template_string = "{% extends 'default_layout.html' %}\n"
+                self.context['layout_permissions_problem'] = True
+                next_node = None
+            t = loader.get_template_from_string(template_string)
+            self.context['layout%d' % cur_node.pk] = t
+            cur_node = next_node
+        if self.cur_site.default_layout:
+            self.context['layout'] = self.context['layout%s' % self.cur_site.default_layout.pk]
         else:
-            extends_string = "{%% extends layout%s %%}\n" % next_node.pk
-        if permission_cache.agent_can(context['cur_agent'], 'view body', cur_node):
-            template_string = extends_string + cur_node.body
-        else:
-            template_string = "{% extends 'default_layout.html' %}\n"
-            context['layout_permissions_problem'] = True
-            next_node = None
-        t = loader.get_template_from_string(template_string)
-        context['layout%d' % cur_node.pk] = t
-        cur_node = next_node
-    if cur_site.default_layout:
-        context['layout'] = context['layout%s' % cur_site.default_layout.pk]
-    else:
-        context['layout'] = 'default_layout.html'
+            self.context['layout'] = 'default_layout.html'
 
-def error_response(cur_agent, cur_site, full_path, request_class, title, body):
-    """
-    Return an HttpResponse (of type request_class) that displays a simple
-    error page with the specified title and body.
-    
-    You must supply cur_agent, cur_site, and full_path so that the error page
-    can be rendered within the expected layout.
-    """
-    template = loader.get_template_from_string("""
-    {%% extends layout %%}
-    {%% load resource_extras %%}
-    {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
-    {%% block title %%}<img src="{{ "error"|icon_url:48 }}" /> %s{%% endblock %%}
-    {%% block content %%}%s{%% endblock content %%}
-    """ % (title, body))
-    context = Context()
-    context['cur_agent'] = cur_agent
-    context['cur_site'] = cur_site
-    context['full_path'] = full_path
-    context['_permission_cache'] = permissions.PermissionCache()
-    set_default_layout(context)
-    return request_class(template.render(context))
+
 
 def get_viewer_class_for_viewer_name(viewer_name):
     return ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
+
 
 def get_versioned_item(item, version_number):
     if version_number is not None:
