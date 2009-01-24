@@ -28,12 +28,12 @@ admin.save_versioned(updater=None, first_agent=True, create_permissions=False)
 print 'Creating roles...'
 role_abilities = []
 deme_settings = {}
-for model in all_models():
+for item_type in all_item_types():
     #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
-    default_role = Role(name="%s Default" % model.__name__)
+    default_role = Role(name="%s Default" % item_type.__name__)
     default_role.save_versioned(updater=admin, create_permissions=False)
-    deme_settings["cms.default_role.%s" % model.__name__] = default_role.pk
-    for ability in model.relevant_abilities:
+    deme_settings["cms.default_role.%s" % item_type.__name__] = default_role.pk
+    for ability in item_type.relevant_abilities:
         if ability.startswith('view ') or ability == 'comment_on':
             role_abilities.append(RoleAbility(role=default_role, ability=ability, is_allowed=True))
 

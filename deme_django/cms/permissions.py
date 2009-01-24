@@ -64,7 +64,7 @@ class PermissionCache(object):
         """
         result = self._item_ability_cache.get((agent.pk, item.pk))
         if result is None:
-            item_type = get_model_with_name(item.item_type)
+            item_type = get_item_type_with_name(item.item_type)
             if 'do_everything' in self.global_abilities(agent):
                 result = item_type.relevant_abilities
             else:

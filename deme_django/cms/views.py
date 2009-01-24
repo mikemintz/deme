@@ -18,8 +18,8 @@ import datetime
 ###############################################################################
 
 resource_name_dict = {}
-for model in all_models():
-    resource_name_dict[model.__name__.lower()] = model
+for item_type in all_item_types():
+    resource_name_dict[item_type.__name__.lower()] = item_type
 
 
 class AjaxModelChoiceWidget(forms.Widget):
@@ -1466,7 +1466,7 @@ class SubscriptionViewer(ItemViewer):
 
 
 # Dynamically create default viewers for the ones we don't have.
-for item_type in all_models():
+for item_type in all_item_types():
     viewer_name = item_type.__name__.lower()
     if viewer_name not in ViewerMetaClass.viewer_name_dict:
         parent_item_type_with_viewer = item_type

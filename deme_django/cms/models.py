@@ -15,7 +15,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentGlobalRolePermission', 'AgentPermission', 'AgentRolePermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionGlobalRolePermission', 'CollectionPermission', 'CollectionRolePermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DefaultGlobalPermission', 'DefaultGlobalRolePermission', 'DefaultPermission', 'DefaultRolePermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'GlobalRole', 'GlobalRoleAbility', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'Permission', 'Person', 'PhoneContactMethod', 'RecursiveCommentMembership', 'RecursiveMembership', 'RemoveMemberComment', 'Role', 'RoleAbility', 'Site', 'SiteDomain', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_models', 'get_model_with_name']
+__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentGlobalRolePermission', 'AgentPermission', 'AgentRolePermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionGlobalRolePermission', 'CollectionPermission', 'CollectionRolePermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DefaultGlobalPermission', 'DefaultGlobalRolePermission', 'DefaultPermission', 'DefaultRolePermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'GlobalRole', 'GlobalRoleAbility', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'Permission', 'Person', 'PhoneContactMethod', 'RecursiveCommentMembership', 'RecursiveMembership', 'RemoveMemberComment', 'Role', 'RoleAbility', 'Site', 'SiteDomain', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
 
 ###############################################################################
 # Item framework
@@ -152,7 +152,7 @@ class Item(models.Model):
         Agent, even though self is an Item. This method always makes a
         single database query.
         """
-        item_type = get_model_with_name(self.item_type)
+        item_type = get_item_type_with_name(self.item_type)
         return item_type.objects.get(id=self.id)
 
     def ancestor_collections(self, recursive_filter=None):
@@ -1524,8 +1524,8 @@ class DemeSetting(Item):
 class POSSIBLE_ABILITIES_ITER(object):
     def __iter__(self):
         choices = set()
-        for model in all_models():
-            choices = choices | set([(x,x) for x in model.relevant_abilities])
+        for item_type in all_item_types():
+            choices = choices | set([(x,x) for x in item_type.relevant_abilities])
         choices = list(choices)
         choices.sort(key=lambda x: x[1])
         for x in choices:
@@ -1534,8 +1534,8 @@ class POSSIBLE_ABILITIES_ITER(object):
 class POSSIBLE_GLOBAL_ABILITIES_ITER(object):
     def __iter__(self):
         choices = set()
-        for model in all_models():
-            choices = choices | set([(x,x) for x in model.relevant_global_abilities])
+        for item_type in all_item_types():
+            choices = choices | set([(x,x) for x in item_type.relevant_global_abilities])
         choices = list(choices)
         choices.sort(key=lambda x: x[1])
         for x in choices:
@@ -1793,16 +1793,16 @@ class RecursiveMembership(models.Model):
 
 
 ###############################################################################
-# all_models()
+# all_item_types()
 ###############################################################################
 
-def all_models():
+def all_item_types():
     result = [x for x in models.loading.get_models() if issubclass(x, Item)]
     return result
 
-def get_model_with_name(name):
+def get_item_type_with_name(name):
     try:
-        return (x for x in all_models() if x.__name__ == name).next()
+        return (x for x in all_item_types() if x.__name__ == name).next()
     except StopIteration:
         return None
 

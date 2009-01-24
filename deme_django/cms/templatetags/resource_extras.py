@@ -102,9 +102,9 @@ def icon_url(item_type, size=32):
         ViewerRequest:          'mimetypes/message',
     }
     if isinstance(item_type, basestring):
-        model = get_model_with_name(item_type)
-        if model:
-            return icon_url(model, size)
+        item_type = get_item_type_with_name(item_type)
+        if item_type:
+            return icon_url(item_type, size)
     elif isinstance(item_type, Item):
         return icon_url(type(item_type), size)
     elif isinstance(item_type, type) and issubclass(item_type, Item):
