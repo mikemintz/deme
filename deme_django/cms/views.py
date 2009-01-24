@@ -280,13 +280,14 @@ class Viewer(object):
         self.context['layout'] = 'blank.html'
 
     def dispatch(self):
-        if not self.cur_agent_can_global('do_something'):
+        if self.action != 'login' and not self.cur_agent_can_global('do_something'):
             template = loader.get_template_from_string("""
             {% extends layout %}
             {% load resource_extras %}
             {% block title %}Not Allowed{% endblock %}
             {% block content %}
-            The agent currently logged in is not allowed to use this application. Please log in as another agent.
+            The agent currently logged in is not allowed to use this application.
+            Please <a href="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">log in as another agent</a>.
             {% endblock content %}
             """)
             return HttpResponse(template.render(self.context))

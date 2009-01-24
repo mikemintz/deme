@@ -30,6 +30,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Abstract away from the viewer.request object lying around
 * We should probably rename collection_ and entry_ and maybe resource, since they aren't really unified
 * Code cleanup: do non-models in models.py, then do remaining files
 * It kind of seems like updater/updater_at is unnecessary, since you can derive it from EditComments, and when Versions become more abstract (with delta) then items_updated won't be possible in the current way
@@ -48,7 +49,7 @@ Code correctness/consistency/bugs
 * Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
   - http://code.djangoproject.com/ticket/2227
 * Maybe EditComment could specify the old_version and new_version (although it's not easy to determine old_version in all cases)
-* Idea for conflicting id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun)
+* Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun)
 
 Performance
 -----------
