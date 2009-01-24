@@ -1327,9 +1327,7 @@ for item_type in all_models():
             parent_item_type_with_viewer = parent_item_type_with_viewer.__base__
         if parent_viewer_class:
             viewer_class_name = '%sViewer' % item_type.__name__
-            import new
-            viewer_class_def = new.classobj(viewer_class_name, (parent_viewer_class,), {'accepted_item_type': item_type, 'viewer_name': viewer_name})
-            exec('global %s;%s = viewer_class_def'%(viewer_class_name, viewer_class_name))
+            ViewerMetaClass.__new__(ViewerMetaClass, viewer_class_name, (parent_viewer_class,), {'accepted_item_type': item_type, 'viewer_name': viewer_name})
         else:
             pass
 
