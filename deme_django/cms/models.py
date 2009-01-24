@@ -85,25 +85,13 @@ class ItemVersion(models.Model):
     # Fields
     current_item = models.ForeignKey('Item', related_name='versions')
     version_number = models.PositiveIntegerField(db_index=True)
-    item_type = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=255, blank=True)
     updater = models.ForeignKey('Agent', related_name='version_items_updated')
     updated_at = models.DateTimeField()
 
     def __unicode__(self):
-        return u'%s[%s.%s] "%s"' % (self.item_type, self.current_item_id, self.version_number, self.name)
-
-    def downcast(self):
-        """
-        Return this item version as an instance of the actual item type.
-        
-        For example, if the current item is an Agent, this will return an
-        AgentVersion, even though self is an ItemVersion. This method always
-        makes a single database query.
-        """
-        item_type = get_model_with_name(self.item_type)
-        return item_type.Version.objects.get(pk=self.pk)
+        return u'%s[%s.%s] "%s"' % (self.current_item.item_type, self.current_item_id, self.version_number, self.name)
 
 
 class Item(models.Model):
