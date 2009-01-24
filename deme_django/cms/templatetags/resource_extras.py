@@ -657,7 +657,6 @@ class SubclassFieldsBox(template.Node):
                 break
             viewer_where_action_defined = parent_viewer
         viewer_item_type = viewer_where_action_defined.accepted_item_type
-        print viewer_item_type
         viewer_item_type_field_names = set(viewer_item_type._meta.get_all_field_names())
         def get_fields_for_item(item):
             fields = []
