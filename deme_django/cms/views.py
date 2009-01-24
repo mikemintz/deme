@@ -9,6 +9,8 @@ from django.utils import simplejson
 from django.core.exceptions import ObjectDoesNotExist
 import permissions
 import re
+import os
+import subprocess
 
 ###############################################################################
 # Models, forms, and fields
@@ -188,6 +190,7 @@ class Viewer(object):
                 self.item = None
         self.context['action'] = self.action
         self.context['item'] = self.item
+        self.context['viewer_name'] = self.viewer_name
         self.context['item_type'] = self.accepted_item_type.__name__
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = cur_agent
@@ -210,6 +213,7 @@ class Viewer(object):
         self.context['action'] = self.action
         self.context['item'] = self.item
         self.context['specific_version'] = False
+        self.context['viewer_name'] = self.viewer_name
         self.context['item_type'] = self.accepted_item_type.__name__
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = original_viewer.cur_agent
@@ -325,6 +329,37 @@ def get_versioned_item(item, version_number):
 ###############################################################################
 # Viewers
 ###############################################################################
+
+class CodeGraphViewer(Viewer):
+    accepted_item_type = Item
+    viewer_name = 'codegraph'
+
+    def collection_list(self):
+        """
+        Generate images for the graph of the Deme item type ontology, and
+        display a page with links to them.
+        """
+        # If cms/models.py was modified after static/codegraph.png was,
+        # re-render the graph before displaying this page.
+        models_filename = os.path.join(os.path.dirname(__file__), 'models.py')
+        codegraph_filename = os.path.join(os.path.dirname(__file__), '..', 'static', 'codegraph.png')
+        models_mtime = os.stat(models_filename)[8]
+        try:
+            codegraph_mtime = os.stat(codegraph_filename)[8]
+        except OSError, e:
+            codegraph_mtime = 0
+        if models_mtime > codegraph_mtime:
+            subprocess.call(os.path.join(os.path.dirname(__file__), '..', 'script', 'gen_graph.py'), shell=True)
+        template = loader.get_template_from_string("""
+        {%% extends layout %%}
+        {%% block title %%}Deme Code Graph{%% endblock %%}
+        {%% block content %%}
+        <div><a href="/static/codegraph.png?%d">Code graph</a></div>
+        <div><a href="/static/codegraph_basic.png?%d">Code graph (basic)</a></div>
+        {%% endblock %%}
+        """ % (models_mtime, models_mtime))
+        return HttpResponse(template.render(self.context))
+
 
 class ItemViewer(Viewer):
     accepted_item_type = Item
@@ -860,6 +895,89 @@ class ItemViewer(Viewer):
         self.context['new_agent_form'] = new_agent_form_class()
         self.context['new_collection_form'] = new_collection_form_class()
         return HttpResponse(template.render(self.context))
+
+
+class AuthenticationMethodViewer(ItemViewer):
+    accepted_item_type = AuthenticationMethod
+    viewer_name = 'authenticationmethod'
+
+    def collection_login(self):
+        """
+        This is the view that takes care of all URLs dealing with logging in
+        and logging out.
+        """
+        if self.request.method == 'GET':
+            # If getencryptionmethod is a key in the query string, return a JSON
+            # response with the details about the PasswordAuthenticationMethod
+            # necessary for JavaScript to encrypt the password.
+            if 'getencryptionmethod' in self.request.GET:
+                username = self.request.GET['getencryptionmethod']
+                nonce = PasswordAuthenticationMethod.get_random_hash()[:5]
+                self.request.session['login_nonce'] = nonce
+                try:
+                    password = PasswordAuthenticationMethod.objects.get(username=username).password
+                    algo, salt, hsh = password.split('$')
+                    response_data = {'nonce':nonce, 'algo':algo, 'salt':salt}
+                except ObjectDoesNotExist:
+                    response_data = {'nonce':nonce, 'algo':'sha1', 'salt':'x'}
+                json_data = simplejson.dumps(response_data, separators=(',',':'))
+                return HttpResponse(json_data, mimetype='application/json')
+            # Otherwise, return the login.html page.
+            else:
+                login_as_agents = Agent.objects.filter(trashed=False).order_by('name')
+                login_as_agents = login_as_agents.filter(self.permission_cache.filter_items(self.cur_agent, 'login_as'))
+                self.permission_cache.mass_learn(self.cur_agent, 'view name', login_as_agents)
+                template = loader.get_template('login.html')
+                self.context['redirect'] = self.request.GET['redirect']
+                self.context['login_as_agents'] = login_as_agents
+                return HttpResponse(template.render(self.context))
+        else:
+            # The user just submitted a login form, so we try to authenticate.
+            redirect = self.request.GET['redirect']
+            login_type = self.request.POST['login_type']
+            if login_type == 'logout':
+                if 'cur_agent_id' in self.request.session:
+                    del self.request.session['cur_agent_id']
+                return HttpResponseRedirect(redirect)
+            elif login_type == 'password':
+                nonce = self.request.session['login_nonce']
+                del self.request.session['login_nonce']
+                username = self.request.POST['username']
+                hashed_password = self.request.POST['hashed_password']
+                try:
+                    password_authentication_method = PasswordAuthenticationMethod.objects.get(username=username)
+                except ObjectDoesNotExist:
+                    # No PasswordAuthenticationMethod has this username.
+                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+                if password_authentication_method.agent.trashed: 
+                    # The Agent corresponding to this PasswordAuthenticationMethod is trashed.
+                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+                if password_authentication_method.check_nonced_password(hashed_password, nonce):
+                    self.request.session['cur_agent_id'] = password_authentication_method.agent.pk
+                    return HttpResponseRedirect(redirect)
+                else:
+                    # The password given does not correspond to the PasswordAuthenticationMethod.
+                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+            elif login_type == 'login_as':
+                for key in self.request.POST.iterkeys():
+                    if key.startswith('login_as_'):
+                        new_agent_id = key.split('login_as_')[1]
+                        try:
+                            new_agent = Agent.objects.get(pk=new_agent_id)
+                        except ObjectDoesNotExist:
+                            # There is no Agent with the specified id.
+                            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+                        if new_agent.trashed:
+                            # The specified agent is trashed.
+                            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+                        if self.permission_cache.agent_can(self.cur_agent, 'login_as', new_agent):
+                            self.request.session['cur_agent_id'] = new_agent.pk
+                            return HttpResponseRedirect(redirect)
+                        else:
+                            # The current agent does not have permission to login_as the specified agent.
+                            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+            # Invalid login_type parameter.
+            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
 
 
 class GroupViewer(ItemViewer):

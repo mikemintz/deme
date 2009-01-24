@@ -144,7 +144,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
         <td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
         <td>
             <span class=nav_menu_item>
-            <a href="{% url authenticate %}?redirect={{ full_path|urlencode }}">Sign In</a>
+            <a href="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Sign In</a>
             </span>
         </td>
         </tr>
@@ -163,7 +163,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
         <td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
         <td>
             <span class=nav_menu_item>
-            <a href="{% url authenticate %}?redirect={{ full_path|urlencode }}">Sign In As Someone Else</a>
+            <a href="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Sign In As Someone Else</a>
             </span>
         </td>
         </tr>
@@ -171,7 +171,7 @@ href="/ssp_static?page=jobs.html" alt="Careers">
         <td></td>
         <td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
         <td>
-            <form name="logout_form" style="display: inline;" method="post" action="{% url authenticate %}?redirect={{ full_path|urlencode }}">
+            <form name="logout_form" style="display: inline;" method="post" action="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">
                 <input type="hidden" name="login_type" value="logout" />
             </form>
             <span class=nav_menu_item>

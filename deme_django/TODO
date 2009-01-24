@@ -30,6 +30,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* We should probably rename collection_ and entry_ and maybe resource, since they aren't really unified
 * Code cleanup: do non-models in models.py, then do remaining files
 * It kind of seems like updater/updater_at is unnecessary, since you can derive it from EditComments, and when Versions become more abstract (with delta) then items_updated won't be possible in the current way
 * Consider adding ManyToManyFields with "through"
