@@ -1797,10 +1797,17 @@ class RecursiveMembership(models.Model):
 ###############################################################################
 
 def all_item_types():
+    """
+    Return a list of every item type (as a class).
+    """
     result = [x for x in models.loading.get_models() if issubclass(x, Item)]
     return result
 
 def get_item_type_with_name(name):
+    """
+    Return the item type class with the given name (case-sensitive), or return
+    None if there is no item type with the name.
+    """
     try:
         return (x for x in all_item_types() if x.__name__ == name).next()
     except StopIteration:
