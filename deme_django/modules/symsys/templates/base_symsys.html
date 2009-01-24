@@ -1,563 +1,396 @@
-<html>
+{% load resource_extras %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<link href="/static/stylesheets/base.css" media="all" rel="Stylesheet" type="text/css" />
-<link rel=stylesheet href=/static/modules/symsys/symsys.css type="text/css">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>Symbolic Systems Program</title>
+<link href="/static/stylesheets/base.css" media="all" rel="Stylesheet" type="text/css" />
+<link href="/static/modules/symsys/symsys.css" media="all" rel="Stylesheet" type="text/css" />
 <link rel="shortcut icon" href="/static/modules/symsys/favicon.ico" type="image/x-icon">
 </head>
-<body bgcolor="white" LINK="#b30008" ALINK="#BBBB00" VLINK="#b30008"
-leftmargin=0 topmargin=0 marginwidth=0 marginheight=0
-rightmargin=0 background="/static/modules/symsys/images/sspback2.gif" alt="Stanford Tree">
+<body>
 
-<!-- Begin header -->
+<div class="site">
 
-<TABLE BGCOLOR=dddddd BORDER="0" CELLPADDING="0" CELLSPACING="0" WIDTH="100%" ALIGN="CENTER">
-<TR>
-        <TD>
+<div class="header">
 
-<MAP Name="leftHeaderMap" ALT="Symbolic Systems Header" >
-<AREA SHAPE="rect" Coords="120,0,500,40"
-href="/" alt="Symbolic Systems Program">
-<AREA SHAPE="rect" Coords="125, 50, 188, 70" href="ssp_people"
-alt="People">
-<AREA SHAPE="rect" Coords="198, 50, 260, 70" href="ssp_events"
-alt="Events">
-<AREA SHAPE="rect" Coords="270, 50, 345, 70"
-href="/ssp_static?page=courses.html" alt="Courses">
-<AREA SHAPE="rect" Coords="355, 50, 435, 70"
-href="/ssp_static?page=research.html" alt="Research">
-<AREA SHAPE="rect" Coords="445, 50, 520, 70"
-href="/ssp_static?page=jobs.html" alt="Careers">
-</MAP>
-        <IMG SRC="/static/modules/symsys/images/header-left.jpg" HEIGHT="75" alt="Left Header" WIDTH="530"
-        ALIGN="LEFT" TOPMARGIN=0 BORDER="0" NATURALSIZEFLAG="0" Usemap="#leftHeaderMap" Ismap>
+<div class="top_right">
+    <div class="top_right_text">
+    <form name="logout_form" style="display: inline;" method="post" action="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">
+        <input type="hidden" name="login_type" value="logout" />
+    </form>
+    {% ifequal cur_agent.item_type 'AnonymousAgent' %}
+    You are not logged in
+    [<a href="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login</a>]
+    {% else %}
+    You are logged in as <a href="{{ cur_agent.get_absolute_url }}">{{ cur_agent.name }}</a>
+    [<a href="#" onclick="document.forms['logout_form'].submit(); return false;">Logout</a>]
+    [<a href="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]
+    {% endifequal %}
+    </div>
+    <div class="top_right_search">
+    <form method="get" action="{% url resource_collection viewer="item" %}">
+    <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
+    </form>
+    </div>
+    <script>
+        var search_box_changed = {% if search_query %}true{% else %}false{% endif %};
+        var search_box = document.getElementById('search_box');
+        search_box.onfocus = function(e){
+            if (!search_box_changed) {
+                search_box_changed = true;
+                search_box.value = '';
+                search_box.style.color = 'inherit';
+            }
+        };
+        search_box.onblur = function(e){
+            if (search_box.value == '') {
+                search_box_changed = false;
+                search_box.value = 'Search';
+                search_box.style.color = '#777';
+            }
+        };
+        search_box.onblur();
+    </script>
+</div>
+
+<div class="title"><img src="/static/modules/symsys/images/SU_Seal_Blk_pos_purple64.png" /> Symbolic Systems Program</div>
+
+<div style="clear: both;"></div>
+</div>
+
+<ul class="tabnav">
+    <li{% ifequal full_path "/"%} class="tabhighlighted"{% endifequal %}><a href="/">Home</a></li>
+    <li{% ifequal full_path "/ssp_people"%} class="tabhighlighted"{% endifequal %}><a href="/ssp_people">People</a></li>
+    <li{% ifequal full_path "/ssp_events"%} class="tabhighlighted"{% endifequal %}><a href="/ssp_events">Events</a></li>
+    <li{% ifequal full_path "/ssp_courses"%} class="tabhighlighted"{% endifequal %}><a href="/ssp_courses">Courses</a></li>
+    <li{% ifequal full_path "/ssp_research"%} class="tabhighlighted"{% endifequal %}><a href="/ssp_research">Research</a></li>
+    <li{% ifequal full_path "/ssp_careers"%} class="tabhighlighted"{% endifequal %}><a href="/ssp_careers">Careers</a></li>
+</ul>
+
+<div class="content_box">
+{% if layout_permissions_problem %}
+<div style="color: #a00; padding: 15px; margin: 15px; border: thin dotted #a00; text-align: center;">
+    Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.
+</div>
+{% endif %}
 
 
-        </TD>
-        <TD>
-        <IMG SRC="/static/modules/symsys/images/header-right.jpg" HEIGHT="75" alt="Right Header" WIDTH="133"
-        ALIGN="RIGHT" BORDER="0" NATURALSIZEFLAG="0">
-        </TD>
-</TR>
 
-<!-- Begin divider -->
 
+
+
+<table cellspacing="0" width="100%">
 <tr>
-        <td colspan=2 bgcolor=a30008>
-        <img src="/static/modules/symsys/images/clear.gif" width=1 height=6 alt="Clear image"><br>
-        </td>
-</tr>
+
+<td width="1%" style="vertical-align: top; border: thin solid #aaa; background: #eee; padding: 5px;">
+
+
+
+
+<table cellspacing="0">
+
+    <tr>
+    <td style="vertical-align: top;"><img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" /></td>
+    <td colspan="2" class="nav_menu_header">
+        <a href="ssp_welcome">Welcome!</a>
+    </td>
+    </tr>
+
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="/ssp_static?page=ssp-description/expl1.html">What Is SSP?</a>
+    </td>
+    </tr>
+
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="/ssp_static?page=genInfo.html">Contact Information</a>
+    </td>
+    </tr>
+
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="/ssp_static?page=admissions2.html">Admissions</a>
+    </td>
+    </tr>
+
+
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="/ssp_static?page=degrees.html">Degrees</a>
+    </td>
+    </tr>
+
+<tr><td>&nbsp;</td></tr>
+            
+    <tr>
+    <td style="vertical-align: top;"><img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" /></td>
+    <td colspan="2" class="nav_menu_header">
+    <a href="ssp_people">People</a>
+    </td>
+    </tr>
+    
+    <tr>        
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="ssp_people?group=Students">Students</a> (<a href="ssp_people_full?group=Students">Expanded</a>)
+    </td>
+    </tr>
+            
+    <tr>        
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="ssp_people?group=Alumni">Alumni</a> (<a href="ssp_people_full?group=Alumni">Expanded</a>)
+    </td>
+    </tr>
+
+
+    <tr>        
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="ssp_people?group=Faculty">Faculty</a> (<a href="ssp_people_full?group=Faculty">Expanded</a>)
+    </td>
+    </tr>
+
+    <tr>        
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="ssp_people?group=AdvisingFellows">Advising Fellows</a>
+    </td>
+    </tr>
+
+    <tr>        
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="ssp_people?group=Administration">Administration</a>
+    </td>
+    </tr>
+    
+    <tr>        
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="ssp_facebook">SSP Facebook</a>
+    </td>
+    </tr>
+
+<tr><td>&nbsp;</td></tr>
+
+    <tr>
+    <td style="vertical-align: top;"><img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" /></td>            
+    <td colspan="2" class="nav_menu_header">
+    <a href="/ssp_static?page=events.html">Events</a>
+    </td>
+    
+    
+    
+    </tr>
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="ssp_events">SSP Calendar</a>
+    </td>
+    </tr>
+
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="/ssp_static?page=forum.html">SSP_Forum</a>
+    </td>
+    </tr>
+
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="http://www-csli.stanford.edu/events" target="_blank">CSLI Events</a>
+    </td>
+    </tr>
+
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="http://events.stanford.edu" target="_blank">Events at Stanford</a>
+    </td>
+    </tr>
+
+<tr><td>&nbsp;</td></tr>
+
+    <tr>
+    <td style="vertical-align: top;"><img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" /></td>            
+    <td colspan="2" class="nav_menu_header">
+    <a href="/ssp_static?page=courses.html">Courses</a>
+    </td>
+    </tr>
+
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="" target="_blank">Course Schedule</a>
+    </td>
+    </tr>
+    
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="http://www.stanford.edu/dept/registrar/bulletin/bulletin07-08/pdf/SymbolicSys.pdf" target="_blank">Course Descriptions</a>
+    </td>
+    </tr>
+     
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item"> 
+    <a href="ssp_courses">Course Websites</a><BR> 
+    </td>
+    </tr>
+
+<tr><td>&nbsp;</td></tr>
+
+    <tr>
+    <td style="vertical-align: top;"><img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" /></td>            
+    <td colspan="2" class="nav_menu_header">
+    <a href="/ssp_static?page=research.html">Research Opportunities</a>
+    </td>
+    </tr>
+
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="/ssp_static?page=choosehonor.html">Honors Program</a>
+    </td>
+    </tr>
+    
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="ssp_research">Academic Year Positions</a>
+    </td>
+    </tr>
+    
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="ssp_internships">Summer Internships</a>
+    </td>
+    </tr>
+    
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="ssp_other_research">Other Opportunities</a>
+    </td>
+    </tr>
+    
+    
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="http://urp.stanford.edu" target="_blank">Stanford URP Office</a>
+    </td>
+    </tr>
+        
+<tr><td>&nbsp;</td></tr>
+
+    <tr>
+    <td style="vertical-align: top;"><img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" /></td>            
+    <td colspan="2" class="nav_menu_header">
+    <a href="/ssp_static?page=jobs.html">Career Resources</a>
+    </td>
+    </tr>
+
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="ssp_jobs">SSP Jobs Database</a>
+    </td>
+    </tr>
+
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class=nav_menu_item>
+    <a href="/ssp_static?page=otherjobs.html">Other Resources</a>
+    </td>
+    </tr>
+
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="ssp_admin_jobs_create?action=create">List a Job</a>
+    </td>
+    </tr>
+    
+    <tr>
+    <td></td>
+    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
+    <td class="nav_menu_item">
+    <a href="http://cardinalrecruiting.stanford.edu/employers/" target="_blank">CDC Listing Service</a>
+    </td>
+    </tr>
+
+<tr><td>&nbsp;</td></tr>
 </table>
 
-<!-- Begin main body -->
 
-<table border=0 cellpadding=10 cellspacing=0 width="100%">
-<tr valign=top>
-        <td width="1%">
-
-
-
-
-<table cellspacing=0 cellpadding=0 border=0>
-        <tr>
-        <td valign=top align=right width=5>
-                <img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" border=0>
-        </td>
-        <td colspan = "2">
-            <span class=nav_menu_header>
-            <a href="ssp_welcome">
-            Welcome!</a>
-            </span>
-        </td>
-        </tr>
-
-        <tr>
-        <td></td>
-        <td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-                    <a href="/ssp_static?page=ssp-description/expl1.html">
-                        What Is SSP?</a>
-                        </span>
-
-                <tr>
-                <td></td>
-                <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-                <td>
-        <span class=nav_menu_item>
-                <a href="/ssp_static?page=genInfo.html">Contact Information</a>
-                </span>
-                </td>
-                </tr>
-
-        <tr>
-                <td></td>
-                <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-                <td>
-        <span class=nav_menu_item>
-                <a href="/ssp_static?page=admissions2.html">Admissions</a>
-                </span>
-                </td>
-                </tr>
-
-
-                <tr>
-                <td></td>
-                <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-                <td>
-        <span class=nav_menu_item>
-                <a href="/ssp_static?page=degrees.html">Degrees</a>
-                </span>
-                </td>
-                </tr>
-
-</table>
-<br>
-                
-
-
-
-
-
-
-
-
-
-
-<table cellspacing=0 cellpadding=0 border=0>
-        <tr>
-        <td valign=top align=right width=5>
-                <img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" border=0>
-        </td>
-        <td colspan = "2">
-           <span class=nav_menu_header>
-           <B>Your Account</B>
-           </span>            
-        </td>
-        </tr>
-        
-        
-
-        {% ifequal cur_agent.item_type 'AnonymousAgent' %}
-        <tr>        
-        <td></td>
-        <td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-            <a href="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Sign In</a>
-            </span>
-        </td>
-        </tr>
-        {% else %}
-        <tr>        
-        <td></td>
-        <td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-            Welcome, {{ cur_agent.name }}
-            </span>
-        </td>
-        </tr>
-        <tr>        
-        <td></td>
-        <td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-            <a href="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Sign In As Someone Else</a>
-            </span>
-        </td>
-        </tr>
-        <tr>        
-        <td></td>
-        <td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <form name="logout_form" style="display: inline;" method="post" action="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">
-                <input type="hidden" name="login_type" value="logout" />
-            </form>
-            <span class=nav_menu_item>
-            <a href="#" onclick="document.forms['logout_form'].submit(); return false;">Sign Out</a>
-            </span>
-        </td>
-        </tr>
-        {% endifequal %}
-                
-</table>
-<br>
-
-
-
-
-
-
-
-
-
-
-
-<table cellspacing=0 cellpadding=0 border=0>
-        <tr>
-        <td valign=top align=right width=5>
-                <img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" border=0>
-        </td>
-        <td colspan = "2">
-           <span class=nav_menu_header>
-           <B><a href="ssp_people">People</a></B>
-           </span>            
-        </td>
-        </tr>
-        
-        
-
-        <tr>        
-        <td></td>
-        <td valign=top ><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-            <a href="ssp_people?group=Students">Students</a> (<a href="ssp_people_full?group=Students">Expanded</a>)
-            </span>
-        </td>
-        </tr>
-                
-        <tr>        
-        <td></td>
-        <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-            <a href="ssp_people?group=Alumni">Alumni</a> (<a href="ssp_people_full?group=Alumni">Expanded</a>)
-            </span>
-        </td>
-        </tr>
-
-
-        <tr>        
-        <td></td>
-        <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-            <a href="ssp_people?group=Faculty">Faculty</a> (<a href="ssp_people_full?group=Faculty">Expanded</a>)
-            </span>
-        </td>
-        </tr>
-
-        <tr>        
-        <td></td>
-        <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-            <a href="ssp_people?group=AdvisingFellows">Advising Fellows</a>
-            </span>
-        </td>
-        </tr>
-
-        <tr>        
-        <td></td>
-        <td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        
-    <td> <span class=nav_menu_item> 
-      
-      <a href="ssp_people?group=Administration">Administration</a> 
-      
-      </span> </td>
-        </tr>
-
-        <tr>        
-        <td></td>
-        <td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-        <td>
-            <span class=nav_menu_item>
-            <a href="ssp_facebook">SSP Facebook</a>
-            </span>
-        </td>
-        </tr>
-</table>
-<br>
-<table cellspacing=0 cellpadding=0 border=0>
-        <tr>
-        <td valign=top align=right width=5>
-                <img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" border=0>
-        </td>
-        <td colspan = "2">
-                <span class=nav_menu_header>
-                <a href="/ssp_static?page=events.html">
-                Events</a>
-                </span>
-        </td>
-        
-        
-        
-        </tr>
-        <tr>
-		<td></td>
-		<td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-		<span class=nav_menu_item>
-		<a href="ssp_events">SSP Calendar</a>
-		</span>
-		</td>
-		</tr>
-
-        <tr>
-		<td></td>
-		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-        <span class=nav_menu_item>
-		<a href="/ssp_static?page=forum.html">SSP_Forum</a>
-		</span>
-		</td>
-		</tr>
-
-		<tr>
-		<td></td>
-		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-        <span class=nav_menu_item>
-		<a href="http://www-csli.stanford.edu/events" target="_blank">CSLI Events</a>
-		</span>
-		</td>
-		</tr>
-
-		<tr>
-		<td></td>
-		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-        <span class=nav_menu_item>
-		<a href="http://events.stanford.edu" target="_blank">Events at Stanford</a>
-		</span>
-        </td>
-        </tr>
-</table>
-<br>
-
-
-
-
-
-
-
-
-
-
-
-<table cellspacing=0 cellpadding=0 border=0>
-        <tr>
-        <td valign=top align=right width=5>
-                <img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" border=0>
-        </td>
-        <td colspan = "2">
-                <span class=nav_menu_header>
-                <a href="/ssp_static?page=courses.html"><b>Courses</b></a>        
-                </span>
-        </td>
-        </tr>
-        <tr>
-		<td></td>
-		<td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-		<span class=nav_menu_item>
-		<a href="https://axess.stanford.edu/psp/psp_prd/EMPLOYEE/SA/e/?url=https%3a%2f%2fpsweb.stanford.edu%2fservlets%2ficlientservlet%2fa2k_prd%2f%3fICType%3dPanel%26Menu%3dSA_LEARNER_SERVICES%26Market%3dGBL%26PanelGroupName%3dCLASS_SEARCH" target="_blank">Course Schedule</a>
-		</span>
-		</td>
-		</tr>
-		
-		<tr>
-		<td></td>
-		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-        <span class=nav_menu_item>
-		<a href="http://www.stanford.edu/dept/registrar/bulletin/bulletin07-08/pdf/SymbolicSys.pdf" target="_blank"> Course Descriptions</a>
-		</span>
-		</td>
-		</tr>
-		 
-		<tr>
-		<td></td>
-		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-        <span class=nav_menu_item> 
-		<a href="ssp_courses">Course Websites</a><BR> 
-        </span>
-        </td>
-        </tr>
-</table>
-<br>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<table cellspacing=0 cellpadding=0 border=0>
-        <tr>
-        <td valign=top align=right width=5>
-                <img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" border=0>
-        </td>
-        <td colspan = "2">
-                <span class=nav_menu_header>
-                <a href="/ssp_static?page=research.html"><b>Research Opportunities</b></a>
-                </span>
-        </td>
-        </tr>
-        <tr>
-		<td></td>
-		<td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-		<span class=nav_menu_item>
-		<a href="/ssp_static?page=choosehonor.html">Honors Program</a>
-		</span>
-		</td>
-		</tr>
-		
-		<tr>
-		<td></td>
-		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-        <span class=nav_menu_item>
-		<a href="ssp_research">Academic Year Positions</a>
-		</span>
-		</td>
-		</tr>
-		
-		<tr>
-		<td></td>
-		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-        <span class=nav_menu_item>
-		<a href="ssp_internships">Summer Internships</a>
-		</span>
-		</td>
-		</tr>
-		
-		<tr>
-		<td></td>
-		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-		<span class=nav_menu_item>
-		<a href="ssp_other_research">Other Opportunities</a>
-		
-		</span>
-		</td>
-		</tr>
-		
-		
-		<tr>
-		<td></td>
-		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-        <span class=nav_menu_item>
-		<a href="http://urp.stanford.edu" target="_blank">Stanford URP Office</a>
-		</span>
-            </td>
-            </tr>
-			
-	    
-		
-</table>
-<br>
-
-
-
-
-
-
-
-
-
-
-
-<table cellspacing=0 cellpadding=0 border=0>
-        <tr>
-        <td valign=top align=right width=5>
-                <img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" border=0>
-        </td>
-        <td colspan = "2">
-                <span class=nav_menu_header>
-                <a href="/ssp_static?page=jobs.html"><b>Career Resources</b></a>
-                </span>
-        </td>
-        </tr>
-        <tr>
-		<td></td>
-		<td valign=top width=10><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-		<span class=nav_menu_item>
-		<a href="ssp_jobs">SSP Jobs Database</a>
-		</span>
-		</td>
-		</tr>
-
-		<tr>
-		<td></td>
-		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		
-    <td> <span class=nav_menu_item> <a href="/ssp_static?page=otherjobs.html">Other Resources
-      </a> </span> </td>
-		</tr>
-
-		<tr>
-		<td></td>
-		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-        <span class=nav_menu_item>
-		<a href="ssp_admin_jobs_create?action=create">List a Job</a>
-		</span>
-        </td>
-        </tr>
-        
-        <tr>
-		<td></td>
-		<td valign=top><img src="/static/modules/symsys/images/bullet.gif" alt="+" border=0></td>
-		<td>
-        <span class=nav_menu_item>
-		<a href="http://cardinalrecruiting.stanford.edu/employers/" target="_blank">CDC Listing Service</a>
-		</span>
-        </td>
-        </tr>
-</table>
-<br><p>
-
-
-
-
-
-
-
-
-
-                <img src="/static/modules/symsys/images/clear.gif" alt="Clear image" width=155
+<img src="/static/spacer.gif" alt="Clear image" width=155
 height=1 border=0>
-        </td>
-        <td>
-                <TABLE BORDER="0" WIDTH=95%
-                 CELLLPADDING="5" CELLSPACING="0">
-                <TR>
-                        <TD align=left>
-                        <div class=maincontent>
-<h1 style="border-bottom: 3px solid #246; color: #369; margin-bottom: 10px;">{% block title %}{% endblock %}</h1>
+
+</td>
+
+<td style="vertical-align: top; padding-left: 15px;">
+<div class="subtitle">{% block title %}{% endblock %}</div>
 {% block content %}
 {% endblock %}
-</div>
-</tr></td></table>
-<P>
-<table border=0 cellspacing=0><tr height=20><td></td></tr></table>
-<hr size=2 noshade>
-<table border=0 width=100%><tr><td align="right">
-<font size=1>
-    Copyright &copy; {% now "Y" %} Symbolic Systems Program at Stanford
-University.  Please contact our <a
-href="mailto:ian.comfort@stanford.edu"><font color=0000BB>webmaster</font></a>
-with any comments or corrections.
-</td></tr></table>
-
 </td>
 </tr>
 </table>
+
+
+
+
+
+
+</div>
+
+<div class="footer">
+    <p>Copyright &copy; {% now "Y" %} Symbolic Systems Program at Stanford University.</p>
+    <p>Please contact our <a href="mailto:ian.comfort@stanford.edu">webmaster</a> with any comments or corrections.</p>
+    <p>&nbsp;</p>
+    <p>Stanford University</p>
+    <p>Margaret Jacks Hall</p>
+    <p>Bldg 460, Rm. 40E</p>
+    <p>650-723-0950</p>
+</div>
+
+</div>
+
 </body>
 </html>
 

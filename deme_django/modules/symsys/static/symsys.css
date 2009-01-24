@@ -1,28 +1,37 @@
-/* This one doesnt work b/c there are so many "font size=2" overrides
- * everywhere in dynamic/*/*.html -- or maybe b/c of all the tables
- */
-BODY {
-/*     font-family: verdana, arial, sans-serif; */
+div.title {
+    float: left;
+    font-weight: normal;
+    color: #4040C4;
+    font-size: 250%;
+    font-variant: small-caps;
+    font-family: arial narrow;
+    font-stretch: ultra-condensed;
 }
 
-.maincontent {
-    font-size: 11pt;
-    font-family: "Times New Roman", serif;
+div.title img {
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+div.subtitle {
+    font-weight: bold;
+    color: #4040C4;
+    font-size: 175%;
+    margin-left: 30px;
+    margin-top: 10px;
+    margin-bottom: 30px;
+}
+
+div.subtitle img {
+    vertical-align: middle;
 }
 
 /* These work fine */
 .nav_menu_header {
-    font-size: 9pt;
+    font-size: 75%;
     font-weight: bold;
-/*     font-style: italic; */
-    font-family: Verdana, Helvetica, sans-serif;
 }
 
 .nav_menu_item {
-    font-size: 8pt;
-    font-family: Verdana, Helvetica, sans-serif;
-}
-    
-.text_editor {
-    width: 100%;
+    font-size: 70%;
 }
