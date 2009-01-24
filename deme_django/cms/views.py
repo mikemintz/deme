@@ -144,78 +144,13 @@ class ViewerMetaClass(type):
     viewer_name_dict = {}
     def __new__(cls, name, bases, attrs):
         result = super(ViewerMetaClass, cls).__new__(cls, name, bases, attrs)
-        ViewerMetaClass.viewer_name_dict[attrs['viewer_name']] = result
+        if name != 'Viewer':
+            ViewerMetaClass.viewer_name_dict[attrs['viewer_name']] = result
         return result
 
-def set_default_layout(context):
-    cur_agent = context['cur_agent']
-    cur_site = context['cur_site']
-    permission_cache = context['_permission_cache']
-    cur_node = cur_site.default_layout
-    while cur_node is not None:
-        next_node = cur_node.layout
-        if next_node is None:
-            if cur_node.override_default_layout:
-                extends_string = ''
-            else:
-                extends_string = "{% extends 'default_layout.html' %}\n"
-        else:
-            extends_string = "{%% extends layout%s %%}\n" % next_node.pk
-        if permission_cache.agent_can(context['cur_agent'], 'view body', cur_node):
-            template_string = extends_string + cur_node.body
-        else:
-            template_string = "{% extends 'default_layout.html' %}\n"
-            context['layout_permissions_problem'] = True
-            next_node = None
-        t = loader.get_template_from_string(template_string)
-        context['layout%d' % cur_node.pk] = t
-        cur_node = next_node
-    if cur_site.default_layout:
-        context['layout'] = context['layout%s' % cur_site.default_layout.pk]
-    else:
-        context['layout'] = 'default_layout.html'
 
-def error_response(cur_agent, cur_site, full_path, request_class, title, body):
-    """
-    Return an HttpResponse (of type request_class) that displays a simple
-    error page with the specified title and body.
-    
-    You must supply cur_agent, cur_site, and full_path so that the error page
-    can be rendered within the expected layout.
-    """
-    template = loader.get_template_from_string("""
-    {%% extends layout %%}
-    {%% load resource_extras %%}
-    {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
-    {%% block title %%}<img src="{{ "error"|icon_url:48 }}" /> %s{%% endblock %%}
-    {%% block content %%}%s{%% endblock content %%}
-    """ % (title, body))
-    context = Context()
-    context['cur_agent'] = cur_agent
-    context['cur_site'] = cur_site
-    context['full_path'] = full_path
-    context['_permission_cache'] = permissions.PermissionCache()
-    set_default_layout(context)
-    return request_class(template.render(context))
-
-def get_viewer_class_for_viewer_name(viewer_name):
-    return ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
-
-def get_versioned_item(item, version_number):
-    if version_number is not None:
-        item.copy_fields_from_version(version_number)
-    return item
-
-
-###############################################################################
-# Viewers
-###############################################################################
-
-class ItemViewer(object):
+class Viewer(object):
     __metaclass__ = ViewerMetaClass
-
-    accepted_item_type = Item
-    viewer_name = 'item'
 
     def __init__(self):
         pass
@@ -325,6 +260,75 @@ class ItemViewer(object):
             else:
                 body = 'There is no item %s version %s.' % (self.noun, version)
         return self.render_error(HttpResponseNotFound, title, body)
+
+
+def set_default_layout(context):
+    cur_agent = context['cur_agent']
+    cur_site = context['cur_site']
+    permission_cache = context['_permission_cache']
+    cur_node = cur_site.default_layout
+    while cur_node is not None:
+        next_node = cur_node.layout
+        if next_node is None:
+            if cur_node.override_default_layout:
+                extends_string = ''
+            else:
+                extends_string = "{% extends 'default_layout.html' %}\n"
+        else:
+            extends_string = "{%% extends layout%s %%}\n" % next_node.pk
+        if permission_cache.agent_can(context['cur_agent'], 'view body', cur_node):
+            template_string = extends_string + cur_node.body
+        else:
+            template_string = "{% extends 'default_layout.html' %}\n"
+            context['layout_permissions_problem'] = True
+            next_node = None
+        t = loader.get_template_from_string(template_string)
+        context['layout%d' % cur_node.pk] = t
+        cur_node = next_node
+    if cur_site.default_layout:
+        context['layout'] = context['layout%s' % cur_site.default_layout.pk]
+    else:
+        context['layout'] = 'default_layout.html'
+
+def error_response(cur_agent, cur_site, full_path, request_class, title, body):
+    """
+    Return an HttpResponse (of type request_class) that displays a simple
+    error page with the specified title and body.
+    
+    You must supply cur_agent, cur_site, and full_path so that the error page
+    can be rendered within the expected layout.
+    """
+    template = loader.get_template_from_string("""
+    {%% extends layout %%}
+    {%% load resource_extras %%}
+    {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
+    {%% block title %%}<img src="{{ "error"|icon_url:48 }}" /> %s{%% endblock %%}
+    {%% block content %%}%s{%% endblock content %%}
+    """ % (title, body))
+    context = Context()
+    context['cur_agent'] = cur_agent
+    context['cur_site'] = cur_site
+    context['full_path'] = full_path
+    context['_permission_cache'] = permissions.PermissionCache()
+    set_default_layout(context)
+    return request_class(template.render(context))
+
+def get_viewer_class_for_viewer_name(viewer_name):
+    return ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
+
+def get_versioned_item(item, version_number):
+    if version_number is not None:
+        item.copy_fields_from_version(version_number)
+    return item
+
+
+###############################################################################
+# Viewers
+###############################################################################
+
+class ItemViewer(Viewer):
+    accepted_item_type = Item
+    viewer_name = 'item'
 
     def collection_list(self):
         if self.request.GET.get('collection'):
