@@ -2,6 +2,15 @@
 |Short Term|
 |==========|
 
+Jan-25 notes
+------------
+* Prioritize making the documentation architecture (by friday)
+* We can now edit TextDocumentExcerpt body
+* There is now DemeSettings for default abilities for every item (and change defaultpermission to alluserpermissions or something), and no more roles
+* EditComment has a field called 'editsummary' that is not part of the item, but just the editcomment
+* We will eventually want to have a item_type table
+* why are all of the button icons messed up on my installation?
+
 Nov-21 notes (automatic comments and subscriptions)
 ---------------------------------------------------
 * Customizable email template per site that gets sent out for each comment (notification)
@@ -24,15 +33,15 @@ Ontology changes
 Code correctness/consistency/bugs
 ---------------------------------
 * Abstract away from the viewer.request object lying around
-* We should probably rename collection_ and entry_ and maybe resource, since they aren't really unified
+* We should probably rename collection_ and entry_ and maybe resource, since they aren't really unified (rename resource to item, resource_entry to item_url, resource_collection to item_type_url)
 * Code cleanup: do permissions in models.py, then do views, templatetags, and templates
-* It kind of seems like updater/updater_at is unnecessary, since you can derive it from EditComments, and when Versions become more abstract (with delta) then items_updated won't be possible in the current way
+* It kind of seems like updater/updater_at is unnecessary, since you can derive it from EditComments, and when Versions become more abstract (with delta) then items_updated won't be possible in the current way (yes do it)
 * Discuss with Todd whether we should make most text fields rich text, or just htmldocument.body
 * consider making permissions have one column per ability. now that we store all possible abilities, it's easier to migrate.
   - I tried this, and ended up with about 150 columns, so the indexes were huge (100mb vs 5mb) and the queries were slower. To do this, we'd need a way that didn't involve one very large table with every permission in the column. At first it makes sense to have a parallel inheritance structure of permissions (from items), but if we want to get a list of permissions for an agent and we only know it's an item right now, we won't get them all. This can probably be dealt with: we'll just need to be careful what we do with "comprehensive" lists of permissions.
 * Make more sensible permissions:
   - no permissions on Roles and RoleAbilities, there should be a Role modifying interface that requires do_everything
-  - figure out SiteDomains (consider replacing it with SiteAliases, where each Site has a single domain, but SiteAliases add additional domains)
+  - figure out SiteDomains (consider replacing it with SiteAliases, where each Site has a single domain, but SiteAliases add additional domains) (yes change it)
   - Don't put creator_roles on things that just require do_everything
   - Figure out better scheme for default created roles
 * figure out import deal on deme_django.cms and just cms
