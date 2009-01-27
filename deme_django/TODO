@@ -32,7 +32,7 @@ Code correctness/consistency/bugs
 * We should define which abilities are allowed by default in the item type, not just hard code in create_initial_data.py
 * Abstract away from the viewer.request object lying around
 * We should probably rename collection_ and entry_ and maybe resource, since they aren't really unified (rename resource to item, resource_entry to item_url, resource_collection to item_type_url)
-* Code cleanup: do permissions in models.py, then do views, templatetags, and templates
+* Code cleanup: do permissions in models.py, document/clean the changes to permissions.py, then do views, templatetags, and templates
 * It kind of seems like updater/updater_at is unnecessary, since you can derive it from EditComments, and when Versions become more abstract (with delta) then items_updated won't be possible in the current way (yes do it)
 * Discuss with Todd whether we should make most text fields rich text, or just htmldocument.body
 * consider making permissions have one column per ability. now that we store all possible abilities, it's easier to migrate.
