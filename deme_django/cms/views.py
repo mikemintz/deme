@@ -642,7 +642,7 @@ class ItemViewer(Viewer):
 
         agent_permission_form_class = forms.models.modelform_factory(AgentPermission, fields=['agent', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
         collection_permission_form_class = forms.models.modelform_factory(CollectionPermission, fields=['collection', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        default_permission_form_class = forms.models.modelform_factory(DefaultPermission, fields=['item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
+        everyone_permission_form_class = forms.models.modelform_factory(EveryonePermission, fields=['item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
 
         if self.method == 'POST':
             form_type = self.request.GET.get('formtype')
@@ -650,8 +650,8 @@ class ItemViewer(Viewer):
                 form_class = agent_permission_form_class
             elif form_type == 'collectionpermission':
                 form_class = collection_permission_form_class
-            elif form_type == 'defaultpermission':
-                form_class = default_permission_form_class
+            elif form_type == 'everyonepermission':
+                form_class = everyone_permission_form_class
             else:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Type', "You submitted a permission form with an invalid formtype parameter")
 
@@ -697,7 +697,7 @@ class ItemViewer(Viewer):
 
         agent_permissions = self.item.agent_permissions_as_item.order_by('ability')
         collection_permissions = self.item.collection_permissions_as_item.order_by('ability')
-        default_permissions = self.item.default_permissions_as_item.order_by('ability')
+        everyone_permissions = self.item.everyone_permissions_as_item.order_by('ability')
         agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
         collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk=self.request.GET.get('collection', 0))).order_by('name')
 
@@ -715,9 +715,9 @@ class ItemViewer(Viewer):
             collection_datum['permissions'] = collection_permissions.filter(collection=collection)
             collection_datum['permission_form'] = collection_permission_form_class(prefix="collection%s" % collection.pk, initial={'item': self.item.pk, 'collection': collection.pk})
             collection_data.append(collection_datum)
-        default_data = {}
-        default_data['permissions'] = default_permissions
-        default_data['permission_form'] = default_permission_form_class(prefix="default", initial={'item': self.item.pk})
+        everyone_data = {}
+        everyone_data['permissions'] = everyone_permissions
+        everyone_data['permission_form'] = everyone_permission_form_class(prefix="everyone", initial={'item': self.item.pk})
 
         # now include the error form
         if self.method == 'POST':
@@ -729,9 +729,9 @@ class ItemViewer(Viewer):
                 collection_datum = [datum for datum in collection_data if str(datum['collection'].pk) == form['collection'].data][0]
                 collection_datum['permission_form'] = form
                 collection_datum['permission_form_invalid'] = True
-            elif form_type == 'defaultpermission':
-                default_data['permission_form'] = form
-                default_data['permission_form_invalid'] = True
+            elif form_type == 'everyonepermission':
+                everyone_data['permission_form'] = form
+                everyone_data['permission_form_invalid'] = True
 
         new_agent_form_class = forms.models.modelform_factory(AgentPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
         new_collection_form_class = forms.models.modelform_factory(CollectionPermission, fields=['collection'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
@@ -739,7 +739,7 @@ class ItemViewer(Viewer):
         template = loader.get_template('item/permissions.html')
         self.context['agent_data'] = agent_data
         self.context['collection_data'] = collection_data
-        self.context['default_data'] = default_data
+        self.context['everyone_data'] = everyone_data
         self.context['new_agent_form'] = new_agent_form_class()
         self.context['new_collection_form'] = new_collection_form_class()
         return HttpResponse(template.render(self.context))
@@ -758,7 +758,7 @@ class ItemViewer(Viewer):
 
         agent_permission_form_class = forms.models.modelform_factory(AgentGlobalPermission, fields=['agent', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
         collection_permission_form_class = forms.models.modelform_factory(CollectionGlobalPermission, fields=['collection', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        default_permission_form_class = forms.models.modelform_factory(DefaultGlobalPermission, fields=['ability', 'is_allowed'], formfield_callback=formfield_callback)
+        everyone_permission_form_class = forms.models.modelform_factory(EveryoneGlobalPermission, fields=['ability', 'is_allowed'], formfield_callback=formfield_callback)
 
         if self.method == 'POST':
             form_type = self.request.GET.get('formtype')
@@ -766,8 +766,8 @@ class ItemViewer(Viewer):
                 form_class = agent_permission_form_class
             elif form_type == 'collectionpermission':
                 form_class = collection_permission_form_class
-            elif form_type == 'defaultpermission':
-                form_class = default_permission_form_class
+            elif form_type == 'everyonepermission':
+                form_class = everyone_permission_form_class
             else:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Type', "You submitted a permission form with an invalid formtype parameter")
 
@@ -819,7 +819,7 @@ class ItemViewer(Viewer):
 
         agent_permissions = AgentGlobalPermission.objects.order_by('ability')
         collection_permissions = CollectionGlobalPermission.objects.order_by('ability')
-        default_permissions = DefaultGlobalPermission.objects.order_by('ability')
+        everyone_permissions = EveryoneGlobalPermission.objects.order_by('ability')
         agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
         collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk=self.request.GET.get('collection', 0))).order_by('name')
 
@@ -837,9 +837,9 @@ class ItemViewer(Viewer):
             collection_datum['permissions'] = collection_permissions.filter(collection=collection)
             collection_datum['permission_form'] = collection_permission_form_class(prefix="collection%s" % collection.pk, initial={'collection': collection.pk})
             collection_data.append(collection_datum)
-        default_data = {}
-        default_data['permissions'] = default_permissions
-        default_data['permission_form'] = default_permission_form_class(prefix="default", initial={})
+        everyone_data = {}
+        everyone_data['permissions'] = everyone_permissions
+        everyone_data['permission_form'] = everyone_permission_form_class(prefix="everyone", initial={})
 
         # now include the error form
         if self.method == 'POST':
@@ -851,9 +851,9 @@ class ItemViewer(Viewer):
                 collection_datum = [datum for datum in collection_data if str(datum['collection'].pk) == form['collection'].data][0]
                 collection_datum['permission_form'] = form
                 collection_datum['permission_form_invalid'] = True
-            elif form_type == 'defaultpermission':
-                default_data['permission_form'] = form
-                default_data['permission_form_invalid'] = True
+            elif form_type == 'everyonepermission':
+                everyone_data['permission_form'] = form
+                everyone_data['permission_form_invalid'] = True
 
         new_agent_form_class = forms.models.modelform_factory(AgentGlobalPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
         new_collection_form_class = forms.models.modelform_factory(CollectionGlobalPermission, fields=['collection'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
@@ -861,7 +861,7 @@ class ItemViewer(Viewer):
         template = loader.get_template('item/globalpermissions.html')
         self.context['agent_data'] = agent_data
         self.context['collection_data'] = collection_data
-        self.context['default_data'] = default_data
+        self.context['everyone_data'] = everyone_data
         self.context['new_agent_form'] = new_agent_form_class()
         self.context['new_collection_form'] = new_collection_form_class()
         return HttpResponse(template.render(self.context))

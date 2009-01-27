@@ -114,19 +114,19 @@ class PermissionCache(object):
 
 def calculate_global_permissions_for_agent(agent):
     """
-    Return tuple (agent_permissions, collection_permissions, default_permissions).
+    Return tuple (agent_permissions, collection_permissions, everyone_permissions).
     
     Each permission list is a QuerySet for untrashed GlobalPermissions. The
     agent_permissions queryset contains permissions that were assigned directly
     to agent, collection_permissions contains permissions that were assigned to
-    Collections that agent is in (directly or indirectly), and default_permissions
+    Collections that agent is in (directly or indirectly), and everyone_permissions
     contains all permissions that were assigned to everyone by default.
     """
     my_collection_ids = agent.ancestor_collections().values('pk').query
     agent_perms = AgentGlobalPermission.objects.filter(agent=agent)
     collection_perms = CollectionGlobalPermission.objects.filter(collection__in=my_collection_ids)
-    default_perms = DefaultGlobalPermission.objects.all()
-    return (agent_perms, collection_perms, default_perms)
+    everyone_perms = EveryoneGlobalPermission.objects.all()
+    return (agent_perms, collection_perms, everyone_perms)
 
 
 def calculate_global_abilities_for_agent(agent):
@@ -143,7 +143,7 @@ def calculate_global_abilities_for_agent(agent):
          b. The agent was NOT directly assigned a permission that
             contains this ability with is_allowed=False.
       3. All of the following holds:
-         a. There is a default permission that contains this ability
+         a. There is an everyone permission that contains this ability
             with is_allowed=True.
          b. NO Collection that the agent is in (directly or indirectly) was
             assigned a permission that contains this ability with
@@ -154,7 +154,7 @@ def calculate_global_abilities_for_agent(agent):
     permissions_triple = calculate_global_permissions_for_agent(agent)
     abilities_yes = set()
     abilities_no = set()
-    # Iterate once for each level: agent, collection, default
+    # Iterate once for each level: agent, collection, everyone
     for permissions in permissions_triple:
         # Populate cur_abilities_yes and cur_abilities_no with the specified
         # abilities at this level.
@@ -185,21 +185,21 @@ def calculate_global_abilities_for_agent(agent):
 
 def calculate_permissions_for_agent_and_item(agent, item):
     """
-    Return tuple (agent_permissions, collection_permissions, default_permissions).
+    Return tuple (agent_permissions, collection_permissions, everyone_permissions).
     
     Each permission list is a QuerySet for untrashed Permissions. The
     agent_permissions queryset contains permissions that were assigned directly
     to agent/item, collection_permissions contains permissions that were assigned
     to Collections that agent is in (directly or indirectly), and
-    default_permissions contains all permissions that were assigned to everyone by
+    everyone_permissions contains all permissions that were assigned to everyone by
     default.
     """
 
     my_collection_ids = agent.ancestor_collections().values('pk').query
     agent_perms = AgentPermission.objects.filter(item=item, agent=agent)
     collection_perms = CollectionPermission.objects.filter(item=item, collection__in=my_collection_ids)
-    default_perms = DefaultPermission.objects.filter(item=item)
-    return (agent_perms, collection_perms, default_perms)
+    everyone_perms = EveryonePermission.objects.filter(item=item)
+    return (agent_perms, collection_perms, everyone_perms)
 
 
 def calculate_abilities_for_agent_and_item(agent, item):
@@ -216,7 +216,7 @@ def calculate_abilities_for_agent_and_item(agent, item):
          b. The agent was NOT directly assigned a permission that
             contains this ability with is_allowed=False.
       3. All of the following holds:
-         a. There is a default permission that contains this ability
+         a. There is an everyone permission that contains this ability
             with is_allowed=True.
          b. NO Collection that the agent is in (directly or indirectly) was
             assigned a permission that contains this ability with
@@ -227,7 +227,7 @@ def calculate_abilities_for_agent_and_item(agent, item):
     permissions_triple = calculate_permissions_for_agent_and_item(agent, item)
     abilities_yes = set()
     abilities_no = set()
-    # Iterate once for each level: agent, collection, default
+    # Iterate once for each level: agent, collection, everyone
     for permissions in permissions_triple:
         # Populate cur_abilities_yes and cur_abilities_no with the specified
         # abilities at this level.
@@ -271,7 +271,7 @@ def filter_items_by_permission(agent, ability):
 
     # p contains all Q objects for all 6 combinations of level, is_allowed
     p = {}
-    for permission_class in [AgentPermission, CollectionPermission, DefaultPermission]:
+    for permission_class in [AgentPermission, CollectionPermission, EveryonePermission]:
         for is_allowed in [True, False]:
             # Figure out what kind of permission this is
             if 'agent' in permission_class._meta.get_all_field_names():
@@ -279,7 +279,7 @@ def filter_items_by_permission(agent, ability):
             elif 'collection' in permission_class._meta.get_all_field_names():
                 level = 'collection'
             else:
-                level = 'default'
+                level = 'everyone'
             # Generate a Q object for this particular permission and is_allowed
             args = {}
             args['ability__in'] = [ability, 'do_everything']
@@ -296,7 +296,7 @@ def filter_items_by_permission(agent, ability):
     # calculate_abilities_for_agent_and_item
     return p['agentyes'] |\
            (~p['agentno'] & p['collectionyes']) |\
-           (~p['agentno'] & ~p['collectionno'] & p['defaultyes'])
+           (~p['agentno'] & ~p['collectionno'] & p['everyoneyes'])
 
 
 def filter_agents_by_permission(item, ability):
@@ -312,7 +312,7 @@ def filter_agents_by_permission(item, ability):
     """
     # p contains all Q objects for all 6 combinations of level, is_allowed
     p = {}
-    for permission_class in [AgentPermission, CollectionPermission, DefaultPermission]:
+    for permission_class in [AgentPermission, CollectionPermission, EveryonePermission]:
         for is_allowed in [True, False]:
             # Figure out what kind of permission this is
             if 'agent' in permission_class._meta.get_all_field_names():
@@ -320,7 +320,7 @@ def filter_agents_by_permission(item, ability):
             elif 'collection' in permission_class._meta.get_all_field_names():
                 level = 'collection'
             else:
-                level = 'default'
+                level = 'everyone'
             # Generate a Q object for this particular permission and is_allowed
             args = {'item': item}
             args['ability__in'] = [ability, 'do_everything']
@@ -331,8 +331,8 @@ def filter_agents_by_permission(item, ability):
                 collection_query = permission_class.objects.filter(**args).values('collection_id').query
                 query = RecursiveMembership.objects.filter(parent__in=collection_query).values('child_id').query
             else:
-                default_perm_exists = (len(permission_class.objects.filter(**args)[:1]) > 0)
-                query = (Agent.objects if default_perm_exists else Agent.objects.filter(pk__isnull=True)).values('pk').query
+                everyone_perm_exists = (len(permission_class.objects.filter(**args)[:1]) > 0)
+                query = (Agent.objects if everyone_perm_exists else Agent.objects.filter(pk__isnull=True)).values('pk').query
             q_name = "%s%s" % (level, 'yes' if is_allowed else 'no')
             p[q_name] = Q(pk__in=query)
 
@@ -340,5 +340,5 @@ def filter_agents_by_permission(item, ability):
     # calculate_abilities_for_agent_and_item
     return p['agentyes'] |\
            (~p['agentno'] & p['collectionyes']) |\
-           (~p['agentno'] & ~p['collectionno'] & p['defaultyes'])
+           (~p['agentno'] & ~p['collectionno'] & p['everyoneyes'])
 

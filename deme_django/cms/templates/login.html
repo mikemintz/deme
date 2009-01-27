@@ -68,7 +68,7 @@
         <tr>
             <td>
                 {% ifagentcan 'view' 'name' agent %}
-                <a href="{{ agent.get_absolute_url }}">{{ agent.name|default:"[Untitled]" }}</a>
+                <a href="{{ agent.get_absolute_url }}">{{ agent.name }}</a>
                 {% else %}
                 <a href="{{ agent.get_absolute_url }}">[PERMISSION DENIED]</a>
                 {% endifagentcan %}

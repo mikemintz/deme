@@ -15,7 +15,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DefaultGlobalPermission', 'DefaultPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'Permission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'SiteDomain', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
+__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryonePermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'Permission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'SiteDomain', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
 
 ###############################################################################
 # Item framework
@@ -1568,7 +1568,7 @@ class CollectionGlobalPermission(GlobalPermission):
         unique_together = (('collection', 'ability'),)
 
 
-class DefaultGlobalPermission(GlobalPermission):
+class EveryoneGlobalPermission(GlobalPermission):
     ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
@@ -1593,8 +1593,8 @@ class CollectionPermission(Permission):
         unique_together = (('collection', 'item', 'ability'),)
 
 
-class DefaultPermission(Permission):
-    item = models.ForeignKey(Item, related_name='default_permissions_as_item')
+class EveryonePermission(Permission):
+    item = models.ForeignKey(Item, related_name='everyone_permissions_as_item')
     ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
