@@ -641,26 +641,17 @@ class ItemViewer(Viewer):
                 return f.formfield()
 
         agent_permission_form_class = forms.models.modelform_factory(AgentPermission, fields=['agent', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        agent_role_permission_form_class = forms.models.modelform_factory(AgentRolePermission, fields=['agent', 'item', 'role'], formfield_callback=formfield_callback)
         collection_permission_form_class = forms.models.modelform_factory(CollectionPermission, fields=['collection', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        collection_role_permission_form_class = forms.models.modelform_factory(CollectionRolePermission, fields=['collection', 'item', 'role'], formfield_callback=formfield_callback)
         default_permission_form_class = forms.models.modelform_factory(DefaultPermission, fields=['item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        default_role_permission_form_class = forms.models.modelform_factory(DefaultRolePermission, fields=['item', 'role'], formfield_callback=formfield_callback)
 
         if self.method == 'POST':
             form_type = self.request.GET.get('formtype')
             if form_type == 'agentpermission':
                 form_class = agent_permission_form_class
-            elif form_type == 'agentrolepermission':
-                form_class = agent_role_permission_form_class
             elif form_type == 'collectionpermission':
                 form_class = collection_permission_form_class
-            elif form_type == 'collectionrolepermission':
-                form_class = collection_role_permission_form_class
             elif form_type == 'defaultpermission':
                 form_class = default_permission_form_class
-            elif form_type == 'defaultrolepermission':
-                form_class = default_role_permission_form_class
             else:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Type', "You submitted a permission form with an invalid formtype parameter")
 
@@ -688,8 +679,6 @@ class ItemViewer(Viewer):
                         existing_permission = existing_permission.filter(collection__pk=data)
                     elif field == 'item':
                         existing_permission = existing_permission.filter(item__pk=data)
-                    elif field == 'role':
-                        existing_permission = existing_permission.filter(role__pk=data)
                     elif field == 'ability':
                         existing_permission = existing_permission.filter(ability=data)
                 try:
@@ -709,35 +698,26 @@ class ItemViewer(Viewer):
         agent_permissions = self.item.agent_permissions_as_item.order_by('ability')
         collection_permissions = self.item.collection_permissions_as_item.order_by('ability')
         default_permissions = self.item.default_permissions_as_item.order_by('ability')
-        agent_role_permissions = self.item.agent_role_permissions_as_item.order_by('role__name')
-        collection_role_permissions = self.item.collection_role_permissions_as_item.order_by('role__name')
-        default_role_permissions = self.item.default_role_permissions_as_item.order_by('role__name')
-        agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
-        collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk__in=collection_role_permissions.values('collection__pk').query) | Q(pk=self.request.GET.get('collection', 0))).order_by('name')
+        agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
+        collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk=self.request.GET.get('collection', 0))).order_by('name')
 
         agent_data = []
         for agent in agents:
             agent_datum = {}
             agent_datum['agent'] = agent
             agent_datum['permissions'] = agent_permissions.filter(agent=agent)
-            agent_datum['role_permissions'] = agent_role_permissions.filter(agent=agent)
             agent_datum['permission_form'] = agent_permission_form_class(prefix="agent%s" % agent.pk, initial={'item': self.item.pk, 'agent': agent.pk})
-            agent_datum['role_permission_form'] = agent_role_permission_form_class(prefix="roleagent%s" % agent.pk, initial={'item': self.item.pk, 'agent': agent.pk})
             agent_data.append(agent_datum)
         collection_data = []
         for collection in collections:
             collection_datum = {}
             collection_datum['collection'] = collection
             collection_datum['permissions'] = collection_permissions.filter(collection=collection)
-            collection_datum['role_permissions'] = collection_role_permissions.filter(collection=collection)
             collection_datum['permission_form'] = collection_permission_form_class(prefix="collection%s" % collection.pk, initial={'item': self.item.pk, 'collection': collection.pk})
-            collection_datum['role_permission_form'] = collection_role_permission_form_class(prefix="rolecollection%s" % collection.pk, initial={'item': self.item.pk, 'collection': collection.pk})
             collection_data.append(collection_datum)
         default_data = {}
         default_data['permissions'] = default_permissions
-        default_data['role_permissions'] = default_role_permissions
         default_data['permission_form'] = default_permission_form_class(prefix="default", initial={'item': self.item.pk})
-        default_data['role_permission_form'] = default_role_permission_form_class(prefix="roledefault", initial={'item': self.item.pk})
 
         # now include the error form
         if self.method == 'POST':
@@ -745,24 +725,13 @@ class ItemViewer(Viewer):
                 agent_datum = [datum for datum in agent_data if str(datum['agent'].pk) == form['agent'].data][0]
                 agent_datum['permission_form'] = form
                 agent_datum['permission_form_invalid'] = True
-            elif form_type == 'agentrolepermission':
-                agent_datum = [datum for datum in agent_data if str(datum['agent'].pk) == form['agent'].data][0]
-                agent_datum['role_permission_form'] = form
-                agent_datum['role_permission_form_invalid'] = True
             elif form_type == 'collectionpermission':
                 collection_datum = [datum for datum in collection_data if str(datum['collection'].pk) == form['collection'].data][0]
                 collection_datum['permission_form'] = form
                 collection_datum['permission_form_invalid'] = True
-            elif form_type == 'collectionrolepermission':
-                collection_datum = [datum for datum in collection_data if str(datum['collection'].pk) == form['collection'].data][0]
-                collection_datum['role_permission_form'] = form
-                collection_datum['role_permission_form_invalid'] = True
             elif form_type == 'defaultpermission':
                 default_data['permission_form'] = form
                 default_data['permission_form_invalid'] = True
-            elif form_type == 'defaultrolepermission':
-                default_data['role_permission_form'] = form
-                default_data['role_permission_form_invalid'] = True
 
         new_agent_form_class = forms.models.modelform_factory(AgentPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
         new_collection_form_class = forms.models.modelform_factory(CollectionPermission, fields=['collection'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
@@ -788,26 +757,17 @@ class ItemViewer(Viewer):
                 return f.formfield()
 
         agent_permission_form_class = forms.models.modelform_factory(AgentGlobalPermission, fields=['agent', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        agent_role_permission_form_class = forms.models.modelform_factory(AgentGlobalRolePermission, fields=['agent', 'global_role'], formfield_callback=formfield_callback)
         collection_permission_form_class = forms.models.modelform_factory(CollectionGlobalPermission, fields=['collection', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        collection_role_permission_form_class = forms.models.modelform_factory(CollectionGlobalRolePermission, fields=['collection', 'global_role'], formfield_callback=formfield_callback)
         default_permission_form_class = forms.models.modelform_factory(DefaultGlobalPermission, fields=['ability', 'is_allowed'], formfield_callback=formfield_callback)
-        default_role_permission_form_class = forms.models.modelform_factory(DefaultGlobalRolePermission, fields=['global_role'], formfield_callback=formfield_callback)
 
         if self.method == 'POST':
             form_type = self.request.GET.get('formtype')
             if form_type == 'agentpermission':
                 form_class = agent_permission_form_class
-            elif form_type == 'agentrolepermission':
-                form_class = agent_role_permission_form_class
             elif form_type == 'collectionpermission':
                 form_class = collection_permission_form_class
-            elif form_type == 'collectionrolepermission':
-                form_class = collection_role_permission_form_class
             elif form_type == 'defaultpermission':
                 form_class = default_permission_form_class
-            elif form_type == 'defaultrolepermission':
-                form_class = default_role_permission_form_class
             else:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Type', "You submitted a permission form with an invalid formtype parameter")
 
@@ -837,8 +797,6 @@ class ItemViewer(Viewer):
                         existing_permission = existing_permission.filter(agent__pk=data)
                     elif field == 'collection':
                         existing_permission = existing_permission.filter(collection__pk=data)
-                    elif field == 'global_role':
-                        existing_permission = existing_permission.filter(global_role__pk=data)
                     elif field == 'ability':
                         existing_permission = existing_permission.filter(ability=data)
                 try:
@@ -862,35 +820,26 @@ class ItemViewer(Viewer):
         agent_permissions = AgentGlobalPermission.objects.order_by('ability')
         collection_permissions = CollectionGlobalPermission.objects.order_by('ability')
         default_permissions = DefaultGlobalPermission.objects.order_by('ability')
-        agent_role_permissions = AgentGlobalRolePermission.objects.order_by('global_role__name')
-        collection_role_permissions = CollectionGlobalRolePermission.objects.order_by('global_role__name')
-        default_role_permissions = DefaultGlobalRolePermission.objects.order_by('global_role__name')
-        agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk__in=agent_role_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
-        collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk__in=collection_role_permissions.values('collection__pk').query) | Q(pk=self.request.GET.get('collection', 0))).order_by('name')
+        agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
+        collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk=self.request.GET.get('collection', 0))).order_by('name')
 
         agent_data = []
         for agent in agents:
             agent_datum = {}
             agent_datum['agent'] = agent
             agent_datum['permissions'] = agent_permissions.filter(agent=agent)
-            agent_datum['role_permissions'] = agent_role_permissions.filter(agent=agent)
             agent_datum['permission_form'] = agent_permission_form_class(prefix="agent%s" % agent.pk, initial={'agent': agent.pk})
-            agent_datum['role_permission_form'] = agent_role_permission_form_class(prefix="roleagent%s" % agent.pk, initial={'agent': agent.pk})
             agent_data.append(agent_datum)
         collection_data = []
         for collection in collections:
             collection_datum = {}
             collection_datum['collection'] = collection
             collection_datum['permissions'] = collection_permissions.filter(collection=collection)
-            collection_datum['role_permissions'] = collection_role_permissions.filter(collection=collection)
             collection_datum['permission_form'] = collection_permission_form_class(prefix="collection%s" % collection.pk, initial={'collection': collection.pk})
-            collection_datum['role_permission_form'] = collection_role_permission_form_class(prefix="rolecollection%s" % collection.pk, initial={'collection': collection.pk})
             collection_data.append(collection_datum)
         default_data = {}
         default_data['permissions'] = default_permissions
-        default_data['role_permissions'] = default_role_permissions
         default_data['permission_form'] = default_permission_form_class(prefix="default", initial={})
-        default_data['role_permission_form'] = default_role_permission_form_class(prefix="roledefault", initial={})
 
         # now include the error form
         if self.method == 'POST':
@@ -898,24 +847,13 @@ class ItemViewer(Viewer):
                 agent_datum = [datum for datum in agent_data if str(datum['agent'].pk) == form['agent'].data][0]
                 agent_datum['permission_form'] = form
                 agent_datum['permission_form_invalid'] = True
-            elif form_type == 'agentrolepermission':
-                agent_datum = [datum for datum in agent_data if str(datum['agent'].pk) == form['agent'].data][0]
-                agent_datum['role_permission_form'] = form
-                agent_datum['role_permission_form_invalid'] = True
             elif form_type == 'collectionpermission':
                 collection_datum = [datum for datum in collection_data if str(datum['collection'].pk) == form['collection'].data][0]
                 collection_datum['permission_form'] = form
                 collection_datum['permission_form_invalid'] = True
-            elif form_type == 'collectionrolepermission':
-                collection_datum = [datum for datum in collection_data if str(datum['collection'].pk) == form['collection'].data][0]
-                collection_datum['role_permission_form'] = form
-                collection_datum['role_permission_form_invalid'] = True
             elif form_type == 'defaultpermission':
                 default_data['permission_form'] = form
                 default_data['permission_form_invalid'] = True
-            elif form_type == 'defaultrolepermission':
-                default_data['role_permission_form'] = form
-                default_data['role_permission_form_invalid'] = True
 
         new_agent_form_class = forms.models.modelform_factory(AgentGlobalPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
         new_collection_form_class = forms.models.modelform_factory(CollectionGlobalPermission, fields=['collection'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))

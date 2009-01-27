@@ -15,7 +15,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentGlobalRolePermission', 'AgentPermission', 'AgentRolePermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionGlobalRolePermission', 'CollectionPermission', 'CollectionRolePermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DefaultGlobalPermission', 'DefaultGlobalRolePermission', 'DefaultPermission', 'DefaultRolePermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'GlobalRole', 'GlobalRoleAbility', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'Permission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Role', 'RoleAbility', 'Site', 'SiteDomain', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
+__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DefaultGlobalPermission', 'DefaultPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'Permission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'SiteDomain', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
 
 ###############################################################################
 # Item framework
@@ -300,10 +300,8 @@ class Item(models.Model):
         new_version.save()
 
         # Create the permissions
-        #TODO don't create these permissions on other funny things like Relationships or SiteDomain or RoleAbility, etc.?
+        #TODO don't create these permissions on other funny things like Relationships or SiteDomain, etc.?
         if create_permissions and is_new:
-            default_role = Role.objects.get(pk=DemeSetting.get("cms.default_role.%s" % type(self).__name__))
-            DefaultRolePermission(item=self, role=default_role).save()
             AgentPermission(agent=updater, item=self, ability='do_everything', is_allowed=True).save()
 
         # Create an EditComment if we're making an edit
@@ -1544,83 +1542,6 @@ POSSIBLE_ABILITIES = POSSIBLE_ABILITIES_ITER()
 POSSIBLE_GLOBAL_ABILITIES = POSSIBLE_GLOBAL_ABILITIES_ITER()
 
 
-class Role(Item):
-    """
-    A Role is a list of abilities (encapsulated in RoleAbilities).
-    
-    Roles do not refer to specific items, but just specific abilities. One
-    example might be a "department admin" Role which has every ability for
-    department-related items turned on. Roles are not necessary for the
-    permission system, but they prevent users from having to manually configure
-    each ability they want to assign between an agent and an item.
-    """
-
-    # Setup
-    immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities
-    relevant_global_abilities = frozenset(['create Role'])
-    class Meta:
-        verbose_name = _('role')
-        verbose_name_plural = _('roles')
-
-
-class GlobalRole(Item):
-    """
-    A GlobalRole is the same as a Role but for global permissions instead of
-    item permissions.
-    """
-
-    # Setup
-    immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities
-    relevant_global_abilities = frozenset(['create GlobalRole'])
-    class Meta:
-        verbose_name = _('global role')
-        verbose_name_plural = _('global roles')
-
-
-class RoleAbility(Item):
-    """
-    A RoleAbility belongs to a Role and specifies an ability string, as well as
-    a boolean for whether this ability is granted or denied.
-    """
-
-    # Setup
-    immutable_fields = Item.immutable_fields | set(['role', 'ability'])
-    relevant_abilities = Item.relevant_abilities | set(['view role', 'view ability', 'view is_allowed', 'edit is_allowed'])
-    relevant_global_abilities = frozenset(['create RoleAbility'])
-    class Meta:
-        verbose_name = _('role ability')
-        verbose_name_plural = _('role abilities')
-        unique_together = (('role', 'ability'),)
-
-    # Fields
-    role       = models.ForeignKey(Role, related_name='role_abilities', verbose_name=_('role'))
-    ability    = models.CharField(_('ability'), max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
-    is_allowed = models.BooleanField(_('is allowed'), default=True, db_index=True)
-
-
-class GlobalRoleAbility(Item):
-    """
-    A GlobalRoleAbility is the same as a RoleAbility but for global permissions
-    instead of item permissions.
-    """
-
-    # Setup
-    immutable_fields = Item.immutable_fields | set(['global_role', 'ability'])
-    relevant_abilities = Item.relevant_abilities | set(['view global_role', 'view ability', 'view is_allowed', 'edit is_allowed'])
-    relevant_global_abilities = frozenset(['create GlobalRoleAbility'])
-    class Meta:
-        verbose_name = _('global role ability')
-        verbose_name_plural = _('global role abilities')
-        unique_together = (('global_role', 'ability'),)
-
-    # Fields
-    global_role = models.ForeignKey(GlobalRole, related_name='role_abilities', verbose_name=_('global role'))
-    ability     = models.CharField(_('ability'), max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
-    is_allowed  = models.BooleanField(_('is allowed'), default=True, db_index=True)
-
-
 class Permission(models.Model):
     class Meta:
         abstract = True
@@ -1654,26 +1575,6 @@ class DefaultGlobalPermission(GlobalPermission):
         unique_together = (('ability',),)
 
 
-class AgentGlobalRolePermission(GlobalPermission):
-    agent = models.ForeignKey(Agent, related_name='agent_global_role_permissions_as_agent')
-    global_role = models.ForeignKey(GlobalRole, related_name='agent_global_role_permissions_as_global_role')
-    class Meta:
-        unique_together = (('agent', 'global_role'),)
-
-
-class CollectionGlobalRolePermission(GlobalPermission):
-    collection = models.ForeignKey(Collection, related_name='collection_global_role_permissions_as_collection')
-    global_role = models.ForeignKey(GlobalRole, related_name='collection_global_role_permissions_as_global_role')
-    class Meta:
-        unique_together = (('collection', 'global_role'),)
-
-
-class DefaultGlobalRolePermission(GlobalPermission):
-    global_role = models.ForeignKey(GlobalRole, related_name='default_global_role_permissions_as_global_role')
-    class Meta:
-        unique_together = (('global_role',),)
-
-
 class AgentPermission(Permission):
     agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent')
     item = models.ForeignKey(Item, related_name='agent_permissions_as_item')
@@ -1698,29 +1599,6 @@ class DefaultPermission(Permission):
     is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         unique_together = (('item', 'ability'),)
-
-
-class AgentRolePermission(Permission):
-    agent = models.ForeignKey(Agent, related_name='agent_role_permissions_as_agent')
-    item = models.ForeignKey(Item, related_name='agent_role_permissions_as_item')
-    role = models.ForeignKey(Role, related_name='agent_role_permissions_as_role')
-    class Meta:
-        unique_together = (('agent', 'item', 'role'),)
-
-
-class CollectionRolePermission(Permission):
-    collection = models.ForeignKey(Collection, related_name='collection_role_permissions_as_collection')
-    item = models.ForeignKey(Item, related_name='collection_role_permissions_as_item')
-    role = models.ForeignKey(Role, related_name='collection_role_permissions_as_role')
-    class Meta:
-        unique_together = (('collection', 'item', 'role'),)
-
-
-class DefaultRolePermission(Permission):
-    item = models.ForeignKey(Item, related_name='default_role_permissions_as_item')
-    role = models.ForeignKey(Role, related_name='default_role_permissions_as_role')
-    class Meta:
-        unique_together = (('item', 'role'),)
 
 
 ###############################################################################
