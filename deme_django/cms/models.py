@@ -29,7 +29,6 @@ class ItemMetaClass(models.base.ModelBase):
     def __new__(cls, name, bases, attrs):
         # Fix up the ItemVersion and Item classes
         if name == 'ItemVersion':
-            attrs['updater'].db_index = False # No point in indexing updater in versions
             result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
             return result
         if name == 'Item':
@@ -87,8 +86,6 @@ class ItemVersion(models.Model):
     version_number = models.PositiveIntegerField(db_index=True)
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=255, blank=True)
-    updater = models.ForeignKey('Agent', related_name='version_items_updated')
-    updated_at = models.DateTimeField()
 
     def __unicode__(self):
         return u'%s[%s.%s] "%s"' % (self.current_item.item_type, self.current_item_id, self.version_number, self.name)
@@ -118,9 +115,8 @@ class Item(models.Model):
     # Setup
     __metaclass__ = ItemMetaClass
     immutable_fields = frozenset()
-    introduced_abilities = frozenset(['do_everything', 'comment_on', 'trash', 'view name',
-                                      'view description', 'view updater', 'view creator',
-                                      'view updated_at', 'view created_at', 'edit name', 'edit description'])
+    introduced_abilities = frozenset(['do_everything', 'comment_on', 'trash', 'view name', 'view description',
+                                      'view creator', 'view created_at', 'edit name', 'edit description'])
     introduced_global_abilities = frozenset(['do_something', 'do_everything'])
     class Meta:
         verbose_name = _('item')
@@ -131,9 +127,7 @@ class Item(models.Model):
     item_type      = models.CharField(_('item type'), max_length=255, editable=False)
     name           = models.CharField(_('name'), max_length=255, default='Untitled')
     description    = models.CharField(_('description'), max_length=255, blank=True)
-    updater        = models.ForeignKey('Agent', related_name='items_updated', editable=False, verbose_name=_('updater'))
     creator        = models.ForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
-    updated_at     = models.DateTimeField(_('updated at'), editable=False)
     created_at     = models.DateTimeField(_('created at'), editable=False)
     trashed        = models.BooleanField(_('trashed'), default=False, editable=False, db_index=True)
 
@@ -243,20 +237,19 @@ class Item(models.Model):
     untrash.alters_data = True
 
     @transaction.commit_on_success
-    def save_versioned(self, updater, first_agent=False, create_permissions=True, created_at=None, updated_at=None, overwrite_latest_version=False):
+    def save_versioned(self, updater, first_agent=False, create_permissions=True, save_time=None, overwrite_latest_version=False):
         """
         Save the current item, making sure to keep track of versions.
         
         Use this method instead of save() because it will keep things
-        consistent with versions and special fields. This will set updated_at
-        to the current time (or the method parameter if specified), and set
+        consistent with versions and special fields. This will set
         created_at to the current time (or method parameter) if this is a
         creation.
         
         If first_agent=True, then this method assumes you are creating the
         first item (which should be an Agent). It is necessary to save the
         first item as an Agent in this way so that every Item has a valid
-        updater and creator pointer.
+        creator pointer.
         
         If create_permissions=True, then this method will automatically create
         reasonable permissions.
@@ -266,7 +259,7 @@ class Item(models.Model):
         method will not create a new version, and make it appear that the
         latest version looked like this the whole time.
         """
-        updated_at = updated_at or datetime.datetime.now()
+        save_time = save_time or datetime.datetime.now()
         is_new = not self.pk
 
         # Update the item
@@ -274,15 +267,11 @@ class Item(models.Model):
         if first_agent:
             self.creator = self
             self.creator_id = 1
-            self.updater = self
-            self.updater_id = 1
         else:
-            self.updater = updater
             if is_new:
                 self.creator = updater
-        self.updated_at = updated_at
         if is_new or overwrite_latest_version:
-            self.created_at = created_at or updated_at
+            self.created_at = save_time
         if not is_new:
             latest_version_number = Item.objects.get(pk=self.pk).version_number
             if overwrite_latest_version:
@@ -307,7 +296,7 @@ class Item(models.Model):
         # Create an EditComment if we're making an edit
         if not is_new and not overwrite_latest_version:
             edit_comment = EditComment(item=self, item_version_number=self.version_number)
-            edit_comment.save_versioned(updater=updater)
+            edit_comment.save_versioned(updater=updater, save_time=save_time)
 
         if is_new:
             self._after_create()
@@ -795,7 +784,7 @@ class Group(Collection):
         super(Group, self)._after_create()
         # Create a folio for this group
         folio = Folio(group=self)
-        folio.save_versioned(updater=self.updater)
+        folio.save_versioned(updater=self.creator)
     _after_create.alters_data = True
 
 

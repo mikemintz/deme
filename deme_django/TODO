@@ -20,7 +20,6 @@ Symsys module
 * advisor should point to a symsysaffiliate
 * change honors_advisor and honors_second_reader to symsysaffiliate pointers (problem is some aren't symsys affiliates)
 * come up with specification for new symsys layout
-* Make granular permissions on AddressContactMethods
 * Figure out how to port mailing lists over
   - announce list == manually created subscriptions with special permissions, such that you cannot unsubscribe, and announcements are just comments on the group
 
@@ -33,10 +32,6 @@ Code correctness/consistency/bugs
 * Abstract away from the viewer.request object lying around
 * We should probably rename collection_ and entry_ and maybe resource, since they aren't really unified (rename resource to item, resource_entry to item_url, resource_collection to item_type_url)
 * Code cleanup: do permissions in models.py, document/clean the changes to permissions.py, then do views, templatetags, and templates
-* It kind of seems like updater/updater_at is unnecessary, since you can derive it from EditComments, and when Versions become more abstract (with delta) then items_updated won't be possible in the current way (yes do it)
-* Discuss with Todd whether we should make most text fields rich text, or just htmldocument.body
-* consider making permissions have one column per ability. now that we store all possible abilities, it's easier to migrate.
-  - I tried this, and ended up with about 150 columns, so the indexes were huge (100mb vs 5mb) and the queries were slower. To do this, we'd need a way that didn't involve one very large table with every permission in the column. At first it makes sense to have a parallel inheritance structure of permissions (from items), but if we want to get a list of permissions for an agent and we only know it's an item right now, we won't get them all. This can probably be dealt with: we'll just need to be careful what we do with "comprehensive" lists of permissions.
 * Make more sensible permissions (is there anything more?)
 * Replace SiteDomains with SiteAliases, and now every Site has a single default domain
 * figure out import deal on deme_django.cms and just cms

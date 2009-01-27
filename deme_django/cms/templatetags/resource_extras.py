@@ -384,10 +384,6 @@ class EntryHeader(template.Node):
             created_at_text = '<span title="%s">%s ago</span>' % (item.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(item.created_at))
         else:
             created_at_text = ''
-        if agentcan_helper(context, 'view updated_at', item):
-            updated_at_text = '<span title="%s">%s ago</span>' % (item.updated_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(item.updated_at))
-        else:
-            updated_at_text = ''
         if agentcan_helper(context, 'view creator', item):
             if agentcan_helper(context, 'view name', item.creator):
                 creator_text = 'by <a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(item.creator.name))
@@ -395,21 +391,10 @@ class EntryHeader(template.Node):
                 creator_text = 'by <a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape('%s %s' % (item.creator.item_type, item.creator.pk)))
         else:
             creator_text = ''
-        if agentcan_helper(context, 'view updater', item):
-            if agentcan_helper(context, 'view name', item.updater):
-                updater_text = 'by <a href="%s">%s</a>' % (item.updater.get_absolute_url(), escape(item.updater.name))
-            else:
-                updater_text = 'by <a href="%s">%s</a>' % (item.updater.get_absolute_url(), escape('%s %s' % (item.updater.item_type, item.updater.pk)))
-        else:
-            updater_text = ''
         result.append('<div style="font-size: 8pt;">')
         if creator_text or created_at_text:
             result.append('<div style="float: left;">')
             result.append('Originally created %s %s' % (creator_text, created_at_text))
-            result.append('</div>')
-        if updater_text or updated_at_text:
-            result.append('<div style="float: right;">')
-            result.append('Version %s updated %s %s' % (version_number, updater_text, updated_at_text))
             result.append('</div>')
         result.append('<div style="clear: both;">')
         result.append('</div>')
