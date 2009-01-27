@@ -67,11 +67,9 @@ class PermissionCache(object):
             if 'do_everything' in self.global_abilities(agent):
                 result = item_type.relevant_abilities
             else:
-                result = calculate_abilities_for_agent_and_item(agent, item)
+                result = calculate_abilities_for_agent_and_item(agent, item, item_type)
                 if 'do_everything' in result:
                     result = item_type.relevant_abilities
-                else:
-                    result &= item_type.relevant_abilities
             self._item_ability_cache[(agent.pk, item.pk)] = result
         return result
 
@@ -87,13 +85,14 @@ class PermissionCache(object):
         if self.agent_can_global(agent, 'do_everything'):
             pass # Nothing to update, since no more database calls need to be made
         else:
-            authorized_queryset = queryset.filter(filter_items_by_permission(agent, ability))
+            item_type = queryset.model
+            authorized_queryset = queryset.filter(filter_items_by_permission(agent, ability, item_type))
             yes_ids = set(authorized_queryset.values_list('pk', flat=True))
             no_ids = set(queryset.values_list('pk', flat=True)) - yes_ids
             self._ability_yes_cache.setdefault((agent.pk, ability), set()).update(yes_ids)
             self._ability_no_cache.setdefault((agent.pk, ability), set()).update(no_ids)
 
-    def filter_items(self, agent, ability):
+    def filter_items(self, agent, ability, queryset):
         """
         Return a Q object that can be used as a QuerySet filter, specifying only
         those items that the agent has the ability for.
@@ -103,9 +102,10 @@ class PermissionCache(object):
         abilities.
         """
         if self.agent_can_global(agent, 'do_everything'):
-            return Q()
+            return queryset
         else:
-            return filter_items_by_permission(agent, ability)
+            item_type = queryset.model
+            return queryset.filter(filter_items_by_permission(agent, ability, item_type))
 
 
 ###############################################################################
@@ -202,9 +202,10 @@ def calculate_permissions_for_agent_and_item(agent, item):
     return (agent_perms, collection_perms, everyone_perms)
 
 
-def calculate_abilities_for_agent_and_item(agent, item):
+def calculate_abilities_for_agent_and_item(agent, item, item_type):
     """
-    Return a set of abilities the agent has with respect to the item.
+    Return a set of abilities the agent has with respect to the item, using the
+    item_type to determine relevant abilities and defaults.
     
     The agent has an ability if one of the following holds:
       1. The agent was directly assigned a permission that contains
@@ -222,6 +223,17 @@ def calculate_abilities_for_agent_and_item(agent, item):
             assigned a permission that contains this ability with
             is_allowed=False.
          c. The agent was NOT directly assigned a permission that
+            contains this ability with is_allowed=False.
+      4. All of the following holds:
+         a. There is a DemeSetting set to "true" with the key
+            "cms.default_permission.<ITEM_TYPE_NAME>.<ABILITY>" (without angle
+            brackets around the item type name and ability).
+         b. There is NO everyone permission that contains this ability
+            with is_allowed=False.
+         c. NO Collection that the agent is in (directly or indirectly) was
+            assigned a permission that contains this ability with
+            is_allowed=False.
+         d. The agent was NOT directly assigned a permission that
             contains this ability with is_allowed=False.
     """
     permissions_triple = calculate_permissions_for_agent_and_item(agent, item)
@@ -248,26 +260,32 @@ def calculate_abilities_for_agent_and_item(agent, item):
         for x in cur_abilities_no:
             if x not in abilities_yes and x not in abilities_no:
                 abilities_no.add(x)
-    # All unspecified abilities are "no".
-    return abilities_yes
+    unspecified_abilities = item_type.relevant_abilities - abilities_yes - abilities_no
+    for ability in unspecified_abilities:
+        if DemeSetting.get("cms.default_permission.%s.%s" % (item_type.__name__, ability)) == "true":
+            abilities_yes.add(ability)
+    return abilities_yes & item_type.relevant_abilities
 
 
 ###############################################################################
 # Permission QuerySet filters
 ###############################################################################
 
-def filter_items_by_permission(agent, ability):
+def filter_items_by_permission(agent, ability, item_type):
     """
     Return a Q object that can be used as a QuerySet filter, specifying only
     those items that the agent has the ability for.
     
     This does not take into account the fact that agents with the global
     ability "do_everything" virtually have all item abilities, but it does take
-    into account the item ability "do_everything".
+    into account the item ability "do_everything". This also takes into account
+    default item type permissions.
     
     This can result in the database query becoming expensive.
     """
     my_collection_ids = agent.ancestor_collections().values('pk').query
+
+    default_is_allowed = (DemeSetting.get("cms.default_permission.%s.%s" % (item_type.__name__, ability)) == "true")
 
     # p contains all Q objects for all 6 combinations of level, is_allowed
     p = {}
@@ -294,11 +312,13 @@ def filter_items_by_permission(agent, ability):
 
     # Combine all of the Q objects by the rules specified in
     # calculate_abilities_for_agent_and_item
-    return p['agentyes'] |\
-           (~p['agentno'] & p['collectionyes']) |\
-           (~p['agentno'] & ~p['collectionno'] & p['everyoneyes'])
+    if default_is_allowed:
+        return ~p['agentno'] & ~p['collectionno'] & ~p['everyoneno']
+    else:
+        return p['agentyes'] | (~p['agentno'] & p['collectionyes']) | (~p['agentno'] & ~p['collectionno'] & p['everyoneyes'])
 
 
+#TODO update filter_agents_by_permission with new default item type permissions
 def filter_agents_by_permission(item, ability):
     """
     Return a Q object that can be used as a QuerySet filter, specifying only
