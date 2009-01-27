@@ -24,9 +24,15 @@ if Item.objects.count() != 0:
 
 admin = Agent(name="Admin")
 admin.save_versioned(updater=None, first_agent=True, create_permissions=False)
-
-print 'Creating permissions for admin...'
 AgentPermission(agent=admin, item=admin, ability='do_everything', is_allowed=True).save()
+
+print 'Creating defaults for the permission framework'
+for item_type in all_item_types():
+    for ability in item_type.relevant_abilities:
+        setting_name = 'cms.default_permission.%s.%s' % (item_type.__name__, ability)
+        is_allowed = ability.startswith('view ')
+        setting_value = 'true' if is_allowed else 'false'
+        DemeSetting.set(setting_name, setting_value, admin)
 
 print 'Other stuff...'
 
