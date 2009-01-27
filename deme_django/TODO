@@ -5,10 +5,8 @@
 Jan-25 notes
 ------------
 * Prioritize making the documentation architecture (by friday)
-* We can now edit TextDocumentExcerpt body
 * EditComment has a field called 'editsummary' that is not part of the item, but just the editcomment
 * We will eventually want to have a item_type table
-* why are all of the button icons messed up on my installation?
 
 Nov-21 notes (automatic comments and subscriptions)
 ---------------------------------------------------
@@ -70,6 +68,7 @@ Layout
 
 Interface
 ---------
+* Get rid of all the [PERMISSION DENIED] and replace it with "Agent 123"
 * There should be a full interface for specifying CommentLocations
 * Interface to add ContactMethods, Subscriptions, and AuthenticationMethods to Agents
 * We should show the default item_type abilities in the permissions action (with a disclaimer about how they can change)

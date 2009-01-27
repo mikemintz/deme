@@ -5,8 +5,8 @@ __all__ = ['SymsysAffiliate', 'Event', 'Advertisement', 'TextAdvertisement', 'Ht
 
 class SymsysAffiliate(Person):
     immutable_fields = Person.immutable_fields
-    relevant_abilities = Person.relevant_abilities | set(['view suid', 'view original_first_name', 'view original_middle_names', 'view original_last_name', 'view original_suffix', 'view first_affiliation_year', 'view bs_graduation_year', 'view ms_graduation_year', 'view academic_title', 'view admin_title', 'view advisor', 'view honors_advisor', 'view honors_second_reader', 'view w_organization', 'view w_position', 'view background', 'view doing_now', 'view interests', 'view publications', 'view office_hours', 'view about', 'view other_degrees', 'view indivdesignedconc', 'view honors_thesis_title', 'view honors_thesis_filename', 'view honors_thesis_url', 'view ms_thesis_title', 'view ms_thesis_filename', 'view ms_thesis_url', 'view ms_idt', 'view then_image', 'view now_image', 'edit suid', 'edit original_first_name', 'edit original_middle_names', 'edit original_last_name', 'edit original_suffix', 'edit first_affiliation_year', 'edit bs_graduation_year', 'edit ms_graduation_year', 'edit academic_title', 'edit admin_title', 'edit advisor', 'edit honors_advisor', 'edit honors_second_reader', 'edit w_organization', 'edit w_position', 'edit background', 'edit doing_now', 'edit interests', 'edit publications', 'edit office_hours', 'edit about', 'edit other_degrees', 'edit indivdesignedconc', 'edit honors_thesis_title', 'edit honors_thesis_filename', 'edit honors_thesis_url', 'edit ms_thesis_title', 'edit ms_thesis_filename', 'edit ms_thesis_url', 'edit ms_idt', 'edit then_image', 'edit now_image'])
-    relevant_global_abilities = frozenset(['create SymsysAffiliate'])
+    introduced_abilities = frozenset(['view suid', 'view original_first_name', 'view original_middle_names', 'view original_last_name', 'view original_suffix', 'view first_affiliation_year', 'view bs_graduation_year', 'view ms_graduation_year', 'view academic_title', 'view admin_title', 'view advisor', 'view honors_advisor', 'view honors_second_reader', 'view w_organization', 'view w_position', 'view background', 'view doing_now', 'view interests', 'view publications', 'view office_hours', 'view about', 'view other_degrees', 'view indivdesignedconc', 'view honors_thesis_title', 'view honors_thesis_filename', 'view honors_thesis_url', 'view ms_thesis_title', 'view ms_thesis_filename', 'view ms_thesis_url', 'view ms_idt', 'view then_image', 'view now_image', 'edit suid', 'edit original_first_name', 'edit original_middle_names', 'edit original_last_name', 'edit original_suffix', 'edit first_affiliation_year', 'edit bs_graduation_year', 'edit ms_graduation_year', 'edit academic_title', 'edit admin_title', 'edit advisor', 'edit honors_advisor', 'edit honors_second_reader', 'edit w_organization', 'edit w_position', 'edit background', 'edit doing_now', 'edit interests', 'edit publications', 'edit office_hours', 'edit about', 'edit other_degrees', 'edit indivdesignedconc', 'edit honors_thesis_title', 'edit honors_thesis_filename', 'edit honors_thesis_url', 'edit ms_thesis_title', 'edit ms_thesis_filename', 'edit ms_thesis_url', 'edit ms_idt', 'edit then_image', 'edit now_image'])
+    introduced_global_abilities = frozenset(['create SymsysAffiliate'])
 
     suid = models.PositiveIntegerField(default=0)
 
@@ -54,8 +54,8 @@ class SymsysAffiliate(Person):
 
 class Event(HtmlDocument):
     immutable_fields = HtmlDocument.immutable_fields
-    relevant_abilities = HtmlDocument.relevant_abilities | set(['view event_time', 'view location', 'view url', 'edit event_time', 'edit location', 'edit url'])
-    relevant_global_abilities = frozenset(['create Event'])
+    introduced_abilities = frozenset(['view event_time', 'view location', 'view url', 'edit event_time', 'edit location', 'edit url'])
+    introduced_global_abilities = frozenset(['create Event'])
     event_time = models.DateTimeField()
     location = models.TextField(blank=True)
     url = models.TextField(blank=True)
@@ -63,20 +63,20 @@ class Event(HtmlDocument):
 
 class Advertisement(Document):
     immutable_fields = Document.immutable_fields
-    relevant_abilities = Document.relevant_abilities | set(['view contact_info', 'view expires_at', 'edit contact_info', 'edit expires_at'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view contact_info', 'view expires_at', 'edit contact_info', 'edit expires_at'])
+    introduced_global_abilities = frozenset()
     contact_info = models.TextField()
     expires_at = models.DateTimeField(blank=True, null=True)
 
 
 class TextAdvertisement(TextDocument, Advertisement):
     immutable_fields = TextDocument.immutable_fields | Advertisement.immutable_fields
-    relevant_abilities = TextDocument.relevant_abilities | Advertisement.relevant_abilities
-    relevant_global_abilities = frozenset(['create TextAdvertisement'])
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create TextAdvertisement'])
 
 
 class HtmlAdvertisement(HtmlDocument, Advertisement):
     immutable_fields = HtmlDocument.immutable_fields | Advertisement.immutable_fields
-    relevant_abilities = HtmlDocument.relevant_abilities | Advertisement.relevant_abilities
-    relevant_global_abilities = frozenset(['create HtmlAdvertisement'])
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create HtmlAdvertisement'])
 

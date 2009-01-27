@@ -28,7 +28,7 @@ AgentPermission(agent=admin, item=admin, ability='do_everything', is_allowed=Tru
 
 print 'Creating defaults for the permission framework'
 for item_type in all_item_types():
-    for ability in item_type.relevant_abilities:
+    for ability in item_type.introduced_abilities:
         setting_name = 'cms.default_permission.%s.%s' % (item_type.__name__, ability)
         is_allowed = ability.startswith('view ')
         setting_value = 'true' if is_allowed else 'false'

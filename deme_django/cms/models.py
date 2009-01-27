@@ -109,19 +109,19 @@ class Item(models.Model):
       fields which may not be modified after creation (this differs from
       editable=False in that immutable_fields may be customized by a user upon
       creation, but uneditable fields are not to be edited in the front end)
-    * relevant_abilities: a frozenset of abilities that are relevant to this
+    * introduced_abilities: a frozenset of abilities that are relevant to this
       item type
-    * relevant_global_abilities: a frozenset of global abilities that are
+    * introduced_global_abilities: a frozenset of global abilities that are
       introduced by this item type
     """
 
     # Setup
     __metaclass__ = ItemMetaClass
     immutable_fields = frozenset()
-    relevant_abilities = frozenset(['do_everything', 'comment_on', 'trash', 'view name',
-                                    'view description', 'view updater', 'view creator',
-                                    'view updated_at', 'view created_at', 'edit name', 'edit description'])
-    relevant_global_abilities = frozenset(['do_something', 'do_everything'])
+    introduced_abilities = frozenset(['do_everything', 'comment_on', 'trash', 'view name',
+                                      'view description', 'view updater', 'view creator',
+                                      'view updated_at', 'view created_at', 'edit name', 'edit description'])
+    introduced_global_abilities = frozenset(['do_something', 'do_everything'])
     class Meta:
         verbose_name = _('item')
         verbose_name_plural = _('items')
@@ -373,8 +373,8 @@ class Agent(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities | set(['add_contact_method', 'add_authentication_method', 'login_as', 'view last_online_at'])
-    relevant_global_abilities = frozenset(['create Agent'])
+    introduced_abilities = frozenset(['add_contact_method', 'add_authentication_method', 'login_as', 'view last_online_at'])
+    introduced_global_abilities = frozenset(['create Agent'])
     class Meta:
         verbose_name = _('agent')
         verbose_name_plural = _('agents')
@@ -398,8 +398,8 @@ class AnonymousAgent(Agent):
 
     # Setup
     immutable_fields = Agent.immutable_fields
-    relevant_abilities = Agent.relevant_abilities
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('anonymous agent')
         verbose_name_plural = _('anonymous agents')
@@ -421,8 +421,8 @@ class AuthenticationMethod(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields | set(['agent'])
-    relevant_abilities = Item.relevant_abilities | set(['view agent'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view agent'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('authentication method')
         verbose_name_plural = _('authentication methods')
@@ -443,8 +443,9 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
 
     # Setup
     immutable_fields = AuthenticationMethod.immutable_fields
-    relevant_abilities = AuthenticationMethod.relevant_abilities | set(['view username', 'view password', 'view password_question', 'view password_answer', 'edit username', 'edit password', 'edit password_question', 'edit password_answer'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view username', 'view password', 'view password_question', 'view password_answer',
+                                      'edit username', 'edit password', 'edit password_question', 'edit password_answer'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('password authentication method')
         verbose_name_plural = _('password authentication methods')
@@ -539,9 +540,9 @@ class Person(Agent):
 
     # Setup
     immutable_fields = Agent.immutable_fields
-    relevant_abilities = Agent.relevant_abilities | set(['view first_name', 'view middle_names', 'view last_name', 'view suffix',
-                                                         'edit first_name', 'edit middle_names', 'edit last_name', 'edit suffix'])
-    relevant_global_abilities = frozenset(['create Person'])
+    introduced_abilities = frozenset(['view first_name', 'view middle_names', 'view last_name', 'view suffix',
+                                      'edit first_name', 'edit middle_names', 'edit last_name', 'edit suffix'])
+    introduced_global_abilities = frozenset(['create Person'])
     class Meta:
         verbose_name = _('person')
         verbose_name_plural = _('people')
@@ -562,8 +563,8 @@ class ContactMethod(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields | set(['agent'])
-    relevant_abilities = Item.relevant_abilities | set(['add_subscription', 'view agent'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['add_subscription', 'view agent'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('contact method')
         verbose_name_plural = _('contact methods')
@@ -579,8 +580,8 @@ class EmailContactMethod(ContactMethod):
 
     # Setup
     immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view email', 'edit email'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view email', 'edit email'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('email contact method')
         verbose_name_plural = _('email contact methods')
@@ -596,8 +597,8 @@ class PhoneContactMethod(ContactMethod):
 
     # Setup
     immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view phone', 'edit phone'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view phone', 'edit phone'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('phone contact method')
         verbose_name_plural = _('phone contact methods')
@@ -613,8 +614,8 @@ class FaxContactMethod(ContactMethod):
 
     # Setup
     immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view fax', 'edit fax'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view fax', 'edit fax'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('fax contact method')
         verbose_name_plural = _('fax contact methods')
@@ -630,8 +631,8 @@ class WebsiteContactMethod(ContactMethod):
 
     # Setup
     immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view url', 'edit url'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view url', 'edit url'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('website contact method')
         verbose_name_plural = _('website contact methods')
@@ -647,8 +648,8 @@ class AIMContactMethod(ContactMethod):
 
     # Setup
     immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view screen_name', 'edit screen_name'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view screen_name', 'edit screen_name'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('AIM contact method')
         verbose_name_plural = _('AIM contact methods')
@@ -665,10 +666,10 @@ class AddressContactMethod(ContactMethod):
 
     # Setup
     immutable_fields = ContactMethod.immutable_fields
-    relevant_abilities = ContactMethod.relevant_abilities | set(['view street1', 'view street2', 'view city', 'view state',
-                                                                 'view country', 'view zip', 'edit street1', 'edit street2',
-                                                                 'edit city', 'edit state', 'edit country', 'edit zip'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view street1', 'view street2', 'view city', 'view state',
+                                      'view country', 'view zip', 'edit street1', 'edit street2',
+                                      'edit city', 'edit state', 'edit country', 'edit zip'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('address contact method')
         verbose_name_plural = _('address contact methods')
@@ -700,9 +701,9 @@ class Subscription(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields | set(['contact_method', 'item'])
-    relevant_abilities = Item.relevant_abilities | set(['view contact_method', 'view item', 'view deep', 'view notify_text',
-                                                        'view notify_edit', 'edit deep', 'edit notify_text', 'edit notify_edit'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view contact_method', 'view item', 'view deep', 'view notify_text',
+                                      'view notify_edit', 'edit deep', 'edit notify_text', 'edit notify_edit'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('subscription')
         verbose_name_plural = _('subscriptions')
@@ -741,8 +742,8 @@ class Collection(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities | set(['modify_membership', 'add_self', 'remove_self'])
-    relevant_global_abilities = frozenset(['create Collection'])
+    introduced_abilities = frozenset(['modify_membership', 'add_self', 'remove_self'])
+    introduced_global_abilities = frozenset(['create Collection'])
     class Meta:
         verbose_name = _('collection')
         verbose_name_plural = _('collections')
@@ -784,8 +785,8 @@ class Group(Collection):
 
     # Setup
     immutable_fields = Collection.immutable_fields
-    relevant_abilities = Collection.relevant_abilities
-    relevant_global_abilities = frozenset(['create Group'])
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create Group'])
     class Meta:
         verbose_name = _('group')
         verbose_name_plural = _('groups')
@@ -805,8 +806,8 @@ class Folio(Collection):
 
     # Setup
     immutable_fields = Collection.immutable_fields | set(['group'])
-    relevant_abilities = Collection.relevant_abilities | set(['view group'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view group'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('folio')
         verbose_name_plural = _('folios')
@@ -822,8 +823,8 @@ class Membership(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields | set(['item', 'collection'])
-    relevant_abilities = (Item.relevant_abilities | set(['view item', 'view collection'])) - set(['trash'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view item', 'view collection'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('membership')
         verbose_name_plural = _('memberships')
@@ -875,8 +876,8 @@ class Document(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('document')
         verbose_name_plural = _('documents')
@@ -889,8 +890,8 @@ class TextDocument(Document):
 
     # Setup
     immutable_fields = Document.immutable_fields
-    relevant_abilities = Document.relevant_abilities | set(['view body', 'edit body', 'add_transclusion'])
-    relevant_global_abilities = frozenset(['create TextDocument'])
+    introduced_abilities = frozenset(['view body', 'edit body', 'add_transclusion'])
+    introduced_global_abilities = frozenset(['create TextDocument'])
     class Meta:
         verbose_name = _('text document')
         verbose_name_plural = _('text documents')
@@ -909,9 +910,9 @@ class DjangoTemplateDocument(TextDocument):
 
     # Setup
     immutable_fields = TextDocument.immutable_fields
-    relevant_abilities = TextDocument.relevant_abilities | set(['view layout', 'view override_default_layout',
-                                                                'edit layout', 'edit override_default_layout'])
-    relevant_global_abilities = frozenset(['create DjangoTemplateDocument'])
+    introduced_abilities = frozenset(['view layout', 'view override_default_layout',
+                                    'edit layout', 'edit override_default_layout'])
+    introduced_global_abilities = frozenset(['create DjangoTemplateDocument'])
     class Meta:
         verbose_name = _('Django template document')
         verbose_name_plural = _('Django template documents')
@@ -928,8 +929,8 @@ class HtmlDocument(TextDocument):
 
     # Setup
     immutable_fields = TextDocument.immutable_fields
-    relevant_abilities = TextDocument.relevant_abilities
-    relevant_global_abilities = frozenset(['create HtmlDocument'])
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create HtmlDocument'])
     class Meta:
         verbose_name = _('HTML document')
         verbose_name_plural = _('HTML documents')
@@ -948,8 +949,8 @@ class FileDocument(Document):
 
     # Setup
     immutable_fields = Document.immutable_fields
-    relevant_abilities = Document.relevant_abilities | set(['view datafile', 'edit datafile'])
-    relevant_global_abilities = frozenset(['create FileDocument'])
+    introduced_abilities = frozenset(['view datafile', 'edit datafile'])
+    introduced_global_abilities = frozenset(['create FileDocument'])
     class Meta:
         verbose_name = _('file document')
         verbose_name_plural = _('file documents')
@@ -969,8 +970,8 @@ class ImageDocument(FileDocument):
 
     # Setup
     immutable_fields = FileDocument.immutable_fields
-    relevant_abilities = FileDocument.relevant_abilities
-    relevant_global_abilities = frozenset(['create ImageDocument'])
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create ImageDocument'])
     class Meta:
         verbose_name = _('image document')
         verbose_name_plural = _('image documents')
@@ -988,9 +989,9 @@ class Transclusion(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields | set(['from_item', 'from_item_version_number', 'to_item'])
-    relevant_abilities = Item.relevant_abilities | set(['view from_item', 'view from_item_version_number',
-                                                        'view from_item_index', 'view to_item', 'edit from_item_index'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view from_item', 'view from_item_version_number',
+                                      'view from_item_index', 'view to_item', 'edit from_item_index'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('transclusion')
         verbose_name_plural = _('transclusions')
@@ -1017,8 +1018,8 @@ class Comment(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields | set(['item'])
-    relevant_abilities = Item.relevant_abilities | set(['view item', 'view item_version_number'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view item', 'view item_version_number'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('comment')
         verbose_name_plural = _('comments')
@@ -1191,8 +1192,8 @@ class TextComment(TextDocument, Comment):
 
     # Setup
     immutable_fields = TextDocument.immutable_fields | Comment.immutable_fields
-    relevant_abilities = TextDocument.relevant_abilities | Comment.relevant_abilities
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('text comment')
         verbose_name_plural = _('text comments')
@@ -1208,8 +1209,8 @@ class EditComment(Comment):
 
     # Setup
     immutable_fields = Comment.immutable_fields
-    relevant_abilities = Comment.relevant_abilities
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('edit comment')
         verbose_name_plural = _('edit comments')
@@ -1225,8 +1226,8 @@ class TrashComment(Comment):
 
     # Setup
     immutable_fields = Comment.immutable_fields
-    relevant_abilities = Comment.relevant_abilities
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('trash comment')
         verbose_name_plural = _('trash comments')
@@ -1242,8 +1243,8 @@ class UntrashComment(Comment):
 
     # Setup
     immutable_fields = Comment.immutable_fields
-    relevant_abilities = Comment.relevant_abilities
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('untrash comment')
         verbose_name_plural = _('untrash comments')
@@ -1261,8 +1262,8 @@ class AddMemberComment(Comment):
 
     # Setup
     immutable_fields = Comment.immutable_fields | set(['membership'])
-    relevant_abilities = Comment.relevant_abilities | set(['view membership'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view membership'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('add member comment')
         verbose_name_plural = _('add member comments')
@@ -1283,8 +1284,8 @@ class RemoveMemberComment(Comment):
 
     # Setup
     immutable_fields = Comment.immutable_fields | set(['membership'])
-    relevant_abilities = Comment.relevant_abilities | set(['view membership'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view membership'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('remove member comment')
         verbose_name_plural = _('remove member comments')
@@ -1304,8 +1305,8 @@ class Excerpt(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('excerpt')
         verbose_name_plural = _('excerpts')
@@ -1322,13 +1323,10 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
     """
 
     # Setup
-    immutable_fields = Excerpt.immutable_fields \
-                     | TextDocument.immutable_fields \
-                     | set(['text_document','text_document_version_number', 'start_index', 'length', 'body'])
-    relevant_abilities = Excerpt.relevant_abilities \
-                       | (TextDocument.relevant_abilities - set(['edit body'])) \
-                       | set(['view text_document', 'view text_document_version_number', 'view start_index', 'view length']) 
-    relevant_global_abilities = frozenset(['create TextDocumentExcerpt'])
+    immutable_fields = Excerpt.immutable_fields | TextDocument.immutable_fields  | set(['text_document'])
+    introduced_abilities = frozenset(['view text_document', 'view text_document_version_number', 'view start_index', 'view length',
+                                      'edit text_document_version_number', 'edit start_index', 'edit length']) 
+    introduced_global_abilities = frozenset(['create TextDocumentExcerpt'])
     class Meta:
         verbose_name = _('text document excerpt')
         verbose_name_plural = _('text document excerpts')
@@ -1360,10 +1358,10 @@ class ViewerRequest(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields
-    relevant_abilities = Item.relevant_abilities | set(['add_sub_path', 'view aliased_item', 'view viewer', 'view action',
-                                                        'view query_string', 'view format', 'edit aliased_item', 'edit viewer',
-                                                        'edit action', 'edit query_string', 'edit format'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['add_sub_path', 'view aliased_item', 'view viewer', 'view action',
+                                      'view query_string', 'view format', 'edit aliased_item', 'edit viewer',
+                                      'edit action', 'edit query_string', 'edit format'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('viewer request')
         verbose_name_plural = _('viewer requests')
@@ -1401,8 +1399,8 @@ class Site(ViewerRequest):
 
     # Setup
     immutable_fields = ViewerRequest.immutable_fields
-    relevant_abilities = ViewerRequest.relevant_abilities | set(['view default_layout', 'edit default_layout'])
-    relevant_global_abilities = frozenset(['create Site'])
+    introduced_abilities = frozenset(['view default_layout', 'edit default_layout'])
+    introduced_global_abilities = frozenset(['create Site'])
     class Meta:
         verbose_name = _('site')
         verbose_name_plural = _('sites')
@@ -1418,8 +1416,8 @@ class SiteDomain(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields | set(['hostname', 'site'])
-    relevant_abilities = Item.relevant_abilities | set(['view hostname', 'view site'])
-    relevant_global_abilities = frozenset(['create SiteDomain'])
+    introduced_abilities = frozenset(['view hostname', 'view site'])
+    introduced_global_abilities = frozenset(['create SiteDomain'])
     class Meta:
         verbose_name = _('site domain')
         verbose_name_plural = _('site domains')
@@ -1443,8 +1441,8 @@ class CustomUrl(ViewerRequest):
 
     # Setup
     immutable_fields = ViewerRequest.immutable_fields | set(['parent_url', 'path'])
-    relevant_abilities = ViewerRequest.relevant_abilities | set(['view parent_url', 'view path'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view parent_url', 'view path'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('custom URL')
         verbose_name_plural = _('custom URLs')
@@ -1471,8 +1469,8 @@ class DemeSetting(Item):
 
     # Setup
     immutable_fields = Item.immutable_fields | set(['key'])
-    relevant_abilities = Item.relevant_abilities | set(['view key', 'view value', 'edit value'])
-    relevant_global_abilities = frozenset()
+    introduced_abilities = frozenset(['view key', 'view value', 'edit value'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('Deme setting')
         verbose_name_plural = _('Deme settings')
@@ -1522,7 +1520,7 @@ class POSSIBLE_ABILITIES_ITER(object):
     def __iter__(self):
         choices = set()
         for item_type in all_item_types():
-            choices = choices | set([(x,x) for x in item_type.relevant_abilities])
+            choices = choices | set([(x,x) for x in item_type.introduced_abilities])
         choices = list(choices)
         choices.sort(key=lambda x: x[1])
         for x in choices:
@@ -1532,7 +1530,7 @@ class POSSIBLE_GLOBAL_ABILITIES_ITER(object):
     def __iter__(self):
         choices = set()
         for item_type in all_item_types():
-            choices = choices | set([(x,x) for x in item_type.relevant_global_abilities])
+            choices = choices | set([(x,x) for x in item_type.introduced_global_abilities])
         choices = list(choices)
         choices.sort(key=lambda x: x[1])
         for x in choices:

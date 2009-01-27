@@ -65,11 +65,11 @@ class PermissionCache(object):
         if result is None:
             item_type = get_item_type_with_name(item.item_type)
             if 'do_everything' in self.global_abilities(agent):
-                result = item_type.relevant_abilities
+                result = all_relevant_abilities(item_type)
             else:
                 result = calculate_abilities_for_agent_and_item(agent, item, item_type)
                 if 'do_everything' in result:
-                    result = item_type.relevant_abilities
+                    result = all_relevant_abilities(item_type)
             self._item_ability_cache[(agent.pk, item.pk)] = result
         return result
 
@@ -183,6 +183,32 @@ def calculate_global_abilities_for_agent(agent):
 # Item permissions
 ###############################################################################
 
+def all_relevant_abilities(item_type):
+    #TODO comment this
+    if not issubclass(item_type, Item):
+        raise Exception("You must call all_relevant_abilities with a subclass of Item")
+    result = set()
+    result.update(item_type.introduced_abilities)
+    if item_type != Item:
+        for parent_item_type in item_type.__bases__:
+            result.update(all_relevant_abilities(parent_item_type))
+    return result
+
+
+def default_ability_is_allowed(ability, item_type):
+    #TODO comment this
+    if not issubclass(item_type, Item):
+        raise Exception("You must call all_relevant_abilities with a subclass of Item")
+    if ability in item_type.introduced_abilities:
+        deme_setting_key = "cms.default_permission.%s.%s" % (item_type.__name__, ability)
+        return (DemeSetting.get(deme_setting_key) == "true")
+    if item_type != Item:
+        for parent_item_type in item_type.__bases__:
+            result = default_ability_is_allowed(ability, parent_item_type)
+            if result is not None:
+                return result
+    return None
+
 def calculate_permissions_for_agent_and_item(agent, item):
     """
     Return tuple (agent_permissions, collection_permissions, everyone_permissions).
@@ -237,6 +263,7 @@ def calculate_abilities_for_agent_and_item(agent, item, item_type):
             contains this ability with is_allowed=False.
     """
     permissions_triple = calculate_permissions_for_agent_and_item(agent, item)
+    possible_abilities = all_relevant_abilities(item_type)
     abilities_yes = set()
     abilities_no = set()
     # Iterate once for each level: agent, collection, everyone
@@ -260,11 +287,11 @@ def calculate_abilities_for_agent_and_item(agent, item, item_type):
         for x in cur_abilities_no:
             if x not in abilities_yes and x not in abilities_no:
                 abilities_no.add(x)
-    unspecified_abilities = item_type.relevant_abilities - abilities_yes - abilities_no
+    unspecified_abilities = possible_abilities - abilities_yes - abilities_no
     for ability in unspecified_abilities:
-        if DemeSetting.get("cms.default_permission.%s.%s" % (item_type.__name__, ability)) == "true":
+        if default_ability_is_allowed(ability, item_type):
             abilities_yes.add(ability)
-    return abilities_yes & item_type.relevant_abilities
+    return abilities_yes & possible_abilities
 
 
 ###############################################################################
@@ -285,7 +312,7 @@ def filter_items_by_permission(agent, ability, item_type):
     """
     my_collection_ids = agent.ancestor_collections().values('pk').query
 
-    default_is_allowed = (DemeSetting.get("cms.default_permission.%s.%s" % (item_type.__name__, ability)) == "true")
+    default_is_allowed = default_ability_is_allowed(ability, item_type)
 
     # p contains all Q objects for all 6 combinations of level, is_allowed
     p = {}
