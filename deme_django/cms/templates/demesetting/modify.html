@@ -6,7 +6,7 @@
 
 {% collectionheader "Modify" %}
 
-<form method="post" enctype="multipart/form-data" action="{% url resource_collection viewer="demesetting",action="addsetting" %}?redirect={{ full_path|urlencode }}" class="item_form">
+<form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer="demesetting",action="addsetting" %}?redirect={{ full_path|urlencode }}" class="item_form">
     Key: <input type="text" name="key" />
     Value: <input type="text" name="value" />
     <input type="submit" value="Set" />
@@ -19,9 +19,9 @@
     </tr>
     {% for deme_setting in deme_settings %}
     <tr class="{% cycle 'even' 'odd' %}">
-        <td><a href="{% url resource_entry viewer=deme_setting.item_type|lower,noun=deme_setting.pk %}">{{ deme_setting.key }}</a></td>
+        <td><a href="{% url item_url viewer=deme_setting.item_type|lower,noun=deme_setting.pk %}">{{ deme_setting.key }}</a></td>
         {% if deme_setting.value|floatformat %}
-        <td><a href="{% url resource_entry viewer="item",noun=deme_setting.value %}">{{ deme_setting.value }}</a></td>
+        <td><a href="{% url item_url viewer="item",noun=deme_setting.value %}">{{ deme_setting.value }}</a></td>
         {% else %}
         <td>{{ deme_setting.value }}</td>
         {% endif %}

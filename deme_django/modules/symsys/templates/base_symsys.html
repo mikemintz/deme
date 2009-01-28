@@ -16,20 +16,20 @@
 
 <div class="top_right">
     <div class="top_right_text">
-    <form name="logout_form" style="display: inline;" method="post" action="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">
+    <form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">
         <input type="hidden" name="login_type" value="logout" />
     </form>
     {% ifequal cur_agent.item_type 'AnonymousAgent' %}
     You are not logged in
-    [<a href="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login</a>]
+    [<a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login</a>]
     {% else %}
     You are logged in as <a href="{{ cur_agent.get_absolute_url }}">{{ cur_agent.name }}</a>
     [<a href="#" onclick="document.forms['logout_form'].submit(); return false;">Logout</a>]
-    [<a href="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]
+    [<a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]
     {% endifequal %}
     </div>
     <div class="top_right_search">
-    <form method="get" action="{% url resource_collection viewer="item" %}">
+    <form method="get" action="{% url item_type_url viewer="item" %}">
     <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
     </form>
     </div>

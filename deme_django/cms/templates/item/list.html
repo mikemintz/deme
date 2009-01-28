@@ -17,9 +17,9 @@
             <select onchange="window.location = this.value;">
                 {% for model_name in model_names %}
                 {% ifequal model_name item_type %}
-                <option value="{% url resource_collection viewer=model_name|lower %}" selected="selected">{{ model_name }}</option>
+                <option value="{% url item_type_url viewer=model_name|lower %}" selected="selected">{{ model_name }}</option>
                 {% else %}
-                <option value="{% url resource_collection viewer=model_name|lower %}">{{ model_name }}</option>
+                <option value="{% url item_type_url viewer=model_name|lower %}">{{ model_name }}</option>
                 {% endifequal %}
                 {% endfor %}
             </select>
@@ -74,7 +74,7 @@
     </tr>
     {% for item in items %}
     <tr class="{% cycle 'even' 'odd' %}">
-        <td><a class="img_link" href="{% url resource_entry viewer=item.item_type|lower,noun=item.pk %}"><img src="{{ item.item_type|icon_url:16 }}" /><span>{{ item.name }}</span></a></td>
+        <td><a class="img_link" href="{% url item_url viewer=item.item_type|lower,noun=item.pk %}"><img src="{{ item.item_type|icon_url:16 }}" /><span>{{ item.name }}</span></a></td>
     </tr>
     {% endfor %}
 </table>

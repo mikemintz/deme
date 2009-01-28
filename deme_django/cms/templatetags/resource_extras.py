@@ -125,7 +125,7 @@ def list_results_navigator(viewer, collection, search_query, trashed, offset, li
     """
     if n_results <= limit:
         return ''
-    url_prefix = reverse('resource_collection', kwargs={'viewer': viewer.lower()}) + '?limit=%s&' % limit
+    url_prefix = reverse('item_type_url', kwargs={'viewer': viewer.lower()}) + '?limit=%s&' % limit
     if search_query:
         url_prefix += 'q=%s&' % search_query
     if trashed:
@@ -333,14 +333,14 @@ class EntryHeader(template.Node):
 
         result = []
 
-        history_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'history'}) + '?version=%s' % version_number
-        subscribe_url = reverse('resource_collection', kwargs={'viewer': 'subscription', 'action': 'new'}) + '?item=%s' % item.pk
-        relationships_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'relationships'}) + '?version=%s' % version_number
-        permissions_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'permissions'})
-        edit_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % version_number
-        copy_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'copy'}) + '?version=%s' % version_number
-        trash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'trash'}) + '?redirect=%s' % urlquote(context['full_path'])
-        untrash_url = reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'untrash'}) + '?redirect=%s' % urlquote(context['full_path'])
+        history_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'history'}) + '?version=%s' % version_number
+        subscribe_url = reverse('item_type_url', kwargs={'viewer': 'subscription', 'action': 'new'}) + '?item=%s' % item.pk
+        relationships_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'relationships'}) + '?version=%s' % version_number
+        permissions_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'permissions'})
+        edit_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % version_number
+        copy_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'copy'}) + '?version=%s' % version_number
+        trash_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'trash'}) + '?redirect=%s' % urlquote(context['full_path'])
+        untrash_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'untrash'}) + '?redirect=%s' % urlquote(context['full_path'])
 
         result.append('<div class="crumbs">')
 
@@ -362,7 +362,7 @@ class EntryHeader(template.Node):
 
         result.append('<div style="float: left; margin-bottom: 5px; margin-top: 5px;">')
         for inherited_item_type in item_type_inheritance:
-            result.append('<a href="%s" class="img_link"><img src="%s" /><span>%ss</span></a> &raquo;' % (reverse('resource_collection', kwargs={'viewer': inherited_item_type.lower()}), icon_url(inherited_item_type, 16), inherited_item_type))
+            result.append('<a href="%s" class="img_link"><img src="%s" /><span>%ss</span></a> &raquo;' % (reverse('item_type_url', kwargs={'viewer': inherited_item_type.lower()}), icon_url(inherited_item_type, 16), inherited_item_type))
         if agentcan_helper(context, 'view name', item):
             result.append('<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (item.get_absolute_url(), icon_url(item.item_type, 16), escape(item.name)))
         else:
@@ -454,7 +454,7 @@ class CollectionHeader(template.Node):
 
         result = []
 
-        new_url = reverse('resource_collection', kwargs={'viewer': item_type.lower(), 'action': "new"})
+        new_url = reverse('item_type_url', kwargs={'viewer': item_type.lower(), 'action': "new"})
 
         result.append('<div class="crumbs">')
         result.append('<div style="float: right; margin-bottom: 5px;">')
@@ -464,7 +464,7 @@ class CollectionHeader(template.Node):
 
         result.append('<div style="float: left; margin-bottom: 5px; margin-top: 5px;">')
         for i, inherited_item_type in enumerate(item_type_inheritance):
-            link = '<a href="%s" class="img_link"><img src="%s" /><span>%ss</span></a>' % (reverse('resource_collection', kwargs={'viewer': inherited_item_type.lower()}), icon_url(inherited_item_type, 16), inherited_item_type)
+            link = '<a href="%s" class="img_link"><img src="%s" /><span>%ss</span></a>' % (reverse('item_type_url', kwargs={'viewer': inherited_item_type.lower()}), icon_url(inherited_item_type, 16), inherited_item_type)
             if i > 0:
                 link = '&raquo; %s' % link
             result.append(link)
@@ -529,14 +529,14 @@ class CommentBox(template.Node):
         result.append("""<div class="comment_box">""")
         result.append("""<div class="comment_box_header">""")
         if agentcan_helper(context, 'comment_on', item):
-            result.append("""<a href="%s?item=%s&item_version_number=%s&redirect=%s">[+] Add Comment</a>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'action': 'new'}), item.pk, version_number, urlquote(full_path)))
+            result.append("""<a href="%s?item=%s&item_version_number=%s&redirect=%s">[+] Add Comment</a>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), item.pk, version_number, urlquote(full_path)))
         result.append("""</div>""")
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
-                result.append("""<div style="float: right;"><a href="%s?item=%s&item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('resource_collection', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
+                result.append("""<div style="float: right;"><a href="%s?item=%s&item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
                 if isinstance(comment, EditComment):
                     comment_name = '[Edited]'
                 elif isinstance(comment, TrashComment):

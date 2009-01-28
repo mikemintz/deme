@@ -52,6 +52,8 @@ if len(sys.argv) < 2 or sys.argv[1] != 'test':
 # Just testing here:
 ###############################################################################
 
+print 'Test stuff...'
+
 # Set the default layout
 default_layout_code = open(os.path.join(os.path.dirname(__file__), '..', 'cms', 'templates', 'default_layout.html')).read()
 default_layout = DjangoTemplateDocument(override_default_layout=True, name='Deme Layout', body=default_layout_code)

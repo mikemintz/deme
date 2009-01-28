@@ -136,7 +136,7 @@ class Item(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('resource_entry', (), {'viewer': self.item_type.lower(), 'noun': self.pk})
+        return ('item_url', (), {'viewer': self.item_type.lower(), 'noun': self.pk})
 
     def downcast(self):
         """
@@ -1103,8 +1103,8 @@ class Comment(Item):
         # Now get the fields we are allowed to view
         item = self.item
         topmost_item = self.original_item()
-        item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}))
-        topmost_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('resource_entry', kwargs={'viewer': topmost_item.item_type.lower(), 'noun': topmost_item.pk}))
+        item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}))
+        topmost_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('item_url', kwargs={'viewer': topmost_item.item_type.lower(), 'noun': topmost_item.pk}))
         comment_name = self.name if permission_cache.agent_can(agent, 'view name', self) else 'PERMISSION DENIED'
         if isinstance(self, TextComment):
             comment_body = self.body if permission_cache.agent_can(agent, 'view body', self) else 'PERMISSION DENIED'

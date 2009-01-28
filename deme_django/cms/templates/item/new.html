@@ -24,9 +24,9 @@ tinyMCE.init({
 
 <div>
     {% if redirect %}
-    <form method="post" enctype="multipart/form-data" action="{% url resource_collection viewer=item_type|lower,action="create" %}?redirect={{ redirect|urlencode }}" class="item_form">
+    <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=item_type|lower,action="create" %}?redirect={{ redirect|urlencode }}" class="item_form">
     {% else %}
-    <form method="post" enctype="multipart/form-data" action="{% url resource_collection viewer=item_type|lower,action="create" %}" class="item_form">
+    <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=item_type|lower,action="create" %}" class="item_form">
     {% endif %}
         <table cellspacing="0">
             <tr>
@@ -37,9 +37,9 @@ tinyMCE.init({
                     <select id="id_item_type" name="item_type" onchange="window.location = this.value;">
                         {% for model_name in model_names %}
                         {% if action_is_entry_copy %}
-                        <option value="{% url resource_entry viewer=model_name|lower,noun=item.pk,action="copy" %}?version={{ item.version_number }}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>
+                        <option value="{% url item_url viewer=model_name|lower,noun=item.pk,action="copy" %}?version={{ item.version_number }}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>
                         {% else %}
-                        <option value="{% url resource_collection viewer=model_name|lower,action="new" %}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>
+                        <option value="{% url item_type_url viewer=model_name|lower,action="new" %}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>
                         {% endif %}
                         {% endfor %}
                     </select>

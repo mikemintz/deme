@@ -38,7 +38,7 @@ class AjaxModelChoiceWidget(forms.Widget):
         initial_search = value_item.name if value_item else ''
         if value is None: value = ''
         if attrs is None: attrs = {}
-        ajax_url = reverse('resource_collection', kwargs={'viewer': model.__name__.lower(), 'format': 'json'})
+        ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'})
         result = """
         <input type="hidden" name="%(name)s" value="%(value)s" />
         <input class="ajax_choice_field" type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" autocomplete="off" />
@@ -287,7 +287,7 @@ class Viewer(object):
             {% block title %}Not Allowed{% endblock %}
             {% block content %}
             The agent currently logged in is not allowed to use this application.
-            Please <a href="{% url resource_collection viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">log in as another agent</a>.
+            Please <a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">log in as another agent</a>.
             {% endblock content %}
             """)
             return HttpResponse(template.render(self.context))
@@ -311,7 +311,7 @@ class Viewer(object):
     def render_item_not_found(self):
         if self.item:
             title = "%s Not Found" % self.accepted_item_type.__name__
-            body = 'You cannot view item %s in this viewer. Try viewing it in the <a href="%s">%s viewer</a>.' % (self.noun, reverse('resource_entry', kwargs={'viewer': self.item.item_type.lower(), 'noun': self.item.pk}), self.item.item_type)
+            body = 'You cannot view item %s in this viewer. Try viewing it in the <a href="%s">%s viewer</a>.' % (self.noun, reverse('item_url', kwargs={'viewer': self.item.item_type.lower(), 'noun': self.item.pk}), self.item.item_type)
         else:
             title = "Item Not Found"
             version = self.request.GET.get('version')
@@ -479,7 +479,7 @@ class ItemViewer(Viewer):
         if form.is_valid():
             item = form.save(commit=False)
             item.save_versioned(updater=self.cur_agent)
-            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
+            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
             model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
@@ -592,7 +592,7 @@ class ItemViewer(Viewer):
         if form.is_valid():
             new_item = form.save(commit=False)
             new_item.save_versioned(updater=self.cur_agent)
-            return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
+            return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
             template = loader.get_template('item/edit.html')
             self.context['form'] = form
@@ -611,7 +611,7 @@ class ItemViewer(Viewer):
         if not can_trash:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to trash this item")
         self.item.trash(self.cur_agent)
-        redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
     def entry_untrash(self):
@@ -625,7 +625,7 @@ class ItemViewer(Viewer):
         if not can_trash:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to untrash this item")
         self.item.untrash(self.cur_agent)
-        redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
     def entry_permissions(self):
@@ -964,7 +964,7 @@ class GroupViewer(ItemViewer):
         if form.is_valid():
             new_item = form.save(commit=False)
             new_item.save_versioned(updater=self.cur_agent)
-            return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
+            return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
             template = loader.get_template('item/new.html')
             self.context['form'] = form
@@ -1006,7 +1006,7 @@ class ViewerRequestViewer(ItemViewer):
             new_item.save_versioned(updater=self.cur_agent)
             if custom_url.trashed:
                 custom_url.untrash(self.cur_agent)
-            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
             return HttpResponseRedirect(redirect)
         else:
             site, custom_urls = self.item.calculate_full_path()
@@ -1051,7 +1051,7 @@ class CollectionViewer(ItemViewer):
         except:
             membership = Membership(collection=self.item, item=member)
             membership.save_versioned(updater=self.cur_agent)
-        redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
 
@@ -1068,7 +1068,7 @@ class CollectionViewer(ItemViewer):
                 membership.trash(self.cur_agent)
         except:
             pass
-        redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
 
@@ -1165,7 +1165,7 @@ class TextDocumentViewer(ItemViewer):
                     transclusion.to_item = to_item
                     transclusion.save_versioned(updater=self.cur_agent)
 
-            return HttpResponseRedirect(reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
+            return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
             template = loader.get_template('item/edit.html')
             self.context['form'] = form
@@ -1243,7 +1243,7 @@ class TextCommentViewer(TextDocumentViewer):
             if isinstance(item, TextDocument) and item_index is not None and self.permission_cache.agent_can(self.cur_agent, 'add_transclusion', item):
                 transclusion = Transclusion(from_item=item, from_item_version_number=comment.item_version_number, from_item_index=item_index, to_item=comment)
                 transclusion.save_versioned(updater=self.cur_agent)
-            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
+            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
         else:
             model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
@@ -1292,7 +1292,7 @@ class TransclusionViewer(ItemViewer):
             if not can_add_transclusion:
                 return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add transclusions to this item")
             item.save_versioned(updater=self.cur_agent)
-            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
+            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
             model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
@@ -1340,7 +1340,7 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
         for excerpt in excerpts:
             excerpt.save_versioned(updater=self.cur_agent)
             Membership(item=excerpt, collection=collection).save_versioned(updater=self.cur_agent)
-        redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': 'collection', 'noun': collection.pk}))
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'collection', 'noun': collection.pk}))
         return HttpResponseRedirect(redirect)
 
 
@@ -1361,7 +1361,7 @@ class DemeSettingViewer(ItemViewer):
         key = self.request.POST.get('key')
         value = self.request.POST.get('value')
         DemeSetting.set(key, value, self.cur_agent)
-        redirect = self.request.GET.get('redirect', reverse('resource_collection', kwargs={'viewer': self.viewer_name, 'action': 'modify'}))
+        redirect = self.request.GET.get('redirect', reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'modify'}))
         return HttpResponseRedirect(redirect)
 
 
@@ -1391,7 +1391,7 @@ class SubscriptionViewer(ItemViewer):
             if not can_add_subscription:
                 return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add subscriptions to this contact method")
             item.save_versioned(updater=self.cur_agent)
-            redirect = self.request.GET.get('redirect', reverse('resource_entry', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
+            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
             model_names = ['Subscription']
