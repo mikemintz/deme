@@ -10,19 +10,14 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   architecture
+   installation
+   code
+
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-.. automodule:: cms.models
-   :members:
-
-.. automodule:: cms.dispatcher
-   :members:
-
-.. automodule:: cms.views
-   :members:
 

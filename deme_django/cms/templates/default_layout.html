@@ -62,7 +62,7 @@
     <li{% ifequal full_path "/"%} class="tabhighlighted"{% endifequal %}><a href="/">Home</a></li>
     <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} class="tabhighlighted"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
     <li{% ifequal viewer_name "codegraph"%} class="tabhighlighted"{% endifequal %}><a href="{% url item_type_url viewer="codegraph" %}">Codegraph</a></li>
-    <li><a href="/static/architecture.html">Architecture</a></li>
+    <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
 </ul>
 
 <div class="content_box">

@@ -73,6 +73,7 @@ Documentation
 * Update the architecture doc
 * Document more functions with docstrings more
 * Make some sort of API doc
+* Make the README better (it points to docs/ directory, but users don't know how to compile docs)
 
 Small Details
 -------------
