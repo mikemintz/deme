@@ -1,5 +1,5 @@
 {% extends layout %}
-{% load resource_extras %}
+{% load item_tags %}
 {% block favicon %}{{ item_type|icon_url:16 }}{% endblock %}
 {% block title %}<img src="{{ item_type|icon_url:48 }}" /> {% if action_is_entry_copy %}Copy{% else %}New{% endif %} {{ item_type }}{% endblock %}
 {% block content %}

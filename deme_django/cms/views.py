@@ -212,7 +212,7 @@ class Viewer(object):
         """
         template = loader.get_template_from_string("""
         {%% extends layout %%}
-        {%% load resource_extras %%}
+        {%% load item_tags %%}
         {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
         {%% block title %%}<img src="{{ "error"|icon_url:48 }}" /> %s{%% endblock %%}
         {%% block content %%}%s{%% endblock content %%}
@@ -283,7 +283,7 @@ class Viewer(object):
         if self.action != 'login' and not self.cur_agent_can_global('do_something'):
             template = loader.get_template_from_string("""
             {% extends layout %}
-            {% load resource_extras %}
+            {% load item_tags %}
             {% block title %}Not Allowed{% endblock %}
             {% block content %}
             The agent currently logged in is not allowed to use this application.
