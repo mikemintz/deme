@@ -30,7 +30,6 @@ Code correctness/consistency/bugs
 ---------------------------------
 * We should define which abilities are allowed by default in the item type, not just hard code in create_initial_data.py
 * Abstract away from the viewer.request object lying around
-* We should probably rename collection_ and entry_ and maybe resource, since they aren't really unified (rename resource to item, resource_entry to item_url, resource_collection to item_type_url)
 * Code cleanup: do permissions in models.py, document/clean the changes to permissions.py, then do views, templatetags, and templates
 * Make more sensible permissions (is there anything more?)
 * Replace SiteDomains with SiteAliases, and now every Site has a single default domain
@@ -111,7 +110,7 @@ Distant Future (sorted by approximate order of planned implementation)
 * respect the format string and have XML output and stuff
 * When matching SiteDomain in alias, match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
 * Add to ImageDocument metadata like width, height, exif, and a pointer to a thumbfile or 2
-* In CustomUrl, we should prevent top level names like 'static' and 'resource' and 'modules' and 'meta', although not a big deal since it doesn't overwrite
+* In CustomUrl, we should prevent top level names like 'static' and 'item' and 'modules', although not a big deal since it doesn't overwrite
 * later, think about adding back "edit downcast". we'll have to think about
   - what happens when viewer2 inherits from viewer1, and viewer2 item type subclasses viewer1 item type, and viewer2 inherits the edit/update functionality?
   - make it work better when you downcast an item in the editor, with versioning backward, and calling actions that should be called on create

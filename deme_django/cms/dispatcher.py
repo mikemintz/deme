@@ -16,10 +16,10 @@ for module_name in settings.MODULE_NAMES:
     __import__('modules.%s.views' % module_name)
 
 
-def resource(request, *args, **kwargs):
+def item_view(request, *args, **kwargs):
     """
     This is the view that takes care of all valid URLs starting with
-    "/resource/". It finds the appropriate viewer and dispatches the request
+    "/item/". It finds the appropriate viewer and dispatches the request
     to it.
     """
     viewer_name = kwargs['viewer']
@@ -41,7 +41,7 @@ def resource(request, *args, **kwargs):
         return viewer.render_error(HttpResponseNotFound, "Viewer Not Found", "We could not find any viewer matching your URL.")
 
 
-def invalidurl(request, *args, **kwargs):
+def invalid_url_view(request, *args, **kwargs):
     """
     This is the view that takes care of all URLs that don't match any expected
     pattern.
@@ -51,10 +51,10 @@ def invalidurl(request, *args, **kwargs):
     return viewer.render_error(HttpResponseNotFound, "Invalid URL", "The URL you typed in is invalid.")
 
 
-def alias(request, *args, **kwargs):
+def alias_view(request, *args, **kwargs):
     """
     This is the view that takes care of all URLs other than those beginning
-    with "/static/", "/resource/", and those URLs taken by modules.
+    with "/static/", "/item/", and those URLs taken by modules.
     
     It checks all of the ViewerRequests to see if any match the current URL,
     and if so, simulates a request to the given viewer.
@@ -81,5 +81,5 @@ def alias(request, *args, **kwargs):
     request.GET = query_dict
     # Set the REQUEST dict
     request._request = datastructures.MergeDict(request.POST, request.GET)
-    return resource(request, **kwargs)
+    return item_view(request, **kwargs)
 

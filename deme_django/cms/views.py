@@ -17,9 +17,9 @@ import datetime
 # Models, forms, and fields
 ###############################################################################
 
-resource_name_dict = {}
+item_type_name_dict = {}
 for item_type in all_item_types():
-    resource_name_dict[item_type.__name__.lower()] = item_type
+    item_type_name_dict[item_type.__name__.lower()] = item_type
 
 
 class AjaxModelChoiceWidget(forms.Widget):
@@ -405,7 +405,7 @@ class ItemViewer(Viewer):
         offset = int(self.request.GET.get('offset', 0))
         limit = int(self.request.GET.get('limit', 100))
         trashed = self.request.GET.get('trashed', None) == '1'
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
+        model_names = [model.__name__ for model in item_type_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
         model_names.sort()
         self.context['search_query'] = self.request.GET.get('q', '')
         items = self.accepted_item_type.objects
@@ -458,7 +458,7 @@ class ItemViewer(Viewer):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
+        model_names = [model.__name__ for model in item_type_name_dict.itervalues() if issubclass(model, self.accepted_item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
@@ -482,7 +482,7 @@ class ItemViewer(Viewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
+            model_names = [model.__name__ for model in item_type_name_dict.itervalues() if issubclass(model, self.accepted_item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
             model_names.sort()
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
@@ -571,7 +571,7 @@ class ItemViewer(Viewer):
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
+        model_names = [model.__name__ for model in item_type_name_dict.itervalues() if issubclass(model, self.accepted_item_type) and self.cur_agent_can_global('create %s' % model.__name__)]
         model_names.sort()
         self.context['model_names'] = model_names
         self.context['action_is_entry_copy'] = True
@@ -1212,7 +1212,7 @@ class TextCommentViewer(TextDocumentViewer):
         can_comment_on = self.cur_agent_can('comment_on', item)
         if not can_comment_on:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to comment on this item")
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
+        model_names = [model.__name__ for model in item_type_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
         form_class = NewTextCommentForm
@@ -1246,7 +1246,7 @@ class TextCommentViewer(TextDocumentViewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
+            model_names = [model.__name__ for model in item_type_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
             model_names.sort()
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
@@ -1270,7 +1270,7 @@ class TransclusionViewer(ItemViewer):
         can_add_transclusion = self.cur_agent_can('add_transclusion', from_item)
         if not can_add_transclusion:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add transclusions to this item")
-        model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
+        model_names = [model.__name__ for model in item_type_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
         model_names.sort()
         form_initial = dict(self.request.GET.items())
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
@@ -1295,7 +1295,7 @@ class TransclusionViewer(ItemViewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            model_names = [model.__name__ for model in resource_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
+            model_names = [model.__name__ for model in item_type_name_dict.itervalues() if issubclass(model, self.accepted_item_type)]
             model_names.sort()
             template = loader.get_template('item/new.html')
             self.context['model_names'] = model_names
