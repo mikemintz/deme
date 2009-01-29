@@ -374,3 +374,66 @@ div.comment_body {
     background: #009;
     color: #fff;
 }
+
+.regular_css p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.regular_css ul {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  padding-left: 1em;
+  list-style-type: disc;
+  list-style-position: outside;
+}
+
+.regular_css li {
+  list-style-type: disc;
+  list-style-position: outside;
+}
+
+.regular_css h1 {
+  font-weight: bold;
+  font-size: 160%;
+  border-bottom: thick solid #000;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.regular_css h2 {
+  font-weight: bold;
+  font-size: 150%;
+  border-bottom: thin solid #000;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.regular_css h3 {
+  font-weight: bold;
+  font-size: 140%;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.regular_css h4 {
+  font-weight: bold;
+  font-size: 130%;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.regular_css h5 {
+  font-weight: bold;
+  font-size: 120%;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.regular_css h2 {
+  font-weight: bold;
+  font-size: 110%;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+

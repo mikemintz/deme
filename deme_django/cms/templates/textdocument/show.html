@@ -230,7 +230,9 @@ When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); 
 
 <div><a href="#" onclick="$$('.commentref').each(function(e){e.toggle()}); return false;">Toggle Inline Comments</a></div>
 
+<div class="regular_css">
 <div id="docbody" style="padding: 10px;">{% display_body_with_inline_transclusions item is_html %}</div>
+</div>
 {% else %}
 [PERMISSION DENIED]
 {% endifagentcan %}
