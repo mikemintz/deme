@@ -66,11 +66,10 @@ Interface
 * There should be a full interface for specifying CommentLocations
 * Interface to add ContactMethods, Subscriptions, and AuthenticationMethods to Agents
 * We should show the default item_type abilities in the permissions action (with a disclaimer about how they can change)
-* We should probably add back all the margins on <p> and stuff
+* We should probably add back all the margins on <p> and stuff (look at the CSS I modified on deme.stanford.edu for a start)
 
 Documentation
 -------------
-* Update the architecture doc
 * Document more functions with docstrings more
 * Make some sort of API doc
 * Make the README better (it points to docs/ directory, but users don't know how to compile docs)
