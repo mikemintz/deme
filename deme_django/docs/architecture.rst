@@ -58,28 +58,146 @@ Not every bit of persistent data is stored in the database in item fields. Here 
 
 Core item types
 ^^^^^^^^^^^^^^^
-TODO: keep revising documentation starting here.
 Below are the core item types and the role they play (see the full ontology at http://deme.stanford.edu/item/codegraph).
 
-* **Item:** Everything is an item. It gives us a completely unique id across all items, and defines some fields common to all items, such as updated_at and description. I'm not sure if description is a good idea though... I'm troubled by the fact that we must come up with a description for every GroupMembership. TODO explain new name/description idea
-* **Agent:** An Agent is an Item that can "do" things. This is important for authentication (only agents can log in), and permissions (agents are the entities we assign permissions to). Also, if there is an author pointer for an item, it should point to an agent. Not all agents are people: agents could be bots or groups too. An example of using a group as an agent is when you want to act on behalf of an organization. For example, imagine we have a group called Alaska Democratic Party. It might create a document called "Party Platform", and it would be desirable to show that the document was authored by Alaska Democratic Party, rather than some random guy who wrote the prose. Also, we might want to use permissions to give this group the ability to cast one vote in the national convention. Later on, when we work more on authentication, we will give particular persons the ability to authenticate on behalf of the group and do these sorts of actions.
-* **Account:** An Account is an Item that represents some credentials to login. For example, there might be an account representing my Facebook login, an account representing my WebAuth login, and an account representing Todd's OpenID login. Every Account points to the Agent it belongs to. Rather than storing the login credentials in a particular Agent, we allow agents to have multiple accounts, so that they can login different ways. Accounts can also be used to sync profile information through APIs. There will be subclasses of Account for each different way of logging in (WebAuthAccount, FacebookAccount, etc.)
-* **AnonymousAccount:** An AnonymousAccount is an Account that is used whenever someone has not authenticated yet. There should be exactly one AnonymousAccount, which corresponds to a single anonymous agent. Thus, whenever someone is not logged in, they are effectively this one anonymous agent. Thus, everywhere in Deme, the website visitor is always represented by an Agent, whether it is the actual person or just the anonymous agent.
-* **Person:** A Person is an Agent that has fields like first name, last name, email address, etc. Depending on how we sync with other profiles, we might want to extract a lot of this to a new Profile class.
-* **Collection:** A Collection is an Item that represents a set of other items. Collections just use pointers to represent their contents, so multiple Collections can point to the same contained items. Since fields cannot store arrays, Collection contents are represented by ItemToCollectionRelationships.
-* **Folio:** A Folio is a Collection that belongs to a Group.
-* **Group:** A Group is an Agent that has a folio and a list of member Agents (through the GroupMemebership item type).
-* **Document:** A Document is an Item that is meant to be a collaborative work. It is abstract in practice (you should always use a subcl
-* **TextDocument:** A TextDocument is a Document that has a text field (that stores any unicode or ascii text right now).
-* **FileDocument:** A FileDocument is a Document that stores a file on the filesystem (could be an MP3 or a Microsoft Word Document).
-* **Comment:** A Comment is a TextDocument that represents discussion about a particular version of a particular item. A reply to a comment is represented by another comment commenting on the original comment.
-* **HtmlDocument:** An HtmlDocument is a TextDocument that renders the text field as HTML.
-* **DjangoTemplateDocument:** A DjangoTemplateDocument is a TextDocument that stores Django template code that can display a fully customized page on Deme. Use this for static content, although it can be dynamic since it's a Django template.
-* **Relationship:** A Relationship is an Item that represents a relationship between two Items. It has a pointer to the first item and a pointer to the second item (although we're still deciding on where these pointers will be stored).
-* **GroupMemebership:** A GroupMemebership is a Relationship between an Agent and a Group representing the agent's membership in the group.
-* **CollectionMembership:** A CollectionMembership is a Relationship between an Item and the Collection representing the face that the Collection contains the Item.
+* **Item:** Item is item type that everything inherits from. It gives us a completely unique id across all items. It defines two user-editable fields (``name`` and ``description``) and six automatically generated fields (``id``, ``version_number``, ``item_type``, ``creator``, ``created_at``, and ``trashed``).
 
-There are also item types defined for permissions and URL aliasing described in the next two sections (they are still full item types, but they require much more explanation).
+  * The ``name`` field is the friendly name to refer to the specific item: the title of a document or the preferred name of a person, and is the kind of name that would appear as the <title> of a webpage or the text of a link to that item. Currently, the name field cannot be blank (so that the viewer always has some text to display), but we are considering making it blank for items that don't need names (like Memberships) and having the viewer deal with possibly blank names.
+  * The ``description`` field is a string field for metadata, that can be used for any purpose.
+  * The ``id`` field is an automatically incrementing integer that gives a globally unique identifier for every item.
+  * The ``version_number`` field is the latest version number.
+  * The ``item_type`` field is the name of the actual item type at the lowest level in the inheritance graph.
+  * The ``creator`` field is a pointer to the Agent that created the item.
+  * The ``created_at`` field is the date and time the item was created.
+  * The ``trashed`` field is true or false, depending on whether the item is trashed or not.
+
+Agents and related item types
+
+* **Agent:** This item type represents an agent that can "do" things. Often this will be a person (see the Person subclass), but actions can also be performed by other agents, such as bots and anonymous agents. Agents are unique in the following ways:
+    
+  * Agents can be assigned permissions
+  * Agents show up in the creator and updater fields of other items
+  * Agents can authenticate with Deme using AuthenticationMethods
+  * Agents can be contacted via their ContactMethods
+  * Agents can subscribe to other items with Subscriptions
+
+  There is only one field defined by this item type, ``last_online_at``, which stores the date and time when the agent last accessed a viewer.
+
+* **AnonymousAgent**: This item type is the agent that users of Deme authenticate as by default. Because every action must be associated with a responsible Agent (e.g., updating an item), we require that users are authenticated as some Agent at all times. So if a user never bothers logging in at the website, they will automatically be logged in as an AnonymousAgent, even if the website says "not logged in". There should be exactly one AnonymousAgent at all times.
+
+  This item type does not define any new fields.
+
+* **AuthenticationMethod**: This item type represents an Agent's credentials to login. For example, there might be a AuthenticationMethod representing my Facebook account, a AuthenticationMethod representing my WebAuth account, and a AuthenticationMethod representing my OpenID account. Rather than storing the login credentials directly in a particular Agent, we allow agents to have multiple authentication methods, so that they can login different ways. In theory, AuthenticationMethods can also be used to sync profile information through APIs. There are subclasses of AuthenticationMethod for each different way of authenticating.
+
+  This item type defines one field, an ``agent`` pointer that points to the agent that is holds this authentication method.
+
+* **PasswordAuthenticationMethod**: This is an AuthenticationMethod that allows a user to log on with a username and a password. The username must be unique across the entire Deme installation. The password field is formatted the same as in the User model of the Django admin app (algo$salt$hash), and is thus not stored in plain text.
+
+  This item type defines four fields: ``username``, ``password``, ``password_question``, and ``password_answer`` (the last two can be used to reset the password and send it to the Agent via one of its ContactMethods).
+
+* **Person**: A Person is an Agent that represents a person in real life. It defines four user-editable fields about the person's name: ``first_name``, ``middle_names``, ``last_name``, and ``suffix``.
+ 
+* **ContactMethod**: A ContactMethod belongs to an Agent and contains details on how to contact them. ContactMethod is meant to be abstract, so developers should always create subclasses rather than creating raw ContactMethods.
+
+  This item type defines one field, an ``agent`` pointer that points to the agent that is holds this contact method.
+
+  Currently, the following concrete subclasses of ContactMethod are defined (with the fields in parentheses):
+
+  * ``EmailContactMethod(email)``
+  * ``PhoneContactMethod(phone)``
+  * ``FaxContactMethod(fax)``
+  * ``WebsiteContactMethod(url)``
+  * ``AIMContactMethod(screen_name)``
+  * ``AddressContactMethod(street1, street2, city, state, country, zip)``
+
+* **Subscription**: A Subscription is a relationship between an Item and a ContactMethod, indicating that all comments on the item should be sent to the contact method as notifications. This item type defines the following fields:
+
+  * The ``contact_method`` field is a pointer to the ContactMethod that is subscribed with this Subscription.
+  * The ``item`` field is a pointer to the Item that is subscribed to with this Subscription.
+  * The ``deep`` field is a boolean, such that when deep=true and the item is a Collection, all comments on all items in the collection (direct or indirect) will be sent in addition to comments on the collection itself.
+  * The ``notify_text`` field is a boolean that signifies that TextComments are included in the subscription.
+  * The ``notify_edit`` field is a boolean that signifies that EditComments, TrashComments, UntrashComments, AddMemberComments, and RemoveMemberComments are included in the subscription.
+
+Collections and related item types
+
+* **Collection**: A Collection is an Item that represents an unordered set of other items. Collections just use pointers from Memberships to represent their contents, so multiple Collections can point to the same contained items. Since Collections are just pointed to, they do not define any new fields.
+
+  Collections "directly" contain items via Memberships, but they also "indirectly" contain items via chained Memberships. If Collection 1 directly contains Collection 2 which directly contains Item 3, then Collection 1 indirectly contains Item 3, even though there may be no explicit Membership item specifying the indirect relationship between Collection 1 and Item 3. (In the actual implementation, a special database table called RecursiveMembership is used to store all indirect membership tuples, but it does not inherit from Item.)
+
+  It is possible for there to be circular memberships. Collection 1 might contain Collection 2 and Collection 2 might contain Collection 1. This will not cause any errors: it simply means that Collection 1 indirectly contains itself. It is even possible that Collection 1 *directly* contains itself via a Membership to itself.
+
+* **Group**: A group is a collection of Agents. A group has a folio that is used for collaboration among members. THis item type does not define any new fields, since it just inherits from Collection and is pointed to by Folio.
+
+* **Folio**: A folio is a special collection that belongs to a group. It has one field, the ``group`` pointer, which must be unique (no two folios can share a group).
+
+* **Membership**: A Membership is a relationship between a collection and one of its items. It defines two fields, an ``item`` pointer and a ``collection`` pointer.
+
+Documents
+
+* **Document**: A Document is an Item that is meant can be a unit of collaborative work. Document is meant to be abstract, so developers should always create subclasses rather than creating raw Documents. This item type does not define any fields.
+
+* **TextDocument**: A TextDocument is a Document that has a body that stores arbitrary text. This item type defines one field, ``body``, which is a free-form text field.
+
+* **DjangoTemplateDocument**: This item type is a TextDocument that stores Django template code. It can display a fully customized page on Deme. This is primarily useful for customizing the layout of some or all pages, but it can also be used to make pages that can display content not possible in other Documents. This item type defines two new fields:
+
+  * The ``layout`` field a pointer to another DjangoTemplateDocument that specifies the layout this template should be rendered in (i.e., this template inherits from the layout template in the Django templating system). This field can be null.
+  * The ``override_default_layout`` field is a boolean specifying the behavior when the ``layout`` field is null. If this field is true and ``layout`` is null, this template will be rendered without inheriting from any other. If this field is false and ``layout`` is null, then this field will inherit from the default layout (which is defined by the current Site).
+
+* **HtmlDocument**: An HtmlDocument is a TextDocument that renders its body as HTML. It uses the same ``body`` field as TextDocument, so it does not define any new fields.
+
+* **FileDocument**: A FileDocument is a Document that stores a file on the filesystem (could be an MP3 or a Microsoft Word Document). It is intended for all binary data, which does not belong in a TextDocument (even though it is technically possible). Subclasses of FileDocument may be able to understand various file formats and add metadata and extra functionality. This item type defines one new field, ``datafile``, which represents the path on the server's filesystem to the actual file.
+
+* **ImageDocument**: An ImageDocument is a FileDocument that stores an image. Right now, the only difference is that viewers know the file can be displayed as an image. Currently it does not define any new fields, but in the future, it may add metadata like EXIF data and thumbnails.
+
+Annotations (Transclusions, Comments, and Excerpts)
+
+* **Transclusion**: A Transclusion is an embedded reference from a location in a specific version of a TextDocument to another Item. This item type defines the following fields:
+
+  * The ``from_item`` field is a pointer to the TextDocument that is transcluding the other item.
+  * The ``from_item_version_number`` field is the version number of the TextDocument in which this Transclusion occurs.
+  * The ``from_item_index`` field is a character offset into the body of the TextDocument where the transclusion occurs.
+  * The ``to_item`` field is a pointer to the Item that is referenced by this Transclusion.
+
+* **Comment**: A Comment is a unit of discussion about an Item. Each comment specifies the commented item and version number (in the ``item`` and ``item_version_number`` fields). Comment is meant to be abstract, so developers should always create subclasses rather than creating raw Comments. Currently, users can only create TextComments. All other Comment types are automatically generated by Deme in response to certain actions (such as edits and trashings).
+
+  If somebody creates Item 1, someone creates Comment 2 about Item 2, and someone responds to Comment 2 with Comment 3, then one would say that Comment 3 is a *direct* comment on Comment 2, and Comment 3 is an *indirect* comment on Item 1. The Comment item type only stores information about direct comments, but behind the scenes, the RecursiveComment table (which does not inherit from Item) keeps track of all of the indirect commenting so that viewers can efficiently render entire threads.
+
+* **TextComment**: A TextComment is a Comment and a TextDocument combined. It is currently the only form of user-generated comments. It defines no new fields.
+
+* **EditComment**: An EditComment is a Comment that is automatically generated whenever an agent edits an item. The commented item is the item that was edited, and the commented item version number is the new version that was just generated (as opposed to the previous version number). It defines no new fields.
+
+* **TrashComment**: A TrashComment is a Comment that is automatically generated whenever an agent trashes an item. The commented item is the item that was trashed, and the commented item version number is the latest version number at the time of the trashing. It defines no new fields.
+
+* **UntrashComment**: An UntrashComment is a Comment that is automatically generated whenever an agent untrashes an item. The commented item is the item that was trashed, and the commented item version number is the latest version number at the time of the untrashing. It defines no new fields.
+
+* **AddMemberComment**: An AddMemberComment is a Comment that is automatically generated whenever an item is added to a collection (via a creation or untrashing of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the add. The ``membership`` field points to the new Membership.
+
+* **RemoveMemberComment**: A RemoveMemberComment is a Comment that is automatically generated whenever an item is removed from a collection (via a trashing of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the remove. The membership field points to the old Membership.
+
+* **Excerpt**: An Excerpt is an Item that refers to a portion of another Item (or an external resource, such as a webpage). Excerpt is meant to be abstract, so developers should always create subclasses rather than creating raw Excerpts.
+
+* **TextDocumentExcerpt**: A TextDocumentExcerpt refers to a contiguous region of text in a version of another TextDocument in Deme. The body field contains the excerpted region, and the following fields are introduced:
+ 
+  * The ``text_document`` field is a pointer to the TextDocument being excerpted.
+  * The ``text_document_version_number`` field is the version number of the TextDocument being excerpted.
+  * The ``start_index`` field identifies the character position of the beginning of the region.
+  * The ``length`` field identifies the length in characters of the region.
+
+Viewer aliases
+
+In order to allow vanity URLs (i.e., things other than ``/item/item/5``), we have a system of hierarchical URLs. In the future, we'll need to make sure URL aliases cannot start with /item/ (our base URL for viewers), /static/ (our base URL for static content like stylesheets), or /meta/ (our base URL for Deme framework things like authentication). Right now, if someone makes a vanity URL with one of those prefixes, you just cannot reach it (it does not shadow the important URLs).
+
+TODO continue here
+
+* **ViewerRequest:** A ViewerRequest is an Item that represents a particular action at a particular viewer (basically a URL, although its stored more explicitly). It specifies a viewer (just a string, since viewers are not Items), an action (like "view" or "edit"), an item that is referred to (or null for the entire collection), and a query_string if you want to pass parameters to the viewer.
+* **Site:** A Site is a ViewerRequest that represents a logical website with URLs. A Site can have multiple SiteDomains, but ordinarily it would just have one (multiple domains are useful if you want to enable www.example.com and example.com). Multiple Sites on the same Deme installation share the same Items with the same unique ids, but they resolve URLs differently so each Site can have a different page for /mike. If you go to the base URL of a site (like http://example.com/), you see the ViewerRequest that this Site inherits from.
+* **SiteDomain:** A SiteDomain is an Item that represents a hostname for a Site.
+* **CustomUrl:** An CustomUrl is a ViewerRequest that represents a specific path. Each CustomUrl has a parent ViewerRequest (it will be the Site if this CustomUrl is the first path component) and a string for the path component. So when a user visits http://example.com/mike/is/great, Deme looks for an CustomUrl with name "great" with a parent with name "is" with a parent with name "mike" with a parent Site with a SiteDomain "example.com".
+
+Misc item types
+
+* **DemeSetting**: This item type stores global settings for the Deme installation. Each DemeSetting has a unique ``key`` field and an arbitrary ``value`` field. Since values are strings of limited size, settings that involve a lot of text (e.g., a default layout) should have a value pointing to an item that contains the data (e.g., the id of a document).
+
 
 Permissions
 ^^^^^^^^^^^
@@ -95,15 +213,6 @@ Abilities between an Agent and an Item (or "nothing" for global abilities) are d
 # Look at all of the AgentItemRoleRelationships that hold between this Agent and this Item. If any of them have ability X granted, then grant ability X. If none of them have ability X granted, and any of them have ability X denied, then deny ability X. Otherwise, continue at the next step.
 # Look at all of the GroupItemRoleRelationships that hold between any of this Agent's groups and this Item. If any of them have ability X granted, then grant ability X. If none of them have ability X granted, and any of them have ability X denied, then deny ability X. Otherwise, continue at the next step.
 # Look at all of the AgentItemRoleRelationships that hold between agent=null and this Item (this represents everyone permissions for this Item). If any of them have ability X granted, then grant ability X. If none of them have ability X granted, and any of them have ability X denied, then deny ability X. Otherwise, deny ability X.
-
-URL Aliases
-^^^^^^^^^^^
-In order to allow vanity URLs (i.e., things other than /item/item/5), we have a system of hierarchical URLs. In the future, we'll need to make sure URL aliases cannot start with /item/ (our base URL for viewers), /static/ (our base URL for static content like stylesheets), or /meta/ (our base URL for Deme framework things like authentication). Right now, if someone makes a URL with one of those prefixes, you just cannot reach it (it does not shadow the important URLs).
-
-* **ViewerRequest:** A ViewerRequest is an Item that represents a particular action at a particular viewer (basically a URL, although its stored more explicitly). It specifies a viewer (just a string, since viewers are not Items), an action (like "view" or "edit"), an item that is referred to (or null for the entire collection), and a query_string if you want to pass parameters to the viewer.
-* **Site:** A Site is a ViewerRequest that represents a logical website with URLs. A Site can have multiple SiteDomains, but ordinarily it would just have one (multiple domains are useful if you want to enable www.example.com and example.com). Multiple Sites on the same Deme installation share the same Items with the same unique ids, but they resolve URLs differently so each Site can have a different page for /mike. If you go to the base URL of a site (like http://example.com/), you see the ViewerRequest that this Site inherits from.
-* **SiteDomain:** A SiteDomain is an Item that represents a hostname for a Site.
-* **CustomUrl:** An CustomUrl is a ViewerRequest that represents a specific path. Each CustomUrl has a parent ViewerRequest (it will be the Site if this CustomUrl is the first path component) and a string for the path component. So when a user visits http://example.com/mike/is/great, Deme looks for an CustomUrl with name "great" with a parent with name "is" with a parent with name "mike" with a parent Site with a SiteDomain "example.com".
 
 Front-end (viewers)
 -------------------

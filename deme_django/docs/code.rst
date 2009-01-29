@@ -10,7 +10,7 @@ Item Types (cms.models)
    :members:
 
 Item Viewers (cms.views)
------------------------
+------------------------
 .. automodule:: cms.views
    :members:
 
