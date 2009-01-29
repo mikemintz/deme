@@ -41,7 +41,7 @@ AgentGlobalPermission(ability='do_everything', is_allowed=True, agent=admin).sav
 anonymous_agent = AnonymousAgent(name='Anonymous')
 anonymous_agent.save_versioned(updater=admin)
 
-default_site = Site(name="Default Site", viewer='item', action='list', aliased_item=None, query_string='')
+default_site = Site(name="Default Site", viewer='item', action='list', aliased_item=None, query_string='', hostname="localhost")
 default_site.save_versioned(updater=admin)
 DemeSetting.set('cms.default_site', default_site.pk, agent=admin)
 
