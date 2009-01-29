@@ -137,7 +137,7 @@ def calculate_global_abilities_for_agent(agent):
       1. The agent was directly assigned a permission that contains
          this ability with is_allowed=True.
       2. All of the following holds:
-         a. An Collection that the agent is in (directly or indirectly) was
+         a. A Collection that the agent is in (directly or indirectly) was
             assigned a permission that contains this ability with
             is_allowed=True.
          b. The agent was NOT directly assigned a permission that
@@ -237,7 +237,7 @@ def calculate_abilities_for_agent_and_item(agent, item, item_type):
       1. The agent was directly assigned a permission that contains
          this ability with is_allowed=True.
       2. All of the following holds:
-         a. An Collection that the agent is in (directly or indirectly) was
+         a. A Collection that the agent is in (directly or indirectly) was
             assigned a permission that contains this ability with
             is_allowed=True.
          b. The agent was NOT directly assigned a permission that

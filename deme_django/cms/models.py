@@ -1333,14 +1333,14 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
 
 class ViewerRequest(Item):
     """
-    A ViewerRequest is represents a particular action at a particular viewer
+    A ViewerRequest represents a particular action at a particular viewer
     (basically a URL, although its stored more explicitly). It specifies a
     viewer (just a string, since viewers are not Items), an action (like "view"
     or "edit"), an item that is referred to (or null for collection-wide
     actions), a query_string if you want to pass parameters to the viewer, and
     a format.
     
-    A ViewerRequest is supposed to be abstract, so developers can only create
+    A ViewerRequest is supposed to be abstract, so users can only create
     Sites and CustomUrls.
     """
 

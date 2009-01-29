@@ -83,21 +83,21 @@ Agents and related item types
 
   There is only one field defined by this item type, ``last_online_at``, which stores the date and time when the agent last accessed a viewer.
 
-* **AnonymousAgent**: This item type is the agent that users of Deme authenticate as by default. Because every action must be associated with a responsible Agent (e.g., updating an item), we require that users are authenticated as some Agent at all times. So if a user never bothers logging in at the website, they will automatically be logged in as an AnonymousAgent, even if the website says "not logged in". There should be exactly one AnonymousAgent at all times.
+* **AnonymousAgent:** This item type is the agent that users of Deme authenticate as by default. Because every action must be associated with a responsible Agent (e.g., updating an item), we require that users are authenticated as some Agent at all times. So if a user never bothers logging in at the website, they will automatically be logged in as an AnonymousAgent, even if the website says "not logged in". There should be exactly one AnonymousAgent at all times.
 
   This item type does not define any new fields.
 
-* **AuthenticationMethod**: This item type represents an Agent's credentials to login. For example, there might be a AuthenticationMethod representing my Facebook account, a AuthenticationMethod representing my WebAuth account, and a AuthenticationMethod representing my OpenID account. Rather than storing the login credentials directly in a particular Agent, we allow agents to have multiple authentication methods, so that they can login different ways. In theory, AuthenticationMethods can also be used to sync profile information through APIs. There are subclasses of AuthenticationMethod for each different way of authenticating.
+* **AuthenticationMethod:** This item type represents an Agent's credentials to login. For example, there might be a AuthenticationMethod representing my Facebook account, a AuthenticationMethod representing my WebAuth account, and a AuthenticationMethod representing my OpenID account. Rather than storing the login credentials directly in a particular Agent, we allow agents to have multiple authentication methods, so that they can login different ways. In theory, AuthenticationMethods can also be used to sync profile information through APIs. There are subclasses of AuthenticationMethod for each different way of authenticating.
 
   This item type defines one field, an ``agent`` pointer that points to the agent that is holds this authentication method.
 
-* **PasswordAuthenticationMethod**: This is an AuthenticationMethod that allows a user to log on with a username and a password. The username must be unique across the entire Deme installation. The password field is formatted the same as in the User model of the Django admin app (algo$salt$hash), and is thus not stored in plain text.
+* **PasswordAuthenticationMethod:** This is an AuthenticationMethod that allows a user to log on with a username and a password. The username must be unique across the entire Deme installation. The password field is formatted the same as in the User model of the Django admin app (algo$salt$hash), and is thus not stored in plain text.
 
   This item type defines four fields: ``username``, ``password``, ``password_question``, and ``password_answer`` (the last two can be used to reset the password and send it to the Agent via one of its ContactMethods).
 
-* **Person**: A Person is an Agent that represents a person in real life. It defines four user-editable fields about the person's name: ``first_name``, ``middle_names``, ``last_name``, and ``suffix``.
+* **Person:** A Person is an Agent that represents a person in real life. It defines four user-editable fields about the person's name: ``first_name``, ``middle_names``, ``last_name``, and ``suffix``.
  
-* **ContactMethod**: A ContactMethod belongs to an Agent and contains details on how to contact them. ContactMethod is meant to be abstract, so developers should always create subclasses rather than creating raw ContactMethods.
+* **ContactMethod:** A ContactMethod belongs to an Agent and contains details on how to contact them. ContactMethod is meant to be abstract, so developers should always create subclasses rather than creating raw ContactMethods.
 
   This item type defines one field, an ``agent`` pointer that points to the agent that is holds this contact method.
 
@@ -110,7 +110,7 @@ Agents and related item types
   * ``AIMContactMethod(screen_name)``
   * ``AddressContactMethod(street1, street2, city, state, country, zip)``
 
-* **Subscription**: A Subscription is a relationship between an Item and a ContactMethod, indicating that all comments on the item should be sent to the contact method as notifications. This item type defines the following fields:
+* **Subscription:** A Subscription is a relationship between an Item and a ContactMethod, indicating that all comments on the item should be sent to the contact method as notifications. This item type defines the following fields:
 
   * The ``contact_method`` field is a pointer to the ContactMethod that is subscribed with this Subscription.
   * The ``item`` field is a pointer to the Item that is subscribed to with this Subscription.
@@ -120,63 +120,63 @@ Agents and related item types
 
 Collections and related item types
 
-* **Collection**: A Collection is an Item that represents an unordered set of other items. Collections just use pointers from Memberships to represent their contents, so multiple Collections can point to the same contained items. Since Collections are just pointed to, they do not define any new fields.
+* **Collection:** A Collection is an Item that represents an unordered set of other items. Collections just use pointers from Memberships to represent their contents, so multiple Collections can point to the same contained items. Since Collections are just pointed to, they do not define any new fields.
 
   Collections "directly" contain items via Memberships, but they also "indirectly" contain items via chained Memberships. If Collection 1 directly contains Collection 2 which directly contains Item 3, then Collection 1 indirectly contains Item 3, even though there may be no explicit Membership item specifying the indirect relationship between Collection 1 and Item 3. (In the actual implementation, a special database table called RecursiveMembership is used to store all indirect membership tuples, but it does not inherit from Item.)
 
   It is possible for there to be circular memberships. Collection 1 might contain Collection 2 and Collection 2 might contain Collection 1. This will not cause any errors: it simply means that Collection 1 indirectly contains itself. It is even possible that Collection 1 *directly* contains itself via a Membership to itself.
 
-* **Group**: A group is a collection of Agents. A group has a folio that is used for collaboration among members. THis item type does not define any new fields, since it just inherits from Collection and is pointed to by Folio.
+* **Group:** A group is a collection of Agents. A group has a folio that is used for collaboration among members. THis item type does not define any new fields, since it just inherits from Collection and is pointed to by Folio.
 
-* **Folio**: A folio is a special collection that belongs to a group. It has one field, the ``group`` pointer, which must be unique (no two folios can share a group).
+* **Folio:** A folio is a special collection that belongs to a group. It has one field, the ``group`` pointer, which must be unique (no two folios can share a group).
 
-* **Membership**: A Membership is a relationship between a collection and one of its items. It defines two fields, an ``item`` pointer and a ``collection`` pointer.
+* **Membership:** A Membership is a relationship between a collection and one of its items. It defines two fields, an ``item`` pointer and a ``collection`` pointer.
 
 Documents
 
-* **Document**: A Document is an Item that is meant can be a unit of collaborative work. Document is meant to be abstract, so developers should always create subclasses rather than creating raw Documents. This item type does not define any fields.
+* **Document:** A Document is an Item that is meant can be a unit of collaborative work. Document is meant to be abstract, so developers should always create subclasses rather than creating raw Documents. This item type does not define any fields.
 
-* **TextDocument**: A TextDocument is a Document that has a body that stores arbitrary text. This item type defines one field, ``body``, which is a free-form text field.
+* **TextDocument:** A TextDocument is a Document that has a body that stores arbitrary text. This item type defines one field, ``body``, which is a free-form text field.
 
-* **DjangoTemplateDocument**: This item type is a TextDocument that stores Django template code. It can display a fully customized page on Deme. This is primarily useful for customizing the layout of some or all pages, but it can also be used to make pages that can display content not possible in other Documents. This item type defines two new fields:
+* **DjangoTemplateDocument:** This item type is a TextDocument that stores Django template code. It can display a fully customized page on Deme. This is primarily useful for customizing the layout of some or all pages, but it can also be used to make pages that can display content not possible in other Documents. This item type defines two new fields:
 
   * The ``layout`` field a pointer to another DjangoTemplateDocument that specifies the layout this template should be rendered in (i.e., this template inherits from the layout template in the Django templating system). This field can be null.
   * The ``override_default_layout`` field is a boolean specifying the behavior when the ``layout`` field is null. If this field is true and ``layout`` is null, this template will be rendered without inheriting from any other. If this field is false and ``layout`` is null, then this field will inherit from the default layout (which is defined by the current Site).
 
-* **HtmlDocument**: An HtmlDocument is a TextDocument that renders its body as HTML. It uses the same ``body`` field as TextDocument, so it does not define any new fields.
+* **HtmlDocument:** An HtmlDocument is a TextDocument that renders its body as HTML. It uses the same ``body`` field as TextDocument, so it does not define any new fields.
 
-* **FileDocument**: A FileDocument is a Document that stores a file on the filesystem (could be an MP3 or a Microsoft Word Document). It is intended for all binary data, which does not belong in a TextDocument (even though it is technically possible). Subclasses of FileDocument may be able to understand various file formats and add metadata and extra functionality. This item type defines one new field, ``datafile``, which represents the path on the server's filesystem to the actual file.
+* **FileDocument:** A FileDocument is a Document that stores a file on the filesystem (could be an MP3 or a Microsoft Word Document). It is intended for all binary data, which does not belong in a TextDocument (even though it is technically possible). Subclasses of FileDocument may be able to understand various file formats and add metadata and extra functionality. This item type defines one new field, ``datafile``, which represents the path on the server's filesystem to the actual file.
 
-* **ImageDocument**: An ImageDocument is a FileDocument that stores an image. Right now, the only difference is that viewers know the file can be displayed as an image. Currently it does not define any new fields, but in the future, it may add metadata like EXIF data and thumbnails.
+* **ImageDocument:** An ImageDocument is a FileDocument that stores an image. Right now, the only difference is that viewers know the file can be displayed as an image. Currently it does not define any new fields, but in the future, it may add metadata like EXIF data and thumbnails.
 
 Annotations (Transclusions, Comments, and Excerpts)
 
-* **Transclusion**: A Transclusion is an embedded reference from a location in a specific version of a TextDocument to another Item. This item type defines the following fields:
+* **Transclusion:** A Transclusion is an embedded reference from a location in a specific version of a TextDocument to another Item. This item type defines the following fields:
 
   * The ``from_item`` field is a pointer to the TextDocument that is transcluding the other item.
   * The ``from_item_version_number`` field is the version number of the TextDocument in which this Transclusion occurs.
   * The ``from_item_index`` field is a character offset into the body of the TextDocument where the transclusion occurs.
   * The ``to_item`` field is a pointer to the Item that is referenced by this Transclusion.
 
-* **Comment**: A Comment is a unit of discussion about an Item. Each comment specifies the commented item and version number (in the ``item`` and ``item_version_number`` fields). Comment is meant to be abstract, so developers should always create subclasses rather than creating raw Comments. Currently, users can only create TextComments. All other Comment types are automatically generated by Deme in response to certain actions (such as edits and trashings).
+* **Comment:** A Comment is a unit of discussion about an Item. Each comment specifies the commented item and version number (in the ``item`` and ``item_version_number`` fields). Comment is meant to be abstract, so developers should always create subclasses rather than creating raw Comments. Currently, users can only create TextComments. All other Comment types are automatically generated by Deme in response to certain actions (such as edits and trashings).
 
   If somebody creates Item 1, someone creates Comment 2 about Item 2, and someone responds to Comment 2 with Comment 3, then one would say that Comment 3 is a *direct* comment on Comment 2, and Comment 3 is an *indirect* comment on Item 1. The Comment item type only stores information about direct comments, but behind the scenes, the RecursiveComment table (which does not inherit from Item) keeps track of all of the indirect commenting so that viewers can efficiently render entire threads.
 
-* **TextComment**: A TextComment is a Comment and a TextDocument combined. It is currently the only form of user-generated comments. It defines no new fields.
+* **TextComment:** A TextComment is a Comment and a TextDocument combined. It is currently the only form of user-generated comments. It defines no new fields.
 
-* **EditComment**: An EditComment is a Comment that is automatically generated whenever an agent edits an item. The commented item is the item that was edited, and the commented item version number is the new version that was just generated (as opposed to the previous version number). It defines no new fields.
+* **EditComment:** An EditComment is a Comment that is automatically generated whenever an agent edits an item. The commented item is the item that was edited, and the commented item version number is the new version that was just generated (as opposed to the previous version number). It defines no new fields.
 
-* **TrashComment**: A TrashComment is a Comment that is automatically generated whenever an agent trashes an item. The commented item is the item that was trashed, and the commented item version number is the latest version number at the time of the trashing. It defines no new fields.
+* **TrashComment:** A TrashComment is a Comment that is automatically generated whenever an agent trashes an item. The commented item is the item that was trashed, and the commented item version number is the latest version number at the time of the trashing. It defines no new fields.
 
-* **UntrashComment**: An UntrashComment is a Comment that is automatically generated whenever an agent untrashes an item. The commented item is the item that was trashed, and the commented item version number is the latest version number at the time of the untrashing. It defines no new fields.
+* **UntrashComment:** An UntrashComment is a Comment that is automatically generated whenever an agent untrashes an item. The commented item is the item that was trashed, and the commented item version number is the latest version number at the time of the untrashing. It defines no new fields.
 
-* **AddMemberComment**: An AddMemberComment is a Comment that is automatically generated whenever an item is added to a collection (via a creation or untrashing of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the add. The ``membership`` field points to the new Membership.
+* **AddMemberComment:** An AddMemberComment is a Comment that is automatically generated whenever an item is added to a collection (via a creation or untrashing of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the add. The ``membership`` field points to the new Membership.
 
-* **RemoveMemberComment**: A RemoveMemberComment is a Comment that is automatically generated whenever an item is removed from a collection (via a trashing of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the remove. The membership field points to the old Membership.
+* **RemoveMemberComment:** A RemoveMemberComment is a Comment that is automatically generated whenever an item is removed from a collection (via a trashing of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the remove. The membership field points to the old Membership.
 
-* **Excerpt**: An Excerpt is an Item that refers to a portion of another Item (or an external resource, such as a webpage). Excerpt is meant to be abstract, so developers should always create subclasses rather than creating raw Excerpts.
+* **Excerpt:** An Excerpt is an Item that refers to a portion of another Item (or an external resource, such as a webpage). Excerpt is meant to be abstract, so developers should always create subclasses rather than creating raw Excerpts.
 
-* **TextDocumentExcerpt**: A TextDocumentExcerpt refers to a contiguous region of text in a version of another TextDocument in Deme. The body field contains the excerpted region, and the following fields are introduced:
+* **TextDocumentExcerpt:** A TextDocumentExcerpt refers to a contiguous region of text in a version of another TextDocument in Deme. The body field contains the excerpted region, and the following fields are introduced:
  
   * The ``text_document`` field is a pointer to the TextDocument being excerpted.
   * The ``text_document_version_number`` field is the version number of the TextDocument being excerpted.
@@ -187,43 +187,294 @@ Viewer aliases
 
 In order to allow vanity URLs (i.e., things other than ``/item/item/5``), we have a system of hierarchical URLs. In the future, we'll need to make sure URL aliases cannot start with /item/ (our base URL for viewers), /static/ (our base URL for static content like stylesheets), or /meta/ (our base URL for Deme framework things like authentication). Right now, if someone makes a vanity URL with one of those prefixes, you just cannot reach it (it does not shadow the important URLs).
 
-TODO continue here
+* **ViewerRequest:** A ViewerRequest represents a particular action at a particular viewer (basically a URL, although its stored more explicitly). A ViewerRequest is supposed to be abstract, so users can only create Sites and CustomUrls. It specifies the following fields
+  
+  * A ``viewer`` (just a string, since viewers are not Items)
+  * An ``action`` (like "view" or "edit")
+  * An ``item`` that is referred to (or null for item type actions like "list" and "new")
+  * A ``query_string`` if you want to pass parameters to the viewer
+  * A ``format`` (like "html" or "json", for the viewer to know what output to render)
+    
+* **Site:** A Site is a ViewerRequest that represents a logical website with URLs. Multiple Sites on the same Deme installation share the same Items with the same unique ids, but they resolve URLs differently so each Site can have a different page for /mike. If you go to the base URL of a site (like http://example.com/), you see the ViewerRequest that this Site inherits from. This item type specifies the following fields:
 
-* **ViewerRequest:** A ViewerRequest is an Item that represents a particular action at a particular viewer (basically a URL, although its stored more explicitly). It specifies a viewer (just a string, since viewers are not Items), an action (like "view" or "edit"), an item that is referred to (or null for the entire collection), and a query_string if you want to pass parameters to the viewer.
-* **Site:** A Site is a ViewerRequest that represents a logical website with URLs. A Site can have multiple SiteDomains, but ordinarily it would just have one (multiple domains are useful if you want to enable www.example.com and example.com). Multiple Sites on the same Deme installation share the same Items with the same unique ids, but they resolve URLs differently so each Site can have a different page for /mike. If you go to the base URL of a site (like http://example.com/), you see the ViewerRequest that this Site inherits from.
-* **SiteDomain:** A SiteDomain is an Item that represents a hostname for a Site.
-* **CustomUrl:** An CustomUrl is a ViewerRequest that represents a specific path. Each CustomUrl has a parent ViewerRequest (it will be the Site if this CustomUrl is the first path component) and a string for the path component. So when a user visits http://example.com/mike/is/great, Deme looks for an CustomUrl with name "great" with a parent with name "is" with a parent with name "mike" with a parent Site with a SiteDomain "example.com".
+  * The ``hostname`` field specifies the hostname of this site, so that the viewer can determine which site a visitor is currently at from the URL.
+  * The ``default_layout`` field is a pointer to a DjangoTemplateDocument. Whenever a visitor is at a URL designated for this site, the template will be rendered under this layout. If this field is null, the Deme default layout (in ``cms/templates/default_layout.html``) will be used.
+
+
+* **CustomUrl:** A CustomUrl is a ViewerRequest that represents a specific path.
+    
+  Each CustomUrl has a ``parent_url`` field pointing to the parent ViewerRequest (it will be the Site if this CustomUrl is the first path component) and a ``path`` field. So when a user visits http://example.com/abc/def, Deme looks for a CustomUrl with name "def" with a parent with name "abc" with a parent Site with hostname "example.com". In other words, we need to find something that looks like this::
+
+    CustomUrl(name="def", parent_url=CustomUrl(name="abc", parent_url=Site(hostname="example.com")))
 
 Misc item types
 
-* **DemeSetting**: This item type stores global settings for the Deme installation. Each DemeSetting has a unique ``key`` field and an arbitrary ``value`` field. Since values are strings of limited size, settings that involve a lot of text (e.g., a default layout) should have a value pointing to an item that contains the data (e.g., the id of a document).
+* **DemeSetting:** This item type stores global settings for the Deme installation. Each DemeSetting has a unique ``key`` field and an arbitrary ``value`` field. Since values are strings of limited size, settings that involve a lot of text (e.g., a default layout) should have a value pointing to an item that contains the data (e.g., the id of a document).
 
 
 Permissions
 ^^^^^^^^^^^
-Permissions define what Agents can and cannot do, both in general, and with respect to specific Items. Hard-coded into Deme will be a list of abilities (as strings), such as CanCreateGroup and CanRenameThisGroup. Using the item types described below, Deme will take the currently authenticated Agent (anonymous or not), and decide whether it has the required ability to complete the requested action. Abilities are not just checked before doing actions, but they can also be used to filter out items on database lookups. For example, if my viewer is supposed to display a list of items I am allowed to see (because I have the CanSeeItem ability), it will need to use permissions to filter out inappropriate results.
+Permissions define what actions Agents can and cannot do. Permissions are not items themselves, but they exist in the database and point to items (it used to be that permissions were items, but for simplicity and efficiency, we now keep them separate).
 
-Below are the item types relevant to permissions.
+There are two major types of permissions: item permissions and global permissions. Item permissions specify an ability and an item (such as "can edit the name of document 123") and global permissions just specify a global ability (such as "can create new documents"). Each item type defines a abilities that are relevant to it. For simplicity in the explanation below, pretend that item permissions and global permissions are just a unified permission, where the ``item`` pointer of a global permission is a special "global" value, since almost everything but the ``item`` field is identical between the two. (In the actual implementation, they are separated into different tables for code simplicity and efficiency.)
 
-* **AgentPermission:** An AgentPermission is a Relationship between an Agent and an Item, specifying a particular Role that holds between them. For example, one might create an AgentPermission between Mike and Mike's Diary with the Role "creator", which would give me all the abilities I need to manage this item. If the item field is left blank (i.e., a Relationship between Mike and nothing), then it represents a global role assignment. For example, you might create an AgentPermission between Mike and nothing with Role "site admin" to make Mike the admin of the entire Deme installation.
-* **GroupPermission:** An GroupPermission is a Relationship between a Group and an Item, specifying a particular Role that holds between the users of that group and the Item. It works the same exact way as AgentPermission, except that the abilities are not given to the Group agent, but instead to all of the agents in the Group. So if the Alaska Democratic Party is given a GroupPermission in order to vote, all of the members get that ability, but not the group as an agent. In contrast, if the Alaska Democratic Party is given an *AgentPermission*, the group gets the ability and none of the members do.
+For both global and item permissions, there are three levels: AgentPermissions, CollectionPermissions, and EveryonePermissions. Earlier levels override later levels, so if an EveryonePermission specifies that nobody can create documents, but an AgentPermission specifies that I can create documents, then the AgentPermission overrides the EveryonePermission and I am allowed to create documents.
 
-Abilities between an Agent and an Item (or "nothing" for global abilities) are decided with the following rules, executed in order:
+* **AgentPermission:** An AgentPermission has an ``agent`` pointer, and ``item`` pointer (except in AgentGlobalPermissions), an ``ability`` string, and an ``is_allowed`` boolean. An AgentPermission specifies that the agent does (or does not) have the ability with respect to the item.
+* **CollectionPermission:** A CollectionPermission has a ``collection`` pointer, and ``item`` pointer (except in CollectionGlobalPermissions), an ``ability`` string, and an ``is_allowed`` boolean. A CollectionPermission specifies that all agents in the collection do (or do not) have the ability with respect to the item.
+* **EveryonePermission:** An EveryonePermission has an ``item`` pointer (except in EveryoneGlobalPermissions), an ``ability`` string, and an ``is_allowed`` boolean. An EveryonePermission specifies that all agents have (or don't have) the ability with respect to the item.
 
-# Look at all of the AgentItemRoleRelationships that hold between this Agent and this Item. If any of them have ability X granted, then grant ability X. If none of them have ability X granted, and any of them have ability X denied, then deny ability X. Otherwise, continue at the next step.
-# Look at all of the GroupItemRoleRelationships that hold between any of this Agent's groups and this Item. If any of them have ability X granted, then grant ability X. If none of them have ability X granted, and any of them have ability X denied, then deny ability X. Otherwise, continue at the next step.
-# Look at all of the AgentItemRoleRelationships that hold between agent=null and this Item (this represents everyone permissions for this Item). If any of them have ability X granted, then grant ability X. If none of them have ability X granted, and any of them have ability X denied, then deny ability X. Otherwise, deny ability X.
+The agent has an ability if one of the following holds:
+
+#. The agent was directly assigned a permission that contains this ability with is_allowed=True.
+
+#. All of the following holds:
+
+  #. A Collection that the agent is in (directly or indirectly) was assigned a permission that contains this ability with is_allowed=True.
+  #. The agent was NOT directly assigned a permission that contains this ability with is_allowed=False.
+
+#. All of the following holds:
+
+  #. There is an everyone permission that contains this ability with is_allowed=True.
+  #. NO Collection that the agent is in (directly or indirectly) was assigned a permission that contains this ability with is_allowed=False.
+  #. The agent was NOT directly assigned a permission that contains this ability with is_allowed=False.
+
+#. All of the following holds (this step is not used for GlobalPermissions since there is no item type):
+
+  #. There is a DemeSetting set to "true" with the key "cms.default_permission.<ITEM_TYPE_NAME>.<ABILITY>" (without angle brackets around the item type name and ability).
+  #. There is NO everyone permission that contains this ability with is_allowed=False.
+  #. NO Collection that the agent is in (directly or indirectly) was assigned a permission that contains this ability with is_allowed=False.
+  #. The agent was NOT directly assigned a permission that contains this ability with is_allowed=False.
+
+Below is a list of all possible global abilities:
+
+* ``create Agent``
+* ``create Collection``
+* ``create DjangoTemplateDocument``
+* ``create FileDocument``
+* ``create Group``
+* ``create HtmlDocument``
+* ``create ImageDocument``
+* ``create Person``
+* ``create Site``
+* ``create TextDocument``
+* ``create TextDocumentExcerpt``
+* ``do_everything`` (Agents with this ability automatically have every single global ability and every item ability with respect to every item.)
+* ``do_something`` (You must have this ability to access any viewer, although you do not need this ability to authenticate.)
+
+Below is a list of item types and the item abilities they introduce:
+
+
+* Item
+
+  * ``do_everything`` (Agents this ability with respect to an item automatically have every item ability for that item.)
+  * ``comment_on`` (With this ability you can create comments *directly* on the item. There is no way to restrict agents from leaving *indirect* comments on an item, apart from ensuring that they don't have the ability to comment on any of the item's existing comments.)
+  * ``trash`` (With this ability you can trash and untrash the item.)
+  * ``view name``
+  * ``view description``
+  * ``view creator``
+  * ``view created_at``
+  * ``edit name``
+  * ``edit description``
+
+* Agent
+
+  * ``add_contact_method`` (With this ability you can create ContactMethods belonging to this Agent.)
+  * ``add_authentication_method`` (With this ability you can create AuthenticationMethods belonging to this Agent.)
+  * ``login_as`` (With this ability you can authenticate as this Agent.)
+  * ``view last_online_at``
+
+* AuthenticationMethod
+
+  * ``view agent``
+
+* PasswordAuthenticationMethod
+
+  * ``view username``
+  * ``view password``
+  * ``view password_question``
+  * ``view password_answer``
+  * ``edit username``
+  * ``edit password``
+  * ``edit password_question``
+  * ``edit password_answer``
+
+* Person
+
+  * ``view first_name``
+  * ``view middle_names``
+  * ``view last_name``
+  * ``view suffix``
+  * ``edit first_name``
+  * ``edit middle_names``
+  * ``edit last_name``
+  * ``edit suffix``
+
+* ContactMethod
+
+  * ``add_subscription`` (With this ability you can create Subscriptions belonging to this ContactMethod.)
+  * ``view agent``
+
+* EmailContactMethod
+
+  * ``view email``
+  * ``edit email``
+
+* PhoneContactMethod
+
+  * ``view phone``
+  * ``edit phone``
+
+* FaxContactMethod
+
+  * ``view fax``
+  * ``edit fax``
+
+* WebsiteContactMethod
+
+  * ``view url``
+  * ``edit url``
+
+* AIMContactMethod
+
+  * ``view screen_name``
+  * ``edit screen_name``
+
+* AddressContactMethod
+
+  * ``view street1``
+  * ``view street2``
+  * ``view city``
+  * ``view state``
+  * ``view country``
+  * ``view zip``
+  * ``edit street1``
+  * ``edit street2``
+  * ``edit city``
+  * ``edit state``
+  * ``edit country``
+  * ``edit zip``
+
+* Subscription
+
+  * ``view contact_method``
+  * ``view item``
+  * ``view deep``
+  * ``view notify_text``
+  * ``view notify_edit``
+  * ``edit deep``
+  * ``edit notify_text``
+  * ``edit notify_edit``
+
+* Collection
+
+  * ``modify_membership`` (With this ability you can add and remove Memberships pointing to this Collection.)
+  * ``add_self`` (With this ability, you can add yourself as a member of this Collection.)
+  * ``remove_self`` (With this ability, you can remove yourself as a member of this Collection.)
+
+* Folio
+
+  * ``view group``
+
+* Membership
+
+  * ``view item``
+  * ``view collection``
+
+* TextDocument
+
+  * ``view body``
+  * ``edit body``
+  * ``add_transclusion`` (With this ability, you can add a transclusion with this TextDocument as the from_item.)
+
+* DjangoTemplateDocument
+
+  * ``view layout``
+  * ``view override_default_layout``
+  * ``edit layout``
+  * ``edit override_default_layout``
+
+* FileDocument
+
+  * ``view datafile``
+  * ``edit datafile``
+
+* Transclusion
+
+  * ``view from_item``
+  * ``view from_item_version_number``
+  * ``view from_item_index``
+  * ``view to_item``
+  * ``edit from_item_index``
+
+* Comment
+
+  * ``view item``
+  * ``view item_version_number``
+
+* AddMemberComment
+
+  * ``view membership``
+
+* RemoveMemberComment
+
+  * ``view membership``
+
+* TextDocumentExcerpt
+
+  * ``view text_document``
+  * ``view text_document_version_number``
+  * ``view start_index``
+  * ``view length``
+  * ``edit text_document_version_number``
+  * ``edit start_index``
+  * ``edit length``
+
+* ViewerRequest
+
+  * ``add_sub_path`` (With this ability you can create ViewerRequests with this ViewerRequest as the parent_url.)
+  * ``view aliased_item``
+  * ``view viewer``
+  * ``view action``
+  * ``view query_string``
+  * ``view format``
+  * ``edit aliased_item``
+  * ``edit viewer``
+  * ``edit action``
+  * ``edit query_string``
+  * ``edit format``
+
+* Site
+
+  * ``view hostname``
+  * ``edit hostname``
+  * ``view default_layout``
+  * ``edit default_layout``
+
+* CustomUrl
+
+  * ``view parent_url``
+  * ``view path``
+
+* DemeSetting
+
+  * ``view key``
+  * ``view value``
+  * ``edit value``
+
+In order to implement permissions, Deme takes the currently authenticated Agent (anonymous or not), and decides whether it has the required ability to complete the requested action (or display some part of the view). Abilities are not just checked before doing actions, but they can also be used to filter out items on database lookups. For example, if my viewer is supposed to display a list of items I am allowed to see (because I have the ``view name`` ability), it will need to use permissions to filter out inappropriate results.
+
 
 Front-end (viewers)
 -------------------
 
 Overview
 ^^^^^^^^
-A viewer is Django class that processes browser or API requests. Any URL that starts with /item/ is routed to a viewer. Each viewer defines the item type it can handle, although multiple viewers could theoretically handle the same item type (you could have ItemViewer and SuperItemViewer which both handle items). There should be a default viewer for every item type, and if there is none, then the default viewer of the superclass should be used. Viewers that handle item type X always handle items that are in subclasses of X (except in the case of editing/updating, in which case they can only handle superclasses, although we still need to fix some behavior for this "downcasting" ability).
+A viewer is a Python class that processes browser or API requests. Any URL that starts with ``/item/`` is routed to a viewer (vanity URLs are also routed to viewers via ViewerRequests, but ``/static/`` URLs and invalid URLs are not). Each viewer defines the item type it can accept, and multiple viewers can accept the same item type (you could have ItemViewer and SuperItemViewer which both handle items). There should be a default viewer for every item type with the same name as the item type (in lowercase), and if there is none, then the default viewer of the superclass should be used. Viewers that handle item type X always handle items that are in subclasses of X.
 
 URLs
 ^^^^
-Our URLs are restful. Every URL defines a viewer, an action, a noun (or none for actions on the collection), a format, an optional parameters in the query string. Here are some example URLs:
+Our URLs are restful. Every URL defines a viewer, an action, a noun (or none for actions on the entire item type), a format, an optional parameters in the query string. Here are some example URLs:
 
 
 * /item/item (item viewer, default "list" action, default "html" format)
@@ -233,8 +484,9 @@ Our URLs are restful. Every URL defines a viewer, an action, a noun (or none for
 
 Actions
 ^^^^^^^
+Every viewer URL defines a set of actions it responds to. Actions are divided into two groups: those that take nouns (which are always item ids) called item actions, and those that do not take nouns called item type actions. In order to make URLs unambiguous, item ids must be numbers, and action names can only be letters (although we may later decide to allow other characters, such as underscores and dashes, or even numbers that do not appear at the beginning).
 
-Every viewer URL defines a set of actions it responds to. The basic actions that most viewers should respond to are list, show, edit, and delete (when we figure out deleting things, which we still need to discuss). Actions are divided into two groups: those that take nouns (which are always item ids) called "entry" actions, and those that do not take nouns called "collection" actions. In order to make URLs unambiguous, item ids must be numbers, and action names can only be letters (although we can decide what other characters to allow, such as underscores and dashes).
+TODO continue here
  
 An action corresponds to a single Python function. If you visit /item/item/list, Deme will call the collection_list method of the ItemViewer class. If you visit /item/person/5/show, Deme will call the entry_show method of the PersonViewer class. Actions return the HTTP response to go back to the browser. Actions can call other actions from other viewers to embed views in other views (for example, the DocumentViewer might want to embed a view from the PersonViewer to show a little profile of the author at the top).
 
