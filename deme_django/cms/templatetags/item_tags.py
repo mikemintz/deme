@@ -66,6 +66,7 @@ def icon_url(item_type, size=32):
         'error':                'apps/error',
         'checkbox':             'apps/clean',
         'new':                  'apps/easymoblog',
+        'copy':                 'apps/easymoblog',
         'history':              'apps/cal',
         'subscribe':            'apps/knewsticker',
         'relationships':        'apps/proxy',
