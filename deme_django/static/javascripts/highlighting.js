@@ -3,51 +3,49 @@ var DemeHighlighting = function(){
 
     pub.scan_for_offsets = function(docbody, body_str, is_escaped, parse_error, whitespace_regex, token_wrapper_callback, element_callback, wrap_text){
         var body_str_index = 0;
-        var remaining_body_str = body_str;
-        var increment_body_str = function(n){
-            body_str_index += n;
-            remaining_body_str = remaining_body_str.substring(n);
-        };
         //TODO better error handling when we call parse_error()
         var traverse_text = function(text, wrapper){
-            while (text.length > 0) {
+            var text_index = 0;
+            while (text_index < text.length) {
                 if (!is_escaped) {
                     //TODO we don't skip over <script> and <style> sections
-                    while (remaining_body_str.length > 0 && remaining_body_str[0] == '<') {
-                        if (remaining_body_str.substring(0, 4) == '<!--') {
-                            increment_body_str(remaining_body_str.indexOf('-->') + 3);
+                    while (body_str_index < body_str.length && body_str.substring(body_str_index, body_str_index + 1) == '<') {
+                        if (body_str.substring(body_str_index + 1, body_str_index + 4) == '!--') {
+                            body_str_index = body_str.indexOf('-->', body_str_index + 4) + 3;
                         } else {
-                            increment_body_str(remaining_body_str.indexOf('>') + 1);
+                            body_str_index = body_str.indexOf('>', body_str_index + 1) + 1;
                         }
                     }
                 }
-                var whiteSpaceBodyMatch = whitespace_regex.exec(remaining_body_str);
+                whitespace_regex.lastIndex = body_str_index;
+                var whiteSpaceBodyMatch = whitespace_regex.exec(body_str);
+                whitespace_regex.lastIndex = text_index;
                 var whiteSpaceTextMatch = whitespace_regex.exec(text);
-                var bodyStartsWithWhiteSpace = (whiteSpaceBodyMatch != null && whiteSpaceBodyMatch.index == 0);
-                var textStartsWithWhiteSpace = (whiteSpaceTextMatch != null && whiteSpaceTextMatch.index == 0);
+                var bodyStartsWithWhiteSpace = (whiteSpaceBodyMatch != null && whiteSpaceBodyMatch.index == body_str_index);
+                var textStartsWithWhiteSpace = (whiteSpaceTextMatch != null && whiteSpaceTextMatch.index == text_index);
                 if (bodyStartsWithWhiteSpace && textStartsWithWhiteSpace) {
-                    increment_body_str(whiteSpaceBodyMatch[0].length);
+                    body_str_index += whiteSpaceBodyMatch[0].length;
                     if (whiteSpaceTextMatch != null) {
                         if (wrap_text) {
-                            var whiteSpaceTextNode = document.createTextNode(text.substring(0, whiteSpaceTextMatch[0].length));
+                            var whiteSpaceTextNode = document.createTextNode(text.substring(text_index, text_index + whiteSpaceTextMatch[0].length));
                             wrapper.appendChild(whiteSpaceTextNode);
                         }
-                        text = text.substring(whiteSpaceTextMatch[0].length);
+                        text_index += whiteSpaceTextMatch[0].length;
                     }
                 } else if (bodyStartsWithWhiteSpace) {
-                    increment_body_str(whiteSpaceBodyMatch[0].length);
+                    body_str_index += whiteSpaceBodyMatch[0].length;
                 } else if (textStartsWithWhiteSpace) {
                     if (wrap_text) {
-                        var whiteSpaceTextNode = document.createTextNode(text.substring(0, whiteSpaceTextMatch[0].length));
+                        var whiteSpaceTextNode = document.createTextNode(text.substring(text_index, text_index + whiteSpaceTextMatch[0].length));
                         wrapper.appendChild(whiteSpaceTextNode);
                     }
-                    text = text.substring(whiteSpaceTextMatch[0].length);
+                    text_index += whiteSpaceTextMatch[0].length;
                 } else {
                     var token;
                     if (whiteSpaceTextMatch == null) {
-                        token = text;
+                        token = text.substring(text_index);
                     } else {
-                        token = text.substring(0, whiteSpaceTextMatch.index);
+                        token = text.substring(text_index, whiteSpaceTextMatch.index);
                     }
                     if (wrap_text) {
                         var tokenWrapper = document.createElement('span');
@@ -56,31 +54,29 @@ var DemeHighlighting = function(){
                         token_wrapper_callback(tokenWrapper, body_str_index);
                         wrapper.appendChild(tokenWrapper);
                     }
-                    var body_i = 0;
                     for (var i = 0; i < token.length; i++) {
-                        if (remaining_body_str.length <= 0) {
-                            parse_error('error @ ' + body_str_index + ': out of remaining_body_str');
+                        if (body_str_index >= body_str.length) {
+                            parse_error('error @ ' + body_str_index + ': out of body_str');
                             return false;
                         }
-                        var bodyChar = remaining_body_str.substring(body_i, body_i+1);
+                        var bodyChar = body_str.substring(body_str_index, body_str_index+1);
                         if (!is_escaped && bodyChar == '&') {
-                            var semicolonIndex = remaining_body_str.indexOf(';', body_i+1);
+                            var semicolonIndex = body_str.indexOf(';', body_str_index+1);
                             if (semicolonIndex == -1) {
                                 parse_error('error @ ' + body_str_index + ': found ampersand without semicolon');
                                 return false;
                             }
-                            body_i = semicolonIndex + 1;
+                            body_str_index = semicolonIndex + 1;
                         } else {
                             var tokenChar = token.substring(i, i+1);
                             if (bodyChar != tokenChar) {
                                 parse_error('error @ ' + body_str_index + ': bodyChar (' + bodyChar + ') != tokenChar (' + tokenChar + ')');
                                 return false;
                             }
-                            body_i += 1;
+                            body_str_index += 1;
                         }
                     }
-                    increment_body_str(body_i);
-                    text = text.substring(token.length);
+                    text_index += token.length;
                 }
             }
             return true;
@@ -108,8 +104,9 @@ var DemeHighlighting = function(){
                         // match the start tag
                         if (!is_escaped) {
                             if (node.tagName == 'IMG') {
-                                var startTagPattern = new RegExp("[.\\s]*<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "i");
-                                var startTagMatch = startTagPattern.exec(remaining_body_str);
+                                var startTagPattern = new RegExp("[.\\s]*<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "ig");
+                                startTagPattern.lastIndex = body_str_index;
+                                var startTagMatch = startTagPattern.exec(body_str);
                                 if (startTagMatch) {
                                     token_wrapper_callback(node, body_str_index - startTagMatch[0].length);
                                 }
@@ -157,7 +154,7 @@ var DemeHighlighting = function(){
         };
         var element_callback = function(node, body_str_index){
         };
-        var whitespace_regex = (is_escaped ? /\s+/ : /((&nbsp;)|(\s))+/i);
+        var whitespace_regex = (is_escaped ? /\s+/g : /((&nbsp;)|(\s))+/ig);
         return pub.scan_for_offsets(docbody_clone, body_str, is_escaped, parse_error, whitespace_regex, token_wrapper_callback, element_callback, true);
     };
 
@@ -170,7 +167,7 @@ var DemeHighlighting = function(){
                 node.deme_text_offset = body_str_index;
             }
         };
-        var whitespace_regex = (is_escaped ? /\s+/ : /((&nbsp;)|(\s))+/i);
+        var whitespace_regex = (is_escaped ? /\s+/g : /((&nbsp;)|(\s))+/ig);
         return pub.scan_for_offsets(docbody_clone, body_str, is_escaped, parse_error, whitespace_regex, token_wrapper_callback, element_callback, false);
     };
 
@@ -318,3 +315,4 @@ var DemeHighlighting = function(){
  
     return pub;
 }();
+
