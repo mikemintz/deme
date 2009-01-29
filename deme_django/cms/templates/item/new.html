@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load item_tags %}
 {% block favicon %}{{ item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item_type|icon_url:48 }}" /> {% if action_is_entry_copy %}Copy{% else %}New{% endif %} {{ item_type }}{% endblock %}
+{% block title %}<img src="{{ item_type|icon_url:48 }}" /> {% if action_is_item_copy %}Copy{% else %}New{% endif %} {{ item_type }}{% endblock %}
 {% block content %}
 
 <script type="text/javascript" src="/static/javascripts/prototype.js"></script>
@@ -16,7 +16,7 @@ tinyMCE.init({
 </script>    
 {% endif %}
 
-{% if action_is_entry_copy %}
+{% if action_is_item_copy %}
 {% collectionheader "Copy" %}
 {% else %}
 {% collectionheader "New" %}
@@ -36,7 +36,7 @@ tinyMCE.init({
                 <td>
                     <select id="id_item_type" name="item_type" onchange="window.location = this.value;">
                         {% for model_name in model_names %}
-                        {% if action_is_entry_copy %}
+                        {% if action_is_item_copy %}
                         <option value="{% url item_url viewer=model_name|lower,noun=item.pk,action="copy" %}?version={{ item.version_number }}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>
                         {% else %}
                         <option value="{% url item_type_url viewer=model_name|lower,action="new" %}"{% ifequal model_name item_type %} selected="selected"{% endifequal %}>{{ model_name }}</option>

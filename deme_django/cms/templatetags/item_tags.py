@@ -410,7 +410,7 @@ class EntryHeader(template.Node):
         return '\n'.join(result)
 
 @register.tag
-def entryheader(parser, token):
+def itemheader(parser, token):
     bits = list(token.split_contents())
     if len(bits) < 1 or len(bits) > 2:
         raise template.TemplateSyntaxError, "%r takes zero or one arguments" % bits[0]
@@ -626,7 +626,7 @@ class SubclassFieldsBox(template.Node):
 
     def render(self, context):
         viewer = context['_viewer']
-        viewer_method_name = ('entry_' if viewer.noun else 'collection_') + viewer.action
+        viewer_method_name = ('item_' if viewer.noun else 'type_') + viewer.action
         viewer_where_action_defined = type(viewer)
         while viewer_where_action_defined.__name__ != 'ItemViewer':
             parent_viewer = viewer_where_action_defined.__base__

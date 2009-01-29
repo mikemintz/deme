@@ -4,7 +4,7 @@
 {% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Relationships for {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
-{% entryheader 'Relationships' %}
+{% itemheader 'Relationships' %}
 
 <table cellspacing="0" class="list" style="margin-bottom: 15px; width: 100%;">
     <tr>

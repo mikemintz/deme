@@ -4,7 +4,7 @@
 {% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> History for {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
-{% entryheader 'History' %}
+{% itemheader 'History' %}
 
 <table cellspacing="0" class="list" style="margin-bottom: 15px; width: 100%;">
 <tr>

@@ -10,7 +10,7 @@ class SymsysAffiliateViewer(ItemViewer):
     accepted_item_type = SymsysAffiliate
     viewer_name = 'symsysaffiliate'
 
-    def entry_show(self):
+    def item_show(self):
         template = loader.get_template('symsysaffiliate/show.html')
         if self.cur_agent_can_global('do_everything'):
             recursive_filter = None
