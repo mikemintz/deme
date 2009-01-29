@@ -486,28 +486,34 @@ Actions
 ^^^^^^^
 Every viewer URL defines a set of actions it responds to. Actions are divided into two groups: those that take nouns (which are always item ids) called item actions, and those that do not take nouns called item type actions. In order to make URLs unambiguous, item ids must be numbers, and action names can only be letters (although we may later decide to allow other characters, such as underscores and dashes, or even numbers that do not appear at the beginning).
 
-TODO continue here
- 
-An action corresponds to a single Python function. If you visit /item/item/list, Deme will call the collection_list method of the ItemViewer class. If you visit /item/person/5/show, Deme will call the entry_show method of the PersonViewer class. Actions return the HTTP response to go back to the browser. Actions can call other actions from other viewers to embed views in other views (for example, the DocumentViewer might want to embed a view from the PersonViewer to show a little profile of the author at the top).
+An action corresponds to a single Python function. If you visit /item/item/list, Deme will call the type_list method of the ItemViewer class. If you visit /item/person/5/show, Deme will call the item_show method of the PersonViewer class. Actions return the HTTP response to go back to the browser. Actions can call other actions from other viewers to embed views in other views (for example, the DocumentViewer could embed a view from the PersonViewer to show a little profile of the author at the top).
 
 Nouns
 ^^^^^
-Entry actions take in a noun in the URL, which is the unique id of the item it acts upon. If viewers need more information (say I submitted a form that specified multiple people I wanted to add to a group), the data is passed in the query string (or the HTTP post data), and the data required is up to the specific viewer. The only query string parameter that is reserved right now is "version" which specifies a specific version of the item the viewer is acting on.
+Item actions take in a noun in the URL, which is the unique id of the item it acts upon. If viewers need more information (say I submitted a form that specified multiple people I wanted to add to a group), the data is passed in the query string or the HTTP post data, and the data required is up to the specific viewer. The only query string parameters that are reserved right now by convention are "version" (which specifies a specific version of the item the viewer is acting on) and "redirect" (which specifies the URL to return to after submitting the form on this page).
 
 Formats
 ^^^^^^^
-An additional parameter is passed in defining the response format, like HTML or XML. The default is HTML. Viewers ignore this now, but it's easy to act upon it. I might add something where viewers have to register which formats they respond to, so that we can display error messages when you type the wrong format rather than ignoring it. Note that the format only specifies the response format. The request format (what the browser sends to the server) is always the same: all parameters encoded in the URL or the HTTP post data. We will only be using HTTP as the transport for viewers (although we can define things that accept emails and SSH and other protocols, they just won't be called viewers).
+An additional parameter is passed in defining the response format, like HTML or XML. The default is HTML. Most viewers ignore this now, but it's easy to act upon it. We might add something where viewers have to register which formats they respond to, so that we can display error messages when you type the wrong format rather than ignoring it. Note that the format only specifies the response format. The request format (what the browser sends to the server) is always the same: all parameters encoded in the URL or the HTTP post data. We will only be using HTTP as the transport for viewers (although we can define things that accept emails and SSH and other protocols, they just won't be called viewers).
 
 Authentication
 ^^^^^^^^^^^^^^
-Whenever a visitor (or another web service or bot) is at an action of a viewer, he has an authenticated account, and through that account, is an Agent. If a visitor has not authenticated, they'll be using the AnonymousAccount, and will be the anonymous agent. We will support various ways of authenticating via the different subclasses of Account.
+Whenever a visitor (or another web service or bot) is at an action of a viewer, he has an authenticated AuthenticationMethod, and through that AuthenticationMethod, is an Agent. If a visitor has not authenticated, they'll be using AnonymousAgent. We will support various ways of authenticating via the different subclasses of AuthenticationMethod.
 
 DjangoTemplateDocuments
 ^^^^^^^^^^^^^^^^^^^^^^^
-There is a DjangoTemplateDocument viewer right now, which accepts DjangoTemplateDocuments, and when viewed with the show action, it renders the DjangoTemplateDocument as HTML (or whatever format) straight back to the browser. This allows users to add web content that is not really used by a viewer, so they can fully customize the user experience. By using DjangoTemplateDocuments and alias URLs, a webmaster can use Deme to create a completely customized site that has no sign of Deme (unless a visitor specifically types in a /item/ or /meta/ URL).
+There is a DjangoTemplateDocument viewer right now, which accepts DjangoTemplateDocuments, and when viewed with the "render" action, it renders the DjangoTemplateDocument as HTML (or whatever format) straight back to the browser. This allows users to add web content that is not really tied to a viewer, so they can fully customize the user experience. By using DjangoTemplateDocuments and vanity URLs, a webmaster can use Deme to create a completely customized site that has no sign of Deme (unless a visitor specifically types in a /item/ or /static/ URL).
+
 However, DjangoTemplateDocuments only allow the content to be customized, and not the things that a view does. For example, one cannot write a DjangoTemplateDocument to create a new record in the database, or to send out an email when visited, or more importantly, to do unauthorized things like execute UNIX commands.
 
-Layouts
-^^^^^^^
-In the future, we might have custom layouts. Let's think about that.
+Also, every HTML response from a viewer is rendered by inheriting from the default layout from the given site, so by modifying DjangoTemplateDocuments, one can change the look and feel of ordinary viewers to some extent.
 
+Modules
+-------
+
+Modules are self-contained collections of item types and viewers (and arbitrary Django code) that can be imported into any Deme project. They work just like Django apps, except by virtue of being in the ``modules/`` directory they are registered into the Deme viewer framework. All of the item types discussed in this document are part of the Deme "core" (the ``cms/`` directory). Modules cannot generally override or change functionality of existing parts of code (so you cannot add a button to a page rendered by ItemViewer). They can only add new functionality.
+
+Email integration
+-----------------
+
+As described in the section on Subscriptions, Deme will email notifications for every comment made on items that are subscribed to (in the future we will support other ContactMethods, like sending SMS notifications). The communication also goes the other way: if someone responds to a notification email (or sends an email to the address corresponding to a particular item), that will become a comment on Deme.
