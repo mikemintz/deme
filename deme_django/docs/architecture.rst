@@ -63,7 +63,7 @@ Below are the core item types and the role they play (see the full ontology at h
 * **Item:** Item is item type that everything inherits from. It gives us a completely unique id across all items. It defines two user-editable fields (``name`` and ``description``) and six automatically generated fields (``id``, ``version_number``, ``item_type``, ``creator``, ``created_at``, and ``trashed``).
 
   * The ``name`` field is the friendly name to refer to the specific item: the title of a document or the preferred name of a person, and is the kind of name that would appear as the <title> of a webpage or the text of a link to that item. Currently, the name field cannot be blank (so that the viewer always has some text to display), but we are considering making it blank for items that don't need names (like Memberships) and having the viewer deal with possibly blank names.
-  * The ``description`` field is a string field for metadata, that can be used for any purpose.
+  * The ``description`` field is a string field for metadata, which can be used for any purpose. Generally, the description is not considered part of the body of the item itself, but tells what the item is. The description for a budget document item might read, "This is the budget as drafted by the budget committee."
   * The ``id`` field is an automatically incrementing integer that gives a globally unique identifier for every item.
   * The ``version_number`` field is the latest version number.
   * The ``item_type`` field is the name of the actual item type at the lowest level in the inheritance graph.
