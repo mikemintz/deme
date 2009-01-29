@@ -15,7 +15,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryonePermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'Permission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'SiteDomain', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
+__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryonePermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'Permission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
 
 ###############################################################################
 # Item framework
@@ -289,7 +289,6 @@ class Item(models.Model):
         new_version.save()
 
         # Create the permissions
-        #TODO don't create these permissions on other funny things like Relationships or SiteDomain, etc.?
         if create_permissions and is_new:
             AgentPermission(agent=updater, item=self, ability='do_everything', is_allowed=True).save()
 
@@ -1377,44 +1376,24 @@ class Site(ViewerRequest):
     """
     A Site is a ViewerRequest that represents a logical website with URLs.
     
-    A Site can have multiple SiteDomains, but ordinarily it would just have one
-    (multiple domains are useful if you want to enable www.example.com and
-    example.com). Multiple Sites on the same Deme installation share the same
-    Items with the same unique ids, but they resolve URLs differently so each
-    Site can have a different page for /mike. If you go to the base URL of a
-    site (like http://example.com/), you see the ViewerRequest that this Site
-    inherits from.
+    Multiple Sites on the same Deme installation share the same Items with the
+    same unique ids, but they resolve URLs differently so each Site can have a
+    different page for /mike. If you go to the base URL of a site (like
+    http://example.com/), you see the ViewerRequest that this Site inherits
+    from.
     """
 
     # Setup
     immutable_fields = ViewerRequest.immutable_fields
-    introduced_abilities = frozenset(['view default_layout', 'edit default_layout'])
+    introduced_abilities = frozenset(['view hostname', 'edit hostname', 'view default_layout', 'edit default_layout'])
     introduced_global_abilities = frozenset(['create Site'])
     class Meta:
         verbose_name = _('site')
         verbose_name_plural = _('sites')
 
     # Fields
+    hostname = models.CharField(_('hostname'), max_length=255, unique=True)
     default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, verbose_name=_('default layout'))
-
-
-class SiteDomain(Item):
-    """
-    A SiteDomain represents a hostname for a Site.
-    """
-
-    # Setup
-    immutable_fields = Item.immutable_fields | set(['hostname', 'site'])
-    introduced_abilities = frozenset(['view hostname', 'view site'])
-    introduced_global_abilities = frozenset(['create SiteDomain'])
-    class Meta:
-        verbose_name = _('site domain')
-        verbose_name_plural = _('site domains')
-        unique_together = (('site', 'hostname'),)
-
-    # Fields
-    hostname = models.CharField(_('hostname'), max_length=255)
-    site     = models.ForeignKey(Site, related_name='site_domains', verbose_name=_('site'))
 
 
 class CustomUrl(ViewerRequest):
@@ -1425,7 +1404,7 @@ class CustomUrl(ViewerRequest):
     CustomUrl is the first path component) and a string for the path component.
     So when a user visits http://example.com/abc/def/ghi, Deme looks for a
     CustomUrl with name "ghi" with a parent with name "def" with a parent with
-    name "abc" with a parent Site with a SiteDomain "example.com".
+    name "abc" with a parent Site with hostname "example.com".
     """
 
     # Setup

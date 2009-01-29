@@ -91,7 +91,6 @@ def icon_url(item_type, size=32):
         Membership:             'filesystems/folder_documents',
         Person:                 'apps/access',
         Site:                   'devices/nfs_unmount',
-        SiteDomain:             'devices/modem',
         Subscription:           'apps/knewsticker',
         TextDocument:           'mimetypes/txt',
         Transclusion:           'apps/knotes',

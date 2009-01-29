@@ -32,7 +32,6 @@ Code correctness/consistency/bugs
 * Abstract away from the viewer.request object lying around
 * Code cleanup: do permissions in models.py, document/clean the changes to permissions.py, then do views, templatetags, and templates
 * Make more sensible permissions (is there anything more?)
-* Replace SiteDomains with SiteAliases, and now every Site has a single default domain
 * figure out import deal on deme_django.cms and just cms
 * start using verbose_name to have nice displays of item type and field names (and keep it consistent when item_type is a string or a class)
 * The "crumbs" at the top of pages like TextAdvertisements and TextComments are wrong, since they have multiple inheritance
@@ -55,6 +54,7 @@ Features
 --------
 * edit locks
 * deleting items (i.e. blanking)
+* Implement some sort of SiteAlias so a Site can have more than one hostname
 
 Layout
 ------
