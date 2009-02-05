@@ -1092,7 +1092,7 @@ class Comment(Item):
             if permission_cache.agent_can_global(agent, 'do_everything'):
                 recursive_filter = None
             else:
-                visible_memberships = Membership.objects.filter(permission_cache.filter_items(agent, 'view item'))
+                visible_memberships = permission_cache.filter_items(agent, 'view item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             parent_pks_query = self.all_parents_in_thread(True, recursive_filter).filter(trashed=False).values('pk').query
             return Subscription.objects.filter(comment_type_q, item__in=parent_pks_query, deep=True, trashed=False)
