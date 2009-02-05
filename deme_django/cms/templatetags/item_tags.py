@@ -642,7 +642,6 @@ class SubclassFieldsBox(template.Node):
         viewer_item_type_field_names = set([x.name for x in viewer_item_type._meta.fields])
         def get_fields_for_item(item):
             fields = []
-            print viewer_item_type_field_names
             for name in item._meta.get_all_field_names():
                 print name
                 if name in viewer_item_type_field_names:
