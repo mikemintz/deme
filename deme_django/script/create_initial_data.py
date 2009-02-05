@@ -30,9 +30,17 @@ print 'Creating defaults for the permission framework'
 for item_type in all_item_types():
     for ability in item_type.introduced_abilities:
         setting_name = 'cms.default_permission.%s.%s' % (item_type.__name__, ability)
-        is_allowed = ability.startswith('view ')
+        if issubclass(item_type, (DemeSetting, AuthenticationMethod)):
+            is_allowed = False
+        elif ability.startswith('view '):
+            is_allowed = True
+        elif ability in ['comment_on']:
+            is_allowed = True
+        else:
+            is_allowed = False
         setting_value = 'true' if is_allowed else 'false'
         DemeSetting.set(setting_name, setting_value, admin)
+        EveryonePermission(item=DemeSetting.objects.get(key=setting_name), ability='view name', is_allowed=False).save()
 
 print 'Other stuff...'
 
