@@ -643,7 +643,6 @@ class SubclassFieldsBox(template.Node):
         def get_fields_for_item(item):
             fields = []
             for name in item._meta.get_all_field_names():
-                print name
                 if name in viewer_item_type_field_names:
                     continue
                 field, model, direct, m2m = item._meta.get_field_by_name(name)
