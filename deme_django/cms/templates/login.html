@@ -65,7 +65,7 @@
     {% for agent in login_as_agents %}
         {% if agent.trashed %}
         {% else %}
-        <tr>
+        <tr class="{% cycle 'even' 'odd' %}">
             <td>
                 {% ifagentcan 'view' 'name' agent %}
                 <a href="{{ agent.get_absolute_url }}">{{ agent.name }}</a>
