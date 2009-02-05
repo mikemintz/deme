@@ -4,9 +4,7 @@
 
 Jan-25 notes
 ------------
-* Prioritize making the documentation architecture (by friday)
 * EditComment has a field called 'editsummary' that is not part of the item, but just the editcomment
-* We will eventually want to have a item_type table
 
 Nov-21 notes (automatic comments and subscriptions)
 ---------------------------------------------------
@@ -28,9 +26,9 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Code cleanup: Rename Permission to ItemPermission and related names, document/clean the changes to permissions.py, then do views, templatetags, and templates
 * We should define which abilities are allowed by default in the item type, not just hard code in create_initial_data.py
 * Abstract away from the viewer.request object lying around
-* Code cleanup: do permissions in models.py, document/clean the changes to permissions.py, then do views, templatetags, and templates
 * Make more sensible permissions (is there anything more?)
 * figure out import deal on deme_django.cms and just cms
 * start using verbose_name to have nice displays of item type and field names (and keep it consistent when item_type is a string or a class)
@@ -98,6 +96,7 @@ Unusual things to remember
 
 Distant Future (sorted by approximate order of planned implementation)
 ----------------------------------------------------------------------
+* We will eventually want to have a item_type table
 * Internationalize using ugettext_lazy
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * new subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group

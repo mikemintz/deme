@@ -1484,85 +1484,102 @@ class DemeSetting(Item):
 # Permissions
 ###############################################################################
 
-class POSSIBLE_ABILITIES_ITER(object):
+class PossibleAbilitiesIterable(object):
+    """
+    Instantiated objects from this class are dynamic iterables, in that each
+    time you iterate through them, you get the latest set of item abilities
+    (according to the current state of introduced_abilities in the item types).
+    
+    Each ability is of the form (ability_name, friendly_name).
+    """
     def __iter__(self):
         choices = set()
         for item_type in all_item_types():
-            choices = choices | set([(x,x) for x in item_type.introduced_abilities])
+            choices |= set([(x,x) for x in item_type.introduced_abilities])
         choices = list(choices)
         choices.sort(key=lambda x: x[1])
         for x in choices:
             yield x
 
-class POSSIBLE_GLOBAL_ABILITIES_ITER(object):
+class PossibleGlobalAbilitiesIterable(object):
+    """
+    Instantiated objects from this class are dynamic iterables, in that each
+    time you iterate through them, you get the latest set of global abilities
+    (according to the current state of introduced_abilities in the item types).
+    
+    Each ability is of the form (ability_name, friendly_name).
+    """
     def __iter__(self):
         choices = set()
         for item_type in all_item_types():
-            choices = choices | set([(x,x) for x in item_type.introduced_global_abilities])
+            choices |= set([(x,x) for x in item_type.introduced_global_abilities])
         choices = list(choices)
         choices.sort(key=lambda x: x[1])
         for x in choices:
             yield x
 
-POSSIBLE_ABILITIES = POSSIBLE_ABILITIES_ITER()
-POSSIBLE_GLOBAL_ABILITIES = POSSIBLE_GLOBAL_ABILITIES_ITER()
+# Iteratable of all (ability, friendly_name) item abilities
+POSSIBLE_ABILITIES = PossibleAbilitiesIterable()
+
+# Iteratable of all (ability, friendly_name) global abilities
+POSSIBLE_GLOBAL_ABILITIES = PossibleGlobalAbilitiesIterable()
 
 
 class Permission(models.Model):
+    """Abstract superclass of all item permissions."""
+    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         abstract = True
 
 
 class GlobalPermission(models.Model):
+    """Abstract superclass of all global permissions."""
+    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
+    is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         abstract = True
 
 
 class AgentGlobalPermission(GlobalPermission):
+    """Global permissions assigned directly to agents."""
     agent = models.ForeignKey(Agent, related_name='agent_global_permissions_as_agent')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         unique_together = (('agent', 'ability'),)
 
 
 class CollectionGlobalPermission(GlobalPermission):
+    """Global permissions assigned to all agents in a given collection."""
     collection = models.ForeignKey(Collection, related_name='collection_global_permissions_as_collection')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         unique_together = (('collection', 'ability'),)
 
 
 class EveryoneGlobalPermission(GlobalPermission):
-    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
+    """Global permissions assigned to all agents in this installation."""
     class Meta:
         unique_together = (('ability',),)
 
 
 class AgentPermission(Permission):
+    """Item permissions assigned directly to agents."""
     agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent')
     item = models.ForeignKey(Item, related_name='agent_permissions_as_item')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         unique_together = (('agent', 'item', 'ability'),)
 
 
 class CollectionPermission(Permission):
+    """Collection permissions assigned to all agents in a given collection."""
     collection = models.ForeignKey(Collection, related_name='collection_permissions_as_collection')
     item = models.ForeignKey(Item, related_name='collection_permissions_as_item')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         unique_together = (('collection', 'item', 'ability'),)
 
 
 class EveryonePermission(Permission):
+    """Item permissions assigned to all agents in this installation."""
     item = models.ForeignKey(Item, related_name='everyone_permissions_as_item')
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ABILITIES, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         unique_together = (('item', 'ability'),)
 
@@ -1699,9 +1716,7 @@ class RecursiveMembership(models.Model):
 ###############################################################################
 
 def all_item_types():
-    """
-    Return a list of every item type (as a class).
-    """
+    """Return a list of every item type (as a class)."""
     result = [x for x in models.loading.get_models() if issubclass(x, Item)]
     return result
 
