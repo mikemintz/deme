@@ -1,6 +1,7 @@
 from django.core.urlresolvers import reverse
 from django import template
 from django.db.models import Q
+from django.db import models
 from cms.models import *
 from cms import permissions
 from django.utils.http import urlquote
@@ -640,60 +641,41 @@ class SubclassFieldsBox(template.Node):
             viewer_where_action_defined = parent_viewer
         viewer_item_type = viewer_where_action_defined.accepted_item_type
         viewer_item_type_field_names = set([x.name for x in viewer_item_type._meta.fields])
-        def get_fields_for_item(item):
-            fields = []
-            for name in item._meta.get_all_field_names():
-                if name in viewer_item_type_field_names:
-                    continue
-                field, model, direct, m2m = item._meta.get_field_by_name(name)
-                model_class = type(item) if model == None else model
-                model_class = model_class.NotVersion if issubclass(model_class, Item.Version) else model_class
-                model_name = model_class.__name__
-                info = {'model_name': model_name, 'name': name, 'format': type(field).__name__}
-                if type(field).__name__ == 'ForeignKey':
-                    try:
-                        obj = getattr(item, name)
-                    except ObjectDoesNotExist:
-                        obj = None
-                    info['field_type'] = 'entry'
-                elif type(field).__name__ == 'OneToOneField':
-                    continue
-                elif type(field).__name__ == 'ManyToManyField':
-                    continue
-                elif type(field).__name__ == 'RelatedObject':
-                    continue
-                else:
-                    obj = getattr(item, name)
-                    info['field_type'] = 'regular'
-                info['obj'] = obj
-                fields.append(info)
-            return fields
-        fields = get_fields_for_item(context['item'])
-        fields.sort(key=lambda x:x['name'])
+        item = context['item']
+        fields = []
+        for field in item._meta.fields:
+            if field.name in viewer_item_type_field_names:
+                continue
+            if isinstance(field, (models.OneToOneField, models.ManyToManyField)):
+                continue
+            fields.append(field)
         if not fields:
             return ''
+        fields.sort(key=lambda x:x.name)
         result = []
         result.append('<table cellspacing="0" class="twocol">')
         for field in fields:
             result.append('<tr>')
-            result.append('<th style="white-space: nowrap;">%s</th>' % field['name'].title().replace('_', ' '))
+            result.append('<th style="white-space: nowrap;">%s</th>' % field.name.title().replace('_', ' '))
             result.append('<td>')
-            if agentcan_helper(context, 'view %s' % field['name'], context['item']):
-                if field['field_type'] == 'entry':
-                    if field['obj']:
-                        if agentcan_helper(context, 'view name', field['obj']):
-                            result.append('<a href="%s">%s</a>' % (escape(field['obj'].get_absolute_url()), escape(field['obj'].name)))
+            if agentcan_helper(context, 'view %s' % field.name, item):
+                if isinstance(field, models.ForeignKey):
+                    foreign_item = getattr(item, field.name)
+                    if foreign_item:
+                        if agentcan_helper(context, 'view name', foreign_item):
+                            result.append('<a href="%s">%s</a>' % (escape(foreign_item.get_absolute_url()), escape(foreign_item.name)))
                         else:
-                            result.append('<a href="%s">[PERMISSION DENIED]</a>' % escape(field['obj'].get_absolute_url()))
+                            result.append('<a href="%s">[PERMISSION DENIED]</a>' % escape(foreign_item.get_absolute_url()))
                     else:
                         result.append('None')
                 else:
-                    if field['format'] == 'FileField':
-                        result.append('<a href="/static/media/%s">%s</a>' % (escape(field['obj']), escape(field['obj'])))
-                    elif field['format'] == 'TextField':
-                        result.append(urlize(escape(field['obj'])).replace('\n', '<br />'))
+                    data = getattr(item, field.name)
+                    if isinstance(field, models.FileField):
+                        result.append('<a href="/static/media/%s">%s</a>' % (escape(data), escape(data)))
+                    elif isinstance(field, models.TextField):
+                        result.append(urlize(escape(data)).replace('\n', '<br />'))
                     else:
-                        result.append(escape(field['obj']))
+                        result.append(escape(data))
             else:
                 result.append('[PERMISSION DENIED]')
             result.append('</td>')
