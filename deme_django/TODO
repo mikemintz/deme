@@ -104,6 +104,7 @@ Distant Future (sorted by approximate order of planned implementation)
 * respect the format string and have XML output and stuff
 * When matching SiteDomain in alias, match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
 * Add to ImageDocument metadata like width, height, exif, and a pointer to a thumbfile or 2
+* Temporal history viewer that lets you look at the state of the world at a given time (e.g., the roster of a group 1 year ago)
 * In CustomUrl, we should prevent top level names like 'static' and 'item' and 'modules', although not a big deal since it doesn't overwrite
 * later, think about adding back "edit downcast". we'll have to think about
   - what happens when viewer2 inherits from viewer1, and viewer2 item type subclasses viewer1 item type, and viewer2 inherits the edit/update functionality?
