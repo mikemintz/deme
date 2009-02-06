@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load item_tags %}
-{% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Edit {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
+{% block favicon %}{{ item|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ item|icon_url:48 }}" /> Edit {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
 <script type="text/javascript" src="/static/javascripts/prototype.js"></script>
@@ -19,11 +19,11 @@ tinyMCE.init({
 {% itemheader 'Edit' %}
 
 <div>
-    <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=item_type|lower,noun=item.pk,action="update" %}?version={{ item.version_number }}" class="item_form">
+    <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,noun=item.pk,action="update" %}?version={{ item.version_number }}" class="item_form">
         <table cellspacing="0">
             {{ form.as_table }}
         </table>
-    <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Save {{ item_type }}</span></button>
+    <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Save {{ accepted_item_type_name }}</span></button>
     </form>
 </div>
 

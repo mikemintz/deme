@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load item_tags %}
-{% block favicon %}{{ item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item_type|icon_url:48 }}" /> List {{ item_type }}s{% endblock %}
+{% block favicon %}{{ accepted_item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ accepted_item_type|icon_url:48 }}" /> List {{ accepted_item_type_name_plural }}{% endblock %}
 {% block content %}
 
 {% typeheader %}
@@ -15,11 +15,11 @@
         </th>
         <td>
             <select onchange="window.location = this.value;">
-                {% for model_name in model_names %}
-                {% ifequal model_name item_type %}
-                <option value="{% url item_type_url viewer=model_name|lower %}" selected="selected">{{ model_name }}</option>
+                {% for item_type in item_types %}
+                {% ifequal item_type.item_type accepted_item_type %}
+                <option value="{% url item_type_url viewer=item_type.viewer %}" selected="selected">{{ item_type.name_plural|capfirst}}</option>
                 {% else %}
-                <option value="{% url item_type_url viewer=model_name|lower %}">{{ model_name }}</option>
+                <option value="{% url item_type_url viewer=item_type.viewer %}">{{ item_type.name_plural|capfirst }}</option>
                 {% endifequal %}
                 {% endfor %}
             </select>
@@ -61,11 +61,11 @@
 {% if items %}
 
 <div style="text-align: right; font-size: smaller;">
-    Displaying {{ list_start_i }} - {{ list_end_i }} of {{ n_listable_items }} listable {{ item_type }}s <!--(plus {{ n_opposite_trashed_items }} opposite-trashed items and {{ n_unlistable_items }} unlistable items)-->
+    Displaying {{ list_start_i }} - {{ list_end_i }} of {{ n_listable_items }} listable {{ accepted_item_type_name_plural }} <!--(plus {{ n_opposite_trashed_items }} opposite-trashed items and {{ n_unlistable_items }} unlistable items)-->
 </div>
 
 <div style="margin-top: 10px; margin-bottom: 10px; text-align: center;">
-    {% list_results_navigator item_type collection search_query trashed offset limit n_listable_items 10 %}
+    {% list_results_navigator viewer_name collection search_query trashed offset limit n_listable_items 10 %}
 </div>
 
 <table cellspacing="0" class="list" width="100%">
@@ -74,16 +74,16 @@
     </tr>
     {% for item in items %}
     <tr class="{% cycle 'even' 'odd' %}">
-        <td><a class="img_link" href="{% url item_url viewer=item.item_type|lower,noun=item.pk %}"><img src="{{ item.item_type|icon_url:16 }}" /><span>{{ item.name }}</span></a></td>
+        <td><a class="img_link" href="{% url item_url viewer=viewer_name,noun=item.pk %}"><img src="{{ item|icon_url:16 }}" /><span>{{ item.name }}</span></a></td>
     </tr>
     {% endfor %}
 </table>
 {% else %}
-    No {{ item_type }}s Found
+    No {{ accepted_item_type_name_plural }} Found
 {% endif %}
 
 <div style="margin-top: 10px; text-align: center;">
-    {% list_results_navigator item_type collection search_query trashed offset limit n_listable_items 10 %}
+    {% list_results_navigator viewer_name collection search_query trashed offset limit n_listable_items 10 %}
 </div>
 
 {% endblock content %}

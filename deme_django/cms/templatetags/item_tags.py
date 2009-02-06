@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timesince import timesince
+from django.utils.text import capfirst
 
 register = template.Library()
 
@@ -103,7 +104,7 @@ def icon_url(item_type, size=32):
             if item_type:
                 return icon_url(item_type, size)
     elif isinstance(item_type, Item):
-        return icon_url(type(item_type), size)
+        return icon_url(get_item_type_with_name(item_type.item_type), size)
     elif isinstance(item_type, type) and issubclass(item_type, Item):
         if item_type not in item_type_to_icon:
             return icon_url(item_type.__base__, size)
@@ -113,7 +114,7 @@ def icon_url(item_type, size=32):
     return "/static/crystal_project/%dx%d/%s.png" % (size, size, icon)
 
 @register.simple_tag
-def list_results_navigator(viewer, collection, search_query, trashed, offset, limit, n_results, max_pages):
+def list_results_navigator(viewer_name, collection, search_query, trashed, offset, limit, n_results, max_pages):
     """
     Make an HTML pagination navigator (page number links with prev and next
     links on both sides).
@@ -125,7 +126,7 @@ def list_results_navigator(viewer, collection, search_query, trashed, offset, li
     """
     if n_results <= limit:
         return ''
-    url_prefix = reverse('item_type_url', kwargs={'viewer': viewer.lower()}) + '?limit=%s&' % limit
+    url_prefix = reverse('item_type_url', kwargs={'viewer': viewer_name}) + '?limit=%s&' % limit
     if search_query:
         url_prefix += 'q=%s&' % search_query
     if trashed:
@@ -328,7 +329,7 @@ class ItemHeader(template.Node):
         cur_item_type = context['_viewer'].accepted_item_type
         item_type_inheritance = []
         while issubclass(cur_item_type, Item):
-            item_type_inheritance.insert(0, cur_item_type.__name__)
+            item_type_inheritance.insert(0, cur_item_type)
             cur_item_type = cur_item_type.__base__
 
         result = []
@@ -362,7 +363,7 @@ class ItemHeader(template.Node):
 
         result.append('<div style="float: left; margin-bottom: 5px; margin-top: 5px;">')
         for inherited_item_type in item_type_inheritance:
-            result.append('<a href="%s" class="img_link"><img src="%s" /><span>%ss</span></a> &raquo;' % (reverse('item_type_url', kwargs={'viewer': inherited_item_type.lower()}), icon_url(inherited_item_type, 16), inherited_item_type))
+            result.append(u'<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a> &raquo;' % (reverse('item_type_url', kwargs={'viewer': inherited_item_type.__name__.lower()}), icon_url(inherited_item_type, 16), capfirst(inherited_item_type._meta.verbose_name_plural)))
         if agentcan_helper(context, 'view name', item):
             result.append('<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (item.get_absolute_url(), icon_url(item.item_type, 16), escape(item.name)))
         else:
@@ -388,14 +389,15 @@ class ItemHeader(template.Node):
             if agentcan_helper(context, 'view name', item.creator):
                 creator_text = 'by <a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(item.creator.name))
             else:
-                creator_text = 'by <a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape('%s %s' % (item.creator.item_type, item.creator.pk)))
+                creator_text = u'by <a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(u'%s %s' % (capfirst(get_item_type_with_name(item.creator.item_type)._meta.verbose_name), item.creator.pk)))
         else:
             creator_text = ''
         result.append('<div style="font-size: 8pt;">')
+        result.append('<div style="float: left;">')
+        result.append(u'%s' % capfirst(get_item_type_with_name(item.item_type)._meta.verbose_name))
         if creator_text or created_at_text:
-            result.append('<div style="float: left;">')
-            result.append('Originally created %s %s' % (creator_text, created_at_text))
-            result.append('</div>')
+            result.append('originally created %s %s' % (creator_text, created_at_text))
+        result.append('</div>')
         result.append('<div style="clear: both;">')
         result.append('</div>')
         result.append('</div>')
@@ -444,27 +446,27 @@ class TypeHeader(template.Node):
                 else:
                     return '' # Fail silently for invalid variables.
 
-        item_type = context['item_type']
+        item_type = context['_viewer'].accepted_item_type
 
         cur_item_type = context['_viewer'].accepted_item_type
         item_type_inheritance = []
         while issubclass(cur_item_type, Item):
-            item_type_inheritance.insert(0, cur_item_type.__name__)
+            item_type_inheritance.insert(0, cur_item_type)
             cur_item_type = cur_item_type.__base__
 
         result = []
 
-        new_url = reverse('item_type_url', kwargs={'viewer': item_type.lower(), 'action': "new"})
+        new_url = reverse('item_type_url', kwargs={'viewer': item_type.__name__.lower(), 'action': "new"})
 
         result.append('<div class="crumbs">')
         result.append('<div style="float: right; margin-bottom: 5px;">')
-        if agentcan_global_helper(context, 'create %s' % item_type):
-            result.append('<a href="%s" class="img_button"><img src="%s" /><span>New %s</span></a>' % (new_url, icon_url('new', 16), item_type))
+        if agentcan_global_helper(context, 'create %s' % item_type.__name__):
+            result.append(u'<a href="%s" class="img_button"><img src="%s" /><span>New %s</span></a>' % (new_url, icon_url('new', 16), item_type._meta.verbose_name))
         result.append('</div>')
 
         result.append('<div style="float: left; margin-bottom: 5px; margin-top: 5px;">')
         for i, inherited_item_type in enumerate(item_type_inheritance):
-            link = '<a href="%s" class="img_link"><img src="%s" /><span>%ss</span></a>' % (reverse('item_type_url', kwargs={'viewer': inherited_item_type.lower()}), icon_url(inherited_item_type, 16), inherited_item_type)
+            link = u'<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (reverse('item_type_url', kwargs={'viewer': inherited_item_type.__name__.lower()}), icon_url(inherited_item_type, 16), capfirst(inherited_item_type._meta.verbose_name_plural))
             if i > 0:
                 link = '&raquo; %s' % link
             result.append(link)
@@ -551,18 +553,18 @@ class CommentBox(template.Node):
                     if agentcan_helper(context, 'view name', comment):
                         comment_name = escape(comment.name)
                     else:
-                        comment_name = escape('%s %s' % (comment.item_type, comment.pk))
+                        comment_name = escape(u'%s %s' % (capfirst(get_item_type_with_name(comment.item_type)._meta.verbose_name), comment.pk))
                 result.append("""<a href="%s">%s</a>""" % (comment.get_absolute_url(), comment_name))
                 if agentcan_helper(context, 'view creator', comment):
                     if agentcan_helper(context, 'view name', comment.creator):
-                        result.append("""by <a href="%s">%s</a>""" % (comment.creator.get_absolute_url(), escape(comment.creator.name)))
+                        result.append('by <a href="%s">%s</a>' % (comment.creator.get_absolute_url(), escape(comment.creator.name)))
                     else:
-                        result.append("""by <a href="%s">%s</a>""" % (comment.creator.get_absolute_url(), escape('%s %s' % (comment.creator.item_type, comment.creator.pk))))
+                        result.append(u'by <a href="%s">%s</a>' % (comment.creator.get_absolute_url(), escape(u'%s %s' % (capfirst(get_item_type_with_name(comment.creator.item_type)._meta.verbose_name), comment.creator.pk))))
                 if item.pk != comment.item_id and nesting_level == 0:
                     if agentcan_helper(context, 'view name', comment.item):
                         result.append('for <a href="%s">%s</a>' % (comment.item.get_absolute_url(), escape(comment.item.name)))
                     else:
-                        result.append('for <a href="%s">%s</a>' % (comment.item.get_absolute_url(), escape('%s %s' % (comment.item.item_type, comment.item.pk))))
+                        result.append(u'for <a href="%s">%s</a>' % (comment.item.get_absolute_url(), escape(u'%s %s' % (capfirst(get_item_type_with_name(comment.item.item_type)._meta.verbose_name), comment.item.pk))))
                 if agentcan_helper(context, 'view created_at', comment):
                     result.append('<span title="%s">%s ago</span>' % (comment.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(comment.created_at)))
                 result.append("</div>")
@@ -631,8 +633,8 @@ class SubclassFieldsBox(template.Node):
         viewer_where_action_defined = type(viewer)
         while viewer_where_action_defined.__name__ != 'ItemViewer':
             parent_viewer = viewer_where_action_defined.__base__
-            my_fn = getattr(viewer_where_action_defined, viewer_method_name)
-            parent_fn = getattr(parent_viewer, viewer_method_name)
+            my_fn = getattr(viewer_where_action_defined, viewer_method_name, None)
+            parent_fn = getattr(parent_viewer, viewer_method_name, None)
             if my_fn is None or parent_fn is None:
                 break
             if my_fn.im_func is not parent_fn.im_func:
@@ -655,7 +657,7 @@ class SubclassFieldsBox(template.Node):
         result.append('<table cellspacing="0" class="twocol">')
         for field in fields:
             result.append('<tr>')
-            result.append('<th style="white-space: nowrap;">%s</th>' % field.name.title().replace('_', ' '))
+            result.append(u'<th style="white-space: nowrap;">%s</th>' % capfirst(field.verbose_name))
             result.append('<td>')
             if agentcan_helper(context, 'view %s' % field.name, item):
                 if isinstance(field, models.ForeignKey):

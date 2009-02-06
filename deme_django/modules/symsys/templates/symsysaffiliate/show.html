@@ -1,8 +1,8 @@
 {% extends layout %}
 {% load symsys_extras %}
 {% load item_tags %}
-{% block favicon %}{{ item.item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item.item_type|icon_url:48 }}" /> Show {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
+{% block favicon %}{{ item|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ item|icon_url:48 }}" /> Show {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
 {% block content %}
 
 {% itemheader %}

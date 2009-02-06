@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load item_tags %}
-{% block favicon %}{{ item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item_type|icon_url:48 }}" /> Global Permissions{% endblock %}
+{% block favicon %}{{ accepted_item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ accepted_item_type|icon_url:48 }}" /> Global Permissions{% endblock %}
 {% block content %}
 
 <script type="text/javascript" src="/static/javascripts/prototype.js"></script>
