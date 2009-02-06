@@ -39,6 +39,8 @@ Performance
 * Asynchronous notifications
 * See if permissions speed up with more postgres memory (so far it doesn't look like it's helping)
 * It would save space if we could have blank names, and somehow the viewer would always display 'Untitled' by default (using the var|default="[Untitled]" filter)
+* Use spaceless tag to compress whitespace
+  - Be careful, since it will screw with body_str in TextDocumentViewer.show
 
 Features
 --------
