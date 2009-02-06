@@ -45,7 +45,10 @@ Performance
 Features
 --------
 * edit locks
-* deleting items (i.e. blanking)
+* Deleting items (i.e. blanking)
+  - We have a button to "blank" a specific version, which sets all fields to a filler value and enables a flag called blanked (only exists in version table)
+  - We have a button to "blank" the entire item, which does the same thing on all versions AND the current item
+  - For every item type, we have a function called blank() which systematically sets all fields to filler value in the correct way (leaving immutable fields untouched and unique fields unique, and so forth with our various constraints)
 * Implement some sort of SiteAlias so a Site can have more than one hostname
 
 Layout
