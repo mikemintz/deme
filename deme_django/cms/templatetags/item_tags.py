@@ -575,7 +575,7 @@ class CommentBox(template.Node):
                         if agentcan_helper(context, 'view body', comment):
                             comment_body = escape(comment.body).replace('\n', '<br />')
                     elif isinstance(comment, EditComment):
-                        comment_body = ''
+                        comment_body = escape(comment.description)
                     elif isinstance(comment, TrashComment):
                         comment_body = ''
                     elif isinstance(comment, UntrashComment):

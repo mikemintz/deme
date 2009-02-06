@@ -21,6 +21,7 @@ tinyMCE.init({
 <div>
     <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,noun=item.pk,action="update" %}?version={{ item.version_number }}" class="item_form">
         <table cellspacing="0">
+            <tr><th><label for="id_edit_summary">Edit summary:</label></th><td><input id="id_edit_summary" type="text" name="edit_summary" value="" maxlength="255" /></td></tr>
             {{ form.as_table }}
         </table>
     <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Save {{ accepted_item_type_name }}</span></button>

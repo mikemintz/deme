@@ -237,7 +237,7 @@ class Item(models.Model):
     untrash.alters_data = True
 
     @transaction.commit_on_success
-    def save_versioned(self, updater, first_agent=False, create_permissions=True, save_time=None, overwrite_latest_version=False):
+    def save_versioned(self, updater, first_agent=False, create_permissions=True, save_time=None, overwrite_latest_version=False, edit_summary=""):
         """
         Save the current item, making sure to keep track of versions.
         
@@ -294,7 +294,7 @@ class Item(models.Model):
 
         # Create an EditComment if we're making an edit
         if not is_new and not overwrite_latest_version:
-            edit_comment = EditComment(item=self, item_version_number=self.version_number)
+            edit_comment = EditComment(item=self, item_version_number=self.version_number, description=edit_summary)
             edit_comment.save_versioned(updater=updater, save_time=save_time)
 
         if is_new:

@@ -2,10 +2,6 @@
 |Short Term|
 |==========|
 
-Jan-25 notes
-------------
-* EditComment has a field called 'editsummary' that is not part of the item, but just the editcomment
-
 Nov-21 notes (automatic comments and subscriptions)
 ---------------------------------------------------
 * Customizable email template per site that gets sent out for each comment (notification)

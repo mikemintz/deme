@@ -586,7 +586,7 @@ class ItemViewer(Viewer):
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
             new_item = form.save(commit=False)
-            new_item.save_versioned(updater=self.cur_agent)
+            new_item.save_versioned(updater=self.cur_agent, edit_summary=self.request.POST.get('edit_summary'))
             return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
             template = loader.get_template('item/edit.html')
@@ -1145,7 +1145,7 @@ class TextDocumentViewer(ItemViewer):
                 if n_subs == 0:
                     break
             
-            new_item.save_versioned(updater=self.cur_agent)
+            new_item.save_versioned(updater=self.cur_agent, edit_summary=self.request.POST.get('edit_summary'))
 
             for index, to_item_id in new_transclusions:
                 try:
