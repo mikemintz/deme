@@ -92,14 +92,15 @@ Unusual things to remember
 
 Distant Future (sorted by approximate order of planned implementation)
 ----------------------------------------------------------------------
-* We will eventually want to have a item_type table
 * Internationalize using ugettext_lazy
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * new subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group
 * Add other types of subscriptions, like text messages / IMs
 * Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
+* We will eventually want to have a item_type table
 * migrations (let's use http://south.aeracode.org/)
-* more efficient versioning (like like latest version in db, but have deltas to prev versions)
+* More efficient versioning (like like latest version in db, but have deltas to prev versions)
+  - Consider not necessarily having linear deltas. If we start with version 1, a spammer comes in and messes it up for version 2, and I "edit" version 1 so that it becomes version 3, the delta would be more efficient if it knew I started with version 1 in order to get to version 3.
 * We're going to have to integrate permissions into binary files (e.g., MediaDocument) so that users can't bypass Deme and download things from Apache directly.
   - I'd like to have a settings option where you either have apache with no permissions, django with no permissions, or django with full permissions (or maybe later a workaround with apache and permissions based on cookie)
 * respect the format string and have XML output and stuff
