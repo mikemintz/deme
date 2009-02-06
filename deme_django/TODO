@@ -26,7 +26,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
-* Code cleanup: document/clean the changes to permissions.py, then do views, templatetags, and templates
+* Code cleanup: views, templatetags, and templates
 * We should define which abilities are allowed by default in the item type, not just hard code in create_initial_data.py
 * Abstract away from the viewer.request object lying around
 * Make more sensible permissions (is there anything more?)
