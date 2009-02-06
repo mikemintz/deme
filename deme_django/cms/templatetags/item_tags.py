@@ -301,7 +301,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
             result.append(child)
     return result
 
-class EntryHeader(template.Node):
+class ItemHeader(template.Node):
     def __init__(self, page_name):
         if page_name:
             self.page_name = template.Variable(page_name)
@@ -309,7 +309,7 @@ class EntryHeader(template.Node):
             self.page_name = None
 
     def __repr__(self):
-        return "<EntryHeaderNode>"
+        return "<ItemHeaderNode>"
 
     def render(self, context):
         if self.page_name is None:
@@ -419,10 +419,10 @@ def itemheader(parser, token):
         page_name = bits[1]
     else:
         page_name = None
-    return EntryHeader(page_name)
+    return ItemHeader(page_name)
 
 
-class CollectionHeader(template.Node):
+class TypeHeader(template.Node):
     def __init__(self, page_name):
         if page_name:
             self.page_name = template.Variable(page_name)
@@ -430,7 +430,7 @@ class CollectionHeader(template.Node):
             self.page_name = None
 
     def __repr__(self):
-        return "<CollectionHeaderNode>"
+        return "<TypeHeaderNode>"
 
     def render(self, context):
         if self.page_name is None:
@@ -481,7 +481,7 @@ class CollectionHeader(template.Node):
         return '\n'.join(result)
 
 @register.tag
-def collectionheader(parser, token):
+def typeheader(parser, token):
     bits = list(token.split_contents())
     if len(bits) < 1 or len(bits) > 2:
         raise template.TemplateSyntaxError, "%r takes zero or one arguments" % bits[0]
@@ -489,7 +489,7 @@ def collectionheader(parser, token):
         page_name = bits[1]
     else:
         page_name = None
-    return CollectionHeader(page_name)
+    return TypeHeader(page_name)
 
 
 @register.simple_tag
