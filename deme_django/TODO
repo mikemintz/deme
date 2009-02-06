@@ -54,11 +54,11 @@ Layout
 
 Interface
 ---------
-* Get rid of all the [PERMISSION DENIED] and replace it with "Agent 123"
+* Get rid of all the [PERMISSION DENIED] and replace it with "Agent 123" or blank
 * There should be a full interface for specifying CommentLocations
 * Interface to add ContactMethods, Subscriptions, and AuthenticationMethods to Agents
 * We should show the default item_type abilities in the permissions action (with a disclaimer about how they can change)
-* We should probably add back all the margins on <p> and stuff (look at the CSS I modified on deme.stanford.edu for a start)
+* We should probably add back all the margins on <p> and stuff (look at base.css .regular_css for a start)
 
 Documentation
 -------------
