@@ -462,13 +462,10 @@ class ItemViewer(Viewer):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
-        item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in item_type_name_dict.itervalues() if issubclass(x, self.accepted_item_type) and self.cur_agent_can_global('create %s' % x.__name__)]
-        item_types.sort(key=lambda x:x['name'])
         form_initial = dict(self.request.GET.items())
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
-        self.context['item_types'] = item_types
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
@@ -486,10 +483,7 @@ class ItemViewer(Viewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in item_type_name_dict.itervalues() if issubclass(x, self.accepted_item_type) and self.cur_agent_can_global('create %s' % x.__name__)]
-            item_types.sort(key=lambda x:x['name'])
             template = loader.get_template('item/new.html')
-            self.context['item_types'] = item_types
             self.context['form'] = form
             self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             self.context['redirect'] = self.request.GET.get('redirect')
@@ -575,9 +569,6 @@ class ItemViewer(Viewer):
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
-        item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in item_type_name_dict.itervalues() if issubclass(x, self.accepted_item_type) and self.cur_agent_can_global('create %s' % x.__name__)]
-        item_types.sort(key=lambda x:x['name'])
-        self.context['item_types'] = item_types
         self.context['action_is_item_copy'] = True
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         if 'redirect' in self.request.GET:
@@ -1216,13 +1207,10 @@ class TextCommentViewer(TextDocumentViewer):
         can_comment_on = self.cur_agent_can('comment_on', item)
         if not can_comment_on:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to comment on this item")
-        item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in item_type_name_dict.itervalues() if issubclass(x, self.accepted_item_type)]
-        item_types.sort(key=lambda x:x['name'])
         form_initial = dict(self.request.GET.items())
         form_class = NewTextCommentForm
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
-        self.context['item_types'] = item_types
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
@@ -1250,10 +1238,7 @@ class TextCommentViewer(TextDocumentViewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in item_type_name_dict.itervalues() if issubclass(x, self.accepted_item_type)]
-            item_types.sort(key=lambda x:x['name'])
             template = loader.get_template('item/new.html')
-            self.context['item_types'] = item_types
             self.context['form'] = form
             self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             self.context['redirect'] = self.request.GET.get('redirect')
@@ -1274,13 +1259,10 @@ class TransclusionViewer(ItemViewer):
         can_add_transclusion = self.cur_agent_can('add_transclusion', from_item)
         if not can_add_transclusion:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add transclusions to this item")
-        item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in item_type_name_dict.itervalues() if issubclass(x, self.accepted_item_type)]
-        item_types.sort(key=lambda x:x['name'])
         form_initial = dict(self.request.GET.items())
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
-        self.context['item_types'] = item_types
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
@@ -1299,10 +1281,7 @@ class TransclusionViewer(ItemViewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in item_type_name_dict.itervalues() if issubclass(x, self.accepted_item_type)]
-            item_types.sort(key=lambda x:x['name'])
             template = loader.get_template('item/new.html')
-            self.context['item_types'] = item_types
             self.context['form'] = form
             self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             self.context['redirect'] = self.request.GET.get('redirect')
@@ -1374,13 +1353,10 @@ class SubscriptionViewer(ItemViewer):
     viewer_name = 'subscription'
 
     def type_new(self):
-        item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in item_type_name_dict.itervalues() if issubclass(x, self.accepted_item_type)]
-        item_types.sort(key=lambda x:x['name'])
         form_initial = dict(self.request.GET.items())
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
-        self.context['item_types'] = item_types
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
@@ -1398,10 +1374,7 @@ class SubscriptionViewer(ItemViewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in item_type_name_dict.itervalues() if issubclass(x, self.accepted_item_type)]
-            item_types.sort(key=lambda x:x['name'])
             template = loader.get_template('item/new.html')
-            self.context['item_types'] = item_types
             self.context['form'] = form
             self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             self.context['redirect'] = self.request.GET.get('redirect')

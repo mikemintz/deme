@@ -29,22 +29,6 @@ tinyMCE.init({
     <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=viewer_name,action="create" %}" class="item_form">
     {% endif %}
         <table cellspacing="0">
-            <tr>
-                <th>
-                    <label for="id_item_type">Item Type:</label>
-                </th>
-                <td>
-                    <select id="id_item_type" name="item_type" onchange="window.location = this.value;">
-                        {% for item_type in item_types %}
-                        {% if action_is_item_copy %}
-                        <option value="{% url item_url viewer=item_type.viewer,noun=item.pk,action="copy" %}?version={{ item.version_number }}"{% ifequal item_type.item_type accepted_item_type %} selected="selected"{% endifequal %}>{{ item_type.name_plural|capfirst }}</option>
-                        {% else %}
-                        <option value="{% url item_type_url viewer=item_type.viewer,action="new" %}"{% ifequal item_type.item_type accepted_item_type %} selected="selected"{% endifequal %}>{{ item_type.name_plural|capfirst }}</option>
-                        {% endif %}
-                        {% endfor %}
-                    </select>
-                </td>
-            </tr>
             {{ form.as_table }}
         </table>
         <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Create {{ accepted_item_type_name }}</span></button>
