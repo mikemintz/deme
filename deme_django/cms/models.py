@@ -15,7 +15,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryonePermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'Permission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
+__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
 
 ###############################################################################
 # Item framework
@@ -290,7 +290,7 @@ class Item(models.Model):
 
         # Create the permissions
         if create_permissions and is_new:
-            AgentPermission(agent=updater, item=self, ability='do_everything', is_allowed=True).save()
+            AgentItemPermission(agent=updater, item=self, ability='do_everything', is_allowed=True).save()
 
         # Create an EditComment if we're making an edit
         if not is_new and not overwrite_latest_version:
@@ -1080,8 +1080,8 @@ class Comment(Item):
         return None.
         """
         agent = email_contact_method.agent
-        import permissions
-        permission_cache = permissions.PermissionCache()
+        from permissions import PermissionCache
+        permission_cache = PermissionCache()
 
         # First, decide if we're allowed to get this notification at all
         comment_type_q = self.subscription_filter_for_comment_type()
@@ -1484,7 +1484,7 @@ class DemeSetting(Item):
 # Permissions
 ###############################################################################
 
-class PossibleAbilitiesIterable(object):
+class PossibleItemAbilitiesIterable(object):
     """
     Instantiated objects from this class are dynamic iterables, in that each
     time you iterate through them, you get the latest set of item abilities
@@ -1518,16 +1518,16 @@ class PossibleGlobalAbilitiesIterable(object):
         for x in choices:
             yield x
 
-# Iteratable of all (ability, friendly_name) item abilities
-POSSIBLE_ABILITIES = PossibleAbilitiesIterable()
+# Iterable of all (ability, friendly_name) item abilities
+POSSIBLE_ITEM_ABILITIES = PossibleItemAbilitiesIterable()
 
-# Iteratable of all (ability, friendly_name) global abilities
+# Iterable of all (ability, friendly_name) global abilities
 POSSIBLE_GLOBAL_ABILITIES = PossibleGlobalAbilitiesIterable()
 
 
-class Permission(models.Model):
+class ItemPermission(models.Model):
     """Abstract superclass of all item permissions."""
-    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ITEM_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         abstract = True
@@ -1561,25 +1561,25 @@ class EveryoneGlobalPermission(GlobalPermission):
         unique_together = (('ability',),)
 
 
-class AgentPermission(Permission):
+class AgentItemPermission(ItemPermission):
     """Item permissions assigned directly to agents."""
-    agent = models.ForeignKey(Agent, related_name='agent_permissions_as_agent')
-    item = models.ForeignKey(Item, related_name='agent_permissions_as_item')
+    agent = models.ForeignKey(Agent, related_name='agent_item_permissions_as_agent')
+    item = models.ForeignKey(Item, related_name='agent_item_permissions_as_item')
     class Meta:
         unique_together = (('agent', 'item', 'ability'),)
 
 
-class CollectionPermission(Permission):
+class CollectionItemPermission(ItemPermission):
     """Collection permissions assigned to all agents in a given collection."""
-    collection = models.ForeignKey(Collection, related_name='collection_permissions_as_collection')
-    item = models.ForeignKey(Item, related_name='collection_permissions_as_item')
+    collection = models.ForeignKey(Collection, related_name='collection_item_permissions_as_collection')
+    item = models.ForeignKey(Item, related_name='collection_item_permissions_as_item')
     class Meta:
         unique_together = (('collection', 'item', 'ability'),)
 
 
-class EveryonePermission(Permission):
+class EveryoneItemPermission(ItemPermission):
     """Item permissions assigned to all agents in this installation."""
-    item = models.ForeignKey(Item, related_name='everyone_permissions_as_item')
+    item = models.ForeignKey(Item, related_name='everyone_item_permissions_as_item')
     class Meta:
         unique_together = (('item', 'ability'),)
 

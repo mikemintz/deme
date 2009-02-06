@@ -7,7 +7,7 @@ from cms.models import *
 from django import forms
 from django.utils import simplejson
 from django.core.exceptions import ObjectDoesNotExist
-import permissions
+from permissions import PermissionCache
 import re
 import os
 import subprocess
@@ -223,7 +223,7 @@ class Viewer(object):
 
     def init_from_http(self, request, action, noun, format):
         self.context = Context()
-        self.permission_cache = permissions.PermissionCache()
+        self.permission_cache = PermissionCache()
         self.action = action
         self.noun = noun
         self.format = format or 'html'
@@ -514,7 +514,7 @@ class ItemViewer(Viewer):
                 continue
             if type(field.field).__name__ != 'ForeignKey':
                 continue
-            if issubclass(field.model, Permission):
+            if issubclass(field.model, (ItemPermission, GlobalPermission)):
                 continue
             if not issubclass(field.model, Item):
                 continue
@@ -604,7 +604,7 @@ class ItemViewer(Viewer):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         can_trash = self.cur_agent_can('trash', self.item)
-        if isinstance(self.item, Permission) and self.cur_agent_can('do_everything', self.item.item):
+        if isinstance(self.item, ItemPermission) and self.cur_agent_can('do_everything', self.item.item):
             can_trash = True
         if isinstance(self.item, GlobalPermission) and self.cur_agent_can_global('do_everything'):
             can_trash = True
@@ -618,7 +618,7 @@ class ItemViewer(Viewer):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         can_trash = self.cur_agent_can('trash', self.item)
-        if isinstance(self.item, Permission) and self.cur_agent_can('do_everything', self.item.item):
+        if isinstance(self.item, ItemPermission) and self.cur_agent_can('do_everything', self.item.item):
             can_trash = True
         if isinstance(self.item, GlobalPermission) and self.cur_agent_can_global('do_everything'):
             can_trash = True
@@ -628,7 +628,7 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
-    def item_permissions(self):
+    def item_itempermissions(self):
         can_modify_permissions = self.cur_agent_can('do_everything', self.item)
         if not can_modify_permissions:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
@@ -641,9 +641,9 @@ class ItemViewer(Viewer):
             else:
                 return f.formfield()
 
-        agent_permission_form_class = forms.models.modelform_factory(AgentPermission, fields=['agent', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        collection_permission_form_class = forms.models.modelform_factory(CollectionPermission, fields=['collection', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        everyone_permission_form_class = forms.models.modelform_factory(EveryonePermission, fields=['item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
+        agent_permission_form_class = forms.models.modelform_factory(AgentItemPermission, fields=['agent', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
+        collection_permission_form_class = forms.models.modelform_factory(CollectionItemPermission, fields=['collection', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
+        everyone_permission_form_class = forms.models.modelform_factory(EveryoneItemPermission, fields=['item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
 
         if self.method == 'POST':
             form_type = self.request.GET.get('formtype')
@@ -696,9 +696,9 @@ class ItemViewer(Viewer):
                     # we'll display it in the regular page below as an invalid form
                     pass
 
-        agent_permissions = self.item.agent_permissions_as_item.order_by('ability')
-        collection_permissions = self.item.collection_permissions_as_item.order_by('ability')
-        everyone_permissions = self.item.everyone_permissions_as_item.order_by('ability')
+        agent_permissions = self.item.agent_item_permissions_as_item.order_by('ability')
+        collection_permissions = self.item.collection_item_permissions_as_item.order_by('ability')
+        everyone_permissions = self.item.everyone_item_permissions_as_item.order_by('ability')
         agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
         collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk=self.request.GET.get('collection', 0))).order_by('name')
 
@@ -734,10 +734,10 @@ class ItemViewer(Viewer):
                 everyone_data['permission_form'] = form
                 everyone_data['permission_form_invalid'] = True
 
-        new_agent_form_class = forms.models.modelform_factory(AgentPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
-        new_collection_form_class = forms.models.modelform_factory(CollectionPermission, fields=['collection'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_agent_form_class = forms.models.modelform_factory(AgentItemPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_collection_form_class = forms.models.modelform_factory(CollectionItemPermission, fields=['collection'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
 
-        template = loader.get_template('item/permissions.html')
+        template = loader.get_template('item/itempermissions.html')
         self.context['agent_data'] = agent_data
         self.context['collection_data'] = collection_data
         self.context['everyone_data'] = everyone_data

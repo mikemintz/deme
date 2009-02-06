@@ -1,3 +1,7 @@
+"""
+This module defines wrapper functions around the permission framework.
+"""
+
 from cms.models import *
 from django.db import models
 from django.db.models import Q
@@ -67,7 +71,7 @@ class PermissionCache(object):
             if 'do_everything' in self.global_abilities(agent):
                 result = all_relevant_abilities(item_type)
             else:
-                result = calculate_abilities_for_agent_and_item(agent, item, item_type)
+                result = calculate_item_abilities_for_agent_and_item(agent, item, item_type)
                 if 'do_everything' in result:
                     result = all_relevant_abilities(item_type)
             self._item_ability_cache[(agent.pk, item.pk)] = result
@@ -209,7 +213,7 @@ def default_ability_is_allowed(ability, item_type):
                 return result
     return None
 
-def calculate_permissions_for_agent_and_item(agent, item):
+def calculate_item_permissions_for_agent_and_item(agent, item):
     """
     Return tuple (agent_permissions, collection_permissions, everyone_permissions).
     
@@ -222,13 +226,13 @@ def calculate_permissions_for_agent_and_item(agent, item):
     """
 
     my_collection_ids = agent.ancestor_collections().values('pk').query
-    agent_perms = AgentPermission.objects.filter(item=item, agent=agent)
-    collection_perms = CollectionPermission.objects.filter(item=item, collection__in=my_collection_ids)
-    everyone_perms = EveryonePermission.objects.filter(item=item)
+    agent_perms = AgentItemPermission.objects.filter(item=item, agent=agent)
+    collection_perms = CollectionItemPermission.objects.filter(item=item, collection__in=my_collection_ids)
+    everyone_perms = EveryoneItemPermission.objects.filter(item=item)
     return (agent_perms, collection_perms, everyone_perms)
 
 
-def calculate_abilities_for_agent_and_item(agent, item, item_type):
+def calculate_item_abilities_for_agent_and_item(agent, item, item_type):
     """
     Return a set of abilities the agent has with respect to the item, using the
     item_type to determine relevant abilities and defaults.
@@ -262,7 +266,7 @@ def calculate_abilities_for_agent_and_item(agent, item, item_type):
          d. The agent was NOT directly assigned a permission that
             contains this ability with is_allowed=False.
     """
-    permissions_triple = calculate_permissions_for_agent_and_item(agent, item)
+    permissions_triple = calculate_item_permissions_for_agent_and_item(agent, item)
     possible_abilities = all_relevant_abilities(item_type)
     abilities_yes = set()
     abilities_no = set()
@@ -316,7 +320,7 @@ def filter_items_by_permission(agent, ability, item_type):
 
     # p contains all Q objects for all 6 combinations of level, is_allowed
     p = {}
-    for permission_class in [AgentPermission, CollectionPermission, EveryonePermission]:
+    for permission_class in [AgentItemPermission, CollectionItemPermission, EveryoneItemPermission]:
         for is_allowed in [True, False]:
             # Figure out what kind of permission this is
             if 'agent' in permission_class._meta.get_all_field_names():
@@ -338,7 +342,7 @@ def filter_items_by_permission(agent, ability, item_type):
             p[q_name] = Q(pk__in=query)
 
     # Combine all of the Q objects by the rules specified in
-    # calculate_abilities_for_agent_and_item
+    # calculate_item_abilities_for_agent_and_item
     if default_is_allowed:
         return ~p['agentno'] & ~p['collectionno'] & ~p['everyoneno']
     else:
@@ -359,7 +363,7 @@ def filter_agents_by_permission(item, ability):
     """
     # p contains all Q objects for all 6 combinations of level, is_allowed
     p = {}
-    for permission_class in [AgentPermission, CollectionPermission, EveryonePermission]:
+    for permission_class in [AgentItemPermission, CollectionItemPermission, EveryoneItemPermission]:
         for is_allowed in [True, False]:
             # Figure out what kind of permission this is
             if 'agent' in permission_class._meta.get_all_field_names():
@@ -384,7 +388,7 @@ def filter_agents_by_permission(item, ability):
             p[q_name] = Q(pk__in=query)
 
     # Combine all of the Q objects by the rules specified in
-    # calculate_abilities_for_agent_and_item
+    # calculate_item_abilities_for_agent_and_item
     return p['agentyes'] |\
            (~p['agentno'] & p['collectionyes']) |\
            (~p['agentno'] & ~p['collectionno'] & p['everyoneyes'])

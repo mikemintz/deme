@@ -3,7 +3,6 @@ from django import template
 from django.db.models import Q
 from django.db import models
 from cms.models import *
-from cms import permissions
 from django.utils.http import urlquote
 from django.utils.html import escape, urlize
 from django.core.exceptions import ObjectDoesNotExist
@@ -337,7 +336,7 @@ class EntryHeader(template.Node):
         history_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'history'}) + '?version=%s' % version_number
         subscribe_url = reverse('item_type_url', kwargs={'viewer': 'subscription', 'action': 'new'}) + '?item=%s' % item.pk
         relationships_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'relationships'}) + '?version=%s' % version_number
-        permissions_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'permissions'})
+        permissions_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'itempermissions'})
         edit_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % version_number
         copy_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'copy'}) + '?version=%s' % version_number
         trash_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'trash'}) + '?redirect=%s' % urlquote(context['full_path'])

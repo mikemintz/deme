@@ -24,7 +24,7 @@ if Item.objects.count() != 0:
 
 admin = Agent(name="Admin")
 admin.save_versioned(updater=None, first_agent=True, create_permissions=False)
-AgentPermission(agent=admin, item=admin, ability='do_everything', is_allowed=True).save()
+AgentItemPermission(agent=admin, item=admin, ability='do_everything', is_allowed=True).save()
 
 print 'Creating defaults for the permission framework'
 for item_type in all_item_types():
@@ -40,7 +40,7 @@ for item_type in all_item_types():
             is_allowed = False
         setting_value = 'true' if is_allowed else 'false'
         DemeSetting.set(setting_name, setting_value, admin)
-        EveryonePermission(item=DemeSetting.objects.get(key=setting_name), ability='view name', is_allowed=False).save()
+        EveryoneItemPermission(item=DemeSetting.objects.get(key=setting_name), ability='view name', is_allowed=False).save()
 
 print 'Other stuff...'
 
@@ -143,4 +143,4 @@ EveryoneGlobalPermission(ability='create HtmlDocument', is_allowed=True).save()
 EveryoneGlobalPermission(ability='create TextDocumentExcerpt', is_allowed=True).save()
 EveryoneGlobalPermission(ability='create Collection', is_allowed=True).save()
 
-EveryonePermission(item=admin, ability='login_as', is_allowed=True).save()
+EveryoneItemPermission(item=admin, ability='login_as', is_allowed=True).save()
