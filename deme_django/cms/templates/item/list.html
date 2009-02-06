@@ -16,11 +16,7 @@
         <td>
             <select onchange="window.location = this.value;">
                 {% for item_type in item_types %}
-                {% ifequal item_type.item_type accepted_item_type %}
-                <option value="{% url item_type_url viewer=item_type.viewer %}" selected="selected">{{ item_type.name_plural|capfirst}}</option>
-                {% else %}
-                <option value="{% url item_type_url viewer=item_type.viewer %}">{{ item_type.name_plural|capfirst }}</option>
-                {% endifequal %}
+                <option style="background-repeat:no-repeat; background-position:bottom left; padding-left:18px; background-image:url({{ item_type.item_type|icon_url:16 }});" value="{% url item_type_url viewer=item_type.viewer %}"{% ifequal item_type.item_type accepted_item_type %} selected="selected"{% endifequal %}>{{ item_type.name_plural|capfirst }}</option>
                 {% endfor %}
             </select>
         </td>

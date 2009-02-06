@@ -410,7 +410,7 @@ class ItemViewer(Viewer):
         limit = int(self.request.GET.get('limit', 100))
         trashed = self.request.GET.get('trashed', None) == '1'
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in item_type_name_dict.itervalues() if issubclass(x, self.accepted_item_type)]
-        item_types.sort(key=lambda x:x['name'])
+        item_types.sort(key=lambda x:x['name'].lower())
         self.context['search_query'] = self.request.GET.get('q', '')
         items = self.accepted_item_type.objects
         if self.context['search_query']:
