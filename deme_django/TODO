@@ -44,7 +44,7 @@ Performance
 
 Features
 --------
-* edit locks
+* edit locks (merging, or evey synchro editing)
 * Deleting items (i.e. blanking)
   - We have a button to "blank" a specific version, which sets all fields to a filler value and enables a flag called blanked (only exists in version table)
   - We have a button to "blank" the entire item, which does the same thing on all versions AND the current item
