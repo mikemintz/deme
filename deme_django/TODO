@@ -44,12 +44,13 @@ Performance
 
 Features
 --------
-* edit locks (merging, or evey synchro editing)
 * Deleting items (i.e. blanking)
   - We have a button to "blank" a specific version, which sets all fields to a filler value and enables a flag called blanked (only exists in version table)
   - We have a button to "blank" the entire item, which does the same thing on all versions AND the current item
   - For every item type, we have a function called blank() which systematically sets all fields to filler value in the correct way (leaving immutable fields untouched and unique fields unique, and so forth with our various constraints)
-* Implement some sort of SiteAlias so a Site can have more than one hostname
+* New subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group
+* OpenID AuthenticationMethod
+* WebAuth AuthenticationMethod
 
 Layout
 ------
@@ -62,6 +63,7 @@ Interface
 * Interface to add ContactMethods, Subscriptions, and AuthenticationMethods to Agents
 * We should show the default item_type abilities in the permissions action (with a disclaimer about how they can change)
 * We should probably add back all the margins on <p> and stuff (look at base.css .regular_css for a start)
+* Some sort of arrows in the side-by-side comment interface
 
 Documentation
 -------------
@@ -93,13 +95,14 @@ Unusual things to remember
 
 Distant Future (sorted by approximate order of planned implementation)
 ----------------------------------------------------------------------
+* Migrations (let's use http://south.aeracode.org/)
+* Edit locks (merging, or evey synchro editing)
+* Implement some sort of SiteAlias so a Site can have more than one hostname
 * Internationalize using ugettext_lazy
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
-* new subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group
 * Add other types of subscriptions, like text messages / IMs
 * Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
 * We will eventually want to have a item_type table
-* migrations (let's use http://south.aeracode.org/)
 * More efficient versioning (like like latest version in db, but have deltas to prev versions)
   - Consider not necessarily having linear deltas. If we start with version 1, a spammer comes in and messes it up for version 2, and I "edit" version 1 so that it becomes version 3, the delta would be more efficient if it knew I started with version 1 in order to get to version 3.
 * We're going to have to integrate permissions into binary files (e.g., MediaDocument) so that users can't bypass Deme and download things from Apache directly.
