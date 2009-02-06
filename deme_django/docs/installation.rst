@@ -23,24 +23,34 @@ Apache
 ------
 Here's what I have in my apache ``/etc/apache2/sites-available/deme`` config file::
 
-  <Location "/">
-      SetHandler python-program
-      PythonHandler django.core.handlers.modpython
-      PythonDebug On
-      PythonPath "['/var/www/deme', '/var/www/deme/deme_django'] + sys.path"
-      SetEnv DJANGO_SETTINGS_MODULE deme_django.settings
-  </Location>
-  
-  Alias /static /var/www/deme/deme_django
-  <Location "/static">
-      SetHandler None
-  </Location>
-  
-  Options -indexes
-  RewriteEngine On
-  RewriteRule   ^/static/modules/([^/]*)/(.*)  /static/modules/$1/static/$2  [QSA,L,PT]
-  RewriteRule   ^/static/(.*)  /static/static/$1  [QSA,L,PT]
-
+    <VirtualHost *:80>                                                                                      
+        ServerName deme.stanford.edu                                                                        
+        ServerAlias deme                                                                                    
+                                                                                                            
+        <Location "/">                                                                                      
+            SetHandler python-program                                                                       
+            PythonHandler django.core.handlers.modpython                                                    
+            SetEnv DJANGO_SETTINGS_MODULE deme_django.settings                                              
+            PythonDebug On                                                                                  
+            PythonPath "['/var/www/deme', '/var/www/deme/deme_django'] + sys.path"                          
+            PythonAutoReload Off                                                                            
+        </Location>                                                                                         
+                                                                                                            
+        Alias /static /var/www/deme/deme_django                                                             
+        <Location "/static">                                                                                
+            SetHandler None                                                                                 
+        </Location>                                                                                         
+                                                                                                            
+        Options -indexes                                                                                    
+        RewriteEngine On                                                                                    
+        RewriteRule   ^/static/modules/([^/]*)/(.*)  /static/modules/$1/static/$2  [QSA,L,PT]               
+        RewriteRule   ^/static/(.*)  /static/static/$1  [QSA,L,PT]                                          
+                                                                                                            
+        BrowserMatch ^Mozilla/4 gzip-only-text/html                                                         
+        BrowserMatch ^Mozilla/4.0[678] no-gzip                                                              
+        BrowserMatch bMSIE !no-gzip !gzip-only-text/html                                                    
+        AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript application/x-javascript
+    </VirtualHost>      
 
 Incoming mail
 -------------
