@@ -259,7 +259,7 @@ Below is a list of all possible global abilities:
 * ``create Site``
 * ``create TextDocument``
 * ``create TextDocumentExcerpt``
-* ``do_anything`` (Agents with this ability automatically have every single global ability and every item ability with respect to every item.)
+* ``do_anything`` (Agents with this ability automatically have every single global ability and every item ability with respect to every item. If an agent has this global ability in the final calculation, this overrides any item abilities at any level. As a specific unusual example, if an agent has the global ``do_anything`` ability from an EveryonePermission, then giving him any item ability with is_allowed=False will have no effect.)
 
 Below is a list of item types and the item abilities they introduce:
 

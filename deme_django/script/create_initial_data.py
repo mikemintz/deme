@@ -39,6 +39,8 @@ for item_type in all_item_types():
         else:
             is_allowed = False
         setting_value = 'true' if is_allowed else 'false'
+        if ability == 'do_anything':
+            setting_value = 'none'
         DemeSetting.set(setting_name, setting_value, admin)
         EveryoneItemPermission(item=DemeSetting.objects.get(key=setting_name), ability='view name', is_allowed=False).save()
 

@@ -52,14 +52,11 @@ class PermissionCache(object):
         """
         result = self._global_ability_cache.get(agent.pk)
         if result is None:
-            result = calculate_global_abilities_for_agent(agent)
-            possible_abilities = set(x[0] for x in POSSIBLE_GLOBAL_ABILITIES)
-            if 'do_anything' in result:
-                result = possible_abilities
-            else:
-                result &= possible_abilities
-            self._global_ability_cache[agent.pk] = result
-        return result
+            abilities_yes, abilities_no = calculate_global_abilities_for_agent(agent)
+            self._global_ability_cache[agent.pk] = (abilities_yes, abilities_no)
+        else:
+            abilities_yes, abilities_no = result
+        return abilities_yes
 
     def item_abilities(self, agent, item):
         """
@@ -68,14 +65,20 @@ class PermissionCache(object):
         result = self._item_ability_cache.get((agent.pk, item.pk))
         if result is None:
             item_type = get_item_type_with_name(item.item_type)
-            if 'do_anything' in self.global_abilities(agent):
-                result = all_relevant_abilities(item_type)
+            self.global_abilities(agent) # cache the global abilities
+            global_abilities_yes, global_abilities_no = self._global_ability_cache[agent.pk]
+            if 'do_anything' in global_abilities_yes:
+                abilities_yes = all_relevant_abilities(item_type)
+                abilities_no = set()
+            elif 'do_anything' in global_abilities_no:
+                abilities_yes = set()
+                abilities_no = all_relevant_abilities(item_type)
             else:
-                result = calculate_item_abilities_for_agent_and_item(agent, item, item_type)
-                if 'do_anything' in result:
-                    result = all_relevant_abilities(item_type)
-            self._item_ability_cache[(agent.pk, item.pk)] = result
-        return result
+                abilities_yes, abilities_no = calculate_item_abilities_for_agent_and_item(agent, item, item_type)
+            self._item_ability_cache[(agent.pk, item.pk)] = (abilities_yes, abilities_no)
+        else:
+            abilities_yes, abilities_no = result
+        return abilities_yes
 
     def mass_learn(self, agent, ability, queryset):
         """
@@ -86,7 +89,11 @@ class PermissionCache(object):
         same agent and ability for all of the items in the queryset. This
         method uses filter_items_by_permission and only makes 2 database calls.
         """
-        if self.agent_can_global(agent, 'do_anything'):
+        self.global_abilities(agent) # cache the global abilities
+        global_abilities_yes, global_abilities_no = self._global_ability_cache[agent.pk]
+        if 'do_anything' in global_abilities_yes:
+            pass # Nothing to update, since no more database calls need to be made
+        elif 'do_anything' in global_abilities_no:
             pass # Nothing to update, since no more database calls need to be made
         else:
             item_type = queryset.model
@@ -105,8 +112,12 @@ class PermissionCache(object):
         agents with the global ability "do_anything" virtually have all item
         abilities.
         """
-        if self.agent_can_global(agent, 'do_anything'):
+        self.global_abilities(agent) # cache the global abilities
+        global_abilities_yes, global_abilities_no = self._global_ability_cache[agent.pk]
+        if 'do_anything' in global_abilities_yes:
             return queryset
+        elif 'do_anything' in global_abilities_no:
+            return queryset.none()
         else:
             item_type = queryset.model
             return queryset.filter(filter_items_by_permission(agent, ability, item_type))
@@ -116,27 +127,23 @@ class PermissionCache(object):
 # Global permissions
 ###############################################################################
 
+def all_relevant_global_abilities():
+    """Return a set of global abilities that are possible."""
+    return set(x[0] for x in POSSIBLE_GLOBAL_ABILITIES)
+
+
 def calculate_global_abilities_for_agent(agent):
     """
-    Return a set of global abilities the agent has.
+    Return a pair (yes_abilities, no_abilities) where yes_abilities is the set
+    of global abilities that the agent is granted and no_abilities is a set of
+    global abilities that the agent is denied. The two sets should be disjoint.
     
-    The agent has an ability if one of the following holds:
-      1. The agent was directly assigned a permission that contains
-         this ability with is_allowed=True.
-      2. All of the following holds:
-         a. A Collection that the agent is in (directly or indirectly) was
-            assigned a permission that contains this ability with
-            is_allowed=True.
-         b. The agent was NOT directly assigned a permission that
-            contains this ability with is_allowed=False.
-      3. All of the following holds:
-         a. There is an everyone permission that contains this ability
-            with is_allowed=True.
-         b. NO Collection that the agent is in (directly or indirectly) was
-            assigned a permission that contains this ability with
-            is_allowed=False.
-         c. The agent was NOT directly assigned a permission that
-            contains this ability with is_allowed=False.
+    We calculate yes_abilities and no_abilities iteratively from the highest
+    permission level down to the lowest permission level (first we check
+    AgentGlobalPermissions, then CollectionGlobalPermissions, and finally
+    EveryoneGlobalPermissions). At each level, any permissions that were not
+    granted or denied at a higher level are added to the abilities_yes or
+    abilities_no set.
     """
     my_collection_ids = agent.ancestor_collections().values('pk').query
 
@@ -158,6 +165,14 @@ def calculate_global_abilities_for_agent(agent):
                 cur_abilities_yes.add(ability_record['ability'])
             else:
                 cur_abilities_no.add(ability_record['ability'])
+        # If "do_anything" is in the yes abilities at this level, grant all
+        # other global abilities.
+        if 'do_anything' in cur_abilities_yes:
+            cur_abilities_yes = all_relevant_global_abilities()
+        # If "do_anything" is in the no abilities at this level, deny all other
+        # global abilities.
+        if 'do_anything' in cur_abilities_no:
+            cur_abilities_no = all_relevant_global_abilities()
         # For each ability specified at this level, add it to the all-level
         # ability sets if it's not already there. "Yes" takes precedence over
         # "no".
@@ -167,8 +182,9 @@ def calculate_global_abilities_for_agent(agent):
         for x in cur_abilities_no:
             if x not in abilities_yes and x not in abilities_no:
                 abilities_no.add(x)
-    # All unspecified abilities are "no".
-    return abilities_yes
+    abilities_yes &= all_relevant_global_abilities()
+    abilities_no &= all_relevant_global_abilities()
+    return (abilities_yes, abilities_no)
 
 
 ###############################################################################
@@ -196,7 +212,12 @@ def default_ability_is_allowed(ability, item_type):
         raise Exception("You must call all_relevant_abilities with a subclass of Item")
     if ability in item_type.introduced_abilities:
         deme_setting_key = "cms.default_permission.%s.%s" % (item_type.__name__, ability)
-        return (DemeSetting.get(deme_setting_key) == "true")
+        deme_setting_value = DemeSetting.get(deme_setting_key)
+        if deme_setting_value == "true":
+            return True
+        if deme_setting_value == "false":
+            return False
+        return None
     if item_type != Item:
         for parent_item_type in item_type.__bases__:
             result = default_ability_is_allowed(ability, parent_item_type)
@@ -207,37 +228,17 @@ def default_ability_is_allowed(ability, item_type):
 
 def calculate_item_abilities_for_agent_and_item(agent, item, item_type):
     """
-    Return a set of abilities the agent has with respect to the item, using the
-    item_type to determine relevant abilities and defaults.
+    Return a pair (yes_abilities, no_abilities) where yes_abilities is the set
+    of item abilities that the agent is granted and no_abilities is a set of
+    item abilities that the agent is denied. The two sets should be disjoint.
     
-    The agent has an ability if one of the following holds:
-      1. The agent was directly assigned a permission that contains
-         this ability with is_allowed=True.
-      2. All of the following holds:
-         a. A Collection that the agent is in (directly or indirectly) was
-            assigned a permission that contains this ability with
-            is_allowed=True.
-         b. The agent was NOT directly assigned a permission that
-            contains this ability with is_allowed=False.
-      3. All of the following holds:
-         a. There is an everyone permission that contains this ability
-            with is_allowed=True.
-         b. NO Collection that the agent is in (directly or indirectly) was
-            assigned a permission that contains this ability with
-            is_allowed=False.
-         c. The agent was NOT directly assigned a permission that
-            contains this ability with is_allowed=False.
-      4. All of the following holds:
-         a. There is a DemeSetting set to "true" with the key
-            "cms.default_permission.<ITEM_TYPE_NAME>.<ABILITY>" (without angle
-            brackets around the item type name and ability).
-         b. There is NO everyone permission that contains this ability
-            with is_allowed=False.
-         c. NO Collection that the agent is in (directly or indirectly) was
-            assigned a permission that contains this ability with
-            is_allowed=False.
-         d. The agent was NOT directly assigned a permission that
-            contains this ability with is_allowed=False.
+    We calculate yes_abilities and no_abilities iteratively from the highest
+    permission level down to the lowest permission level (first we check
+    AgentItemPermissions, then CollectionItemPermissions, then 
+    EveryoneItemPermissions, and finally default permissions defined in
+    DemeSettings). At each level, any permissions that were not granted or
+    denied at a higher level are added to the abilities_yes or
+    abilities_no set.
     """
     my_collection_ids = agent.ancestor_collections().values('pk').query
 
@@ -260,6 +261,14 @@ def calculate_item_abilities_for_agent_and_item(agent, item, item_type):
                 cur_abilities_yes.add(ability_record['ability'])
             else:
                 cur_abilities_no.add(ability_record['ability'])
+        # If "do_anything" is in the yes abilities at this level, grant all
+        # other item abilities.
+        if 'do_anything' in cur_abilities_yes:
+            cur_abilities_yes = possible_abilities
+        # If "do_anything" is in the no abilities at this level, deny all other
+        # item abilities.
+        if 'do_anything' in cur_abilities_no:
+            cur_abilities_no = possible_abilities
         # For each ability specified at this level, add it to the all-level
         # ability sets if it's not already there. "Yes" takes precedence over
         # "no".
@@ -271,9 +280,15 @@ def calculate_item_abilities_for_agent_and_item(agent, item, item_type):
                 abilities_no.add(x)
     unspecified_abilities = possible_abilities - abilities_yes - abilities_no
     for ability in unspecified_abilities:
-        if default_ability_is_allowed(ability, item_type):
+        if default_ability_is_allowed(ability, item_type) == True:
             abilities_yes.add(ability)
-    return abilities_yes & possible_abilities
+        elif default_ability_is_allowed(ability, item_type) == False:
+            abilities_no.add(ability)
+        else:
+            pass # unspecified
+    abilities_yes &= possible_abilities
+    abilities_no &= possible_abilities
+    return (abilities_yes, abilities_no)
 
 
 ###############################################################################
@@ -321,10 +336,10 @@ def filter_items_by_permission(agent, ability, item_type):
 
     # Combine all of the Q objects by the rules specified in
     # calculate_item_abilities_for_agent_and_item
+    result = p['agentyes'] | (~p['agentno'] & p['collectionyes']) | (~p['agentno'] & ~p['collectionno'] & p['everyoneyes'])
     if default_is_allowed:
-        return ~p['agentno'] & ~p['collectionno'] & ~p['everyoneno']
-    else:
-        return p['agentyes'] | (~p['agentno'] & p['collectionyes']) | (~p['agentno'] & ~p['collectionno'] & p['everyoneyes'])
+        result = result | (~p['agentno'] & ~p['collectionno'] & ~p['everyoneno'])
+    return result
 
 
 def filter_agents_by_permission(item, ability):
@@ -369,8 +384,9 @@ def filter_agents_by_permission(item, ability):
 
     # Combine all of the Q objects by the rules specified in
     # calculate_item_abilities_for_agent_and_item
+    result = p['agentyes'] | (~p['agentno'] & p['collectionyes']) | (~p['agentno'] & ~p['collectionno'] & p['everyoneyes'])
     if default_is_allowed:
-        return ~p['agentno'] & ~p['collectionno'] & ~p['everyoneno']
-    else:
-        return p['agentyes'] | (~p['agentno'] & p['collectionyes']) | (~p['agentno'] & ~p['collectionno'] & p['everyoneyes'])
+        result = result | (~p['agentno'] & ~p['collectionno'] & ~p['everyoneno'])
+    return result
+
 
