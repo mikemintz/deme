@@ -286,18 +286,6 @@ class Viewer(object):
         self.context['layout'] = 'blank.html'
 
     def dispatch(self):
-        #TODO: figure out how to query for users with -do_anything
-        # if self.action != 'login' and not self.cur_agent_can_global('do_something'):
-        #     template = loader.get_template_from_string("""
-        #     {% extends layout %}
-        #     {% load item_tags %}
-        #     {% block title %}Not Allowed{% endblock %}
-        #     {% block content %}
-        #     The agent currently logged in is not allowed to use this application.
-        #     Please <a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">log in as another agent</a>.
-        #     {% endblock content %}
-        #     """)
-        #     return HttpResponse(template.render(self.context))
         if self.noun == None:
             action_method = getattr(self, 'type_%s' % self.action, None)
         else:
