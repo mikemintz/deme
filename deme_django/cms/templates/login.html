@@ -52,6 +52,16 @@
     <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
 </form>
 
+<form name="openid_form" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ redirect|urlencode }}" method="post">
+    <input type="hidden" name="login_type" value="openid" />
+    <div>
+        OpenID URL: <input type="text" name="openid_url" />
+    </div>
+    <div>
+        <input type="submit" value="Login" />
+    </div>
+</form>
+
 {% if login_as_agents %}
 <form action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ redirect|urlencode }}" method="post">
 <div style="margin-top: 15px;">

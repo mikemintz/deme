@@ -1,5 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
+from django.utils.http import urlquote
+from django.utils.html import escape
 from django.template import Context, loader
 from django.db import models
 from django.db.models import Q
@@ -888,6 +890,31 @@ class AuthenticationMethodViewer(ItemViewer):
                     response_data = {'nonce':nonce, 'algo':'sha1', 'salt':'x'}
                 json_data = simplejson.dumps(response_data, separators=(',',':'))
                 return HttpResponse(json_data, mimetype='application/json')
+            # If openidcomplete is a key in the query string, the user has just
+            # authenticated with OpenID
+            elif 'openidcomplete' in self.request.GET:
+                try:
+                    import openid.consumer.consumer
+                except ImportError:
+                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID is not supported in this installation")
+                consumer = openid.consumer.consumer.Consumer(self.request.session, None)
+                query_dict = dict((k,v) for k,v in self.request.GET.items())
+                current_url = self.request.build_absolute_uri().split('?')[0]
+                openid_response = consumer.complete(query_dict, current_url)
+                
+                if openid_response.status == openid.consumer.consumer.SUCCESS:
+                    identity_url = openid_response.identity_url
+                    display_identifier = openid_response.getDisplayIdentifier()
+                    sreg = openid_response.extensionResponse('sreg', False)
+                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID implementation not complete yet")
+                elif openid_response.status == openid.consumer.consumer.CANCEL:
+                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID request was cancelled")
+                elif openid_response.status == openid.consumer.consumer.FAILURE:
+                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID error: %s" % escape(openid_response.message))
+                elif openid_response.status == openid.consumer.consumer.SETUP_NEEDED:
+                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID setup needed")
+                else:
+                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "Invalid OpenID status: %s" % escape(openid_response.status))
             # Otherwise, return the login.html page.
             else:
                 login_as_agents = Agent.objects.filter(trashed=False).order_by('name')
@@ -942,6 +969,21 @@ class AuthenticationMethodViewer(ItemViewer):
                         else:
                             # The current agent does not have permission to login_as the specified agent.
                             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+            elif login_type == 'openid':
+                try:
+                    import openid.consumer.consumer
+                except ImportError:
+                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID is not supported in this installation")
+                trust_root = self.request.build_absolute_uri('/')
+                full_redirect = self.request.build_absolute_uri('%s?openidcomplete=1&redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'login'}), urlquote(redirect)))
+                user_url = self.request.POST['openid_url']
+                consumer = openid.consumer.consumer.Consumer(self.request.session, None)
+                try:
+                    auth_request = consumer.begin(user_url)
+                except openid.consumer.consumer.DiscoveryFailure:
+                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "Invalid OpenID URL")
+                auth_request.addExtensionArg('sreg', 'optional', 'nickname,email,fullname')
+                return HttpResponseRedirect(auth_request.redirectURL(trust_root, full_redirect))
             # Invalid login_type parameter.
             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
 

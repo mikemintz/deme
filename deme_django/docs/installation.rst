@@ -17,6 +17,7 @@ Because of the table-name size restriction in MySQL, we run on postgresql
 * Download an iconset called crystal project (at everaldo) and extract the size folders to a folder called ``deme_django/static/crystal_project``
 * ``sudo apt-get install graphviz`` (optional: for gen_graph.py support)
 * ``sudo apt-get install python-sphinx`` (optional: for documentation generation)
+* ``sudo apt-get install python-openid`` (optional: for openid authentication)
 * ``sudo apt-get install postgresql python-psycopg2``
 
 Apache
