@@ -24,7 +24,7 @@ if Item.objects.count() != 0:
 
 admin = Agent(name="Admin")
 admin.save_versioned(updater=None, first_agent=True, create_permissions=False)
-AgentItemPermission(agent=admin, item=admin, ability='do_everything', is_allowed=True).save()
+AgentItemPermission(agent=admin, item=admin, ability='do_anything', is_allowed=True).save()
 
 print 'Creating defaults for the permission framework'
 for item_type in all_item_types():
@@ -44,7 +44,7 @@ for item_type in all_item_types():
 
 print 'Other stuff...'
 
-AgentGlobalPermission(ability='do_everything', is_allowed=True, agent=admin).save()
+AgentGlobalPermission(ability='do_anything', is_allowed=True, agent=admin).save()
 
 anonymous_agent = AnonymousAgent(name='Anonymous')
 anonymous_agent.save_versioned(updater=admin)
@@ -94,7 +94,7 @@ default_site.save_versioned(updater=admin)
 
 mike_person = Person(first_name="Mike", last_name="Mintz", name="Mike Mintz")
 mike_person.save_versioned(updater=admin)
-AgentItemPermission(agent=mike_person, item=mike_person, ability='do_everything', is_allowed=True).save()
+AgentItemPermission(agent=mike_person, item=mike_person, ability='do_anything', is_allowed=True).save()
 mike_authentication_method = PasswordAuthenticationMethod(username="mike", agent=mike_person)
 mike_authentication_method.set_password('')
 mike_authentication_method.save_versioned(updater=mike_person)
@@ -103,7 +103,7 @@ mike_email_contact_method.save_versioned(updater=mike_person)
 
 todd_person = Person(first_name="Todd", last_name="Davies", name="Todd Davies")
 todd_person.save_versioned(updater=admin)
-AgentItemPermission(agent=todd_person, item=todd_person, ability='do_everything', is_allowed=True).save()
+AgentItemPermission(agent=todd_person, item=todd_person, ability='do_anything', is_allowed=True).save()
 todd_authentication_method = PasswordAuthenticationMethod(username="todd", agent=todd_person)
 todd_authentication_method.set_password('')
 todd_authentication_method.save_versioned(updater=todd_person)
@@ -112,7 +112,7 @@ todd_email_contact_method.save_versioned(updater=todd_person)
 
 reid_person = Person(first_name="Reid", last_name="Chandler", name="Reid Chandler")
 reid_person.save_versioned(updater=admin)
-AgentItemPermission(agent=reid_person, item=reid_person, ability='do_everything', is_allowed=True).save()
+AgentItemPermission(agent=reid_person, item=reid_person, ability='do_anything', is_allowed=True).save()
 reid_authentication_method = PasswordAuthenticationMethod(username="reid", agent=reid_person)
 reid_authentication_method.set_password('')
 reid_authentication_method.save_versioned(updater=reid_person)
@@ -140,8 +140,7 @@ discuss_group.save_versioned(updater=admin)
 Membership(item=mike_person, collection=discuss_group).save_versioned(updater=admin)
 Membership(item=todd_person, collection=discuss_group).save_versioned(updater=admin)
 
-EveryoneGlobalPermission(ability='do_something', is_allowed=True).save()
-#AgentGlobalPermission(agent=anonymous_agent, ability='do_something', is_allowed=False).save()
+#AgentGlobalPermission(agent=anonymous_agent, ability='do_anything', is_allowed=False).save()
 EveryoneGlobalPermission(ability='create HtmlDocument', is_allowed=True).save()
 EveryoneGlobalPermission(ability='create TextDocumentExcerpt', is_allowed=True).save()
 EveryoneGlobalPermission(ability='create Collection', is_allowed=True).save()

@@ -261,7 +261,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
     comment_subclasses = [TextComment, EditComment, TrashComment, UntrashComment, AddMemberComment, RemoveMemberComment]
     comments = []
     if include_recursive_collection_comments:
-        if agentcan_global_helper(context, 'do_everything'):
+        if agentcan_global_helper(context, 'do_anything'):
             recursive_filter = None
         else:
             visible_memberships = permission_cache.filter_items(context['cur_agent'], 'view item', Membership.objects)
@@ -349,7 +349,7 @@ class ItemHeader(template.Node):
         result.append('<a href="%s" class="img_button"><img src="%s" /><span>History</span></a>' % (history_url, icon_url('history', 16)))
         result.append('<a href="%s" class="img_button"><img src="%s" /><span>Subscribe</span></a>' % (subscribe_url, icon_url('subscribe', 16)))
         result.append('<a href="%s" class="img_button"><img src="%s" /><span>Relationships</span></a>' % (relationships_url, icon_url('relationships', 16)))
-        if agentcan_helper(context, 'do_everything', item):
+        if agentcan_helper(context, 'do_anything', item):
             result.append('<a href="%s" class="img_button"><img src="%s" /><span>Permissions</span></a>' % (permissions_url, icon_url('permissions', 16)))
         if agentcan_helper(context, 'edit', item, wildcard_suffix=True):
             result.append('<a href="%s" class="img_button"><img src="%s" /><span>Edit</span></a>' % (edit_url, icon_url('edit', 16)))

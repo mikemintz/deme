@@ -259,15 +259,14 @@ Below is a list of all possible global abilities:
 * ``create Site``
 * ``create TextDocument``
 * ``create TextDocumentExcerpt``
-* ``do_everything`` (Agents with this ability automatically have every single global ability and every item ability with respect to every item.)
-* ``do_something`` (You must have this ability to access any viewer, although you do not need this ability to authenticate.)
+* ``do_anything`` (Agents with this ability automatically have every single global ability and every item ability with respect to every item.)
 
 Below is a list of item types and the item abilities they introduce:
 
 
 * Item
 
-  * ``do_everything`` (Agents this ability with respect to an item automatically have every item ability for that item.)
+  * ``do_anything`` (Agents this ability with respect to an item automatically have every item ability for that item.)
   * ``comment_on`` (With this ability you can create comments *directly* on the item. There is no way to restrict agents from leaving *indirect* comments on an item, apart from ensuring that they don't have the ability to comment on any of the item's existing comments.)
   * ``trash`` (With this ability you can trash and untrash the item.)
   * ``view name``

@@ -115,9 +115,9 @@ class Item(models.Model):
     # Setup
     __metaclass__ = ItemMetaClass
     immutable_fields = frozenset()
-    introduced_abilities = frozenset(['do_everything', 'comment_on', 'trash', 'view name', 'view description',
+    introduced_abilities = frozenset(['do_anything', 'comment_on', 'trash', 'view name', 'view description',
                                       'view creator', 'view created_at', 'edit name', 'edit description'])
-    introduced_global_abilities = frozenset(['do_something', 'do_everything'])
+    introduced_global_abilities = frozenset(['do_anything'])
     class Meta:
         verbose_name = _('item')
         verbose_name_plural = _('items')
@@ -290,7 +290,7 @@ class Item(models.Model):
 
         # Create the permissions
         if create_permissions and is_new:
-            AgentItemPermission(agent=updater, item=self, ability='do_everything', is_allowed=True).save()
+            AgentItemPermission(agent=updater, item=self, ability='do_anything', is_allowed=True).save()
 
         # Create an EditComment if we're making an edit
         if not is_new and not overwrite_latest_version:
@@ -1089,7 +1089,7 @@ class Comment(Item):
             parent_pks_query = self.all_parents_in_thread().filter(trashed=False).values('pk').query
             return Subscription.objects.filter(comment_type_q, item__in=parent_pks_query, trashed=False)
         def deep_subscriptions():
-            if permission_cache.agent_can_global(agent, 'do_everything'):
+            if permission_cache.agent_can_global(agent, 'do_anything'):
                 recursive_filter = None
             else:
                 visible_memberships = permission_cache.filter_items(agent, 'view item', Membership.objects)

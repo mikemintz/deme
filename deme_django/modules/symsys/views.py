@@ -12,7 +12,7 @@ class SymsysAffiliateViewer(ItemViewer):
 
     def item_show(self):
         template = loader.get_template('symsysaffiliate/show.html')
-        if self.cur_agent_can_global('do_everything'):
+        if self.cur_agent_can_global('do_anything'):
             recursive_filter = None
         else:
             visible_memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', Membership.objects)

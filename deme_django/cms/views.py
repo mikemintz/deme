@@ -286,17 +286,18 @@ class Viewer(object):
         self.context['layout'] = 'blank.html'
 
     def dispatch(self):
-        if self.action != 'login' and not self.cur_agent_can_global('do_something'):
-            template = loader.get_template_from_string("""
-            {% extends layout %}
-            {% load item_tags %}
-            {% block title %}Not Allowed{% endblock %}
-            {% block content %}
-            The agent currently logged in is not allowed to use this application.
-            Please <a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">log in as another agent</a>.
-            {% endblock content %}
-            """)
-            return HttpResponse(template.render(self.context))
+        #TODO: figure out how to query for users with -do_anything
+        # if self.action != 'login' and not self.cur_agent_can_global('do_something'):
+        #     template = loader.get_template_from_string("""
+        #     {% extends layout %}
+        #     {% load item_tags %}
+        #     {% block title %}Not Allowed{% endblock %}
+        #     {% block content %}
+        #     The agent currently logged in is not allowed to use this application.
+        #     Please <a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">log in as another agent</a>.
+        #     {% endblock content %}
+        #     """)
+        #     return HttpResponse(template.render(self.context))
         if self.noun == None:
             action_method = getattr(self, 'type_%s' % self.action, None)
         else:
@@ -428,7 +429,7 @@ class ItemViewer(Viewer):
             #     search_filter = search_filter | Q(body__icontains=q)
             items = items.filter(search_filter)
         if isinstance(collection, Collection):
-            if self.cur_agent_can_global('do_everything'):
+            if self.cur_agent_can_global('do_anything'):
                 recursive_filter = None
             else:
                 visible_memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', Membership.objects)
@@ -601,9 +602,9 @@ class ItemViewer(Viewer):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         can_trash = self.cur_agent_can('trash', self.item)
-        if isinstance(self.item, ItemPermission) and self.cur_agent_can('do_everything', self.item.item):
+        if isinstance(self.item, ItemPermission) and self.cur_agent_can('do_anything', self.item.item):
             can_trash = True
-        if isinstance(self.item, GlobalPermission) and self.cur_agent_can_global('do_everything'):
+        if isinstance(self.item, GlobalPermission) and self.cur_agent_can_global('do_anything'):
             can_trash = True
         if not can_trash:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to trash this item")
@@ -615,9 +616,9 @@ class ItemViewer(Viewer):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         can_trash = self.cur_agent_can('trash', self.item)
-        if isinstance(self.item, ItemPermission) and self.cur_agent_can('do_everything', self.item.item):
+        if isinstance(self.item, ItemPermission) and self.cur_agent_can('do_anything', self.item.item):
             can_trash = True
-        if isinstance(self.item, GlobalPermission) and self.cur_agent_can_global('do_everything'):
+        if isinstance(self.item, GlobalPermission) and self.cur_agent_can_global('do_anything'):
             can_trash = True
         if not can_trash:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to untrash this item")
@@ -626,7 +627,7 @@ class ItemViewer(Viewer):
         return HttpResponseRedirect(redirect)
 
     def item_itempermissions(self):
-        can_modify_permissions = self.cur_agent_can('do_everything', self.item)
+        can_modify_permissions = self.cur_agent_can('do_anything', self.item)
         if not can_modify_permissions:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
 
@@ -743,7 +744,7 @@ class ItemViewer(Viewer):
         return HttpResponse(template.render(self.context))
 
     def type_globalpermissions(self):
-        if not self.cur_agent_can_global('do_everything'):
+        if not self.cur_agent_can_global('do_anything'):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify global permissions")
 
         def formfield_callback(f):
@@ -771,7 +772,7 @@ class ItemViewer(Viewer):
 
             if self.request.POST.get('permission_to_delete') is not None:
                 permission = form_class._meta.model.objects.get(pk=self.request.POST.get('permission_to_delete'))
-                if isinstance(permission, AgentGlobalPermission) and permission.agent.pk == 1 and permission.ability == 'do_everything':
+                if isinstance(permission, AgentGlobalPermission) and permission.agent.pk == 1 and permission.ability == 'do_anything':
                     # Don't delete the admin permission, it may be difficult to get back.
                     pass
                 else:
@@ -802,7 +803,7 @@ class ItemViewer(Viewer):
                 except ObjectDoesNotExist:
                     existing_permission = None
                 if existing_permission:
-                    if isinstance(existing_permission, AgentGlobalPermission) and existing_permission.agent.pk == 1 and existing_permission.ability == 'do_everything':
+                    if isinstance(existing_permission, AgentGlobalPermission) and existing_permission.agent.pk == 1 and existing_permission.ability == 'do_anything':
                         # Don't delete the admin permission, it may be difficult to get back.
                         pass
                     else:
@@ -1374,14 +1375,14 @@ class DemeSettingViewer(ItemViewer):
     viewer_name = 'demesetting'
 
     def type_modify(self):
-        if not self.cur_agent_can_global('do_everything'):
+        if not self.cur_agent_can_global('do_anything'):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify DemeSettings")
         self.context['deme_settings'] = DemeSetting.objects.filter(trashed=False).order_by('key')
         template = loader.get_template('demesetting/modify.html')
         return HttpResponse(template.render(self.context))
 
     def type_addsetting(self):
-        if not self.cur_agent_can_global('do_everything'):
+        if not self.cur_agent_can_global('do_anything'):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify DemeSettings")
         key = self.request.POST.get('key')
         value = self.request.POST.get('value')

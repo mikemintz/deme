@@ -54,7 +54,7 @@ class PermissionCache(object):
         if result is None:
             result = calculate_global_abilities_for_agent(agent)
             possible_abilities = set(x[0] for x in POSSIBLE_GLOBAL_ABILITIES)
-            if 'do_everything' in result:
+            if 'do_anything' in result:
                 result = possible_abilities
             else:
                 result &= possible_abilities
@@ -68,11 +68,11 @@ class PermissionCache(object):
         result = self._item_ability_cache.get((agent.pk, item.pk))
         if result is None:
             item_type = get_item_type_with_name(item.item_type)
-            if 'do_everything' in self.global_abilities(agent):
+            if 'do_anything' in self.global_abilities(agent):
                 result = all_relevant_abilities(item_type)
             else:
                 result = calculate_item_abilities_for_agent_and_item(agent, item, item_type)
-                if 'do_everything' in result:
+                if 'do_anything' in result:
                     result = all_relevant_abilities(item_type)
             self._item_ability_cache[(agent.pk, item.pk)] = result
         return result
@@ -86,7 +86,7 @@ class PermissionCache(object):
         same agent and ability for all of the items in the queryset. This
         method uses filter_items_by_permission and only makes 2 database calls.
         """
-        if self.agent_can_global(agent, 'do_everything'):
+        if self.agent_can_global(agent, 'do_anything'):
             pass # Nothing to update, since no more database calls need to be made
         else:
             item_type = queryset.model
@@ -102,10 +102,10 @@ class PermissionCache(object):
         those items that the agent has the ability for.
         
         Unlike filter_items_by_permission, this takes into account the fact that
-        agents with the global ability "do_everything" virtually have all item
+        agents with the global ability "do_anything" virtually have all item
         abilities.
         """
-        if self.agent_can_global(agent, 'do_everything'):
+        if self.agent_can_global(agent, 'do_anything'):
             return queryset
         else:
             item_type = queryset.model
@@ -286,8 +286,8 @@ def filter_items_by_permission(agent, ability, item_type):
     those items that the agent has the ability for.
     
     This does not take into account the fact that agents with the global
-    ability "do_everything" virtually have all item abilities, but it does take
-    into account the item ability "do_everything". This also takes into account
+    ability "do_anything" virtually have all item abilities, but it does take
+    into account the item ability "do_anything". This also takes into account
     default item type permissions.
     
     This can result in the database query becoming expensive.
@@ -309,7 +309,7 @@ def filter_items_by_permission(agent, ability, item_type):
                 level = 'everyone'
             # Generate a Q object for this particular permission and is_allowed
             args = {}
-            args['ability__in'] = [ability, 'do_everything']
+            args['ability__in'] = [ability, 'do_anything']
             args['is_allowed'] = is_allowed
             if level == 'agent':
                 args['agent'] = agent
@@ -333,8 +333,8 @@ def filter_agents_by_permission(item, ability):
     those agents that have the ability for the item.
     
     This does not take into account the fact that agents with the global
-    ability "do_everything" virtually have all item abilities, but it does take
-    into account the item ability "do_everything".
+    ability "do_anything" virtually have all item abilities, but it does take
+    into account the item ability "do_anything".
     
     This can result in the database query becoming expensive.
     """
@@ -354,7 +354,7 @@ def filter_agents_by_permission(item, ability):
                 level = 'everyone'
             # Generate a Q object for this particular permission and is_allowed
             args = {'item': item}
-            args['ability__in'] = [ability, 'do_everything']
+            args['ability__in'] = [ability, 'do_anything']
             args['is_allowed'] = is_allowed
             if level == 'agent':
                 query = permission_class.objects.filter(**args).values('agent_id').query
