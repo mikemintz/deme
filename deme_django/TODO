@@ -22,6 +22,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* How do we deal with immutable things that get trashed, but should get recreated by other users? Like webauth usernames or open id usernames, or sites with hostnames?
 * Code cleanup: views, templatetags, and templates, and symsys everything
 * We should define which abilities are allowed by default in the item type, not just hard code in create_initial_data.py
 * Abstract away from the viewer.request object lying around
@@ -48,7 +49,6 @@ Features
   - We have a button to "blank" a specific version, which sets all fields to a filler value and enables a flag called blanked (only exists in version table)
   - We have a button to "blank" the entire item, which does the same thing on all versions AND the current item
   - For every item type, we have a function called blank() which systematically sets all fields to filler value in the correct way (leaving immutable fields untouched and unique fields unique, and so forth with our various constraints)
-* Include hCard in user profiles
 
 Layout
 ------
@@ -62,6 +62,7 @@ Interface
 * We should show the default item_type abilities in the permissions action (with a disclaimer about how they can change)
 * We should probably add back all the margins on <p> and stuff (look at base.css .regular_css for a start)
 * Some sort of arrows in the side-by-side comment interface, or just click->highlight/scroll
+* Include hCard in user profiles
 
 Documentation
 -------------

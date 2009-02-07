@@ -291,6 +291,10 @@ Below is a list of item types and the item abilities they introduce:
   * ``login_as`` (With this ability you can authenticate as this Agent.)
   * ``view last_online_at``
 
+* GroupAgent
+
+  * ``view group``
+
 * AuthenticationMethod
 
   * ``view agent``
@@ -298,7 +302,10 @@ Below is a list of item types and the item abilities they introduce:
 * OpenidAuthenticationMethod
 
   * ``view openid_url``
-  * ``edit openid_url``
+
+* WebauthAuthenticationMethod
+
+  * ``view username``
 
 * PasswordAuthenticationMethod
 

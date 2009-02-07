@@ -451,8 +451,8 @@ class OpenidAuthenticationMethod(AuthenticationMethod):
     """
 
     # Setup
-    immutable_fields = AuthenticationMethod.immutable_fields
-    introduced_abilities = frozenset(['view openid_url', 'edit openid_url'])
+    immutable_fields = AuthenticationMethod.immutable_fields | set(['openid_url'])
+    introduced_abilities = frozenset(['view openid_url'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('OpenID authentication method')
@@ -471,8 +471,8 @@ class WebauthAuthenticationMethod(AuthenticationMethod):
     """
 
     # Setup
-    immutable_fields = AuthenticationMethod.immutable_fields
-    introduced_abilities = frozenset(['view username', 'edit username'])
+    immutable_fields = AuthenticationMethod.immutable_fields | set(['username'])
+    introduced_abilities = frozenset(['view username'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('WebAuth authentication method')
