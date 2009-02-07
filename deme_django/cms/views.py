@@ -992,6 +992,8 @@ class WebauthAuthenticationMethodViewer(ItemViewer):
     viewer_name = 'webauth'
 
     def type_login(self):
+        if not self.request.is_secure():
+            return HttpResponseRedirect('https://%s%s' % (self.request.get_host(), self.request.get_full_path()))
         if self.request.META.get('AUTH_TYPE') != 'WebAuth' or not self.request.META.get('REMOTE_USER'):
             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "WebAuth is not supported in this installation")
         username = self.request.META['REMOTE_USER']
