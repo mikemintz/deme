@@ -15,7 +15,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
+__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
 
 ###############################################################################
 # Item framework
@@ -391,6 +391,29 @@ class AnonymousAgent(Agent):
     class Meta:
         verbose_name = _('anonymous agent')
         verbose_name_plural = _('anonymous agents')
+
+
+class GroupAgent(Agent):
+    """
+    This item type is an Agent that acts on behalf of an entire group. It can't
+    do anything that other agents can't do. It's significance is just symbolic:
+    by being associated with a group, the actions taken by the group agent are
+    seen as collective action of the group members. In general, permission to
+    login_as the group agent will be limited to powerful members of the group.
+    
+    There should be exactly one GroupAgent for every group.
+    """
+
+    # Setup
+    immutable_fields = Agent.immutable_fields | set(['group'])
+    introduced_abilities = frozenset(['view group'])
+    introduced_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('group agent')
+        verbose_name_plural = _('group agents')
+
+    # Fields
+    group = models.ForeignKey('Group', related_name='group_agents', unique=True, editable=False, verbose_name=_('group'))
 
 
 class AuthenticationMethod(Item):
@@ -822,8 +845,11 @@ class Group(Collection):
     def _after_create(self):
         super(Group, self)._after_create()
         # Create a folio for this group
-        folio = Folio(group=self)
+        folio = Folio(group=self, name='%s folio' % self.name)
         folio.save_versioned(updater=self.creator)
+        # Create a group agent for this group
+        group_agent = GroupAgent(group=self, name='%s agent' % self.name)
+        group_agent.save_versioned(updater=self.creator)
     _after_create.alters_data = True
 
 

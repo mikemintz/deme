@@ -48,7 +48,6 @@ Features
   - We have a button to "blank" a specific version, which sets all fields to a filler value and enables a flag called blanked (only exists in version table)
   - We have a button to "blank" the entire item, which does the same thing on all versions AND the current item
   - For every item type, we have a function called blank() which systematically sets all fields to filler value in the correct way (leaving immutable fields untouched and unique fields unique, and so forth with our various constraints)
-* New subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group
 * Include hCard in user profiles
 
 Layout
