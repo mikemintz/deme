@@ -49,8 +49,8 @@ Features
   - We have a button to "blank" the entire item, which does the same thing on all versions AND the current item
   - For every item type, we have a function called blank() which systematically sets all fields to filler value in the correct way (leaving immutable fields untouched and unique fields unique, and so forth with our various constraints)
 * New subclass of Agent called GroupAgent with field called group it belongs to, which is unique so that no two GroupAgents can belong to the same group
-* OpenID AuthenticationMethod
 * WebAuth AuthenticationMethod
+* Include hCard in user profiles
 
 Layout
 ------
@@ -63,7 +63,7 @@ Interface
 * Interface to add ContactMethods, Subscriptions, and AuthenticationMethods to Agents
 * We should show the default item_type abilities in the permissions action (with a disclaimer about how they can change)
 * We should probably add back all the margins on <p> and stuff (look at base.css .regular_css for a start)
-* Some sort of arrows in the side-by-side comment interface
+* Some sort of arrows in the side-by-side comment interface, or just click->highlight/scroll
 
 Documentation
 -------------
