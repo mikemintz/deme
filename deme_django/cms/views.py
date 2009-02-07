@@ -882,6 +882,7 @@ class AuthenticationMethodViewer(ItemViewer):
             # If openidcomplete is a key in the query string, the user has just
             # authenticated with OpenID
             elif 'openidcomplete' in self.request.GET:
+                redirect = self.request.GET['redirect']
                 try:
                     import openid.consumer.consumer
                 except ImportError:
@@ -895,7 +896,16 @@ class AuthenticationMethodViewer(ItemViewer):
                     identity_url = openid_response.identity_url
                     display_identifier = openid_response.getDisplayIdentifier()
                     sreg = openid_response.extensionResponse('sreg', False)
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID implementation not complete yet")
+                    try:
+                        openid_authentication_method = OpenidAuthenticationMethod.objects.get(openid_url=identity_url)
+                    except ObjectDoesNotExist:
+                        # No OpenidAuthenticationMethod has this openid_url.
+                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID")
+                    if openid_authentication_method.trashed or openid_authentication_method.agent.trashed: 
+                        # The Agent or OpenidAuthenticationMethod is trashed.
+                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID")
+                    self.request.session['cur_agent_id'] = openid_authentication_method.agent.pk
+                    return HttpResponseRedirect(redirect)
                 elif openid_response.status == openid.consumer.consumer.CANCEL:
                     return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID request was cancelled")
                 elif openid_response.status == openid.consumer.consumer.FAILURE:
@@ -931,8 +941,8 @@ class AuthenticationMethodViewer(ItemViewer):
                 except ObjectDoesNotExist:
                     # No PasswordAuthenticationMethod has this username.
                     return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-                if password_authentication_method.agent.trashed: 
-                    # The Agent corresponding to this PasswordAuthenticationMethod is trashed.
+                if password_authentication_method.trashed or password_authentication_method.agent.trashed:
+                    # The Agent or PasswordAuthenticationMethod is trashed.
                     return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
                 if password_authentication_method.check_nonced_password(hashed_password, nonce):
                     self.request.session['cur_agent_id'] = password_authentication_method.agent.pk
