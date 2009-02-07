@@ -589,12 +589,7 @@ class ItemViewer(Viewer):
     def item_trash(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
-        can_trash = self.cur_agent_can('trash', self.item)
-        if isinstance(self.item, ItemPermission) and self.cur_agent_can('do_anything', self.item.item):
-            can_trash = True
-        if isinstance(self.item, GlobalPermission) and self.cur_agent_can_global('do_anything'):
-            can_trash = True
-        if not can_trash:
+        if not self.cur_agent_can('trash', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to trash this item")
         self.item.trash(self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -603,14 +598,18 @@ class ItemViewer(Viewer):
     def item_untrash(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
-        can_trash = self.cur_agent_can('trash', self.item)
-        if isinstance(self.item, ItemPermission) and self.cur_agent_can('do_anything', self.item.item):
-            can_trash = True
-        if isinstance(self.item, GlobalPermission) and self.cur_agent_can_global('do_anything'):
-            can_trash = True
-        if not can_trash:
+        if not self.cur_agent_can('trash', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to untrash this item")
         self.item.untrash(self.cur_agent)
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
+
+    def item_blank(self):
+        if self.method == 'GET':
+            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
+        if not self.cur_agent_can('trash', self.item):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to blank this item")
+        self.item.blank(self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 

@@ -237,6 +237,55 @@ class Item(models.Model):
     untrash.alters_data = True
 
     @transaction.commit_on_success
+    def blank(self, agent):
+        """
+        Blank the fields of this item (the specified agent was responsible) and
+        all versions. The item must already be trashed.
+        """
+        #TODO move this into subclasses where each class blanks out the fields it knows about
+        if not self.trashed:
+            return
+        for field in self._meta.fields:
+            if field.primary_key:
+                continue
+            elif field.name == 'trashed':
+                continue
+            elif field.name == 'item_type':
+                continue
+            elif field.name == 'version_number':
+                continue
+            elif field.null:
+                value = None
+            elif field.blank:
+                value = ''
+            elif isinstance(field, models.TextField):
+                value = '[BLANKED]'
+            elif isinstance(field, models.CharField):
+                value = '[BLANKED]'
+            elif isinstance(field, models.DateTimeField):
+                value = datetime.datetime.utcfromtimestamp(0)
+            elif isinstance(field, models.BooleanField):
+                value = False
+            elif isinstance(field, models.FileField):
+                value = 'blanked'
+            elif isinstance(field, models.IntegerField):
+                value = 1
+            elif isinstance(field, models.ForeignKey):
+                continue #TODO do something better?
+            else:
+                raise Exception("We don't know how to blank %s" % type(field).__name__)
+            #TODO immutable, unique, unique_together?
+            setattr(self, field.name, value)
+        self.save()
+        for version in type(self).Version.objects.filter(current_item=self):
+            original_version_number = version.version_number
+            self.copy_fields_to_itemversion(version)
+            version.version_number = original_version_number
+            version.save()
+        #TODO generate a comment?
+    blank.alters_data = True
+
+    @transaction.commit_on_success
     def save_versioned(self, updater, first_agent=False, create_permissions=True, save_time=None, overwrite_latest_version=False, edit_summary=""):
         """
         Save the current item, making sure to keep track of versions.

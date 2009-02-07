@@ -342,6 +342,7 @@ class ItemHeader(template.Node):
         copy_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'copy'}) + '?version=%s' % version_number
         trash_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'trash'}) + '?redirect=%s' % urlquote(context['full_path'])
         untrash_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'untrash'}) + '?redirect=%s' % urlquote(context['full_path'])
+        blank_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'blank'}) + '?redirect=%s' % urlquote(context['full_path'])
 
         result.append('<div class="crumbs">')
 
@@ -359,6 +360,10 @@ class ItemHeader(template.Node):
             result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % (untrash_url if item.trashed else trash_url))
             result.append("""<a href="#" onclick="this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('trash', 16), "Untrash" if item.trashed else "Trash"))
             result.append("""</form>""")
+            if item.trashed:
+                result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % blank_url)
+                result.append("""<a href="#" onclick="this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('trash', 16), "Blank"))
+                result.append("""</form>""")
         result.append('</div>')
 
         result.append('<div style="float: left; margin-bottom: 5px; margin-top: 5px;">')
