@@ -93,6 +93,8 @@ Agents and related item types
 
 * **OpenidAuthenticationMethod:** This is an AuthenticationMethod that allows a user to log on with an OpenID. The openid url must be unique across the entire Deme installation. It defines only one new field, ``openid_url``, which is all that we need to represent the identity.
 
+* **WebauthAuthenticationMethod:** This is an AuthenticationMethod that allows a user to log on with Stanford's WebAuth system. The username must be unique across the entire Deme installation.
+
 * **PasswordAuthenticationMethod:** This is an AuthenticationMethod that allows a user to log on with a username and a password. The username must be unique across the entire Deme installation. The password field is formatted the same as in the User model of the Django admin app (algo$salt$hash), and is thus not stored in plain text.
 
   This item type defines four fields: ``username``, ``password``, ``password_question``, and ``password_answer`` (the last two can be used to reset the password and send it to the Agent via one of its ContactMethods).

@@ -987,6 +987,27 @@ class AuthenticationMethodViewer(ItemViewer):
             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
 
 
+class WebauthAuthenticationMethodViewer(ItemViewer):
+    accepted_item_type = WebauthAuthenticationMethod
+    viewer_name = 'webauth'
+
+    def type_login(self):
+        if self.request.META.get('AUTH_TYPE') != 'WebAuth' or not self.request.META.get('REMOTE_USER'):
+            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "WebAuth is not supported in this installation")
+        username = self.request.META['REMOTE_USER']
+        try:
+            webauth_authentication_method = WebauthAuthenticationMethod.objects.get(username=username)
+        except ObjectDoesNotExist:
+            # No WebauthAuthenticationMethod has this username.
+            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that webauth username")
+        if webauth_authentication_method.trashed or webauth_authentication_method.agent.trashed: 
+            # The Agent or WebauthAuthenticationMethod is trashed.
+            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that webauth username")
+        self.request.session['cur_agent_id'] = webauth_authentication_method.agent.pk
+        redirect = self.request.GET['redirect']
+        return HttpResponseRedirect(redirect)
+
+
 class GroupViewer(ItemViewer):
     accepted_item_type = Group
     viewer_name = 'group'

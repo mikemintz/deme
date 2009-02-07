@@ -62,6 +62,10 @@
     </div>
 </form>
 
+<div>
+    <a href="{% url item_type_url viewer="webauth",action="login" %}?redirect={{ redirect|urlencode }}">Login with WebAuth</a>
+</div>
+
 {% if login_as_agents %}
 <form action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ redirect|urlencode }}" method="post">
 <div style="margin-top: 15px;">

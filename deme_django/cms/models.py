@@ -15,7 +15,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
+__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
 
 ###############################################################################
 # Item framework
@@ -437,6 +437,26 @@ class OpenidAuthenticationMethod(AuthenticationMethod):
 
     # Fields
     openid_url = models.CharField(_('OpenID URL'), max_length=2047, unique=True)
+
+
+class WebauthAuthenticationMethod(AuthenticationMethod):
+    """
+    This is an AuthenticationMethod that allows a user to log on with
+    Stanford's WebAuth system.
+    
+    The username must be unique across the entire Deme installation.
+    """
+
+    # Setup
+    immutable_fields = AuthenticationMethod.immutable_fields
+    introduced_abilities = frozenset(['view username', 'edit username'])
+    introduced_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('WebAuth authentication method')
+        verbose_name_plural = _('WebAuth authentication methods')
+
+    # Fields
+    username = models.CharField(_('username'), max_length=255, unique=True)
 
 
 class PasswordAuthenticationMethod(AuthenticationMethod):

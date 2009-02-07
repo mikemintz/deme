@@ -100,6 +100,7 @@ AgentItemPermission(agent=mike_person, item=mike_person, ability='do_anything', 
 mike_authentication_method = PasswordAuthenticationMethod(username="mike", agent=mike_person)
 mike_authentication_method.set_password('')
 mike_authentication_method.save_versioned(updater=mike_person)
+WebauthAuthenticationMethod(username="mintz", agent=mike_person).save_versioned(updater=mike_person)
 mike_email_contact_method = EmailContactMethod(name="Mike's Email Contact Method", email="mike@example.com", agent=mike_person)
 mike_email_contact_method.save_versioned(updater=mike_person)
 
