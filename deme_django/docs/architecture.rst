@@ -66,7 +66,7 @@ Core item types
 ^^^^^^^^^^^^^^^
 Below are the core item types and the role they play (see the full ontology at http://deme.stanford.edu/item/codegraph).
 
-* **Item:** Item is item type that everything inherits from. It gives us a completely unique id across all items. It defines two user-editable fields (``name`` and ``description``) and six automatically generated fields (``id``, ``version_number``, ``item_type``, ``creator``, ``created_at``, and ``trashed``).
+* **Item:** Item is item type that everything inherits from. It gives us a completely unique id across all items. It defines two user-editable fields (``name`` and ``description``) and six automatically generated fields (``id``, ``version_number``, ``item_type``, ``creator``, ``created_at``, ``trashed``, and ``blanked``).
 
   * The ``name`` field is the friendly name to refer to the specific item: the title of a document or the preferred name of a person, and is the kind of name that would appear as the <title> of a webpage or the text of a link to that item. Currently, the name field cannot be blank (so that the viewer always has some text to display), but we are considering making it blank for items that don't need names (like Memberships) and having the viewer deal with possibly blank names.
   * The ``description`` field is a string field for metadata, which can be used for any purpose. Generally, the description is not considered part of the body of the item itself, but tells what the item is. The description for a budget document item might read, "This is the budget as drafted by the budget committee."
@@ -76,6 +76,7 @@ Below are the core item types and the role they play (see the full ontology at h
   * The ``creator`` field is a pointer to the Agent that created the item.
   * The ``created_at`` field is the date and time the item was created.
   * The ``trashed`` field is true or false, depending on whether the item is trashed or not.
+  * The ``blanked`` field is true or false, depending on whether the item is blanked or not.
 
 Agents and related item types
 
