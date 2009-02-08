@@ -1474,7 +1474,7 @@ class ViewerRequest(Item):
     action       = models.CharField(_('action'), max_length=255)
     # If aliased_item is null, it is a collection action
     aliased_item = models.ForeignKey(Item, related_name='viewer_requests', null=True, blank=True, verbose_name=_('aliased item'))
-    query_string = models.CharField(_('query string'), max_length=1024, null=True, blank=True)
+    query_string = models.CharField(_('query string'), max_length=1024, blank=True)
     format       = models.CharField(_('format'), max_length=255, default='html')
 
     def calculate_full_path(self):
