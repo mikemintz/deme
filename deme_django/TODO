@@ -44,9 +44,8 @@ Performance
 Features
 --------
 * Deleting items (i.e. blanking)
-  - We have a button to "blank" a specific version, which sets all fields to a filler value and enables a flag called blanked (only exists in version table)
-  - We have a button to "blank" the entire item, which does the same thing on all versions AND the current item
-  - For every item type, we have a function called blank() which systematically sets all fields to filler value in the correct way (leaving immutable fields untouched and unique fields unique, and so forth with our various constraints)
+  - Do remaining TODOs on whole-item blanking
+  - Figure out specific-version blanking
 
 Layout
 ------
@@ -83,6 +82,7 @@ Unusual things to remember
 * Don't forget to update crystal icons for new models
 * If someone has permission to edit the body of an item, we allow them to add transclusions in some situations (TextDocumentViewer.edit)
 * We do not [knowingly] support OneToOneFields and ManyToManyFields in item types
+* Whenever you do anything to modify an item (like save, trash, untrash, blank) you better be in the downcasted version.
 
 
 

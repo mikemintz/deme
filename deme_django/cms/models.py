@@ -38,6 +38,20 @@ class ItemMetaClass(models.base.ModelBase):
             return result
 
         # Create the non-versioned class
+        for key, value in attrs.iteritems():
+            if isinstance(value, models.Field):
+                # We must be able to blank this field
+                value.null = True
+                if not value.has_default():
+                    if isinstance(value, models.DateTimeField):
+                        value.default = datetime.datetime.utcfromtimestamp(0)
+                    elif isinstance(value, models.BooleanField):
+                        value.default = False
+                    elif isinstance(value, models.IntegerField):
+                        value.default = 1
+                    else:
+                        value.default = ''
+                #TODO we need to prevent fields from normally being null now :(
         attrs_copy = copy.deepcopy(attrs)
         result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
 
@@ -84,8 +98,8 @@ class ItemVersion(models.Model):
     # Fields
     current_item = models.ForeignKey('Item', related_name='versions')
     version_number = models.PositiveIntegerField(db_index=True)
-    name = models.CharField(max_length=255)
-    description = models.CharField(max_length=255, blank=True)
+    name = models.CharField(max_length=255, null=True)
+    description = models.CharField(max_length=255, blank=True, null=True)
 
     def __unicode__(self):
         return u'%s[%s.%s] "%s"' % (self.current_item.item_type, self.current_item_id, self.version_number, self.name)
@@ -125,11 +139,53 @@ class Item(models.Model):
     # Fields
     version_number = models.PositiveIntegerField(_('version number'), default=1, editable=False)
     item_type      = models.CharField(_('item type'), max_length=255, editable=False)
-    creator        = models.ForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
-    created_at     = models.DateTimeField(_('created at'), editable=False)
     trashed        = models.BooleanField(_('trashed'), default=False, editable=False, db_index=True)
-    name           = models.CharField(_('name'), max_length=255, default='Untitled')
-    description    = models.CharField(_('description'), max_length=255, blank=True)
+    blanked        = models.BooleanField(_('blanked'), default=False, editable=False)
+    creator        = models.ForeignKey('Agent', related_name='items_created', default='', editable=False, verbose_name=_('creator'), null=True)
+    created_at     = models.DateTimeField(_('created at'), default=datetime.datetime.utcfromtimestamp(0), editable=False, null=True)
+    name           = models.CharField(_('name'), max_length=255, default='Untitled', null=True)
+    description    = models.CharField(_('description'), max_length=255, default='', blank=True, null=True)
+
+    # This is a possible solution to blanking (when you get a blanked item 
+    # from the database, you fill its fields in memory with virtual values).
+    # def __init__(self, *args, **kwargs):
+    #     #TODO think this over more carefully
+    #     super(Item, self).__init__(*args, **kwargs)
+    #     def blank_item(item, depth=0):
+    #         if depth > 3:
+    #             raise Exception("Maximum blank_item recursion depth reached")
+    #         for field in item._meta.fields:
+    #             if field.primary_key:
+    #                 # Don't mess with it?
+    #                 continue
+    #             elif field.name == 'item_type':
+    #                 if item.item_type:
+    #                     continue
+    #                 else:
+    #                     value = type(item).__name__
+    #             elif field.name == 'version_number':
+    #                 value = 1
+    #             elif field.name in ('trashed', 'blanked'):
+    #                 value = True
+    #             elif isinstance(field, models.ForeignKey):
+    #                 # We don't want infinite recursion on creators, so they created themselves
+    #                 if field.name == 'creator' and isinstance(item, Agent):
+    #                     value = item
+    #                 else:
+    #                     value = field.rel.to()
+    #                     blank_item(value, depth + 1)
+    #             else:
+    #                 value = field.get_default()
+    #                 if value == '' and not field.blank:
+    #                     value = '[blanked]'
+    #             if value is None:
+    #                 # nothing we can do about this when we have things like last_online_at
+    #                 pass#raise Exception("blank_item should not find null field %s" % field.name)
+    #             setattr(item, field.name, value)
+    #         if item.pk is None:
+    #             item.pk = 0
+    #     if self.blanked:
+    #         blank_item(self)
 
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.name)
@@ -178,6 +234,9 @@ class Item(models.Model):
         Set the fields of self to what they were at the given version number.
         This method does not make any database writes.
         """
+        if self.blanked:
+            self.version_number = int(version_number)
+            return
         itemversion = type(self).Version.objects.get(current_item=self, version_number=version_number)
         fields = {}
         for field in itemversion._meta.fields:
@@ -240,49 +299,35 @@ class Item(models.Model):
     def blank(self, agent):
         """
         Blank the fields of this item (the specified agent was responsible) and
-        all versions. The item must already be trashed.
+        all versions. The item must already be trashed and cannot have already
+        been blanked. This will call _after_blank().
         """
-        #TODO move this into subclasses where each class blanks out the fields it knows about
-        if not self.trashed:
+        if self.blanked or not self.trashed:
             return
+        # Set all non-special fields to null
+        self.blanked = True
         for field in self._meta.fields:
             if field.primary_key:
                 continue
-            elif field.name == 'trashed':
-                continue
-            elif field.name == 'item_type':
-                continue
-            elif field.name == 'version_number':
+            elif field.name in ('version_number', 'item_type', 'trashed', 'blanked'):
                 continue
             elif field.null:
-                value = None
-            elif field.blank:
-                value = ''
-            elif isinstance(field, models.TextField):
-                value = '[BLANKED]'
-            elif isinstance(field, models.CharField):
-                value = '[BLANKED]'
-            elif isinstance(field, models.DateTimeField):
-                value = datetime.datetime.utcfromtimestamp(0)
-            elif isinstance(field, models.BooleanField):
-                value = False
-            elif isinstance(field, models.FileField):
-                value = 'blanked'
-            elif isinstance(field, models.IntegerField):
-                value = 1
-            elif isinstance(field, models.ForeignKey):
-                continue #TODO do something better?
+                setattr(self, field.name, None)
             else:
-                raise Exception("We don't know how to blank %s" % type(field).__name__)
-            #TODO immutable, unique, unique_together?
-            setattr(self, field.name, value)
+                raise Exception("un-nullable field tried to be blanked: %s" % field.name) #TODO what to do?
         self.save()
-        for version in type(self).Version.objects.filter(current_item=self):
-            original_version_number = version.version_number
-            self.copy_fields_to_itemversion(version)
-            version.version_number = original_version_number
-            version.save()
-        #TODO generate a comment?
+        # Remove all versions
+        type(self).Version.objects.filter(current_item=self).delete()
+        # Remove all permissions on this item
+        self.agent_item_permissions_as_item.all().delete()
+        self.collection_item_permissions_as_item.all().delete()
+        self.everyone_item_permissions_as_item.all().delete()
+        AgentItemPermission.objects.filter(agent=self).delete()
+        CollectionItemPermission.objects.filter(collection=self).delete()
+        AgentGlobalPermission.objects.filter(agent=self).delete()
+        CollectionGlobalPermission.objects.filter(collection=self).delete()
+        #TODO if you blank a comment or membership (or anything with immutable fields) think about the consequences
+        self._after_blank(agent)
     blank.alters_data = True
 
     @transaction.commit_on_success
@@ -388,6 +433,17 @@ class Item(models.Model):
         untrash_comment.save_versioned(updater=agent)
     _after_untrash.alters_data = True
 
+    def _after_blank(self, agent):
+        """
+        This method gets called after an item is blanked.
+        
+        Item types that want to trigger an action after blank should
+        override this method, making sure to put a call to super at the top,
+        like super(Membership, self)._after_blank()
+        """
+        #TODO Create a BlankComment or something
+    _after_blank.alters_data = True
+
 
 ###############################################################################
 # Agents and related item types
@@ -417,7 +473,7 @@ class Agent(Item):
         verbose_name_plural = _('agents')
 
     # Fields
-    last_online_at = models.DateTimeField(_('last online at'), null=True, blank=True, editable=False)
+    last_online_at = models.DateTimeField(_('last online at'), null=True, blank=True, default=None, editable=False) #TODO resolve issue where NULL doesn't imply blanked item
 
 
 class AnonymousAgent(Agent):
@@ -1021,7 +1077,7 @@ class DjangoTemplateDocument(TextDocument):
         verbose_name_plural = _('Django template documents')
 
     # Fields
-    layout = models.ForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, verbose_name=_('layout'))
+    layout = models.ForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout')) #TODO resolve issue where NULL doesn't imply blanked item
     override_default_layout = models.BooleanField(_('override default layout'), default=False)
 
 
@@ -1473,7 +1529,7 @@ class ViewerRequest(Item):
     viewer       = models.CharField(_('viewer'), max_length=255)
     action       = models.CharField(_('action'), max_length=255)
     # If aliased_item is null, it is a collection action
-    aliased_item = models.ForeignKey(Item, related_name='viewer_requests', null=True, blank=True, verbose_name=_('aliased item'))
+    aliased_item = models.ForeignKey(Item, related_name='viewer_requests', null=True, blank=True, default=None, verbose_name=_('aliased item')) #TODO resolve issue where NULL doesn't imply blanked item
     query_string = models.CharField(_('query string'), max_length=1024, blank=True)
     format       = models.CharField(_('format'), max_length=255, default='html')
 
@@ -1508,7 +1564,7 @@ class Site(ViewerRequest):
 
     # Fields
     hostname = models.CharField(_('hostname'), max_length=255, unique=True)
-    default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, verbose_name=_('default layout'))
+    default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout')) #TODO resolve issue where NULL doesn't imply blanked item
 
 
 class CustomUrl(ViewerRequest):

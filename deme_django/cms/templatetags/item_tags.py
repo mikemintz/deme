@@ -412,7 +412,9 @@ class ItemHeader(template.Node):
             result.append('Description: %s' % escape(item.description))
         result.append('</div>')
 
-        if item.trashed:
+        if item.blanked:
+            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is blanked</div>')
+        elif item.trashed:
             result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is trashed</div>')
 
         return '\n'.join(result)
@@ -655,7 +657,7 @@ class SubclassFieldsBox(template.Node):
             if isinstance(field, (models.OneToOneField, models.ManyToManyField)):
                 continue
             fields.append(field)
-        if not fields:
+        if item.blanked or not fields:
             return ''
         fields.sort(key=lambda x:x.name)
         result = []

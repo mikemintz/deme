@@ -40,6 +40,8 @@ class PermissionCache(object):
         If the `mass_learn` method was called for the ability on a QuerySet
         containing the item, no database calls will be made.
         """
+        if item.blanked:
+            return False
         if item.pk in self._ability_yes_cache.get((agent.pk, ability), set()):
             return True
         if item.pk in self._ability_no_cache.get((agent.pk, ability), set()):
@@ -62,6 +64,8 @@ class PermissionCache(object):
         """
         Return a set of abilities the agent has with respect to the item.
         """
+        if item.blanked:
+            return set()
         result = self._item_ability_cache.get((agent.pk, item.pk))
         if result is None:
             item_type = get_item_type_with_name(item.item_type)
@@ -115,12 +119,12 @@ class PermissionCache(object):
         self.global_abilities(agent) # cache the global abilities
         global_abilities_yes, global_abilities_no = self._global_ability_cache[agent.pk]
         if 'do_anything' in global_abilities_yes:
-            return queryset
+            return queryset.filter(blanked=False)
         elif 'do_anything' in global_abilities_no:
             return queryset.none()
         else:
             item_type = queryset.model
-            return queryset.filter(filter_items_by_permission(agent, ability, item_type))
+            return queryset.filter(filter_items_by_permission(agent, ability, item_type), blanked=False)
 
 
 ###############################################################################

@@ -487,7 +487,7 @@ class ItemViewer(Viewer):
     def item_history(self):
         import copy
         versions = []
-        for version_number in xrange(1, self.item.versions.latest().version_number + 1):
+        for version_number in xrange(1, self.item.version_number + 1):
             versioned_item = copy.deepcopy(self.item)
             versioned_item.copy_fields_from_version(version_number)
             versions.append(versioned_item)
