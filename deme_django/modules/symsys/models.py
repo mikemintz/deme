@@ -15,9 +15,9 @@ class SymsysAffiliate(Person):
     original_last_name = models.CharField(max_length=255)
     original_suffix = models.CharField(max_length=255, blank=True)
 
-    first_affiliation_year = models.PositiveIntegerField(null=True, blank=True)
-    bs_graduation_year = models.PositiveIntegerField(null=True, blank=True)
-    ms_graduation_year = models.PositiveIntegerField(blank=True, null=True)
+    first_affiliation_year = models.PositiveIntegerField(null=True, blank=True, default=None) #TODO resolve issue where NULL doesn't imply blanked item
+    bs_graduation_year = models.PositiveIntegerField(null=True, blank=True, default=None) #TODO resolve issue where NULL doesn't imply blanked item
+    ms_graduation_year = models.PositiveIntegerField(null=True, blank=True, default=None) #TODO resolve issue where NULL doesn't imply blanked item
 
     academic_title = models.CharField(max_length=255, blank=True, choices=[("Assistant Professor", "Assistant Professor"), ("Associate Professor", "Associate Professor"), ("Associate Professor (Research)", "Associate Professor (Research)"), ("Consulting Assistant Professor", "Consulting Assistant Professor"), ("Consulting Associate Professor", "Consulting Associate Professor"), ("Consulting Professor", "Consulting Professor"), ("Engineering Research Associate", "Engineering Research Associate"), ("Executive Director", "Executive Director"), ("Lecturer", "Lecturer"), ("Professor", "Professor"), ("Professor Emeritus", "Professor Emeritus"), ("Senior Lecturer", "Senior Lecturer"), ("Senior Research Engineer", "Senior Research Engineer"), ("Student Services Officer", "Student Services Officer"), ("University Affiliate", "University Affiliate"), ("Wasow Visiting Lecturer", "Wasow Visiting Lecturer"), ("Web Design", "Web Design"),])
     admin_title = models.CharField(max_length=255, blank=True, choices=[("Advising Fellow", "Advising Fellow"), ("AF", "AF"), ("Associate Director", "Associate Director"), ("Director Emeritus", "Director Emeritus"), ("Graduate Studies Director", "Graduate Studies Director"), ("Program Director", "Program Director"), ("Student Services Officer", "Student Services Officer"), ("Student Services Officer (on leave)", "Student Services Officer (on leave)"), ("Web Developer", "Web Developer"), ("Webmaster", "Webmaster"), ("Webmaster (2003-2004)", "Webmaster (2003-2004)"),])
@@ -48,8 +48,8 @@ class SymsysAffiliate(Person):
     ms_thesis_url = models.CharField(max_length=255, blank=True)
     ms_idt = models.CharField(max_length=255, blank=True)
 
-    then_image = models.ForeignKey(ImageDocument, related_name='symsysaffiliates_with_then_image', blank=True, null=True)
-    now_image = models.ForeignKey(ImageDocument, related_name='symsysaffiliates_with_now_image', blank=True, null=True)
+    then_image = models.ForeignKey(ImageDocument, related_name='symsysaffiliates_with_then_image', null=True, blank=True, default=None) #TODO resolve issue where NULL doesn't imply blanked item
+    now_image = models.ForeignKey(ImageDocument, related_name='symsysaffiliates_with_now_image', null=True, blank=True, default=None) #TODO resolve issue where NULL doesn't imply blanked item
 
 
 class Event(HtmlDocument):
@@ -66,7 +66,7 @@ class Advertisement(Document):
     introduced_abilities = frozenset(['view contact_info', 'view expires_at', 'edit contact_info', 'edit expires_at'])
     introduced_global_abilities = frozenset()
     contact_info = models.TextField()
-    expires_at = models.DateTimeField(blank=True, null=True)
+    expires_at = models.DateTimeField(null=True, blank=True, default=None) #TODO resolve issue where NULL doesn't imply blanked item
 
 
 class TextAdvertisement(TextDocument, Advertisement):
