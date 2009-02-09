@@ -199,7 +199,7 @@ class Item(models.Model):
         itemversion = type(self).Version.objects.get(current_item=self, version_number=version_number)
         fields = {}
         for field in itemversion._meta.fields:
-            if not field.primary_key:
+            if not (field.primary_key or isinstance(field, models.OneToOneField)):
                 try:
                     fields[field.name] = getattr(itemversion, field.name)
                 except ObjectDoesNotExist:
@@ -219,7 +219,7 @@ class Item(models.Model):
         itemversion.current_item_id = self.pk
         fields = {}
         for field in self._meta.fields:
-            if not field.primary_key:
+            if not (field.primary_key or isinstance(field, models.OneToOneField)):
                 try:
                     fields[field.name] = getattr(self, field.name)
                 except ObjectDoesNotExist:
@@ -266,7 +266,7 @@ class Item(models.Model):
         # Set all non-special fields to null
         self.destroyed = True
         for field in self._meta.fields:
-            if field.primary_key:
+            if field.primary_key or isinstance(field, models.OneToOneField):
                 continue
             elif field.name in ('version_number', 'item_type', 'trashed', 'destroyed'):
                 continue
@@ -285,7 +285,6 @@ class Item(models.Model):
         CollectionItemPermission.objects.filter(collection=self).delete()
         AgentGlobalPermission.objects.filter(agent=self).delete()
         CollectionGlobalPermission.objects.filter(collection=self).delete()
-        #TODO if you destroy a comment or membership (or anything with immutable fields) think about the consequences
         self._after_destroy(agent)
     destroy.alters_data = True
 
@@ -957,8 +956,9 @@ class Membership(Item):
 
     def _after_create(self):
         super(Membership, self)._after_create()
-        # Update the RecursiveMembership to indicate this Membership exists
-        RecursiveMembership.recursive_add_membership(self)
+        if not self.collection.trashed:
+            # Update the RecursiveMembership to indicate this Membership exists
+            RecursiveMembership.recursive_add_membership(self)
         # Create an AddMemberComment to indicate a member was added to the collection
         add_member_comment = AddMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
         add_member_comment.save_versioned(updater=self.creator)
@@ -975,8 +975,9 @@ class Membership(Item):
 
     def _after_untrash(self, agent):
         super(Membership, self)._after_untrash(agent)
-        # Update the RecursiveMembership to indicate this Membership exists
-        RecursiveMembership.recursive_add_membership(self)
+        if not self.collection.trashed:
+            # Update the RecursiveMembership to indicate this Membership exists
+            RecursiveMembership.recursive_add_membership(self)
         # Create an AddMemberComment to indicate a member was added to the collection
         add_member_comment = AddMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
         add_member_comment.save_versioned(updater=agent)
@@ -1308,6 +1309,13 @@ class Comment(Item):
             smtp_connection = SMTPConnection()
             smtp_connection.send_messages(messages)
     _after_create.alters_data = True
+
+    def _after_destroy(self, agent):
+        super(Comment, self)._after_destroy(agent)
+        # Update the RecursiveComment to indicate this Membership is gone
+        RecursiveComment.recursive_remove_comment(self)
+    _after_destroy.alters_data = True
+
 
 
 class TextComment(TextDocument, Comment):
@@ -1761,11 +1769,25 @@ class RecursiveComment(models.Model):
         """
         Update the table to reflect that the given comment was created.
         """
+        if comment.destroyed:
+            raise Exception("Cannot call recursive_add_comment on destroyed comment") #TODO what do do here? can it happen?
         parent = comment.item
         ancestors = Item.objects.filter(Q(pk__in=RecursiveComment.objects.filter(child=parent).values('parent').query)
                                         | Q(pk=parent.pk))
         for ancestor in ancestors:
             RecursiveComment(parent=ancestor, child=comment).save()
+
+    @classmethod
+    def recursive_remove_comment(cls, comment):
+        """
+        Update the table to reflect that the given comment was destroyed.
+        """
+        proper_ancestors = Item.objects.filter(pk__in=RecursiveComment.objects.filter(child=comment).values('parent').query)
+        descendants = Comment.objects.filter(Q(pk__in=RecursiveComment.objects.filter(parent=comment).values('child').query)
+                                             | Q(pk=comment.pk))
+        edges = RecursiveComment.objects.filter(parent__in=proper_ancestors.values('pk').query, child__in=descendants.values('pk').query)
+        # Remove all connections between proper_ancestors and descendants
+        edges.delete()
 
 
 class RecursiveMembership(models.Model):
