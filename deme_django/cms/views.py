@@ -604,12 +604,12 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
-    def item_blank(self):
+    def item_destroy(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can('trash', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to blank this item")
-        self.item.blank(self.cur_agent)
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to destroy this item")
+        self.item.destroy(self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 

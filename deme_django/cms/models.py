@@ -40,7 +40,7 @@ class ItemMetaClass(models.base.ModelBase):
         # Create the non-versioned class
         for key, value in attrs.iteritems():
             if isinstance(value, models.Field):
-                # We must be able to blank this field
+                # We must be able to nullify this field if we destroy the item
                 value.null = True
                 if not value.has_default():
                     if isinstance(value, models.DateTimeField):
@@ -140,7 +140,7 @@ class Item(models.Model):
     version_number = models.PositiveIntegerField(_('version number'), default=1, editable=False)
     item_type      = models.CharField(_('item type'), max_length=255, editable=False)
     trashed        = models.BooleanField(_('trashed'), default=False, editable=False, db_index=True)
-    blanked        = models.BooleanField(_('blanked'), default=False, editable=False)
+    destroyed      = models.BooleanField(_('destroyed'), default=False, editable=False)
     creator        = models.ForeignKey('Agent', related_name='items_created', default='', editable=False, verbose_name=_('creator'), null=True)
     created_at     = models.DateTimeField(_('created at'), default=datetime.datetime.utcfromtimestamp(0), editable=False, null=True)
     name           = models.CharField(_('name'), max_length=255, default='Untitled', null=True)
@@ -193,7 +193,7 @@ class Item(models.Model):
         Set the fields of self to what they were at the given version number.
         This method does not make any database writes.
         """
-        if self.blanked:
+        if self.destroyed:
             self.version_number = int(version_number)
             return
         itemversion = type(self).Version.objects.get(current_item=self, version_number=version_number)
@@ -255,25 +255,25 @@ class Item(models.Model):
     untrash.alters_data = True
 
     @transaction.commit_on_success
-    def blank(self, agent):
+    def destroy(self, agent):
         """
-        Blank the fields of this item (the specified agent was responsible) and
-        all versions. The item must already be trashed and cannot have already
-        been blanked. This will call _after_blank().
+        Nullify the fields of this item (the specified agent was responsible)
+        and delete all versions. The item must already be trashed and cannot
+        have already been destroyed. This will call _after_destroy().
         """
-        if self.blanked or not self.trashed:
+        if self.destroyed or not self.trashed:
             return
         # Set all non-special fields to null
-        self.blanked = True
+        self.destroyed = True
         for field in self._meta.fields:
             if field.primary_key:
                 continue
-            elif field.name in ('version_number', 'item_type', 'trashed', 'blanked'):
+            elif field.name in ('version_number', 'item_type', 'trashed', 'destroyed'):
                 continue
             elif field.null:
                 setattr(self, field.name, None)
             else:
-                raise Exception("un-nullable field tried to be blanked: %s" % field.name) #TODO what to do?
+                raise Exception("un-nullable field tried to be destroyed: %s" % field.name) #TODO what to do?
         self.save()
         # Remove all versions
         type(self).Version.objects.filter(current_item=self).delete()
@@ -285,9 +285,9 @@ class Item(models.Model):
         CollectionItemPermission.objects.filter(collection=self).delete()
         AgentGlobalPermission.objects.filter(agent=self).delete()
         CollectionGlobalPermission.objects.filter(collection=self).delete()
-        #TODO if you blank a comment or membership (or anything with immutable fields) think about the consequences
-        self._after_blank(agent)
-    blank.alters_data = True
+        #TODO if you destroy a comment or membership (or anything with immutable fields) think about the consequences
+        self._after_destroy(agent)
+    destroy.alters_data = True
 
     @transaction.commit_on_success
     def save_versioned(self, updater, first_agent=False, create_permissions=True, save_time=None, overwrite_latest_version=False, edit_summary=""):
@@ -392,16 +392,16 @@ class Item(models.Model):
         untrash_comment.save_versioned(updater=agent)
     _after_untrash.alters_data = True
 
-    def _after_blank(self, agent):
+    def _after_destroy(self, agent):
         """
-        This method gets called after an item is blanked.
+        This method gets called after an item is destroyed.
         
-        Item types that want to trigger an action after blank should
+        Item types that want to trigger an action after destroy should
         override this method, making sure to put a call to super at the top,
-        like super(Membership, self)._after_blank()
+        like super(Membership, self)._after_destroy()
         """
-        #TODO Create a BlankComment or something
-    _after_blank.alters_data = True
+        #TODO Create a DestroyComment or something
+    _after_destroy.alters_data = True
 
 
 ###############################################################################
@@ -432,7 +432,7 @@ class Agent(Item):
         verbose_name_plural = _('agents')
 
     # Fields
-    last_online_at = models.DateTimeField(_('last online at'), null=True, blank=True, default=None, editable=False) #TODO resolve issue where NULL doesn't imply blanked item
+    last_online_at = models.DateTimeField(_('last online at'), null=True, blank=True, default=None, editable=False) #TODO resolve issue where NULL doesn't imply destroyed item
 
 
 class AnonymousAgent(Agent):
@@ -1036,7 +1036,7 @@ class DjangoTemplateDocument(TextDocument):
         verbose_name_plural = _('Django template documents')
 
     # Fields
-    layout = models.ForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout')) #TODO resolve issue where NULL doesn't imply blanked item
+    layout = models.ForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout')) #TODO resolve issue where NULL doesn't imply destroyed item
     override_default_layout = models.BooleanField(_('override default layout'), default=False)
 
 
@@ -1488,7 +1488,7 @@ class ViewerRequest(Item):
     viewer       = models.CharField(_('viewer'), max_length=255)
     action       = models.CharField(_('action'), max_length=255)
     # If aliased_item is null, it is a collection action
-    aliased_item = models.ForeignKey(Item, related_name='viewer_requests', null=True, blank=True, default=None, verbose_name=_('aliased item')) #TODO resolve issue where NULL doesn't imply blanked item
+    aliased_item = models.ForeignKey(Item, related_name='viewer_requests', null=True, blank=True, default=None, verbose_name=_('aliased item')) #TODO resolve issue where NULL doesn't imply destroyed item
     query_string = models.CharField(_('query string'), max_length=1024, blank=True)
     format       = models.CharField(_('format'), max_length=255, default='html')
 
@@ -1523,7 +1523,7 @@ class Site(ViewerRequest):
 
     # Fields
     hostname = models.CharField(_('hostname'), max_length=255, unique=True)
-    default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout')) #TODO resolve issue where NULL doesn't imply blanked item
+    default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout')) #TODO resolve issue where NULL doesn't imply destroyed item
 
 
 class CustomUrl(ViewerRequest):

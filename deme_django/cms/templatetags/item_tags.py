@@ -342,7 +342,7 @@ class ItemHeader(template.Node):
         copy_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'copy'}) + '?version=%s' % version_number
         trash_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'trash'}) + '?redirect=%s' % urlquote(context['full_path'])
         untrash_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'untrash'}) + '?redirect=%s' % urlquote(context['full_path'])
-        blank_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'blank'}) + '?redirect=%s' % urlquote(context['full_path'])
+        destroy_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'destroy'}) + '?redirect=%s' % urlquote(context['full_path'])
 
         result.append('<div class="crumbs">')
 
@@ -361,7 +361,7 @@ class ItemHeader(template.Node):
             result.append("""<a href="#" onclick="this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('trash', 16), "Untrash" if item.trashed else "Trash"))
             result.append("""</form>""")
             if item.trashed:
-                result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % blank_url)
+                result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % destroy_url)
                 result.append("""<a href="#" onclick="this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('trash', 16), "Blank"))
                 result.append("""</form>""")
         result.append('</div>')
@@ -412,8 +412,8 @@ class ItemHeader(template.Node):
             result.append('Description: %s' % escape(item.description))
         result.append('</div>')
 
-        if item.blanked:
-            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is blanked</div>')
+        if item.destroyed:
+            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is destroyed</div>')
         elif item.trashed:
             result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is trashed</div>')
 
@@ -657,7 +657,7 @@ class SubclassFieldsBox(template.Node):
             if isinstance(field, (models.OneToOneField, models.ManyToManyField)):
                 continue
             fields.append(field)
-        if item.blanked or not fields:
+        if item.destroyed or not fields:
             return ''
         fields.sort(key=lambda x:x.name)
         result = []
