@@ -60,6 +60,7 @@ Interface
 * We should probably add back all the margins on <p> and stuff (look at base.css .regular_css for a start)
 * Some sort of arrows in the side-by-side comment interface, or just click->highlight/scroll
 * Include hCard in user profiles
+* Get rid of prototype dependence by redoing the autocompleter
 
 Documentation
 -------------
