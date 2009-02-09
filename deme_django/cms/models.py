@@ -15,7 +15,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
+__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DestroyComment', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
 
 ###############################################################################
 # Item framework
@@ -400,7 +400,9 @@ class Item(models.Model):
         override this method, making sure to put a call to super at the top,
         like super(Membership, self)._after_destroy()
         """
-        #TODO Create a DestroyComment or something
+        # Create a DestroyComment
+        destroy_comment = DestroyComment(item=self, item_version_number=self.version_number)
+        destroy_comment.save_versioned(updater=agent)
     _after_destroy.alters_data = True
 
 
@@ -811,7 +813,8 @@ class Subscription(Item):
     If notify_text=True, TextComments will be included.
     
     If notify_edit=True, EditComments, TrashComments, UntrashComments,
-    AddMemberComments, and RemoveMemberComments will be included.
+    DestroyComments, AddMemberComments, and RemoveMemberComments will be
+    included.
     """
 
     # Setup
@@ -1193,6 +1196,8 @@ class Comment(Item):
             return Q(notify_edit=True)
         elif isinstance(self, TrashComment):
             return Q(notify_edit=True)
+        elif isinstance(self, DestroyComment):
+            return Q(notify_edit=True)
         elif isinstance(self, UntrashComment):
             return Q(notify_edit=True)
         elif isinstance(self, AddMemberComment):
@@ -1254,6 +1259,9 @@ class Comment(Item):
         elif isinstance(self, UntrashComment):
             subject = 'Re: [Untrashed] %s' % (item_name,)
             body = '%s untrashed %s\n%s' % (creator_name, item_name, item_url)
+        elif isinstance(self, DestroyComment):
+            subject = 'Re: [Destroyed] %s' % (item_name,)
+            body = '%s destroyed %s\n%s' % (creator_name, item_name, item_url)
         elif isinstance(self, AddMemberComment):
             subject = 'Re: [Member Added] %s' % (item_name,)
             body = '%s added a member to %s\n%s' % (creator_name, item_name, item_url)
@@ -1366,6 +1374,23 @@ class UntrashComment(Comment):
     class Meta:
         verbose_name = _('untrash comment')
         verbose_name_plural = _('untrash comments')
+
+
+class DestroyComment(Comment):
+    """
+    A DestroyComment is a Comment that is automatically generated whenever
+    an agent destroys an item. The commented item is the item that was
+    destroyed, and the commented item version number is the latest version
+    number at the time of the destroying.
+    """
+
+    # Setup
+    immutable_fields = Comment.immutable_fields
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('destroy comment')
+        verbose_name_plural = _('destroy comments')
 
 
 class AddMemberComment(Comment):

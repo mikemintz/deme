@@ -44,16 +44,16 @@ Here is the major caveat. Imagine there is a student and a class. We must repres
 Deleting items
 ^^^^^^^^^^^^^^
 
-There are two ways of deleting items: trashing and deleting. Neither of these methods removes any rows from the database. Trashing is recoverable, deleting is not. The user interface ensures that trashing happens before deleting.
+There are two ways of deleting items: trashing and destroying. Neither of these methods removes any rows from the database. Trashing is recoverable, destroying is not. The user interface ensures that trashing happens before destroying.
 
 * **Trashing:** If an agent trashes an item, it sets the trashed field to true. An agent can recover the item by untrashing it, which sets the trashed field back to false. Each time this happens, the version does not change, but a TrashComment or UntrashComment is automatically generated to log when the item was around. Trashed items can still be viewed and edited as normally. The major difference between a trashed and untrashed item is that when an item is trashed, it will not be returned as the result of queries (unless the query specifically requests trashed items). For example, when you look at the list of students in a class, it will only show students that are untrashed with classmemberships that are untrashed.
-* **Deleting:** We have not fully implemented deleting yet. The idea is that after an item is trashed, you can permanently nullify all of its fields (and/or the fields in its versions) so that it is impossible to recover (but keep trashed=true).
+* **Destroying:** After an item is trashed, you can permanently nullify all of its fields (and/or the fields in its versions) so that it is impossible to recover (but keep trashed=true). A DestroyComment is automatically generated to log when the item was around.
 
-  Our solution is as follows. We allow any field to have the special NULL value from SQL. The application (not the database) ensures that fields only take on these values when the item is destroyed, and never otherwise. Thus, to destroy an item is to set every field to NULL, and set destroyed=True (and leave alone id, item_type, and trashed, version_number). Destroying an item also removes all permissions and versions of the item. After an item is destroyed, nobody can make changes (in particular, it cannot be untrashed or edited).
+  Our solution is as follows. We allow any field to have the special NULL value from SQL. The application (not the database) ensures that fields only take on these values when the item is destroyed, and never otherwise (I haven't finished making sure this happens yet). Thus, to destroy an item is to set every field to NULL, and set destroyed=True (and leave alone id, item_type, and trashed, version_number). Destroying an item also removes all permissions and versions of the item. After an item is destroyed, nobody can make changes (in particular, it cannot be untrashed or edited).
   
   Normally, having NULL values makes the code much more complex and prone to bugs, since the developer has to write a lot of checks for NULL. For example, to display the name of the creator of an item, the developer would have to write something like ``if (item.creator != NULL && item.creator.name != NULL) ...``. Since we already do all of this up-front error checking in the permission system (to ensure that the logged in agent has permission to view the creator of the item and the name of the creator), all we have to do is modify the permission code so that users cannot view fields (or take any actions) for destroyed items. So if an item's creator was destroyed, a simple viewer will just display the creator's name in the same way it would display something it does not have permission to view (a more advanced viewer could check to see if it was destroyed).
 
-  It will also be possible to destroy specific versions of an item. You can destroy any version except for the latest version (if you want to destroy the latest version, just edit the item to make a new version so that the version you want to destroy is now the second-latest). Destroying a version will permanently NULLify all fields in the version.
+  It will also be possible to destroy specific versions of an item (not yet implemented). You can destroy any version except for the latest version (if you want to destroy the latest version, just edit the item to make a new version so that the version you want to destroy is now the second-latest). Destroying a version will permanently NULLify all fields in the version.
 
 Things stored outside the database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -131,7 +131,7 @@ Agents and related item types
   * The ``item`` field is a pointer to the Item that is subscribed to with this Subscription.
   * The ``deep`` field is a boolean, such that when deep=true and the item is a Collection, all comments on all items in the collection (direct or indirect) will be sent in addition to comments on the collection itself.
   * The ``notify_text`` field is a boolean that signifies that TextComments are included in the subscription.
-  * The ``notify_edit`` field is a boolean that signifies that EditComments, TrashComments, UntrashComments, AddMemberComments, and RemoveMemberComments are included in the subscription.
+  * The ``notify_edit`` field is a boolean that signifies that EditComments, TrashComments, UntrashComments, DestroyComments, AddMemberComments, and RemoveMemberComments are included in the subscription.
 
 Collections and related item types
 
@@ -184,6 +184,8 @@ Annotations (Transclusions, Comments, and Excerpts)
 * **TrashComment:** A TrashComment is a Comment that is automatically generated whenever an agent trashes an item. The commented item is the item that was trashed, and the commented item version number is the latest version number at the time of the trashing. It defines no new fields.
 
 * **UntrashComment:** An UntrashComment is a Comment that is automatically generated whenever an agent untrashes an item. The commented item is the item that was trashed, and the commented item version number is the latest version number at the time of the untrashing. It defines no new fields.
+
+* **DestroyComment:** A DestroyComment is a Comment that is automatically generated whenever an agent destroys an item. The commented item is the item that was destroyed, and the commented item version number is the latest version number at the time of the destroying. It defines no new fields.
 
 * **AddMemberComment:** An AddMemberComment is a Comment that is automatically generated whenever an item is added to a collection (via a creation or untrashing of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the add. The ``membership`` field points to the new Membership.
 

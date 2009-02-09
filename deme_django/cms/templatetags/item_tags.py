@@ -258,7 +258,7 @@ def ifagentcanglobal(parser, token):
 # remember this includes trashed comments, which should be displayed differently after calling this
 def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments):
     permission_cache = context['_permission_cache']
-    comment_subclasses = [TextComment, EditComment, TrashComment, UntrashComment, AddMemberComment, RemoveMemberComment]
+    comment_subclasses = [TextComment, EditComment, TrashComment, UntrashComment, DestroyComment, AddMemberComment, RemoveMemberComment]
     comments = []
     if include_recursive_collection_comments:
         if agentcan_global_helper(context, 'do_anything'):
@@ -362,7 +362,7 @@ class ItemHeader(template.Node):
             result.append("""</form>""")
             if item.trashed:
                 result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % destroy_url)
-                result.append("""<a href="#" onclick="this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('trash', 16), "Blank"))
+                result.append("""<a href="#" onclick="this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('trash', 16), "Destroy"))
                 result.append("""</form>""")
         result.append('</div>')
 
@@ -552,6 +552,8 @@ class CommentBox(template.Node):
                     comment_name = '[Trashed]'
                 elif isinstance(comment, UntrashComment):
                     comment_name = '[Untrashed]'
+                elif isinstance(comment, DestroyComment):
+                    comment_name = '[Destroyed]'
                 elif isinstance(comment, AddMemberComment):
                     comment_name = '[Added Member]'
                 elif isinstance(comment, RemoveMemberComment):
@@ -586,6 +588,8 @@ class CommentBox(template.Node):
                     elif isinstance(comment, TrashComment):
                         comment_body = ''
                     elif isinstance(comment, UntrashComment):
+                        comment_body = ''
+                    elif isinstance(comment, DestroyComment):
                         comment_body = ''
                     elif isinstance(comment, AddMemberComment):
                         if agentcan_helper(context, 'view membership', comment):

@@ -29,6 +29,7 @@ Code correctness/consistency/bugs
   - http://code.djangoproject.com/ticket/2227
 * Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun)
 * Make it so you cannot trash certain things, like AnonymousAgent or Admin
+* Figure out a more correct subject line for notification emails that hopefully threads correctly in gmail
 
 Performance
 -----------
