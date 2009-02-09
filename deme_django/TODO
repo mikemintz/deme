@@ -28,6 +28,7 @@ Code correctness/consistency/bugs
 * Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
   - http://code.djangoproject.com/ticket/2227
 * Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun)
+* Make it so you cannot trash certain things, like AnonymousAgent or Admin
 
 Performance
 -----------
@@ -43,9 +44,9 @@ Performance
 
 Features
 --------
-* Deleting items (i.e. blanking)
-  - Do remaining TODOs on whole-item blanking
-  - Figure out specific-version blanking
+* Destroying items
+  - Do remaining TODOs on whole-item destroying
+  - Figure out specific-version destroying
 
 Layout
 ------
@@ -83,7 +84,7 @@ Unusual things to remember
 * Don't forget to update crystal icons for new models
 * If someone has permission to edit the body of an item, we allow them to add transclusions in some situations (TextDocumentViewer.edit)
 * We do not [knowingly] support OneToOneFields and ManyToManyFields in item types
-* Whenever you do anything to modify an item (like save, trash, untrash, blank) you better be in the downcasted version.
+* Whenever you do anything to modify an item (like save, trash, untrash, destroy) you better be in the downcasted version.
 
 
 
