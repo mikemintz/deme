@@ -157,13 +157,13 @@ def get_logged_in_agent(request):
     cur_agent = None
     if cur_agent_id is not None:
         try:
-            cur_agent = Agent.objects.get(pk=cur_agent_id).downcast()
+            cur_agent = Agent.objects.get(trashed=False, pk=cur_agent_id).downcast()
         except ObjectDoesNotExist:
             if 'cur_agent_id' in request.session:
                 del request.session['cur_agent_id']
     if not cur_agent:
         try:
-            cur_agent = AnonymousAgent.objects.all()[0:1].get()
+            cur_agent = AnonymousAgent.objects.filter(trashed=False)[0:1].get()
         except ObjectDoesNotExist:
             raise Exception("You must create an anonymous agent")
     Agent.objects.filter(pk=cur_agent.pk).update(last_online_at=datetime.datetime.now())
