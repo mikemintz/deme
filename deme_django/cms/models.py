@@ -146,47 +146,6 @@ class Item(models.Model):
     name           = models.CharField(_('name'), max_length=255, default='Untitled', null=True)
     description    = models.CharField(_('description'), max_length=255, default='', blank=True, null=True)
 
-    # This is a possible solution to blanking (when you get a blanked item 
-    # from the database, you fill its fields in memory with virtual values).
-    # def __init__(self, *args, **kwargs):
-    #     #TODO think this over more carefully
-    #     super(Item, self).__init__(*args, **kwargs)
-    #     def blank_item(item, depth=0):
-    #         if depth > 3:
-    #             raise Exception("Maximum blank_item recursion depth reached")
-    #         for field in item._meta.fields:
-    #             if field.primary_key:
-    #                 # Don't mess with it?
-    #                 continue
-    #             elif field.name == 'item_type':
-    #                 if item.item_type:
-    #                     continue
-    #                 else:
-    #                     value = type(item).__name__
-    #             elif field.name == 'version_number':
-    #                 value = 1
-    #             elif field.name in ('trashed', 'blanked'):
-    #                 value = True
-    #             elif isinstance(field, models.ForeignKey):
-    #                 # We don't want infinite recursion on creators, so they created themselves
-    #                 if field.name == 'creator' and isinstance(item, Agent):
-    #                     value = item
-    #                 else:
-    #                     value = field.rel.to()
-    #                     blank_item(value, depth + 1)
-    #             else:
-    #                 value = field.get_default()
-    #                 if value == '' and not field.blank:
-    #                     value = '[blanked]'
-    #             if value is None:
-    #                 # nothing we can do about this when we have things like last_online_at
-    #                 pass#raise Exception("blank_item should not find null field %s" % field.name)
-    #             setattr(item, field.name, value)
-    #         if item.pk is None:
-    #             item.pk = 0
-    #     if self.blanked:
-    #         blank_item(self)
-
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.name)
 
