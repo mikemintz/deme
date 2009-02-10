@@ -142,6 +142,8 @@ discuss_group = Group(name="Deme Dev Discussion")
 discuss_group.save_versioned(updater=admin)
 Membership(item=mike_person, collection=discuss_group).save_versioned(updater=admin)
 Membership(item=todd_person, collection=discuss_group).save_versioned(updater=admin)
+Subscription(contact_method=mike_email_contact_method, item=discuss_group.folios.get(), deep=True, notify_text=True, notify_edit=True).save_versioned(updater=mike_person)
+Subscription(contact_method=todd_email_contact_method, item=discuss_group.folios.get(), deep=True, notify_text=True, notify_edit=True).save_versioned(updater=todd_person)
 
 #AgentGlobalPermission(agent=anonymous_agent, ability='do_anything', is_allowed=False).save()
 EveryoneGlobalPermission(ability='create HtmlDocument', is_allowed=True).save()
