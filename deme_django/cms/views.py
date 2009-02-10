@@ -1,3 +1,5 @@
+#TODO completely clean up code
+
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
 from django.utils.http import urlquote

@@ -1,3 +1,5 @@
+#TODO completely clean up code
+
 from django.core.urlresolvers import reverse
 from django import template
 from django.db.models import Q

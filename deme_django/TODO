@@ -46,6 +46,7 @@ Performance
 Features
 --------
 * Destroying items
+  - Figure out how to prevent fields from being null when they shouldn't
   - Do remaining TODOs on whole-item destroying
   - Figure out specific-version destroying
 
