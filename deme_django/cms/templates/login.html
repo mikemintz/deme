@@ -77,8 +77,7 @@
             <th>Login</th>
         </tr>
     {% for agent in login_as_agents %}
-        {% if agent.trashed %}
-        {% else %}
+        {% if agent.active %}
         <tr class="{% cycle 'even' 'odd' %}">
             <td>
                 {% ifagentcan 'view' 'name' agent %}

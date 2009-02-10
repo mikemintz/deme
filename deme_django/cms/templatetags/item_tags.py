@@ -73,7 +73,7 @@ def icon_url(item_type, size=32):
         'relationships':        'apps/proxy',
         'permissions':          'apps/ksysv',
         'edit':                 'apps/kedit',
-        'trash':                'filesystems/trashcan_empty',
+        'delete':               'filesystems/trashcan_empty',
         Agent:                  'apps/personal',
         AuthenticationMethod:   'apps/password',
         ContactMethod:          'apps/kontact',
@@ -114,7 +114,7 @@ def icon_url(item_type, size=32):
     return "/static/crystal_project/%dx%d/%s.png" % (size, size, icon)
 
 @register.simple_tag
-def list_results_navigator(viewer_name, collection, search_query, trashed, offset, limit, n_results, max_pages):
+def list_results_navigator(viewer_name, collection, search_query, active, offset, limit, n_results, max_pages):
     """
     Make an HTML pagination navigator (page number links with prev and next
     links on both sides).
@@ -129,8 +129,8 @@ def list_results_navigator(viewer_name, collection, search_query, trashed, offse
     url_prefix = reverse('item_type_url', kwargs={'viewer': viewer_name}) + '?limit=%s&' % limit
     if search_query:
         url_prefix += 'q=%s&' % search_query
-    if trashed:
-        url_prefix += 'trashed=1&'
+    if not active:
+        url_prefix += 'active=0&'
     if collection:
         url_prefix += 'collection=%s&' % collection.pk
     result = []
@@ -255,10 +255,10 @@ def ifagentcanglobal(parser, token):
         nodelist_false = template.NodeList()
     return IfAgentCanGlobal(bits[1], bits[2], nodelist_true, nodelist_false)
 
-# remember this includes trashed comments, which should be displayed differently after calling this
+# remember this includes inactive comments, which should be displayed differently after calling this
 def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments):
     permission_cache = context['_permission_cache']
-    comment_subclasses = [TextComment, EditComment, TrashComment, UntrashComment, DestroyComment, AddMemberComment, RemoveMemberComment]
+    comment_subclasses = [TextComment, EditComment, DeactivateComment, ReactivateComment, DestroyComment, AddMemberComment, RemoveMemberComment]
     comments = []
     if include_recursive_collection_comments:
         if agentcan_global_helper(context, 'do_anything'):
@@ -266,7 +266,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
         else:
             visible_memberships = permission_cache.filter_items(context['cur_agent'], 'view item', Membership.objects)
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-        members_and_me_pks_query = Item.objects.filter(trashed=False).filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_collection_members(recursive_filter).values('pk').query)).values('pk').query
+        members_and_me_pks_query = Item.objects.filter(active=True).filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_collection_members(recursive_filter).values('pk').query)).values('pk').query
         comment_pks = RecursiveComment.objects.filter(parent__in=members_and_me_pks_query).values_list('child', flat=True)
     else:
         comment_pks = RecursiveComment.objects.filter(parent=item).values_list('child', flat=True)
@@ -340,8 +340,8 @@ class ItemHeader(template.Node):
         permissions_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'itempermissions'})
         edit_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % version_number
         copy_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'copy'}) + '?version=%s' % version_number
-        trash_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'trash'}) + '?redirect=%s' % urlquote(context['full_path'])
-        untrash_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'untrash'}) + '?redirect=%s' % urlquote(context['full_path'])
+        deactivate_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'deactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
+        reactivate_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'reactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
         destroy_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'destroy'}) + '?redirect=%s' % urlquote(context['full_path'])
 
         result.append('<div class="crumbs">')
@@ -356,13 +356,13 @@ class ItemHeader(template.Node):
             result.append('<a href="%s" class="img_button"><img src="%s" /><span>Edit</span></a>' % (edit_url, icon_url('edit', 16)))
         if agentcan_global_helper(context, 'create %s' % item.item_type):
             result.append('<a href="%s" class="img_button"><img src="%s" /><span>Copy</span></a>' % (copy_url, icon_url('copy', 16)))
-        if agentcan_helper(context, 'trash', item):
-            result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % (untrash_url if item.trashed else trash_url))
-            result.append("""<a href="#" onclick="this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('trash', 16), "Untrash" if item.trashed else "Trash"))
+        if agentcan_helper(context, 'delete', item):
+            result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % (deactivate_url if item.active else reactivate_url))
+            result.append("""<a href="#" onclick="this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('delete', 16), "Deactivate" if item.active else "Reactivate"))
             result.append("""</form>""")
-            if item.trashed:
+            if not item.active:
                 result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % destroy_url)
-                result.append("""<a href="#" onclick="this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('trash', 16), "Destroy"))
+                result.append("""<a href="#" onclick="this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('delete', 16), "Destroy"))
                 result.append("""</form>""")
         result.append('</div>')
 
@@ -414,8 +414,8 @@ class ItemHeader(template.Node):
 
         if item.destroyed:
             result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is destroyed</div>')
-        elif item.trashed:
-            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is trashed</div>')
+        elif not item.active:
+            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is inactive</div>')
 
         return '\n'.join(result)
 
@@ -510,7 +510,7 @@ def display_body_with_inline_transclusions(item, is_html):
         format = lambda text: text
     else:
         format = lambda text: urlize(escape(text)).replace('\n', '<br />')
-    transclusions = Transclusion.objects.filter(from_item=item, from_item_version_number=item.version_number, trashed=False, to_item__trashed=False).order_by('-from_item_index')
+    transclusions = Transclusion.objects.filter(from_item=item, from_item_version_number=item.version_number, active=True, to_item__active=True).order_by('-from_item_index')
     result = []
     last_i = None
     for transclusion in transclusions:
@@ -548,10 +548,10 @@ class CommentBox(template.Node):
                 result.append("""<div style="float: right;"><a href="%s?item=%s&item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
                 if isinstance(comment, EditComment):
                     comment_name = '[Edited]'
-                elif isinstance(comment, TrashComment):
-                    comment_name = '[Trashed]'
-                elif isinstance(comment, UntrashComment):
-                    comment_name = '[Untrashed]'
+                elif isinstance(comment, DeactivateComment):
+                    comment_name = '[Deactivated]'
+                elif isinstance(comment, ReactivateComment):
+                    comment_name = '[Reactivated]'
                 elif isinstance(comment, DestroyComment):
                     comment_name = '[Destroyed]'
                 elif isinstance(comment, AddMemberComment):
@@ -577,17 +577,15 @@ class CommentBox(template.Node):
                 if agentcan_helper(context, 'view created_at', comment):
                     result.append('<span title="%s">%s ago</span>' % (comment.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(comment.created_at)))
                 result.append("</div>")
-                if comment.trashed:
-                    comment_body = '[TRASHED]'
-                else:
+                if comment.active:
                     if isinstance(comment, TextComment):
                         if agentcan_helper(context, 'view body', comment):
                             comment_body = escape(comment.body).replace('\n', '<br />')
                     elif isinstance(comment, EditComment):
                         comment_body = escape(comment.description)
-                    elif isinstance(comment, TrashComment):
+                    elif isinstance(comment, DeactivateComment):
                         comment_body = ''
-                    elif isinstance(comment, UntrashComment):
+                    elif isinstance(comment, ReactivateComment):
                         comment_body = ''
                     elif isinstance(comment, DestroyComment):
                         comment_body = ''
@@ -615,6 +613,8 @@ class CommentBox(template.Node):
                             comment_body = ''
                     else:
                         comment_body = ''
+                else:
+                    comment_body = '[INACTIVE]'
                 result.append("""<div class="comment_body">%s</div>""" % comment_body)
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")

@@ -157,13 +157,13 @@ def get_logged_in_agent(request):
     cur_agent = None
     if cur_agent_id is not None:
         try:
-            cur_agent = Agent.objects.get(trashed=False, pk=cur_agent_id).downcast()
+            cur_agent = Agent.objects.get(active=True, pk=cur_agent_id).downcast()
         except ObjectDoesNotExist:
             if 'cur_agent_id' in request.session:
                 del request.session['cur_agent_id']
     if not cur_agent:
         try:
-            cur_agent = AnonymousAgent.objects.filter(trashed=False)[0:1].get()
+            cur_agent = AnonymousAgent.objects.filter(active=True)[0:1].get()
         except ObjectDoesNotExist:
             raise Exception("You must create an anonymous agent")
     Agent.objects.filter(pk=cur_agent.pk).update(last_online_at=datetime.datetime.now())
@@ -233,11 +233,11 @@ class Viewer(object):
         self.request = request # FOR NOW
         if self.noun == None:
             if self.action == None:
-                self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'trash'}.get(self.method, 'list')
+                self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'deactivate'}.get(self.method, 'list')
             self.item = None
         else:
             if self.action == None:
-                self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'trash'}.get(self.method, 'show')
+                self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'deactivate'}.get(self.method, 'show')
             try:
                 self.item = Item.objects.get(pk=self.noun)
                 self.item = self.item.downcast()
@@ -399,7 +399,7 @@ class ItemViewer(Viewer):
             collection = None
         offset = int(self.request.GET.get('offset', 0))
         limit = int(self.request.GET.get('limit', 100))
-        trashed = self.request.GET.get('trashed', None) == '1'
+        active = self.request.GET.get('active', '1') == '1'
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in item_type_name_dict.itervalues() if self.accepted_item_type in x.__bases__ + (x,)]
         item_types.sort(key=lambda x:x['name'].lower())
         self.context['search_query'] = self.request.GET.get('q', '')
@@ -424,8 +424,8 @@ class ItemViewer(Viewer):
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=collection.all_contained_collection_members(recursive_filter).values('pk').query)
         listable_items = self.permission_cache.filter_items(self.cur_agent, 'view name', items)
-        n_opposite_trashed_items = listable_items.filter(trashed=(not trashed)).count()
-        listable_items = listable_items.filter(trashed=trashed)
+        n_opposite_active_items = listable_items.filter(active=(not active)).count()
+        listable_items = listable_items.filter(active=active)
         listable_items = listable_items.order_by('id')
         n_items = items.count()
         n_listable_items = listable_items.count()
@@ -438,15 +438,15 @@ class ItemViewer(Viewer):
         self.context['items'] = items
         self.context['n_items'] = n_items
         self.context['n_listable_items'] = n_listable_items
-        self.context['n_unlistable_items'] = n_items - n_listable_items - n_opposite_trashed_items
-        self.context['n_opposite_trashed_items'] = n_opposite_trashed_items
+        self.context['n_unlistable_items'] = n_items - n_listable_items - n_opposite_active_items
+        self.context['n_opposite_active_items'] = n_opposite_active_items
         self.context['offset'] = offset
         self.context['limit'] = limit
         self.context['list_start_i'] = offset + 1
         self.context['list_end_i'] = min(offset + limit, n_listable_items)
-        self.context['trashed'] = trashed
+        self.context['active'] = active
         self.context['collection'] = collection
-        self.context['all_collections'] = self.permission_cache.filter_items(self.cur_agent, 'view name', Collection.objects.filter(trashed=False)).order_by('name')
+        self.context['all_collections'] = self.permission_cache.filter_items(self.cur_agent, 'view name', Collection.objects.filter(active=True)).order_by('name')
         return HttpResponse(template.render(self.context))
 
     def type_new(self):
@@ -510,7 +510,7 @@ class ItemViewer(Viewer):
             manager = getattr(self.item, name)
             relationship_set = {}
             relationship_set['name'] = name
-            viewable_items = manager.filter(trashed=False)
+            viewable_items = manager.filter(active=True)
             if viewable_items.count() == 0:
                 continue
             relationship_item_type = manager.model
@@ -586,28 +586,28 @@ class ItemViewer(Viewer):
             self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             return HttpResponse(template.render(self.context))
 
-    def item_trash(self):
+    def item_deactivate(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
-        if not self.cur_agent_can('trash', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to trash this item")
-        self.item.trash(self.cur_agent)
+        if not self.cur_agent_can('delete', self.item):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to deactivate this item")
+        self.item.deactivate(self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
-    def item_untrash(self):
+    def item_reactivate(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
-        if not self.cur_agent_can('trash', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to untrash this item")
-        self.item.untrash(self.cur_agent)
+        if not self.cur_agent_can('delete', self.item):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to reactivate this item")
+        self.item.reactivate(self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
     def item_destroy(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
-        if not self.cur_agent_can('trash', self.item):
+        if not self.cur_agent_can('delete', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to destroy this item")
         self.item.destroy(self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -900,8 +900,8 @@ class AuthenticationMethodViewer(ItemViewer):
                     except ObjectDoesNotExist:
                         # No OpenidAuthenticationMethod has this openid_url.
                         return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID")
-                    if openid_authentication_method.trashed or openid_authentication_method.agent.trashed: 
-                        # The Agent or OpenidAuthenticationMethod is trashed.
+                    if not openid_authentication_method.active or not openid_authentication_method.agent.active: 
+                        # The Agent or OpenidAuthenticationMethod is inactive.
                         return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID")
                     self.request.session['cur_agent_id'] = openid_authentication_method.agent.pk
                     return HttpResponseRedirect(redirect)
@@ -915,7 +915,7 @@ class AuthenticationMethodViewer(ItemViewer):
                     return self.render_error(HttpResponseBadRequest, "Authentication Failed", "Invalid OpenID status: %s" % escape(openid_response.status))
             # Otherwise, return the login.html page.
             else:
-                login_as_agents = Agent.objects.filter(trashed=False).order_by('name')
+                login_as_agents = Agent.objects.filter(active=True).order_by('name')
                 login_as_agents = self.permission_cache.filter_items(self.cur_agent, 'login_as', login_as_agents)
                 self.permission_cache.mass_learn(self.cur_agent, 'view name', login_as_agents)
                 template = loader.get_template('login.html')
@@ -940,8 +940,8 @@ class AuthenticationMethodViewer(ItemViewer):
                 except ObjectDoesNotExist:
                     # No PasswordAuthenticationMethod has this username.
                     return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-                if password_authentication_method.trashed or password_authentication_method.agent.trashed:
-                    # The Agent or PasswordAuthenticationMethod is trashed.
+                if not password_authentication_method.active or not password_authentication_method.agent.active:
+                    # The Agent or PasswordAuthenticationMethod is inactive.
                     return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
                 if password_authentication_method.check_nonced_password(hashed_password, nonce):
                     self.request.session['cur_agent_id'] = password_authentication_method.agent.pk
@@ -958,8 +958,8 @@ class AuthenticationMethodViewer(ItemViewer):
                         except ObjectDoesNotExist:
                             # There is no Agent with the specified id.
                             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-                        if new_agent.trashed:
-                            # The specified agent is trashed.
+                        if not new_agent.active:
+                            # The specified agent is inactive.
                             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
                         if self.permission_cache.agent_can(self.cur_agent, 'login_as', new_agent):
                             self.request.session['cur_agent_id'] = new_agent.pk
@@ -1001,8 +1001,8 @@ class WebauthAuthenticationMethodViewer(ItemViewer):
         except ObjectDoesNotExist:
             # No WebauthAuthenticationMethod has this username.
             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that webauth username")
-        if webauth_authentication_method.trashed or webauth_authentication_method.agent.trashed: 
-            # The Agent or WebauthAuthenticationMethod is trashed.
+        if not webauth_authentication_method.active or not webauth_authentication_method.agent.active: 
+            # The Agent or WebauthAuthenticationMethod is inactive.
             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that webauth username")
         self.request.session['cur_agent_id'] = webauth_authentication_method.agent.pk
         redirect = self.request.GET['redirect']
@@ -1042,7 +1042,7 @@ class ViewerRequestViewer(ItemViewer):
         site, custom_urls = self.item.calculate_full_path()
         self.context['site'] = site
         self.context['custom_urls'] = custom_urls
-        self.context['child_urls'] = self.item.child_urls.filter(trashed=False)
+        self.context['child_urls'] = self.item.child_urls.filter(active=True)
         self.context['addsubpath_form'] = AddSubPathForm(initial={'parent_url':self.item.pk})
         template = loader.get_template('viewerrequest/show.html')
         return HttpResponse(template.render(self.context))
@@ -1062,15 +1062,15 @@ class ViewerRequestViewer(ItemViewer):
         if form.is_valid():
             new_item = form.save(commit=False)
             new_item.save_versioned(updater=self.cur_agent)
-            if new_item.trashed:
-                new_item.untrash(self.cur_agent)
+            if not new_item.active:
+                new_item.reactivate(self.cur_agent)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
             return HttpResponseRedirect(redirect)
         else:
             site, custom_urls = self.item.calculate_full_path()
             self.context['site'] = site
             self.context['custom_urls'] = custom_urls
-            self.context['child_urls'] = self.item.child_urls.filter(trashed=False)
+            self.context['child_urls'] = self.item.child_urls.filter(active=True)
             self.context['addsubpath_form'] = form
             template = loader.get_template('viewerrequest/show.html')
             return HttpResponse(template.render(self.context))
@@ -1082,14 +1082,14 @@ class CollectionViewer(ItemViewer):
 
     def item_show(self):
         memberships = self.item.child_memberships
-        memberships = memberships.filter(trashed=False)
-        memberships = memberships.filter(item__trashed=False)
+        memberships = memberships.filter(active=True)
+        memberships = memberships.filter(item__active=True)
         memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', memberships)
         memberships = memberships.select_related('item')
         if memberships:
             self.permission_cache.mass_learn(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
         self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can(self.cur_agent, 'view name', x.item), x.item.name))
-        self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(trashed=False, item=self.cur_agent))
+        self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
         self.context['addmember_form'] = NewMembershipForm()
         template = loader.get_template('collection/show.html')
         return HttpResponse(template.render(self.context))
@@ -1104,8 +1104,8 @@ class CollectionViewer(ItemViewer):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add this member to this Collection")
         try:
             membership = Membership.objects.get(collection=self.item, item=member)
-            if membership.trashed:
-                membership.untrash(self.cur_agent)
+            if not membership.active:
+                membership.reactivate(self.cur_agent)
         except:
             membership = Membership(collection=self.item, item=member)
             membership.save_versioned(updater=self.cur_agent)
@@ -1122,8 +1122,8 @@ class CollectionViewer(ItemViewer):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to remove this member from this Collection")
         try:
             membership = Membership.objects.get(collection=self.item, item=member)
-            if not membership.trashed:
-                membership.trash(self.cur_agent)
+            if membership.active:
+                membership.deactivate(self.cur_agent)
         except:
             pass
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -1397,7 +1397,7 @@ class DemeSettingViewer(ItemViewer):
     def type_modify(self):
         if not self.cur_agent_can_global('do_anything'):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify DemeSettings")
-        self.context['deme_settings'] = DemeSetting.objects.filter(trashed=False).order_by('key')
+        self.context['deme_settings'] = DemeSetting.objects.filter(active=True).order_by('key')
         template = loader.get_template('demesetting/modify.html')
         return HttpResponse(template.render(self.context))
 

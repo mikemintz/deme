@@ -334,12 +334,7 @@
     {% endfor %}
 
     {% if item.then_image %}
-    {% if item.then_image.trashed %}
-    <tr>
-        <th>Then image:</th>
-        <td>[Trashed]</td>
-    </tr>
-    {% else %}
+    {% if item.then_image.active %}
     {% ifagentcan 'view' 'then_image' item %}
     {% ifagentcan 'view' 'datafile' item.then_image %}
     <tr>
@@ -348,16 +343,16 @@
     </tr>
     {% endifagentcan %}
     {% endifagentcan %}
+    {% else %}
+    <tr>
+        <th>Then image:</th>
+        <td>Inactive</td>
+    </tr>
     {% endif %}
     {% endif %}
 
     {% if item.now_image %}
-    {% if item.now_image.trashed %}
-    <tr>
-        <th>Now image:</th>
-        <td>[Trashed]</td>
-    </tr>
-    {% else %}
+    {% if item.now_image.active %}
     {% ifagentcan 'view' 'now_image' item %}
     {% ifagentcan 'view' 'datafile' item.now_image %}
     <tr>
@@ -366,6 +361,11 @@
     </tr>
     {% endifagentcan %}
     {% endifagentcan %}
+    {% else %}
+    <tr>
+        <th>Now image:</th>
+        <td>Inactive</td>
+    </tr>
     {% endif %}
     {% endif %}
 

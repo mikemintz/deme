@@ -18,6 +18,6 @@ class SymsysAffiliateViewer(ItemViewer):
             visible_memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', Membership.objects)
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         self.context['containing_collections'] = self.item.ancestor_collections(recursive_filter)
-        self.context['contact_methods'] = self.permission_cache.filter_items(self.cur_agent, 'view agent', self.item.contact_methods).filter(trashed=False)
+        self.context['contact_methods'] = self.permission_cache.filter_items(self.cur_agent, 'view agent', self.item.contact_methods).filter(active=True)
         return HttpResponse(template.render(self.context))
 

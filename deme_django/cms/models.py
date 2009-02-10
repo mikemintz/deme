@@ -15,7 +15,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DestroyComment', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'TrashComment', 'UntrashComment', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
+__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DeactivateComment', 'DestroyComment', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ReactivateComment', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
 
 ###############################################################################
 # Item framework
@@ -129,7 +129,7 @@ class Item(models.Model):
     # Setup
     __metaclass__ = ItemMetaClass
     immutable_fields = frozenset()
-    introduced_abilities = frozenset(['do_anything', 'comment_on', 'trash', 'view name', 'view description',
+    introduced_abilities = frozenset(['do_anything', 'comment_on', 'delete', 'view name', 'view description',
                                       'view creator', 'view created_at', 'edit name', 'edit description'])
     introduced_global_abilities = frozenset(['do_anything'])
     class Meta:
@@ -139,7 +139,7 @@ class Item(models.Model):
     # Fields
     version_number = models.PositiveIntegerField(_('version number'), default=1, editable=False)
     item_type      = models.CharField(_('item type'), max_length=255, editable=False)
-    trashed        = models.BooleanField(_('trashed'), default=False, editable=False, db_index=True)
+    active         = models.BooleanField(_('active'), default=True, editable=False, db_index=True)
     destroyed      = models.BooleanField(_('destroyed'), default=False, editable=False)
     creator        = models.ForeignKey('Agent', related_name='items_created', default='', editable=False, verbose_name=_('creator'), null=True)
     created_at     = models.DateTimeField(_('created at'), default=datetime.datetime.utcfromtimestamp(0), editable=False, null=True)
@@ -166,8 +166,7 @@ class Item(models.Model):
 
     def ancestor_collections(self, recursive_filter=None):
         """
-        Return all untrashed Collections containing self directly or
-        indirectly.
+        Return all active Collections containing self directly or indirectly.
         
         A Collection does not indirectly contain itself by default.
         
@@ -179,14 +178,14 @@ class Item(models.Model):
         recursive_memberships = RecursiveMembership.objects.filter(child=self)
         if recursive_filter is not None:
             recursive_memberships = recursive_memberships.filter(recursive_filter)
-        return Collection.objects.filter(trashed=False, pk__in=recursive_memberships.values('parent').query)
+        return Collection.objects.filter(active=True, pk__in=recursive_memberships.values('parent').query)
 
     def all_comments(self):
         """
-        Return all untrashed Comments made directly or indirectly on self.
+        Return all active Comments made directly or indirectly on self.
         """
         recursive_comment_membership = RecursiveComment.objects.filter(parent=self)
-        return Comment.objects.filter(trashed=False, pk__in=recursive_comment_membership.values('child').query)
+        return Comment.objects.filter(active=True, pk__in=recursive_comment_membership.values('child').query)
 
     def copy_fields_from_version(self, version_number):
         """
@@ -229,46 +228,46 @@ class Item(models.Model):
     copy_fields_to_itemversion.alters_data = True
 
     @transaction.commit_on_success
-    def trash(self, agent):
+    def deactivate(self, agent):
         """
-        Trash the current Item (the specified agent was responsible). This
-        will call _after_trash() if the item was previously untrashed.
+        Deactivate the current Item (the specified agent was responsible). This
+        will call _after_deactivate() if the item was previously active.
         """
-        if self.trashed:
+        if not self.active:
             return
-        self.trashed = True
+        self.active = False
         self.save()
-        self._after_trash(agent)
-    trash.alters_data = True
+        self._after_deactivate(agent)
+    deactivate.alters_data = True
 
     @transaction.commit_on_success
-    def untrash(self, agent):
+    def reactivate(self, agent):
         """
-        Untrash the current Item (the specified agent was responsible). This
-        will call _after_untrash() if the item was previously trashed.
+        Reactivate the current Item (the specified agent was responsible). This
+        will call _after_reactivate() if the item was previously inactive.
         """
-        if not self.trashed:
+        if self.active:
             return
-        self.trashed = False
+        self.active = True
         self.save()
-        self._after_untrash(agent)
-    untrash.alters_data = True
+        self._after_reactivate(agent)
+    reactivate.alters_data = True
 
     @transaction.commit_on_success
     def destroy(self, agent):
         """
         Nullify the fields of this item (the specified agent was responsible)
-        and delete all versions. The item must already be trashed and cannot
+        and delete all versions. The item must already be inactive and cannot
         have already been destroyed. This will call _after_destroy().
         """
-        if self.destroyed or not self.trashed:
+        if self.destroyed or self.active:
             return
         # Set all non-special fields to null
         self.destroyed = True
         for field in self._meta.fields:
             if field.primary_key or isinstance(field, models.OneToOneField):
                 continue
-            elif field.name in ('version_number', 'item_type', 'trashed', 'destroyed'):
+            elif field.name in ('version_number', 'item_type', 'active', 'destroyed'):
                 continue
             elif field.null:
                 setattr(self, field.name, None)
@@ -365,31 +364,31 @@ class Item(models.Model):
         pass
     _after_create.alters_data = True
 
-    def _after_trash(self, agent):
+    def _after_deactivate(self, agent):
         """
-        This method gets called after an item is trashed.
+        This method gets called after an item is deactivated.
         
-        Item types that want to trigger an action after trash should
+        Item types that want to trigger an action after deactivation should
         override this method, making sure to put a call to super at the top,
-        like super(Membership, self)._after_trash()
+        like super(Membership, self)._after_deactivate()
         """
-        # Create a TrashComment
-        trash_comment = TrashComment(item=self, item_version_number=self.version_number)
-        trash_comment.save_versioned(updater=agent)
-    _after_trash.alters_data = True
+        # Create a DeactivateComment
+        deactivate_comment = DeactivateComment(item=self, item_version_number=self.version_number)
+        deactivate_comment.save_versioned(updater=agent)
+    _after_deactivate.alters_data = True
 
-    def _after_untrash(self, agent):
+    def _after_reactivate(self, agent):
         """
-        This method gets called after an item is untrashed.
+        This method gets called after an item is reactivated.
         
-        Item types that want to trigger an action after untrash should
+        Item types that want to trigger an action after reactivation should
         override this method, making sure to put a call to super at the top,
-        like super(Membership, self)._after_untrash()
+        like super(Membership, self)._after_reactivate()
         """
-        # Create an UntrashComment
-        untrash_comment = UntrashComment(item=self, item_version_number=self.version_number)
-        untrash_comment.save_versioned(updater=agent)
-    _after_untrash.alters_data = True
+        # Create a ReactivateComment
+        reactivate_comment = ReactivateComment(item=self, item_version_number=self.version_number)
+        reactivate_comment.save_versioned(updater=agent)
+    _after_reactivate.alters_data = True
 
     def _after_destroy(self, agent):
         """
@@ -811,7 +810,7 @@ class Subscription(Item):
     
     If notify_text=True, TextComments will be included.
     
-    If notify_edit=True, EditComments, TrashComments, UntrashComments,
+    If notify_edit=True, EditComments, DeactivateComments, ReactivateComments,
     DestroyComments, AddMemberComments, and RemoveMemberComments will be
     included.
     """
@@ -880,17 +879,17 @@ class Collection(Item):
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         return Item.objects.filter(pk__in=recursive_memberships.values('child').query)
 
-    def _after_trash(self, agent):
-        super(Collection, self)._after_trash(agent)
+    def _after_deactivate(self, agent):
+        super(Collection, self)._after_deactivate(agent)
         # Update the RecursiveMembership to indicate this Collection is gone
         RecursiveMembership.recursive_remove_collection(self)
-    _after_trash.alters_data = True
+    _after_deactivate.alters_data = True
 
-    def _after_untrash(self, agent):
-        super(Collection, self)._after_untrash(agent)
+    def _after_reactivate(self, agent):
+        super(Collection, self)._after_reactivate(agent)
         # Update the RecursiveMembership to indicate this Collection exists
         RecursiveMembership.recursive_add_collection(self)
-    _after_untrash.alters_data = True
+    _after_reactivate.alters_data = True
 
 
 class Group(Collection):
@@ -956,7 +955,7 @@ class Membership(Item):
 
     def _after_create(self):
         super(Membership, self)._after_create()
-        if not self.collection.trashed:
+        if self.collection.active:
             # Update the RecursiveMembership to indicate this Membership exists
             RecursiveMembership.recursive_add_membership(self)
         # Create an AddMemberComment to indicate a member was added to the collection
@@ -964,24 +963,24 @@ class Membership(Item):
         add_member_comment.save_versioned(updater=self.creator)
     _after_create.alters_data = True
 
-    def _after_trash(self, agent):
-        super(Membership, self)._after_trash(agent)
+    def _after_deactivate(self, agent):
+        super(Membership, self)._after_deactivate(agent)
         # Update the RecursiveMembership to indicate this Membership is gone
         RecursiveMembership.recursive_remove_edge(self.collection, self.item)
         # Create a RemoveMemberComment to indicate a member was removed from the collection
         remove_member_comment = RemoveMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
         remove_member_comment.save_versioned(updater=agent)
-    _after_trash.alters_data = True
+    _after_deactivate.alters_data = True
 
-    def _after_untrash(self, agent):
-        super(Membership, self)._after_untrash(agent)
-        if not self.collection.trashed:
+    def _after_reactivate(self, agent):
+        super(Membership, self)._after_reactivate(agent)
+        if self.collection.active:
             # Update the RecursiveMembership to indicate this Membership exists
             RecursiveMembership.recursive_add_membership(self)
         # Create an AddMemberComment to indicate a member was added to the collection
         add_member_comment = AddMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
         add_member_comment.save_versioned(updater=agent)
-    _after_untrash.alters_data = True
+    _after_reactivate.alters_data = True
 
 
 ###############################################################################
@@ -1135,7 +1134,7 @@ class Comment(Item):
     
     Currently, users can only create TextComments. All other Comment types are
     automatically generated by Deme in response to certain actions (such as
-    edits and trashings).
+    edits and deactivations).
     """
 
     # Setup
@@ -1195,11 +1194,11 @@ class Comment(Item):
             return Q(notify_text=True)
         elif isinstance(self, EditComment):
             return Q(notify_edit=True)
-        elif isinstance(self, TrashComment):
+        elif isinstance(self, DeactivateComment):
             return Q(notify_edit=True)
         elif isinstance(self, DestroyComment):
             return Q(notify_edit=True)
-        elif isinstance(self, UntrashComment):
+        elif isinstance(self, ReactivateComment):
             return Q(notify_edit=True)
         elif isinstance(self, AddMemberComment):
             return Q(notify_edit=True)
@@ -1222,16 +1221,16 @@ class Comment(Item):
         # First, decide if we're allowed to get this notification at all
         comment_type_q = self.subscription_filter_for_comment_type()
         def direct_subscriptions():
-            parent_pks_query = self.all_parents_in_thread().filter(trashed=False).values('pk').query
-            return Subscription.objects.filter(comment_type_q, item__in=parent_pks_query, trashed=False)
+            parent_pks_query = self.all_parents_in_thread().filter(active=True).values('pk').query
+            return Subscription.objects.filter(comment_type_q, item__in=parent_pks_query, active=True)
         def deep_subscriptions():
             if permission_cache.agent_can_global(agent, 'do_anything'):
                 recursive_filter = None
             else:
                 visible_memberships = permission_cache.filter_items(agent, 'view item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-            parent_pks_query = self.all_parents_in_thread(True, recursive_filter).filter(trashed=False).values('pk').query
-            return Subscription.objects.filter(comment_type_q, item__in=parent_pks_query, deep=True, trashed=False)
+            parent_pks_query = self.all_parents_in_thread(True, recursive_filter).filter(active=True).values('pk').query
+            return Subscription.objects.filter(comment_type_q, item__in=parent_pks_query, deep=True, active=True)
         if not direct_subscriptions() and not deep_subscriptions():
             return None
 
@@ -1254,12 +1253,12 @@ class Comment(Item):
         elif isinstance(self, EditComment):
             subject = 'Re: [Edited] %s' % (item_name,)
             body = '%s edited %s\n%s' % (creator_name, item_name, item_url)
-        elif isinstance(self, TrashComment):
-            subject = 'Re: [Trashed] %s' % (item_name,)
-            body = '%s trashed %s\n%s' % (creator_name, item_name, item_url)
-        elif isinstance(self, UntrashComment):
-            subject = 'Re: [Untrashed] %s' % (item_name,)
-            body = '%s untrashed %s\n%s' % (creator_name, item_name, item_url)
+        elif isinstance(self, DeactivateComment):
+            subject = 'Re: [Deactivated] %s' % (item_name,)
+            body = '%s deactivated %s\n%s' % (creator_name, item_name, item_url)
+        elif isinstance(self, ReactivateComment):
+            subject = 'Re: [Reactivated] %s' % (item_name,)
+            body = '%s reactivated %s\n%s' % (creator_name, item_name, item_url)
         elif isinstance(self, DestroyComment):
             subject = 'Re: [Destroyed] %s' % (item_name,)
             body = '%s destroyed %s\n%s' % (creator_name, item_name, item_url)
@@ -1294,15 +1293,15 @@ class Comment(Item):
         # Email everyone subscribed to items this comment is relevant for
         comment_type_q = self.subscription_filter_for_comment_type()
         direct_subscriptions = Subscription.objects.filter(comment_type_q,
-                                                           item__in=self.all_parents_in_thread().filter(trashed=False).values('pk').query,
-                                                           trashed=False)
+                                                           item__in=self.all_parents_in_thread().filter(active=True).values('pk').query,
+                                                           active=True)
         deep_subscriptions = Subscription.objects.filter(comment_type_q,
-                                                         item__in=self.all_parents_in_thread(True).filter(trashed=False).values('pk').query,
+                                                         item__in=self.all_parents_in_thread(True).filter(active=True).values('pk').query,
                                                          deep=True,
-                                                         trashed=False)
+                                                         active=True)
         direct_q = Q(pk__in=direct_subscriptions.values('contact_method').query)
         deep_q = Q(pk__in=deep_subscriptions.values('contact_method').query)
-        email_contact_methods = EmailContactMethod.objects.filter(direct_q | deep_q, trashed=False)
+        email_contact_methods = EmailContactMethod.objects.filter(direct_q | deep_q, active=True)
         messages = [self.notification_email(email_contact_method) for email_contact_method in email_contact_methods]
         messages = [x for x in messages if x is not None]
         if messages:
@@ -1350,29 +1349,12 @@ class EditComment(Comment):
         verbose_name_plural = _('edit comments')
 
 
-class TrashComment(Comment):
+class DeactivateComment(Comment):
     """
-    A TrashComment is a Comment that is automatically generated whenever
-    an agent trashes an item. The commented item is the item that was trashed,
-    and the commented item version number is the latest version number at the
-    time of the trashing.
-    """
-
-    # Setup
-    immutable_fields = Comment.immutable_fields
-    introduced_abilities = frozenset()
-    introduced_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('trash comment')
-        verbose_name_plural = _('trash comments')
-
-
-class UntrashComment(Comment):
-    """
-    An UntrashComment is a Comment that is automatically generated whenever
-    an agent untrashes an item. The commented item is the item that was
-    trashed, and the commented item version number is the latest version number
-    at the time of the untrashing.
+    A DeactivateComment is a Comment that is automatically generated whenever
+    an agent deactivates an item. The commented item is the item that was
+    deactivated, and the commented item version number is the latest version
+    number at the time of the deactivation.
     """
 
     # Setup
@@ -1380,8 +1362,25 @@ class UntrashComment(Comment):
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset()
     class Meta:
-        verbose_name = _('untrash comment')
-        verbose_name_plural = _('untrash comments')
+        verbose_name = _('deactivate comment')
+        verbose_name_plural = _('deactivate comments')
+
+
+class ReactivateComment(Comment):
+    """
+    A ReactivateComment is a Comment that is automatically generated whenever
+    an agent reactivates an item. The commented item is the item that was
+    reactivated, and the commented item version number is the latest version
+    number at the time of the reactivation.
+    """
+
+    # Setup
+    immutable_fields = Comment.immutable_fields
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset()
+    class Meta:
+        verbose_name = _('reactivate comment')
+        verbose_name_plural = _('reactivate comments')
 
 
 class DestroyComment(Comment):
@@ -1408,7 +1407,7 @@ class AddMemberComment(Comment):
     the commented item version number is the latest version number at the time
     of the add. The membership field points to the new Membership.
     
-    This comment is generated when Memberships are created and untrashed.
+    This comment is generated when Memberships are created and reactivated.
     """
 
     # Setup
@@ -1430,7 +1429,7 @@ class RemoveMemberComment(Comment):
     and the commented item version number is the latest version number at the
     time of the remove. The membership field points to the old Membership.
     
-    This comment is generated when Memberships are trashed.
+    This comment is generated when Memberships are deactivated.
     """
 
     # Setup
@@ -1614,11 +1613,11 @@ class DemeSetting(Item):
     def get(cls, key):
         """
         Return the value of the DemeSetting with the specified key, or None if
-        it is trashed or no such DemeSetting exists.
+        it is inactive or no such DemeSetting exists.
         """
         try:
             setting = cls.objects.get(key=key)
-            if setting.trashed:
+            if not setting.active:
                 return None
             return setting.value
         except ObjectDoesNotExist:
@@ -1630,7 +1629,7 @@ class DemeSetting(Item):
         Set the DemeSetting with the specified key to the specified value,
         such that the agent is the creator/updater. This may result in
         creating a new DemeSetting, updating an existing DemeSetting, or
-        untrashing a trashed DemeSetting.
+        reactivating an inactive DemeSetting.
         """
         try:
             setting = cls.objects.get(key=key)
@@ -1639,8 +1638,8 @@ class DemeSetting(Item):
         if setting.value != value:
             setting.value = value
             setting.save_versioned(updater=agent)
-        if setting.trashed:
-            setting.untrash(agent)
+        if not setting.active:
+            setting.reactivate(agent)
 
 
 ###############################################################################
@@ -1800,8 +1799,8 @@ class RecursiveMembership(models.Model):
     memberships from the child to the parent where the first membership in the
     path is in child_memberships.
     
-    When Collections or Memberships are trashed, this table is updated as if
-    the Collection or Membership did not exist.
+    When Collections or Memberships are deactivated, this table is updated as
+    if the Collection or Membership did not exist.
     
     For example if A is a Collection, and B is a Collection (which is a member
     of A), and C is an Item (which is a member of B), and D is an Item (which
@@ -1823,7 +1822,7 @@ class RecursiveMembership(models.Model):
     def recursive_add_membership(cls, membership):
         """
         Update the table to reflect that the given membership was created (or
-        untrashed).
+        reactivated).
         """
         parent = membership.collection
         child = membership.item
@@ -1863,8 +1862,8 @@ class RecursiveMembership(models.Model):
         edges = RecursiveMembership.objects.filter(parent__in=ancestors.values('pk').query, child__in=descendants.values('pk').query)
         # Remove all connections between ancestors and descendants
         edges.delete()
-        # Add back any real connections between ancestors and descendants that aren't trashed
-        memberships = Membership.objects.filter(trashed=False,
+        # Add back any real connections between ancestors and descendants that are active
+        memberships = Membership.objects.filter(active=True,
                                                 collection__in=ancestors.values('pk').query,
                                                 item__in=descendants.values('pk').query).exclude(collection=parent, item=child)
         for membership in memberships:
@@ -1874,16 +1873,16 @@ class RecursiveMembership(models.Model):
     def recursive_add_collection(cls, collection):
         """
         Update the table to reflect that the given collection was created or
-        untrashed.
+        reactivated.
         """
-        memberships = Membership.objects.filter(Q(collection=collection) | Q(item=collection), trashed=False)
+        memberships = Membership.objects.filter(Q(collection=collection) | Q(item=collection), active=True)
         for membership in memberships:
             RecursiveMembership.recursive_add_membership(membership)
 
     @classmethod
     def recursive_remove_collection(cls, collection):
         """
-        Update the table to reflect that the given collection was trashed.
+        Update the table to reflect that the given collection was deactivated.
         """
         RecursiveMembership.recursive_remove_edge(collection, collection)
 

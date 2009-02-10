@@ -44,12 +44,12 @@ Here is the major caveat. Imagine there is a student and a class. We must repres
 Deleting items
 ^^^^^^^^^^^^^^
 
-There are two ways of deleting items: trashing and destroying. Neither of these methods removes any rows from the database. Trashing is recoverable, destroying is not. The user interface ensures that trashing happens before destroying.
+There are two ways of deleting items: deactivating and destroying. Neither of these methods removes any rows from the database. Deactivating is recoverable (by reactivating), destroying is not. The user interface ensures that deactivating happens before destroying.
 
-* **Trashing:** If an agent trashes an item, it sets the trashed field to true. An agent can recover the item by untrashing it, which sets the trashed field back to false. Each time this happens, the version does not change, but a TrashComment or UntrashComment is automatically generated to log when the item was around. Trashed items can still be viewed and edited as normally. The major difference between a trashed and untrashed item is that when an item is trashed, it will not be returned as the result of queries (unless the query specifically requests trashed items). For example, when you look at the list of students in a class, it will only show students that are untrashed with classmemberships that are untrashed.
-* **Destroying:** After an item is trashed, you can permanently nullify all of its fields (and/or the fields in its versions) so that it is impossible to recover (but keep trashed=true). A DestroyComment is automatically generated to log when the item was around.
+* **Deactivating:** If an agent deactivates an item, it sets the active field to false. An agent can recover the item by reactivating it, which sets the active field back to true. Each time this happens, the version does not change, but a DeactivateComment or ReactivateComment is automatically generated to log when the item was active. Inactive items can still be viewed and edited as normally. The major difference between an active and an inactive item is that when an item is inactive, it will not be returned as the result of queries (unless the query specifically requests inactive items). For example, when you look at the list of students in a class, it will only show students that are active with classmemberships that are active.
+* **Destroying:** After an item is deactivated, you can permanently nullify all of its fields (and/or the fields in its versions) so that it is impossible to recover (but keep active=false). A DestroyComment is automatically generated to log when the item was around.
 
-  Our solution is as follows. We allow any field to have the special NULL value from SQL. The application (not the database) ensures that fields only take on these values when the item is destroyed, and never otherwise (I haven't finished making sure this happens yet). Thus, to destroy an item is to set every field to NULL, and set destroyed=True (and leave alone id, item_type, and trashed, version_number). Destroying an item also removes all permissions and versions of the item. After an item is destroyed, nobody can make changes (in particular, it cannot be untrashed or edited).
+  Our solution is as follows. We allow any field to have the special NULL value from SQL. The application (not the database) ensures that fields only take on these values when the item is destroyed, and never otherwise (I haven't finished making sure this happens yet). Thus, to destroy an item is to set every field to NULL, and set destroyed=True (and leave alone id, item_type, and active, version_number). Destroying an item also removes all permissions and versions of the item. After an item is destroyed, nobody can make changes (in particular, it cannot be reactivated or edited).
   
   Normally, having NULL values makes the code much more complex and prone to bugs, since the developer has to write a lot of checks for NULL. For example, to display the name of the creator of an item, the developer would have to write something like ``if (item.creator != NULL && item.creator.name != NULL) ...``. Since we already do all of this up-front error checking in the permission system (to ensure that the logged in agent has permission to view the creator of the item and the name of the creator), all we have to do is modify the permission code so that users cannot view fields (or take any actions) for destroyed items. So if an item's creator was destroyed, a simple viewer will just display the creator's name in the same way it would display something it does not have permission to view (a more advanced viewer could check to see if it was destroyed).
 
@@ -66,7 +66,7 @@ Core item types
 ^^^^^^^^^^^^^^^
 Below are the core item types and the role they play (see the full ontology at http://deme.stanford.edu/item/codegraph).
 
-* **Item:** Item is item type that everything inherits from. It gives us a completely unique id across all items. It defines two user-editable fields (``name`` and ``description``) and six automatically generated fields (``id``, ``version_number``, ``item_type``, ``creator``, ``created_at``, ``trashed``, and ``destroyed``).
+* **Item:** Item is item type that everything inherits from. It gives us a completely unique id across all items. It defines two user-editable fields (``name`` and ``description``) and six automatically generated fields (``id``, ``version_number``, ``item_type``, ``creator``, ``created_at``, ``active``, and ``destroyed``).
 
   * The ``name`` field is the friendly name to refer to the specific item: the title of a document or the preferred name of a person, and is the kind of name that would appear as the <title> of a webpage or the text of a link to that item. Currently, the name field cannot be blank (so that the viewer always has some text to display), but we are considering making it blank for items that don't need names (like Memberships) and having the viewer deal with possibly blank names.
   * The ``description`` field is a string field for metadata, which can be used for any purpose. Generally, the description is not considered part of the body of the item itself, but tells what the item is. The description for a budget document item might read, "This is the budget as drafted by the budget committee."
@@ -75,7 +75,7 @@ Below are the core item types and the role they play (see the full ontology at h
   * The ``item_type`` field is the name of the actual item type at the lowest level in the inheritance graph.
   * The ``creator`` field is a pointer to the Agent that created the item.
   * The ``created_at`` field is the date and time the item was created.
-  * The ``trashed`` field is true or false, depending on whether the item is trashed or not.
+  * The ``active`` field is true or false, depending on whether the item is active or not.
   * The ``destroyed`` field is true or false, depending on whether the item is destroyed or not.
 
 Agents and related item types
@@ -131,7 +131,7 @@ Agents and related item types
   * The ``item`` field is a pointer to the Item that is subscribed to with this Subscription.
   * The ``deep`` field is a boolean, such that when deep=true and the item is a Collection, all comments on all items in the collection (direct or indirect) will be sent in addition to comments on the collection itself.
   * The ``notify_text`` field is a boolean that signifies that TextComments are included in the subscription.
-  * The ``notify_edit`` field is a boolean that signifies that EditComments, TrashComments, UntrashComments, DestroyComments, AddMemberComments, and RemoveMemberComments are included in the subscription.
+  * The ``notify_edit`` field is a boolean that signifies that EditComments, DeactivateComments, ReactivateComments, DestroyComments, AddMemberComments, and RemoveMemberComments are included in the subscription.
 
 Collections and related item types
 
@@ -173,7 +173,7 @@ Annotations (Transclusions, Comments, and Excerpts)
   * The ``from_item_index`` field is a character offset into the body of the TextDocument where the transclusion occurs.
   * The ``to_item`` field is a pointer to the Item that is referenced by this Transclusion.
 
-* **Comment:** A Comment is a unit of discussion about an Item. Each comment specifies the commented item and version number (in the ``item`` and ``item_version_number`` fields). Comment is meant to be abstract, so developers should always create subclasses rather than creating raw Comments. Currently, users can only create TextComments. All other Comment types are automatically generated by Deme in response to certain actions (such as edits and trashings).
+* **Comment:** A Comment is a unit of discussion about an Item. Each comment specifies the commented item and version number (in the ``item`` and ``item_version_number`` fields). Comment is meant to be abstract, so developers should always create subclasses rather than creating raw Comments. Currently, users can only create TextComments. All other Comment types are automatically generated by Deme in response to certain actions (such as edits and deactivations).
 
   If somebody creates Item 1, someone creates Comment 2 about Item 2, and someone responds to Comment 2 with Comment 3, then one would say that Comment 3 is a *direct* comment on Comment 2, and Comment 3 is an *indirect* comment on Item 1. The Comment item type only stores information about direct comments, but behind the scenes, the RecursiveComment table (which does not inherit from Item) keeps track of all of the indirect commenting so that viewers can efficiently render entire threads.
 
@@ -181,15 +181,15 @@ Annotations (Transclusions, Comments, and Excerpts)
 
 * **EditComment:** An EditComment is a Comment that is automatically generated whenever an agent edits an item. The commented item is the item that was edited, and the commented item version number is the new version that was just generated (as opposed to the previous version number). It defines no new fields.
 
-* **TrashComment:** A TrashComment is a Comment that is automatically generated whenever an agent trashes an item. The commented item is the item that was trashed, and the commented item version number is the latest version number at the time of the trashing. It defines no new fields.
+* **DeactivateComment:** A DeactivateComment is a Comment that is automatically generated whenever an agent deactivates an item. The commented item is the item that was deactivated, and the commented item version number is the latest version number at the time of the deactivation. It defines no new fields.
 
-* **UntrashComment:** An UntrashComment is a Comment that is automatically generated whenever an agent untrashes an item. The commented item is the item that was trashed, and the commented item version number is the latest version number at the time of the untrashing. It defines no new fields.
+* **ReactivateComment:** A ReactivateComment is a Comment that is automatically generated whenever an agent reactivates an item. The commented item is the item that was reactivated, and the commented item version number is the latest version number at the time of the reactivation. It defines no new fields.
 
 * **DestroyComment:** A DestroyComment is a Comment that is automatically generated whenever an agent destroys an item. The commented item is the item that was destroyed, and the commented item version number is the latest version number at the time of the destroying. It defines no new fields.
 
-* **AddMemberComment:** An AddMemberComment is a Comment that is automatically generated whenever an item is added to a collection (via a creation or untrashing of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the add. The ``membership`` field points to the new Membership.
+* **AddMemberComment:** An AddMemberComment is a Comment that is automatically generated whenever an item is added to a collection (via a creation or reactivation of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the add. The ``membership`` field points to the new Membership.
 
-* **RemoveMemberComment:** A RemoveMemberComment is a Comment that is automatically generated whenever an item is removed from a collection (via a trashing of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the remove. The membership field points to the old Membership.
+* **RemoveMemberComment:** A RemoveMemberComment is a Comment that is automatically generated whenever an item is removed from a collection (via a deactivation of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the remove. The membership field points to the old Membership.
 
 * **Excerpt:** An Excerpt is an Item that refers to a portion of another Item (or an external resource, such as a webpage). Excerpt is meant to be abstract, so developers should always create subclasses rather than creating raw Excerpts.
 
@@ -285,7 +285,7 @@ Below is a list of item types and the item abilities they introduce:
 
   * ``do_anything`` (Agents this ability with respect to an item automatically have every item ability for that item.)
   * ``comment_on`` (With this ability you can create comments *directly* on the item. There is no way to restrict agents from leaving *indirect* comments on an item, apart from ensuring that they don't have the ability to comment on any of the item's existing comments.)
-  * ``trash`` (With this ability you can trash and untrash the item.)
+  * ``delete`` (With this ability you can deactivate, reativate, or destroy the item.)
   * ``view name``
   * ``view description``
   * ``view creator``
