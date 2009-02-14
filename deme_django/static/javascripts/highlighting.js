@@ -8,7 +8,6 @@ var DemeHighlighting = function(){
             var text_index = 0;
             while (text_index < text.length) {
                 if (!is_escaped) {
-                    //TODO we don't skip over <script> and <style> sections
                     while (body_str_index < body_str.length && body_str.substring(body_str_index, body_str_index + 1) == '<') {
                         if (body_str.substring(body_str_index + 1, body_str_index + 4) == '!--') {
                             body_str_index = body_str.indexOf('-->', body_str_index + 4) + 3;
@@ -101,19 +100,33 @@ var DemeHighlighting = function(){
                 } else if (node.nodeType == Node.ELEMENT_NODE) {
                     element_callback(node, body_str_index);
                     if (!node.hasClassName('commentref')) {
-                        // match the start tag
-                        if (!is_escaped) {
-                            if (node.tagName == 'IMG') {
-                                var startTagPattern = new RegExp("[.\\s]*<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "ig");
-                                startTagPattern.lastIndex = body_str_index;
-                                var startTagMatch = startTagPattern.exec(body_str);
-                                if (startTagMatch) {
-                                    token_wrapper_callback(node, body_str_index - startTagMatch[0].length);
-                                }
+                        //TODO are there others besides SCRIPT and STYLE that we must skip the body for?
+                        //TODO can we unify some of the code for SCRIPT/STYLE and IMG?
+                        if (!is_escaped && (node.tagName == 'SCRIPT' || node.tagName == 'STYLE')) {
+                            var tagPattern = new RegExp("[\\S\\s]*?<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))((/\\s*>)|(>[\\S\\s]*?<\\s*/\\s*" + node.tagName + "\\s*>))", "ig");
+                            tagPattern.lastIndex = body_str_index;
+                            var tagMatch = tagPattern.exec(body_str);
+                            if (tagMatch) {
+                                body_str_index += tagMatch[0].length;
+                            } else {
+                                parse_error('error @ ' + body_str_index + ': could not find ' + node.tagName + ' tag in body_str');
+                                return false;
                             }
+                        } else if (!is_escaped && node.tagName == 'IMG') {
+                            var startTagPattern = new RegExp("([\\S\\s]*?)<\\s*" + node.tagName + "((\\s*)|(\\s+[^>]+))>", "ig");
+                            startTagPattern.lastIndex = body_str_index;
+                            var startTagMatch = startTagPattern.exec(body_str);
+                            if (startTagMatch) {
+                                token_wrapper_callback(node, body_str_index + startTagMatch[1].length);
+                                body_str_index += startTagMatch[0].length;
+                            } else {
+                                parse_error('error @ ' + body_str_index + ': could not find ' + node.tagName + ' tag in body_str');
+                                return false;
+                            }
+                        } else {
+                            var success = traverse_fn(node.childNodes, false);
+                            if (!success) return false;
                         }
-                        var success = traverse_fn(node.childNodes, false);
-                        if (!success) return false;
                     }
                 } else if (node.nodeType == Node.COMMENT_NODE) {
                     // We can safely ignore comment nodes, since they are skipped over in body_str
