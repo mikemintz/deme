@@ -290,7 +290,7 @@ class Item(models.Model):
     destroy.alters_data = True
 
     @transaction.commit_on_success
-    def save_versioned(self, updater, first_agent=False, create_permissions=True, save_time=None, edit_summary=""):
+    def save_versioned(self, updater, first_agent=False, create_permissions=True, action_time=None, edit_summary=""):
         """
         Save the current item, making sure to keep track of versions.
         
@@ -308,7 +308,7 @@ class Item(models.Model):
         reasonable permissions.
         TODO: figure out what those permissions should really be
         """
-        save_time = save_time or datetime.datetime.now()
+        action_time = action_time or datetime.datetime.now()
         is_new = not self.pk
 
         # Update the item
@@ -320,7 +320,7 @@ class Item(models.Model):
             if is_new:
                 self.creator = updater
         if is_new:
-            self.created_at = save_time
+            self.created_at = action_time
         if not is_new:
             latest_version_number = Item.objects.get(pk=self.pk).version_number
             self.version_number = latest_version_number + 1
@@ -363,7 +363,7 @@ class Item(models.Model):
         """
         # Create an EditComment
         #TODO get the description
-        #TODO get the save_time (same with the others)
+        #TODO get the action_time (same with the others)
         edit_comment = EditComment(item=self, item_version_number=self.version_number, description='')
         edit_comment.save_versioned(updater=agent)
         EditActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
