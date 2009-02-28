@@ -290,7 +290,7 @@ class Item(models.Model):
     destroy.alters_data = True
 
     @transaction.commit_on_success
-    def save_versioned(self, updater, first_agent=False, create_permissions=True, save_time=None, overwrite_latest_version=False, edit_summary=""):
+    def save_versioned(self, updater, first_agent=False, create_permissions=True, save_time=None, edit_summary=""):
         """
         Save the current item, making sure to keep track of versions.
         
@@ -307,10 +307,6 @@ class Item(models.Model):
         If create_permissions=True, then this method will automatically create
         reasonable permissions.
         TODO: figure out what those permissions should really be
-        
-        If overwrite_latest_version=True and this is an update, then this
-        method will not create a new version, and make it appear that the
-        latest version looked like this the whole time.
         """
         save_time = save_time or datetime.datetime.now()
         is_new = not self.pk
@@ -323,21 +319,15 @@ class Item(models.Model):
         else:
             if is_new:
                 self.creator = updater
-        if is_new or overwrite_latest_version:
+        if is_new:
             self.created_at = save_time
         if not is_new:
             latest_version_number = Item.objects.get(pk=self.pk).version_number
-            if overwrite_latest_version:
-                self.version_number = latest_version_number
-            else:
-                self.version_number = latest_version_number + 1
+            self.version_number = latest_version_number + 1
         self.save()
 
         # Create the new item version
-        if overwrite_latest_version and not is_new:
-            new_version = type(self).Version.objects.get(current_item=self, version_number=self.version_number)
-        else:
-            new_version = type(self).Version()
+        new_version = type(self).Version()
         self.copy_fields_to_itemversion(new_version)
         new_version.save()
 
@@ -346,7 +336,7 @@ class Item(models.Model):
             AgentItemPermission(agent=updater, item=self, ability='do_anything', is_allowed=True).save()
 
         # Create an EditComment if we're making an edit
-        if not is_new and not overwrite_latest_version:
+        if not is_new:
             edit_comment = EditComment(item=self, item_version_number=self.version_number, description=edit_summary)
             edit_comment.save_versioned(updater=updater, save_time=save_time)
             EditActionNotice(item=self, item_version_number=self.version_number, creator=updater, created_at=save_time, description=edit_summary).save()
