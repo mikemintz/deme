@@ -335,14 +335,10 @@ class Item(models.Model):
         if create_permissions and is_new:
             AgentItemPermission(agent=updater, item=self, ability='do_anything', is_allowed=True).save()
 
-        # Create an EditComment if we're making an edit
-        if not is_new:
-            edit_comment = EditComment(item=self, item_version_number=self.version_number, description=edit_summary)
-            edit_comment.save_versioned(updater=updater, save_time=save_time)
-            EditActionNotice(item=self, item_version_number=self.version_number, creator=updater, created_at=save_time, description=edit_summary).save()
-
         if is_new:
             self._after_create()
+        else:
+            self._after_edit(updater)
     save_versioned.alters_data = True
 
     def _after_create(self):
@@ -355,6 +351,22 @@ class Item(models.Model):
         like super(Membership, self)._after_create()
         """
         pass
+    _after_create.alters_data = True
+
+    def _after_edit(self, agent):
+        """
+        This method gets called after an item is edited via save_versioned().
+        
+        Item types that want to trigger an action after creation should
+        override this method, making sure to put a call to super at the top,
+        like super(Membership, self)._after_edit()
+        """
+        # Create an EditComment
+        #TODO get the description
+        #TODO get the save_time (same with the others)
+        edit_comment = EditComment(item=self, item_version_number=self.version_number, description='')
+        edit_comment.save_versioned(updater=agent)
+        EditActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
     _after_create.alters_data = True
 
     def _after_deactivate(self, agent):
