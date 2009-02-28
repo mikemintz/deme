@@ -9,7 +9,6 @@ Feb-16 notes (action notices)
 * Every time somebody does an action, not only will there be action notices on the affected items, but also on the agent who did that action. E.g., Mike deactivates Document: this creates a DeactivateActionNotice on the Document, and a separate kind of notice on Mike (different types of action notices to signify the roles).
 * Think about PermissionActionNotices (where you need permission to view_permissions).
 * Should we have a CreateActionNotice? It doesn't cause any problems anymore, although it's still not very useful since nobody would ever get its notification
-* When you subscribe to an item, you get all of the action notices on it and its comment-children. There will not yet be any options to choose what types of action notices to subscribe to.
 * Update the architecture doc with these changes
 * write documentation for action notices
 * fix the order of super._after_create and stuff (like comments and memberships, the recursive info should be created before the notifications get sent). but think about it: maybe sometimes you want the new structure and sometimes you want the old structure.
