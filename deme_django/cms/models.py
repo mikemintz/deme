@@ -1515,7 +1515,7 @@ class ActionNotice(models.Model):
         to_email = formataddr((agent.name, email_contact_method.email))
         headers = {}
         headers['Reply-To'] = reply_to_email
-        messageid = lambda x: '<%s-%s@%s>' % (x.pk, x.created_at.strftime("%Y%m%d%H%M%S"), settings.NOTIFICATION_EMAIL_HOSTNAME)
+        messageid = lambda x: '<%s-%s-%s@%s>' % ('notice' if isinstance(x, ActionNotice) else 'item', x.pk, x.created_at.strftime("%Y%m%d%H%M%S"), settings.NOTIFICATION_EMAIL_HOSTNAME)
         if reply_item == item:
             headers['Message-ID'] = messageid(self)
         else:
