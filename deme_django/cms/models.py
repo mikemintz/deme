@@ -130,8 +130,8 @@ class Item(models.Model):
     # Setup
     __metaclass__ = ItemMetaClass
     immutable_fields = frozenset()
-    introduced_abilities = frozenset(['do_anything', 'comment_on', 'delete', 'view name', 'view description',
-                                      'view creator', 'view created_at', 'edit name', 'edit description'])
+    introduced_abilities = frozenset(['do_anything', 'comment_on', 'view_action_notices', 'delete', 'view name',
+                                      'view description', 'view creator', 'view created_at', 'edit name', 'edit description'])
     introduced_global_abilities = frozenset(['do_anything'])
     class Meta:
         verbose_name = _('item')
@@ -1456,6 +1456,11 @@ class ActionNotice(models.Model):
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             parent_pks_query = self.item.all_parents_in_thread(True, recursive_filter).values('pk').query
             return Subscription.objects.filter(item__in=parent_pks_query, deep=True, active=True)
+        if not permission_cache.agent_can(agent, 'view_action_notices', self.item):
+            return None
+        if isinstance(self, RelationActionNotice):
+            if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
+                return None
         if not direct_subscriptions() and not deep_subscriptions():
             return None
 

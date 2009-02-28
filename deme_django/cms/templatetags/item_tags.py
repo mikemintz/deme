@@ -580,6 +580,12 @@ class CommentBox(template.Node):
         # adding action notices just for debugging for now (eventually we'll move it to its own tag)
         result.append(u"<div><b>Action Notices</b></div>")
         result.append(u"<ul>")
+        #TODO include permission code. effectively like:
+        # if not permission_cache.agent_can(agent, 'view_action_notices', self.item):
+        #     return None
+        # if isinstance(self, RelationActionNotice):
+        #     if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
+        #         return None
         relation_action_notices = RelationActionNotice.objects.filter(item=item)
         deactivate_action_notices = DeactivateActionNotice.objects.filter(item=item)
         reactivate_action_notices = ReactivateActionNotice.objects.filter(item=item)

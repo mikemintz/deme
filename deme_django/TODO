@@ -3,15 +3,19 @@
 |==========|
 
 
-Feb-16 notes
-------------
+Feb-16 notes (action notices)
+-----------------------------
 * Make custom tag (included in every ItemViewer.show page) that displays all notices
-* New ability called "view_action_notices". If you have that ability w.r.t. an item, you can look at the action notices, and receive them via subscription (but you can always be subscribed even if you don't have this ability)
-* In addition to needing the "view_action_notices" ability, in RelationActionNotices, you must also have permission to read the pointer in the from item that points to the to item. If you don't have this permission, you can't see the action notice at all, or get a notification about it.
 * Every time somebody does an action, not only will there be action notices on the affected items, but also on the agent who did that action. E.g., Mike deactivates Document: this creates a DeactivateActionNotice on the Document, and a separate kind of notice on Mike (different types of action notices to signify the roles).
 * Think about PermissionActionNotices (where you need permission to view_permissions).
+* Should we have a CreateActionNotice? It doesn't cause any problems anymore, although it's still not very useful since nobody would ever get its notification
 * When you subscribe to an item, you get all of the action notices on it and its comment-children. There will not yet be any options to choose what types of action notices to subscribe to.
 * Update the architecture doc with these changes
+* write documentation for action notices
+* fix the order of super._after_create and stuff (like comments and memberships, the recursive info should be created before the notifications get sent). but think about it: maybe sometimes you want the new structure and sometimes you want the old structure.
+* figure out how we are determining the permission to view comments
+* probably get rid of TextComment and just call it Comment (and inherit from TextDocument)
+
 
 Nov-21 notes (automatic comments and subscriptions)
 ---------------------------------------------------
