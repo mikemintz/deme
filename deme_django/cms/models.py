@@ -290,7 +290,7 @@ class Item(models.Model):
     destroy.alters_data = True
 
     @transaction.commit_on_success
-    def save_versioned(self, updater, first_agent=False, create_permissions=True, action_time=None, edit_summary=""):
+    def save_versioned(self, agent, first_agent=False, create_permissions=True, action_time=None, edit_summary=""):
         """
         Save the current item, making sure to keep track of versions.
         
@@ -318,7 +318,7 @@ class Item(models.Model):
             self.creator_id = 1
         else:
             if is_new:
-                self.creator = updater
+                self.creator = agent
         if is_new:
             self.created_at = action_time
         if not is_new:
@@ -333,12 +333,12 @@ class Item(models.Model):
 
         # Create the permissions
         if create_permissions and is_new:
-            AgentItemPermission(agent=updater, item=self, ability='do_anything', is_allowed=True).save()
+            AgentItemPermission(agent=agent, item=self, ability='do_anything', is_allowed=True).save()
 
         if is_new:
             self._after_create()
         else:
-            self._after_edit(updater)
+            self._after_edit(agent)
     save_versioned.alters_data = True
 
     def _after_create(self):
@@ -365,7 +365,7 @@ class Item(models.Model):
         #TODO get the description
         #TODO get the action_time (same with the others)
         edit_comment = EditComment(item=self, item_version_number=self.version_number, description='')
-        edit_comment.save_versioned(updater=agent)
+        edit_comment.save_versioned(agent=agent)
         EditActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
     _after_create.alters_data = True
 
@@ -379,7 +379,7 @@ class Item(models.Model):
         """
         # Create a DeactivateComment
         deactivate_comment = DeactivateComment(item=self, item_version_number=self.version_number)
-        deactivate_comment.save_versioned(updater=agent)
+        deactivate_comment.save_versioned(agent=agent)
         # Create a DeactivateActionNotice
         #TODO get the description
         DeactivateActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
@@ -395,7 +395,7 @@ class Item(models.Model):
         """
         # Create a ReactivateComment
         reactivate_comment = ReactivateComment(item=self, item_version_number=self.version_number)
-        reactivate_comment.save_versioned(updater=agent)
+        reactivate_comment.save_versioned(agent=agent)
         # Create a ReactivateActionNotice
         #TODO get the description
         ReactivateActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
@@ -411,7 +411,7 @@ class Item(models.Model):
         """
         # Create a DestroyComment
         destroy_comment = DestroyComment(item=self, item_version_number=self.version_number)
-        destroy_comment.save_versioned(updater=agent)
+        destroy_comment.save_versioned(agent=agent)
         # Create a DestroyActionNotice
         #TODO get the description
         DestroyActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
@@ -431,7 +431,7 @@ class Agent(Item):
     Agents are unique in the following ways:
     
     * Agents can be assigned permissions
-    * Agents show up in the creator and updater fields of other items
+    * Agents show up in the creator fields of other items
     * Agents can authenticate with Deme using AuthenticationMethods
     * Agents can be contacted via their ContactMethods
     * Agents can subscribe to other items with Subscriptions
@@ -925,10 +925,10 @@ class Group(Collection):
         super(Group, self)._after_create()
         # Create a folio for this group
         folio = Folio(group=self, name='%s folio' % self.name)
-        folio.save_versioned(updater=self.creator)
+        folio.save_versioned(agent=self.creator)
         # Create a group agent for this group
         group_agent = GroupAgent(group=self, name='%s agent' % self.name)
-        group_agent.save_versioned(updater=self.creator)
+        group_agent.save_versioned(agent=self.creator)
     _after_create.alters_data = True
 
 
@@ -974,7 +974,7 @@ class Membership(Item):
             RecursiveMembership.recursive_add_membership(self)
         # Create an AddMemberComment to indicate a member was added to the collection
         add_member_comment = AddMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
-        add_member_comment.save_versioned(updater=self.creator)
+        add_member_comment.save_versioned(agent=self.creator)
     _after_create.alters_data = True
 
     def _after_deactivate(self, agent):
@@ -983,7 +983,7 @@ class Membership(Item):
         RecursiveMembership.recursive_remove_edge(self.collection, self.item)
         # Create a RemoveMemberComment to indicate a member was removed from the collection
         remove_member_comment = RemoveMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
-        remove_member_comment.save_versioned(updater=agent)
+        remove_member_comment.save_versioned(agent=agent)
     _after_deactivate.alters_data = True
 
     def _after_reactivate(self, agent):
@@ -993,7 +993,7 @@ class Membership(Item):
             RecursiveMembership.recursive_add_membership(self)
         # Create an AddMemberComment to indicate a member was added to the collection
         add_member_comment = AddMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
-        add_member_comment.save_versioned(updater=agent)
+        add_member_comment.save_versioned(agent=agent)
     _after_reactivate.alters_data = True
 
 
@@ -1641,9 +1641,9 @@ class DemeSetting(Item):
     def set(cls, key, value, agent):
         """
         Set the DemeSetting with the specified key to the specified value,
-        such that the agent is the creator/updater. This may result in
-        creating a new DemeSetting, updating an existing DemeSetting, or
-        reactivating an inactive DemeSetting.
+        such that the agent is the creator. This may result in creating a new
+        DemeSetting, updating an existing DemeSetting, or reactivating an
+        inactive DemeSetting.
         """
         try:
             setting = cls.objects.get(key=key)
@@ -1651,7 +1651,7 @@ class DemeSetting(Item):
             setting = cls(name=key, key=key)
         if setting.value != value:
             setting.value = value
-            setting.save_versioned(updater=agent)
+            setting.save_versioned(agent=agent)
         if not setting.active:
             setting.reactivate(agent)
 
