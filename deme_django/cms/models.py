@@ -15,7 +15,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DeactivateComment', 'DestroyComment', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ReactivateComment', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name']
+__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DeactivateComment', 'DestroyComment', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ReactivateComment', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice', 'ReactivateActionNotice', 'DestroyActionNotice']
 
 ###############################################################################
 # Item framework
@@ -276,6 +276,8 @@ class Item(models.Model):
         self.save()
         # Remove all versions
         type(self).Version.objects.filter(current_item=self).delete()
+        # Remove all existing action notices
+        self.action_notices.all().delete()
         # Remove all permissions on this item
         self.agent_item_permissions_as_item.all().delete()
         self.collection_item_permissions_as_item.all().delete()
@@ -347,6 +349,7 @@ class Item(models.Model):
         if not is_new and not overwrite_latest_version:
             edit_comment = EditComment(item=self, item_version_number=self.version_number, description=edit_summary)
             edit_comment.save_versioned(updater=updater, save_time=save_time)
+            EditActionNotice(item=self, item_version_number=self.version_number, creator=updater, created_at=save_time, description=edit_summary).save()
 
         if is_new:
             self._after_create()
@@ -375,6 +378,9 @@ class Item(models.Model):
         # Create a DeactivateComment
         deactivate_comment = DeactivateComment(item=self, item_version_number=self.version_number)
         deactivate_comment.save_versioned(updater=agent)
+        # Create a DeactivateActionNotice
+        #TODO get the description
+        DeactivateActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
     _after_deactivate.alters_data = True
 
     def _after_reactivate(self, agent):
@@ -388,6 +394,9 @@ class Item(models.Model):
         # Create a ReactivateComment
         reactivate_comment = ReactivateComment(item=self, item_version_number=self.version_number)
         reactivate_comment.save_versioned(updater=agent)
+        # Create a ReactivateActionNotice
+        #TODO get the description
+        ReactivateActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
     _after_reactivate.alters_data = True
 
     def _after_destroy(self, agent):
@@ -401,6 +410,9 @@ class Item(models.Model):
         # Create a DestroyComment
         destroy_comment = DestroyComment(item=self, item_version_number=self.version_number)
         destroy_comment.save_versioned(updater=agent)
+        # Create a DestroyActionNotice
+        #TODO get the description
+        DestroyActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
     _after_destroy.alters_data = True
 
 
@@ -1640,6 +1652,56 @@ class DemeSetting(Item):
             setting.save_versioned(updater=agent)
         if not setting.active:
             setting.reactivate(agent)
+
+
+###############################################################################
+# Action notices
+###############################################################################
+
+class ActionNotice(models.Model):
+    item                = models.ForeignKey(Item, related_name='action_notices', verbose_name=_('item'))
+    item_version_number = models.PositiveIntegerField(_('item version number'))
+    creator             = models.ForeignKey(Agent, related_name='action_notices_created', verbose_name=_('creator'))
+    created_at          = models.DateTimeField(_('created at'))
+    description         = models.CharField(_('description'), max_length=255, blank=True)
+
+    def notification_reply_item(self):
+        """
+        Return the item that comments created about this notice (via replying
+        to a notification email for this notice) are replies to.
+        """
+        return self.item
+
+class RelationActionNotice(ActionNotice):
+    from_item                = models.ForeignKey(Item, related_name='relation_action_notices_from', verbose_name=_('from item'))
+    from_item_version_number = models.PositiveIntegerField(_('from item version number'))
+    from_field_name          = models.CharField(_('from field name'), max_length=255)
+    from_field_model         = models.CharField(_('from field model'), max_length=255)
+
+    def notification_reply_item(self):
+        """
+        In RelationActionNotices, when someone replies to a notification, it
+        should be turned into a comment on from_item, not item.
+        
+        For example, if we have a RelationActionNotice with from_item=membership
+        and item=agent, the reply comment should go to membership, not agent.
+        """
+        return self.from_item
+
+class DeactivateActionNotice(ActionNotice):
+    pass
+
+
+class ReactivateActionNotice(ActionNotice):
+    pass
+
+
+class DestroyActionNotice(ActionNotice):
+    pass
+
+
+class EditActionNotice(ActionNotice):
+    pass
 
 
 ###############################################################################
