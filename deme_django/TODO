@@ -5,16 +5,12 @@
 
 Feb-16 notes
 ------------
-* Every action notice has a field called item. When you visit an item, the viewer might display all action notices where the item = notice.item. This will be a separate sort of view from looking at threaded comments.
+* Make custom tag (included in every ItemViewer.show page) that displays all notices
 * New ability called "view_action_notices". If you have that ability w.r.t. an item, you can look at the action notices, and receive them via subscription (but you can always be subscribed even if you don't have this ability)
 * In addition to needing the "view_action_notices" ability, in RelationActionNotices, you must also have permission to read the pointer in the from item that points to the to item. If you don't have this permission, you can't see the action notice at all, or get a notification about it.
-* Every time somebody does an action, not only will there be action notices on the affected items, but also on the agent who did that action. E.g., Mike deactivates Document: this creates a DeactivateActionNotice on both Mike and Document (maybe differnet types of action notices to signify the roles).
+* Every time somebody does an action, not only will there be action notices on the affected items, but also on the agent who did that action. E.g., Mike deactivates Document: this creates a DeactivateActionNotice on the Document, and a separate kind of notice on Mike (different types of action notices to signify the roles).
 * Think about PermissionActionNotices (where you need permission to view_permissions).
 * When you subscribe to an item, you get all of the action notices on it and its comment-children. There will not yet be any options to choose what types of action notices to subscribe to.
-* When you create something, you should get to choose the permissions generated on the item (which will happen before the action notice is generated).
-* We need to have an "edit summary" whenever someone deactivates/reactivates/destroys that can go in ActionNotice.description
-* Make sure we recursively go through comments to find all notices relevant to this item?
-* Consider getting rid of overwrite_latest_version in save_versioned for database consistency, then we can have a simple _after_edit method. Maybe propagate the custom save_time to the _after_* methods
 * Update the architecture doc with these changes
 
 Nov-21 notes (automatic comments and subscriptions)
@@ -37,6 +33,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Change classmethods to staticmethods (and see if we can get alters_data on them!)
 * How can you make a DeactivateComment or AddMemberComment unreadable with permissions?
 * How do we deal with immutable things that get trashed, but should get recreated by other users? Like webauth usernames or open id usernames, or sites with hostnames?
 * Code cleanup: views, templatetags, and templates, and symsys everything
@@ -72,6 +69,8 @@ Layout
 
 Interface
 ---------
+* Set action_summary whenever someone deactivates/reactivates/destroys that can go in ActionNotice.description
+* When you create something, you should get to choose the permissions generated on the item (which will happen before the action notice is generated).
 * Get rid of all the [PERMISSION DENIED] and replace it with "Agent 123" or blank
 * There should be a full interface for specifying CommentLocations
 * Interface to add ContactMethods, Subscriptions, and AuthenticationMethods to Agents

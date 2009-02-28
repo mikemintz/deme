@@ -45,7 +45,7 @@ def main():
         send_mail('Re: %s' % subject, 'Error: Deme could not create your comment "%s" because you do not have permission to comment on the item with id %s' % (subject, item_id), to_email, [from_email])
         return 
     comment = TextComment(item=item, item_version_number=item.version_number, name=subject, body=body)
-    comment.save_versioned(agent=email_contact_method.agent)
+    comment.save_versioned(action_agent=email_contact_method.agent)
 
 
 if __name__ == '__main__':

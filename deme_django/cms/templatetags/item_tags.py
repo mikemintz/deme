@@ -260,7 +260,7 @@ def ifagentcanglobal(parser, token):
 # remember this includes inactive comments, which should be displayed differently after calling this
 def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments):
     permission_cache = context['_permission_cache']
-    comment_subclasses = [TextComment, EditComment, DeactivateComment, ReactivateComment, DestroyComment, AddMemberComment, RemoveMemberComment]
+    comment_subclasses = [TextComment]
     comments = []
     if include_recursive_collection_comments:
         if agentcan_global_helper(context, 'do_anything'):
@@ -281,12 +281,6 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
             related_fields = ['creator']
             if include_recursive_collection_comments:
                 related_fields.extend(['item'])
-            if new_comments:
-                if comment_subclass in [AddMemberComment, RemoveMemberComment]:
-                    permission_cache.mass_learn(context['cur_agent'], 'view membership', new_comments)
-                    permission_cache.mass_learn(context['cur_agent'], 'view item', Membership.objects.filter(pk__in=new_comments.values('membership_id').query))
-                    permission_cache.mass_learn(context['cur_agent'], 'view name', Item.objects.filter(pk__in=Membership.objects.filter(pk__in=new_comments.values('membership_id').query).values('item_id').query))
-                    related_fields.extend(['membership', 'membership__item'])
             new_comments = new_comments.select_related(*related_fields)
             comments.extend(new_comments)
     comments.sort(key=lambda x: x.created_at)
@@ -548,23 +542,10 @@ class CommentBox(template.Node):
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
                 result.append("""<div style="float: right;"><a href="%s?item=%s&item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
-                if isinstance(comment, EditComment):
-                    comment_name = '[Edited]'
-                elif isinstance(comment, DeactivateComment):
-                    comment_name = '[Deactivated]'
-                elif isinstance(comment, ReactivateComment):
-                    comment_name = '[Reactivated]'
-                elif isinstance(comment, DestroyComment):
-                    comment_name = '[Destroyed]'
-                elif isinstance(comment, AddMemberComment):
-                    comment_name = '[Added Member]'
-                elif isinstance(comment, RemoveMemberComment):
-                    comment_name = '[Removed Member]'
+                if agentcan_helper(context, 'view name', comment):
+                    comment_name = escape(comment.name)
                 else:
-                    if agentcan_helper(context, 'view name', comment):
-                        comment_name = escape(comment.name)
-                    else:
-                        comment_name = escape(u'%s %s' % (capfirst(get_item_type_with_name(comment.item_type)._meta.verbose_name), comment.pk))
+                    comment_name = escape(u'%s %s' % (capfirst(get_item_type_with_name(comment.item_type)._meta.verbose_name), comment.pk))
                 result.append("""<a href="%s">%s</a>""" % (comment.get_absolute_url(), comment_name))
                 if agentcan_helper(context, 'view creator', comment):
                     if agentcan_helper(context, 'view name', comment.creator):
@@ -585,36 +566,6 @@ class CommentBox(template.Node):
                             comment_body = escape(comment.body).replace('\n', '<br />')
                         else:
                             comment_body = ''
-                    elif isinstance(comment, EditComment):
-                        comment_body = escape(comment.description)
-                    elif isinstance(comment, DeactivateComment):
-                        comment_body = ''
-                    elif isinstance(comment, ReactivateComment):
-                        comment_body = ''
-                    elif isinstance(comment, DestroyComment):
-                        comment_body = ''
-                    elif isinstance(comment, AddMemberComment):
-                        if agentcan_helper(context, 'view membership', comment):
-                            if agentcan_helper(context, 'view item', comment.membership):
-                                if agentcan_helper(context, 'view name', comment.membership.item):
-                                    comment_body = '<a href="%s">%s</a> with <a href="%s">Membership %s</a>' % (comment.membership.item.get_absolute_url(), escape(comment.membership.item.name), comment.membership.get_absolute_url(), comment.membership.pk)
-                                else:
-                                    comment_body = '<a href="%s">Item %s</a> with <a href="%s">Membership %s</a>' % (comment.membership.item.get_absolute_url(), comment.membership.item.pk, comment.membership.get_absolute_url(), comment.membership.pk)
-                            else:
-                                comment_body = '<a href="%s">Membership %s</a>' % (comment.membership.get_absolute_url(), comment.membership.pk)
-                        else:
-                            comment_body = ''
-                    elif isinstance(comment, RemoveMemberComment):
-                        if agentcan_helper(context, 'view membership', comment):
-                            if agentcan_helper(context, 'view item', comment.membership):
-                                if agentcan_helper(context, 'view name', comment.membership.item):
-                                    comment_body = '<a href="%s">%s</a> with <a href="%s">Membership %s</a>' % (comment.membership.item.get_absolute_url(), escape(comment.membership.item.name), comment.membership.get_absolute_url(), comment.membership.pk)
-                                else:
-                                    comment_body = '<a href="%s">Item %s</a> with <a href="%s">Membership %s</a>' % (comment.membership.item.get_absolute_url(), comment.membership.item.pk, comment.membership.get_absolute_url(), comment.membership.pk)
-                            else:
-                                comment_body = '<a href="%s">Membership %s</a>' % (comment.membership.get_absolute_url(), comment.membership.pk)
-                        else:
-                            comment_body = ''
                     else:
                         comment_body = ''
                 else:
@@ -625,6 +576,27 @@ class CommentBox(template.Node):
         comment_dicts = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection))
         add_comments_to_div(comment_dicts)
         result.append("</div>")
+
+        # adding action notices just for debugging for now (eventually we'll move it to its own tag)
+        result.append(u"<div><b>Action Notices</b></div>")
+        result.append(u"<ul>")
+        relation_action_notices = RelationActionNotice.objects.filter(item=item)
+        deactivate_action_notices = DeactivateActionNotice.objects.filter(item=item)
+        reactivate_action_notices = ReactivateActionNotice.objects.filter(item=item)
+        destroy_action_notices = DestroyActionNotice.objects.filter(item=item)
+        edit_action_notices = EditActionNotice.objects.filter(item=item)
+        for action_notice in relation_action_notices:
+            result.append(u"<li>Relation action notice (%s version %s field %s.%s %s points to me)</li>" % (action_notice.from_item, action_notice.from_item_version_number, action_notice.from_field_model, action_notice.from_field_name, u'now' if action_notice.relation_added else u'no longer'))
+        for action_notice in deactivate_action_notices:
+            result.append(u"<li>Deactivate action notice</li>")
+        for action_notice in reactivate_action_notices:
+            result.append(u"<li>Reactivate action notice</li>")
+        for action_notice in destroy_action_notices:
+            result.append(u"<li>Destroy action notice</li>")
+        for action_notice in edit_action_notices:
+            result.append(u"<li>Edit action notice</li>")
+        result.append(u"</ul>")
+
         return '\n'.join(result)
 
 @register.tag

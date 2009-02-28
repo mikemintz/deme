@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import SMTPConnection, EmailMessage
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
+from django.db.models import signals
 from email.utils import formataddr
 import datetime
 import settings
@@ -15,7 +16,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddMemberComment', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'DeactivateComment', 'DestroyComment', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EditComment', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'RemoveMemberComment', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ReactivateComment', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice', 'ReactivateActionNotice', 'DestroyActionNotice']
+__all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice', 'ReactivateActionNotice', 'DestroyActionNotice', 'EditActionNotice']
 
 ###############################################################################
 # Item framework
@@ -187,6 +188,48 @@ class Item(models.Model):
         recursive_comment_membership = RecursiveComment.objects.filter(parent=self)
         return Comment.objects.filter(active=True, pk__in=recursive_comment_membership.values('child').query)
 
+    def all_parents_in_thread(self, include_parent_collections=False, recursive_filter=None):
+        """
+        Return a QuerySet including self and all direct and indirect parents in
+        this thread. If self is a Comment, this will return self, the parent,
+        the grandparent, so on up to (and including) the original item. If self
+        is not a Comment, this should only self (unless
+        include_parent_collections is True as explained below).
+        
+        If include_parent_collections=True, also include all Collections
+        containing self or parents in this thread, either through direct or
+        indirect membership. If a recursive_filter is specified, use it to
+        filter which RecursiveMemberships can be used to infer an item's
+        membership in this collection. Often, one will use a permission filter
+        so that only those RecursiveMemberships that the Agent is allowed to
+        view will be used.
+        """
+        thread_items = Item.objects.filter(Q(pk=self.pk) | Q(pk__in=RecursiveComment.objects.filter(child=self).values('parent').query))
+        if not include_parent_collections:
+            return thread_items
+
+        recursive_memberships = RecursiveMembership.objects.filter(child__in=thread_items.values('pk').query)
+        if recursive_filter is not None:
+            recursive_memberships = recursive_memberships.filter(recursive_filter)
+        collection_filter = Q(pk__in=recursive_memberships.values('parent').query)
+
+        return Item.objects.filter(Q(pk__in=thread_items.values('pk').query) | collection_filter)
+
+    def original_item_in_thread(self):
+        """
+        Return the original item that was commented on in this thread. If this
+        is not a Comment, just return self.
+        
+        For example, if this is a reply to a reply to a comment on X, this
+        method will return X. This method uses the RecursiveComment table.
+        """
+        parent_pks_query = RecursiveComment.objects.filter(child=self).values('parent').query
+        comment_pks_query = Comment.objects.all().values('pk').query
+        try:
+            return Item.objects.exclude(pk__in=comment_pks_query).get(pk__in=parent_pks_query)
+        except ObjectDoesNotExist:
+            return self
+
     def copy_fields_from_version(self, version_number):
         """
         Set the fields of self to what they were at the given version number.
@@ -228,38 +271,44 @@ class Item(models.Model):
     copy_fields_to_itemversion.alters_data = True
 
     @transaction.commit_on_success
-    def deactivate(self, agent):
+    def deactivate(self, action_agent, action_summary='', action_time=None):
         """
-        Deactivate the current Item (the specified agent was responsible). This
-        will call _after_deactivate() if the item was previously active.
+        Deactivate the current Item (the specified agent was responsible with
+        the given summary at the given time). This will call _after_deactivate
+        if the item was previously active.
         """
+        action_time = action_time or datetime.datetime.now()
         if not self.active:
             return
         self.active = False
         self.save()
-        self._after_deactivate(agent)
+        self._after_deactivate(action_agent, action_summary, action_time)
     deactivate.alters_data = True
 
     @transaction.commit_on_success
-    def reactivate(self, agent):
+    def reactivate(self, action_agent, action_summary='', action_time=None):
         """
-        Reactivate the current Item (the specified agent was responsible). This
-        will call _after_reactivate() if the item was previously inactive.
+        Reactivate the current Item (the specified agent was responsible with
+        the given summary at the given time). This will call _after_reactivate
+        if the item was previously inactive.
         """
+        action_time = action_time or datetime.datetime.now()
         if self.active:
             return
         self.active = True
         self.save()
-        self._after_reactivate(agent)
+        self._after_reactivate(action_agent, action_summary, action_time)
     reactivate.alters_data = True
 
     @transaction.commit_on_success
-    def destroy(self, agent):
+    def destroy(self, action_agent, action_summary='', action_time=None):
         """
-        Nullify the fields of this item (the specified agent was responsible)
-        and delete all versions. The item must already be inactive and cannot
-        have already been destroyed. This will call _after_destroy().
+        Nullify the fields of this item (the specified agent was responsible
+        with the given summary at the given time) and delete all versions.
+        The item must already be inactive and cannot have already been
+        destroyed. This will call _after_destroy.
         """
+        action_time = action_time or datetime.datetime.now()
         if self.destroyed or self.active:
             return
         # Set all non-special fields to null
@@ -286,17 +335,19 @@ class Item(models.Model):
         CollectionItemPermission.objects.filter(collection=self).delete()
         AgentGlobalPermission.objects.filter(agent=self).delete()
         CollectionGlobalPermission.objects.filter(collection=self).delete()
-        self._after_destroy(agent)
+        # After destroy callback
+        self._after_destroy(action_agent, action_summary, action_time)
     destroy.alters_data = True
 
     @transaction.commit_on_success
-    def save_versioned(self, agent, first_agent=False, create_permissions=True, action_time=None, edit_summary=""):
+    def save_versioned(self, action_agent, action_summary='', action_time=None, first_agent=False, create_permissions=True):
         """
-        Save the current item, making sure to keep track of versions.
+        Save the current item (the specified agent was responsible with the
+        given summary at the given time), making sure to keep track of versions.
         
         Use this method instead of save() because it will keep things
         consistent with versions and special fields. This will set
-        created_at to the current time (or method parameter) if this is a
+        created_at to the current time (or action_time parameter) if this is a
         creation.
         
         If first_agent=True, then this method assumes you are creating the
@@ -307,6 +358,9 @@ class Item(models.Model):
         If create_permissions=True, then this method will automatically create
         reasonable permissions.
         TODO: figure out what those permissions should really be
+        
+        This will call _after_create or _after_edit, depending on whether the
+        item already existed.
         """
         action_time = action_time or datetime.datetime.now()
         is_new = not self.pk
@@ -314,11 +368,10 @@ class Item(models.Model):
         # Update the item
         self.item_type = type(self).__name__
         if first_agent:
-            self.creator = self
+            action_agent = self
             self.creator_id = 1
-        else:
-            if is_new:
-                self.creator = agent
+        if is_new:
+            self.creator = action_agent
         if is_new:
             self.created_at = action_time
         if not is_new:
@@ -333,88 +386,78 @@ class Item(models.Model):
 
         # Create the permissions
         if create_permissions and is_new:
-            AgentItemPermission(agent=agent, item=self, ability='do_anything', is_allowed=True).save()
+            AgentItemPermission(agent=action_agent, item=self, ability='do_anything', is_allowed=True).save()
 
         if is_new:
-            self._after_create()
+            self._after_create(action_agent, action_summary, action_time)
         else:
-            self._after_edit(agent)
+            self._after_edit(action_agent, action_summary, action_time)
     save_versioned.alters_data = True
 
-    def _after_create(self):
+    def _after_create(self, action_agent, action_summary, action_time):
         """
         This method gets called after the first version of an item is
         created via save_versioned().
         
         Item types that want to trigger an action after creation should
         override this method, making sure to put a call to super at the top,
-        like super(Membership, self)._after_create()
+        like super(Group, self)._after_create(action_agent, action_summary, action_time)
         """
-        pass
+        if self.active:
+            RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
     _after_create.alters_data = True
 
-    def _after_edit(self, agent):
+    def _after_edit(self, action_agent, action_summary, action_time):
         """
-        This method gets called after an item is edited via save_versioned().
+        This method gets called after an existing item is edited via
+        save_versioned().
         
         Item types that want to trigger an action after creation should
         override this method, making sure to put a call to super at the top,
-        like super(Membership, self)._after_edit()
+        like super(Group, self)._after_edit(action_agent, action_summary, action_time)
         """
-        # Create an EditComment
-        #TODO get the description
-        #TODO get the action_time (same with the others)
-        edit_comment = EditComment(item=self, item_version_number=self.version_number, description='')
-        edit_comment.save_versioned(agent=agent)
-        EditActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
-    _after_create.alters_data = True
+        EditActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+        if self.active:
+            RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=True)
+    _after_edit.alters_data = True
 
-    def _after_deactivate(self, agent):
+    def _after_deactivate(self, action_agent, action_summary, action_time):
         """
         This method gets called after an item is deactivated.
         
         Item types that want to trigger an action after deactivation should
         override this method, making sure to put a call to super at the top,
-        like super(Membership, self)._after_deactivate()
+        like super(Group, self)._after_deactivate(action_agent, action_summary, action_time)
         """
-        # Create a DeactivateComment
-        deactivate_comment = DeactivateComment(item=self, item_version_number=self.version_number)
-        deactivate_comment.save_versioned(agent=agent)
-        # Create a DeactivateActionNotice
-        #TODO get the description
-        DeactivateActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
+        DeactivateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+        old_item = self
+        new_item = None
+        RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=False)
     _after_deactivate.alters_data = True
 
-    def _after_reactivate(self, agent):
+    def _after_reactivate(self, action_agent, action_summary, action_time):
         """
         This method gets called after an item is reactivated.
         
         Item types that want to trigger an action after reactivation should
         override this method, making sure to put a call to super at the top,
-        like super(Membership, self)._after_reactivate()
+        like super(Group, self)._after_reactivate(action_agent, action_summary, action_time)
         """
-        # Create a ReactivateComment
-        reactivate_comment = ReactivateComment(item=self, item_version_number=self.version_number)
-        reactivate_comment.save_versioned(agent=agent)
-        # Create a ReactivateActionNotice
-        #TODO get the description
-        ReactivateActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
+        ReactivateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+        old_item = None
+        new_item = self
+        RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
     _after_reactivate.alters_data = True
 
-    def _after_destroy(self, agent):
+    def _after_destroy(self, action_agent, action_summary, action_time):
         """
         This method gets called after an item is destroyed.
         
         Item types that want to trigger an action after destroy should
         override this method, making sure to put a call to super at the top,
-        like super(Membership, self)._after_destroy()
+        like super(Group, self)._after_destroy(action_agent, action_summary, action_time)
         """
-        # Create a DestroyComment
-        destroy_comment = DestroyComment(item=self, item_version_number=self.version_number)
-        destroy_comment.save_versioned(agent=agent)
-        # Create a DestroyActionNotice
-        #TODO get the description
-        DestroyActionNotice(item=self, item_version_number=self.version_number, creator=agent, created_at=datetime.datetime.now(), description='').save()
+        DestroyActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
     _after_destroy.alters_data = True
 
 
@@ -821,18 +864,11 @@ class Subscription(Item):
     If deep=True and the item is a Collection, then comments on all items in
     the collection (direct or indirect) will be sent in addition to comments on
     the collection itself.
-    
-    If notify_text=True, TextComments will be included.
-    
-    If notify_edit=True, EditComments, DeactivateComments, ReactivateComments,
-    DestroyComments, AddMemberComments, and RemoveMemberComments will be
-    included.
     """
 
     # Setup
     immutable_fields = Item.immutable_fields | set(['contact_method', 'item'])
-    introduced_abilities = frozenset(['view contact_method', 'view item', 'view deep', 'view notify_text',
-                                      'view notify_edit', 'edit deep', 'edit notify_text', 'edit notify_edit'])
+    introduced_abilities = frozenset(['view contact_method', 'view item', 'view deep', 'edit deep'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('subscription')
@@ -843,8 +879,6 @@ class Subscription(Item):
     contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'))
     item           = models.ForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'))
     deep           = models.BooleanField('deep subscription', default=False)
-    notify_text    = models.BooleanField('notify about text comments', default=True)
-    notify_edit    = models.BooleanField('notify about edits', default=False)
 
 
 ###############################################################################
@@ -893,14 +927,14 @@ class Collection(Item):
             recursive_memberships = recursive_memberships.filter(recursive_filter)
         return Item.objects.filter(pk__in=recursive_memberships.values('child').query)
 
-    def _after_deactivate(self, agent):
-        super(Collection, self)._after_deactivate(agent)
+    def _after_deactivate(self, action_agent, action_summary, action_time):
+        super(Collection, self)._after_deactivate(action_agent, action_summary, action_time)
         # Update the RecursiveMembership to indicate this Collection is gone
         RecursiveMembership.recursive_remove_collection(self)
     _after_deactivate.alters_data = True
 
-    def _after_reactivate(self, agent):
-        super(Collection, self)._after_reactivate(agent)
+    def _after_reactivate(self, action_agent, action_summary, action_time):
+        super(Collection, self)._after_reactivate(action_agent, action_summary, action_time)
         # Update the RecursiveMembership to indicate this Collection exists
         RecursiveMembership.recursive_add_collection(self)
     _after_reactivate.alters_data = True
@@ -921,14 +955,14 @@ class Group(Collection):
         verbose_name = _('group')
         verbose_name_plural = _('groups')
 
-    def _after_create(self):
-        super(Group, self)._after_create()
+    def _after_create(self, action_agent, action_summary, action_time):
+        super(Group, self)._after_create(action_agent, action_summary, action_time)
         # Create a folio for this group
         folio = Folio(group=self, name='%s folio' % self.name)
-        folio.save_versioned(agent=self.creator)
+        folio.save_versioned(action_agent, action_summary, action_time)
         # Create a group agent for this group
         group_agent = GroupAgent(group=self, name='%s agent' % self.name)
-        group_agent.save_versioned(agent=self.creator)
+        group_agent.save_versioned(action_agent, action_summary, action_time)
     _after_create.alters_data = True
 
 
@@ -967,33 +1001,24 @@ class Membership(Item):
     item       = models.ForeignKey(Item, related_name='memberships', verbose_name=_('item'))
     collection = models.ForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'))
 
-    def _after_create(self):
-        super(Membership, self)._after_create()
+    def _after_create(self, action_agent, action_summary, action_time):
+        super(Membership, self)._after_create(action_agent, action_summary, action_time)
         if self.collection.active:
             # Update the RecursiveMembership to indicate this Membership exists
             RecursiveMembership.recursive_add_membership(self)
-        # Create an AddMemberComment to indicate a member was added to the collection
-        add_member_comment = AddMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
-        add_member_comment.save_versioned(agent=self.creator)
     _after_create.alters_data = True
 
-    def _after_deactivate(self, agent):
-        super(Membership, self)._after_deactivate(agent)
+    def _after_deactivate(self, action_agent, action_summary, action_time):
+        super(Membership, self)._after_deactivate(action_agent, action_summary, action_time)
         # Update the RecursiveMembership to indicate this Membership is gone
         RecursiveMembership.recursive_remove_edge(self.collection, self.item)
-        # Create a RemoveMemberComment to indicate a member was removed from the collection
-        remove_member_comment = RemoveMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
-        remove_member_comment.save_versioned(agent=agent)
     _after_deactivate.alters_data = True
 
-    def _after_reactivate(self, agent):
-        super(Membership, self)._after_reactivate(agent)
+    def _after_reactivate(self, action_agent, action_summary, action_time):
+        super(Membership, self)._after_reactivate(action_agent, action_summary, action_time)
         if self.collection.active:
             # Update the RecursiveMembership to indicate this Membership exists
             RecursiveMembership.recursive_add_membership(self)
-        # Create an AddMemberComment to indicate a member was added to the collection
-        add_member_comment = AddMemberComment(item=self.collection, item_version_number=self.collection.version_number, membership=self)
-        add_member_comment.save_versioned(agent=agent)
     _after_reactivate.alters_data = True
 
 
@@ -1163,169 +1188,15 @@ class Comment(Item):
     item                = models.ForeignKey(Item, related_name='comments', verbose_name=_('item'))
     item_version_number = models.PositiveIntegerField(_('item version number'))
 
-    def original_item(self):
-        """
-        Return the original item that was commented on in this thread.
-        
-        For example, if this is a reply to a reply to a comment on X, this
-        method will return X. This method uses the RecursiveComment table.
-        """
-        parent_pks_query = RecursiveComment.objects.filter(child=self).values('parent').query
-        comment_pks_query = Comment.objects.all().values('pk').query
-        return Item.objects.exclude(pk__in=comment_pks_query).get(pk__in=parent_pks_query)
-
-    def all_parents_in_thread(self, include_parent_collections=False, recursive_filter=None):
-        """
-        Return a QuerySet of all direct and indirect parents in this thread.
-        
-        If include_parent_collections=True, also include all Collections
-        containing self or parents in this thread, either through direct or
-        indirect membership. If a recursive_filter is specified, use it to
-        filter which RecursiveMemberships can be used to infer an item's
-        membership in this collection. Often, one will use a permission filter
-        so that only those RecursiveMemberships that the Agent is allowed to
-        view will be used.
-        """
-        thread_parent_pks_query = RecursiveComment.objects.filter(child=self).values('parent').query
-        thread_parent_filter = Q(pk__in=thread_parent_pks_query)
-        if not include_parent_collections:
-            return Item.objects.filter(thread_parent_filter)
-
-        recursive_memberships = RecursiveMembership.objects.filter(child__in=thread_parent_pks_query)
-        if recursive_filter is not None:
-            recursive_memberships = recursive_memberships.filter(recursive_filter)
-        collection_filter = Q(pk__in=recursive_memberships.values('parent').query)
-
-        return Item.objects.filter(thread_parent_filter | collection_filter)
-
-    def subscription_filter_for_comment_type(self):
-        """
-        Return a filter (Q node) for Subscriptions that are supposed to be
-        notified about this comment type. Only the item type is considered
-        (e.g., whether it's a TextComment or and EditComment).
-        """
-        if isinstance(self, TextComment):
-            return Q(notify_text=True)
-        elif isinstance(self, EditComment):
-            return Q(notify_edit=True)
-        elif isinstance(self, DeactivateComment):
-            return Q(notify_edit=True)
-        elif isinstance(self, DestroyComment):
-            return Q(notify_edit=True)
-        elif isinstance(self, ReactivateComment):
-            return Q(notify_edit=True)
-        elif isinstance(self, AddMemberComment):
-            return Q(notify_edit=True)
-        elif isinstance(self, RemoveMemberComment):
-            return Q(notify_edit=True)
-        else:
-            return Q(pk__isnull=False)
-
-    def notification_email(self, email_contact_method):
-        """
-        Return an EmailMessage with the notification that should be sent to the
-        specified EmailContactMethod. If there is no Subscription, or the Agent
-        with the subscription is not allowed to receive the notification,
-        return None.
-        """
-        agent = email_contact_method.agent
-        from permissions import PermissionCache
-        permission_cache = PermissionCache()
-
-        # First, decide if we're allowed to get this notification at all
-        comment_type_q = self.subscription_filter_for_comment_type()
-        def direct_subscriptions():
-            parent_pks_query = self.all_parents_in_thread().filter(active=True).values('pk').query
-            return Subscription.objects.filter(comment_type_q, item__in=parent_pks_query, active=True)
-        def deep_subscriptions():
-            if permission_cache.agent_can_global(agent, 'do_anything'):
-                recursive_filter = None
-            else:
-                visible_memberships = permission_cache.filter_items(agent, 'view item', Membership.objects)
-                recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-            parent_pks_query = self.all_parents_in_thread(True, recursive_filter).filter(active=True).values('pk').query
-            return Subscription.objects.filter(comment_type_q, item__in=parent_pks_query, deep=True, active=True)
-        if not direct_subscriptions() and not deep_subscriptions():
-            return None
-
-        # Now get the fields we are allowed to view
-        item = self.item
-        topmost_item = self.original_item()
-        item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk}))
-        topmost_item_url = 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('item_url', kwargs={'viewer': topmost_item.item_type.lower(), 'noun': topmost_item.pk}))
-        comment_name = self.name if permission_cache.agent_can(agent, 'view name', self) else 'PERMISSION DENIED'
-        if isinstance(self, TextComment):
-            comment_body = self.body if permission_cache.agent_can(agent, 'view body', self) else 'PERMISSION DENIED'
-        item_name = item.name if permission_cache.agent_can(agent, 'view name', item) else 'PERMISSION DENIED'
-        topmost_item_name = topmost_item.name if permission_cache.agent_can(agent, 'view name', topmost_item) else 'PERMISSION DENIED'
-        creator_name = self.creator.name if permission_cache.agent_can(agent, 'view name', self.creator) else 'PERMISSION DENIED'
-
-        # Generate the subject and body
-        if isinstance(self, TextComment):
-            subject = 'Re: [%s] %s' % (comment_name, topmost_item_name)
-            body = '%s commented on %s\n%s\n\n%s' % (creator_name, topmost_item_name, topmost_item_url, comment_body)
-        elif isinstance(self, EditComment):
-            subject = 'Re: [Edited] %s' % (item_name,)
-            body = '%s edited %s\n%s' % (creator_name, item_name, item_url)
-        elif isinstance(self, DeactivateComment):
-            subject = 'Re: [Deactivated] %s' % (item_name,)
-            body = '%s deactivated %s\n%s' % (creator_name, item_name, item_url)
-        elif isinstance(self, ReactivateComment):
-            subject = 'Re: [Reactivated] %s' % (item_name,)
-            body = '%s reactivated %s\n%s' % (creator_name, item_name, item_url)
-        elif isinstance(self, DestroyComment):
-            subject = 'Re: [Destroyed] %s' % (item_name,)
-            body = '%s destroyed %s\n%s' % (creator_name, item_name, item_url)
-        elif isinstance(self, AddMemberComment):
-            subject = 'Re: [Member Added] %s' % (item_name,)
-            body = '%s added a member to %s\n%s' % (creator_name, item_name, item_url)
-        elif isinstance(self, RemoveMemberComment):
-            subject = 'Re: [Member Removed] %s' % (item_name,)
-            body = '%s removed a member from %s\n%s' % (creator_name, item_name, item_url)
-        else:
-            return None
-
-        # Finally, put together the EmailMessage
-        from_email_address = '%s@%s' % (self.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
-        from_email = formataddr((creator_name, from_email_address))
-        reply_to_email = formataddr((comment_name, from_email_address))
-        to_email = formataddr((agent.name, email_contact_method.email))
-        headers = {}
-        headers['Reply-To'] = reply_to_email
-        messageid = lambda x: '<%s-%s@%s>' % (x.pk, x.created_at.strftime("%Y%m%d%H%M%S"), settings.NOTIFICATION_EMAIL_HOSTNAME)
-        headers['Message-ID'] = messageid(self)
-        headers['In-Reply-To'] = messageid(self.item)
-        headers['References'] = '%s %s' % (messageid(topmost_item), messageid(self.item))
-        return EmailMessage(subject=subject, body=body, from_email=from_email, to=[to_email], headers=headers)
-
-    def _after_create(self):
-        super(Comment, self)._after_create()
-
+    def _after_create(self, action_agent, action_summary, action_time):
+        super(Comment, self)._after_create(action_agent, action_summary, action_time)
         # Update the RecursiveComment to indicate this Comment exists
         RecursiveComment.recursive_add_comment(self)
-
-        # Email everyone subscribed to items this comment is relevant for
-        comment_type_q = self.subscription_filter_for_comment_type()
-        direct_subscriptions = Subscription.objects.filter(comment_type_q,
-                                                           item__in=self.all_parents_in_thread().filter(active=True).values('pk').query,
-                                                           active=True)
-        deep_subscriptions = Subscription.objects.filter(comment_type_q,
-                                                         item__in=self.all_parents_in_thread(True).filter(active=True).values('pk').query,
-                                                         deep=True,
-                                                         active=True)
-        direct_q = Q(pk__in=direct_subscriptions.values('contact_method').query)
-        deep_q = Q(pk__in=deep_subscriptions.values('contact_method').query)
-        email_contact_methods = EmailContactMethod.objects.filter(direct_q | deep_q, active=True)
-        messages = [self.notification_email(email_contact_method) for email_contact_method in email_contact_methods]
-        messages = [x for x in messages if x is not None]
-        if messages:
-            smtp_connection = SMTPConnection()
-            smtp_connection.send_messages(messages)
     _after_create.alters_data = True
 
-    def _after_destroy(self, agent):
-        super(Comment, self)._after_destroy(agent)
-        # Update the RecursiveComment to indicate this Membership is gone
+    def _after_destroy(self, action_agent, action_summary, action_time):
+        super(Comment, self)._after_destroy(action_agent, action_summary, action_time)
+        # Update the RecursiveComment to indicate this Comment is gone
         RecursiveComment.recursive_remove_comment(self)
     _after_destroy.alters_data = True
 
@@ -1344,118 +1215,6 @@ class TextComment(TextDocument, Comment):
     class Meta:
         verbose_name = _('text comment')
         verbose_name_plural = _('text comments')
-
-
-class EditComment(Comment):
-    """
-    An EditComment is a Comment that is automatically generated whenever
-    an agent edits an item. The commented item is the item that was edited,
-    and the commented item version number is the new version that was just
-    generated (as opposed to the previous version number).
-    """
-
-    # Setup
-    immutable_fields = Comment.immutable_fields
-    introduced_abilities = frozenset()
-    introduced_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('edit comment')
-        verbose_name_plural = _('edit comments')
-
-
-class DeactivateComment(Comment):
-    """
-    A DeactivateComment is a Comment that is automatically generated whenever
-    an agent deactivates an item. The commented item is the item that was
-    deactivated, and the commented item version number is the latest version
-    number at the time of the deactivation.
-    """
-
-    # Setup
-    immutable_fields = Comment.immutable_fields
-    introduced_abilities = frozenset()
-    introduced_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('deactivate comment')
-        verbose_name_plural = _('deactivate comments')
-
-
-class ReactivateComment(Comment):
-    """
-    A ReactivateComment is a Comment that is automatically generated whenever
-    an agent reactivates an item. The commented item is the item that was
-    reactivated, and the commented item version number is the latest version
-    number at the time of the reactivation.
-    """
-
-    # Setup
-    immutable_fields = Comment.immutable_fields
-    introduced_abilities = frozenset()
-    introduced_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('reactivate comment')
-        verbose_name_plural = _('reactivate comments')
-
-
-class DestroyComment(Comment):
-    """
-    A DestroyComment is a Comment that is automatically generated whenever
-    an agent destroys an item. The commented item is the item that was
-    destroyed, and the commented item version number is the latest version
-    number at the time of the destroying.
-    """
-
-    # Setup
-    immutable_fields = Comment.immutable_fields
-    introduced_abilities = frozenset()
-    introduced_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('destroy comment')
-        verbose_name_plural = _('destroy comments')
-
-
-class AddMemberComment(Comment):
-    """
-    An AddMemberComment is a Comment that is automatically generated whenever
-    an item is added to a collection. The commented item is the collection, and
-    the commented item version number is the latest version number at the time
-    of the add. The membership field points to the new Membership.
-    
-    This comment is generated when Memberships are created and reactivated.
-    """
-
-    # Setup
-    immutable_fields = Comment.immutable_fields | set(['membership'])
-    introduced_abilities = frozenset(['view membership'])
-    introduced_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('add member comment')
-        verbose_name_plural = _('add member comments')
-
-    # Fields
-    membership = models.ForeignKey(Membership, related_name="add_member_comments", verbose_name=_('membership'))
-
-
-class RemoveMemberComment(Comment):
-    """
-    A RemoveMemberComment is a Comment that is automatically generated whenever
-    an item is removed from a collection. The commented item is the collection,
-    and the commented item version number is the latest version number at the
-    time of the remove. The membership field points to the old Membership.
-    
-    This comment is generated when Memberships are deactivated.
-    """
-
-    # Setup
-    immutable_fields = Comment.immutable_fields | set(['membership'])
-    introduced_abilities = frozenset(['view membership'])
-    introduced_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('remove member comment')
-        verbose_name_plural = _('remove member comments')
-
-    # Fields
-    membership = models.ForeignKey(Membership, related_name="remove_member_comments", verbose_name=_('membership'))
 
 
 class Excerpt(Item):
@@ -1638,7 +1397,7 @@ class DemeSetting(Item):
             return None
 
     @classmethod
-    def set(cls, key, value, agent):
+    def set(cls, key, value, action_agent):
         """
         Set the DemeSetting with the specified key to the specified value,
         such that the agent is the creator. This may result in creating a new
@@ -1651,9 +1410,9 @@ class DemeSetting(Item):
             setting = cls(name=key, key=key)
         if setting.value != value:
             setting.value = value
-            setting.save_versioned(agent=agent)
+            setting.save_versioned(action_agent=action_agent)
         if not setting.active:
-            setting.reactivate(agent)
+            setting.reactivate(action_agent=action_agent)
 
 
 ###############################################################################
@@ -1674,11 +1433,117 @@ class ActionNotice(models.Model):
         """
         return self.item
 
+    def notification_email(self, email_contact_method):
+        """
+        Return an EmailMessage with the notification that should be sent to the
+        specified EmailContactMethod. If there is no Subscription, or the Agent
+        with the subscription is not allowed to receive the notification,
+        return None.
+        """
+        agent = email_contact_method.agent
+        from permissions import PermissionCache
+        permission_cache = PermissionCache()
+
+        # First, decide if we're allowed to get this notification at all
+        def direct_subscriptions():
+            parent_pks_query = self.item.all_parents_in_thread().values('pk').query
+            return Subscription.objects.filter(item__in=parent_pks_query, active=True)
+        def deep_subscriptions():
+            if permission_cache.agent_can_global(agent, 'do_anything'):
+                recursive_filter = None
+            else:
+                visible_memberships = permission_cache.filter_items(agent, 'view item', Membership.objects)
+                recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
+            parent_pks_query = self.item.all_parents_in_thread(True, recursive_filter).values('pk').query
+            return Subscription.objects.filter(item__in=parent_pks_query, deep=True, active=True)
+        if not direct_subscriptions() and not deep_subscriptions():
+            return None
+
+        # Now get the fields we are allowed to view
+        item = self.item
+        reply_item = self.notification_reply_item()
+        topmost_item = item.original_item_in_thread()
+        def get_url(x):
+            return 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('item_url', kwargs={'viewer': x.item_type.lower(), 'noun': x.pk}))
+        item_name = item.name if permission_cache.agent_can(agent, 'view name', item) else u'%s %d' % (item.item_type, item.pk)
+        reply_item_name = reply_item.name if permission_cache.agent_can(agent, 'view name', reply_item) else u'%s %d' % (reply_item.item_type, reply_item.pk)
+        topmost_item_name = topmost_item.name if permission_cache.agent_can(agent, 'view name', topmost_item) else u'%s %d' % (topmost_item.item_type, topmost_item.pk)
+        creator_name = self.creator.name if permission_cache.agent_can(agent, 'view name', self.creator) else u'%s %d' % (self.creator.item_type, self.creator.pk)
+
+        # Generate the subject and body
+        if isinstance(self, RelationActionNotice):
+            if (self.from_field_model, self.from_field_name) == ('Comment', 'item') and self.relation_added:
+                comment = self.from_item.downcast()
+                comment_name = comment.name if permission_cache.agent_can(agent, 'view name', comment) else u'%s %d' % (comment.item_type, comment.pk)
+                if isinstance(comment, TextComment):
+                    comment_body = comment.body if permission_cache.agent_can(agent, 'view body', comment) else '[You do not have permission to view the body of this comment]'
+                else:
+                    comment_body = ''
+                subject = 'Re: [%s] %s' % (comment_name, topmost_item_name)
+                body = '%s commented on %s\n%s\n\n%s' % (creator_name, topmost_item_name, get_url(topmost_item), comment_body)
+            else:
+                from_item_name = self.from_item.name if permission_cache.agent_can(agent, 'view name', self.from_item) else u'%s %d' % (self.from_item.item_type, self.from_item.pk)
+                if self.relation_added:
+                    subject = 'Re: [Relation Added] %s' % (item_name,)
+                else:
+                    subject = 'Re: [Relation Removed] %s' % (item_name,)
+                body = 'Thanks to %s, the %s.%s field of %s %s points to %s\n%s' % (creator_name, self.from_field_model, self.from_field_name, from_item_name, 'now' if self.relation_added else 'no longer', item_name, get_url(self.from_item))
+        elif isinstance(self, DeactivateActionNotice):
+            subject = 'Re: [Deactivated] %s' % (item_name,)
+            body = '%s deactivated %s\n%s' % (creator_name, item_name, get_url(item))
+        elif isinstance(self, ReactivateActionNotice):
+            subject = 'Re: [Reactivated] %s' % (item_name,)
+            body = '%s reactivated %s\n%s' % (creator_name, item_name, get_url(item))
+        elif isinstance(self, DestroyActionNotice):
+            subject = 'Re: [Destroyed] %s' % (item_name,)
+            body = '%s destroyed %s\n%s' % (creator_name, item_name, get_url(item))
+        elif isinstance(self, EditActionNotice):
+            subject = 'Re: [Edited] %s' % (item_name,)
+            body = '%s edited %s\n%s' % (creator_name, item_name, get_url(item))
+        else:
+            return None
+
+        # Finally, put together the EmailMessage
+        from_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
+        from_email = formataddr((creator_name, from_email_address))
+        reply_to_email = formataddr((reply_item_name, from_email_address))
+        to_email = formataddr((agent.name, email_contact_method.email))
+        headers = {}
+        headers['Reply-To'] = reply_to_email
+        messageid = lambda x: '<%s-%s@%s>' % (x.pk, x.created_at.strftime("%Y%m%d%H%M%S"), settings.NOTIFICATION_EMAIL_HOSTNAME)
+        if reply_item == item:
+            headers['Message-ID'] = messageid(self)
+        else:
+            headers['Message-ID'] = messageid(reply_item)
+        headers['In-Reply-To'] = messageid(item)
+        headers['References'] = '%s %s' % (messageid(topmost_item), messageid(item))
+        return EmailMessage(subject=subject, body=body, from_email=from_email, to=[to_email], headers=headers)
+
+def action_notice_post_save_handler(sender, **kwargs):
+    action_notice = kwargs['instance']
+    item = action_notice.item
+    # Email everyone subscribed to items this notice is relevant for
+    direct_subscriptions = Subscription.objects.filter(item__in=item.all_parents_in_thread().values('pk').query,
+                                                       active=True)
+    deep_subscriptions = Subscription.objects.filter(item__in=item.all_parents_in_thread(True).values('pk').query,
+                                                     deep=True,
+                                                     active=True)
+    direct_q = Q(pk__in=direct_subscriptions.values('contact_method').query)
+    deep_q = Q(pk__in=deep_subscriptions.values('contact_method').query)
+    email_contact_methods = EmailContactMethod.objects.filter(direct_q | deep_q, active=True)
+    messages = [action_notice.notification_email(email_contact_method) for email_contact_method in email_contact_methods]
+    messages = [x for x in messages if x is not None]
+    if messages:
+        smtp_connection = SMTPConnection()
+        smtp_connection.send_messages(messages)
+
+
 class RelationActionNotice(ActionNotice):
     from_item                = models.ForeignKey(Item, related_name='relation_action_notices_from', verbose_name=_('from item'))
     from_item_version_number = models.PositiveIntegerField(_('from item version number'))
     from_field_name          = models.CharField(_('from field name'), max_length=255)
     from_field_model         = models.CharField(_('from field model'), max_length=255)
+    relation_added           = models.BooleanField(_('relation added'))
 
     def notification_reply_item(self):
         """
@@ -1690,20 +1555,72 @@ class RelationActionNotice(ActionNotice):
         """
         return self.from_item
 
+    @classmethod
+    def create_notices(cls, action_agent, action_summary, action_time, item, existed_before, existed_after):
+        if existed_before and existed_after:
+            old_item = type(item).objects.get(pk=item.pk)
+            old_item.copy_fields_from_version(item.version_number - 1)
+            new_item = item
+        elif existed_before:
+            old_item = item
+            new_item = None
+        elif existed_after:
+            old_item = None
+            new_item = item
+        # Because of multiple inheritance, we need to put the field/model pairs into a set
+        fields_and_models = set(item._meta.get_fields_with_model())
+        for field, model in fields_and_models:
+            if isinstance(field, (models.OneToOneField, models.ManyToManyField)):
+                continue
+            if field.name == 'creator':
+                continue # we do creator stuff separately
+            if isinstance(field, models.ForeignKey):
+                if model is None:
+                    model = type(item)
+                if old_item is None:
+                    old_value = None
+                else:
+                    old_value = getattr(old_item, field.name)
+                if new_item is None:
+                    new_value = None
+                else:
+                    new_value = getattr(new_item, field.name)
+                if new_value != old_value:
+                    for value, relation_added in [(old_value, False), (new_value, True)]:
+                        if value is not None:
+                            action_notice = RelationActionNotice()
+                            action_notice.item = value
+                            action_notice.item_version_number = value.version_number
+                            action_notice.creator = action_agent
+                            action_notice.created_at = action_time
+                            action_notice.description = action_summary
+                            action_notice.from_item = item
+                            action_notice.from_item_version_number = item.version_number
+                            action_notice.from_field_name = field.name
+                            action_notice.from_field_model = model.__name__
+                            action_notice.relation_added = relation_added
+                            action_notice.save()
+signals.post_save.connect(action_notice_post_save_handler, sender=RelationActionNotice, dispatch_uid='RelationActionNotice post_save')
+    
+
 class DeactivateActionNotice(ActionNotice):
     pass
+signals.post_save.connect(action_notice_post_save_handler, sender=DeactivateActionNotice, dispatch_uid='DeactivateActionNotice post_save')
 
 
 class ReactivateActionNotice(ActionNotice):
     pass
+signals.post_save.connect(action_notice_post_save_handler, sender=ReactivateActionNotice, dispatch_uid='ReactivateActionNotice post_save')
 
 
 class DestroyActionNotice(ActionNotice):
     pass
+signals.post_save.connect(action_notice_post_save_handler, sender=DestroyActionNotice, dispatch_uid='DestroyActionNotice post_save')
 
 
 class EditActionNotice(ActionNotice):
     pass
+signals.post_save.connect(action_notice_post_save_handler, sender=EditActionNotice, dispatch_uid='EditActionNotice post_save')
 
 
 ###############################################################################
