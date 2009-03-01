@@ -369,14 +369,14 @@ class Item(models.Model):
         self.item_type = type(self).__name__
         if first_agent:
             action_agent = self
-            self.creator_id = 1
         if is_new:
             self.creator = action_agent
-        if is_new:
             self.created_at = action_time
-        if not is_new:
+        else:
             latest_version_number = Item.objects.get(pk=self.pk).version_number
             self.version_number = latest_version_number + 1
+        if first_agent:
+            self.creator_id = 1
         self.save()
 
         # Create the new item version
