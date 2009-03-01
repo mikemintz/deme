@@ -1496,22 +1496,22 @@ class ActionNotice(models.Model):
                     subject = 'Re: [Relation Added] %s' % (item_name,)
                 else:
                     subject = 'Re: [Relation Removed] %s' % (item_name,)
-                body = 'Thanks to %s, the %s.%s field of %s %s points to %s\n%s' % (creator_name, self.from_field_model, self.from_field_name, from_item_name, 'now' if self.relation_added else 'no longer', item_name, get_url(self.from_item))
+                body = 'Thanks to %s, the %s.%s field of %s %s points to %s\n%s\n%s' % (creator_name, self.from_field_model, self.from_field_name, from_item_name, 'now' if self.relation_added else 'no longer', item_name, self.description, get_url(self.from_item))
         elif isinstance(self, DeactivateActionNotice):
             subject = 'Re: [Deactivated] %s' % (item_name,)
-            body = '%s deactivated %s\n%s' % (creator_name, item_name, get_url(item))
+            body = '%s deactivated %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
         elif isinstance(self, ReactivateActionNotice):
             subject = 'Re: [Reactivated] %s' % (item_name,)
-            body = '%s reactivated %s\n%s' % (creator_name, item_name, get_url(item))
+            body = '%s reactivated %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
         elif isinstance(self, DestroyActionNotice):
             subject = 'Re: [Destroyed] %s' % (item_name,)
-            body = '%s destroyed %s\n%s' % (creator_name, item_name, get_url(item))
+            body = '%s destroyed %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
         elif isinstance(self, CreateActionNotice):
             subject = 'Re: [Created] %s' % (item_name,)
-            body = '%s created %s\n%s' % (creator_name, item_name, get_url(item))
+            body = '%s created %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
         elif isinstance(self, EditActionNotice):
             subject = 'Re: [Edited] %s' % (item_name,)
-            body = '%s edited %s\n%s' % (creator_name, item_name, get_url(item))
+            body = '%s edited %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
         else:
             return None
 
