@@ -579,28 +579,58 @@ class CommentBox(template.Node):
 
         # adding action notices just for debugging for now (eventually we'll move it to its own tag)
         if agentcan_helper(context, 'view_action_notices', item):
+            #TODO include recursive threads (comment replies, and items in this collection) of action notices
             result.append(u"<div><b>Action Notices</b></div>")
-            result.append(u"<ul>")
-            #TODO make sure cur_agent has 'view %s' % self.from_field_name, self.from_item in RelationActionNotices
-            relation_action_notices = RelationActionNotice.objects.filter(Q(item=item) | Q(creator=item))
-            deactivate_action_notices = DeactivateActionNotice.objects.filter(Q(item=item) | Q(creator=item))
-            reactivate_action_notices = ReactivateActionNotice.objects.filter(Q(item=item) | Q(creator=item))
-            destroy_action_notices = DestroyActionNotice.objects.filter(Q(item=item) | Q(creator=item))
-            create_action_notices = CreateActionNotice.objects.filter(Q(item=item) | Q(creator=item))
-            edit_action_notices = EditActionNotice.objects.filter(Q(item=item) | Q(creator=item))
-            for action_notice in relation_action_notices:
-                result.append(u"<li>Relation action notice (%s version %s field %s.%s %s points to me)</li>" % (action_notice.from_item, action_notice.from_item_version_number, action_notice.from_field_model, action_notice.from_field_name, u'now' if action_notice.relation_added else u'no longer'))
-            for action_notice in deactivate_action_notices:
-                result.append(u"<li>Deactivate action notice</li>")
-            for action_notice in reactivate_action_notices:
-                result.append(u"<li>Reactivate action notice</li>")
-            for action_notice in destroy_action_notices:
-                result.append(u"<li>Destroy action notice</li>")
-            for action_notice in create_action_notices:
-                result.append(u"<li>Create action notice</li>")
-            for action_notice in edit_action_notices:
-                result.append(u"<li>Edit action notice</li>")
-            result.append(u"</ul>")
+            result.append(u'<table class="list">')
+            result.append(u'<tr><th>Date/Time</th><th>Agent</th><th>Action</th><th>Item</th><th>Description</th></tr>')
+            action_notices = ActionNotice.objects.filter(Q(item=item) | Q(creator=item)).order_by('created_at')
+            action_notice_pk_to_object_map = {}
+            for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
+                specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
+                if action_notice_subclass == RelationActionNotice:
+                    context['_permission_cache'].mass_learn(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
+                for action_notice in specific_action_notices:
+                    action_notice_pk_to_object_map[action_notice.pk] = action_notice
+            context['_permission_cache'].mass_learn(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('creator').query)))
+            for action_notice in action_notices:
+                action_notice = action_notice_pk_to_object_map[action_notice.pk]
+                if isinstance(action_notice, RelationActionNotice):
+                    if not agentcan_helper(context, 'view %s' % action_notice.from_field_name, action_notice.from_item):
+                        continue
+                created_at_text = '<span title="%s">%s ago</span>' % (action_notice.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.created_at))
+                if agentcan_helper(context, 'view name', action_notice.creator):
+                    creator_name = action_notice.creator.name
+                else:
+                    creator_name = u'%s %s' % (capfirst(get_item_type_with_name(action_notice.creator.item_type)._meta.verbose_name), action_notice.creator.pk)
+                agent_text = u'<a href="%s">%s</a>' % (escape(action_notice.creator.get_absolute_url()), escape(creator_name))
+                if agentcan_helper(context, 'view name', action_notice.item):
+                    item_name = action_notice.item.name
+                else:
+                    item_name = u'%s %s' % (capfirst(get_item_type_with_name(action_notice.item.item_type)._meta.verbose_name), action_notice.item.pk)
+                item_text = u'<a href="%s">%s</a>' % (escape(action_notice.item.get_absolute_url() + '?version=%d' % action_notice.item_version_number), escape(item_name))
+                description_text = action_notice.description
+                if isinstance(action_notice, RelationActionNotice):
+                    if agentcan_helper(context, 'view name', action_notice.from_item):
+                        from_item_name = action_notice.from_item.name
+                    else:
+                        from_item_name = u'%s %s' % (capfirst(get_item_type_with_name(action_notice.from_item.item_type)._meta.verbose_name), action_notice.from_item.pk)
+                    from_item_text = u'<a href="%s">%s</a>' % (escape(action_notice.from_item.get_absolute_url() + '?version=%d' % action_notice.from_item_version_number), escape(from_item_name))
+                    if action_notice.relation_added:
+                        action_text = u"Set the %s of %s to" % (action_notice.from_field_name, from_item_text)
+                    else:
+                        action_text = u"Unset the %s of %s from" % (action_notice.from_field_name, from_item_text)
+                if isinstance(action_notice, DeactivateActionNotice):
+                    action_text = 'Deactivated'
+                if isinstance(action_notice, ReactivateActionNotice):
+                    action_text = 'Reactivated'
+                if isinstance(action_notice, DestroyActionNotice):
+                    action_text = 'Destroyed'
+                if isinstance(action_notice, CreateActionNotice):
+                    action_text = 'Created'
+                if isinstance(action_notice, EditActionNotice):
+                    action_text = 'Edited'
+                result.append(u"<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (created_at_text, agent_text, action_text, item_text, description_text))
+            result.append(u"</table>")
 
         return '\n'.join(result)
 
