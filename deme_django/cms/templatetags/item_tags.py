@@ -586,12 +586,12 @@ class CommentBox(template.Node):
         # if isinstance(self, RelationActionNotice):
         #     if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
         #         return None
-        relation_action_notices = RelationActionNotice.objects.filter(item=item)
-        deactivate_action_notices = DeactivateActionNotice.objects.filter(item=item)
-        reactivate_action_notices = ReactivateActionNotice.objects.filter(item=item)
-        destroy_action_notices = DestroyActionNotice.objects.filter(item=item)
-        create_action_notices = CreateActionNotice.objects.filter(item=item)
-        edit_action_notices = EditActionNotice.objects.filter(item=item)
+        relation_action_notices = RelationActionNotice.objects.filter(Q(item=item) | Q(creator=item))
+        deactivate_action_notices = DeactivateActionNotice.objects.filter(Q(item=item) | Q(creator=item))
+        reactivate_action_notices = ReactivateActionNotice.objects.filter(Q(item=item) | Q(creator=item))
+        destroy_action_notices = DestroyActionNotice.objects.filter(Q(item=item) | Q(creator=item))
+        create_action_notices = CreateActionNotice.objects.filter(Q(item=item) | Q(creator=item))
+        edit_action_notices = EditActionNotice.objects.filter(Q(item=item) | Q(creator=item))
         for action_notice in relation_action_notices:
             result.append(u"<li>Relation action notice (%s version %s field %s.%s %s points to me)</li>" % (action_notice.from_item, action_notice.from_item_version_number, action_notice.from_field_model, action_notice.from_field_name, u'now' if action_notice.relation_added else u'no longer'))
         for action_notice in deactivate_action_notices:

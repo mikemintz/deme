@@ -1445,18 +1445,21 @@ class ActionNotice(models.Model):
         from permissions import PermissionCache
         permission_cache = PermissionCache()
 
+        #TODO this code looks funny.. why doesn't it check the agent in the subscription?
         # First, decide if we're allowed to get this notification at all
         def direct_subscriptions():
-            parent_pks_query = self.item.all_parents_in_thread().values('pk').query
-            return Subscription.objects.filter(item__in=parent_pks_query, active=True)
+            item_parent_pks_query = self.item.all_parents_in_thread().values('pk').query
+            creator_parent_pks_query = self.creator.all_parents_in_thread().values('pk').query
+            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=creator_parent_pks_query), active=True)
         def deep_subscriptions():
             if permission_cache.agent_can_global(agent, 'do_anything'):
                 recursive_filter = None
             else:
                 visible_memberships = permission_cache.filter_items(agent, 'view item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-            parent_pks_query = self.item.all_parents_in_thread(True, recursive_filter).values('pk').query
-            return Subscription.objects.filter(item__in=parent_pks_query, deep=True, active=True)
+            item_pks_query = self.item.all_parents_in_thread(True, recursive_filter).values('pk').query
+            creator_pks_query = self.creator.all_parents_in_thread(True, recursive_filter).values('pk').query
+            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=creator_parent_pks_query), deep=True, active=True)
         if not permission_cache.agent_can(agent, 'view_action_notices', self.item):
             return None
         if isinstance(self, RelationActionNotice):
@@ -1530,11 +1533,12 @@ class ActionNotice(models.Model):
 
 def action_notice_post_save_handler(sender, **kwargs):
     action_notice = kwargs['instance']
-    item = action_notice.item
     # Email everyone subscribed to items this notice is relevant for
-    direct_subscriptions = Subscription.objects.filter(item__in=item.all_parents_in_thread().values('pk').query,
+    direct_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.item.all_parents_in_thread().values('pk').query) |
+                                                       Q(item__in=action_notice.creator.all_parents_in_thread().values('pk').query),
                                                        active=True)
-    deep_subscriptions = Subscription.objects.filter(item__in=item.all_parents_in_thread(True).values('pk').query,
+    deep_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.item.all_parents_in_thread(True).values('pk').query) |
+                                                     Q(item__in=action_notice.creator.all_parents_in_thread(True).values('pk').query),
                                                      deep=True,
                                                      active=True)
     direct_q = Q(pk__in=direct_subscriptions.values('contact_method').query)
