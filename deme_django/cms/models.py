@@ -16,7 +16,7 @@ import copy
 import random
 import hashlib
 
-__all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice', 'ReactivateActionNotice', 'DestroyActionNotice', 'EditActionNotice']
+__all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice', 'ReactivateActionNotice', 'DestroyActionNotice', 'CreateActionNotice', 'EditActionNotice']
 
 ###############################################################################
 # Item framework
@@ -403,6 +403,7 @@ class Item(models.Model):
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._after_create(action_agent, action_summary, action_time)
         """
+        CreateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
         if self.active:
             RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
     _after_create.alters_data = True
@@ -1502,6 +1503,9 @@ class ActionNotice(models.Model):
         elif isinstance(self, DestroyActionNotice):
             subject = 'Re: [Destroyed] %s' % (item_name,)
             body = '%s destroyed %s\n%s' % (creator_name, item_name, get_url(item))
+        elif isinstance(self, CreateActionNotice):
+            subject = 'Re: [Created] %s' % (item_name,)
+            body = '%s created %s\n%s' % (creator_name, item_name, get_url(item))
         elif isinstance(self, EditActionNotice):
             subject = 'Re: [Edited] %s' % (item_name,)
             body = '%s edited %s\n%s' % (creator_name, item_name, get_url(item))
@@ -1622,6 +1626,10 @@ class DestroyActionNotice(ActionNotice):
     pass
 signals.post_save.connect(action_notice_post_save_handler, sender=DestroyActionNotice, dispatch_uid='DestroyActionNotice post_save')
 
+
+class CreateActionNotice(ActionNotice):
+    pass
+signals.post_save.connect(action_notice_post_save_handler, sender=CreateActionNotice, dispatch_uid='CreateActionNotice post_save')
 
 class EditActionNotice(ActionNotice):
     pass

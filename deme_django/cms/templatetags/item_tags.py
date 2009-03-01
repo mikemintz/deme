@@ -590,6 +590,7 @@ class CommentBox(template.Node):
         deactivate_action_notices = DeactivateActionNotice.objects.filter(item=item)
         reactivate_action_notices = ReactivateActionNotice.objects.filter(item=item)
         destroy_action_notices = DestroyActionNotice.objects.filter(item=item)
+        create_action_notices = CreateActionNotice.objects.filter(item=item)
         edit_action_notices = EditActionNotice.objects.filter(item=item)
         for action_notice in relation_action_notices:
             result.append(u"<li>Relation action notice (%s version %s field %s.%s %s points to me)</li>" % (action_notice.from_item, action_notice.from_item_version_number, action_notice.from_field_model, action_notice.from_field_name, u'now' if action_notice.relation_added else u'no longer'))
@@ -599,6 +600,8 @@ class CommentBox(template.Node):
             result.append(u"<li>Reactivate action notice</li>")
         for action_notice in destroy_action_notices:
             result.append(u"<li>Destroy action notice</li>")
+        for action_notice in create_action_notices:
+            result.append(u"<li>Create action notice</li>")
         for action_notice in edit_action_notices:
             result.append(u"<li>Edit action notice</li>")
         result.append(u"</ul>")
