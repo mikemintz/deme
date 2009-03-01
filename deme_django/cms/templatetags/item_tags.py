@@ -578,33 +578,29 @@ class CommentBox(template.Node):
         result.append("</div>")
 
         # adding action notices just for debugging for now (eventually we'll move it to its own tag)
-        result.append(u"<div><b>Action Notices</b></div>")
-        result.append(u"<ul>")
-        #TODO include permission code. effectively like:
-        # if not permission_cache.agent_can(agent, 'view_action_notices', self.item):
-        #     return None
-        # if isinstance(self, RelationActionNotice):
-        #     if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
-        #         return None
-        relation_action_notices = RelationActionNotice.objects.filter(Q(item=item) | Q(creator=item))
-        deactivate_action_notices = DeactivateActionNotice.objects.filter(Q(item=item) | Q(creator=item))
-        reactivate_action_notices = ReactivateActionNotice.objects.filter(Q(item=item) | Q(creator=item))
-        destroy_action_notices = DestroyActionNotice.objects.filter(Q(item=item) | Q(creator=item))
-        create_action_notices = CreateActionNotice.objects.filter(Q(item=item) | Q(creator=item))
-        edit_action_notices = EditActionNotice.objects.filter(Q(item=item) | Q(creator=item))
-        for action_notice in relation_action_notices:
-            result.append(u"<li>Relation action notice (%s version %s field %s.%s %s points to me)</li>" % (action_notice.from_item, action_notice.from_item_version_number, action_notice.from_field_model, action_notice.from_field_name, u'now' if action_notice.relation_added else u'no longer'))
-        for action_notice in deactivate_action_notices:
-            result.append(u"<li>Deactivate action notice</li>")
-        for action_notice in reactivate_action_notices:
-            result.append(u"<li>Reactivate action notice</li>")
-        for action_notice in destroy_action_notices:
-            result.append(u"<li>Destroy action notice</li>")
-        for action_notice in create_action_notices:
-            result.append(u"<li>Create action notice</li>")
-        for action_notice in edit_action_notices:
-            result.append(u"<li>Edit action notice</li>")
-        result.append(u"</ul>")
+        if agentcan_helper(context, 'view_action_notices', item):
+            result.append(u"<div><b>Action Notices</b></div>")
+            result.append(u"<ul>")
+            #TODO make sure cur_agent has 'view %s' % self.from_field_name, self.from_item in RelationActionNotices
+            relation_action_notices = RelationActionNotice.objects.filter(Q(item=item) | Q(creator=item))
+            deactivate_action_notices = DeactivateActionNotice.objects.filter(Q(item=item) | Q(creator=item))
+            reactivate_action_notices = ReactivateActionNotice.objects.filter(Q(item=item) | Q(creator=item))
+            destroy_action_notices = DestroyActionNotice.objects.filter(Q(item=item) | Q(creator=item))
+            create_action_notices = CreateActionNotice.objects.filter(Q(item=item) | Q(creator=item))
+            edit_action_notices = EditActionNotice.objects.filter(Q(item=item) | Q(creator=item))
+            for action_notice in relation_action_notices:
+                result.append(u"<li>Relation action notice (%s version %s field %s.%s %s points to me)</li>" % (action_notice.from_item, action_notice.from_item_version_number, action_notice.from_field_model, action_notice.from_field_name, u'now' if action_notice.relation_added else u'no longer'))
+            for action_notice in deactivate_action_notices:
+                result.append(u"<li>Deactivate action notice</li>")
+            for action_notice in reactivate_action_notices:
+                result.append(u"<li>Reactivate action notice</li>")
+            for action_notice in destroy_action_notices:
+                result.append(u"<li>Destroy action notice</li>")
+            for action_notice in create_action_notices:
+                result.append(u"<li>Create action notice</li>")
+            for action_notice in edit_action_notices:
+                result.append(u"<li>Edit action notice</li>")
+            result.append(u"</ul>")
 
         return '\n'.join(result)
 
