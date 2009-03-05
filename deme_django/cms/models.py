@@ -1494,22 +1494,12 @@ class ActionNotice(models.Model):
 
         # Generate the subject and body
         if isinstance(self, RelationActionNotice):
-            if (self.from_field_model, self.from_field_name) == ('Comment', 'item') and self.relation_added:
-                comment = self.from_item.downcast()
-                comment_name = comment.name if permission_cache.agent_can(agent, 'view name', comment) else u'%s %d' % (comment.item_type, comment.pk)
-                if isinstance(comment, TextComment):
-                    comment_body = comment.body if permission_cache.agent_can(agent, 'view body', comment) else '[You do not have permission to view the body of this comment]'
-                else:
-                    comment_body = ''
-                subject = 'Re: [%s] %s' % (comment_name, topmost_item_name)
-                body = '%s commented on %s\n%s\n\n%s' % (creator_name, topmost_item_name, get_url(topmost_item), comment_body)
+            from_item_name = self.from_item.name if permission_cache.agent_can(agent, 'view name', self.from_item) else u'%s %d' % (self.from_item.item_type, self.from_item.pk)
+            if self.relation_added:
+                subject = 'Re: [Relation Added] %s' % (item_name,)
             else:
-                from_item_name = self.from_item.name if permission_cache.agent_can(agent, 'view name', self.from_item) else u'%s %d' % (self.from_item.item_type, self.from_item.pk)
-                if self.relation_added:
-                    subject = 'Re: [Relation Added] %s' % (item_name,)
-                else:
-                    subject = 'Re: [Relation Removed] %s' % (item_name,)
-                body = 'Thanks to %s, the %s.%s field of %s %s points to %s\n%s\n%s' % (creator_name, self.from_field_model, self.from_field_name, from_item_name, 'now' if self.relation_added else 'no longer', item_name, self.description, get_url(self.from_item))
+                subject = 'Re: [Relation Removed] %s' % (item_name,)
+            body = 'Thanks to %s, the %s.%s field of %s %s points to %s\n%s\n%s' % (creator_name, self.from_field_model, self.from_field_name, from_item_name, 'now' if self.relation_added else 'no longer', item_name, self.description, get_url(self.from_item))
         elif isinstance(self, DeactivateActionNotice):
             subject = 'Re: [Deactivated] %s' % (item_name,)
             body = '%s deactivated %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
@@ -1520,8 +1510,18 @@ class ActionNotice(models.Model):
             subject = 'Re: [Destroyed] %s' % (item_name,)
             body = '%s destroyed %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
         elif isinstance(self, CreateActionNotice):
-            subject = 'Re: [Created] %s' % (item_name,)
-            body = '%s created %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
+            if issubclass(get_item_type_with_name(item.item_type), Comment):
+                comment = item.downcast()
+                comment_name = comment.name if permission_cache.agent_can(agent, 'view name', comment) else u'%s %d' % (comment.item_type, comment.pk)
+                if isinstance(comment, TextComment):
+                    comment_body = comment.body if permission_cache.agent_can(agent, 'view body', comment) else '[You do not have permission to view the body of this comment]'
+                else:
+                    comment_body = ''
+                subject = 'Re: [%s] %s' % (comment_name, topmost_item_name)
+                body = '%s commented on %s\n%s\n\n%s' % (creator_name, topmost_item_name, get_url(topmost_item), comment_body)
+            else:
+                subject = 'Re: [Created] %s' % (item_name,)
+                body = '%s created %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
         elif isinstance(self, EditActionNotice):
             subject = 'Re: [Edited] %s' % (item_name,)
             body = '%s edited %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))

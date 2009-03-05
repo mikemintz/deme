@@ -9,7 +9,6 @@ Feb-16 notes (action notices)
 * Think about PermissionActionNotices (where you need permission to view_permissions).
 * Update the architecture doc with these changes
 * write documentation for action notices
-* fix the order of super._after_create and stuff (like comments and memberships, the recursive info should be created before the notifications get sent). but think about it: maybe sometimes you want the new structure and sometimes you want the old structure.
 * figure out how we are determining the permission to view comments
 
 Nov-21 notes (automatic comments and subscriptions)
