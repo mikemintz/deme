@@ -1108,7 +1108,7 @@ class CollectionViewer(ItemViewer):
             membership = Membership.objects.get(collection=self.item, item=member)
             if not membership.active:
                 membership.reactivate(action_agent=self.cur_agent)
-        except:
+        except ObjectDoesNotExist:
             membership = Membership(collection=self.item, item=member)
             membership.save_versioned(action_agent=self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -1126,7 +1126,7 @@ class CollectionViewer(ItemViewer):
             membership = Membership.objects.get(collection=self.item, item=member)
             if membership.active:
                 membership.deactivate(action_agent=self.cur_agent)
-        except:
+        except ObjectDoesNotExist:
             pass
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)

@@ -282,7 +282,13 @@ class Item(models.Model):
             return
         self.active = False
         self.save()
+        # Execute callbacks
         self._after_deactivate(action_agent, action_summary, action_time)
+        # Create relevant ActionNotices
+        DeactivateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+        old_item = self
+        new_item = None
+        RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=False)
     deactivate.alters_data = True
 
     @transaction.commit_on_success
@@ -297,7 +303,13 @@ class Item(models.Model):
             return
         self.active = True
         self.save()
+        # Execute callbacks
         self._after_reactivate(action_agent, action_summary, action_time)
+        # Create relevant ActionNotices
+        ReactivateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+        old_item = None
+        new_item = self
+        RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
     reactivate.alters_data = True
 
     @transaction.commit_on_success
@@ -335,8 +347,10 @@ class Item(models.Model):
         CollectionItemPermission.objects.filter(collection=self).delete()
         AgentGlobalPermission.objects.filter(agent=self).delete()
         CollectionGlobalPermission.objects.filter(collection=self).delete()
-        # After destroy callback
+        # Execute callbacks
         self._after_destroy(action_agent, action_summary, action_time)
+        # Create relevant ActionNotices
+        DestroyActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
     destroy.alters_data = True
 
     @transaction.commit_on_success
@@ -388,10 +402,21 @@ class Item(models.Model):
         if create_permissions and is_new:
             AgentItemPermission(agent=action_agent, item=self, ability='do_anything', is_allowed=True).save()
 
+        # Execute callbacks
         if is_new:
             self._after_create(action_agent, action_summary, action_time)
         else:
             self._after_edit(action_agent, action_summary, action_time)
+
+        # Create relevant ActionNotices
+        if is_new:
+            CreateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+            if self.active:
+                RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
+        else:
+            EditActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+            if self.active:
+                RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=True)
     save_versioned.alters_data = True
 
     def _after_create(self, action_agent, action_summary, action_time):
@@ -403,9 +428,7 @@ class Item(models.Model):
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._after_create(action_agent, action_summary, action_time)
         """
-        CreateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
-        if self.active:
-            RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
+        pass
     _after_create.alters_data = True
 
     def _after_edit(self, action_agent, action_summary, action_time):
@@ -417,9 +440,7 @@ class Item(models.Model):
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._after_edit(action_agent, action_summary, action_time)
         """
-        EditActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
-        if self.active:
-            RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=True)
+        pass
     _after_edit.alters_data = True
 
     def _after_deactivate(self, action_agent, action_summary, action_time):
@@ -430,10 +451,7 @@ class Item(models.Model):
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._after_deactivate(action_agent, action_summary, action_time)
         """
-        DeactivateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
-        old_item = self
-        new_item = None
-        RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=False)
+        pass
     _after_deactivate.alters_data = True
 
     def _after_reactivate(self, action_agent, action_summary, action_time):
@@ -444,10 +462,7 @@ class Item(models.Model):
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._after_reactivate(action_agent, action_summary, action_time)
         """
-        ReactivateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
-        old_item = None
-        new_item = self
-        RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
+        pass
     _after_reactivate.alters_data = True
 
     def _after_destroy(self, action_agent, action_summary, action_time):
@@ -458,7 +473,7 @@ class Item(models.Model):
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._after_destroy(action_agent, action_summary, action_time)
         """
-        DestroyActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+        pass
     _after_destroy.alters_data = True
 
 
@@ -1455,8 +1470,8 @@ class ActionNotice(models.Model):
             else:
                 visible_memberships = permission_cache.filter_items(agent, 'view item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-            item_pks_query = self.item.all_parents_in_thread(True, recursive_filter).values('pk').query
-            creator_pks_query = self.creator.all_parents_in_thread(True, recursive_filter).values('pk').query
+            item_parent_pks_query = self.item.all_parents_in_thread(True, recursive_filter).values('pk').query
+            creator_parent_pks_query = self.creator.all_parents_in_thread(True, recursive_filter).values('pk').query
             return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=creator_parent_pks_query), deep=True, active=True)
         if not permission_cache.agent_can(agent, 'view_action_notices', self.item):
             return None

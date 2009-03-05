@@ -40,7 +40,7 @@ Code correctness/consistency/bugs
 * Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
   - http://code.djangoproject.com/ticket/2227
 * Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun)
-* Make it so you cannot trash certain things, like AnonymousAgent or Admin
+* Make it so you cannot deactivate or destroy certain things, like AnonymousAgent or Admin
 * Figure out a more correct subject line for notification emails that hopefully threads correctly in gmail
 
 Performance
