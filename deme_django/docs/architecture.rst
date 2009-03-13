@@ -46,8 +46,8 @@ Deleting items
 
 There are two ways of deleting items: deactivating and destroying. Neither of these methods removes any rows from the database. Deactivating is recoverable (by reactivating), destroying is not. The user interface ensures that deactivating happens before destroying.
 
-* **Deactivating:** If an agent deactivates an item, it sets the active field to false. An agent can recover the item by reactivating it, which sets the active field back to true. Each time this happens, the version does not change, but a DeactivateComment or ReactivateComment is automatically generated to log when the item was active. Inactive items can still be viewed and edited as normally. The major difference between an active and an inactive item is that when an item is inactive, it will not be returned as the result of queries (unless the query specifically requests inactive items). For example, when you look at the list of students in a class, it will only show students that are active with classmemberships that are active.
-* **Destroying:** After an item is deactivated, you can permanently nullify all of its fields (and/or the fields in its versions) so that it is impossible to recover (but keep active=false). A DestroyComment is automatically generated to log when the item was around.
+* **Deactivating:** If an agent deactivates an item, it sets the active field to false. An agent can recover the item by reactivating it, which sets the active field back to true. Each time this happens, the version does not change, but a DeactivateActionNotice or ReactivateActionNotice is automatically generated to log when the item was active. Inactive items can still be viewed and edited as normally. The major difference between an active and an inactive item is that when an item is inactive, it will not be returned as the result of queries (unless the query specifically requests inactive items). For example, when you look at the list of students in a class, it will only show students that are active with classmemberships that are active.
+* **Destroying:** After an item is deactivated, you can permanently nullify all of its fields (and/or the fields in its versions) so that it is impossible to recover (but keep active=false). A DestroyActionNotice is automatically generated to log when the item was around.
 
   Our solution is as follows. We allow any field to have the special NULL value from SQL. The application (not the database) ensures that fields only take on these values when the item is destroyed, and never otherwise (I haven't finished making sure this happens yet). Thus, to destroy an item is to set every field to NULL, and set destroyed=True (and leave alone id, item_type, and active, version_number). Destroying an item also removes all permissions and versions of the item. After an item is destroyed, nobody can make changes (in particular, it cannot be reactivated or edited).
   
@@ -125,13 +125,11 @@ Agents and related item types
   * ``AIMContactMethod(screen_name)``
   * ``AddressContactMethod(street1, street2, city, state, country, zip)``
 
-* **Subscription:** A Subscription is a relationship between an Item and a ContactMethod, indicating that all comments on the item should be sent to the contact method as notifications. This item type defines the following fields:
+* **Subscription:** A Subscription is a relationship between an Item and a ContactMethod, indicating that all action notices on the item should be sent to the contact method as notifications. This item type defines the following fields:
 
   * The ``contact_method`` field is a pointer to the ContactMethod that is subscribed with this Subscription.
   * The ``item`` field is a pointer to the Item that is subscribed to with this Subscription.
-  * The ``deep`` field is a boolean, such that when deep=true and the item is a Collection, all comments on all items in the collection (direct or indirect) will be sent in addition to comments on the collection itself.
-  * The ``notify_text`` field is a boolean that signifies that TextComments are included in the subscription.
-  * The ``notify_edit`` field is a boolean that signifies that EditComments, DeactivateComments, ReactivateComments, DestroyComments, AddMemberComments, and RemoveMemberComments are included in the subscription.
+  * The ``deep`` field is a boolean, such that when deep=true and the item is a Collection, all action notices on all items in the collection (direct or indirect) will be sent in addition to action notices on the collection itself.
 
 Collections and related item types
 
@@ -179,18 +177,6 @@ Annotations (Transclusions, Comments, and Excerpts)
 
 * **TextComment:** A TextComment is a Comment and a TextDocument combined. It is currently the only form of user-generated comments. It defines no new fields.
 
-* **EditComment:** An EditComment is a Comment that is automatically generated whenever an agent edits an item. The commented item is the item that was edited, and the commented item version number is the new version that was just generated (as opposed to the previous version number). It defines no new fields.
-
-* **DeactivateComment:** A DeactivateComment is a Comment that is automatically generated whenever an agent deactivates an item. The commented item is the item that was deactivated, and the commented item version number is the latest version number at the time of the deactivation. It defines no new fields.
-
-* **ReactivateComment:** A ReactivateComment is a Comment that is automatically generated whenever an agent reactivates an item. The commented item is the item that was reactivated, and the commented item version number is the latest version number at the time of the reactivation. It defines no new fields.
-
-* **DestroyComment:** A DestroyComment is a Comment that is automatically generated whenever an agent destroys an item. The commented item is the item that was destroyed, and the commented item version number is the latest version number at the time of the destroying. It defines no new fields.
-
-* **AddMemberComment:** An AddMemberComment is a Comment that is automatically generated whenever an item is added to a collection (via a creation or reactivation of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the add. The ``membership`` field points to the new Membership.
-
-* **RemoveMemberComment:** A RemoveMemberComment is a Comment that is automatically generated whenever an item is removed from a collection (via a deactivation of a Membership). The commented item is the collection, and the commented item version number is the latest version number at the time of the remove. The membership field points to the old Membership.
-
 * **Excerpt:** An Excerpt is an Item that refers to a portion of another Item (or an external resource, such as a webpage). Excerpt is meant to be abstract, so developers should always create subclasses rather than creating raw Excerpts.
 
 * **TextDocumentExcerpt:** A TextDocumentExcerpt refers to a contiguous region of text in a version of another TextDocument in Deme. The body field contains the excerpted region, and the following fields are introduced:
@@ -229,9 +215,33 @@ Misc item types
 * **DemeSetting:** This item type stores global settings for the Deme installation. Each DemeSetting has a unique ``key`` field and an arbitrary ``value`` field. Since values are strings of limited size, settings that involve a lot of text (e.g., a default layout) should have a value pointing to an item that contains the data (e.g., the id of a document).
 
 
+ActionNotices
+^^^^^^^^^^^^^^
+ActionNotices keep records of every action that occurs in Deme. ActionNotices are not items themselves, but they exist in the database and point to items.
+
+Every ActionNotice keeps the following fields
+
+* Item (the item that was acted upon)
+* Item version number (the version of the item after the action took place)
+* Creator (the agent who acted upon the item)
+* Created at (the date/time that the action took place)
+* Description (the optional user-entered description of the action -- for edits, this is like an "Edit Summary", but it applies to any action)
+
+There are currently 6 types of ActionNotices: DeactivateActionNotices, ReactivateActionNotices, DestroyActionNotices, CreateActionNotices, EditActionNotices, and RelationNotices. The first 5 are self-explanatory: when an agent deactivates, reactivates, destroys, creates, or edits an item, this automatically generates an ActionNotice. None of these 5 ActionNotices define new fields. Although it seems like the CreateActionNotices and EditActionNotices should define fields to specify what changed, this information can be inferred from the item itself (and its revisions).
+
+RelationActionNotices are more interesting: when an agent modifies an item (the *from* item) that points to another item (the *to* item), a RelationActionNotice is generated about the *to* item. These notices are only generated when the pointer changes, either from something else to the *to* item, or from the *to* item to something else. RelationActionNotices define new fields to specify the *from* item and its version at the time of the action, and the field in the *from* item that points to the *to* item.
+
+A good example of a RelationActionNotice is a membership that points to a collection. If I'm viewing the ActionNotices for the collection, I will see a RelationActionNotice saying that at some date, some user set the membership to point to this collection. Or in other words, an item was added to this collection.
+
+In order to view ActionNotices, an agent must have the ``view_action_notices`` permission with respect to the item. For RelationActionNotices, an agent must also have permission to view the pointing field in the *from* item.
+
+If you are subscribed to an item (via the Subscription item type), and you have permission to view ActionNotices on that item, you will receive notifications by email every time an ActionNotice is generated.
+
+The ActionNotices about an agent include ActionNotices whose ``creator`` field points to the agent, in addition to ActionNotices whose ``item`` field points to the agent. Thus, if you subscribe to an agent, you will get emails about things they do, in addition to things done to them. For this reason, RelationActionNotices are not generated for the ``creator`` field of an item, or else there would be redundant ActionNotices on the same item.
+
 Permissions
 ^^^^^^^^^^^
-Permissions define what actions Agents can and cannot do. Permissions are not items themselves, but they exist in the database and point to items (it used to be that permissions were items, but for simplicity and efficiency, we now keep them separate).
+Permissions define what actions Agents can and cannot do. Similar to ActionNotices, permissions are not items themselves, but they exist in the database and point to items (it used to be that permissions were items, but for simplicity and efficiency, we now keep them separate).
 
 There are two major types of permissions: item permissions and global permissions. Item permissions specify an ability and an item (such as "can edit the name of document 123") and global permissions just specify a global ability (such as "can create new documents"). Each item type defines a abilities that are relevant to it. For simplicity in the explanation below, pretend that item permissions and global permissions are just a unified permission, where the ``item`` pointer of a global permission is a special "global" value, since almost everything but the ``item`` field is identical between the two. (In the actual implementation, they are separated into different tables for code simplicity and efficiency.)
 
@@ -440,14 +450,6 @@ Below is a list of item types and the item abilities they introduce:
   * ``view item``
   * ``view item_version_number``
 
-* AddMemberComment
-
-  * ``view membership``
-
-* RemoveMemberComment
-
-  * ``view membership``
-
 * TextDocumentExcerpt
 
   * ``view text_document``
@@ -544,4 +546,4 @@ Modules are self-contained collections of item types and viewers (and arbitrary 
 Email integration
 -----------------
 
-As described in the section on Subscriptions, Deme will email notifications for every comment made on items that are subscribed to (in the future we will support other ContactMethods, like sending SMS notifications). The communication also goes the other way: if someone responds to a notification email (or sends an email to the address corresponding to a particular item), that will become a comment on Deme.
+As described in the section on Subscriptions, Deme will email notifications for every action notice made on items that are subscribed to (in the future we will support other ContactMethods, like sending SMS notifications). The communication also goes the other way: if someone responds to a notification email (or sends an email to the address corresponding to a particular item), that will become a comment on Deme.

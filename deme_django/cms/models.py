@@ -877,12 +877,12 @@ class AddressContactMethod(ContactMethod):
 class Subscription(Item):
     """
     A Subscription is a relationship between an Item and a ContactMethod,
-    indicating that all comments on the item should be sent to the contact
+    indicating that all action notices on the item should be sent to the contact
     method as notifications.
     
-    If deep=True and the item is a Collection, then comments on all items in
-    the collection (direct or indirect) will be sent in addition to comments on
-    the collection itself.
+    If deep=True and the item is a Collection, then action notices on all items
+    in the collection (direct or indirect) will be sent in addition to comments
+    on the collection itself.
     """
 
     # Setup

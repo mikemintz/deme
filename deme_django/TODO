@@ -7,8 +7,6 @@ Feb-16 notes (action notices)
 -----------------------------
 * Make custom tag (included in every ItemViewer.show page) that displays all notices
 * Think about PermissionActionNotices (where you need permission to view_permissions).
-* write documentation for action notices
-* Update the architecture doc with these changes
 
 Symsys module
 -------------
