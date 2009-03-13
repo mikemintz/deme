@@ -18,7 +18,11 @@ Because of the table-name size restriction in MySQL, we run on postgresql
 * ``sudo apt-get install graphviz`` (optional: for gen_graph.py support)
 * ``sudo apt-get install python-sphinx`` (optional: for documentation generation)
 * ``sudo apt-get install python-openid`` (optional: for openid authentication)
+* ``sudo apt-get install html2text`` (optional: for plain-text email notifications)
 * ``sudo apt-get install postgresql python-psycopg2``
+
+Right now, all of the dependencies that are optional are actually required,
+since we don't degrade gracefully yet.
 
 Webauth
 -------

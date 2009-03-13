@@ -7,13 +7,8 @@ Feb-16 notes (action notices)
 -----------------------------
 * Make custom tag (included in every ItemViewer.show page) that displays all notices
 * Think about PermissionActionNotices (where you need permission to view_permissions).
-* Update the architecture doc with these changes
 * write documentation for action notices
-* figure out how we are determining the permission to view comments
-
-Nov-21 notes (automatic comments and subscriptions)
----------------------------------------------------
-* Customizable email template per site that gets sent out for each comment (notification)
+* Update the architecture doc with these changes
 
 Symsys module
 -------------
@@ -31,6 +26,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* figure out how we are determining the permission to view comment hierarchy (i.e., comment.commented_item)
 * Change classmethods to staticmethods (and see if we can get alters_data on them!)
 * How can you make a DeactivateComment or AddMemberComment unreadable with permissions?
 * How do we deal with immutable things that get trashed, but should get recreated by other users? Like webauth usernames or open id usernames, or sites with hostnames?
@@ -113,6 +109,7 @@ Distant Future (sorted by approximate order of planned implementation)
 * Implement some sort of SiteAlias so a Site can have more than one hostname
 * Internationalize using ugettext_lazy
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
+* Customizable email template per site that gets sent out for each notification
 * Add other types of subscriptions, like text messages / IMs
 * Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
 * We will eventually want to have a item_type table

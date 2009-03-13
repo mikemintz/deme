@@ -49,6 +49,18 @@ def agentcan_helper(context, ability, item, wildcard_suffix=False):
         return permission_cache.agent_can(agent, ability, item)
 
 
+def get_viewable_name(context, item):
+    """
+    If the logged in agent can view the item's name, return the item's name.
+    Otherwise, return a string like "GroupAgent 51".
+    """
+    if agentcan_helper(context, 'view name', item):
+        return item.name
+    else:
+        item_type = get_item_type_with_name(item.item_type)
+        return u'%s %s' % (capfirst(item_type._meta.verbose_name), item.pk)
+
+
 ###############################################################################
 # Filters and templates
 ###############################################################################
@@ -387,10 +399,7 @@ class ItemHeader(template.Node):
         else:
             created_at_text = ''
         if agentcan_helper(context, 'view creator', item):
-            if agentcan_helper(context, 'view name', item.creator):
-                creator_text = 'by <a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(item.creator.name))
-            else:
-                creator_text = u'by <a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(u'%s %s' % (capfirst(get_item_type_with_name(item.creator.item_type)._meta.verbose_name), item.creator.pk)))
+            creator_text = 'by <a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(get_viewable_name(context, item.creator)))
         else:
             creator_text = ''
         result.append('<div style="font-size: 8pt;">')
@@ -542,21 +551,12 @@ class CommentBox(template.Node):
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
                 result.append("""<div style="float: right;"><a href="%s?item=%s&item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
-                if agentcan_helper(context, 'view name', comment):
-                    comment_name = escape(comment.name)
-                else:
-                    comment_name = escape(u'%s %s' % (capfirst(get_item_type_with_name(comment.item_type)._meta.verbose_name), comment.pk))
+                comment_name = escape(get_viewable_name(context, comment))
                 result.append("""<a href="%s">%s</a>""" % (comment.get_absolute_url(), comment_name))
                 if agentcan_helper(context, 'view creator', comment):
-                    if agentcan_helper(context, 'view name', comment.creator):
-                        result.append('by <a href="%s">%s</a>' % (comment.creator.get_absolute_url(), escape(comment.creator.name)))
-                    else:
-                        result.append(u'by <a href="%s">%s</a>' % (comment.creator.get_absolute_url(), escape(u'%s %s' % (capfirst(get_item_type_with_name(comment.creator.item_type)._meta.verbose_name), comment.creator.pk))))
+                    result.append('by <a href="%s">%s</a>' % (comment.creator.get_absolute_url(), escape(get_viewable_name(context, comment.creator))))
                 if item.pk != comment.item_id and nesting_level == 0:
-                    if agentcan_helper(context, 'view name', comment.item):
-                        result.append('for <a href="%s">%s</a>' % (comment.item.get_absolute_url(), escape(comment.item.name)))
-                    else:
-                        result.append(u'for <a href="%s">%s</a>' % (comment.item.get_absolute_url(), escape(u'%s %s' % (capfirst(get_item_type_with_name(comment.item.item_type)._meta.verbose_name), comment.item.pk))))
+                    result.append('for <a href="%s">%s</a>' % (comment.item.get_absolute_url(), escape(get_viewable_name(context, comment.item))))
                 if agentcan_helper(context, 'view created_at', comment):
                     result.append('<span title="%s">%s ago</span>' % (comment.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(comment.created_at)))
                 result.append("</div>")
@@ -598,22 +598,13 @@ class CommentBox(template.Node):
                     if not agentcan_helper(context, 'view %s' % action_notice.from_field_name, action_notice.from_item):
                         continue
                 created_at_text = '<span title="%s">%s ago</span>' % (action_notice.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.created_at))
-                if agentcan_helper(context, 'view name', action_notice.creator):
-                    creator_name = action_notice.creator.name
-                else:
-                    creator_name = u'%s %s' % (capfirst(get_item_type_with_name(action_notice.creator.item_type)._meta.verbose_name), action_notice.creator.pk)
+                creator_name = get_viewable_name(context, action_notice.creator)
                 agent_text = u'<a href="%s">%s</a>' % (escape(action_notice.creator.get_absolute_url()), escape(creator_name))
-                if agentcan_helper(context, 'view name', action_notice.item):
-                    item_name = action_notice.item.name
-                else:
-                    item_name = u'%s %s' % (capfirst(get_item_type_with_name(action_notice.item.item_type)._meta.verbose_name), action_notice.item.pk)
+                item_name = get_viewable_name(context, action_notice.item)
                 item_text = u'<a href="%s">%s</a>' % (escape(action_notice.item.get_absolute_url() + '?version=%d' % action_notice.item_version_number), escape(item_name))
                 description_text = action_notice.description
                 if isinstance(action_notice, RelationActionNotice):
-                    if agentcan_helper(context, 'view name', action_notice.from_item):
-                        from_item_name = action_notice.from_item.name
-                    else:
-                        from_item_name = u'%s %s' % (capfirst(get_item_type_with_name(action_notice.from_item.item_type)._meta.verbose_name), action_notice.from_item.pk)
+                    from_item_name = get_viewable_name(context, action_notice.from_item)
                     from_item_text = u'<a href="%s">%s</a>' % (escape(action_notice.from_item.get_absolute_url() + '?version=%d' % action_notice.from_item_version_number), escape(from_item_name))
                     if action_notice.relation_added:
                         action_text = u"Set the %s of %s to" % (action_notice.from_field_name, from_item_text)
@@ -750,4 +741,29 @@ def embed(parser, token):
     if len(bits) != 3:
         raise template.TemplateSyntaxError, "%r takes two arguments" % bits[0]
     return EmbeddedItem(bits[1], bits[2])
+
+
+class ViewableName(template.Node):
+    def __init__(self, item):
+        self.item = template.Variable(item)
+
+    def __repr__(self):
+        return "<ViewableName>"
+
+    def render(self, context):
+        try:
+            item = self.item.resolve(context)
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve item variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+        return get_viewable_name(context, item)
+
+@register.tag
+def viewable_name(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
+    return ViewableName(bits[1])
 

@@ -1,0 +1,37 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+<p>
+
+<a href="{{ url_prefix }}{{ creator.get_absolute_url }}">{% viewable_name creator %}</a>
+
+{% ifequal delete_type "deactivate" %}
+deactivated
+{% endifequal %}
+{% ifequal delete_type "reactivate" %}
+reactivated
+{% endifequal %}
+{% ifequal delete_type "destroy" %}
+destroyed
+{% endifequal %}
+
+<a href="{{ url_prefix }}{{ item.get_absolute_url }}">{% viewable_name item %}</a>
+
+{% ifequal item topmost_item %}
+{% else %}
+-
+a comment about
+<a href="{{ url_prefix }}{{ topmost_item.get_absolute_url }}">{% viewable_name topmost_item %}</a>
+{% endifequal %}
+
+</p>
+
+{% if description %}
+<p>
+<strong>Description:</strong> {{ description }}
+</p>
+{% endif %}
+
+{% endblock content %}
+

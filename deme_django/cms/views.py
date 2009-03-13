@@ -172,6 +172,15 @@ def get_logged_in_agent(request):
     return cur_agent
 
 
+def get_default_site():
+    """
+    Return the default site, or raise an Exception if there is none.
+    """
+    try:
+        return Site.objects.get(pk=DemeSetting.get('cms.default_site'))
+    except ObjectDoesNotExist:
+        raise Exception("You must create a default Site")
+
 def get_current_site(request):
     """
     Return the Site that corresponds to the URL in the request, or return the
@@ -182,10 +191,7 @@ def get_current_site(request):
     try:
         return Site.objects.filter(hostname=hostname).get()
     except ObjectDoesNotExist:
-        try:
-            return Site.objects.get(pk=DemeSetting.get('cms.default_site'))
-        except ObjectDoesNotExist:
-            raise Exception("You must create a default Site")
+        return get_default_site()
 
 
 class ViewerMetaClass(type):
@@ -281,6 +287,31 @@ class Viewer(object):
         self.context['full_path'] = self.request.get_full_path()
         self.cur_agent = original_viewer.cur_agent
         self.cur_site = original_viewer.cur_site
+        self.context['cur_agent'] = self.cur_agent
+        self.context['cur_site'] = self.cur_site
+        self.context['_permission_cache'] = self.permission_cache
+        self.context['_viewer'] = self
+        self.context['layout'] = 'blank.html'
+
+    def init_for_outgoing_email(self, agent):
+        self.permission_cache = PermissionCache()
+        self.request = None
+        self.format = 'html'
+        self.method = 'GET'
+        self.noun = None
+        self.item = None
+        self.action = 'list'
+        self.context = Context()
+        self.context['action'] = self.action
+        self.context['item'] = self.item
+        self.context['specific_version'] = False
+        self.context['viewer_name'] = self.viewer_name
+        self.context['accepted_item_type'] = self.accepted_item_type
+        self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
+        self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
+        self.context['full_path'] = '/'
+        self.cur_agent = agent
+        self.cur_site = get_default_site()
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
         self.context['_permission_cache'] = self.permission_cache

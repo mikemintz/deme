@@ -1,0 +1,35 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+<p>
+
+Courtesy of
+<a href="{{ url_prefix }}{{ creator.get_absolute_url }}">{% viewable_name creator %}</a>,
+the "{{ from_field_name }}" field of
+<a href="{{ url_prefix }}{{ from_item.get_absolute_url }}">{% viewable_name from_item %}</a>
+{% if relation_added %}
+now
+{% else %}
+no longer
+{% endif %}
+points to
+<a href="{{ url_prefix }}{{ item.get_absolute_url }}">{% viewable_name item %}</a>
+
+{% ifequal item topmost_item %}
+{% else %}
+-
+a comment about
+<a href="{{ url_prefix }}{{ topmost_item.get_absolute_url }}">{% viewable_name topmost_item %}</a>
+{% endifequal %}
+
+</p>
+
+{% if description %}
+<p>
+<strong>Description:</strong> {{ description }}
+</p>
+{% endif %}
+
+{% endblock content %}
+

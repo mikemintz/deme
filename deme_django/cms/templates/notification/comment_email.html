@@ -1,0 +1,32 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+<p>
+<a href="{{ url_prefix }}{{ creator.get_absolute_url }}">{% viewable_name creator %}</a>
+commented on
+<a href="{{ url_prefix }}{{ topmost_item.get_absolute_url }}">{% viewable_name topmost_item %}</a>
+</p>
+
+<p>
+<a href="{{ url_prefix }}{{ comment.get_absolute_url }}">{% viewable_name comment %}</a>
+</p>
+
+<p>
+<pre>
+{% ifagentcan 'view' 'body' comment %}
+{{ comment.body }}
+{% else %}
+[You do not have permission to view the body of this comment]
+{% endifagentcan %}
+</pre>
+</p>
+
+{% if description %}
+<p>
+<strong>Description:</strong> {{ description }}
+</p>
+{% endif %}
+
+{% endblock content %}
+

@@ -5,9 +5,10 @@ This module creates the item type framework, and defines the core item types.
 from django.db import models, transaction
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import SMTPConnection, EmailMessage
+from django.core.mail import SMTPConnection, EmailMessage, EmailMultiAlternatives
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
+from django.template import loader, Context
 from django.db.models import signals
 from email.utils import formataddr
 import datetime
@@ -15,6 +16,7 @@ import settings
 import copy
 import random
 import hashlib
+import html2text
 
 __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice', 'ReactivateActionNotice', 'DestroyActionNotice', 'CreateActionNotice', 'EditActionNotice']
 
@@ -371,7 +373,8 @@ class Item(models.Model):
         
         If create_permissions=True, then this method will automatically create
         reasonable permissions.
-        TODO: figure out what those permissions should really be
+        TODO: figure out what those permissions should really be, or better,
+        have a list of initial permissions you want before callbacks are made
         
         This will call _after_create or _after_edit, depending on whether the
         item already existed.
@@ -1434,6 +1437,11 @@ class DemeSetting(Item):
 ###############################################################################
 
 class ActionNotice(models.Model):
+    """
+    An ActionNotice is a model (not a subclass of Item) that records an action
+    happening in Deme. ActionNotice is meant to be abstract, so only subclasses
+    should ever be created.
+    """
     item                = models.ForeignKey(Item, related_name='action_notices', verbose_name=_('item'))
     item_version_number = models.PositiveIntegerField(_('item version number'))
     creator             = models.ForeignKey(Agent, related_name='action_notices_created', verbose_name=_('creator'))
@@ -1455,15 +1463,18 @@ class ActionNotice(models.Model):
         return None.
         """
         agent = email_contact_method.agent
-        from permissions import PermissionCache
-        permission_cache = PermissionCache()
+        from cms.views import ItemViewer
+        from cms.templatetags.item_tags import get_viewable_name
+        viewer = ItemViewer()
+        viewer.init_for_outgoing_email(email_contact_method.agent)
+        permission_cache = viewer.permission_cache
 
-        #TODO this code looks funny.. why doesn't it check the agent in the subscription?
         # First, decide if we're allowed to get this notification at all
         def direct_subscriptions():
             item_parent_pks_query = self.item.all_parents_in_thread().values('pk').query
             creator_parent_pks_query = self.creator.all_parents_in_thread().values('pk').query
-            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=creator_parent_pks_query), active=True)
+            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=creator_parent_pks_query),
+                                               active=True, contact_method=email_contact_method)
         def deep_subscriptions():
             if permission_cache.agent_can_global(agent, 'do_anything'):
                 recursive_filter = None
@@ -1472,13 +1483,14 @@ class ActionNotice(models.Model):
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             item_parent_pks_query = self.item.all_parents_in_thread(True, recursive_filter).values('pk').query
             creator_parent_pks_query = self.creator.all_parents_in_thread(True, recursive_filter).values('pk').query
-            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=creator_parent_pks_query), deep=True, active=True)
-        if not permission_cache.agent_can(agent, 'view_action_notices', self.item):
+            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=creator_parent_pks_query),
+                                               active=True, contact_method=email_contact_method, deep=True)
+        if not (permission_cache.agent_can(agent, 'view_action_notices', self.item) or permission_cache.agent_can(agent, 'view_action_notices', self.creator)):
             return None
         if isinstance(self, RelationActionNotice):
             if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
                 return None
-        if not direct_subscriptions() and not deep_subscriptions():
+        if not (direct_subscriptions() or deep_subscriptions()):
             return None
 
         # Now get the fields we are allowed to view
@@ -1487,48 +1499,65 @@ class ActionNotice(models.Model):
         topmost_item = item.original_item_in_thread()
         def get_url(x):
             return 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('item_url', kwargs={'viewer': x.item_type.lower(), 'noun': x.pk}))
-        item_name = item.name if permission_cache.agent_can(agent, 'view name', item) else u'%s %d' % (item.item_type, item.pk)
-        reply_item_name = reply_item.name if permission_cache.agent_can(agent, 'view name', reply_item) else u'%s %d' % (reply_item.item_type, reply_item.pk)
-        topmost_item_name = topmost_item.name if permission_cache.agent_can(agent, 'view name', topmost_item) else u'%s %d' % (topmost_item.item_type, topmost_item.pk)
-        creator_name = self.creator.name if permission_cache.agent_can(agent, 'view name', self.creator) else u'%s %d' % (self.creator.item_type, self.creator.pk)
+        item_name = get_viewable_name(viewer.context, item)
+        reply_item_name = get_viewable_name(viewer.context, reply_item)
+        topmost_item_name = get_viewable_name(viewer.context, topmost_item)
+        creator_name = get_viewable_name(viewer.context, self.creator)
 
+        viewer.context['item'] = self.item
+        viewer.context['item_version_number'] = self.item_version_number
+        viewer.context['creator'] = self.creator
+        viewer.context['created_at'] = self.created_at
+        viewer.context['description'] = self.description
+        viewer.context['topmost_item'] = topmost_item
+        viewer.context['url_prefix'] = 'http://%s' % settings.DEFAULT_HOSTNAME
         # Generate the subject and body
         if isinstance(self, RelationActionNotice):
-            from_item_name = self.from_item.name if permission_cache.agent_can(agent, 'view name', self.from_item) else u'%s %d' % (self.from_item.item_type, self.from_item.pk)
+            from_item_name = get_viewable_name(viewer.context, self.from_item)
             if self.relation_added:
                 subject = 'Re: [Relation Added] %s' % (item_name,)
             else:
                 subject = 'Re: [Relation Removed] %s' % (item_name,)
-            body = 'Thanks to %s, the %s.%s field of %s %s points to %s\n%s\n%s' % (creator_name, self.from_field_model, self.from_field_name, from_item_name, 'now' if self.relation_added else 'no longer', item_name, self.description, get_url(self.from_item))
+            template_name = 'relation'
+            viewer.context['relation_added'] = self.relation_added
+            viewer.context['from_item'] = self.from_item
+            viewer.context['from_item_version_number'] = self.from_item_version_number
+            viewer.context['from_field_name'] = self.from_field_name
+            viewer.context['from_field_model'] = self.from_field_model
         elif isinstance(self, DeactivateActionNotice):
             subject = 'Re: [Deactivated] %s' % (item_name,)
-            body = '%s deactivated %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
+            template_name = 'delete'
+            viewer.context['delete_type'] = 'deactivate'
         elif isinstance(self, ReactivateActionNotice):
             subject = 'Re: [Reactivated] %s' % (item_name,)
-            body = '%s reactivated %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
+            template_name = 'delete'
+            viewer.context['delete_type'] = 'reactivate'
         elif isinstance(self, DestroyActionNotice):
             subject = 'Re: [Destroyed] %s' % (item_name,)
-            body = '%s destroyed %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
+            template_name = 'delete'
+            viewer.context['delete_type'] = 'destroy'
         elif isinstance(self, CreateActionNotice):
-            if issubclass(get_item_type_with_name(item.item_type), Comment):
+            if issubclass(get_item_type_with_name(item.item_type), TextComment):
                 comment = item.downcast()
-                comment_name = comment.name if permission_cache.agent_can(agent, 'view name', comment) else u'%s %d' % (comment.item_type, comment.pk)
-                if isinstance(comment, TextComment):
-                    comment_body = comment.body if permission_cache.agent_can(agent, 'view body', comment) else '[You do not have permission to view the body of this comment]'
-                else:
-                    comment_body = ''
+                comment_name = get_viewable_name(viewer.context, comment)
                 subject = 'Re: [%s] %s' % (comment_name, topmost_item_name)
-                body = '%s commented on %s\n%s\n\n%s' % (creator_name, topmost_item_name, get_url(topmost_item), comment_body)
+                template_name = 'comment'
+                viewer.context['comment'] = comment
             else:
                 subject = 'Re: [Created] %s' % (item_name,)
-                body = '%s created %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
+                template_name = 'save'
+                viewer.context['save_type'] = 'create'
         elif isinstance(self, EditActionNotice):
             subject = 'Re: [Edited] %s' % (item_name,)
-            body = '%s edited %s\n%s\n%s' % (creator_name, item_name, self.description, get_url(item))
+            template_name = 'save'
+            viewer.context['save_type'] = 'edit'
         else:
             return None
 
         # Finally, put together the EmailMessage
+        template = loader.get_template("notification/%s_email.html" % template_name)
+        body_html = template.render(viewer.context)
+        body_text = html2text.html2text(body_html)
         from_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
         from_email = formataddr((creator_name, from_email_address))
         reply_to_email = formataddr((reply_item_name, from_email_address))
@@ -1542,7 +1571,9 @@ class ActionNotice(models.Model):
             headers['Message-ID'] = messageid(reply_item)
         headers['In-Reply-To'] = messageid(item)
         headers['References'] = '%s %s' % (messageid(topmost_item), messageid(item))
-        return EmailMessage(subject=subject, body=body, from_email=from_email, to=[to_email], headers=headers)
+        email_message = EmailMultiAlternatives(subject, body_text, from_email, [to_email], headers=headers)
+        email_message.attach_alternative(body_html, 'text/html')
+        return email_message
 
 def action_notice_post_save_handler(sender, **kwargs):
     action_notice = kwargs['instance']
