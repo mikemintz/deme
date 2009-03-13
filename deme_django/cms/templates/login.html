@@ -80,11 +80,7 @@
         {% if agent.active %}
         <tr class="{% cycle 'even' 'odd' %}">
             <td>
-                {% ifagentcan 'view' 'name' agent %}
-                <a href="{{ agent.get_absolute_url }}">{{ agent.name }}</a>
-                {% else %}
-                <a href="{{ agent.get_absolute_url }}">[PERMISSION DENIED]</a>
-                {% endifagentcan %}
+                <a href="{{ agent.get_absolute_url }}">{% viewable_name agent %}</a>
             </td>
             <td>
                 <input type="submit" name="login_as_{{ agent.pk }}" value="Login" />

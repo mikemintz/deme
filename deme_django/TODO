@@ -62,9 +62,9 @@ Layout
 
 Interface
 ---------
+* Get a variable <title> tag
 * Set action_summary whenever someone deactivates/reactivates/destroys that can go in ActionNotice.description
 * When you create something, you should get to choose the permissions generated on the item (which will happen before the action notice is generated).
-* Get rid of all the [PERMISSION DENIED] and replace it with "Agent 123" or blank
 * There should be a full interface for specifying CommentLocations
 * Interface to add ContactMethods, Subscriptions, and AuthenticationMethods to Agents
 * We should show the default item_type abilities in the permissions action (with a disclaimer about how they can change)

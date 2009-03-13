@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load item_tags %}
 {% block favicon %}{{ item|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item|icon_url:48 }}" /> {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
+{% block title %}<img src="{{ item|icon_url:48 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
 <script type="text/javascript" src="/static/javascripts/prototype.js"></script>
@@ -47,7 +47,7 @@
     {% for membership in memberships %}
     <tr class="{% cycle 'even' 'odd' %}">
         <td>
-            <a href="{{ membership.item.get_absolute_url }}">{% ifagentcan 'view' 'name' membership.item %}{{ membership.item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a>
+            <a href="{{ membership.item.get_absolute_url }}">{% viewable_name membership.item %}</a>
         </td>
         <td>
             <a href="{{ membership.get_absolute_url }}">{{ membership.pk }}</a>

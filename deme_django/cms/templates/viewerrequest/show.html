@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load item_tags %}
 {% block favicon %}{{ item|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item|icon_url:48 }}" /> {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
+{% block title %}<img src="{{ item|icon_url:48 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
 <script type="text/javascript" src="/static/javascripts/prototype.js"></script>
@@ -26,13 +26,13 @@
     {% if custom_urls %}
     <tr>
         <th>Path</th>
-        <td>&lt;<a href="{{ site.get_absolute_url }}">{% ifagentcan 'view' 'name' site %}{{ site.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a>&gt;{% for custom_url in custom_urls %}/<a href="{{ custom_url.get_absolute_url }}">{{ custom_url.path }}</a>{% endfor %}</td>
+        <td>&lt;<a href="{{ site.get_absolute_url }}">{% viewable_name site %}</a>&gt;{% for custom_url in custom_urls %}/<a href="{{ custom_url.get_absolute_url }}">{{ custom_url.path }}</a>{% endfor %}</td>
     </tr>
     {% endif %}
     {% if item.default_layout %}
     <tr>
         <th>Default Layout</th>
-        <td><a href="{{ item.default_layout.get_absolute_url }}">{% ifagentcan 'view' 'name' item.default_layout %}{{ item.default_layout.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a></td>
+        <td><a href="{{ item.default_layout.get_absolute_url }}">{% viewable_name item.default_layout %}</a></td>
     </tr>
     {% endif %}
     {% if child_urls %}
@@ -44,7 +44,7 @@
     {% if item.aliased_item %}
     <tr>
         <th>Aliased Item</th>
-        <td><a href="{{ item.aliased_item.get_absolute_url }}">{% ifagentcan 'view' 'name' item.aliased_item %}{{ item.aliased_item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}</a></td>
+        <td><a href="{{ item.aliased_item.get_absolute_url }}">{% viewable_name item.aliased_item %}</a></td>
     </tr>
     {% endif %}
     <tr>

@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load item_tags %}
 {% block favicon %}{{ item|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item|icon_url:48 }}" /> Relationships for {% ifagentcan 'view' 'name' item %}{{ item.name }}{% else %}[PERMISSION DENIED]{% endifagentcan %}{% endblock %}
+{% block title %}<img src="{{ item|icon_url:48 }}" /> Relationships for {% viewable_name item %}{% endblock %}
 {% block content %}
 
 {% itemheader 'Relationships' %}
@@ -25,11 +25,7 @@
     </tr>
     {% for relationship in relationship_set.items %}
     <tr class="{% cycle 'even' 'odd' %}">
-        {% ifagentcan 'view' 'name' relationship %}
-            <td><a href="{{ relationship.get_absolute_url }}">{{ relationship.name }}</a></td>
-        {% else %}
-            <td><a href="{{ relationship.get_absolute_url }}">[PERMISSION DENIED]</a></td>
-        {% endifagentcan %}
+        <td><a href="{{ relationship.get_absolute_url }}">{% viewable_name relationship %}</a></td>
     </tr>
     {% endfor %}
 </table>

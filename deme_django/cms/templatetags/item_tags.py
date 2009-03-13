@@ -669,17 +669,14 @@ class SubclassFieldsBox(template.Node):
         result = []
         result.append('<table cellspacing="0" class="twocol">')
         for field in fields:
-            result.append('<tr>')
-            result.append(u'<th style="white-space: nowrap;">%s</th>' % capfirst(field.verbose_name))
-            result.append('<td>')
             if agentcan_helper(context, 'view %s' % field.name, item):
+                result.append('<tr>')
+                result.append(u'<th style="white-space: nowrap;">%s</th>' % capfirst(field.verbose_name))
+                result.append('<td>')
                 if isinstance(field, models.ForeignKey):
                     foreign_item = getattr(item, field.name)
                     if foreign_item:
-                        if agentcan_helper(context, 'view name', foreign_item):
-                            result.append('<a href="%s">%s</a>' % (escape(foreign_item.get_absolute_url()), escape(foreign_item.name)))
-                        else:
-                            result.append('<a href="%s">[PERMISSION DENIED]</a>' % escape(foreign_item.get_absolute_url()))
+                        result.append('<a href="%s">%s</a>' % (escape(foreign_item.get_absolute_url()), get_viewable_name(context, foreign_item)))
                     else:
                         result.append('None')
                 else:
@@ -690,10 +687,8 @@ class SubclassFieldsBox(template.Node):
                         result.append(urlize(escape(data)).replace('\n', '<br />'))
                     else:
                         result.append(escape(data))
-            else:
-                result.append('[PERMISSION DENIED]')
-            result.append('</td>')
-            result.append('</tr>')
+                result.append('</td>')
+                result.append('</tr>')
         result.append('</table>')
         return '\n'.join(result)
 
