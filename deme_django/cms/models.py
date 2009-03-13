@@ -680,8 +680,8 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
         algo, salt, hsh = self.password.split('$')
         return PasswordAuthenticationMethod.get_hexdigest('sha1', nonce, hsh) == hashed_password
 
-    @classmethod
-    def mysql_pre41_password(cls, raw_password):
+    @staticmethod
+    def mysql_pre41_password(raw_password):
         """
         Encrypt a password using the same algorithm MySQL used for PASSWORD()
         prior to 4.1.
@@ -704,8 +704,8 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
         result2 = nr2 & ((1L << 31) - 1L)
         return "%08lx%08lx" % (result1, result2)
 
-    @classmethod
-    def get_hexdigest(cls, algorithm, salt, raw_password):
+    @staticmethod
+    def get_hexdigest(algorithm, salt, raw_password):
         """
         Return a string of the hexdigest of the given plaintext password and salt
         using the given algorithm ('sha1' or 'mysql_pre41_password').
@@ -718,8 +718,8 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
             return PasswordAuthenticationMethod.mysql_pre41_password(raw_password)
         raise ValueError("Got unknown password algorithm type in password.")
 
-    @classmethod
-    def get_random_hash(cls):
+    @staticmethod
+    def get_random_hash():
         """Return a random 40-digit hexadecimal string. """
         return PasswordAuthenticationMethod.get_hexdigest('sha1', str(random.random()), str(random.random()))
 
@@ -1399,22 +1399,22 @@ class DemeSetting(Item):
     key   = models.CharField(_('key'), max_length=255, unique=True)
     value = models.CharField(_('value'), max_length=255, blank=True)
 
-    @classmethod
-    def get(cls, key):
+    @staticmethod
+    def get(key):
         """
         Return the value of the DemeSetting with the specified key, or None if
         it is inactive or no such DemeSetting exists.
         """
         try:
-            setting = cls.objects.get(key=key)
+            setting = DemeSetting.objects.get(key=key)
             if not setting.active:
                 return None
             return setting.value
         except ObjectDoesNotExist:
             return None
 
-    @classmethod
-    def set(cls, key, value, action_agent):
+    @staticmethod
+    def set(key, value, action_agent):
         """
         Set the DemeSetting with the specified key to the specified value,
         such that the agent is the creator. This may result in creating a new
@@ -1422,9 +1422,9 @@ class DemeSetting(Item):
         inactive DemeSetting.
         """
         try:
-            setting = cls.objects.get(key=key)
+            setting = DemeSetting.objects.get(key=key)
         except ObjectDoesNotExist:
-            setting = cls(name=key, key=key)
+            setting = DemeSetting(name=key, key=key)
         if setting.value != value:
             setting.value = value
             setting.save_versioned(action_agent=action_agent)
@@ -1632,8 +1632,8 @@ class RelationActionNotice(ActionNotice):
         """
         return self.from_item
 
-    @classmethod
-    def create_notices(cls, action_agent, action_summary, action_time, item, existed_before, existed_after):
+    @staticmethod
+    def create_notices(action_agent, action_summary, action_time, item, existed_before, existed_after):
         """
         This method should be called whenever an item is created, edited,
         deactivated, or reactivated. It generates all relevant
@@ -1852,8 +1852,8 @@ class RecursiveComment(models.Model):
     class Meta:
         unique_together = (('parent', 'child'),)
 
-    @classmethod
-    def recursive_add_comment(cls, comment):
+    @staticmethod
+    def recursive_add_comment(comment):
         """
         Update the table to reflect that the given comment was created.
         """
@@ -1865,8 +1865,8 @@ class RecursiveComment(models.Model):
         for ancestor in ancestors:
             RecursiveComment(parent=ancestor, child=comment).save()
 
-    @classmethod
-    def recursive_remove_comment(cls, comment):
+    @staticmethod
+    def recursive_remove_comment(comment):
         """
         Update the table to reflect that the given comment was destroyed.
         """
@@ -1907,8 +1907,8 @@ class RecursiveMembership(models.Model):
     class Meta:
         unique_together = (('parent', 'child'),)
 
-    @classmethod
-    def recursive_add_membership(cls, membership):
+    @staticmethod
+    def recursive_add_membership(membership):
         """
         Update the table to reflect that the given membership was created (or
         reactivated).
@@ -1938,8 +1938,8 @@ class RecursiveMembership(models.Model):
             for child_membership in child_memberships:
                 recursive_membership.child_memberships.add(child_membership)
 
-    @classmethod
-    def recursive_remove_edge(cls, parent, child):
+    @staticmethod
+    def recursive_remove_edge(parent, child):
         """
         Update the table to reflect that child is no longer directly a member
         of parent.
@@ -1958,8 +1958,8 @@ class RecursiveMembership(models.Model):
         for membership in memberships:
             RecursiveMembership.recursive_add_membership(membership)
 
-    @classmethod
-    def recursive_add_collection(cls, collection):
+    @staticmethod
+    def recursive_add_collection(collection):
         """
         Update the table to reflect that the given collection was created or
         reactivated.
@@ -1968,8 +1968,8 @@ class RecursiveMembership(models.Model):
         for membership in memberships:
             RecursiveMembership.recursive_add_membership(membership)
 
-    @classmethod
-    def recursive_remove_collection(cls, collection):
+    @staticmethod
+    def recursive_remove_collection(collection):
         """
         Update the table to reflect that the given collection was deactivated.
         """
