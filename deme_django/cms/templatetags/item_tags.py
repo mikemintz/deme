@@ -577,7 +577,29 @@ class CommentBox(template.Node):
         add_comments_to_div(comment_dicts)
         result.append("</div>")
 
-        # adding action notices just for debugging for now (eventually we'll move it to its own tag)
+        return '\n'.join(result)
+
+@register.tag
+def commentbox(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return CommentBox()
+
+
+class ActionNoticeBox(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<ActionNoticeBoxNode>"
+
+    def render(self, context):
+        item = context['item']
+        version_number = item.version_number
+        full_path = context['full_path']
+
+        result = []
         if agentcan_helper(context, 'view_action_notices', item):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
             result.append(u"<div><b>Action Notices</b></div>")
@@ -626,11 +648,11 @@ class CommentBox(template.Node):
         return '\n'.join(result)
 
 @register.tag
-def commentbox(parser, token):
+def actionnoticebox(parser, token):
     bits = list(token.split_contents())
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
-    return CommentBox()
+    return ActionNoticeBox()
 
 
 class SubclassFieldsBox(template.Node):
