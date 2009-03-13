@@ -110,6 +110,7 @@ Distant Future (sorted by approximate order of planned implementation)
 * Internationalize using ugettext_lazy
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * Customizable email template per site that gets sent out for each notification
+* Add options to subscriptions, like which kinds of action notices you want and whether you want to subscribe to the entire comment thread.
 * Add other types of subscriptions, like text messages / IMs
 * Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
 * We will eventually want to have a item_type table

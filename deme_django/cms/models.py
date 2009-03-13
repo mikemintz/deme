@@ -1469,7 +1469,7 @@ class ActionNotice(models.Model):
         viewer.init_for_outgoing_email(email_contact_method.agent)
         permission_cache = viewer.permission_cache
 
-        # First, decide if we're allowed to get this notification at all
+        # Decide if we're allowed to get this notification at all
         def direct_subscriptions():
             item_parent_pks_query = self.item.all_parents_in_thread().values('pk').query
             creator_parent_pks_query = self.creator.all_parents_in_thread().values('pk').query
@@ -1493,7 +1493,7 @@ class ActionNotice(models.Model):
         if not (direct_subscriptions() or deep_subscriptions()):
             return None
 
-        # Now get the fields we are allowed to view
+        # Get the fields we are allowed to view
         item = self.item
         reply_item = self.notification_reply_item()
         topmost_item = item.original_item_in_thread()
@@ -1504,6 +1504,7 @@ class ActionNotice(models.Model):
         topmost_item_name = get_viewable_name(viewer.context, topmost_item)
         creator_name = get_viewable_name(viewer.context, self.creator)
 
+        # Generate the subject and body
         viewer.context['item'] = self.item
         viewer.context['item_version_number'] = self.item_version_number
         viewer.context['creator'] = self.creator
@@ -1511,7 +1512,6 @@ class ActionNotice(models.Model):
         viewer.context['description'] = self.description
         viewer.context['topmost_item'] = topmost_item
         viewer.context['url_prefix'] = 'http://%s' % settings.DEFAULT_HOSTNAME
-        # Generate the subject and body
         if isinstance(self, RelationActionNotice):
             from_item_name = get_viewable_name(viewer.context, self.from_item)
             if self.relation_added:
@@ -1554,7 +1554,7 @@ class ActionNotice(models.Model):
         else:
             return None
 
-        # Finally, put together the EmailMessage
+        # Construct the EmailMessage
         template = loader.get_template("notification/%s_email.html" % template_name)
         body_html = template.render(viewer.context)
         body_text = html2text.html2text(body_html)
@@ -1564,7 +1564,10 @@ class ActionNotice(models.Model):
         to_email = formataddr((agent.name, email_contact_method.email))
         headers = {}
         headers['Reply-To'] = reply_to_email
-        messageid = lambda x: '<%s-%s-%s@%s>' % ('notice' if isinstance(x, ActionNotice) else 'item', x.pk, x.created_at.strftime("%Y%m%d%H%M%S"), settings.NOTIFICATION_EMAIL_HOSTNAME)
+        def messageid(x):
+            prefix = 'notice' if isinstance(x, ActionNotice) else 'item'
+            date = x.created_at.strftime("%Y%m%d%H%M%S")
+            return '<%s-%s-%s@%s>' % (prefix, x.pk, date, settings.NOTIFICATION_EMAIL_HOSTNAME)
         if reply_item == item:
             headers['Message-ID'] = messageid(self)
         else:
@@ -1575,7 +1578,14 @@ class ActionNotice(models.Model):
         email_message.attach_alternative(body_html, 'text/html')
         return email_message
 
-def action_notice_post_save_handler(sender, **kwargs):
+def _action_notice_post_save_handler(sender, **kwargs):
+    """
+    This handler should get triggered when an ActionNotice is created. It takes
+    care of asynchronously sending out notifications.
+    
+    Signals do not propagate to subclasses, this signal must be specified for
+    every concrete subclass of ActionNotice.
+    """
     action_notice = kwargs['instance']
     # Email everyone subscribed to items this notice is relevant for
     direct_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.item.all_parents_in_thread().values('pk').query) |
@@ -1596,6 +1606,16 @@ def action_notice_post_save_handler(sender, **kwargs):
 
 
 class RelationActionNotice(ActionNotice):
+    """
+    A RelationActionNotice is created on an item whenever another item (the
+    "from item") is created or modified so that one of its foreign-key fields
+    now points to the item (when it didn't before) or no longer points to the
+    item (when it did before).
+    
+    If relation_added is true, it means that the from item did not point before
+    but now does; and if relation_added is false, it means that from item did
+    point before but no longer does.
+    """
     from_item                = models.ForeignKey(Item, related_name='relation_action_notices_from', verbose_name=_('from item'))
     from_item_version_number = models.PositiveIntegerField(_('from item version number'))
     from_field_name          = models.CharField(_('from field name'), max_length=255)
@@ -1614,6 +1634,17 @@ class RelationActionNotice(ActionNotice):
 
     @classmethod
     def create_notices(cls, action_agent, action_summary, action_time, item, existed_before, existed_after):
+        """
+        This method should be called whenever an item is created, edited,
+        deactivated, or reactivated. It generates all relevant
+        RelationActionNotices relevant to the action.
+        
+        The flags existed_before and existed_after are used to indicate what
+        the action did to the item.  If the item was reactivated or created,
+        existed_before would be false, otherwise it would be true. If the item
+        was deactivated, existed_after would be false, otherwise it would be
+        true.
+        """
         if existed_before and existed_after:
             old_item = type(item).objects.get(pk=item.pk)
             old_item.copy_fields_from_version(item.version_number - 1)
@@ -1624,7 +1655,8 @@ class RelationActionNotice(ActionNotice):
         elif existed_after:
             old_item = None
             new_item = item
-        # Because of multiple inheritance, we need to put the field/model pairs into a set
+        # Because of multiple inheritance, we need to put the field/model pairs
+        # into a set to eliminate duplicates
         fields_and_models = set(item._meta.get_fields_with_model())
         for field, model in fields_and_models:
             if isinstance(field, (models.OneToOneField, models.ManyToManyField)):
@@ -1657,31 +1689,46 @@ class RelationActionNotice(ActionNotice):
                             action_notice.from_field_model = model.__name__
                             action_notice.relation_added = relation_added
                             action_notice.save()
-signals.post_save.connect(action_notice_post_save_handler, sender=RelationActionNotice, dispatch_uid='RelationActionNotice post_save')
+signals.post_save.connect(_action_notice_post_save_handler, sender=RelationActionNotice, dispatch_uid='RelationActionNotice post_save')
     
 
 class DeactivateActionNotice(ActionNotice):
+    """
+    A DeactivateActionNotice is generated whenever someone deactivates an item.
+    """
     pass
-signals.post_save.connect(action_notice_post_save_handler, sender=DeactivateActionNotice, dispatch_uid='DeactivateActionNotice post_save')
+signals.post_save.connect(_action_notice_post_save_handler, sender=DeactivateActionNotice, dispatch_uid='DeactivateActionNotice post_save')
 
 
 class ReactivateActionNotice(ActionNotice):
+    """
+    A DeactivateActionNotice is generated whenever someone reactivates an item.
+    """
     pass
-signals.post_save.connect(action_notice_post_save_handler, sender=ReactivateActionNotice, dispatch_uid='ReactivateActionNotice post_save')
+signals.post_save.connect(_action_notice_post_save_handler, sender=ReactivateActionNotice, dispatch_uid='ReactivateActionNotice post_save')
 
 
 class DestroyActionNotice(ActionNotice):
+    """
+    A DeactivateActionNotice is generated whenever someone destroys an item.
+    """
     pass
-signals.post_save.connect(action_notice_post_save_handler, sender=DestroyActionNotice, dispatch_uid='DestroyActionNotice post_save')
+signals.post_save.connect(_action_notice_post_save_handler, sender=DestroyActionNotice, dispatch_uid='DestroyActionNotice post_save')
 
 
 class CreateActionNotice(ActionNotice):
+    """
+    A DeactivateActionNotice is generated whenever someone creates an item.
+    """
     pass
-signals.post_save.connect(action_notice_post_save_handler, sender=CreateActionNotice, dispatch_uid='CreateActionNotice post_save')
+signals.post_save.connect(_action_notice_post_save_handler, sender=CreateActionNotice, dispatch_uid='CreateActionNotice post_save')
 
 class EditActionNotice(ActionNotice):
+    """
+    A DeactivateActionNotice is generated whenever someone edits an item.
+    """
     pass
-signals.post_save.connect(action_notice_post_save_handler, sender=EditActionNotice, dispatch_uid='EditActionNotice post_save')
+signals.post_save.connect(_action_notice_post_save_handler, sender=EditActionNotice, dispatch_uid='EditActionNotice post_save')
 
 
 ###############################################################################
