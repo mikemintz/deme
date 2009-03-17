@@ -19,6 +19,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* gen_graph is broken on my macbook
 * figure out how we are determining the permission to view comment hierarchy (i.e., comment.commented_item)
 * How do we deal with immutable things that get trashed, but should get recreated by other users? Like webauth usernames or open id usernames, or sites with hostnames?
 * Code cleanup: views, templatetags, and templates, and symsys everything

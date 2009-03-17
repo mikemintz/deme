@@ -11,6 +11,8 @@ from cms.models import *
 from django import forms
 from django.utils import simplejson
 from django.core.exceptions import ObjectDoesNotExist
+import django.contrib.syndication.feeds
+import django.contrib.syndication.views
 from permissions import PermissionCache
 import re
 import os
@@ -491,6 +493,22 @@ class ItemViewer(Viewer):
         json_str = simplejson.dumps(data, separators=(',',':'))
         return HttpResponse(json_str, mimetype='application/json')
 
+    def type_list_rss(self):
+        #TODO add <meta> tag to page
+        self._type_list_helper()
+        item_list = self.context['items'] #TODO probably not useful to get this ordering
+        class ItemListFeed(django.contrib.syndication.feeds.Feed):
+            title = "Items"
+            description = "Items"
+            link = reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'list', 'format': 'rss'})
+            def items(self):
+                return item_list
+            def item_link(self, item):
+                return item.get_absolute_url()
+            def item_pubdate(self, item):
+                return item.created_at
+        return django.contrib.syndication.views.feed(self.request, 'item_list', {'item_list': ItemListFeed})
+
     def type_new_html(self):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
@@ -525,6 +543,54 @@ class ItemViewer(Viewer):
     def item_show_html(self):
         template = loader.get_template('item/show.html')
         return HttpResponse(template.render(self.context))
+
+    def item_show_rss(self):
+        from cms.templatetags.item_tags import get_viewable_name
+        viewer = self
+        #TODO add <meta> tag to page
+        if not self.cur_agent_can('view_action_notices', self.item):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to view action notices for this item")
+        action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(creator=self.item)).order_by('created_at') #TODO limit
+        action_notice_pk_to_object_map = {}
+        for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
+            specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
+            if action_notice_subclass == RelationActionNotice:
+                self.permission_cache.mass_learn(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
+            for action_notice in specific_action_notices:
+                action_notice_pk_to_object_map[action_notice.pk] = action_notice
+        self.permission_cache.mass_learn(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('creator').query)))
+        class ItemShowFeed(django.contrib.syndication.feeds.Feed):
+            title = get_viewable_name(viewer.context, viewer.item)
+            description = viewer.item.description if viewer.cur_agent_can('view description', viewer.item) else ''
+            link = reverse('item_url', kwargs={'viewer': viewer.viewer_name, 'action': 'show', 'noun': viewer.item.pk, 'format': 'rss'})
+            def items(self):
+                result = []
+                for action_notice in action_notices:
+                    action_notice = action_notice_pk_to_object_map[action_notice.pk]
+                    if isinstance(action_notice, RelationActionNotice):
+                        if not viewer.cur_agent_can('view %s' % action_notice.from_field_name, action_notice.from_item):
+                            continue
+                    item = {}
+                    item['created_at'] = action_notice.created_at
+                    item['creator_name'] = get_viewable_name(viewer.context, action_notice.creator)
+                    item['creator_link'] = action_notice.creator.get_absolute_url()
+                    item['item_name'] = get_viewable_name(viewer.context, action_notice.item)
+                    item['description'] = action_notice.description
+                    if isinstance(action_notice, RelationActionNotice):
+                        item['from_item_name'] = get_viewable_name(viewer.context, action_notice.from_item)
+                        item['from_field_name'] = action_notice.from_field_name
+                        item['relation_added'] = action_notice.relation_added
+                        item['link'] = action_notice.from_item.get_absolute_url()
+                    else:
+                        item['link'] = action_notice.item.get_absolute_url()
+                    item['action_notice_type'] = type(action_notice).__name__
+                    result.append(item)
+                return result
+            def item_link(self, item):
+                return item['link']
+            def item_pubdate(self, item):
+                return item['created_at']
+        return django.contrib.syndication.views.feed(self.request, 'item_show', {'item_show': ItemShowFeed})
 
     def item_history_html(self):
         import copy
