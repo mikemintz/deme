@@ -42,7 +42,7 @@ def gen_dotcode(show_fields):
             for field_name in item_type._meta.get_all_field_names():
                 field, model_defined, direct, m2m = item_type._meta.get_field_by_name(field_name)
                 field_type = type(field).__name__
-                if model_defined == None: # defined locally
+                if model_defined is None: # defined locally
                     if field_type in ['OneToOneField', 'RelatedObject']:
                         continue
                     if field_type == 'ForeignKey':

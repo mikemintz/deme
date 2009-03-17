@@ -239,12 +239,12 @@ class Viewer(object):
         self.format = format or 'html'
         self.method = (request.GET.get('_method', None) or request.method).upper()
         self.request = request # FOR NOW
-        if self.noun == None:
-            if self.action == None:
+        if self.noun is None:
+            if self.action is None:
                 self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'deactivate'}.get(self.method, 'list')
             self.item = None
         else:
-            if self.action == None:
+            if self.action is None:
                 self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'deactivate'}.get(self.method, 'show')
             try:
                 self.item = Item.objects.get(pk=self.noun)
@@ -319,7 +319,7 @@ class Viewer(object):
         self.context['layout'] = 'blank.html'
 
     def dispatch(self):
-        if self.noun == None:
+        if self.noun is None:
             action_method = getattr(self, 'type_%s_%s' % (self.action, self.format), None)
         else:
             action_method = getattr(self, 'item_%s_%s' % (self.action, self.format), None)
