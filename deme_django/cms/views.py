@@ -320,9 +320,9 @@ class Viewer(object):
 
     def dispatch(self):
         if self.noun == None:
-            action_method = getattr(self, 'type_%s' % self.action, None)
+            action_method = getattr(self, 'type_%s_%s' % (self.action, self.format), None)
         else:
-            action_method = getattr(self, 'item_%s' % self.action, None)
+            action_method = getattr(self, 'item_%s_%s' % (self.action, self.format), None)
         if action_method:
             if self.noun != None:
                 if self.item is None:
@@ -394,7 +394,7 @@ class CodeGraphViewer(Viewer):
     accepted_item_type = Item
     viewer_name = 'codegraph'
 
-    def type_list(self):
+    def type_list_html(self):
         """
         Generate images for the graph of the Deme item type ontology, and
         display a page with links to them.
@@ -425,7 +425,7 @@ class ItemViewer(Viewer):
     accepted_item_type = Item
     viewer_name = 'item'
 
-    def type_list(self):
+    def _type_list_helper(self):
         if self.request.GET.get('collection'):
             collection = Item.objects.get(pk=self.request.GET.get('collection')).downcast()
         else:
@@ -463,10 +463,6 @@ class ItemViewer(Viewer):
         n_items = items.count()
         n_listable_items = listable_items.count()
         items = [item for item in listable_items.all()[offset:offset+limit]]
-        if self.format == 'json':
-            json_data = simplejson.dumps([[item.name, item.pk] for item in items], separators=(',',':'))
-            return HttpResponse(json_data, mimetype='application/json')
-        template = loader.get_template('item/list.html')
         self.context['item_types'] = item_types
         self.context['items'] = items
         self.context['n_items'] = n_items
@@ -480,9 +476,22 @@ class ItemViewer(Viewer):
         self.context['active'] = active
         self.context['collection'] = collection
         self.context['all_collections'] = self.permission_cache.filter_items(self.cur_agent, 'view name', Collection.objects.filter(active=True)).order_by('name')
-        return HttpResponse(template.render(self.context))
 
-    def type_new(self):
+    def type_list_html(self):
+        self._type_list_helper()
+        template = loader.get_template('item/list.html')
+        return HttpResponse(template.render(self.context))
+        if self.format == 'json':
+            json_data = simplejson.dumps([[item.name, item.pk] for item in items], separators=(',',':'))
+            return HttpResponse(json_data, mimetype='application/json')
+
+    def type_list_json(self):
+        self._type_list_helper()
+        data = [[item.name, item.pk] for item in self.context['items']]
+        json_str = simplejson.dumps(data, separators=(',',':'))
+        return HttpResponse(json_str, mimetype='application/json')
+
+    def type_new_html(self):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
@@ -495,7 +504,7 @@ class ItemViewer(Viewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
-    def type_create(self):
+    def type_create_html(self):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
@@ -513,11 +522,11 @@ class ItemViewer(Viewer):
             self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
 
-    def item_show(self):
+    def item_show_html(self):
         template = loader.get_template('item/show.html')
         return HttpResponse(template.render(self.context))
 
-    def item_history(self):
+    def item_history_html(self):
         import copy
         versions = []
         for version_number in xrange(1, self.item.version_number + 1):
@@ -528,7 +537,7 @@ class ItemViewer(Viewer):
         self.context['versions'] = versions
         return HttpResponse(template.render(self.context))
 
-    def item_relationships(self):
+    def item_relationships_html(self):
         relationship_sets = []
         for name in sorted(self.item._meta.get_all_field_names()):
             field, model, direct, m2m = self.item._meta.get_field_by_name(name)
@@ -556,7 +565,7 @@ class ItemViewer(Viewer):
         self.context['abilities'] = sorted(self.permission_cache.item_abilities(self.cur_agent, self.item))
         return HttpResponse(template.render(self.context))
 
-    def item_edit(self):
+    def item_edit_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
@@ -575,7 +584,7 @@ class ItemViewer(Viewer):
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
-    def item_copy(self):
+    def item_copy_html(self):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
@@ -599,7 +608,7 @@ class ItemViewer(Viewer):
             self.context['redirect'] = self.request.GET['redirect']
         return HttpResponse(template.render(self.context))
 
-    def item_update(self):
+    def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
@@ -619,7 +628,7 @@ class ItemViewer(Viewer):
             self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             return HttpResponse(template.render(self.context))
 
-    def item_deactivate(self):
+    def item_deactivate_html(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can('delete', self.item):
@@ -628,7 +637,7 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
-    def item_reactivate(self):
+    def item_reactivate_html(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can('delete', self.item):
@@ -637,7 +646,7 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
-    def item_destroy(self):
+    def item_destroy_html(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can('delete', self.item):
@@ -646,7 +655,7 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
-    def item_itempermissions(self):
+    def item_itempermissions_html(self):
         can_modify_permissions = self.cur_agent_can('do_anything', self.item)
         if not can_modify_permissions:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
@@ -763,7 +772,7 @@ class ItemViewer(Viewer):
         self.context['new_collection_form'] = new_collection_form_class()
         return HttpResponse(template.render(self.context))
 
-    def type_globalpermissions(self):
+    def type_globalpermissions_html(self):
         if not self.cur_agent_can_global('do_anything'):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify global permissions")
 
@@ -890,7 +899,7 @@ class AuthenticationMethodViewer(ItemViewer):
     accepted_item_type = AuthenticationMethod
     viewer_name = 'authenticationmethod'
 
-    def type_login(self):
+    def type_login_html(self):
         """
         This is the view that takes care of all URLs dealing with logging in
         and logging out.
@@ -1023,7 +1032,7 @@ class WebauthAuthenticationMethodViewer(ItemViewer):
     accepted_item_type = WebauthAuthenticationMethod
     viewer_name = 'webauth'
 
-    def type_login(self):
+    def type_login_html(self):
         if not self.request.is_secure():
             return HttpResponseRedirect('https://%s%s' % (self.request.get_host(), self.request.get_full_path()))
         if self.request.META.get('AUTH_TYPE') != 'WebAuth' or not self.request.META.get('REMOTE_USER'):
@@ -1046,7 +1055,7 @@ class GroupViewer(ItemViewer):
     accepted_item_type = Group
     viewer_name = 'group'
 
-    def type_create(self):
+    def type_create_html(self):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
@@ -1062,7 +1071,7 @@ class GroupViewer(ItemViewer):
             self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
             return HttpResponse(template.render(self.context))
 
-    def item_show(self):
+    def item_show_html(self):
         template = loader.get_template('group/show.html')
         return HttpResponse(template.render(self.context))
 
@@ -1071,7 +1080,7 @@ class ViewerRequestViewer(ItemViewer):
     accepted_item_type = ViewerRequest
     viewer_name = 'viewerrequest'
 
-    def item_show(self):
+    def item_show_html(self):
         site, custom_urls = self.item.calculate_full_path()
         self.context['site'] = site
         self.context['custom_urls'] = custom_urls
@@ -1081,7 +1090,7 @@ class ViewerRequestViewer(ItemViewer):
         return HttpResponse(template.render(self.context))
 
 
-    def item_addsubpath(self):
+    def item_addsubpath_html(self):
         form = AddSubPathForm(self.request.POST, self.request.FILES)
         if form.data['parent_url'] != str(self.item.pk):
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the parent url you are extending")
@@ -1113,7 +1122,7 @@ class CollectionViewer(ItemViewer):
     accepted_item_type = Collection
     viewer_name = 'collection'
 
-    def item_show(self):
+    def item_show_html(self):
         memberships = self.item.child_memberships
         memberships = memberships.filter(active=True)
         memberships = memberships.filter(item__active=True)
@@ -1128,7 +1137,7 @@ class CollectionViewer(ItemViewer):
         return HttpResponse(template.render(self.context))
 
 
-    def item_addmember(self):
+    def item_addmember_html(self):
         try:
             member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
@@ -1146,7 +1155,7 @@ class CollectionViewer(ItemViewer):
         return HttpResponseRedirect(redirect)
 
 
-    def item_removemember(self):
+    def item_removemember_html(self):
         try:
             member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
@@ -1167,7 +1176,7 @@ class ImageDocumentViewer(ItemViewer):
     accepted_item_type = ImageDocument
     viewer_name = 'imagedocument'
 
-    def item_show(self):
+    def item_show_html(self):
         template = loader.get_template('imagedocument/show.html')
         return HttpResponse(template.render(self.context))
 
@@ -1176,13 +1185,13 @@ class TextDocumentViewer(ItemViewer):
     accepted_item_type = TextDocument
     viewer_name = 'textdocument'
 
-    def item_show(self):
+    def item_show_html(self):
         template = loader.get_template('textdocument/show.html')
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
 
-    def item_edit(self):
+    def item_edit_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
@@ -1214,7 +1223,7 @@ class TextDocumentViewer(ItemViewer):
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
-    def item_update(self):
+    def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
@@ -1269,7 +1278,7 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
     accepted_item_type = DjangoTemplateDocument
     viewer_name = 'djangotemplatedocument'
 
-    def item_render(self):
+    def item_render_html(self):
         cur_node = self.item
         while cur_node is not None:
             next_node = cur_node.layout
@@ -1295,7 +1304,7 @@ class TextCommentViewer(TextDocumentViewer):
     accepted_item_type = TextComment
     viewer_name = 'textcomment'
 
-    def type_new(self):
+    def type_new_html(self):
         try:
             item = Item.objects.get(pk=self.request.GET.get('item'))
         except:
@@ -1312,7 +1321,7 @@ class TextCommentViewer(TextDocumentViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
-    def type_create(self):
+    def type_create_html(self):
         try:
             item = Item.objects.get(pk=self.request.POST.get('item'))
         except:
@@ -1347,7 +1356,7 @@ class TransclusionViewer(ItemViewer):
     accepted_item_type = Transclusion
     viewer_name = 'transclusion'
 
-    def type_new(self):
+    def type_new_html(self):
         try:
             from_item = Item.objects.get(pk=self.request.GET.get('from_item'))
         except:
@@ -1364,7 +1373,7 @@ class TransclusionViewer(ItemViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
-    def type_create(self):
+    def type_create_html(self):
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
@@ -1390,7 +1399,7 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
     accepted_item_type = TextDocumentExcerpt
     viewer_name = 'textdocumentexcerpt'
 
-    def type_createmultiexcerpt(self):
+    def type_createmultiexcerpt_html(self):
         if not self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
         if not self.cur_agent_can_global('create Collection'):
@@ -1427,14 +1436,14 @@ class DemeSettingViewer(ItemViewer):
     accepted_item_type = DemeSetting
     viewer_name = 'demesetting'
 
-    def type_modify(self):
+    def type_modify_html(self):
         if not self.cur_agent_can_global('do_anything'):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify DemeSettings")
         self.context['deme_settings'] = DemeSetting.objects.filter(active=True).order_by('key')
         template = loader.get_template('demesetting/modify.html')
         return HttpResponse(template.render(self.context))
 
-    def type_addsetting(self):
+    def type_addsetting_html(self):
         if not self.cur_agent_can_global('do_anything'):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify DemeSettings")
         key = self.request.POST.get('key')
@@ -1448,7 +1457,7 @@ class SubscriptionViewer(ItemViewer):
     accepted_item_type = Subscription
     viewer_name = 'subscription'
 
-    def type_new(self):
+    def type_new_html(self):
         form_initial = dict(self.request.GET.items())
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(initial=form_initial)
@@ -1458,7 +1467,7 @@ class SubscriptionViewer(ItemViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
-    def type_create(self):
+    def type_create_html(self):
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
