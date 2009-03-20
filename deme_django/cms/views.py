@@ -575,7 +575,7 @@ class ItemViewer(Viewer):
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            item.save_versioned(action_agent=self.cur_agent)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -1035,7 +1035,7 @@ class ContactMethodViewer(ItemViewer):
             can_add_contact_method = self.cur_agent_can('add_contact_method', item.agent)
             if not can_add_contact_method:
                 return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add contact methods to this agent")
-            item.save_versioned(action_agent=self.cur_agent)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -1075,7 +1075,7 @@ class AuthenticationMethodViewer(ItemViewer):
             can_add_authentication_method = self.cur_agent_can('add_authentication_method', item.agent)
             if not can_add_authentication_method:
                 return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add authentication methods to this agent")
-            item.save_versioned(action_agent=self.cur_agent)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -1249,7 +1249,7 @@ class GroupViewer(ItemViewer):
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             new_item = form.save(commit=False)
-            new_item.save_versioned(action_agent=self.cur_agent)
+            new_item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
             return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
             template = loader.get_template('item/new.html')
@@ -1289,7 +1289,7 @@ class ViewerRequestViewer(ItemViewer):
         form = AddSubPathForm(self.request.POST, self.request.FILES, instance=custom_url)
         if form.is_valid():
             new_item = form.save(commit=False)
-            new_item.save_versioned(action_agent=self.cur_agent)
+            new_item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
             if not new_item.active:
                 new_item.reactivate(action_agent=self.cur_agent)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -1336,7 +1336,7 @@ class CollectionViewer(ItemViewer):
                 membership.reactivate(action_agent=self.cur_agent)
         except ObjectDoesNotExist:
             membership = Membership(collection=self.item, item=member)
-            membership.save_versioned(action_agent=self.cur_agent)
+            membership.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
@@ -1449,7 +1449,7 @@ class TextDocumentViewer(ItemViewer):
                     transclusion.from_item_index = index
                     transclusion.from_item_version_number = new_item.version_number
                     transclusion.to_item = to_item
-                    transclusion.save_versioned(action_agent=self.cur_agent)
+                    transclusion.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
 
             return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
@@ -1521,11 +1521,11 @@ class TextCommentViewer(TextDocumentViewer):
             #TODO use transactions to make the Transclusion save at the same time as the Comment
             item_index = form.cleaned_data['item_index']
             comment = form.save(commit=False)
-            comment.save_versioned(action_agent=self.cur_agent)
+            comment.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
             item = comment.item.downcast()
             if isinstance(item, TextDocument) and item_index is not None and self.permission_cache.agent_can(self.cur_agent, 'add_transclusion', item):
                 transclusion = Transclusion(from_item=item, from_item_version_number=comment.item_version_number, from_item_index=item_index, to_item=comment)
-                transclusion.save_versioned(action_agent=self.cur_agent)
+                transclusion.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -1568,7 +1568,7 @@ class TransclusionViewer(ItemViewer):
             can_add_transclusion = self.cur_agent_can('add_transclusion', item.from_item)
             if not can_add_transclusion:
                 return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add transclusions to this item")
-            item.save_versioned(action_agent=self.cur_agent)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -1610,10 +1610,10 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
         if not excerpts:
             return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "You must submit at least one excerpt")
         collection = Collection()
-        collection.save_versioned(action_agent=self.cur_agent)
+        collection.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         for excerpt in excerpts:
-            excerpt.save_versioned(action_agent=self.cur_agent)
-            Membership(item=excerpt, collection=collection).save_versioned(action_agent=self.cur_agent)
+            excerpt.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            Membership(item=excerpt, collection=collection).save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'collection', 'noun': collection.pk}))
         return HttpResponseRedirect(redirect)
 
@@ -1661,7 +1661,7 @@ class SubscriptionViewer(ItemViewer):
             can_add_subscription = self.cur_agent_can('add_subscription', item.contact_method)
             if not can_add_subscription:
                 return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add subscriptions to this contact method")
-            item.save_versioned(action_agent=self.cur_agent)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:

@@ -41,6 +41,7 @@ tinyMCE.init({
     <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=viewer_name,action="create" %}" class="item_form">
     {% endif %}
         <table cellspacing="0">
+            <tr><th><label for="id_action_summary">Create summary:</label></th><td><input id="id_action_summary" type="text" name="action_summary" value="" maxlength="255" /></td></tr>
             {{ form.as_table }}
         </table>
         <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Create {{ accepted_item_type_name }}</span></button>
