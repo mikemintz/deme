@@ -366,11 +366,11 @@ class ItemHeader(template.Node):
             result.append('<a href="%s" class="img_button"><img src="%s" /><span>Copy</span></a>' % (copy_url, icon_url('copy', 16)))
         if agentcan_helper(context, 'delete', item):
             result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % (deactivate_url if item.active else reactivate_url))
-            result.append("""<a href="#" onclick="this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('delete', 16), "Deactivate" if item.active else "Reactivate"))
+            result.append("""<a href="#" onclick="if (confirm('Are you sure you want to %s this item?'))this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % ("deactivate" if item.active else "reactivate", icon_url('delete', 16), "Deactivate" if item.active else "Reactivate"))
             result.append("""</form>""")
             if not item.active:
                 result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % destroy_url)
-                result.append("""<a href="#" onclick="this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('delete', 16), "Destroy"))
+                result.append("""<a href="#" onclick="if (confirm('Are you sure you want to destroy this item?')) this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('delete', 16), "Destroy"))
                 result.append("""</form>""")
         result.append('</div>')
 
