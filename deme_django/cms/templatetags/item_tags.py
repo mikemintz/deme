@@ -671,7 +671,7 @@ class SubclassFieldsBox(template.Node):
 
     def render(self, context):
         viewer = context['_viewer']
-        viewer_method_name = ('item_' if viewer.noun else 'type_') + viewer.action
+        viewer_method_name = "%s_%s_%s" % ('item' if viewer.noun else 'type', viewer.action, viewer.format)
         viewer_where_action_defined = type(viewer)
         while viewer_where_action_defined.__name__ != 'ItemViewer':
             parent_viewer = viewer_where_action_defined.__base__
