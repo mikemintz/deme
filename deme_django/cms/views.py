@@ -4,6 +4,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
 from django.utils.http import urlquote
 from django.utils.html import escape
+from django.utils.translation import ugettext_lazy as _
 from django.template import Context, loader
 from django.db import models
 from django.db.models import Q
@@ -128,7 +129,51 @@ class NewTextCommentForm(forms.ModelForm):
         model = TextComment
         fields = ['name', 'description', 'body', 'item', 'item_version_number']
 
+class NewPasswordAuthenticationMethodForm(forms.ModelForm):
+    agent = AjaxModelChoiceField(Agent.objects)
+    password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
+    password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
+    class Meta:
+        model = PasswordAuthenticationMethod
+        exclude = ['password']
+    def clean_password2(self):
+        password1 = self.cleaned_data.get("password1", "")
+        password2 = self.cleaned_data["password2"]
+        if password1 != password2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+        return password2
+    def save(self, commit=True):
+        item = super(NewPasswordAuthenticationMethodForm, self).save(commit=False)
+        item.set_password(self.cleaned_data["password1"])
+        if commit:
+            item.save()
+        return item
+
+class EditPasswordAuthenticationMethodForm(forms.ModelForm):
+    password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
+    password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
+    class Meta:
+        model = PasswordAuthenticationMethod
+        exclude = ['password']
+    def clean_password2(self):
+        password1 = self.cleaned_data.get("password1", "")
+        password2 = self.cleaned_data["password2"]
+        if password1 != password2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+        return password2
+    def save(self, commit=True):
+        item = super(EditPasswordAuthenticationMethodForm, self).save(commit=False)
+        item.set_password(self.cleaned_data["password1"])
+        if commit:
+            item.save()
+        return item
+
 def get_form_class_for_item_type(update_or_create, item_type, fields=None):
+    if issubclass(item_type, PasswordAuthenticationMethod):
+        if update_or_create == 'update':
+            return EditPasswordAuthenticationMethodForm
+        else:
+            return NewPasswordAuthenticationMethodForm
     # For now, this is how we prevent manual creation of TextDocumentExcerpts
     if issubclass(item_type, TextDocumentExcerpt):
         return forms.models.modelform_factory(item_type, fields=['name'])
@@ -961,9 +1006,84 @@ class ItemViewer(Viewer):
         return HttpResponse(template.render(self.context))
 
 
+class ContactMethodViewer(ItemViewer):
+    accepted_item_type = ContactMethod
+    viewer_name = 'contactmethod'
+
+    def type_new_html(self):
+        try:
+            agent = Item.objects.get(pk=self.request.GET.get('agent'))
+        except:
+            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding an contact method to")
+        can_add_contact_method = self.cur_agent_can('add_contact_method', agent)
+        if not can_add_contact_method:
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add contact methods to this agent")
+        form_initial = dict(self.request.GET.items())
+        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+        form = form_class(initial=form_initial)
+        template = loader.get_template('item/new.html')
+        self.context['form'] = form
+        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
+        self.context['redirect'] = self.request.GET.get('redirect')
+        return HttpResponse(template.render(self.context))
+
+    def type_create_html(self):
+        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+        form = form_class(self.request.POST, self.request.FILES)
+        if form.is_valid():
+            item = form.save(commit=False)
+            can_add_contact_method = self.cur_agent_can('add_contact_method', item.agent)
+            if not can_add_contact_method:
+                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add contact methods to this agent")
+            item.save_versioned(action_agent=self.cur_agent)
+            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
+            return HttpResponseRedirect(redirect)
+        else:
+            template = loader.get_template('item/new.html')
+            self.context['form'] = form
+            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
+            self.context['redirect'] = self.request.GET.get('redirect')
+            return HttpResponse(template.render(self.context))
+
+
 class AuthenticationMethodViewer(ItemViewer):
     accepted_item_type = AuthenticationMethod
     viewer_name = 'authenticationmethod'
+
+    def type_new_html(self):
+        try:
+            agent = Item.objects.get(pk=self.request.GET.get('agent'))
+        except:
+            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding an authentication method to")
+        can_add_authentication_method = self.cur_agent_can('add_authentication_method', agent)
+        if not can_add_authentication_method:
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add authentication methods to this agent")
+        form_initial = dict(self.request.GET.items())
+        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+        form = form_class(initial=form_initial)
+        template = loader.get_template('item/new.html')
+        self.context['form'] = form
+        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
+        self.context['redirect'] = self.request.GET.get('redirect')
+        return HttpResponse(template.render(self.context))
+
+    def type_create_html(self):
+        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+        form = form_class(self.request.POST, self.request.FILES)
+        if form.is_valid():
+            item = form.save(commit=False)
+            can_add_authentication_method = self.cur_agent_can('add_authentication_method', item.agent)
+            if not can_add_authentication_method:
+                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add authentication methods to this agent")
+            item.save_versioned(action_agent=self.cur_agent)
+            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
+            return HttpResponseRedirect(redirect)
+        else:
+            template = loader.get_template('item/new.html')
+            self.context['form'] = form
+            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
+            self.context['redirect'] = self.request.GET.get('redirect')
+            return HttpResponse(template.render(self.context))
 
     def type_login_html(self):
         """

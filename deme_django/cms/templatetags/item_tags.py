@@ -351,10 +351,17 @@ class ItemHeader(template.Node):
         deactivate_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'deactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
         reactivate_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'reactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
         destroy_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'destroy'}) + '?redirect=%s' % urlquote(context['full_path'])
+        add_authentication_method_url = reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'new'}) + '?agent=%s' % item.pk
+        add_contact_method_url = reverse('item_type_url', kwargs={'viewer': 'contactmethod', 'action': 'new'}) + '?agent=%s' % item.pk
 
         result.append('<div class="crumbs">')
 
         result.append('<div style="float: right; margin-bottom: 5px;">')
+        if isinstance(item, Agent):
+            if agentcan_helper(context, 'add_authentication_method', item):
+                result.append('<a href="%s" class="img_button"><img src="%s" /><span>Add authentication method</span></a>' % (add_authentication_method_url, icon_url('AuthenticationMethod', 16)))
+            if agentcan_helper(context, 'add_contact_method', item):
+                result.append('<a href="%s" class="img_button"><img src="%s" /><span>Add contact method</span></a>' % (add_contact_method_url, icon_url('ContactMethod', 16)))
         result.append('<a href="%s" class="img_button"><img src="%s" /><span>History</span></a>' % (history_url, icon_url('history', 16)))
         result.append('<a href="%s" class="img_button"><img src="%s" /><span>Subscribe</span></a>' % (subscribe_url, icon_url('subscribe', 16)))
         result.append('<a href="%s" class="img_button"><img src="%s" /><span>Relationships</span></a>' % (relationships_url, icon_url('relationships', 16)))
