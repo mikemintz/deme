@@ -154,7 +154,7 @@ class EditPasswordAuthenticationMethodForm(forms.ModelForm):
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
     class Meta:
         model = PasswordAuthenticationMethod
-        exclude = ['password']
+        exclude = ['password', 'agent']
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1", "")
         password2 = self.cleaned_data["password2"]
