@@ -30,6 +30,7 @@ Code correctness/consistency/bugs
 * Make it so you cannot deactivate or destroy certain things, like AnonymousAgent or Admin
 * Figure out a more correct subject line for notification emails that hopefully threads correctly in gmail
 * HTML special chars are being escaped twice in RSS feeds
+* Do a more thorough job ensuring fields are not null (unless allowed_to_be_null_before_destroyed == True). We might have to wait for real model-based validations.
 
 Performance
 -----------
@@ -44,10 +45,7 @@ Performance
 
 Features
 --------
-* Destroying items
-  - Figure out how to prevent fields from being null when they shouldn't
-  - Do remaining TODOs on whole-item destroying
-  - Figure out specific-version destroying
+* Specific-version destroying
 
 Layout
 ------

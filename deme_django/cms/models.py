@@ -24,12 +24,35 @@ __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent', 'AgentGlobalPerm
 # Item framework
 ###############################################################################
 
+UN_NULLABLE_FIELDS = ['version_number', 'item_type', 'active', 'destroyed']
+
 class ItemMetaClass(models.base.ModelBase):
     """
     Metaclass for item types. Takes care of creating parallel versioned classes
     for every item type.
     """
     def __new__(cls, name, bases, attrs):
+        # Fix null/defaults so we can nullify fields of destroyed items
+        for key, value in attrs.iteritems():
+            if isinstance(value, models.Field):
+                field = value
+                if field.primary_key or isinstance(field, models.OneToOneField):
+                    continue
+                elif field.name in UN_NULLABLE_FIELDS:
+                    continue
+                field.allowed_to_be_null_before_destroyed = field.null
+                # We must be able to nullify this field if we destroy the item
+                field.null = True
+                if not field.has_default():
+                    if isinstance(field, models.DateTimeField):
+                        field.default = datetime.datetime.utcfromtimestamp(0)
+                    elif isinstance(field, models.BooleanField):
+                        field.default = False
+                    elif isinstance(field, models.IntegerField):
+                        field.default = 1
+                    else:
+                        field.default = ''
+
         # Fix up the ItemVersion and Item classes
         if name == 'ItemVersion':
             result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
@@ -41,20 +64,6 @@ class ItemMetaClass(models.base.ModelBase):
             return result
 
         # Create the non-versioned class
-        for key, value in attrs.iteritems():
-            if isinstance(value, models.Field):
-                # We must be able to nullify this field if we destroy the item
-                value.null = True
-                if not value.has_default():
-                    if isinstance(value, models.DateTimeField):
-                        value.default = datetime.datetime.utcfromtimestamp(0)
-                    elif isinstance(value, models.BooleanField):
-                        value.default = False
-                    elif isinstance(value, models.IntegerField):
-                        value.default = 1
-                    else:
-                        value.default = ''
-                #TODO we need to prevent fields from normally being null now :(
         attrs_copy = copy.deepcopy(attrs)
         result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
 
@@ -66,18 +75,20 @@ class ItemMetaClass(models.base.ModelBase):
         version_attrs = {'__module__': attrs_copy['__module__']}
         # Copy over mutable fields
         for key, value in attrs_copy.iteritems():
-            if isinstance(value, models.Field) and value.editable and key not in result.immutable_fields:
-                # We don't want to waste time indexing versions, except things
-                # specified in ItemVersion like version_number and current_item
-                value.db_index = False
-                # Fix the related_name so we don't have conflicts with the
-                # non-versioned class.
-                if value.rel and value.rel.related_name:
-                    value.rel.related_name = 'version_' + value.rel.related_name
-                # We don't want any fields in the versioned class to be unique
-                # since there will be conflicts.
-                value._unique = False
-                version_attrs[key] = value
+            if isinstance(value, models.Field):
+                field = value
+                if field.editable and key not in result.immutable_fields:
+                    # We don't want to waste time indexing versions, except things
+                    # specified in ItemVersion like version_number and current_item
+                    field.db_index = False
+                    # Fix the related_name so we don't have conflicts with the
+                    # non-versioned class.
+                    if field.rel and field.rel.related_name:
+                        field.rel.related_name = 'version_' + field.rel.related_name
+                    # We don't want any fields in the versioned class to be unique
+                    # since there will be conflicts.
+                    field._unique = False
+                    version_attrs[key] = field
         version_result = super(ItemMetaClass, cls).__new__(cls, version_name, version_bases, version_attrs)
 
         # Set the Version field of the class to point to the versioned class
@@ -144,10 +155,10 @@ class Item(models.Model):
     item_type      = models.CharField(_('item type'), max_length=255, editable=False)
     active         = models.BooleanField(_('active'), default=True, editable=False, db_index=True)
     destroyed      = models.BooleanField(_('destroyed'), default=False, editable=False)
-    creator        = models.ForeignKey('Agent', related_name='items_created', default='', editable=False, verbose_name=_('creator'), null=True)
-    created_at     = models.DateTimeField(_('created at'), default=datetime.datetime.utcfromtimestamp(0), editable=False, null=True)
-    name           = models.CharField(_('name'), max_length=255, default='Untitled', null=True)
-    description    = models.CharField(_('description'), max_length=255, default='', blank=True, null=True)
+    creator        = models.ForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
+    created_at     = models.DateTimeField(_('created at'), editable=False)
+    name           = models.CharField(_('name'), max_length=255, default='Untitled')
+    description    = models.CharField(_('description'), max_length=255, blank=True)
 
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type, self.pk, self.name)
@@ -330,12 +341,12 @@ class Item(models.Model):
         for field in self._meta.fields:
             if field.primary_key or isinstance(field, models.OneToOneField):
                 continue
-            elif field.name in ('version_number', 'item_type', 'active', 'destroyed'):
+            elif field.name in UN_NULLABLE_FIELDS:
                 continue
             elif field.null:
                 setattr(self, field.name, None)
             else:
-                raise Exception("un-nullable field tried to be destroyed: %s" % field.name) #TODO what to do?
+                raise Exception("Failed attempt to nullify un-nullable field: %s" % field.name)
         self.save()
         # Remove all versions
         type(self).Version.objects.filter(current_item=self).delete()
@@ -371,10 +382,10 @@ class Item(models.Model):
         first item as an Agent in this way so that every Item has a valid
         creator pointer.
         
-        If create_permissions=True, then this method will automatically create
-        reasonable permissions.
-        TODO: figure out what those permissions should really be, or better,
-        have a list of initial permissions you want before callbacks are made
+        If create_permissions=True, then this method will automatically give
+        the action_agent the 'do_anything' permission for this item.
+        
+        TODO: have a list of initial permissions you want before callbacks are made
         
         This will call _after_create or _after_edit, depending on whether the
         item already existed.
@@ -508,7 +519,7 @@ class Agent(Item):
         verbose_name_plural = _('agents')
 
     # Fields
-    last_online_at = models.DateTimeField(_('last online at'), null=True, blank=True, default=None, editable=False) #TODO resolve issue where NULL doesn't imply destroyed item
+    last_online_at = models.DateTimeField(_('last online at'), null=True, blank=True, default=None, editable=False)
 
 
 class AnonymousAgent(Agent):
@@ -1097,7 +1108,7 @@ class DjangoTemplateDocument(TextDocument):
         verbose_name_plural = _('Django template documents')
 
     # Fields
-    layout = models.ForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout')) #TODO resolve issue where NULL doesn't imply destroyed item
+    layout = models.ForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout'))
     override_default_layout = models.BooleanField(_('override default layout'), default=False)
 
 
@@ -1310,7 +1321,7 @@ class ViewerRequest(Item):
     viewer       = models.CharField(_('viewer'), max_length=255)
     action       = models.CharField(_('action'), max_length=255)
     # If aliased_item is null, it is a collection action
-    aliased_item = models.ForeignKey(Item, related_name='viewer_requests', null=True, blank=True, default=None, verbose_name=_('aliased item')) #TODO resolve issue where NULL doesn't imply destroyed item
+    aliased_item = models.ForeignKey(Item, related_name='viewer_requests', null=True, blank=True, default=None, verbose_name=_('aliased item'))
     query_string = models.CharField(_('query string'), max_length=1024, blank=True)
     format       = models.CharField(_('format'), max_length=255, default='html')
 
@@ -1345,7 +1356,7 @@ class Site(ViewerRequest):
 
     # Fields
     hostname = models.CharField(_('hostname'), max_length=255, unique=True)
-    default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout')) #TODO resolve issue where NULL doesn't imply destroyed item
+    default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout'))
 
 
 class CustomUrl(ViewerRequest):
@@ -1857,8 +1868,6 @@ class RecursiveComment(models.Model):
         """
         Update the table to reflect that the given comment was created.
         """
-        if comment.destroyed:
-            raise Exception("Cannot call recursive_add_comment on destroyed comment") #TODO what do do here? can it happen?
         parent = comment.item
         ancestors = Item.objects.filter(Q(pk__in=RecursiveComment.objects.filter(child=parent).values('parent').query)
                                         | Q(pk=parent.pk))
