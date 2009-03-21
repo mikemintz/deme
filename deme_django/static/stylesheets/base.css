@@ -119,7 +119,7 @@ input[type=submit], button, .img_button, *:visited.img_button {
     padding: 4px;
     background: #ffffff url(/static/gradients/button_gradient.png) 0 100% repeat-x;
     color: #333333;
-    display: inline;
+    display: inline-block;
     cursor: pointer;
 }
 
