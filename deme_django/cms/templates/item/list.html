@@ -70,7 +70,7 @@
     </tr>
     {% for item in items %}
     <tr class="{% cycle 'even' 'odd' %}">
-        <td><a class="img_link" href="{% url item_url viewer=item.item_type|lower,noun=item.pk %}"><img src="{{ item|icon_url:16 }}" /><span>{{ item.name }}</span></a></td>
+        <td><a class="img_link" href="{% url item_url viewer=item.item_type_string|lower,noun=item.pk %}"><img src="{{ item|icon_url:16 }}" /><span>{{ item.name }}</span></a></td>
     </tr>
     {% endfor %}
 </table>

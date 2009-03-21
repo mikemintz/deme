@@ -57,7 +57,7 @@ def get_viewable_name(context, item):
     if agentcan_helper(context, 'view name', item):
         return item.name
     else:
-        item_type = get_item_type_with_name(item.item_type)
+        item_type = get_item_type_with_name(item.item_type_string)
         return u'%s %s' % (capfirst(item_type._meta.verbose_name), item.pk)
 
 
@@ -118,7 +118,7 @@ def icon_url(item_type, size=32):
             if item_type:
                 return icon_url(item_type, size)
     elif isinstance(item_type, Item):
-        return icon_url(get_item_type_with_name(item_type.item_type), size)
+        return icon_url(get_item_type_with_name(item_type.item_type_string), size)
     elif isinstance(item_type, type) and issubclass(item_type, Item):
         if item_type not in item_type_to_icon:
             return icon_url(item_type.__base__, size)
@@ -342,15 +342,15 @@ class ItemHeader(template.Node):
 
         result = []
 
-        history_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'history'}) + '?version=%s' % version_number
+        history_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'history'}) + '?version=%s' % version_number
         subscribe_url = reverse('item_type_url', kwargs={'viewer': 'subscription', 'action': 'new'}) + '?item=%s' % item.pk
-        relationships_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'relationships'}) + '?version=%s' % version_number
-        permissions_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'itempermissions'})
-        edit_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % version_number
-        copy_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'copy'}) + '?version=%s' % version_number
-        deactivate_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'deactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
-        reactivate_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'reactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
-        destroy_url = reverse('item_url', kwargs={'viewer': item.item_type.lower(), 'noun': item.pk, 'action': 'destroy'}) + '?redirect=%s' % urlquote(context['full_path'])
+        relationships_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'relationships'}) + '?version=%s' % version_number
+        permissions_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'itempermissions'})
+        edit_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % version_number
+        copy_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'copy'}) + '?version=%s' % version_number
+        deactivate_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'deactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
+        reactivate_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'reactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
+        destroy_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'destroy'}) + '?redirect=%s' % urlquote(context['full_path'])
         add_authentication_method_url = reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'new'}) + '?agent=%s' % item.pk
         add_contact_method_url = reverse('item_type_url', kwargs={'viewer': 'contactmethod', 'action': 'new'}) + '?agent=%s' % item.pk
 
@@ -369,7 +369,7 @@ class ItemHeader(template.Node):
             result.append('<a href="%s" class="img_button"><img src="%s" /><span>Permissions</span></a>' % (permissions_url, icon_url('permissions', 16)))
         if agentcan_helper(context, 'edit', item, wildcard_suffix=True):
             result.append('<a href="%s" class="img_button"><img src="%s" /><span>Edit</span></a>' % (edit_url, icon_url('edit', 16)))
-        if agentcan_global_helper(context, 'create %s' % item.item_type):
+        if agentcan_global_helper(context, 'create %s' % item.item_type_string):
             result.append('<a href="%s" class="img_button"><img src="%s" /><span>Copy</span></a>' % (copy_url, icon_url('copy', 16)))
         if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
             result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % (deactivate_url if item.active else reactivate_url))
@@ -385,9 +385,9 @@ class ItemHeader(template.Node):
         for inherited_item_type in item_type_inheritance:
             result.append(u'<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a> &raquo;' % (reverse('item_type_url', kwargs={'viewer': inherited_item_type.__name__.lower()}), icon_url(inherited_item_type, 16), capfirst(inherited_item_type._meta.verbose_name_plural)))
         if agentcan_helper(context, 'view name', item):
-            result.append('<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (item.get_absolute_url(), icon_url(item.item_type, 16), escape(item.name)))
+            result.append('<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (item.get_absolute_url(), icon_url(item.item_type_string, 16), escape(item.name)))
         else:
-            result.append('<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (item.get_absolute_url(), icon_url(item.item_type, 16), escape("%s %s" % (item.item_type, item.pk))))
+            result.append('<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (item.get_absolute_url(), icon_url(item.item_type_string, 16), escape("%s %s" % (item.item_type_string, item.pk))))
         if context['specific_version']:
             result.append('&raquo; ')
             result.append('v%d' % item.version_number)
@@ -411,7 +411,7 @@ class ItemHeader(template.Node):
             creator_text = ''
         result.append('<div style="font-size: 8pt;">')
         result.append('<div style="float: left;">')
-        result.append(u'%s' % capfirst(get_item_type_with_name(item.item_type)._meta.verbose_name))
+        result.append(u'%s' % capfirst(get_item_type_with_name(item.item_type_string)._meta.verbose_name))
         if creator_text or created_at_text:
             result.append('originally created %s %s' % (creator_text, created_at_text))
         result.append('</div>')

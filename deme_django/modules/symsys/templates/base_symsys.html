@@ -19,7 +19,7 @@
     <form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">
         <input type="hidden" name="login_type" value="logout" />
     </form>
-    {% ifequal cur_agent.item_type 'AnonymousAgent' %}
+    {% ifequal cur_agent.item_type_string 'AnonymousAgent' %}
     You are not logged in
     [<a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login</a>]
     {% else %}

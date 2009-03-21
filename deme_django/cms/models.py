@@ -24,7 +24,7 @@ __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent', 'AgentGlobalPerm
 # Item framework
 ###############################################################################
 
-UN_NULLABLE_FIELDS = ['version_number', 'item_type', 'active', 'destroyed']
+UN_NULLABLE_FIELDS = ['version_number', 'item_type_string', 'active', 'destroyed']
 
 class ItemMetaClass(models.base.ModelBase):
     """
@@ -116,7 +116,7 @@ class ItemVersion(models.Model):
     description = models.CharField(max_length=255, blank=True, null=True)
 
     def __unicode__(self):
-        return u'%s[%s.%s] "%s"' % (self.current_item.item_type, self.current_item_id, self.version_number, self.name)
+        return u'%s[%s.%s] "%s"' % (self.current_item.item_type_string, self.current_item_id, self.version_number, self.name)
 
 
 class Item(models.Model):
@@ -152,21 +152,21 @@ class Item(models.Model):
         verbose_name_plural = _('items')
 
     # Fields
-    version_number = models.PositiveIntegerField(_('version number'), default=1, editable=False)
-    item_type      = models.CharField(_('item type'), max_length=255, editable=False)
-    active         = models.BooleanField(_('active'), default=True, editable=False, db_index=True)
-    destroyed      = models.BooleanField(_('destroyed'), default=False, editable=False)
-    creator        = models.ForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
-    created_at     = models.DateTimeField(_('created at'), editable=False)
-    name           = models.CharField(_('name'), max_length=255, default='Untitled')
-    description    = models.CharField(_('description'), max_length=255, blank=True)
+    version_number   = models.PositiveIntegerField(_('version number'), default=1, editable=False)
+    item_type_string = models.CharField(_('item type'), max_length=255, editable=False)
+    active           = models.BooleanField(_('active'), default=True, editable=False, db_index=True)
+    destroyed        = models.BooleanField(_('destroyed'), default=False, editable=False)
+    creator          = models.ForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
+    created_at       = models.DateTimeField(_('created at'), editable=False)
+    name             = models.CharField(_('name'), max_length=255, default='Untitled')
+    description      = models.CharField(_('description'), max_length=255, blank=True)
 
     def __unicode__(self):
-        return u'%s[%s] "%s"' % (self.item_type, self.pk, self.name)
+        return u'%s[%s] "%s"' % (self.item_type_string, self.pk, self.name)
 
     @models.permalink
     def get_absolute_url(self):
-        return ('item_url', (), {'viewer': self.item_type.lower(), 'noun': self.pk})
+        return ('item_url', (), {'viewer': self.item_type_string.lower(), 'noun': self.pk})
 
     def downcast(self):
         """
@@ -176,7 +176,7 @@ class Item(models.Model):
         Agent, even though self is an Item. This method always makes a
         single database query.
         """
-        item_type = get_item_type_with_name(self.item_type)
+        item_type = get_item_type_with_name(self.item_type_string)
         return item_type.objects.get(id=self.id)
 
     def ancestor_collections(self, recursive_filter=None):
@@ -395,7 +395,7 @@ class Item(models.Model):
         is_new = not self.pk
 
         # Update the item
-        self.item_type = type(self).__name__
+        self.item_type_string = type(self).__name__
         if first_agent:
             action_agent = self
         if is_new:
@@ -1555,7 +1555,7 @@ class ActionNotice(models.Model):
         reply_item = self.notification_reply_item()
         topmost_item = item.original_item_in_thread()
         def get_url(x):
-            return 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('item_url', kwargs={'viewer': x.item_type.lower(), 'noun': x.pk}))
+            return 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('item_url', kwargs={'viewer': x.item_type_string.lower(), 'noun': x.pk}))
         item_name = get_viewable_name(viewer.context, item)
         reply_item_name = get_viewable_name(viewer.context, reply_item)
         topmost_item_name = get_viewable_name(viewer.context, topmost_item)
@@ -1594,7 +1594,7 @@ class ActionNotice(models.Model):
             template_name = 'delete'
             viewer.context['delete_type'] = 'destroy'
         elif isinstance(self, CreateActionNotice):
-            if issubclass(get_item_type_with_name(item.item_type), TextComment):
+            if issubclass(get_item_type_with_name(item.item_type_string), TextComment):
                 comment = item.downcast()
                 comment_name = get_viewable_name(viewer.context, comment)
                 subject = 'Re: [%s] %s' % (comment_name, topmost_item_name)

@@ -386,7 +386,7 @@ class Viewer(object):
     def render_item_not_found(self):
         if self.item:
             title = "%s Not Found" % self.accepted_item_type.__name__
-            body = 'You cannot view item %s in this viewer. Try viewing it in the <a href="%s">%s viewer</a>.' % (self.noun, reverse('item_url', kwargs={'viewer': self.item.item_type.lower(), 'noun': self.item.pk}), self.item.item_type)
+            body = 'You cannot view item %s in this viewer. Try viewing it in the <a href="%s">%s viewer</a>.' % (self.noun, reverse('item_url', kwargs={'viewer': self.item.item_type_string.lower(), 'noun': self.item.pk}), self.item.item_type_string)
         else:
             title = "Item Not Found"
             version = self.request.GET.get('version')
