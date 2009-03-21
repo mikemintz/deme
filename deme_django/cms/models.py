@@ -643,8 +643,8 @@ class WebauthAuthenticationMethod(AuthenticationMethod):
     """
 
     # Setup
-    immutable_fields = AuthenticationMethod.immutable_fields | set(['username'])
-    introduced_abilities = frozenset(['view username'])
+    immutable_fields = AuthenticationMethod.immutable_fields
+    introduced_abilities = frozenset(['view username', 'edit username'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('WebAuth authentication method')
