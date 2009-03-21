@@ -94,7 +94,7 @@ Agents and related item types
 
   This item type does not define any new fields.
 
-* **GroupAgent:** This item type is an Agent that acts on behalf of an entire group. It can't do anything that other agents can't do. It's significance is just symbolic: by being associated with a group, the actions taken by the group agent are seen as collective action of the group members. In general, permission to login_as the group agent will be limited to powerful members of the group. There should be exactly one GroupAgent for every group.
+* **GroupAgent:** This item type is an Agent that acts on behalf of an entire group. It can't do anything that other agents can't do. Its significance is just symbolic: by being associated with a group, the actions taken by the group agent are seen as collective action of the group members. In general, permission to login_as the group agent will be limited to powerful members of the group. There should be exactly one GroupAgent for every group.
 
   This item type defines one field, a unique ``group`` pointer that points to the group it represents.
 

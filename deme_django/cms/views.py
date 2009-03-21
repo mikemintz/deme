@@ -742,7 +742,7 @@ class ItemViewer(Viewer):
     def item_deactivate_html(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
-        if not self.cur_agent_can('delete', self.item):
+        if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to deactivate this item")
         self.item.deactivate(action_agent=self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -751,7 +751,7 @@ class ItemViewer(Viewer):
     def item_reactivate_html(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
-        if not self.cur_agent_can('delete', self.item):
+        if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to reactivate this item")
         self.item.reactivate(action_agent=self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -760,7 +760,7 @@ class ItemViewer(Viewer):
     def item_destroy_html(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
-        if not self.cur_agent_can('delete', self.item):
+        if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to destroy this item")
         self.item.destroy(action_agent=self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))

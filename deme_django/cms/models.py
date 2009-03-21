@@ -433,6 +433,17 @@ class Item(models.Model):
                 RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=True)
     save_versioned.alters_data = True
 
+    def can_be_deleted(self):
+        """
+        This method returns False for special items that should never be
+        deleted, such as the AnonymousAgent; and it returns True for ordinary
+        items.
+        
+        Item types that want to define special items should override this
+        method.
+        """
+        return True
+
     def _after_create(self, action_agent, action_summary, action_time):
         """
         This method gets called after the first version of an item is
@@ -521,6 +532,12 @@ class Agent(Item):
     # Fields
     last_online_at = models.DateTimeField(_('last online at'), null=True, blank=True, default=None, editable=False)
 
+    def can_be_deleted(self):
+        # Don't delete the admin agent
+        if self.pk == 1:
+            return False
+        return super(Agent, self).can_be_deleted()
+
 
 class AnonymousAgent(Agent):
     """
@@ -543,11 +560,15 @@ class AnonymousAgent(Agent):
         verbose_name = _('anonymous agent')
         verbose_name_plural = _('anonymous agents')
 
+    def can_be_deleted(self):
+        # Don't delete the anonymous agent
+        return False
+
 
 class GroupAgent(Agent):
     """
     This item type is an Agent that acts on behalf of an entire group. It can't
-    do anything that other agents can't do. It's significance is just symbolic:
+    do anything that other agents can't do. Its significance is just symbolic:
     by being associated with a group, the actions taken by the group agent are
     seen as collective action of the group members. In general, permission to
     login_as the group agent will be limited to powerful members of the group.
@@ -1358,6 +1379,12 @@ class Site(ViewerRequest):
     hostname = models.CharField(_('hostname'), max_length=255, unique=True)
     default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout'))
 
+    def can_be_deleted(self):
+        # Don't delete the default site
+        if str(self.pk) == DemeSetting.get('cms.default_site'):
+            return False
+        return super(Site, self).can_be_deleted()
+
 
 class CustomUrl(ViewerRequest):
     """
@@ -1409,6 +1436,12 @@ class DemeSetting(Item):
     # Fields
     key   = models.CharField(_('key'), max_length=255, unique=True)
     value = models.CharField(_('value'), max_length=255, blank=True)
+
+    def can_be_deleted(self):
+        # Don't delete important settings
+        if self.key in ['cms.default_site']:
+            return False
+        return super(DemeSetting, self).can_be_deleted()
 
     @staticmethod
     def get(key):
