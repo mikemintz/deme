@@ -1512,8 +1512,12 @@ class TextCommentViewer(TextDocumentViewer):
             #TODO use transactions to make the Transclusion save at the same time as the Comment
             item_index = form.cleaned_data['item_index']
             comment = form.save(commit=False)
-            comment.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
             item = comment.item.downcast()
+            if not comment.name:
+                comment.name = item.display_name()
+                if not comment.name.lower().startswith('re: '):
+                    comment.name = 'Re: %s' % comment.name
+            comment.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
             if isinstance(item, TextDocument) and item_index is not None and self.permission_cache.agent_can(self.cur_agent, 'add_transclusion', item):
                 transclusion = Transclusion(from_item=item, from_item_version_number=comment.item_version_number, from_item_index=item_index, to_item=comment)
                 transclusion.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
