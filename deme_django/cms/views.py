@@ -24,11 +24,6 @@ import datetime
 # Models, forms, and fields
 ###############################################################################
 
-item_type_name_dict = {}
-for item_type in all_item_types():
-    item_type_name_dict[item_type.__name__.lower()] = item_type
-
-
 class AjaxModelChoiceWidget(forms.Widget):
     def render(self, name, value, attrs=None):
         model = self.choices.queryset.model
@@ -480,7 +475,7 @@ class ItemViewer(Viewer):
         offset = int(self.request.GET.get('offset', 0))
         limit = int(self.request.GET.get('limit', 100))
         active = self.request.GET.get('active', '1') == '1'
-        item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in item_type_name_dict.itervalues() if self.accepted_item_type in x.__bases__ + (x,)]
+        item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
         item_types.sort(key=lambda x:x['name'].lower())
         self.context['search_query'] = self.request.GET.get('q', '')
         items = self.accepted_item_type.objects
