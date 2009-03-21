@@ -7,7 +7,9 @@
 <link href="/static/stylesheets/base.css" media="all" rel="Stylesheet" type="text/css" />
 <link rel="shortcut icon" href="{% block favicon %}/static/favicon.ico{% endblock %}" type="image/x-icon" />
 {% ifequal action 'show' %}
+{% if item %}
 <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}" />
+{% endif %}
 {% endifequal %}
 {% ifequal action 'list' %}
 <link rel="alternate" type="application/rss+xml" title="Item feed" href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}" />

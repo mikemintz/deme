@@ -180,7 +180,7 @@ def get_form_class_for_item_type(update_or_create, item_type, fields=None):
 
     exclude = []
     for field in item_type._meta.fields:
-        if (field.rel and field.rel.parent_link) or (update_or_create == 'update' and field.name in item_type.immutable_fields):
+        if (field.rel and field.rel.parent_link) or (update_or_create == 'update' and field.name in item_type.all_immutable_fields()):
             exclude.append(field.name)
     def formfield_callback(f):
         if isinstance(f, models.ForeignKey):
