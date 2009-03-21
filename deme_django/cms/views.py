@@ -37,7 +37,7 @@ class AjaxModelChoiceWidget(forms.Widget):
                 value_item = None
         except:
             value_item = None
-        initial_search = value_item.name if value_item else ''
+        initial_search = value_item.name if value_item else '' #TODO does this pose a permission problem? can someone set an initial item, and figure out its name?
         if value is None: value = ''
         if attrs is None: attrs = {}
         ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'})
@@ -523,9 +523,6 @@ class ItemViewer(Viewer):
         self._type_list_helper()
         template = loader.get_template('item/list.html')
         return HttpResponse(template.render(self.context))
-        if self.format == 'json':
-            json_data = simplejson.dumps([[item.name, item.pk] for item in items], separators=(',',':'))
-            return HttpResponse(json_data, mimetype='application/json')
 
     def type_list_json(self):
         self._type_list_helper()

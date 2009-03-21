@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import SMTPConnection, EmailMessage, EmailMultiAlternatives
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
+from django.utils.text import capfirst
 from django.template import loader, Context
 from django.db.models import signals
 from email.utils import formataddr
@@ -158,11 +159,26 @@ class Item(models.Model):
     destroyed        = models.BooleanField(_('destroyed'), default=False, editable=False)
     creator          = models.ForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
     created_at       = models.DateTimeField(_('created at'), editable=False)
-    name             = models.CharField(_('name'), max_length=255, default='Untitled')
+    name             = models.CharField(_('name'), max_length=255, blank=True)
     description      = models.CharField(_('description'), max_length=255, blank=True)
 
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type_string, self.pk, self.name)
+
+    def display_name(self, can_view_name_field=True):
+        """
+        Return a friendly display name for the item.
+        
+        If the item has a blank name field, return a string of the form
+        "ItemType id" (like Agent 1).  Otherwise, just return the value of the
+        name field.
+        
+        If can_view_name_field is False, only return the "ItemType id" form.
+        """
+        if self.name and can_view_name_field:
+            return self.name
+        else:
+            return u'%s %s' % (capfirst(self.actual_item_type()._meta.verbose_name), self.pk)
 
     def actual_item_type(self):
         """
@@ -1036,10 +1052,10 @@ class Group(Collection):
     def _after_create(self, action_agent, action_summary, action_time):
         super(Group, self)._after_create(action_agent, action_summary, action_time)
         # Create a folio for this group
-        folio = Folio(group=self, name='%s folio' % self.name)
+        folio = Folio(group=self, name='%s folio' % self.display_name())
         folio.save_versioned(action_agent, action_summary, action_time)
         # Create a group agent for this group
-        group_agent = GroupAgent(group=self, name='%s agent' % self.name)
+        group_agent = GroupAgent(group=self, name='%s agent' % self.display_name())
         group_agent.save_versioned(action_agent, action_summary, action_time)
     _after_create.alters_data = True
 
@@ -1574,6 +1590,7 @@ class ActionNotice(models.Model):
         reply_item_name = get_viewable_name(viewer.context, reply_item)
         topmost_item_name = get_viewable_name(viewer.context, topmost_item)
         creator_name = get_viewable_name(viewer.context, self.creator)
+        recipient_name = get_viewable_name(viewer.context, agent)
 
         # Generate the subject and body
         viewer.context['item'] = self.item
@@ -1632,7 +1649,7 @@ class ActionNotice(models.Model):
         from_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
         from_email = formataddr((creator_name, from_email_address))
         reply_to_email = formataddr((reply_item_name, from_email_address))
-        to_email = formataddr((agent.name, email_contact_method.email))
+        to_email = formataddr((recipient_name, email_contact_method.email))
         headers = {}
         headers['Reply-To'] = reply_to_email
         def messageid(x):

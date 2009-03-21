@@ -54,11 +54,8 @@ def get_viewable_name(context, item):
     If the logged in agent can view the item's name, return the item's name.
     Otherwise, return a string like "GroupAgent 51".
     """
-    if agentcan_helper(context, 'view name', item):
-        return item.name
-    else:
-        item_type = item.actual_item_type()
-        return u'%s %s' % (capfirst(item_type._meta.verbose_name), item.pk)
+    can_view_name_field = agentcan_helper(context, 'view name', item)
+    return item.display_name(can_view_name_field)
 
 
 ###############################################################################
@@ -384,10 +381,7 @@ class ItemHeader(template.Node):
         result.append('<div style="float: left; margin-bottom: 5px; margin-top: 5px;">')
         for inherited_item_type in item_type_inheritance:
             result.append(u'<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a> &raquo;' % (reverse('item_type_url', kwargs={'viewer': inherited_item_type.__name__.lower()}), icon_url(inherited_item_type, 16), capfirst(inherited_item_type._meta.verbose_name_plural)))
-        if agentcan_helper(context, 'view name', item):
-            result.append('<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (item.get_absolute_url(), icon_url(item.item_type_string, 16), escape(item.name)))
-        else:
-            result.append('<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (item.get_absolute_url(), icon_url(item.item_type_string, 16), escape("%s %s" % (item.item_type_string, item.pk))))
+        result.append('<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (item.get_absolute_url(), icon_url(item.item_type_string, 16), escape(get_viewable_name(context, item))))
         if context['specific_version']:
             result.append('&raquo; ')
             result.append('v%d' % item.version_number)
@@ -528,7 +522,7 @@ def display_body_with_inline_transclusions(item, is_html):
     for transclusion in transclusions:
         i = transclusion.from_item_index
         result.insert(0, format(item.body[i:last_i]))
-        result.insert(0, '<a href="%s" class="commentref">%s</a>' % (transclusion.to_item.get_absolute_url(), escape(transclusion.to_item.name)))
+        result.insert(0, '<a href="%s" class="commentref">%s</a>' % (transclusion.to_item.get_absolute_url(), escape(transclusion.to_item.display_name())))
         last_i = i
     result.insert(0, format(item.body[0:last_i]))
     return ''.join(result)

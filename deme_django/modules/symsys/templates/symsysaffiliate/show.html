@@ -320,8 +320,8 @@
     {# TODO display them as fields, rather than a silly list #}
     {% for collection in containing_collections %}
     <tr>
-        <th>Item Set:</th>
-        <td><a href="{{ collection.get_absolute_url }}">{{ collection.name }}</a></td>
+        <th>Collection:</th>
+        <td><a href="{{ collection.get_absolute_url }}">{% viewable_name collection %}</a></td>
     </tr>
     {% endfor %}
 

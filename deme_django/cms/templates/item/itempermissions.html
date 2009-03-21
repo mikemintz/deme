@@ -42,7 +42,7 @@
     {% for agent_datum in agent_data %}
     <tr class="{% cycle 'even' 'odd' as row_parity %}">
         <td>Agent</td>
-        <td><a href="{{ agent_datum.agent.get_absolute_url }}">{{ agent_datum.agent.name }}</a></td>
+        <td><a href="{{ agent_datum.agent.get_absolute_url }}">{% viewable_name agent_datum.agent %}</a></td>
         <td>
             {% for p in agent_datum.permissions %}
                 <div>
@@ -70,7 +70,7 @@
     {% for collection_datum in collection_data %}
     <tr class="{% cycle row_parity %}">
         <td>Collection</td>
-        <td><a href="{{ collection_datum.collection.get_absolute_url }}">{{ collection_datum.collection.name }}</a></td>
+        <td><a href="{{ collection_datum.collection.get_absolute_url }}">{% viewable_name collection_datum.collection %}</a></td>
         <td>
             {% for p in collection_datum.permissions %}
                 <div>
