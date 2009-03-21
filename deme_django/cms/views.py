@@ -539,9 +539,9 @@ class ItemViewer(Viewer):
         return HttpResponse(json_str, mimetype='application/json')
 
     def type_list_rss(self):
-        #TODO add <meta> tag to page
         self._type_list_helper()
         item_list = self.context['items'] #TODO probably not useful to get this ordering
+        #TODO permissions to view name/description
         class ItemListFeed(django.contrib.syndication.feeds.Feed):
             title = "Items"
             description = "Items"
@@ -592,7 +592,6 @@ class ItemViewer(Viewer):
     def item_show_rss(self):
         from cms.templatetags.item_tags import get_viewable_name
         viewer = self
-        #TODO add <meta> tag to page
         if not self.cur_agent_can('view_action_notices', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to view action notices for this item")
         action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(creator=self.item)).order_by('created_at') #TODO limit
