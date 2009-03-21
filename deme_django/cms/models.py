@@ -164,6 +164,14 @@ class Item(models.Model):
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type_string, self.pk, self.name)
 
+    def actual_item_type(self):
+        """
+        Return the actual item type for this item as a class (not a string).
+        
+        For example, Item.objects.get(pk=1).actual_item_type() == Agent
+        """
+        return get_item_type_with_name(self.item_type_string)
+
     @models.permalink
     def get_absolute_url(self):
         return ('item_url', (), {'viewer': self.item_type_string.lower(), 'noun': self.pk})
@@ -173,11 +181,17 @@ class Item(models.Model):
         Return this item as an instance of the actual item type.
         
         For example, if the current item is an Agent, this will return an
-        Agent, even though self is an Item. This method always makes a
-        single database query.
+        Agent, even though self is an Item.
+        
+        When the type of self is the actual item type, this returns self (not a
+        copy); otherwise, this makes a single database query and returns an
+        instance of the actual item type.
         """
-        item_type = get_item_type_with_name(self.item_type_string)
-        return item_type.objects.get(id=self.id)
+        item_type = self.actual_item_type()
+        if type(self) != item_type:
+            return item_type.objects.get(pk=self.pk)
+        else:
+            return self
 
     def ancestor_collections(self, recursive_filter=None):
         """
@@ -1594,7 +1608,7 @@ class ActionNotice(models.Model):
             template_name = 'delete'
             viewer.context['delete_type'] = 'destroy'
         elif isinstance(self, CreateActionNotice):
-            if issubclass(get_item_type_with_name(item.item_type_string), TextComment):
+            if issubclass(item.actual_item_type(), TextComment):
                 comment = item.downcast()
                 comment_name = get_viewable_name(viewer.context, comment)
                 subject = 'Re: [%s] %s' % (comment_name, topmost_item_name)

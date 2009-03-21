@@ -57,7 +57,7 @@ def get_viewable_name(context, item):
     if agentcan_helper(context, 'view name', item):
         return item.name
     else:
-        item_type = get_item_type_with_name(item.item_type_string)
+        item_type = item.actual_item_type()
         return u'%s %s' % (capfirst(item_type._meta.verbose_name), item.pk)
 
 
@@ -118,7 +118,7 @@ def icon_url(item_type, size=32):
             if item_type:
                 return icon_url(item_type, size)
     elif isinstance(item_type, Item):
-        return icon_url(get_item_type_with_name(item_type.item_type_string), size)
+        return icon_url(item_type.actual_item_type(), size)
     elif isinstance(item_type, type) and issubclass(item_type, Item):
         if item_type not in item_type_to_icon:
             return icon_url(item_type.__base__, size)
@@ -411,7 +411,7 @@ class ItemHeader(template.Node):
             creator_text = ''
         result.append('<div style="font-size: 8pt;">')
         result.append('<div style="float: left;">')
-        result.append(u'%s' % capfirst(get_item_type_with_name(item.item_type_string)._meta.verbose_name))
+        result.append(u'%s' % capfirst(item.actual_item_type()._meta.verbose_name))
         if creator_text or created_at_text:
             result.append('originally created %s %s' % (creator_text, created_at_text))
         result.append('</div>')
