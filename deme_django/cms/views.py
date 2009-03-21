@@ -591,10 +591,10 @@ class ItemViewer(Viewer):
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
             if action_notice_subclass == RelationActionNotice:
-                self.permission_cache.mass_learn(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
+                self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
             for action_notice in specific_action_notices:
                 action_notice_pk_to_object_map[action_notice.pk] = action_notice
-        self.permission_cache.mass_learn(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('creator').query)))
+        self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('creator').query)))
         class ItemShowFeed(django.contrib.syndication.feeds.Feed):
             title = get_viewable_name(viewer.context, viewer.item)
             description = viewer.item.description if viewer.cur_agent_can('view description', viewer.item) else ''
@@ -658,7 +658,7 @@ class ItemViewer(Viewer):
             if viewable_items.count() == 0:
                 continue
             relationship_item_type = manager.model
-            self.permission_cache.mass_learn(self.cur_agent, 'view name', viewable_items)
+            self.permission_cache.filter_items(self.cur_agent, 'view name', viewable_items)
             viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view %s' % field.field.name, viewable_items)
             relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)
@@ -1136,7 +1136,7 @@ class AuthenticationMethodViewer(ItemViewer):
             else:
                 login_as_agents = Agent.objects.filter(active=True).order_by('name')
                 login_as_agents = self.permission_cache.filter_items(self.cur_agent, 'login_as', login_as_agents)
-                self.permission_cache.mass_learn(self.cur_agent, 'view name', login_as_agents)
+                self.permission_cache.filter_items(self.cur_agent, 'view name', login_as_agents)
                 template = loader.get_template('login.html')
                 self.context['redirect'] = self.request.GET['redirect']
                 self.context['login_as_agents'] = login_as_agents
@@ -1306,7 +1306,7 @@ class CollectionViewer(ItemViewer):
         memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', memberships)
         memberships = memberships.select_related('item')
         if memberships:
-            self.permission_cache.mass_learn(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+            self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
         self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can(self.cur_agent, 'view name', x.item), x.item.name))
         self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
         self.context['addmember_form'] = NewMembershipForm()

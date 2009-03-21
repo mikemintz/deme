@@ -282,9 +282,9 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
     else:
         comment_pks = RecursiveComment.objects.filter(parent=item).values_list('child', flat=True)
     if comment_pks:
-        permission_cache.mass_learn(context['cur_agent'], 'view created_at', Comment.objects.filter(pk__in=comment_pks))
-        permission_cache.mass_learn(context['cur_agent'], 'view creator', Comment.objects.filter(pk__in=comment_pks))
-        permission_cache.mass_learn(context['cur_agent'], 'view name', Agent.objects.filter(pk__in=Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
+        permission_cache.filter_items(context['cur_agent'], 'view created_at', Comment.objects.filter(pk__in=comment_pks))
+        permission_cache.filter_items(context['cur_agent'], 'view creator', Comment.objects.filter(pk__in=comment_pks))
+        permission_cache.filter_items(context['cur_agent'], 'view name', Agent.objects.filter(pk__in=Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
         for comment_subclass in comment_subclasses:
             new_comments = comment_subclass.objects.filter(pk__in=comment_pks)
             related_fields = ['creator']
@@ -611,10 +611,10 @@ class ActionNoticeBox(template.Node):
             for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
                 specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
                 if action_notice_subclass == RelationActionNotice:
-                    context['_permission_cache'].mass_learn(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
+                    context['_permission_cache'].filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
                 for action_notice in specific_action_notices:
                     action_notice_pk_to_object_map[action_notice.pk] = action_notice
-            context['_permission_cache'].mass_learn(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('creator').query)))
+            context['_permission_cache'].filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('creator').query)))
             for action_notice in action_notices:
                 action_notice = action_notice_pk_to_object_map[action_notice.pk]
                 if isinstance(action_notice, RelationActionNotice):
