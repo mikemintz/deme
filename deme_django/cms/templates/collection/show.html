@@ -14,14 +14,14 @@
 {% ifagentcan 'remove_self' '' item %}
 <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
     <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
-    <input type="submit" value="Remove Self" />
+    <button type="submit"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove myself from collection</span></button>
 </form>
 {% endifagentcan %}
 {% else %}
 {% ifagentcan 'add_self' '' item %}
 <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="addmember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
     <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
-    <input type="submit" value="Add Self" />
+    <button type="submit"><img src="{{ "new"|icon_url:16 }}" /> <span>Add myself to collection</span></button>
 </form>
 {% endifagentcan %}
 {% endif %}
@@ -33,7 +33,7 @@
         <table cellspacing="0">
             {{ addmember_form.as_table }}
         </table>
-        <input type="submit" />
+        <button type="submit"><img src="{{ "new"|icon_url:16 }}" /> <span>Add to collection</span></button>
     </form>
 </div>
 {% endifagentcan %}
@@ -54,7 +54,7 @@
             {% ifagentcan 'modify_membership' '' item %}
             <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
                 <input type="hidden" name="item" value="{{ membership.item.pk }}" />
-                <input type="submit" value="Remove" />
+                <button type="submit"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove from collection</span></button>
             </form>
             {% endifagentcan %}
         </td>

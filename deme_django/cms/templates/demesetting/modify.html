@@ -9,7 +9,7 @@
 <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer="demesetting",action="addsetting" %}?redirect={{ full_path|urlencode }}" class="item_form">
     Key: <input type="text" name="key" />
     Value: <input type="text" name="value" />
-    <input type="submit" value="Set" />
+    <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Set</span></button>
 </form>
 
 <table cellspacing="0" class="list" width="100%">

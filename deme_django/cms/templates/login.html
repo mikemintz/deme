@@ -42,7 +42,7 @@
         Password: <input type="password" name="password" />
     </div>
     <div>
-        <input type="submit" value="Login" />
+        <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Login</span></button>
     </div>
 </form>
 
@@ -58,7 +58,7 @@
         OpenID URL: <input type="text" name="openid_url" />
     </div>
     <div>
-        <input type="submit" value="Login" />
+        <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Login</span></button>
     </div>
 </form>
 
@@ -83,7 +83,7 @@
                 <a href="{{ agent.get_absolute_url }}">{% viewable_name agent %}</a>
             </td>
             <td>
-                <input type="submit" name="login_as_{{ agent.pk }}" value="Login" />
+                <button type="submit" name="login_as_{{ agent.pk }}"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Login</span></button>
             </td>
         </tr>
         {% endif %}

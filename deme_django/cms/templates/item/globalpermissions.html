@@ -9,27 +9,17 @@
 {% typeheader "Global Permissions" %}
 
 <div style="margin-bottom: 5px;">
-    <div><a href="#" onclick="$('new_agent_form').toggle(); return false;">[+] Agent</a></div>
-    <div id="new_agent_form" style="display: none;">
-        <form method="get" class="item_form">
-            <table cellspacing="0">
-                {{ new_agent_form.as_table }}
-            </table>
-            <input type="submit" />
-        </form>
-    </div>
+    <form method="get" class="item_form">
+        {{ new_agent_select_widget|safe }}
+        <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Add agent</span></button>
+    </form>
 </div>
 
 <div style="margin-bottom: 5px;">
-    <div><a href="#" onclick="$('new_collection_form').toggle(); return false;">[+] Collection</a></div>
-    <div id="new_collection_form" style="display: none;">
-        <form method="get" class="item_form">
-            <table cellspacing="0">
-                {{ new_collection_form.as_table }}
-            </table>
-            <input type="submit" />
-        </form>
-    </div>
+    <form method="get" class="item_form">
+        {{ new_collection_select_widget|safe }}
+        <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Add collection</span></button>
+    </form>
 </div>
 
 <table cellspacing="0" class="list">
@@ -49,7 +39,7 @@
                     {% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}
                     <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_type_url viewer="item",action="globalpermissions" %}?formtype=agentpermission&redirect={{ full_path|urlencode }}&formprefix={{ agent_datum.permission_form.prefix|urlencode }}" class="item_form">
                         <input type="hidden" name="permission_to_delete" value="{{ p.pk }}" />
-                        <input type="submit" value="Remove" />
+                        <button type="submit"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove</span></button>
                     </form>
                 </div>
             {% endfor %}
@@ -61,7 +51,7 @@
                     <table cellspacing="0">
                         {{ agent_datum.permission_form.as_table }}
                     </table>
-                    <input type="submit" />
+                    <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Add permission</span></button>
                 </form>
             </div>
         </td>
@@ -77,7 +67,7 @@
                     {% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}
                     <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_type_url viewer="item",action="globalpermissions" %}?formtype=collectionpermission&redirect={{ full_path|urlencode }}&formprefix={{ collection_datum.permission_form.prefix|urlencode }}" class="item_form">
                         <input type="hidden" name="permission_to_delete" value="{{ p.pk }}" />
-                        <input type="submit" value="Remove" />
+                        <button type="submit"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove</span></button>
                     </form>
                 </div>
             {% endfor %}
@@ -89,7 +79,7 @@
                     <table cellspacing="0">
                         {{ collection_datum.permission_form.as_table }}
                     </table>
-                    <input type="submit" />
+                    <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Add permission</span></button>
                 </form>
             </div>
         </td>
@@ -104,7 +94,7 @@
                     {% if p.is_allowed %}+{% else %}-{% endif %}{{ p.ability }}
                     <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_type_url viewer="item",action="globalpermissions" %}?formtype=everyonepermission&redirect={{ full_path|urlencode }}&formprefix={{ everyone_data.permission_form.prefix|urlencode }}" class="item_form">
                         <input type="hidden" name="permission_to_delete" value="{{ p.pk }}" />
-                        <input type="submit" value="Remove" />
+                        <button type="submit"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove</span></button>
                     </form>
                 </div>
             {% endfor %}
@@ -116,7 +106,7 @@
                     <table cellspacing="0">
                         {{ everyone_data.permission_form.as_table }}
                     </table>
-                    <input type="submit" />
+                    <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Add permission</span></button>
                 </form>
             </div>
         </td>

@@ -37,7 +37,7 @@ class AjaxModelChoiceWidget(forms.Widget):
                 value_item = None
         except:
             value_item = None
-        initial_search = value_item.name if value_item else '' #TODO does this pose a permission problem? can someone set an initial item, and figure out its name?
+        initial_search = value_item.name if value_item else '' #TODO this poses a permission problem. someone can set an initial item, and figure out its name
         if value is None: value = ''
         if attrs is None: attrs = {}
         ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'})
@@ -828,8 +828,17 @@ class ItemViewer(Viewer):
         agent_permissions = self.item.agent_item_permissions_as_item.order_by('ability')
         collection_permissions = self.item.collection_item_permissions_as_item.order_by('ability')
         everyone_permissions = self.item.everyone_item_permissions_as_item.order_by('ability')
-        agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
-        collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk=self.request.GET.get('collection', 0))).order_by('name')
+        try:
+            new_agent_pk = int(self.request.GET.get('agent', ''))
+        except ValueError:
+            new_agent_pk = 0
+        try:
+            new_collection_pk = int(self.request.GET.get('collection', ''))
+        except ValueError:
+            new_collection_pk = 0
+        agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk=new_agent_pk)).order_by('name')
+        collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk=new_collection_pk)).order_by('name')
+
 
         agent_data = []
         for agent in agents:
@@ -863,15 +872,15 @@ class ItemViewer(Viewer):
                 everyone_data['permission_form'] = form
                 everyone_data['permission_form_invalid'] = True
 
-        new_agent_form_class = forms.models.modelform_factory(AgentItemPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
-        new_collection_form_class = forms.models.modelform_factory(CollectionItemPermission, fields=['collection'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_agent_select_widget = AjaxModelChoiceField(Agent.objects).widget.render('agent', None)
+        new_collection_select_widget = AjaxModelChoiceField(Collection.objects).widget.render('collection', None)
 
         template = loader.get_template('item/itempermissions.html')
         self.context['agent_data'] = agent_data
         self.context['collection_data'] = collection_data
         self.context['everyone_data'] = everyone_data
-        self.context['new_agent_form'] = new_agent_form_class()
-        self.context['new_collection_form'] = new_collection_form_class()
+        self.context['new_agent_select_widget'] = new_agent_select_widget
+        self.context['new_collection_select_widget'] = new_collection_select_widget
         return HttpResponse(template.render(self.context))
 
     def type_globalpermissions_html(self):
@@ -950,8 +959,16 @@ class ItemViewer(Viewer):
         agent_permissions = AgentGlobalPermission.objects.order_by('ability')
         collection_permissions = CollectionGlobalPermission.objects.order_by('ability')
         everyone_permissions = EveryoneGlobalPermission.objects.order_by('ability')
-        agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk=self.request.GET.get('agent', 0))).order_by('name')
-        collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk=self.request.GET.get('collection', 0))).order_by('name')
+        try:
+            new_agent_pk = int(self.request.GET.get('agent', ''))
+        except ValueError:
+            new_agent_pk = 0
+        try:
+            new_collection_pk = int(self.request.GET.get('collection', ''))
+        except ValueError:
+            new_collection_pk = 0
+        agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk=new_agent_pk)).order_by('name')
+        collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk=new_collection_pk)).order_by('name')
 
         agent_data = []
         for agent in agents:
@@ -985,15 +1002,15 @@ class ItemViewer(Viewer):
                 everyone_data['permission_form'] = form
                 everyone_data['permission_form_invalid'] = True
 
-        new_agent_form_class = forms.models.modelform_factory(AgentGlobalPermission, fields=['agent'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
-        new_collection_form_class = forms.models.modelform_factory(CollectionGlobalPermission, fields=['collection'], formfield_callback=lambda f: super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name))
+        new_agent_select_widget = AjaxModelChoiceField(Agent.objects).widget.render('agent', None)
+        new_collection_select_widget = AjaxModelChoiceField(Collection.objects).widget.render('collection', None)
 
         template = loader.get_template('item/globalpermissions.html')
         self.context['agent_data'] = agent_data
         self.context['collection_data'] = collection_data
         self.context['everyone_data'] = everyone_data
-        self.context['new_agent_form'] = new_agent_form_class()
-        self.context['new_collection_form'] = new_collection_form_class()
+        self.context['new_agent_select_widget'] = new_agent_select_widget
+        self.context['new_collection_select_widget'] = new_collection_select_widget
         return HttpResponse(template.render(self.context))
 
 
