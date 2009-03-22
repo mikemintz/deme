@@ -421,6 +421,7 @@ class Item(models.Model):
         This will call _after_create or _after_edit, depending on whether the
         item already existed.
         """
+        action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
         is_new = not self.pk
 
