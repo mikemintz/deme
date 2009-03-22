@@ -875,10 +875,16 @@ class ItemViewer(Viewer):
         new_agent_select_widget = AjaxModelChoiceField(Agent.objects).widget.render('agent', None)
         new_collection_select_widget = AjaxModelChoiceField(Collection.objects).widget.render('collection', None)
 
+        default_data = {'permissions': []}
+        for ability in self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()):
+            default_allowed = self.permission_cache.default_ability_is_allowed(ability, self.item.actual_item_type())
+            default_data['permissions'].append({'ability': ability, 'is_allowed': default_allowed})
+
         template = loader.get_template('item/itempermissions.html')
         self.context['agent_data'] = agent_data
         self.context['collection_data'] = collection_data
         self.context['everyone_data'] = everyone_data
+        self.context['default_data'] = default_data
         self.context['new_agent_select_widget'] = new_agent_select_widget
         self.context['new_collection_select_widget'] = new_collection_select_widget
         return HttpResponse(template.render(self.context))
