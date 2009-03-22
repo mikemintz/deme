@@ -31,7 +31,7 @@ field_name_map = {
 def gen_dotcode(show_fields):
     dotcode = []
     dotcode.append('digraph structs {')
-    dotcode.append('  ranksep=1.5; nodesep=1.5;')
+    dotcode.append('  ranksep=0.5; nodesep=0.5;')
     all_item_types = models.all_item_types()
     if show_fields:
         all_item_types = all_item_types + [models.Item.Version]
@@ -57,10 +57,10 @@ def gen_dotcode(show_fields):
                 label = "{<TOP>%s\\n|%s}" % (item_type.__name__, fieldcols)
             else:
                 label = "{<TOP>%s}" % (item_type.__name__,)
-            dotcode.append('  %s [shape=record,style=rounded,label="%s "];' % (item_type.__name__, label))
+            dotcode.append('  %s [shape=record,style=rounded,label="%s"];' % (item_type.__name__, label))
         else:
             label = item_type.__name__
-            dotcode.append('  %s [shape=box,style=rounded,label="%s "];' % (item_type.__name__, label))
+            dotcode.append('  %s [shape=box,style=rounded,label="%s",margin=0.05];' % (item_type.__name__, label))
         bases = [x for x in item_type.__bases__ if (issubclass(x, models.Item) or issubclass(x, models.Item.Version))]
         for base in bases:
             if show_fields:
@@ -79,7 +79,9 @@ def run_dot_to_file(dotcode, filename):
     f.write(p.stdout.read())
     f.close()
 
+def main():
+    run_dot_to_file(gen_dotcode(show_fields=True), os.path.join(os.path.dirname(__file__), '..', 'static', 'codegraph.png'))
+    run_dot_to_file(gen_dotcode(show_fields=False), os.path.join(os.path.dirname(__file__), '..', 'static', 'codegraph_basic.png'))
 
-run_dot_to_file(gen_dotcode(show_fields=True), os.path.join(os.path.dirname(__file__), '..', 'static', 'codegraph.png'))
-run_dot_to_file(gen_dotcode(show_fields=False), os.path.join(os.path.dirname(__file__), '..', 'static', 'codegraph_basic.png'))
-
+if __name__ == '__main__':
+    main()
