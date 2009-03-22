@@ -237,6 +237,10 @@ def get_current_site(request):
 
 
 class ViewerMetaClass(type):
+    """
+    Metaclass for viewers. Defines ViewerMetaClass.viewer_name_dict, a mapping
+    from viewer names to viewer classes.
+    """
     viewer_name_dict = {}
     def __new__(cls, name, bases, attrs):
         result = super(ViewerMetaClass, cls).__new__(cls, name, bases, attrs)
@@ -246,15 +250,62 @@ class ViewerMetaClass(type):
 
 
 class Viewer(object):
+    """
+    Superclass of all viewers. Implements all of the common functionality
+    like dispatching and convenience methods, but does not define any views.
+    
+    Although most viewers will want to inherit from ItemViewer, since it
+    defines the basic views (like list, show, edit), some viewers may want to
+    inherit from this abstract Viewer so they can ensure no views will be
+    inherited.
+    
+    Subclasses must define the following fields:
+    * `accepted_item_type`: The item type that this viewer is defined over. For
+      example, if accepted_item_type == Agent, this viewer can be used to view
+      Agents and all subclasses of Agents (e.g., Person), but an error will be
+      rendered if a user tries to view something else (e.g., a Document) with
+      this viewer.
+    * `viewer_name`: The name of the viewer, which shows up in the URL. This
+      should only consist of lowercase letters, in accordance with the Deme URL
+      scheme.
+    
+    There are two types of views subclasses can define: item-specific views,
+    and type-wide views. Item-specific views expect an item in the URL (the noun), while type-wide views do not expect a particular item.
+    1. To define an item-speicfic view, define a method with the name
+      `item_method_format`, where `method` is the name of the view (which shows
+      up in the URL as the action), and format is the output format (which shows
+      up in the URL as the format). For example, the method item_edit_html(self)
+      in an agent viewer represents the item-specific view with action="edit" and
+      format="html", and would respond to the URL `/item/agent/123/edit.html`.
+    2. To define a type-wide view, define a method with the name
+      `type_method_format`. For example, the method type_new_html(self) in an
+      agent viewer represents the type-wide view with action="new" and
+      format="html", and would respond to the URL `/item/agent/new.html`.
+    
+    View methods take no parameters (except self), since all of the details of
+    the request are defined as instance variables in the viewer before
+    dispatch. They must return an HttpResponse. They should take advantage of
+    self.context, which is defined before the view is called.
+    """
     __metaclass__ = ViewerMetaClass
 
     def __init__(self):
+        # Nothing happens in the constructor. All of the initialization happens
+        # in the init_from_* methods, based on how the viewer was loaded.
         pass
 
     def cur_agent_can_global(self, ability):
+        """
+        Return whether the currently logged in agent has the given global
+        ability.
+        """
         return self.permission_cache.agent_can_global(self.cur_agent, ability)
 
     def cur_agent_can(self, ability, item):
+        """
+        Return whether the currently logged in agent has the given item ability
+        with respect to the given item.
+        """
         return self.permission_cache.agent_can(self.cur_agent, ability, item)
 
     def render_error(self, request_class, title, body):
@@ -270,8 +321,6 @@ class Viewer(object):
         {%% block content %%}%s{%% endblock content %%}
         """ % (title, body))
         return request_class(template.render(self.context))
-
-        return error_response(self.cur_agent, self.cur_site, self.context['full_path'], request_class, title, body)
 
     def init_from_http(self, request, action, noun, format):
         self.context = Context()

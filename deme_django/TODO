@@ -50,6 +50,7 @@ Layout
 
 Interface
 ---------
+* Make notifications have different messages for each RelationActionNotice (at least for many-to-many things like Membership and Transclusion)
 * Make the action at top-right of item more of a javascript menu, like in gmail
 * Get a variable <title> tag
 * Set action_summary whenever someone deactivates/reactivates/destroys that can go in ActionNotice.description
