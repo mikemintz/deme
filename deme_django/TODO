@@ -19,10 +19,10 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Abstract away from the viewer.request object lying around (IDEA: maybe the best way to do this is to keep the viewer.request object around, but in cases where there is no HTTP request, we mock it)
 * gen_graph is broken on my macbook
 * figure out how we are determining the permission to view comment hierarchy (i.e., comment.commented_item)
 * Code cleanup: views, templatetags, and templates, and symsys everything
-* Abstract away from the viewer.request object lying around
 * Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
   - http://code.djangoproject.com/ticket/2227
 * Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun)
