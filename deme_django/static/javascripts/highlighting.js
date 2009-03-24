@@ -82,13 +82,13 @@ var DemeHighlighting = function(){
         };
         var traverse_fn = function(nodes, inside_commentref){
             for (var i = 0; i < nodes.length; i++) {
-                var node = $(nodes[i]);
-                if (inside_commentref || (node.nodeType == Node.ELEMENT_NODE && node.hasClassName('commentref'))) {
+                var node = nodes[i];
+                if (inside_commentref || (node.nodeType == Node.ELEMENT_NODE && $(node).hasClass('commentref'))) {
                     var success = traverse_fn(node.childNodes, true);
                     if (!success) return false;
                 } else if (node.nodeType == Node.TEXT_NODE) {
                     if (wrap_text) {
-                        var wrapper = $(document.createElement('span'));
+                        var wrapper = document.createElement('span');
                         node.parentNode.insertBefore(wrapper, node);
                         var success = traverse_text(node.data, wrapper);
                         node.parentNode.removeChild(node);
@@ -99,7 +99,7 @@ var DemeHighlighting = function(){
                     }
                 } else if (node.nodeType == Node.ELEMENT_NODE) {
                     element_callback(node, body_str_index);
-                    if (!node.hasClassName('commentref')) {
+                    if (!$(node).hasClass('commentref')) {
                         //TODO are there others besides SCRIPT and STYLE that we must skip the body for?
                         //TODO can we unify some of the code for SCRIPT/STYLE and IMG?
                         if (!is_escaped && (node.tagName == 'SCRIPT' || node.tagName == 'STYLE')) {
@@ -159,7 +159,7 @@ var DemeHighlighting = function(){
     };
 
     pub.tokenize = function(docbody, body_str, is_escaped, parse_error, token_classname, token_click){
-        var docbody_clone = $(docbody.cloneNode(true));
+        var docbody_clone = docbody.cloneNode(true);
         var token_wrapper_callback = function(tokenWrapper, body_str_index){
             tokenWrapper.deme_text_offset = body_str_index;
             tokenWrapper.className = token_classname;
@@ -172,7 +172,7 @@ var DemeHighlighting = function(){
     };
 
     pub.tag_highlight_endpoints_with_offset = function(docbody, body_str, is_escaped, start_id, end_id){
-        var docbody_clone = $(docbody);
+        var docbody_clone = docbody;
         var token_wrapper_callback = function(tokenWrapper, body_str_index){
         };
         var element_callback = function(node, body_str_index){
@@ -192,7 +192,7 @@ var DemeHighlighting = function(){
         var start_span = null;
         var end_span = null;
         var contents = null;
-        if (Prototype.Browser.IE) {
+        if ($.browser.msie) {
             var range = window.document.selection.createRange();
             if (range.htmlText != "") {
                 function offset(r, id) {

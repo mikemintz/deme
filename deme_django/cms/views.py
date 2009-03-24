@@ -47,46 +47,43 @@ class AjaxModelChoiceWidget(forms.Widget):
         <div class="ajax_choice_results" style="display: none;"></div>
         <script type="text/javascript">
         fn = function(){
-          var ajax_observer = null;
-          var search_onchange = function(e, value) {
-            var hidden_input = $(e).previousSiblings()[0];
-            var results_div = $(e).nextSiblings()[0];
-            if (value == '') {
-              $A(results_div.childNodes).each(Element.remove);
+          var search_onchange = function(e) {
+            if (e.value === e.last_value) return;
+            e.last_value = e.value;
+            var hidden_input = $(e).prev()[0];
+            var results_div = $(e).next()[0];
+            if (e.value == '') {
+              $(results_div.childNodes).remove();
               $(results_div).hide();
               hidden_input.value = '';
               return;
             }
-            var url = '%(ajax_url)s?q=' + encodeURIComponent(value);
-            new Ajax.Request(url, {
-              method: 'get',
-              onSuccess: function(transport) {
-                var results = $A(transport.responseJSON);
-                results.splice(0, 0, ['[NULL]', '']);
-                $A(results_div.childNodes).each(Element.remove);
-                results.each(function(result){
-                  var option = document.createElement('div');
-                  option.className = 'ajax_choice_option';
-                  option.innerHTML = result[0];
-                  $(option).observe('click', function(event){
-                    e.ajax_observer.stop();
-                    e.value = result[0];
-                    e.ajax_observer = new Form.Element.Observer(e, 0.25, search_onchange);
-                    hidden_input.value = result[1];
-                    $A(results_div.childNodes).each(Element.remove);
-                    $(results_div).hide();
-                  });
-                  results_div.appendChild(option);
+            jQuery.getJSON('%(ajax_url)s', {q:e.value}, function(json) {
+              json.splice(0, 0, ['[NULL]', '']);
+              $(results_div.childNodes).remove();
+              for (var i in json) {
+                var datum = json[i];
+                var option = document.createElement('div');
+                option.className = 'ajax_choice_option';
+                option.innerHTML = datum[0];
+                $(option).bind('click', function(event){
+                  window.clearInterval(e.ajax_timer);
+                  e.value = datum[0];
+                  e.last_value = datum[0];
+                  e.ajax_timer = window.setInterval(function(){search_onchange(e)}, 250); //TODO use bind on search_onchange?
+                  hidden_input.value = datum[1];
+                  $(results_div.childNodes).remove();
+                  $(results_div).hide();
                 });
-                $(results_div).show();
+                x = results_div;
+                results_div.appendChild(option);
               }
+              $(results_div).show();
             });
           };
-          $$('.ajax_choice_field').each(function(input){
-            if (!input.hasClassName('ajax_choice_field_activated')) {
-              input.addClassName('ajax_choice_field_activated');
-              input.ajax_observer = new Form.Element.Observer(input, 0.25, search_onchange);
-            }
+          $('.ajax_choice_field:not(.ajax_choice_field_activated)').addClass('ajax_choice_field_activated').each(function(i, input){
+            input.last_value = input.value;
+            input.ajax_timer = window.setInterval(function(){search_onchange(input)}, 250); //TODO use bind on search_onchange?
           });
         };
         fn();

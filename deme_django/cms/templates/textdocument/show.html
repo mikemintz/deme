@@ -4,7 +4,6 @@
 {% block title %}<img src="{{ item|icon_url:48 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
-<script type="text/javascript" src="/static/javascripts/prototype.js"></script>
 <script type="text/javascript" src="/static/javascripts/highlighting.js"></script>
 
 {% itemheader %}
@@ -26,10 +25,10 @@
     var body_str = "{{ item.body|escapejs }}";
 
     function parse_error(str) {
-        $('parse_errors').show();
+        $('#parse_errors').show();
         var div = document.createElement('div');
         div.appendChild(document.createTextNode(str));
-        $('parse_errors').appendChild(div);
+        $('#parse_errors')[0].appendChild(div);
     }
 
     function located_comment_token_click(e) {
@@ -39,7 +38,7 @@
         else if (e.srcElement) targ = e.srcElement;
         if (targ.nodeType == 3) // defeat Safari bug
             targ = targ.parentNode;
-        var tokenWrapper = $(targ);
+        var tokenWrapper = targ;
         var index = tokenWrapper.deme_text_offset;
         var url = '{% url item_type_url viewer="textcomment",action="new" %}?item={{ item.pk }}&item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&item_index=' + index;
         window.location = url;
@@ -53,7 +52,7 @@
         else if (e.srcElement) targ = e.srcElement;
         if (targ.nodeType == 3) // defeat Safari bug
             targ = targ.parentNode;
-        var tokenWrapper = $(targ);
+        var tokenWrapper = targ;
         var index = tokenWrapper.deme_text_offset;
         var url = '{% url item_type_url viewer="transclusion",action="new" %}?from_item={{ item.pk }}&from_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&from_item_index=' + index;
         window.location = url;
@@ -61,55 +60,55 @@
     }
 
     function add_located_comment() {
-        var docbody = $('docbody');
+        var docbody = $('#docbody')[0];
         var docbody_clone = DemeHighlighting.tokenize(docbody, body_str, is_escaped, parse_error, 'transclude_token', located_comment_token_click);
         docbody_clone.setAttribute('id', 'docbody_clone_located_comment');
-        docbody.hide();
+        $(docbody).hide();
         docbody.parentNode.insertBefore(docbody_clone, docbody);
 
-        $('add_located_comment_div').hide();
-        $('adding_located_comment_div').show();
+        $('#add_located_comment_div').hide();
+        $('#adding_located_comment_div').show();
     }
 
     function cancel_add_located_comment() {
-        $('docbody').show();
-        $('docbody_clone_located_comment').remove();
-        $('add_located_comment_div').show();
-        $('adding_located_comment_div').hide();
+        $('#docbody').show();
+        $('#docbody_clone_located_comment').remove();
+        $('#add_located_comment_div').show();
+        $('#adding_located_comment_div').hide();
     }
 
     function add_transclusion() {
-        var docbody = $('docbody');
+        var docbody = $('#docbody')[0];
         var docbody_clone = DemeHighlighting.tokenize(docbody, body_str, is_escaped, parse_error, 'transclude_token', transclusion_token_click);
         docbody_clone.setAttribute('id', 'docbody_clone_transclusion');
-        docbody.hide();
+        $(docbody).hide();
         docbody.parentNode.insertBefore(docbody_clone, docbody);
 
-        $('add_transclusion_div').hide();
-        $('adding_transclusion_div').show();
+        $('#add_transclusion_div').hide();
+        $('#adding_transclusion_div').show();
     }
 
     function cancel_add_transclusion() {
-        $('docbody').show();
-        $('docbody_clone_transclusion').remove();
-        $('add_transclusion_div').show();
-        $('adding_transclusion_div').hide();
+        $('#docbody').show();
+        $('#docbody_clone_transclusion').remove();
+        $('#add_transclusion_div').show();
+        $('#adding_transclusion_div').hide();
     }
 
     function start_highlighting() {
-        $('docbody').observe('mouseup', add_current_highlight);
-        $('add_highlight_div').hide();
-        $('adding_highlight_div').show();
+        $('#docbody').bind('mouseup', add_current_highlight);
+        $('#add_highlight_div').hide();
+        $('#adding_highlight_div').show();
     }
  
     function cancel_highlighting() {
-        $('docbody').stopObserving('mouseup', add_current_highlight);
-        $('add_highlight_div').show();
-        $('adding_highlight_div').hide();
+        $('#docbody').unbind('mouseup', add_current_highlight);
+        $('#add_highlight_div').show();
+        $('#adding_highlight_div').hide();
     }
 
     function add_current_highlight() {
-        var docbody = $('docbody');
+        var docbody = $('#docbody')[0];
         var selection = DemeHighlighting.get_current_highlight(docbody, body_str);
         if (selection) {
             var text_excerpt = body_str.substring(selection.start_offset, selection.end_offset);
@@ -131,14 +130,14 @@
             remove_button.onclick = function(){$(remove_button.parentNode).remove(); return false;};
             form_div.appendChild(remove_button);
             form_div.appendChild(selection.contents);
-            $('excerpt_form').appendChild(form_div);
+            $('#excerpt_form')[0].appendChild(form_div);
             //var url = '{% url item_type_url viewer="textdocumentexcerpt",action="new" %}?text_document={{ item.pk }}&text_document_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&start_index=' + selection.start_offset + '&length=' + length;
             //window.location = url;
         }
     }
 
     function submit_highlights() {
-        $('excerpt_form').submit();
+        $('#excerpt_form').submit();
     }
 </script>
 
@@ -151,29 +150,29 @@ div#section_body, div#section_comments, div#section_combined {
 
 <script type="text/javascript">
     function select_section_body() {
-        $('section_body').appendChild($('section_body_inner'));
-        $$('ul#doctabnav li.tabhighlighted').each(function(e){e.removeClassName('tabhighlighted')});
-        $('tab_body').addClassName('tabhighlighted');
-        $('section_body').show();
-        $('section_comments').hide();
-        $('section_combined').hide();
+        $('#section_body')[0].appendChild($('#section_body_inner')[0]);
+        $('ul#doctabnav li.tabhighlighted').removeClass('tabhighlighted');
+        $('#tab_body').addClass('tabhighlighted');
+        $('#section_body').show();
+        $('#section_comments').hide();
+        $('#section_combined').hide();
     }
     function select_section_comments() {
-        $('section_comments').appendChild($('section_comments_inner'));
-        $$('ul#doctabnav li.tabhighlighted').each(function(e){e.removeClassName('tabhighlighted')});
-        $('tab_comments').addClassName('tabhighlighted');
-        $('section_body').hide();
-        $('section_comments').show();
-        $('section_combined').hide();
+        $('#section_comments')[0].appendChild($('#section_comments_inner')[0]);
+        $('ul#doctabnav li.tabhighlighted').removeClass('tabhighlighted');
+        $('#tab_comments').addClass('tabhighlighted');
+        $('#section_body').hide();
+        $('#section_comments').show();
+        $('#section_combined').hide();
     }
     function select_section_combined() {
-        $('body_side').appendChild($('section_body_inner'));
-        $('comments_side').appendChild($('section_comments_inner'));
-        $$('ul#doctabnav li.tabhighlighted').each(function(e){e.removeClassName('tabhighlighted')});
-        $('tab_combined').addClassName('tabhighlighted');
-        $('section_body').hide();
-        $('section_comments').hide();
-        $('section_combined').show();
+        $('#body_side')[0].appendChild($('#section_body_inner')[0]);
+        $('#comments_side')[0].appendChild($('#section_comments_inner')[0]);
+        $('ul#doctabnav li.tabhighlighted').removeClass('tabhighlighted');
+        $('#tab_combined').addClass('tabhighlighted');
+        $('#section_body').hide();
+        $('#section_comments').hide();
+        $('#section_combined').show();
     }
 </script>
 
@@ -228,7 +227,7 @@ When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); 
 {% endifagentcanglobal %}
 {% endifagentcanglobal %}
 
-<div><a href="#" onclick="$$('.commentref').each(function(e){e.toggle()}); return false;">Toggle Inline Comments</a></div>
+<div><a href="#" onclick="$('.commentref').toggle(); return false;">Toggle Inline Comments</a></div>
 
 <div class="regular_css">
 <div id="docbody" style="padding: 10px;">{% display_body_with_inline_transclusions item is_html %}</div>
@@ -246,7 +245,7 @@ When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); 
 
 <div id="section_comments" style="display: none;">
 <div id="section_comments_inner">
-<div><a href="#" onclick="$$('.comment_body, .comment_description').each(function(e){e.toggle()}); return false;">Collapse/Expand</a></div>
+<div><a href="#" onclick="$('.comment_body, .comment_description').toggle(); return false;">Collapse/Expand</a></div>
 {% commentbox %}
 </div>
 </div>

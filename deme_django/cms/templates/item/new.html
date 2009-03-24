@@ -4,7 +4,6 @@
 {% block title %}<img src="{{ accepted_item_type|icon_url:48 }}" /> {% if action_is_item_copy %}Copy{% else %}New{% endif %} {{ accepted_item_type_name }}{% endblock %}
 {% block content %}
 
-<script type="text/javascript" src="/static/javascripts/prototype.js"></script>
 {% if is_html %}
 <script type="text/javascript" src="/static/javascripts/tinymce/jscripts/tiny_mce/tiny_mce.js"></script>
 <script type="text/javascript">

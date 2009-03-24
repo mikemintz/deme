@@ -4,15 +4,13 @@
 {% block title %}<img src="{{ item|icon_url:48 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
-<script type="text/javascript" src="/static/javascripts/prototype.js"></script>
-
 {% itemheader %}
 
 {% subclassfields %}
 
 {% ifagentcan 'add_sub_path' '' item %}
 <div style="margin-bottom: 10px;">
-    <a href="#" onclick="$('add_sub_path_form').toggle(); return false;">Add sub path</a>
+    <a href="#" onclick="$('#add_sub_path_form').toggle(); return false;">Add sub path</a>
     <form id="add_sub_path_form" style="display: none;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="addsubpath",noun=item.pk %}?redirect={{ item.get_absolute_url }}" class="item_form">
         <table cellspacing="0">
             {{ addsubpath_form.as_table }}

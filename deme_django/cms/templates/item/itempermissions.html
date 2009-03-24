@@ -4,8 +4,6 @@
 {% block title %}<img src="{{ item|icon_url:48 }}" /> Permissions for {% viewable_name item %}{% endblock %}
 {% block content %}
 
-<script type="text/javascript" src="/static/javascripts/prototype.js"></script>
-
 {% itemheader 'Permissions' %}
 
 <div style="margin-bottom: 5px;">
@@ -45,7 +43,7 @@
             {% endfor %}
         </td>
         <td>
-            <div><a href="#" onclick="$('permission_form_{{ agent_datum.agent.pk }}').toggle(); return false;">[+] Permission</a></div>
+            <div><a href="#" onclick="$('#permission_form_{{ agent_datum.agent.pk }}').toggle(); return false;">[+] Permission</a></div>
             <div id="permission_form_{{ agent_datum.agent.pk }}" style="{% if agent_datum.permission_form_invalid %}{% else %}display: none;{% endif %}">
                 <form method="post" enctype="multipart/form-data" action="{% url item_url viewer="item",noun=item.pk,action="itempermissions" %}?formtype=agentpermission&redirect={{ full_path|urlencode }}&formprefix={{ agent_datum.permission_form.prefix|urlencode }}" class="item_form">
                     <table cellspacing="0">
@@ -73,7 +71,7 @@
             {% endfor %}
         </td>
         <td>
-            <div><a href="#" onclick="$('permission_form_{{ collection_datum.collection.pk }}').toggle(); return false;">[+] Permission</a></div>
+            <div><a href="#" onclick="$('#permission_form_{{ collection_datum.collection.pk }}').toggle(); return false;">[+] Permission</a></div>
             <div id="permission_form_{{ collection_datum.collection.pk }}" style="{% if collection_datum.permission_form_invalid %}{% else %}display: none;{% endif %}">
                 <form method="post" enctype="multipart/form-data" action="{% url item_url viewer="item",noun=item.pk,action="itempermissions" %}?formtype=collectionpermission&redirect={{ full_path|urlencode }}&formprefix={{ collection_datum.permission_form.prefix|urlencode }}" class="item_form">
                     <table cellspacing="0">
@@ -100,7 +98,7 @@
             {% endfor %}
         </td>
         <td>
-            <div><a href="#" onclick="$('permission_form_everyone').toggle(); return false;">[+] Permission</a></div>
+            <div><a href="#" onclick="$('#permission_form_everyone').toggle(); return false;">[+] Permission</a></div>
             <div id="permission_form_everyone" style="{% if everyone_data.permission_form_invalid %}{% else %}display: none;{% endif %}">
                 <form method="post" enctype="multipart/form-data" action="{% url item_url viewer="item",noun=item.pk,action="itempermissions" %}?formtype=everyonepermission&redirect={{ full_path|urlencode }}&formprefix={{ everyone_data.permission_form.prefix|urlencode }}" class="item_form">
                     <table cellspacing="0">
