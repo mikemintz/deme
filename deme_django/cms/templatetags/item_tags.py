@@ -705,7 +705,7 @@ class SubclassFieldsBox(template.Node):
                 else:
                     data = getattr(item, field.name)
                     if isinstance(field, models.FileField):
-                        result.append('<a href="/static/media/%s">%s</a>' % (escape(data), escape(data)))
+                        result.append('<a href="%s%s">%s</a>' % (escape(settings.MEDIA_URL), escape(data), escape(data)))
                     elif isinstance(field, models.TextField):
                         result.append(urlize(escape(data)).replace('\n', '<br />'))
                     else:
