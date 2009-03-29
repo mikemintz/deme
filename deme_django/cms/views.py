@@ -1,10 +1,11 @@
 #TODO completely clean up code
 
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound, HttpRequest, QueryDict
 from django.utils.http import urlquote
 from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
+from django.utils import datastructures
 from django.template import Context, loader
 from django.db import models
 from django.db.models import Q
@@ -233,6 +234,30 @@ def get_current_site(request):
         return get_default_site()
 
 
+class VirtualRequest(HttpRequest):
+
+    def __init__(self, original_request, path, query_string):
+        self.original_request = original_request
+        self.path = path
+        self.query_string = query_string
+        self.encoding = self.original_request.encoding
+        self.GET = QueryDict(self.query_string, encoding=self._encoding)
+        self.POST = QueryDict('', encoding=self._encoding)
+        self.FILES = QueryDict('', encoding=self._encoding)
+        self.REQUEST = datastructures.MergeDict(self.POST, self.GET)
+        self.COOKIES = self.original_request.COOKIES
+        self.META = {}
+        self.raw_post_data = ''
+        #TODO: will we ever need META, path_info, or script_name?
+        self.method = 'GET'
+
+    def get_full_path(self):
+        return '%s%s' % (self.path, self.query_string and ('?' + self.query_string) or '')
+
+    def is_secure(self):
+        return self.original_request.is_secure()
+
+
 class ViewerMetaClass(type):
     """
     Metaclass for viewers. Defines ViewerMetaClass.viewer_name_dict, a mapping
@@ -326,7 +351,7 @@ class Viewer(object):
         self.noun = noun
         self.format = format or 'html'
         self.method = (request.GET.get('_method', None) or request.method).upper()
-        self.request = request # FOR NOW
+        self.request = request
         if self.noun is None:
             if self.action is None:
                 self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'deactivate'}.get(self.method, 'list')
@@ -357,8 +382,10 @@ class Viewer(object):
         self._set_default_layout()
 
     def init_from_div(self, original_viewer, action, item):
+        path = reverse('item_url', kwargs={'viewer': self.viewer_name, 'action': action, 'noun': item.pk})
+        query_string = ''
         self.permission_cache = original_viewer.permission_cache
-        self.request = original_viewer.request
+        self.request = VirtualRequest(original_viewer.request, path, query_string)
         self.format = 'html'
         self.method = 'GET'
         self.noun = item.pk

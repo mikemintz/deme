@@ -19,8 +19,9 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* If somebody embeds a page in itself (or some other kind of recursion), server will infinite loop. Must prevent.
+* Probably don't need auto-load modules: INSTALLED_APPS is more explicit and familiar
 * Figure out correct way to manage assets (maybe like in rails)
-* Abstract away from the viewer.request object lying around (IDEA: maybe the best way to do this is to keep the viewer.request object around, but in cases where there is no HTTP request, we mock it)
 * figure out how we are determining the permission to view comment hierarchy (i.e., comment.commented_item)
 * Code cleanup: views, templatetags, and templates, and symsys everything
 * Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
@@ -60,7 +61,7 @@ Interface
 * We should probably add back all the margins on <p> and stuff (look at base.css .regular_css for a start)
 * Some sort of arrows in the side-by-side comment interface, or just click->highlight/scroll
 * Include hCard in user profiles
-* Get rid of prototype dependence by redoing the autocompleter
+* Nicer autocompleter (jquery plugin?)
 
 Documentation
 -------------
