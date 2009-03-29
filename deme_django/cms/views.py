@@ -257,6 +257,14 @@ class VirtualRequest(HttpRequest):
     def is_secure(self):
         return self.original_request.is_secure()
 
+    def virtual_requests_too_deep(self, n):
+        if n <= 1:
+            return True
+        elif not hasattr(self.original_request, 'virtual_requests_too_deep'):
+            return False
+        else:
+            return self.original_request.virtual_requests_too_deep(n - 1)
+
 
 class ViewerMetaClass(type):
     """
@@ -269,6 +277,9 @@ class ViewerMetaClass(type):
         if name != 'Viewer':
             ViewerMetaClass.viewer_name_dict[attrs['viewer_name']] = result
         return result
+
+
+MAXIMUM_VIRTUAL_REQUEST_DEPTH = 10
 
 
 class Viewer(object):
@@ -434,6 +445,9 @@ class Viewer(object):
         self.context['layout'] = 'blank.html'
 
     def dispatch(self):
+        if hasattr(self.request, 'virtual_requests_too_deep'):
+            if self.request.virtual_requests_too_deep(MAXIMUM_VIRTUAL_REQUEST_DEPTH):
+                return self.render_virtual_requests_too_deep()
         if self.noun is None:
             action_method = getattr(self, 'type_%s_%s' % (self.action, self.format), None)
         else:
@@ -450,6 +464,11 @@ class Viewer(object):
             return action_method()
         else:
             return None
+
+    def render_virtual_requests_too_deep(self):
+        title = "Exceeded maximum recursion depth"
+        body = 'The depth of embedded pages is too high.'
+        return self.render_error(HttpResponseNotFound, title, body)
 
     def render_item_not_found(self):
         if self.item:

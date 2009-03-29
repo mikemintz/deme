@@ -19,7 +19,6 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
-* If somebody embeds a page in itself (or some other kind of recursion), server will infinite loop. Must prevent.
 * Probably don't need auto-load modules: INSTALLED_APPS is more explicit and familiar
 * Figure out correct way to manage assets (maybe like in rails)
 * figure out how we are determining the permission to view comment hierarchy (i.e., comment.commented_item)
