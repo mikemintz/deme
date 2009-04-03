@@ -297,15 +297,15 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
     for comment in comments:
         comment_info = {'comment': comment, 'subcomments': []}
         pk_to_comment_info[comment.pk] = comment_info
-    result = []
+    comment_dicts = []
     for comment in comments:
         child = pk_to_comment_info[comment.pk]
         parent = pk_to_comment_info.get(comment.item_id)
         if parent:
             parent['subcomments'].append(child)
         else:
-            result.append(child)
-    return result
+            comment_dicts.append(child)
+    return comment_dicts, len(comments)
 
 class ItemHeader(template.Node):
     def __init__(self, page_name):
@@ -571,10 +571,11 @@ class CommentBox(template.Node):
                         comment_body = ''
                 else:
                     comment_body = '[INACTIVE]'
-                result.append("""<div class="comment_body">%s</div>""" % comment_body)
+                result.append("""<div class="comment_body" style="display: none;">%s</div>""" % comment_body)
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
-        comment_dicts = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection))
+        comment_dicts, n_comments = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection))
+        context['n_comments'] = n_comments
         add_comments_to_div(comment_dicts)
         result.append("</div>")
 
@@ -705,6 +706,7 @@ class SubclassFieldsBox(template.Node):
                 else:
                     data = getattr(item, field.name)
                     if isinstance(field, models.FileField):
+                        #TODO use .url
                         result.append('<a href="%s%s">%s</a>' % (escape(settings.MEDIA_URL), escape(data), escape(data)))
                     elif isinstance(field, models.TextField):
                         result.append(urlize(escape(data)).replace('\n', '<br />'))

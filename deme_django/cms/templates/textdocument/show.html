@@ -141,49 +141,29 @@
     }
 </script>
 
-<style type="text/css">
-div#section_body, div#section_comments, div#section_combined {
-    border: 1px solid #4040C4;
-    padding: 10px;
-}
-</style>
-
-<script type="text/javascript">
-    function select_section_body() {
-        $('#section_body')[0].appendChild($('#section_body_inner')[0]);
-        $('ul#doctabnav li.tabhighlighted').removeClass('tabhighlighted');
-        $('#tab_body').addClass('tabhighlighted');
-        $('#section_body').show();
-        $('#section_comments').hide();
-        $('#section_combined').hide();
-    }
-    function select_section_comments() {
-        $('#section_comments')[0].appendChild($('#section_comments_inner')[0]);
-        $('ul#doctabnav li.tabhighlighted').removeClass('tabhighlighted');
-        $('#tab_comments').addClass('tabhighlighted');
-        $('#section_body').hide();
-        $('#section_comments').show();
-        $('#section_combined').hide();
-    }
-    function select_section_combined() {
-        $('#body_side')[0].appendChild($('#section_body_inner')[0]);
-        $('#comments_side')[0].appendChild($('#section_comments_inner')[0]);
-        $('ul#doctabnav li.tabhighlighted').removeClass('tabhighlighted');
-        $('#tab_combined').addClass('tabhighlighted');
-        $('#section_body').hide();
-        $('#section_comments').hide();
-        $('#section_combined').show();
-    }
+<script>
+$(document).ready(function () {
+    document_layout = $('#document_layout').layout({
+        applyDefaultStyles: true,
+        east__size: 400,
+        east__initClosed: true,
+        east__resizerTip: "hello world",
+    });
+});
 </script>
 
-<ul class="tabnav" id="doctabnav">
-	<li id="tab_body" class="tabhighlighted"><a href="#" onclick="select_section_body(); return false;">Document</a></li>
-	<li id="tab_combined"><a href="#" onclick="select_section_combined(); return false;">Side By Side</a></li>
-	<li id="tab_comments"><a href="#" onclick="select_section_comments(); return false;">Comments</a></li>
-</ul>
+<div id="document_layout" style="height: 400px;">
 
-<div id="section_body">
-<div id="section_body_inner">
+<div class="ui-layout-east" style="overflow: auto">
+<div><a href="#" onclick="$('.comment_body, .comment_description').toggle(); return false;">Collapse/Expand</a></div>
+{% commentbox %}
+</div>
+
+<div class="ui-layout-center" style="overflow: auto">
+
+<div style="float: right;">
+    <button onclick="document_layout.toggle('east')"><img src="{{ "TextComment"|icon_url:16 }}" /> <span><b>{{ n_comments }}</b> comment{{ n_comments|pluralize }}</span></button>
+</div>    
 
 <div id="parse_errors" style="display: none;">
 </div>
@@ -235,19 +215,7 @@ When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); 
 {% endifagentcan %}
 
 </div>
-</div>
 
-<div id="section_combined" style="display: none;">
-    <div id="body_side" style="float: left; width: 50%;"></div>
-    <div id="comments_side" style="float: right; width: 50%;"></div>
-    <div style="clear: both;"></div>
-</div>
-
-<div id="section_comments" style="display: none;">
-<div id="section_comments_inner">
-<div><a href="#" onclick="$('.comment_body, .comment_description').toggle(); return false;">Collapse/Expand</a></div>
-{% commentbox %}
-</div>
 </div>
 
 {% actionnoticebox %}
