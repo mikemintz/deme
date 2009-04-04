@@ -4,6 +4,8 @@
 {% block title %}<img src="{{ item|icon_url:48 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
+{% subclassfields %}
+
 {% ifagentcan 'add_sub_path' '' item %}
 <div style="margin-bottom: 10px;">
     <a href="#" onclick="$('#add_sub_path_form').toggle(); return false;">Add sub path</a>

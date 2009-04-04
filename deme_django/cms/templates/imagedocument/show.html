@@ -4,6 +4,8 @@
 {% block title %}<img src="{{ item|icon_url:48 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
+{% subclassfields %}
+
 {% ifagentcan 'view' 'datafile' item %}
 <img src="/static/media/{{ item.datafile }}" />
 {% endifagentcan %}
