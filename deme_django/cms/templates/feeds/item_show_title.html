@@ -1,0 +1,27 @@
+{% spaceless %}
+
+{% ifequal obj.action_notice_type 'RelationActionNotice' %}
+{{ obj.creator_name }} set the {{ obj.from_field_name }} field of {{ obj.from_item_name }} to {% if obj.relation_added %}now{% else %}no longer{% endif %} point to {{ obj.item_name }}
+{% endifequal %}
+
+{% ifequal obj.action_notice_type 'DeactivateActionNotice' %}
+{{ obj.creator_name }} deactivated {{ obj.item_name }}
+{% endifequal %}
+
+{% ifequal obj.action_notice_type 'ReactivateActionNotice' %}
+{{ obj.creator_name }} reactivated obj.item_name }}
+{% endifequal %}
+
+{% ifequal obj.action_notice_type 'DestroyActionNotice' %}
+{{ obj.creator_name }} destroyed {{ obj.item_name }}
+{% endifequal %}
+
+{% ifequal obj.action_notice_type 'CreateActionNotice' %}
+{{ obj.creator_name }} created {{ obj.item_name }}
+{% endifequal %}
+
+{% ifequal obj.action_notice_type 'EditActionNotice' %}
+{{ obj.creator_name }} edited {{ obj.item_name }}
+{% endifequal %}
+
+{% endspaceless %}
