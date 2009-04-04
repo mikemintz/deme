@@ -28,12 +28,6 @@ tinyMCE.init({
 </script>    
 {% endif %}
 
-{% if action_is_item_copy %}
-{% typeheader "Copy" %}
-{% else %}
-{% typeheader "New" %}
-{% endif %}
-
 <div>
     {% if redirect %}
     <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=viewer_name,action="create" %}?redirect={{ redirect|urlencode }}" class="item_form">

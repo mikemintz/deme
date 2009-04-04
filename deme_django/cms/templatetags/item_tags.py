@@ -647,6 +647,7 @@ class ActionNoticeBox(template.Node):
                 result.append(u"<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (created_at_text, agent_text, action_text, item_text, description_text))
             result.append(u"</table>")
 
+        context['n_action_notices'] = len(action_notices)
         return '\n'.join(result)
 
 @register.tag

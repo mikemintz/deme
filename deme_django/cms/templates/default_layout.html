@@ -127,8 +127,50 @@ $(document).ready(function(){
     Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.
 </div>
 {% endif %}
+
+<script>
+$(document).ready(function () {
+    document_layout = $('#content_layout').layout({
+        applyDefaultStyles: true,
+        east__size: 400,
+        east__initClosed: true,
+        south__initClosed: true,
+    });
+});
+</script>
+
+<div id="content_layout" style="height: 400px;">
+
+{% if item %}
+<div class="ui-layout-east" style="overflow: auto;">
+<div><a href="#" onclick="$('.comment_body, .comment_description').toggle(); return false;">Collapse/Expand</a></div>
+{% commentbox %}
+</div>
+{% endif %}
+
+{% if item %}
+<div class="ui-layout-south" style="overflow: auto;">
+{% actionnoticebox %}
+</div>
+{% endif %}
+
+<div class="ui-layout-center" style="overflow: auto;">
+{% if item %}
+<div style="text-align: right; margin-bottom: 5px;">
+    <button onclick="document_layout.toggle('east')"><img src="{{ "TextComment"|icon_url:16 }}" /> <span><b>{{ n_comments }}</b> comment{{ n_comments|pluralize }}</span></button>
+    <button onclick="document_layout.toggle('south')"><img src="{{ "history"|icon_url:16 }}" /> <span><b>{{ n_action_notices }}</b> action notice{{ n_action_notices|pluralize }}</span></button>
+</div>
+{% itemheader %} {#TODO include argument for page title#}
+{% subclassfields %}
+{% else %}
+{% typeheader %} {#TODO include argument for page title#}
+{% endif %}
 {% block content %}
 {% endblock %}
+</div>
+
+</div>
+
 </div>
 
 <div class="footer">

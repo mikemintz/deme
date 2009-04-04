@@ -4,8 +4,6 @@
 {% block title %}<img src="{{ item|icon_url:48 }}" /> Permissions for {% viewable_name item %}{% endblock %}
 {% block content %}
 
-{% itemheader 'Permissions' %}
-
 <div style="margin-bottom: 5px;">
     <form method="get" class="item_form">
         {{ new_agent_select_widget|safe }}

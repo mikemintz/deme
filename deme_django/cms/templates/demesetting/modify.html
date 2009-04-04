@@ -4,8 +4,6 @@
 {% block title %}<img src="{{ accepted_item_type|icon_url:48 }}" /> Modify DemeSettings{% endblock %}
 {% block content %}
 
-{% typeheader "Modify" %}
-
 <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer="demesetting",action="addsetting" %}?redirect={{ full_path|urlencode }}" class="item_form">
     Key: <input type="text" name="key" />
     Value: <input type="text" name="value" />

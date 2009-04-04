@@ -5,10 +5,6 @@
 {% block title %}<img src="{{ item|icon_url:48 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
-{% itemheader %}
-
-{% subclassfields %}
-
 <table cellspacing="0" class="twocol">
 
     {% ifagentcan 'view' 'original_first_name' item %}
@@ -370,9 +366,6 @@
     {% endif %}
 
 </table>
-
-{% commentbox %}
-{% actionnoticebox %}
 
 {% endblock content %}
 

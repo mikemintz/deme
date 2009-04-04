@@ -31,19 +31,8 @@ Code correctness/consistency/bugs
 * Do a more thorough job ensuring fields are not null (unless allowed_to_be_null_before_destroyed == True). We might have to wait for real model-based validations.
 * The create/edit summary gets reset if your form is invalid
 
-Performance
------------
-* add indexes on things besides foreign keys, like name, description (for search)
-  - Maybe Postgres has some nice full-text indexing for good searching
-* we need multi-column indexes for permissions (so far it doesn't look like it's helping)
-  - we'll try http://docs.djangoproject.com/en/dev/howto/initial-data/#howto-initial-data
-* See if permissions speed up with more postgres memory (so far it doesn't look like it's helping)
-* Use spaceless tag to compress whitespace
-  - Be careful, since it will screw with body_str in TextDocumentViewer.show
-
 Features
 --------
-* Specific-version destroying
 
 Layout
 ------
@@ -60,6 +49,7 @@ Interface
 * We should probably add back all the margins on <p> and stuff (look at base.css .regular_css for a start)
 * Some sort of arrows in the side-by-side comment interface, or just click->highlight/scroll
 * Include hCard in user profiles
+* Include iCal export of calendar
 * Nicer autocompleter (jquery plugin?)
 
 Documentation
@@ -94,11 +84,13 @@ Unusual things to remember
 Distant Future (sorted by approximate order of planned implementation)
 ----------------------------------------------------------------------
 * Migrations (let's use http://south.aeracode.org/)
+* Specific-version destroying
 * Edit locks (merging, or evey synchro editing)
 * Implement some sort of SiteAlias so a Site can have more than one hostname
 * Internationalize using ugettext_lazy
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * Customizable email template per site that gets sent out for each notification
+* Facebook API
 * Think about PermissionActionNotices (where you need permission to view_permissions).
 * Add options to subscriptions, like which kinds of action notices you want and whether you want to subscribe to the entire comment thread.
 * Add other types of subscriptions, like text messages / IMs
@@ -117,3 +109,14 @@ Distant Future (sorted by approximate order of planned implementation)
   - what happens when viewer2 inherits from viewer1, and viewer2 item type subclasses viewer1 item type, and viewer2 inherits the edit/update functionality?
   - make it work better when you downcast an item in the editor, with versioning backward, and calling actions that should be called on create
 * work on google app engine
+
+Performance
+-----------
+* add indexes on things besides foreign keys, like name, description (for search)
+  - Maybe Postgres has some nice full-text indexing for good searching
+* we need multi-column indexes for permissions (so far it doesn't look like it's helping)
+  - we'll try http://docs.djangoproject.com/en/dev/howto/initial-data/#howto-initial-data
+* See if permissions speed up with more postgres memory (so far it doesn't look like it's helping)
+* Use spaceless tag to compress whitespace
+  - Be careful, since it will screw with body_str in TextDocumentViewer.show
+

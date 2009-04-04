@@ -28,8 +28,6 @@ tinyMCE.init({
 </script>    
 {% endif %}
 
-{% itemheader 'Edit' %}
-
 <div>
     <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,noun=item.pk,action="update" %}?version={{ item.version_number }}" class="item_form">
         <table cellspacing="0">
