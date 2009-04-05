@@ -22,16 +22,16 @@
 
     function encrypt_password() {
         var raw_password = document.forms['password_form']['password'].value;
-        var url = '{% url item_type_url viewer="authenticationmethod",action="login" %}?getencryptionmethod=' + document.forms['password_form']['username'].value;
-        new Ajax.Request(url, {method: 'get', onSuccess: function(transport) {
-            var algo = transport.responseJSON.algo;
-            var salt = transport.responseJSON.salt;
-            var nonce = transport.responseJSON.nonce;
+        var url = '{% url item_type_url viewer="authenticationmethod",action="login" %}';
+        jQuery.getJSON(url, {getencryptionmethod:document.forms['password_form']['username'].value}, function(json) {
+            var algo = json.algo;
+            var salt = json.salt;
+            var nonce = json.nonce;
             var encrypted_password = get_encrypted_password(raw_password, algo, salt, nonce);
             document.forms['real_password_form']['hashed_password'].value = encrypted_password;
             document.forms['real_password_form']['username'].value = document.forms['password_form']['username'].value;
             document.forms['real_password_form'].submit();
-        }});
+        });
     }
 </script>
 
