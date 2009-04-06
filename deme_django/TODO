@@ -92,6 +92,8 @@ Distant Future (sorted by approximate order of planned implementation)
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * Customizable email template per site that gets sent out for each notification
 * Facebook API
+* Installation-to-installation API
+  - Allow, as an option, an alias to refer to the hostname of the installation, such as i-numbers (to allow a consistent identifier when people change hostnames for their installation).
 * Think about PermissionActionNotices (where you need permission to view_permissions).
 * Add options to subscriptions, like which kinds of action notices you want and whether you want to subscribe to the entire comment thread.
 * Add other types of subscriptions, like text messages / IMs
