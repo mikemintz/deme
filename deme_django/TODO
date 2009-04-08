@@ -8,8 +8,6 @@ Symsys module
 * permissions for symsysusers will just be interpreted in the viewer, they don't get "modify_permissions"
 * joining and leaving groups is somehow covered by permissions
 * examine the choices for academic_title and admin_title
-* advisor should point to a symsysaffiliate
-* change honors_advisor and honors_second_reader to symsysaffiliate pointers (problem is some aren't symsys affiliates) (maybe change the original database)
 * come up with specification for new symsys layout
 * Figure out how to port mailing lists over
   - announce list == manually created subscriptions with special permissions, such that you cannot unsubscribe, and announcements are just comments on the group
