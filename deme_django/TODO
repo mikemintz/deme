@@ -7,7 +7,6 @@ Symsys module
 -------------
 * permissions for symsysusers will just be interpreted in the viewer, they don't get "modify_permissions"
 * joining and leaving groups is somehow covered by permissions
-* examine the choices for academic_title and admin_title
 * come up with specification for new symsys layout
 * Figure out how to port mailing lists over
   - announce list == manually created subscriptions with special permissions, such that you cannot unsubscribe, and announcements are just comments on the group

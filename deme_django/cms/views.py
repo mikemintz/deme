@@ -854,129 +854,72 @@ class ItemViewer(Viewer):
         if not can_modify_permissions:
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
 
-        def formfield_callback(f):
-            if f.name in ['agent', 'collection', 'item']:
-                return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=f.rel.field_name)
-            if isinstance(f, models.ForeignKey):
-                return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
-            else:
-                return f.formfield()
-
-        agent_permission_form_class = forms.models.modelform_factory(AgentItemPermission, fields=['agent', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        collection_permission_form_class = forms.models.modelform_factory(CollectionItemPermission, fields=['collection', 'item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-        everyone_permission_form_class = forms.models.modelform_factory(EveryoneItemPermission, fields=['item', 'ability', 'is_allowed'], formfield_callback=formfield_callback)
-
         if self.method == 'POST':
-            form_type = self.request.GET.get('formtype')
-            if form_type == 'agentpermission':
-                form_class = agent_permission_form_class
-            elif form_type == 'collectionpermission':
-                form_class = collection_permission_form_class
-            elif form_type == 'everyonepermission':
-                form_class = everyone_permission_form_class
-            else:
-                return self.render_error(HttpResponseBadRequest, 'Invalid Form Type', "You submitted a permission form with an invalid formtype parameter")
-
-            if self.request.POST.get('permission_to_delete') is not None:
-                permission = form_class._meta.model.objects.get(pk=self.request.POST.get('permission_to_delete'))
-                permission.delete()
-                redirect = self.request.GET['redirect']
-                return HttpResponseRedirect(redirect)
-
-            form = form_class(self.request.POST, self.request.FILES, prefix=self.request.GET['formprefix'])
-            if form.is_valid():
-                item = form.save(commit=False)
-                item.save()
-                redirect = self.request.GET['redirect']
-                return HttpResponseRedirect(redirect)
-            elif form.non_field_errors(): # there may have been a duplicate
-                model = form._meta.model
-                fields = form._meta.fields
-                existing_permission = model.objects
-                for field in fields:
-                    data = form[field].data
-                    if field == 'agent':
-                        existing_permission = existing_permission.filter(agent__pk=data)
-                    elif field == 'collection':
-                        existing_permission = existing_permission.filter(collection__pk=data)
-                    elif field == 'item':
-                        existing_permission = existing_permission.filter(item__pk=data)
-                    elif field == 'ability':
-                        existing_permission = existing_permission.filter(ability=data)
-                try:
-                    existing_permission = existing_permission.get()
-                except ObjectDoesNotExist:
-                    existing_permission = None
-                if existing_permission:
-                    if 'is_allowed' in fields and existing_permission.is_allowed != form['is_allowed'].data:
-                        existing_permission.is_allowed = form['is_allowed'].data
-                        existing_permission.save()
-                    redirect = self.request.GET['redirect']
-                    return HttpResponseRedirect(redirect)
+            permission_data = {}
+            for key, value in self.request.POST.iteritems():
+                permission_counter, name = key.split('_', 1)
+                permission_datum = permission_data.setdefault(permission_counter, {})
+                permission_datum[name] = value
+            new_permissions = []
+            for permission_datum in permission_data.itervalues():
+                ability = permission_datum['ability']
+                is_allowed = (permission_datum.get('is_allowed') == 'on')
+                permission_type = permission_datum['permission_type']
+                agent_or_collection_id = permission_datum['agent_or_collection_id']
+                if permission_type == 'agent':
+                    permission = AgentItemPermission(agent=Agent.objects.get(pk=agent_or_collection_id))
+                elif permission_type == 'collection':
+                    permission = CollectionItemPermission(collection=Collection.objects.get(pk=agent_or_collection_id))
+                elif permission_type == 'everyone':
+                    permission = EveryoneItemPermission()
                 else:
-                    # we'll display it in the regular page below as an invalid form
-                    pass
+                    return self.render_error(HttpResponseBadRequest, 'Form Error', "Invalid permission_type")
+                permission.ability = ability
+                permission.is_allowed = is_allowed
+                permission.item = self.item
+                new_permissions.append(permission)
+            AgentItemPermission.objects.filter(item=self.item).delete()
+            CollectionItemPermission.objects.filter(item=self.item).delete()
+            EveryoneItemPermission.objects.filter(item=self.item).delete()
+            for permission in new_permissions:
+                permission.save()
+                #TODO contradictory permissions?
+                #TODO verify it's a possible permission for this item type
+            #TODO check for own permission to modify_permissions again? preferrably we'd just redirect somewhere, like when we do "new"
+
+        possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
+        default_permissions = []
+        for ability in possible_abilities:
+            default_allowed = self.permission_cache.default_ability_is_allowed(ability, self.item.actual_item_type())
+            default_permissions.append({'ability': ability, 'is_allowed': default_allowed})
 
         agent_permissions = self.item.agent_item_permissions_as_item.order_by('ability')
         collection_permissions = self.item.collection_item_permissions_as_item.order_by('ability')
         everyone_permissions = self.item.everyone_item_permissions_as_item.order_by('ability')
-        try:
-            new_agent_pk = int(self.request.GET.get('agent', ''))
-        except ValueError:
-            new_agent_pk = 0
-        try:
-            new_collection_pk = int(self.request.GET.get('collection', ''))
-        except ValueError:
-            new_collection_pk = 0
-        agents = Agent.objects.filter(Q(pk__in=agent_permissions.values('agent__pk').query) | Q(pk=new_agent_pk)).order_by('name')
-        collections = Collection.objects.filter(Q(pk__in=collection_permissions.values('collection__pk').query) | Q(pk=new_collection_pk)).order_by('name')
+        agents = Agent.objects.filter(pk__in=agent_permissions.values('agent__pk').query).order_by('name')
+        collections = Collection.objects.filter(pk__in=collection_permissions.values('collection__pk').query).order_by('name')
 
+        new_agent_select_widget = AjaxModelChoiceField(Agent.objects).widget.render('new_agent', None)
+        new_collection_select_widget = AjaxModelChoiceField(Collection.objects).widget.render('new_collection', None)
 
         agent_data = []
         for agent in agents:
             agent_datum = {}
             agent_datum['agent'] = agent
             agent_datum['permissions'] = agent_permissions.filter(agent=agent)
-            agent_datum['permission_form'] = agent_permission_form_class(prefix="agent%s" % agent.pk, initial={'item': self.item.pk, 'agent': agent.pk})
             agent_data.append(agent_datum)
         collection_data = []
         for collection in collections:
             collection_datum = {}
             collection_datum['collection'] = collection
             collection_datum['permissions'] = collection_permissions.filter(collection=collection)
-            collection_datum['permission_form'] = collection_permission_form_class(prefix="collection%s" % collection.pk, initial={'item': self.item.pk, 'collection': collection.pk})
             collection_data.append(collection_datum)
-        everyone_data = {}
-        everyone_data['permissions'] = everyone_permissions
-        everyone_data['permission_form'] = everyone_permission_form_class(prefix="everyone", initial={'item': self.item.pk})
-
-        # now include the error form
-        if self.method == 'POST':
-            if form_type == 'agentpermission':
-                agent_datum = [datum for datum in agent_data if str(datum['agent'].pk) == form['agent'].data][0]
-                agent_datum['permission_form'] = form
-                agent_datum['permission_form_invalid'] = True
-            elif form_type == 'collectionpermission':
-                collection_datum = [datum for datum in collection_data if str(datum['collection'].pk) == form['collection'].data][0]
-                collection_datum['permission_form'] = form
-                collection_datum['permission_form_invalid'] = True
-            elif form_type == 'everyonepermission':
-                everyone_data['permission_form'] = form
-                everyone_data['permission_form_invalid'] = True
-
-        new_agent_select_widget = AjaxModelChoiceField(Agent.objects).widget.render('agent', None)
-        new_collection_select_widget = AjaxModelChoiceField(Collection.objects).widget.render('collection', None)
-
-        default_data = {'permissions': []}
-        for ability in self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()):
-            default_allowed = self.permission_cache.default_ability_is_allowed(ability, self.item.actual_item_type())
-            default_data['permissions'].append({'ability': ability, 'is_allowed': default_allowed})
-
         template = loader.get_template('item/itempermissions.html')
+        self.context['possible_abilities'] = possible_abilities
+        self.context['default_permissions'] = default_permissions
         self.context['agent_data'] = agent_data
         self.context['collection_data'] = collection_data
-        self.context['everyone_data'] = everyone_data
-        self.context['default_data'] = default_data
+        self.context['everyone_permissions'] = everyone_permissions
         self.context['new_agent_select_widget'] = new_agent_select_widget
         self.context['new_collection_select_widget'] = new_collection_select_widget
         return HttpResponse(template.render(self.context))
