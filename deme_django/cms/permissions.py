@@ -99,8 +99,12 @@ class PermissionCache(object):
         the same agent and ability for all of the items in the queryset,
         without having to do a new database query each time.
         """
+        item_type = queryset.model
         self.global_abilities(agent) # cache the global abilities
         global_abilities_yes, global_abilities_no = self._global_ability_cache[agent.pk]
+        if ability not in self.all_possible_item_abilities(item_type):
+            # Nothing to update, since no more database calls need to be made
+            return queryset.none()
         if 'do_anything' in global_abilities_yes:
             # Nothing to update, since no more database calls need to be made
             return queryset.filter(destroyed=False)
@@ -108,7 +112,6 @@ class PermissionCache(object):
             # Nothing to update, since no more database calls need to be made
             return queryset.none()
         else:
-            item_type = queryset.model
             authorized_queryset = queryset.filter(self.filter_items_by_permission(agent, ability, item_type), destroyed=False)
             yes_ids = set(authorized_queryset.values_list('pk', flat=True))
             no_ids = set(queryset.values_list('pk', flat=True)) - yes_ids

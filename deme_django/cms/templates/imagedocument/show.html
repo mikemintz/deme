@@ -7,7 +7,7 @@
 {% subclassfields %}
 
 {% ifagentcan 'view' 'datafile' item %}
-<img src="/static/media/{{ item.datafile }}" />
+<img src="{{ item.datafile.url }}" />
 {% endifagentcan %}
 
 {% endblock content %}
