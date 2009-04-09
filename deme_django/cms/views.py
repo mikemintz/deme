@@ -849,45 +849,56 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
+    def item_updateitempermissions_html(self):
+        if self.method == 'GET':
+            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
+        if not self.cur_agent_can('do_anything', self.item):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
+        possible_abilities = self.permission_cache.all_possible_item_abilities(self.item.actual_item_type())
+        permission_data = {}
+        for key, value in self.request.POST.iteritems():
+            permission_counter, name = key.split('_', 1)
+            permission_datum = permission_data.setdefault(permission_counter, {})
+            permission_datum[name] = value
+        new_permissions = []
+        for permission_datum in permission_data.itervalues():
+            ability = permission_datum['ability']
+            if ability not in possible_abilities:
+                return self.render_error(HttpResponseBadRequest, 'Form Error', "Invalid ability")
+            is_allowed = (permission_datum.get('is_allowed') == 'on')
+            permission_type = permission_datum['permission_type']
+            agent_or_collection_id = permission_datum['agent_or_collection_id']
+            if permission_type == 'agent':
+                agent = Agent.objects.get(pk=agent_or_collection_id)
+                permission = AgentItemPermission(agent=agent)
+            elif permission_type == 'collection':
+                collection = Collection.objects.get(pk=agent_or_collection_id)
+                permission = CollectionItemPermission(collection=collection)
+            elif permission_type == 'everyone':
+                permission = EveryoneItemPermission()
+            else:
+                return self.render_error(HttpResponseBadRequest, 'Form Error', "Invalid permission_type")
+            permission.ability = ability
+            permission.is_allowed = is_allowed
+            permission.item = self.item
+            permission_key_fn = lambda x: (x.ability, getattr(x, 'agent', None), getattr(x, 'collection', None))
+            if not any(permission_key_fn(x) == permission_key_fn(permission) for x in new_permissions):
+                new_permissions.append(permission)
+        AgentItemPermission.objects.filter(item=self.item).delete()
+        CollectionItemPermission.objects.filter(item=self.item).delete()
+        EveryoneItemPermission.objects.filter(item=self.item).delete()
+        for permission in new_permissions:
+            permission.save()
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
+
+
     def item_itempermissions_html(self):
-        can_modify_permissions = self.cur_agent_can('do_anything', self.item)
-        if not can_modify_permissions:
+        if not self.cur_agent_can('do_anything', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
 
-        if self.method == 'POST':
-            permission_data = {}
-            for key, value in self.request.POST.iteritems():
-                permission_counter, name = key.split('_', 1)
-                permission_datum = permission_data.setdefault(permission_counter, {})
-                permission_datum[name] = value
-            new_permissions = []
-            for permission_datum in permission_data.itervalues():
-                ability = permission_datum['ability']
-                is_allowed = (permission_datum.get('is_allowed') == 'on')
-                permission_type = permission_datum['permission_type']
-                agent_or_collection_id = permission_datum['agent_or_collection_id']
-                if permission_type == 'agent':
-                    permission = AgentItemPermission(agent=Agent.objects.get(pk=agent_or_collection_id))
-                elif permission_type == 'collection':
-                    permission = CollectionItemPermission(collection=Collection.objects.get(pk=agent_or_collection_id))
-                elif permission_type == 'everyone':
-                    permission = EveryoneItemPermission()
-                else:
-                    return self.render_error(HttpResponseBadRequest, 'Form Error', "Invalid permission_type")
-                permission.ability = ability
-                permission.is_allowed = is_allowed
-                permission.item = self.item
-                new_permissions.append(permission)
-            AgentItemPermission.objects.filter(item=self.item).delete()
-            CollectionItemPermission.objects.filter(item=self.item).delete()
-            EveryoneItemPermission.objects.filter(item=self.item).delete()
-            for permission in new_permissions:
-                permission.save()
-                #TODO contradictory permissions?
-                #TODO verify it's a possible permission for this item type
-            #TODO check for own permission to modify_permissions again? preferrably we'd just redirect somewhere, like when we do "new"
-
         possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
+
         default_permissions = []
         for ability in possible_abilities:
             default_allowed = self.permission_cache.default_ability_is_allowed(ability, self.item.actual_item_type())

@@ -9,10 +9,8 @@
     var possible_abilities = [{% for ability in possible_abilities %}"{{ ability|escapejs }}",{% endfor %}];
     function add_permission_fields(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
         var is_allowed_checkbox = $('<input type="checkbox" name="' + permission_counter + '_is_allowed" value="on">');
-        if (is_allowed) {
-            is_allowed_checkbox.attr('checked', true);
-            is_allowed_checkbox.attr('defaultChecked', true);
-        }
+        is_allowed_checkbox.attr('checked', is_allowed);
+        is_allowed_checkbox.attr('defaultChecked', is_allowed);
         var ability_select = $('<select name="' + permission_counter + '_ability">');
         for (var i in possible_abilities) {
             var is_selected = (possible_abilities[i] == ability);
@@ -38,9 +36,15 @@
 
     function add_agent_or_collection_row(permission_type, agent_or_collection_id, name) {
         var row = $('<tr>');
-        var name_cell = $('<td>');
-        name_cell.append(name);
-        row.append(name_cell);
+        if (permission_type == 'agent') {
+            var name_url = '{% url item_url viewer="agent",noun="1" %}'.replace('1', agent_or_collection_id);
+            row.append('<td><a href="' + name_url + '">' + name + '</a></td>');
+        } else if (permission_type == 'collection') {
+            var name_url = '{% url item_url viewer="collection",noun="1" %}'.replace('1', agent_or_collection_id);
+            row.append('<td><a href="' + name_url + '">' + name + '</a></td>');
+        } else if (permission_type == 'everyone') {
+            row.append('<td>' + name + '</td>');
+        }
         var permissions_cell = $('<td>');
         permissions_cell.addClass('permissions_cell');
         var add_button = $('<a href="#" class="img_link">');
@@ -59,7 +63,7 @@
 
     $(document).ready(function(){
         {% for agent_datum in agent_data %}
-            var agent_row = add_agent_or_collection_row("agent", "{{ agent_datum.agent.pk }}", '<a href="{{ agent_datum.agent.get_absolute_url }}">{% viewable_name agent_datum.agent %}</a>'); //TODO escapejs
+            var agent_row = add_agent_or_collection_row("agent", "{{ agent_datum.agent.pk }}", '{% viewable_name agent_datum.agent %}'); //TODO escapejs
             var permissions_cell = agent_row.children('td.permissions_cell');
             {% for p in agent_datum.permissions|dictsort:"ability" %}
                 add_permission_div(permissions_cell, "agent", "{{ agent_datum.agent.pk }}", {% if p.is_allowed %}true{% else %}false{% endif %}, "{{ p.ability|escapejs }}");
@@ -68,7 +72,7 @@
         {% endfor %}
 
         {% for collection_datum in collection_data %}
-            var collection_row = add_agent_or_collection_row("collection", "{{ collection_datum.collection.pk }}", '<a href="{{ collection_datum.collection.get_absolute_url }}">{% viewable_name collection_datum.collection %}</a>'); //TODO escapejs
+            var collection_row = add_agent_or_collection_row("collection", "{{ collection_datum.collection.pk }}", '{% viewable_name collection_datum.collection %}'); //TODO escapejs
             var permissions_cell = collection_row.children('td.permissions_cell');
             {% for p in collection_datum.permissions|dictsort:"ability" %}
             add_permission_div(permissions_cell, "collection", "{{ collection_datum.collection.pk }}", {% if p.is_allowed %}true{% else %}false{% endif %}, "{{ p.ability|escapejs }}");
@@ -81,20 +85,52 @@
         {% for p in everyone_permissions|dictsort:"ability" %}
             add_permission_div(permissions_cell, "everyone", "0", {% if p.is_allowed %}true{% else %}false{% endif %}, "{{ p.ability|escapejs }}");
         {% endfor %}
+
+        $('#new_agent_dialog').dialog({
+            autoOpen: false,
+            close: function(event, ui){
+                $('input[name=\'new_agent\']').val('');
+                $('input[name=\'new_agent_search\']').val('');
+            },
+            buttons: {
+                'Add Agent': function(){
+                    add_agent_or_collection_row('agent', $('input[name=\'new_agent\']').val(), $('input[name=\'new_agent_search\']').val());
+                    $(this).dialog("close");
+                },
+                'Cancel': function(){
+                    $(this).dialog("close");
+                }
+            },
+        });
+
+        $('#new_collection_dialog').dialog({
+            autoOpen: false,
+            close: function(event, ui){
+                $('input[name=\'new_collection\']').val('');
+                $('input[name=\'new_collection_search\']').val('');
+            },
+            buttons: {
+                'Add Collection': function(){
+                    add_agent_or_collection_row('collection', $('input[name=\'new_collection\']').val(), $('input[name=\'new_collection_search\']').val());
+                    $(this).dialog("close");
+                },
+                'Cancel': function(){
+                    $(this).dialog("close");
+                }
+            },
+        });
     });
 </script>
 
-<div style="margin-bottom: 5px;">
-    {{ new_agent_select_widget|safe }}
-    <button onclick="add_agent_or_collection_row('agent', $('input[name=\'new_agent\']').val(), $('input[name=\'new_agent_search\']').val());"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Add agent</span></button>
+<div id="new_agent_dialog" style="display: none;">
+    Name: {{ new_agent_select_widget|safe }}
 </div>
 
-<div style="margin-bottom: 5px;">
-    {{ new_collection_select_widget|safe }}
-    <button onclick="add_agent_or_collection_row('collection', $('input[name=\'new_collection\']').val(), $('input[name=\'new_collection_search\']').val());"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Add collection</span></button>
+<div id="new_collection_dialog" style="display: none;">
+    Name: {{ new_collection_select_widget|safe }}
 </div>
 
-<form method="post" action="{% url item_url viewer=viewer_name,noun=item.pk,action="itempermissions" %}" class="item_form">
+<form method="post" action="{% url item_url viewer=viewer_name,noun=item.pk,action="updateitempermissions" %}?redirect={{ full_path|urlencode }}" class="item_form">
 <table id="permission_table" class="list" cellspacing="0">
     <tbody>
         <tr>
@@ -103,7 +139,11 @@
         </tr>
     </tbody>
 </table>
+
+<button type="button" onclick="$('#new_agent_dialog').dialog('open');"><img src="{{ "Agent"|icon_url:16 }}" /> <span>Select  Agent</span></button>
+<button type="button" onclick="$('#new_collection_dialog').dialog('open');"><img src="{{ "Collection"|icon_url:16 }}" /> <span>Select  Collection</span></button>
 <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Save Permissions</span></button>
+
 </form>
 
 <div>
