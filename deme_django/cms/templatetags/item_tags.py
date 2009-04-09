@@ -12,6 +12,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timesince import timesince
 from django.utils.text import capfirst
+from django.utils import simplejson
 
 register = template.Library()
 
@@ -787,4 +788,229 @@ def viewable_name(parser, token):
     if len(bits) != 2:
         raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
     return ViewableName(bits[1])
+
+
+class PermissionEditor(template.Node):
+    def __init__(self, item, global_permissions):
+        if item is None:
+            self.item = None
+        else:
+            self.item = template.Variable(item)
+        self.global_permissions = global_permissions
+
+    def __repr__(self):
+        return "<PermissionEditor>"
+
+    def render(self, context):
+        if self.item is None:
+            item = None
+        else:
+            try:
+                item = self.item.resolve(context)
+            except template.VariableDoesNotExist:
+                if settings.DEBUG:
+                    return "[Couldn't resolve item variable]"
+                else:
+                    return '' # Fail silently for invalid variables.
+        viewer = context['_viewer']
+
+        if self.global_permissions:
+            possible_abilities = viewer.permission_cache.all_possible_global_abilities()
+        else:
+            possible_abilities = viewer.permission_cache.all_possible_item_abilities(viewer.item.actual_item_type())
+
+        if self.global_permissions:
+            agent_permissions = AgentGlobalPermission.objects.order_by('ability')
+            collection_permissions = CollectionGlobalPermission.objects.order_by('ability')
+            everyone_permissions = EveryoneGlobalPermission.objects.order_by('ability')
+        else:
+            agent_permissions = item.agent_item_permissions_as_item.order_by('ability')
+            collection_permissions = item.collection_item_permissions_as_item.order_by('ability')
+            everyone_permissions = item.everyone_item_permissions_as_item.order_by('ability')
+        agents = Agent.objects.filter(pk__in=agent_permissions.values('agent__pk').query).order_by('name')
+        collections = Collection.objects.filter(pk__in=collection_permissions.values('collection__pk').query).order_by('name')
+        
+        existing_permission_data = []
+        for agent in agents:
+            datum = {}
+            datum['permission_type'] = 'agent'
+            datum['name'] = get_viewable_name(context, agent)
+            datum['agent_or_collection_id'] = str(agent.pk)
+            datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in agent_permissions.filter(agent=agent)]
+            existing_permission_data.append(datum)
+        collection_data = []
+        for collection in collections:
+            datum = {}
+            datum['permission_type'] = 'collection'
+            datum['name'] = get_viewable_name(context, collection)
+            datum['agent_or_collection_id'] = str(collection.pk)
+            datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in collection_permissions.filter(collection=collection)]
+            existing_permission_data.append(datum)
+        datum = {}
+        datum['permission_type'] = 'everyone'
+        datum['name'] = 'Everyone'
+        datum['agent_or_collection_id'] = '0'
+        datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in everyone_permissions]
+        existing_permission_data.append(datum)
+
+        from cms.views import AjaxModelChoiceField
+        new_agent_select_widget = AjaxModelChoiceField(Agent.objects).widget.render('new_agent', None)
+        new_collection_select_widget = AjaxModelChoiceField(Collection.objects).widget.render('new_collection', None)
+        #TODO the widgets get centered-alignment in the dialog, which looks bad
+
+        result = """
+        <script>
+            var permission_counter = 1;
+            var possible_abilities = %(possible_ability_javascript_array)s;
+            function add_permission_fields(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
+                var is_allowed_checkbox = $('<input type="checkbox" name="perm' + permission_counter + '_is_allowed" value="on">');
+                is_allowed_checkbox.attr('checked', is_allowed);
+                is_allowed_checkbox.attr('defaultChecked', is_allowed);
+                var ability_select = $('<select name="perm' + permission_counter + '_ability">');
+                for (var i in possible_abilities) {
+                    var is_selected = (possible_abilities[i] == ability);
+                    ability_select[0].options[i] = new Option(possible_abilities[i], possible_abilities[i], is_selected, is_selected);
+                }
+                var remove_button = $('<a href="#" class="img_link">');
+                remove_button.addClass('img_link');
+                remove_button.append('<img src="%(delete_img_url)s" />');
+                remove_button.bind('click', function(e){wrapper.remove(); return false;});
+                wrapper.append(is_allowed_checkbox);
+                wrapper.append(ability_select);
+                wrapper.append(remove_button);
+                wrapper.append('<input type="hidden" name="perm' + permission_counter + '_permission_type" value="' + permission_type + '" />');
+                wrapper.append('<input type="hidden" name="perm' + permission_counter + '_agent_or_collection_id" value="' + agent_or_collection_id + '" />');
+                permission_counter += 1;
+            }
+
+            function add_permission_div(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
+                var permission_div = $('<div>');
+                add_permission_fields(permission_div, permission_type, agent_or_collection_id, is_allowed, ability);
+                wrapper.append(permission_div);
+            }
+
+            function add_agent_or_collection_row(permission_type, agent_or_collection_id, name) {
+                var row = $('<tr>');
+                if (permission_type == 'agent') {
+                    var name_url = '%(sample_agent_url)s'.replace('1', agent_or_collection_id);
+                    row.append('<td><a href="' + name_url + '">' + name + '</a></td>');
+                } else if (permission_type == 'collection') {
+                    var name_url = '%(sample_collection_url)s'.replace('1', agent_or_collection_id);
+                    row.append('<td><a href="' + name_url + '">' + name + '</a></td>');
+                } else if (permission_type == 'everyone') {
+                    row.append('<td>' + name + '</td>');
+                }
+                var permissions_cell = $('<td>');
+                permissions_cell.addClass('permissions_cell');
+                var add_button = $('<a href="#" class="img_link">');
+                add_button.append('<img src="%(new_img_url)s" /> New Permission');
+                add_button.bind('click', function(e){
+                    var permission_div = $('<div>');
+                    add_permission_fields(permission_div, permission_type, agent_or_collection_id, true, '');
+                    permissions_cell.append(permission_div);
+                    return false;
+                });
+                permissions_cell.append(add_button);
+                row.append(permissions_cell);
+                $('#permission_table tbody').append(row);
+                return row;
+            }
+
+            $(document).ready(function(){
+                var existing_permission_data = %(existing_permission_data_javascript_array)s;
+                for (var i in existing_permission_data) {
+                    var datum = existing_permission_data[i];
+                    var row = add_agent_or_collection_row(datum.permission_type, datum.agent_or_collection_id, datum.name);
+                    var permissions_cell = row.children('td.permissions_cell');
+                    for (var j in datum.permissions) {
+                        var permission = datum.permissions[j];
+                        add_permission_div(permissions_cell, datum.permission_type, datum.agent_or_collection_id, permission.is_allowed, permission.ability);
+                    }
+                    $('#permission_table tbody').append(row);
+                }
+
+                $('#new_agent_dialog').dialog({
+                    autoOpen: false,
+                    close: function(event, ui){
+                        $('input[name="new_agent"]').val('');
+                        $('input[name="new_agent_search"]').val('');
+                    },
+                    buttons: {
+                        'Add Agent': function(){
+                            add_agent_or_collection_row('agent', $('input[name="new_agent"]').val(), $('input[name="new_agent_search"]').val());
+                            $(this).dialog("close");
+                        },
+                        'Cancel': function(){
+                            $(this).dialog("close");
+                        }
+                    },
+                });
+
+                $('#new_collection_dialog').dialog({
+                    autoOpen: false,
+                    close: function(event, ui){
+                        $('input[name="new_collection"]').val('');
+                        $('input[name="new_collection_search"]').val('');
+                    },
+                    buttons: {
+                        'Add Collection': function(){
+                            add_agent_or_collection_row('collection', $('input[name="new_collection"]').val(), $('input[name="new_collection_search"]').val());
+                            $(this).dialog("close");
+                        },
+                        'Cancel': function(){
+                            $(this).dialog("close");
+                        }
+                    },
+                });
+            });
+        </script>
+
+        <div id="new_agent_dialog" style="display: none;">
+            Name: %(new_agent_select_widget)s
+        </div>
+
+        <div id="new_collection_dialog" style="display: none;">
+            Name: %(new_collection_select_widget)s
+        </div>
+
+        <table id="permission_table" class="list" cellspacing="0">
+            <tbody>
+                <tr>
+                    <th>Name</th>
+                    <th>Permissions</th>
+                </tr>
+            </tbody>
+        </table>
+
+        <a href="#" class="img_link" onclick="$('#new_agent_dialog').dialog('open'); return false;"><img src="%(agent_img_url)s" /> <span>Select Agent</span></a>
+        <a href="#" class="img_link" onclick="$('#new_collection_dialog').dialog('open'); return false;"><img src="%(collection_img_url)s" /> <span>Select Collection</span></a>
+""" % {
+        'possible_ability_javascript_array': simplejson.dumps(sorted(possible_abilities), separators=(',',':')),
+        'existing_permission_data_javascript_array': simplejson.dumps(existing_permission_data, separators=(',',':')),
+        'sample_agent_url': reverse('item_url', kwargs={'viewer': 'agent', 'noun': '1'}),
+        'sample_collection_url': reverse('item_url', kwargs={'viewer': 'collection', 'noun': '1'}),
+        'delete_img_url': icon_url('delete', 16),
+        'new_img_url': icon_url('new', 16),
+        'agent_img_url': icon_url('Agent', 16),
+        'collection_img_url': icon_url('Collection', 16),
+        'new_agent_select_widget': AjaxModelChoiceField(Agent.objects).widget.render('new_agent', None),
+        'new_collection_select_widget': AjaxModelChoiceField(Collection.objects).widget.render('new_collection', None),
+        }
+        return result
+
+@register.tag
+def item_permission_editor(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 2 and len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes zero or one argument" % bits[0]
+    item = bits[1] if len(bits) == 2 else None
+    return PermissionEditor(item, global_permissions=False)
+
+@register.tag
+def global_permission_editor(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes zero arguments" % bits[0]
+    item = None
+    return PermissionEditor(item, global_permissions=True)
 
