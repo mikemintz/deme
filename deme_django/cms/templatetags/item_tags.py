@@ -599,8 +599,6 @@ class ActionNoticeBox(template.Node):
 
     def render(self, context):
         item = context['item']
-        version_number = item.version_number
-        full_path = context['full_path']
 
         result = []
         if agentcan_helper(context, 'view_action_notices', item):
@@ -611,7 +609,10 @@ class ActionNoticeBox(template.Node):
             action_notices = ActionNotice.objects.filter(Q(item=item) | Q(creator=item)).order_by('created_at')
             action_notice_pk_to_object_map = {}
             for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
-                specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
+                select_related_fields = ['creator__name', 'item__name']
+                if action_notice_subclass == RelationActionNotice:
+                    select_related_fields.append('from_item__name')
+                specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query).select_related(*select_related_fields)
                 if action_notice_subclass == RelationActionNotice:
                     context['_permission_cache'].filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
                 for action_notice in specific_action_notices:
