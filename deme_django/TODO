@@ -42,7 +42,6 @@ Interface
 * Make the action at top-right of item more of a javascript menu, like in gmail
 * Get a variable <title> tag
 * Set action_summary whenever someone deactivates/reactivates/destroys that can go in ActionNotice.description
-* When you create something, you should get to choose the permissions generated on the item (which will happen before the action notice is generated).
 * There should be a full interface for specifying CommentLocations
 * Improve interface for adding ContactMethods, Subscriptions, and AuthenticationMethods to Agents
 * We should probably add back all the margins on <p> and stuff (look at base.css .regular_css for a start)

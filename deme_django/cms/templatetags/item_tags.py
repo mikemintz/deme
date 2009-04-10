@@ -822,24 +822,22 @@ class PermissionEditor(template.Node):
             else:
                 possible_abilities = viewer.permission_cache.all_possible_item_abilities(viewer.item.actual_item_type())
 
-        if self.global_permissions:
-            agent_permissions = AgentGlobalPermission.objects.order_by('ability')
-            collection_permissions = CollectionGlobalPermission.objects.order_by('ability')
-            everyone_permissions = EveryoneGlobalPermission.objects.order_by('ability')
+        if item is None and not self.global_permissions:
+            # Default permissions when creating a new item
+            agent_permissions = [AgentItemPermission(agent=context['cur_agent'], ability='do_anything', is_allowed=True)]
+            collection_permissions = []
+            everyone_permissions = []
+            agents = sorted(set(x.agent for x in agent_permissions), key=lambda x: x.name)
+            collections = sorted(set(x.collection for x in collection_permissions), key=lambda x: x.name)
         else:
-            if item is None:
-                agent_permissions = AgentItemPermission.objects.none()
-                collection_permissions = CollectionItemPermission.objects.none()
-                everyone_permissions = EveryoneItemPermission.objects.none()
-                #TODO we need to be able to specify default permissions with item=None
+            if self.global_permissions:
+                agent_permissions = AgentGlobalPermission.objects.order_by('ability')
+                collection_permissions = CollectionGlobalPermission.objects.order_by('ability')
+                everyone_permissions = EveryoneGlobalPermission.objects.order_by('ability')
             else:
                 agent_permissions = item.agent_item_permissions_as_item.order_by('ability')
                 collection_permissions = item.collection_item_permissions_as_item.order_by('ability')
                 everyone_permissions = item.everyone_item_permissions_as_item.order_by('ability')
-        if item is None and not self.global_permissions:
-            agents = Agent.objects.none()
-            collections = Collection.objects.none()
-        else:
             agents = Agent.objects.filter(pk__in=agent_permissions.values('agent__pk').query).order_by('name')
             collections = Collection.objects.filter(pk__in=collection_permissions.values('collection__pk').query).order_by('name')
         
@@ -849,7 +847,7 @@ class PermissionEditor(template.Node):
             datum['permission_type'] = 'agent'
             datum['name'] = get_viewable_name(context, agent)
             datum['agent_or_collection_id'] = str(agent.pk)
-            datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in agent_permissions.filter(agent=agent)]
+            datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in agent_permissions if x.agent == agent]
             existing_permission_data.append(datum)
         collection_data = []
         for collection in collections:
@@ -857,7 +855,7 @@ class PermissionEditor(template.Node):
             datum['permission_type'] = 'collection'
             datum['name'] = get_viewable_name(context, collection)
             datum['agent_or_collection_id'] = str(collection.pk)
-            datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in collection_permissions.filter(collection=collection)]
+            datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in collection_permissions if x.collection == collection]
             existing_permission_data.append(datum)
         datum = {}
         datum['permission_type'] = 'everyone'

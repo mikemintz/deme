@@ -38,6 +38,9 @@ tinyMCE.init({
             <tr><th><label for="id_action_summary">Create summary:</label></th><td><input id="id_action_summary" type="text" name="action_summary" value="" maxlength="255" /></td></tr>
             {{ form.as_table }}
         </table>
+        <div>
+            {% item_permission_editor item %}
+        </div>
         <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Create {{ accepted_item_type_name }}</span></button>
     </form>
 </div>

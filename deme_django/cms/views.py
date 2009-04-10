@@ -659,7 +659,8 @@ class ItemViewer(Viewer):
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -849,7 +850,7 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
-    def _get_permissions_from_post_data(self, item, item_type, global_permissions):
+    def _get_permissions_from_post_data(self, item_type, global_permissions):
         if global_permissions:
             possible_abilities = self.permission_cache.all_possible_global_abilities()
         else:
@@ -892,8 +893,6 @@ class ItemViewer(Viewer):
                 return self.render_error(HttpResponseBadRequest, 'Form Error', "Invalid permission_type")
             permission.ability = ability
             permission.is_allowed = is_allowed
-            if not global_permissions:
-                permission.item = item
             permission_key_fn = lambda x: (x.ability, getattr(x, 'agent', None), getattr(x, 'collection', None))
             if not any(permission_key_fn(x) == permission_key_fn(permission) for x in result):
                 result.append(permission)
@@ -904,11 +903,12 @@ class ItemViewer(Viewer):
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can('do_anything', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
-        new_permissions = self._get_permissions_from_post_data(self.item, self.item.actual_item_type(), False)
+        new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
         AgentItemPermission.objects.filter(item=self.item).delete()
         CollectionItemPermission.objects.filter(item=self.item).delete()
         EveryoneItemPermission.objects.filter(item=self.item).delete()
         for permission in new_permissions:
+            permission.item = self.item
             permission.save()
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'itempermissions'}))
         return HttpResponseRedirect(redirect)
@@ -918,7 +918,7 @@ class ItemViewer(Viewer):
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can_global('do_anything'):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify global permissions")
-        new_permissions = self._get_permissions_from_post_data(None, None, True)
+        new_permissions = self._get_permissions_from_post_data(None, True)
         AgentGlobalPermission.objects.filter().delete()
         CollectionGlobalPermission.objects.filter().delete()
         EveryoneGlobalPermission.objects.filter().delete()
@@ -975,7 +975,8 @@ class ContactMethodViewer(ItemViewer):
             can_add_contact_method = self.cur_agent_can('add_contact_method', item.agent)
             if not can_add_contact_method:
                 return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add contact methods to this agent")
-            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -1015,7 +1016,8 @@ class AuthenticationMethodViewer(ItemViewer):
             can_add_authentication_method = self.cur_agent_can('add_authentication_method', item.agent)
             if not can_add_authentication_method:
                 return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add authentication methods to this agent")
-            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -1189,7 +1191,8 @@ class GroupViewer(ItemViewer):
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             new_item = form.save(commit=False)
-            new_item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
+            new_item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
             template = loader.get_template('item/new.html')
@@ -1229,7 +1232,8 @@ class ViewerRequestViewer(ItemViewer):
         form = AddSubPathForm(self.request.POST, self.request.FILES, instance=custom_url)
         if form.is_valid():
             new_item = form.save(commit=False)
-            new_item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
+            new_item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             if not new_item.active:
                 new_item.reactivate(action_agent=self.cur_agent)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -1466,7 +1470,8 @@ class TextCommentViewer(TextDocumentViewer):
                 comment.name = item.display_name()
                 if not comment.name.lower().startswith('re: '):
                     comment.name = 'Re: %s' % comment.name
-            comment.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
+            comment.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             if isinstance(item, TextDocument) and item_index is not None and self.permission_cache.agent_can(self.cur_agent, 'add_transclusion', item):
                 transclusion = Transclusion(from_item=item, from_item_version_number=comment.item_version_number, from_item_index=item_index, to_item=comment)
                 transclusion.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
@@ -1512,7 +1517,8 @@ class TransclusionViewer(ItemViewer):
             can_add_transclusion = self.cur_agent_can('add_transclusion', item.from_item)
             if not can_add_transclusion:
                 return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add transclusions to this item")
-            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -1605,7 +1611,8 @@ class SubscriptionViewer(ItemViewer):
             can_add_subscription = self.cur_agent_can('add_subscription', item.contact_method)
             if not can_add_subscription:
                 return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add subscriptions to this contact method")
-            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:

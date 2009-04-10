@@ -398,7 +398,7 @@ class Item(models.Model):
     destroy.alters_data = True
 
     @transaction.commit_on_success
-    def save_versioned(self, action_agent, action_summary='', action_time=None, first_agent=False, create_permissions=True):
+    def save_versioned(self, action_agent, action_summary='', action_time=None, first_agent=False, initial_permissions=None):
         """
         Save the current item (the specified agent was responsible with the
         given summary at the given time), making sure to keep track of versions.
@@ -413,10 +413,7 @@ class Item(models.Model):
         first item as an Agent in this way so that every Item has a valid
         creator pointer.
         
-        If create_permissions=True, then this method will automatically give
-        the action_agent the 'do_anything' permission for this item.
-        
-        TODO: have a list of initial permissions you want before callbacks are made
+        TODO: document initial_permissions
         
         This will call _after_create or _after_edit, depending on whether the
         item already existed.
@@ -445,8 +442,10 @@ class Item(models.Model):
         new_version.save()
 
         # Create the permissions
-        if create_permissions and is_new:
-            AgentItemPermission(agent=action_agent, item=self, ability='do_anything', is_allowed=True).save()
+        if initial_permissions:
+            for permission in initial_permissions:
+                permission.item = self
+                permission.save()
 
         # Execute callbacks
         if is_new:
