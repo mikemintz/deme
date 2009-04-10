@@ -849,18 +849,21 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
-    def item_updateitempermissions_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
-        if not self.cur_agent_can('do_anything', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
-        possible_abilities = self.permission_cache.all_possible_item_abilities(self.item.actual_item_type())
+    def _get_permissions_from_post_data(self, item, item_type, global_permissions):
+        if global_permissions:
+            possible_abilities = self.permission_cache.all_possible_global_abilities()
+        else:
+            possible_abilities = self.permission_cache.all_possible_item_abilities(item_type)
         permission_data = {}
         for key, value in self.request.POST.iteritems():
-            permission_counter, name = key.split('_', 1)
-            permission_datum = permission_data.setdefault(permission_counter, {})
-            permission_datum[name] = value
-        new_permissions = []
+            if key.startswith('newpermission'):
+                permission_counter, name = key.split('_', 1)
+                permission_datum = permission_data.setdefault(permission_counter, {})
+                permission_datum[name] = value
+        result = []
+        if global_permissions:
+            #TODO make sure admin keeps do_anything ability
+            result.append(AgentGlobalPermission(agent_id=1, ability='do_anything', is_allowed=True))
         for permission_datum in permission_data.itervalues():
             ability = permission_datum['ability']
             if ability not in possible_abilities:
@@ -870,20 +873,38 @@ class ItemViewer(Viewer):
             agent_or_collection_id = permission_datum['agent_or_collection_id']
             if permission_type == 'agent':
                 agent = Agent.objects.get(pk=agent_or_collection_id)
-                permission = AgentItemPermission(agent=agent)
+                if global_permissions:
+                    permission = AgentGlobalPermission(agent=agent)
+                else:
+                    permission = AgentItemPermission(agent=agent)
             elif permission_type == 'collection':
                 collection = Collection.objects.get(pk=agent_or_collection_id)
-                permission = CollectionItemPermission(collection=collection)
+                if global_permissions:
+                    permission = CollectionGlobalPermission(collection=collection)
+                else:
+                    permission = CollectionItemPermission(collection=collection)
             elif permission_type == 'everyone':
-                permission = EveryoneItemPermission()
+                if global_permissions:
+                    permission = EveryoneGlobalPermission()
+                else:
+                    permission = EveryoneItemPermission()
             else:
                 return self.render_error(HttpResponseBadRequest, 'Form Error', "Invalid permission_type")
             permission.ability = ability
             permission.is_allowed = is_allowed
-            permission.item = self.item
+            if not global_permissions:
+                permission.item = item
             permission_key_fn = lambda x: (x.ability, getattr(x, 'agent', None), getattr(x, 'collection', None))
-            if not any(permission_key_fn(x) == permission_key_fn(permission) for x in new_permissions):
-                new_permissions.append(permission)
+            if not any(permission_key_fn(x) == permission_key_fn(permission) for x in result):
+                result.append(permission)
+        return result
+
+    def item_updateitempermissions_html(self):
+        if self.method == 'GET':
+            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
+        if not self.cur_agent_can('do_anything', self.item):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
+        new_permissions = self._get_permissions_from_post_data(self.item, self.item.actual_item_type(), False)
         AgentItemPermission.objects.filter(item=self.item).delete()
         CollectionItemPermission.objects.filter(item=self.item).delete()
         EveryoneItemPermission.objects.filter(item=self.item).delete()
@@ -897,35 +918,7 @@ class ItemViewer(Viewer):
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can_global('do_anything'):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify global permissions")
-        possible_abilities = self.permission_cache.all_possible_global_abilities()
-        permission_data = {}
-        for key, value in self.request.POST.iteritems():
-            permission_counter, name = key.split('_', 1)
-            permission_datum = permission_data.setdefault(permission_counter, {})
-            permission_datum[name] = value
-        new_permissions = []
-        for permission_datum in permission_data.itervalues():
-            ability = permission_datum['ability']
-            if ability not in possible_abilities:
-                return self.render_error(HttpResponseBadRequest, 'Form Error', "Invalid ability")
-            is_allowed = (permission_datum.get('is_allowed') == 'on')
-            permission_type = permission_datum['permission_type']
-            agent_or_collection_id = permission_datum['agent_or_collection_id']
-            if permission_type == 'agent':
-                agent = Agent.objects.get(pk=agent_or_collection_id)
-                permission = AgentGlobalPermission(agent=agent)
-            elif permission_type == 'collection':
-                collection = Collection.objects.get(pk=agent_or_collection_id)
-                permission = CollectionGlobalPermission(collection=collection)
-            elif permission_type == 'everyone':
-                permission = EveryoneGlobalPermission()
-            else:
-                return self.render_error(HttpResponseBadRequest, 'Form Error', "Invalid permission_type")
-            permission.ability = ability
-            permission.is_allowed = is_allowed
-            permission_key_fn = lambda x: (x.ability, getattr(x, 'agent', None), getattr(x, 'collection', None))
-            if not any(permission_key_fn(x) == permission_key_fn(permission) for x in new_permissions):
-                new_permissions.append(permission)
+        new_permissions = self._get_permissions_from_post_data(None, None, True)
         AgentGlobalPermission.objects.filter().delete()
         CollectionGlobalPermission.objects.filter().delete()
         EveryoneGlobalPermission.objects.filter().delete()

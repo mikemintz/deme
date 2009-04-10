@@ -817,18 +817,31 @@ class PermissionEditor(template.Node):
         if self.global_permissions:
             possible_abilities = viewer.permission_cache.all_possible_global_abilities()
         else:
-            possible_abilities = viewer.permission_cache.all_possible_item_abilities(viewer.item.actual_item_type())
+            if item is None:
+                possible_abilities = viewer.permission_cache.all_possible_item_abilities(viewer.accepted_item_type)
+            else:
+                possible_abilities = viewer.permission_cache.all_possible_item_abilities(viewer.item.actual_item_type())
 
         if self.global_permissions:
             agent_permissions = AgentGlobalPermission.objects.order_by('ability')
             collection_permissions = CollectionGlobalPermission.objects.order_by('ability')
             everyone_permissions = EveryoneGlobalPermission.objects.order_by('ability')
         else:
-            agent_permissions = item.agent_item_permissions_as_item.order_by('ability')
-            collection_permissions = item.collection_item_permissions_as_item.order_by('ability')
-            everyone_permissions = item.everyone_item_permissions_as_item.order_by('ability')
-        agents = Agent.objects.filter(pk__in=agent_permissions.values('agent__pk').query).order_by('name')
-        collections = Collection.objects.filter(pk__in=collection_permissions.values('collection__pk').query).order_by('name')
+            if item is None:
+                agent_permissions = AgentItemPermission.objects.none()
+                collection_permissions = CollectionItemPermission.objects.none()
+                everyone_permissions = EveryoneItemPermission.objects.none()
+                #TODO we need to be able to specify default permissions with item=None
+            else:
+                agent_permissions = item.agent_item_permissions_as_item.order_by('ability')
+                collection_permissions = item.collection_item_permissions_as_item.order_by('ability')
+                everyone_permissions = item.everyone_item_permissions_as_item.order_by('ability')
+        if item is None and not self.global_permissions:
+            agents = Agent.objects.none()
+            collections = Collection.objects.none()
+        else:
+            agents = Agent.objects.filter(pk__in=agent_permissions.values('agent__pk').query).order_by('name')
+            collections = Collection.objects.filter(pk__in=collection_permissions.values('collection__pk').query).order_by('name')
         
         existing_permission_data = []
         for agent in agents:
@@ -863,10 +876,10 @@ class PermissionEditor(template.Node):
             var permission_counter = 1;
             var possible_abilities = %(possible_ability_javascript_array)s;
             function add_permission_fields(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
-                var is_allowed_checkbox = $('<input type="checkbox" name="perm' + permission_counter + '_is_allowed" value="on">');
+                var is_allowed_checkbox = $('<input type="checkbox" name="newpermission' + permission_counter + '_is_allowed" value="on">');
                 is_allowed_checkbox.attr('checked', is_allowed);
                 is_allowed_checkbox.attr('defaultChecked', is_allowed);
-                var ability_select = $('<select name="perm' + permission_counter + '_ability">');
+                var ability_select = $('<select name="newpermission' + permission_counter + '_ability">');
                 for (var i in possible_abilities) {
                     var is_selected = (possible_abilities[i] == ability);
                     ability_select[0].options[i] = new Option(possible_abilities[i], possible_abilities[i], is_selected, is_selected);
@@ -878,8 +891,8 @@ class PermissionEditor(template.Node):
                 wrapper.append(is_allowed_checkbox);
                 wrapper.append(ability_select);
                 wrapper.append(remove_button);
-                wrapper.append('<input type="hidden" name="perm' + permission_counter + '_permission_type" value="' + permission_type + '" />');
-                wrapper.append('<input type="hidden" name="perm' + permission_counter + '_agent_or_collection_id" value="' + agent_or_collection_id + '" />');
+                wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_permission_type" value="' + permission_type + '" />');
+                wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_agent_or_collection_id" value="' + agent_or_collection_id + '" />');
                 permission_counter += 1;
             }
 
