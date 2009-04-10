@@ -413,7 +413,10 @@ class Item(models.Model):
         first item as an Agent in this way so that every Item has a valid
         creator pointer.
         
-        TODO: document initial_permissions
+        If the initial_permissions parameter is given, it should be a list of
+        unsaved ItemPermissions. After successfully saving self, this method
+        will save these permissions (setting permission.item = self) before
+        calling any callbacks.
         
         This will call _after_create or _after_edit, depending on whether the
         item already existed.
