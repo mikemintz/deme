@@ -817,9 +817,9 @@ class Person(Agent):
         verbose_name_plural = _('people')
 
     # Fields
-    first_name   = models.CharField(_('first name'), max_length=255)
+    first_name   = models.CharField(_('first name'), max_length=255, blank=True)
     middle_names = models.CharField(_('middle names'), max_length=255, blank=True)
-    last_name    = models.CharField(_('last name'), max_length=255)
+    last_name    = models.CharField(_('last name'), max_length=255, blank=True)
     suffix       = models.CharField(_('suffix'), max_length=255, blank=True)
 
 
@@ -1580,15 +1580,22 @@ class ActionNotice(models.Model):
         if isinstance(self, RelationActionNotice):
             if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
                 return None
-        if not (direct_subscriptions() or deep_subscriptions()):
-            return None
+        try:
+            arbitrary_subscription = direct_subscriptions()[0]
+        except ObjectDoesNotExist:
+            try:
+                arbitrary_subscription = deep_subscriptions()[0]
+            except ObjectDoesNotExist:
+                return None
 
         # Get the fields we are allowed to view
+        subscribed_item = arbitrary_subscription.item
         item = self.item
         reply_item = self.notification_reply_item()
         topmost_item = item.original_item_in_thread()
         def get_url(x):
             return 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('item_url', kwargs={'viewer': x.item_type_string.lower(), 'noun': x.pk}))
+        subscribed_item_name = get_viewable_name(viewer.context, subscribed_item)
         item_name = get_viewable_name(viewer.context, item)
         reply_item_name = get_viewable_name(viewer.context, reply_item)
         topmost_item_name = get_viewable_name(viewer.context, topmost_item)
@@ -1606,9 +1613,9 @@ class ActionNotice(models.Model):
         if isinstance(self, RelationActionNotice):
             from_item_name = get_viewable_name(viewer.context, self.from_item)
             if self.relation_added:
-                subject = 'Re: [Relation Added] %s' % (item_name,)
+                subject = '[%s] Relation added to %s' % (subscribed_item_name, item_name)
             else:
-                subject = 'Re: [Relation Removed] %s' % (item_name,)
+                subject = '[%s] Relation removed from %s' % (subscribed_item_name, item_name)
             template_name = 'relation'
             viewer.context['relation_added'] = self.relation_added
             viewer.context['from_item'] = self.from_item
@@ -1616,30 +1623,32 @@ class ActionNotice(models.Model):
             viewer.context['from_field_name'] = self.from_field_name
             viewer.context['from_field_model'] = self.from_field_model
         elif isinstance(self, DeactivateActionNotice):
-            subject = 'Re: [Deactivated] %s' % (item_name,)
+            subject = '[%s] Deactivated %s' % (subscribed_item_name, item_name)
             template_name = 'delete'
             viewer.context['delete_type'] = 'deactivate'
         elif isinstance(self, ReactivateActionNotice):
-            subject = 'Re: [Reactivated] %s' % (item_name,)
+            subject = '[%s] Reactivated %s' % (subscribed_item_name, item_name)
             template_name = 'delete'
             viewer.context['delete_type'] = 'reactivate'
         elif isinstance(self, DestroyActionNotice):
-            subject = 'Re: [Destroyed] %s' % (item_name,)
+            subject = '[%s] Destroyed %s' % (subscribed_item_name, item_name)
             template_name = 'delete'
             viewer.context['delete_type'] = 'destroy'
         elif isinstance(self, CreateActionNotice):
             if issubclass(item.actual_item_type(), TextComment):
                 comment = item.downcast()
                 comment_name = get_viewable_name(viewer.context, comment)
-                subject = 'Re: [%s] %s' % (comment_name, topmost_item_name)
+                subject = '[%s] New comment on %s' % (subscribed_item_name, topmost_item_name)
+                if issubclass(comment.item.actual_item_type(), Comment):
+                    subject = 'Re: ' + subject
                 template_name = 'comment'
                 viewer.context['comment'] = comment
             else:
-                subject = 'Re: [Created] %s' % (item_name,)
+                subject = '[%s] Created %s' % (subscribed_item_name, item_name)
                 template_name = 'save'
                 viewer.context['save_type'] = 'create'
         elif isinstance(self, EditActionNotice):
-            subject = 'Re: [Edited] %s' % (item_name,)
+            subject = '[%s] Edited %s' % (subscribed_item_name, item_name)
             template_name = 'save'
             viewer.context['save_type'] = 'edit'
         else:
@@ -1649,7 +1658,7 @@ class ActionNotice(models.Model):
         template = loader.get_template("notification/%s_email.html" % template_name)
         body_html = template.render(viewer.context)
         body_text = html2text.html2text(body_html)
-        from_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
+        from_email_address = '%s@%s' % ('noreply', settings.NOTIFICATION_EMAIL_HOSTNAME)
         from_email = formataddr((creator_name, from_email_address))
         reply_to_email = formataddr((reply_item_name, from_email_address))
         to_email = formataddr((recipient_name, email_contact_method.email))
