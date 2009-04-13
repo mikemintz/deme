@@ -1659,8 +1659,9 @@ class ActionNotice(models.Model):
         body_html = template.render(viewer.context)
         body_text = html2text.html2text(body_html)
         from_email_address = '%s@%s' % ('noreply', settings.NOTIFICATION_EMAIL_HOSTNAME)
+        reply_to_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
         from_email = formataddr((creator_name, from_email_address))
-        reply_to_email = formataddr((reply_item_name, from_email_address))
+        reply_to_email = formataddr((reply_item_name, reply_to_email_address))
         to_email = formataddr((recipient_name, email_contact_method.email))
         headers = {}
         headers['Reply-To'] = reply_to_email
