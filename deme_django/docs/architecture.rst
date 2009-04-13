@@ -514,7 +514,7 @@ Our URLs are restful. Every URL defines a viewer, an action, a noun (or none for
 
 Actions
 ^^^^^^^
-Every viewer URL defines a set of actions it responds to. Actions are divided into two groups: those that take nouns (which are always item ids) called item actions, and those that do not take nouns called item type actions. In order to make URLs unambiguous, item ids must be numbers, and action names can only be letters (although we may later decide to allow other characters, such as underscores and dashes, or even numbers that do not appear at the beginning).
+Every viewer defines a set of actions it responds to. Actions are divided into two groups: those that take nouns (which are always item ids) called item actions, and those that do not take nouns called item type actions. In order to make URLs unambiguous, item ids must be numbers, and action names can only be letters (although we may later decide to allow other characters, such as underscores and dashes, or even numbers that do not appear at the beginning).
 
 An action corresponds to a single Python function. If you visit /item/item/list, Deme will call the type_list method of the ItemViewer class. If you visit /item/person/5/show, Deme will call the item_show method of the PersonViewer class. Actions return the HTTP response to go back to the browser. Actions can call other actions from other viewers to embed views in other views (for example, the DocumentViewer could embed a view from the PersonViewer to show a little profile of the author at the top).
 
