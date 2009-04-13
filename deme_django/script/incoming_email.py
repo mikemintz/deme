@@ -34,17 +34,23 @@ def main():
     try:
         email_contact_method = EmailContactMethod.objects.get(email=from_email)
     except ObjectDoesNotExist:
-        send_mail('Re: %s' % subject, 'Error: Deme could not create your comment "%s" because there does not exist a user with email address %s' % (subject, from_email), to_email, [from_email])
+        send_mail('Re: %s' % subject, 'Error: Deme could not create your comment because there does not exist a user with email address %s' % from_email, to_email, [from_email])
         return 
     try:
         item = Item.objects.get(pk=item_id)
     except ObjectDoesNotExist:
-        send_mail('Re: %s' % subject, 'Error: Deme could not create your comment "%s" because there does not exist an item with id %s' % (subject, item_id), to_email, [from_email])
+        send_mail('Re: %s' % subject, 'Error: Deme could not create your comment because there does not exist an item with id %s' % item_id, to_email, [from_email])
         return 
     if not permission_cache.agent_can(email_contact_method.agent, 'comment_on', item):
-        send_mail('Re: %s' % subject, 'Error: Deme could not create your comment "%s" because you do not have permission to comment on the item with id %s' % (subject, item_id), to_email, [from_email])
+        send_mail('Re: %s' % subject, 'Error: Deme could not create your comment because you do not have permission to comment on the item with id %s' % item_id, to_email, [from_email])
         return 
-    comment = TextComment(item=item, item_version_number=item.version_number, name=subject, body=body)
+
+    #TODO permissions to view name: technically you could figure out the name of an item by commenting on it here (same issue in cms/views.py)
+    comment_name = item.display_name()
+    if not comment_name.lower().startswith('re: '):
+        comment_name = 'Re: %s' % comment_name
+    
+    comment = TextComment(item=item, item_version_number=item.version_number, name=comment_name, body=body)
     comment.save_versioned(action_agent=email_contact_method.agent)
 
 
