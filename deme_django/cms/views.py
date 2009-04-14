@@ -1467,6 +1467,7 @@ class TextCommentViewer(TextDocumentViewer):
             comment = form.save(commit=False)
             item = comment.item.downcast()
             if not comment.name:
+                #TODO permissions to view name: technically you could figure out the name of an item by commenting on it here
                 comment.name = item.display_name()
                 if not comment.name.lower().startswith('re: '):
                     comment.name = 'Re: %s' % comment.name

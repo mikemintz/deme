@@ -19,6 +19,7 @@ from django.core.exceptions import ObjectDoesNotExist
 #TODO error handling (always send back an email, preferrably with same thread, on error)
 #TODO attachments? handle html formatting?
 #TODO the subject line isn't always getting read
+#TODO let people comment on specific versions, like 123.2@deme.stanford.edu
 
 def main():
     permission_cache = PermissionCache()
