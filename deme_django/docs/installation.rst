@@ -7,7 +7,7 @@ http://github.com/mikemintz/deme/tree/master
 
 Dependencies
 ------------
-We currently run with Django from SVN, r9912.
+We currently run with Django from SVN, r10558.
 
 http://code.djangoproject.com/svn/django/trunk/django
 

@@ -77,12 +77,12 @@ home_page = DjangoTemplateDocument(name='Deme Home Page', body="""
 {%% block title %%}Welcome to Deme!{%% endblock %%}
 {%% block content %%}
 Welcome to Deme!
-<br><br>
+<br/><br/>
 Visit our GitHub page for the latest source code: <a href="http://github.com/mikemintz/deme">http://github.com/mikemintz/deme</a>.
-<br><br>
+<br/><br/>
 
 This site is running a working copy of Deme <a href="http://github.com/mikemintz/deme/commit/%s">commit %s</a> from %s.
-<br><br>
+<br/><br/>
 View the slides from our presentation at Code Camp at <a href="http://www.stanford.edu/~davies/tdavies-presentations.html">http://www.stanford.edu/~davies/tdavies-presentations.html</a>.
 {%% endblock content %%} 
 """ % (git_commit, git_commit, formatted_git_date) )
@@ -91,7 +91,7 @@ default_site.viewer = 'djangotemplatedocument'
 default_site.action = 'render'
 default_site.aliased_item = home_page
 default_site.query_string = ''
-default_site.default_layout = default_layout
+#default_site.default_layout = default_layout #TODO uncomment this line
 default_site.save_versioned(action_agent=admin)
 
 mike = Person(first_name="Mike", last_name="Mintz", name="Mike Mintz")

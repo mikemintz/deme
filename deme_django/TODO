@@ -16,6 +16,10 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Need initial permissions set on incoming email comments, group generated folios/groupagents, maybe other things too. Just search for save_versioned.
+* Make sure openid still works
+* Rename /static/ to /file/
+* Rename PasswordAuthenticationMethod to DemeAccount. Rename WebauthAuthenticationMethod to WebauthAccount. Rename OpenidAuthenticationMethod to OpenidAccount.
 * The viewer should probably define a list of actions for each item type to be displayed in a menu
 * Probably don't need auto-load modules: INSTALLED_APPS is more explicit and familiar
 * Figure out correct way to manage assets (maybe like in rails)
@@ -24,7 +28,6 @@ Code correctness/consistency/bugs
 * Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
   - http://code.djangoproject.com/ticket/2227
 * Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun)
-* Figure out a more correct subject line for notification emails that hopefully threads correctly in gmail
 * HTML special chars are being escaped twice in RSS feeds
 * Do a more thorough job ensuring fields are not null (unless allowed_to_be_null_before_destroyed == True). We might have to wait for real model-based validations.
 * The create/edit summary gets reset if your form is invalid
@@ -32,6 +35,7 @@ Code correctness/consistency/bugs
 
 Features
 --------
+* JavaScript spam disabler
 
 Layout
 ------
@@ -43,15 +47,15 @@ Interface
 * Get a variable <title> tag
 * Set action_summary whenever someone deactivates/reactivates/destroys that can go in ActionNotice.description
 * There should be a full interface for specifying CommentLocations
-* Improve interface for adding ContactMethods, Subscriptions, and AuthenticationMethods to Agents
 * We should probably add back all the margins on <p> and stuff (look at base.css .regular_css for a start)
-* Some sort of arrows in the side-by-side comment interface, or just click->highlight/scroll
+* Some sort of arrows in the side-by-side comment interface, or just click->highlight/scroll (just for TextDocuments right now)
 * Include hCard in user profiles
 * Include iCal export of calendar
 * Nicer autocompleter (jquery plugin?)
 
 Documentation
 -------------
+* Update documentation to reflect how we deal with formats now
 * Document more functions with docstrings more
 * Make some sort of API doc
 * Make the README better (it points to docs/ directory, but users don't know how to compile docs)
@@ -88,6 +92,7 @@ Distant Future (sorted by approximate order of planned implementation)
 * Internationalize using ugettext_lazy
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * Customizable email template per site that gets sent out for each notification
+* If someone has a public EmailContactMethod, then the from_email of notifications they sent out should be one of those email addresses.
 * Facebook API
 * Installation-to-installation API
   - Allow, as an option, an alias to refer to the hostname of the installation, such as i-numbers (to allow a consistent identifier when people change hostnames for their installation).
@@ -95,12 +100,15 @@ Distant Future (sorted by approximate order of planned implementation)
 * Add options to subscriptions, like which kinds of action notices you want and whether you want to subscribe to the entire comment thread.
 * Add other types of subscriptions, like text messages / IMs
 * Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
+* Captchas
 * We will eventually want to have a item_type table
 * More efficient versioning (like like latest version in db, but have deltas to prev versions)
   - Consider not necessarily having linear deltas. If we start with version 1, a spammer comes in and messes it up for version 2, and I "edit" version 1 so that it becomes version 3, the delta would be more efficient if it knew I started with version 1 in order to get to version 3.
 * We're going to have to integrate permissions into binary files (e.g., MediaDocument) so that users can't bypass Deme and download things from Apache directly.
   - I'd like to have a settings option where you either have apache with no permissions, django with no permissions, or django with full permissions (or maybe later a workaround with apache and permissions based on cookie)
-* respect the format string and have XML output and stuff
+* More dynamic way of setting whether certain fields can be blank (or other constraints) within an installation.
+* Have XML output and stuff
+* Maybe events can have multi-field dates, like you can specify the year and month but not the day and time.
 * When matching SiteDomain in alias, match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
 * Add to ImageDocument metadata like width, height, exif, and a pointer to a thumbfile or 2
 * Temporal history viewer that lets you look at the state of the world at a given time (e.g., the roster of a group 1 year ago)

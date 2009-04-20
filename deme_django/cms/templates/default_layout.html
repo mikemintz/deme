@@ -1,140 +1,243 @@
 {% load item_tags %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
+
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Deme</title>
-<script type="text/javascript" src="/static/javascripts/jquery-1.3.2.min.js"></script>
-<script type="text/javascript" src="/static/javascripts/jquery-ui-1.7.1.custom.min.js"></script>
-<script type="text/javascript" src="/static/javascripts/jquery-ui-layout-1.2.0.min.js"></script>
-<link href="/static/stylesheets/smoothness/jquery-ui-1.7.1.custom.css" media="all" rel="Stylesheet" type="text/css" />
-<link href="/static/stylesheets/base.css" media="all" rel="Stylesheet" type="text/css" />
-<link rel="shortcut icon" href="{% block favicon %}/static/favicon.ico{% endblock %}" type="image/x-icon" />
-{% ifequal action 'show' %}
-{% if item %}
-<link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}" />
-{% endif %}
-{% endifequal %}
-{% ifequal action 'list' %}
-<link rel="alternate" type="application/rss+xml" title="Item feed" href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}" />
-{% endifequal %}
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Deme</title>
+    <link rel="shortcut icon" href="{% block favicon %}/static/favicon.ico{% endblock %}" type="image/x-icon" />
+
+    <link rel="stylesheet" href="/static/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection" />
+    <link rel="stylesheet" href="/static/stylesheets/blueprint/print.css" type="text/css" media="print" />
+    <!--[if IE]>
+      <link rel="stylesheet" href="/static/stylesheets/blueprint/ie.css" type="text/css" media="screen, projection" />
+    <![endif]-->
+    <link href="/static/stylesheets/base.css" media="all" rel="Stylesheet" type="text/css" />
+
+    <script type="text/javascript" src="/static/javascripts/jquery-1.3.2.min.js"></script>
+    <script type="text/javascript" src="/static/javascripts/jquery-ui-1.7.1.custom.min.js"></script>
+    <!--<script type="text/javascript" src="/static/javascripts/jquery-ui-layout-1.2.0.min.js"></script>-->
+    <link href="/static/stylesheets/smoothness/jquery-ui-1.7.1.custom.css" media="all" rel="Stylesheet" type="text/css" />
+
+    {% ifequal action 'show' %}
+    {% if item %}
+    <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}" />
+    {% endif %}
+    {% endifequal %}
+    {% ifequal action 'list' %}
+    <link rel="alternate" type="application/rss+xml" title="Item feed" href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}" />
+    {% endifequal %}
+    <script type="text/javascript">
+        // from http://www.filamentgroup.com/examples/buttonFrameworkCSS/
+        $(function(){
+            //all hover and click logic for buttons
+            $(".fg-button:not(.ui-state-disabled)")
+            .hover(
+                function(){ 
+                    $(this).addClass("ui-state-hover"); 
+                },
+                function(){ 
+                    $(this).removeClass("ui-state-hover"); 
+                }
+            )
+            .mousedown(function(){
+                    $(this).parents('.fg-buttonset-single:first').find(".fg-button.ui-state-active").removeClass("ui-state-active");
+                    if( $(this).is('.ui-state-active.fg-button-toggleable, .fg-buttonset-multi .ui-state-active') ){ $(this).removeClass("ui-state-active"); }
+                    else { $(this).addClass("ui-state-active"); }	
+            })
+            .mouseup(function(){
+                if(! $(this).is('.fg-button-toggleable, .fg-buttonset-single .fg-button,  .fg-buttonset-multi .fg-button') ){
+                    $(this).removeClass("ui-state-active");
+                }
+            });
+        });
+    </script>        
 </head>
+
 <body>
 
-<div class="site">
+<div class="site_outer">
+<div class="site_inner">
 
 <div class="header">
 
-<div class="top_right">
-    <div class="top_right_text">
-    <form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">
-        <input type="hidden" name="login_type" value="logout" />
-    </form>
-    {% ifequal cur_agent.item_type_string 'AnonymousAgent' %}
-    You are not logged in
-    [<a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login</a>]
-    {% else %}
-    You are logged in as <a href="{{ cur_agent.get_absolute_url }}">{% viewable_name cur_agent %}</a>
-    [<a href="#" onclick="document.forms['logout_form'].submit(); return false;">Logout</a>]
-    [<a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]
-    {% endifequal %}
+    <div class="top_left">
+        <div style="height: 100px; width: 200px; border: 1px solid #aaa; text-align: center;">
+            Deme logo
+        </div>
     </div>
-    <div class="top_right_search">
-    <form method="get" action="{% url item_type_url viewer="item" %}">
-    <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
-    </form>
+
+    <div class="top_right">
+        <div class="top_right_text">
+            <form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">
+                <input type="hidden" name="login_type" value="logout" />
+            </form>
+            {% ifequal cur_agent.item_type_string 'AnonymousAgent' %}
+            You are not logged in
+            [<a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login</a>]
+            {% else %}
+            You are logged in as <a href="{{ cur_agent.get_absolute_url }}">{% viewable_name cur_agent %}</a>
+            [<a href="#" onclick="document.forms['logout_form'].submit(); return false;">Logout</a>]
+            [<a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]
+            {% endifequal %}
+        </div>
+        <div class="top_right_actions">
+            <a href="{% url item_type_url viewer="item" %}" class="img_button"><img src="{{ "Item"|icon_url:16 }}" /><span>Items</span></a> {#TODO more sophisticaed item type menu #}
+            <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline;">
+                <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
+                {# TODO add magnifying glass #}
+            </form>
+        </div>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                var search_box_changed = {% if search_query %}true{% else %}false{% endif %};
+                var search_box = document.getElementById('search_box');
+                search_box.onfocus = function(e){
+                    if (!search_box_changed) {
+                        search_box_changed = true;
+                        search_box.value = '';
+                        search_box.style.color = 'inherit';
+                    }
+                };
+                search_box.onblur = function(e){
+                    if (search_box.value == '') {
+                        search_box_changed = false;
+                        search_box.value = 'Search';
+                        search_box.style.color = '#777';
+                    }
+                };
+                search_box.onblur();
+            });
+        </script>
     </div>
-    <script>
-        var search_box_changed = {% if search_query %}true{% else %}false{% endif %};
-        var search_box = document.getElementById('search_box');
-        search_box.onfocus = function(e){
-            if (!search_box_changed) {
-                search_box_changed = true;
-                search_box.value = '';
-                search_box.style.color = 'inherit';
-            }
-        };
-        search_box.onblur = function(e){
-            if (search_box.value == '') {
-                search_box_changed = false;
-                search_box.value = 'Search';
-                search_box.style.color = '#777';
-            }
-        };
-        search_box.onblur();
-    </script>
+
+    <div style="clear: both;"></div>
 </div>
 
-<div class="title">{% block title %}{% endblock %}</div>
-
-<div style="clear: both;"></div>
-</div>
-
-<ul class="tabnav">
-    <li{% ifequal full_path "/"%} class="tabhighlighted"{% endifequal %}><a href="/">Home</a></li>
-    <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} class="tabhighlighted"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
-    <li{% ifequal viewer_name "codegraph"%} class="tabhighlighted"{% endifequal %}><a href="{% url item_type_url viewer="codegraph" %}">Codegraph</a></li>
-    <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
-</ul>
 
 <div class="content_box">
-{% if layout_permissions_problem %}
-<div style="color: #a00; padding: 15px; margin: 15px; border: thin dotted #a00; text-align: center;">
-    Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.
-</div>
-{% endif %}
+    {% if layout_permissions_problem %}
+    <div style="color: #a00; padding: 15px; margin: 15px; border: thin dotted #a00; text-align: center;">
+        Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.
+    </div>
+    {% endif %}
 
-<script>
-$(document).ready(function () {
-    document_layout = $('#content_layout').layout({
-        applyDefaultStyles: true,
-        east__size: 400,
-        east__initClosed: true,
-        south__initClosed: true,
-    });
-});
-</script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#right_accordion").accordion({
+                fillSpace: false,
+                autoHeight: false,
+            });
+        });
+    </script>
 
-<div id="content_layout" style="height: 400px;">
+    <div class="title">{% block title %}{% endblock %}</div>
 
-{% if item %}
-<div class="ui-layout-east" style="overflow: auto;">
-<div><a href="#" onclick="$('.comment_body, .comment_description').toggle(); return false;">Collapse/Expand</a></div>
-{% commentbox %}
-</div>
-{% endif %}
+    <table cellspacing="0">
+        <tr>
+            <td style="vertical-align: top; width: 120px;">
+                <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
+                    Navigation
+                </div>
+                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px;">
+                    <ul style="list-style-type: none; margin: 0; padding: 0;">
+                        <li{% ifequal full_path "/"%} style="font-weight: bold;"{% endifequal %}><a href="/">Home</a></li>
+                        <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
+                        <li{% ifequal viewer_name "codegraph"%} style="font-weight: bold;"{% endifequal %}><a href="{% url item_type_url viewer="codegraph" %}">Codegraph</a></li>
+                        <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
+                    </ul>
+                </div>
+            </td>
+            <td style="vertical-align: top; width: 590px;">
+                <div style="padding: 0 5px 0 5px;">
+                    {% if item %}
+                    {% itemheader %} {#TODO include argument for page title#}
+                    {% else %}
+                    {% typeheader %} {#TODO include argument for page title#}
+                    {% endif %}
+                    {% block content %}
+                    {% endblock %}
+                </div>
+            </td>
+            <td style="vertical-align: top; width: 240px;">
+                <div class="fg-toolbar ui-widget-header ui-corner-all ui-helper-clearfix">
+                <div class="fg-buttonset ui-helper-clearfix">
+                {% if item %}
+                     <a href="#" onclick="$('#right_accordion').accordion('activate', 0); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Item details"><span class="ui-icon ui-icon-lightbulb"></span> Item details</a>
+                     <a href="#" onclick="$('#right_accordion').accordion('activate', 1); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Comments"><span class="ui-icon ui-icon-comment"></span> Comments</a>
+                     <a href="#" onclick="$('#right_accordion').accordion('activate', 2); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Action notices"><span class="ui-icon ui-icon-wrench"></span> Action notices</a>
+                     <a href="#" onclick="$('#right_accordion').accordion('activate', 3); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="History"><span class="ui-icon ui-icon-clock"></span> History</a>
+                     <a href="#" onclick="$('#right_accordion').accordion('activate', 4); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Related items"><span class="ui-icon ui-icon-transferthick-e-w"></span> Related items</a>
+                     <a href="#" onclick="$('#right_accordion').accordion('activate', 5); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Permissions"><span class="ui-icon ui-icon-locked"></span> Permissions</a>
+                {% else %}
+                     <a href="#" onclick="$('#right_accordion').accordion('activate', 0); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Filters"><span class="ui-icon ui-icon-lightbulb"></span> Filters</a>
+                {% endif %}
+                </div>
+                </div>
+                
+                {# TODO links are black because of ui-widget-content to a #}
+                <div id="right_accordion">
+                    {% if item %}
 
-{% if item %}
-<div class="ui-layout-south" style="overflow: auto;">
-{% actionnoticebox %}
-</div>
-{% endif %}
+                    <h3><a href="#">Item details</a></h3>
+                    <div>
+                        {% itemdetails %}
+                    </div>
 
-<div class="ui-layout-center" style="overflow: auto;">
-{% if item %}
-<div style="text-align: right; margin-bottom: 5px;">
-    <button onclick="document_layout.toggle('east')"><img src="{{ "TextComment"|icon_url:16 }}" /> <span><b>{{ n_comments }}</b> comment{{ n_comments|pluralize }}</span></button>
-    <button onclick="document_layout.toggle('south')"><img src="{{ "history"|icon_url:16 }}" /> <span><b>{{ n_action_notices }}</b> action notice{{ n_action_notices|pluralize }}</span></button>
-</div>
-{% itemheader %} {#TODO include argument for page title#}
-{% else %}
-{% typeheader %} {#TODO include argument for page title#}
-{% endif %}
-{% block content %}
-{% endblock %}
-</div>
+                    {% calculatecomments %}
+                    <h3><a href="#">{{ n_comments }} comment{{ n_comments|pluralize }}</a></h3>
+                    <div>
+                        <div><a href="#" onclick="$('.comment_body, .comment_description').toggle(); return false;">Collapse/Expand</a></div>
+                        {{ comment_box }}
+                    </div>
 
-</div>
+                    {% calculateactionnotices %}
+                    <h3><a href="#">{{ n_action_notices }} action notice{{ n_action_notices|pluralize }}</a></h3>
+                    <div>
+                        {{ action_notice_box }}
+                    </div>
+
+                    {% calculatehistory %}
+                    <h3><a href="#">{{ n_versions }} version{{ n_versions|pluralize }}</a></h3>
+                    <div>
+                        {{ history_box }}
+                    </div>
+
+                    {% calculaterelationships %}
+                    <h3><a href="#">{{ n_relationships }} related item{{ n_relationships|pluralize }}</a></h3>
+                    <div>
+                        {{ relationships_box }}
+                    </div>
+
+                    <h3><a href="#">Permissions</a></h3>
+                    <div>
+                        {% permissions_box %}
+                    </div>
+
+                    {% else %}
+
+                    <h3><a href="#">Filters</a></h3>
+                    <div>
+                        blah blah {#TODO put stuff here #}
+                    </div>
+
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    </table>
 
 </div>
 
 <div class="footer">
-    <p><a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a></p>
-    <p>Copyright &copy;2008-{% now "Y" %} to Deme</p>
+    <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="/admin">Admin</a></p> {# TODO write admin page #}
+    <p>Desktop browser | <a href="list.mobi">Mobile</a> | <a href="list.rss">RSS</a></p> {# TODO generate formats list #}
 </div>
 
+</div>
 </div>
 
 </body>
+
 </html>
 

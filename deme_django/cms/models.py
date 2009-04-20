@@ -315,12 +315,13 @@ class Item(models.Model):
     copy_fields_to_itemversion.alters_data = True
 
     @transaction.commit_on_success
-    def deactivate(self, action_agent, action_summary='', action_time=None):
+    def deactivate(self, action_agent, action_summary=None, action_time=None):
         """
         Deactivate the current Item (the specified agent was responsible with
         the given summary at the given time). This will call _after_deactivate
         if the item was previously active.
         """
+        action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
         if not self.active:
             return
@@ -336,12 +337,13 @@ class Item(models.Model):
     deactivate.alters_data = True
 
     @transaction.commit_on_success
-    def reactivate(self, action_agent, action_summary='', action_time=None):
+    def reactivate(self, action_agent, action_summary=None, action_time=None):
         """
         Reactivate the current Item (the specified agent was responsible with
         the given summary at the given time). This will call _after_reactivate
         if the item was previously inactive.
         """
+        action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
         if self.active:
             return
@@ -357,13 +359,14 @@ class Item(models.Model):
     reactivate.alters_data = True
 
     @transaction.commit_on_success
-    def destroy(self, action_agent, action_summary='', action_time=None):
+    def destroy(self, action_agent, action_summary=None, action_time=None):
         """
         Nullify the fields of this item (the specified agent was responsible
         with the given summary at the given time) and delete all versions.
         The item must already be inactive and cannot have already been
         destroyed. This will call _after_destroy.
         """
+        action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
         if self.destroyed or self.active:
             return
@@ -398,7 +401,7 @@ class Item(models.Model):
     destroy.alters_data = True
 
     @transaction.commit_on_success
-    def save_versioned(self, action_agent, action_summary='', action_time=None, first_agent=False, initial_permissions=None):
+    def save_versioned(self, action_agent, action_summary=None, action_time=None, first_agent=False, initial_permissions=None):
         """
         Save the current item (the specified agent was responsible with the
         given summary at the given time), making sure to keep track of versions.

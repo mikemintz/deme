@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load item_tags %}
 {% block favicon %}{{ accepted_item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ accepted_item_type|icon_url:48 }}" /> {% if action_is_item_copy %}Copy{% else %}New{% endif %} {{ accepted_item_type_name }}{% endblock %}
+{% block title %}<img src="{{ accepted_item_type|icon_url:24 }}" /> {% if action_is_item_copy %}Copy{% else %}New{% endif %} {{ accepted_item_type_name }}{% endblock %}
 {% block content %}
 
 {% if is_html %}

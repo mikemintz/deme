@@ -350,7 +350,7 @@ class Viewer(object):
         {%% extends layout %%}
         {%% load item_tags %%}
         {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
-        {%% block title %%}<img src="{{ "error"|icon_url:48 }}" /> %s{%% endblock %%}
+        {%% block title %%}<img src="{{ "error"|icon_url:24 }}" /> %s{%% endblock %%}
         {%% block content %%}%s{%% endblock content %%}
         """ % (title, body))
         return request_class(template.render(self.context))
@@ -721,45 +721,6 @@ class ItemViewer(Viewer):
                 return item['created_at']
         return django.contrib.syndication.views.feed(self.request, 'item_show', {'item_show': ItemShowFeed})
 
-    def item_history_html(self):
-        import copy
-        versions = []
-        for version_number in xrange(1, self.item.version_number + 1):
-            versioned_item = copy.deepcopy(self.item)
-            versioned_item.copy_fields_from_version(version_number)
-            versions.append(versioned_item)
-        template = loader.get_template('item/history.html')
-        self.context['versions'] = versions
-        return HttpResponse(template.render(self.context))
-
-    def item_relationships_html(self):
-        relationship_sets = []
-        for name in sorted(self.item._meta.get_all_field_names()):
-            field, model, direct, m2m = self.item._meta.get_field_by_name(name)
-            if type(field).__name__ != 'RelatedObject':
-                continue
-            if type(field.field).__name__ != 'ForeignKey':
-                continue
-            if issubclass(field.model, (ItemPermission, GlobalPermission)):
-                continue
-            if not issubclass(field.model, Item):
-                continue
-            manager = getattr(self.item, name)
-            relationship_set = {}
-            relationship_set['name'] = name
-            viewable_items = manager.filter(active=True)
-            if viewable_items.count() == 0:
-                continue
-            relationship_item_type = manager.model
-            self.permission_cache.filter_items(self.cur_agent, 'view name', viewable_items)
-            viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view %s' % field.field.name, viewable_items)
-            relationship_set['items'] = viewable_items
-            relationship_sets.append(relationship_set)
-        template = loader.get_template('item/relationships.html')
-        self.context['relationship_sets'] = relationship_sets
-        self.context['abilities'] = sorted(self.permission_cache.item_abilities(self.cur_agent, self.item))
-        return HttpResponse(template.render(self.context))
-
     def item_edit_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
@@ -828,7 +789,7 @@ class ItemViewer(Viewer):
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to deactivate this item")
-        self.item.deactivate(action_agent=self.cur_agent)
+        self.item.deactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
@@ -837,7 +798,7 @@ class ItemViewer(Viewer):
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to reactivate this item")
-        self.item.reactivate(action_agent=self.cur_agent)
+        self.item.reactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
@@ -846,7 +807,7 @@ class ItemViewer(Viewer):
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
             return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to destroy this item")
-        self.item.destroy(action_agent=self.cur_agent)
+        self.item.destroy(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 

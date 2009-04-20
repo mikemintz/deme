@@ -13,6 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.timesince import timesince
 from django.utils.text import capfirst
 from django.utils import simplejson
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -138,13 +139,13 @@ def list_results_navigator(viewer_name, collection, search_query, active, offset
     """
     if n_results <= limit:
         return ''
-    url_prefix = reverse('item_type_url', kwargs={'viewer': viewer_name}) + '?limit=%s&' % limit
+    url_prefix = reverse('item_type_url', kwargs={'viewer': viewer_name}) + '?limit=%s&amp;' % limit
     if search_query:
-        url_prefix += 'q=%s&' % search_query
+        url_prefix += 'q=%s&amp;' % search_query
     if not active:
-        url_prefix += 'active=0&'
+        url_prefix += 'active=0&amp;'
     if collection:
-        url_prefix += 'collection=%s&' % collection.pk
+        url_prefix += 'collection=%s&amp;' % collection.pk
     result = []
     # Add a prev link
     if offset > 0:
@@ -340,10 +341,7 @@ class ItemHeader(template.Node):
 
         result = []
 
-        history_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'history'}) + '?version=%s' % version_number
         subscribe_url = reverse('item_type_url', kwargs={'viewer': 'subscription', 'action': 'new'}) + '?item=%s' % item.pk
-        relationships_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'relationships'}) + '?version=%s' % version_number
-        permissions_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'itempermissions'})
         edit_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % version_number
         copy_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'copy'}) + '?version=%s' % version_number
         deactivate_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'deactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
@@ -352,34 +350,101 @@ class ItemHeader(template.Node):
         add_authentication_method_url = reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'new'}) + '?agent=%s' % item.pk
         add_contact_method_url = reverse('item_type_url', kwargs={'viewer': 'contactmethod', 'action': 'new'}) + '?agent=%s' % item.pk
 
-        result.append('<div class="crumbs">')
+        result.append('<div class="fg-toolbar ui-widget-header ui-corner-all ui-helper-clearfix">')
+        result.append('<div class="fg-buttonset ui-helper-clearfix">')
 
-        result.append('<div style="float: right; margin-bottom: 5px;">')
         if isinstance(item, Agent):
             if agentcan_helper(context, 'add_authentication_method', item):
-                result.append('<a href="%s" class="img_button"><img src="%s" /><span>Add authentication method</span></a>' % (add_authentication_method_url, icon_url('AuthenticationMethod', 16)))
+                result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add authentication method</a>' % add_authentication_method_url)
             if agentcan_helper(context, 'add_contact_method', item):
-                result.append('<a href="%s" class="img_button"><img src="%s" /><span>Add contact method</span></a>' % (add_contact_method_url, icon_url('ContactMethod', 16)))
-        result.append('<a href="%s" class="img_button"><img src="%s" /><span>History</span></a>' % (history_url, icon_url('history', 16)))
-        result.append('<a href="%s" class="img_button"><img src="%s" /><span>Subscribe</span></a>' % (subscribe_url, icon_url('subscribe', 16)))
-        result.append('<a href="%s" class="img_button"><img src="%s" /><span>Relationships</span></a>' % (relationships_url, icon_url('relationships', 16)))
-        if agentcan_helper(context, 'do_anything', item):
-            result.append('<a href="%s" class="img_button"><img src="%s" /><span>Permissions</span></a>' % (permissions_url, icon_url('permissions', 16)))
+                result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a>' % add_contact_method_url)
+        result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscibe</a>' % subscribe_url)
         if agentcan_helper(context, 'edit', item, wildcard_suffix=True):
-            result.append('<a href="%s" class="img_button"><img src="%s" /><span>Edit</span></a>' % (edit_url, icon_url('edit', 16)))
+            result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-pencil"></span>Edit</a>' % edit_url)
         if agentcan_global_helper(context, 'create %s' % item.item_type_string):
-            result.append('<a href="%s" class="img_button"><img src="%s" /><span>Copy</span></a>' % (copy_url, icon_url('copy', 16)))
+            result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-copy"></span>Copy</a>' % copy_url)
         if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
-            result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % (deactivate_url if item.active else reactivate_url))
-            result.append("""<a href="#" onclick="if (confirm('Are you sure you want to %s this item?'))this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % ("deactivate" if item.active else "reactivate", icon_url('delete', 16), "Deactivate" if item.active else "Reactivate"))
-            result.append("""</form>""")
-            if not item.active:
-                result.append("""<form style="display: inline;" method="post" enctype="multipart/form-data" action="%s" class="item_form">""" % destroy_url)
-                result.append("""<a href="#" onclick="if (confirm('Are you sure you want to destroy this item?')) this.parentNode.submit(); return false;" class="img_button"><img src="%s" /><span>%s</span></a>""" % (icon_url('delete', 16), "Destroy"))
-                result.append("""</form>""")
+            if item.active:
+                result.append("""
+                    <script type="text/javascript">
+                        $(function() {
+                            $("#deactivate_dialog").dialog({
+                                autoOpen: false,
+                                bgiframe: true,
+                                modal: true,
+                                buttons: {
+                                    'Deactivate': function(){$(this).dialog('close'); $('#deactivate_dialog form').submit()},
+                                    'Cancel': function(){$(this).dialog('close')}
+                                }
+                            });
+                        });
+                        </script>
+                    <div id="deactivate_dialog" title="Deactivate this item?" style="display: none;">
+                        <form method="post" action="%s" onsubmit="$('#deactivate_dialog').dialog('close');">
+                        <p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>Are you sure you want to deactivate this item?</p>
+                        <label for="deactivate_reason">Reason</label>
+                        <input type="text" id="deactivate_reason" name="action_summary" />
+                        </form>
+                    </div>
+                    <a href="#" onclick="$('#deactivate_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Deactivate"><span class="ui-icon ui-icon-trash"></span> Deactivate</a>
+                """ % deactivate_url)
+            else:
+                result.append("""
+                    <script type="text/javascript">
+                        $(function() {
+                            $("#reactivate_dialog").dialog({
+                                autoOpen: false,
+                                bgiframe: true,
+                                modal: true,
+                                buttons: {
+                                    'Reactivate': function(){$(this).dialog('close'); $('#reactivate_dialog form').submit()},
+                                    'Cancel': function(){$(this).dialog('close')}
+                                }
+                            });
+                        });
+                        </script>
+                    <div id="reactivate_dialog" title="Reactivate this item?" style="display: none;">
+                        <form method="post" action="%s" onsubmit="$('#reactivate_dialog').dialog('close');">
+                        <p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>Are you sure you want to reactivate this item?</p>
+                        <label for="reactivate_reason">Reason</label>
+                        <input type="text" id="reactivate_reason" name="action_summary" />
+                        </form>
+                    </div>
+                    <a href="#" onclick="$('#reactivate_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Reactivate"><span class="ui-icon ui-icon-trash"></span>Reactivate</a>
+                """ % reactivate_url)
+                result.append("""
+                    <script type="text/javascript">
+                        $(function() {
+                            $("#destroy_dialog").dialog({
+                                autoOpen: false,
+                                bgiframe: true,
+                                modal: true,
+                                buttons: {
+                                    'Destroy': function(){$(this).dialog('close'); $('#destroy_dialog form').submit()},
+                                    'Cancel': function(){$(this).dialog('close')}
+                                }
+                            });
+                        });
+                        </script>
+                    <div id="destroy_dialog" title="Destroy this item?" style="display: none;">
+                        <form method="post" action="%s" onsubmit="$('#destroy_dialog').dialog('close');">
+                        <p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>Are you sure you want to destroy this item?</p>
+                        <label for="destroy_reason">Reason</label>
+                        <input type="text" id="destroy_reason" name="action_summary" />
+                        </form>
+                    </div>
+                    <a href="#" onclick="$('#destroy_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Destroy"><span class="ui-icon ui-icon-trash"></span>Destroy</a>
+                """ % destroy_url)
+
+        result.append('</div>')
         result.append('</div>')
 
-        result.append('<div style="float: left; margin-bottom: 5px; margin-top: 5px;">')
+
+
+
+
+        result.append('<div class="crumbs">')
+        result.append('<div style="margin-bottom: 5px; margin-top: 5px;">')
         for inherited_item_type in item_type_inheritance:
             result.append(u'<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a> &raquo;' % (reverse('item_type_url', kwargs={'viewer': inherited_item_type.__name__.lower()}), icon_url(inherited_item_type, 16), capfirst(inherited_item_type._meta.verbose_name_plural)))
         result.append('<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (item.get_absolute_url(), icon_url(item.item_type_string, 16), escape(get_viewable_name(context, item))))
@@ -390,39 +455,7 @@ class ItemHeader(template.Node):
             result.append('&raquo; ')
             result.append(page_name)
         result.append('</div>')
-
-        result.append('<div style="clear: both;">')
         result.append('</div>')
-
-        result.append('</div>')
-
-        if agentcan_helper(context, 'view created_at', item):
-            created_at_text = '<span title="%s">%s ago</span>' % (item.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(item.created_at))
-        else:
-            created_at_text = ''
-        if agentcan_helper(context, 'view creator', item):
-            creator_text = 'by <a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(get_viewable_name(context, item.creator)))
-        else:
-            creator_text = ''
-        result.append('<div style="font-size: 8pt;">')
-        result.append('<div style="float: left;">')
-        result.append(u'%s' % capfirst(item.actual_item_type()._meta.verbose_name))
-        if creator_text or created_at_text:
-            result.append('originally created %s %s' % (creator_text, created_at_text))
-        result.append('</div>')
-        result.append('<div style="clear: both;">')
-        result.append('</div>')
-        result.append('</div>')
-
-        result.append('<div style="font-size: 8pt; color: #aaa; margin-bottom: 10px;">')
-        if agentcan_helper(context, 'view description', item) and item.description.strip():
-            result.append('Description: %s' % escape(item.description))
-        result.append('</div>')
-
-        if item.destroyed:
-            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is destroyed</div>')
-        elif not item.active:
-            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is inactive</div>')
 
         return '\n'.join(result)
 
@@ -436,6 +469,51 @@ def itemheader(parser, token):
     else:
         page_name = None
     return ItemHeader(page_name)
+
+
+class ItemDetails(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<ItemDetailsNode>"
+
+    def render(self, context):
+        item = context['item']
+        result = []
+
+        if item.destroyed:
+            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is destroyed</div>')
+        elif not item.active:
+            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is inactive</div>')
+
+        if agentcan_helper(context, 'view created_at', item):
+            created_at_text = '<span title="%s">%s ago</span>' % (item.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(item.created_at))
+        else:
+            created_at_text = ''
+        if agentcan_helper(context, 'view creator', item):
+            creator_text = 'by <a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(get_viewable_name(context, item.creator)))
+        else:
+            creator_text = ''
+        result.append('<div style="font-size: 8pt;">')
+        result.append(u'%s' % capfirst(item.actual_item_type()._meta.verbose_name))
+        if creator_text or created_at_text:
+            result.append('originally created %s %s' % (creator_text, created_at_text))
+        result.append('</div>')
+
+        result.append('<div style="font-size: 8pt; color: #aaa; margin-bottom: 10px;">')
+        if agentcan_helper(context, 'view description', item) and item.description.strip():
+            result.append('Description: %s' % escape(item.description))
+        result.append('</div>')
+
+        return '\n'.join(result)
+
+@register.tag
+def itemdetails(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes zero arguments" % bits[0]
+    return ItemDetails()
 
 
 class TypeHeader(template.Node):
@@ -529,12 +607,12 @@ def display_body_with_inline_transclusions(item, is_html):
     return ''.join(result)
 
 
-class CommentBox(template.Node):
+class CalculateComments(template.Node):
     def __init__(self):
         pass
 
     def __repr__(self):
-        return "<CommentBoxNode>"
+        return "<CalculateCommentsNode>"
 
     def render(self, context):
         item = context['item']
@@ -545,14 +623,14 @@ class CommentBox(template.Node):
         result.append("""<div class="comment_box">""")
         result.append("""<div class="comment_box_header">""")
         if agentcan_helper(context, 'comment_on', item):
-            result.append("""<a href="%s?item=%s&item_version_number=%s&redirect=%s">[+] Add Comment</a>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), item.pk, version_number, urlquote(full_path)))
+            result.append("""<a href="%s?item=%s&amp;item_version_number=%s&amp;redirect=%s">[+] Add Comment</a>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), item.pk, version_number, urlquote(full_path)))
         result.append("""</div>""")
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
-                result.append("""<div style="float: right;"><a href="%s?item=%s&item_version_number=%s&redirect=%s">[+] Reply</a></div>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
+                result.append("""<div style="float: right;"><a href="%s?item=%s&amp;item_version_number=%s&amp;redirect=%s">[+] Reply</a></div>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
                 comment_name = escape(get_viewable_name(context, comment))
                 result.append("""<a href="%s">%s</a>""" % (comment.get_absolute_url(), comment_name))
                 if agentcan_helper(context, 'view creator', comment):
@@ -576,26 +654,136 @@ class CommentBox(template.Node):
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
         comment_dicts, n_comments = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection))
-        context['n_comments'] = n_comments
         add_comments_to_div(comment_dicts)
         result.append("</div>")
-
-        return '\n'.join(result)
+        context['comment_box'] = mark_safe('\n'.join(result))
+        context['n_comments'] = n_comments
+        return ''
 
 @register.tag
-def commentbox(parser, token):
+def calculatecomments(parser, token):
     bits = list(token.split_contents())
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
-    return CommentBox()
+    return CalculateComments()
 
 
-class ActionNoticeBox(template.Node):
+class PermissionsBox(template.Node):
     def __init__(self):
         pass
 
     def __repr__(self):
-        return "<ActionNoticeBoxNode>"
+        return "<PermissionsBoxNode>"
+
+    def render(self, context):
+        permission_cache = context['_permission_cache']
+        item = context['item']
+        cur_agent = context['cur_agent']
+        abilities = sorted(permission_cache.item_abilities(cur_agent, item))
+
+        result = []
+        if agentcan_helper(context, 'do_anything', item):
+            modify_permissions_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'itempermissions'})
+            result.append("""<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify permissions</a>""" % modify_permissions_url)
+        for ability in abilities:
+            result.append("""<div>%s</div>""" % escape(ability))
+        return '\n'.join(result)
+
+@register.tag
+def permissions_box(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return PermissionsBox()
+
+
+class CalculateRelationships(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<CalculateRelationshipsNode>"
+
+    def render(self, context):
+        permission_cache = context['_permission_cache']
+        item = context['item']
+        cur_agent = context['cur_agent']
+
+        relationship_sets = []
+        for name in sorted(item._meta.get_all_field_names()):
+            field, model, direct, m2m = item._meta.get_field_by_name(name)
+            if type(field).__name__ != 'RelatedObject':
+                continue
+            if type(field.field).__name__ != 'ForeignKey':
+                continue
+            if issubclass(field.model, (ItemPermission, GlobalPermission)):
+                continue
+            if not issubclass(field.model, Item):
+                continue
+            manager = getattr(item, name)
+            relationship_set = {}
+            relationship_set['name'] = name
+            viewable_items = manager.filter(active=True)
+            if viewable_items.count() == 0:
+                continue
+            relationship_item_type = manager.model
+            permission_cache.filter_items(cur_agent, 'view name', viewable_items)
+            viewable_items = permission_cache.filter_items(cur_agent, 'view %s' % field.field.name, viewable_items)
+            relationship_set['items'] = viewable_items
+            relationship_sets.append(relationship_set)
+
+        result = []
+        for relationship_set in relationship_sets:
+            result.append("""<div><b>%s</b></div>""" % relationship_set['name'])
+            for related_item in relationship_set['items']:
+                related_item_url = related_item.get_absolute_url()
+                related_item_name = get_viewable_name(context, related_item)
+                result.append("""<div><a href="%s">%s</a></div>""" % (related_item_url, escape(related_item_name)))
+        context['relationships_box'] = mark_safe('\n'.join(result))
+        context['n_relationships'] = sum(len(x['items']) for x in relationship_sets)
+        return ''
+
+@register.tag
+def calculaterelationships(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return CalculateRelationships()
+
+
+class CalculateHistory(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<CalculateHistoryNode>"
+
+    def render(self, context):
+        item = context['item']
+
+        result = []
+        versions = item.versions.all()
+        for version in versions:
+            version_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk}) + '?version=%s' % version.version_number
+            result.append("""<div><a href="%s">Version %s</a></div>""" % (version_url, version.version_number))
+        context['history_box'] = mark_safe('\n'.join(result))
+        context['n_versions'] = len(versions)
+        return ''
+
+@register.tag
+def calculatehistory(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return CalculateHistory()
+
+
+class CalculateActionNotices(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<CalculateActionNoticesNode>"
 
     def render(self, context):
         item = context['item']
@@ -648,16 +836,19 @@ class ActionNoticeBox(template.Node):
                     action_text = 'Edited'
                 result.append(u"<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (created_at_text, agent_text, action_text, item_text, description_text))
             result.append(u"</table>")
+        else:
+            action_notices = []
 
         context['n_action_notices'] = len(action_notices)
-        return '\n'.join(result)
+        context['action_notice_box'] = mark_safe('\n'.join(result))
+        return ''
 
 @register.tag
-def actionnoticebox(parser, token):
+def calculateactionnotices(parser, token):
     bits = list(token.split_contents())
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
-    return ActionNoticeBox()
+    return CalculateActionNotices()
 
 
 class SubclassFieldsBox(template.Node):

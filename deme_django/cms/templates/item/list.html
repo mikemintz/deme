@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load item_tags %}
 {% block favicon %}{{ accepted_item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ accepted_item_type|icon_url:48 }}" /> List {{ accepted_item_type_name_plural }}{% endblock %}
+{% block title %}<img src="{{ accepted_item_type|icon_url:24 }}" /> List {{ accepted_item_type_name_plural }}{% endblock %}
 {% block content %}
 
 <div style="border: thin solid #aaa; background: #eee; padding: 10px; margin-bottom: 10px;">

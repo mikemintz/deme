@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load item_tags %}
 {% block favicon %}{{ item|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item|icon_url:48 }}" /> {% viewable_name item %}{% endblock %}
+{% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
 {% subclassfields %}
@@ -183,9 +183,7 @@ When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); 
 
 <div><a href="#" onclick="$('.commentref').toggle(); return false;">Toggle Inline Comments</a></div>
 
-<div class="regular_css">
 <div id="docbody" style="padding: 10px;">{% display_body_with_inline_transclusions item is_html %}</div>
-</div>
 {% endifagentcan %}
 
 {% endblock content %}
