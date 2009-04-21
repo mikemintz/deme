@@ -135,10 +135,10 @@ the following to the end of ``/etc/postfix/master.cf``::
 I then added the following to the end of ``/etc/postfix/main.cf``::
 
   # Deme incoming mail    
-  transport_maps = hash:/etc/postfix/deme_transport
+  transport_maps = regexp:/etc/postfix/deme_transport
   virtual_mailbox_domains = deme.stanford.edu                                                             
 
 I then created a file called ``/etc/postfix/deme_transport`` containing the following::
 
-  deme.stanford.edu    deme:
+  /[0-9]+@deme\.stanford\.edu/    deme:
 
