@@ -145,7 +145,7 @@ class Item(models.Model):
     # Setup
     __metaclass__ = ItemMetaClass
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['do_anything', 'comment_on', 'view_action_notices', 'delete', 'view name',
+    introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'comment_on', 'view_action_notices', 'delete', 'view name',
                                       'view description', 'view creator', 'view created_at', 'edit name', 'edit description'])
     introduced_global_abilities = frozenset(['do_anything'])
     class Meta:

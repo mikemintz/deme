@@ -699,6 +699,9 @@ class PermissionsBox(template.Node):
         if agentcan_helper(context, 'do_anything', item):
             modify_permissions_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'itempermissions'})
             result.append("""<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify permissions</a>""" % modify_permissions_url)
+        elif agentcan_helper(context, 'modify_privacy_settings', item):
+            modify_privacy_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'privacy'})
+            result.append("""<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify privacy</a>""" % modify_privacy_url)
         for ability in abilities:
             result.append("""<div>%s</div>""" % escape(ability))
         return '\n'.join(result)
@@ -997,12 +1000,13 @@ def viewable_name(parser, token):
 
 
 class PermissionEditor(template.Node):
-    def __init__(self, item, global_permissions):
+    def __init__(self, item, is_global_permissions, privacy_only):
         if item is None:
             self.item = None
         else:
             self.item = template.Variable(item)
-        self.global_permissions = global_permissions
+        self.is_global_permissions = is_global_permissions
+        self.privacy_only = privacy_only
 
     def __repr__(self):
         return "<PermissionEditor>"
@@ -1020,15 +1024,17 @@ class PermissionEditor(template.Node):
                     return '' # Fail silently for invalid variables.
         viewer = context['_viewer']
 
-        if self.global_permissions:
+        if self.is_global_permissions:
             possible_abilities = viewer.permission_cache.all_possible_global_abilities()
         else:
             if item is None:
                 possible_abilities = viewer.permission_cache.all_possible_item_abilities(viewer.accepted_item_type)
             else:
                 possible_abilities = viewer.permission_cache.all_possible_item_abilities(viewer.item.actual_item_type())
+        if self.privacy_only:
+            possible_abilities = [x for x in possible_abilities if x.startswith('view ')]
 
-        if item is None and not self.global_permissions:
+        if item is None and not self.is_global_permissions and not self.privacy_only:
             # Default permissions when creating a new item
             agent_permissions = [AgentItemPermission(agent=context['cur_agent'], ability='do_anything', is_allowed=True)]
             collection_permissions = []
@@ -1036,7 +1042,7 @@ class PermissionEditor(template.Node):
             agents = sorted(set(x.agent for x in agent_permissions), key=lambda x: x.name)
             collections = sorted(set(x.collection for x in collection_permissions), key=lambda x: x.name)
         else:
-            if self.global_permissions:
+            if self.is_global_permissions:
                 agent_permissions = AgentGlobalPermission.objects.order_by('ability')
                 collection_permissions = CollectionGlobalPermission.objects.order_by('ability')
                 everyone_permissions = EveryoneGlobalPermission.objects.order_by('ability')
@@ -1044,6 +1050,10 @@ class PermissionEditor(template.Node):
                 agent_permissions = item.agent_item_permissions_as_item.order_by('ability')
                 collection_permissions = item.collection_item_permissions_as_item.order_by('ability')
                 everyone_permissions = item.everyone_item_permissions_as_item.order_by('ability')
+                if self.privacy_only:
+                    agent_permissions = agent_permissions.filter(ability__startswith='view ')
+                    collection_permissions = collection_permissions.filter(ability__startswith='view ')
+                    everyone_permissions = everyone_permissions.filter(ability__startswith='view ')
             agents = Agent.objects.filter(pk__in=agent_permissions.values('agent__pk').query).order_by('name')
             collections = Collection.objects.filter(pk__in=collection_permissions.values('collection__pk').query).order_by('name')
         
@@ -1216,12 +1226,20 @@ class PermissionEditor(template.Node):
         return result
 
 @register.tag
+def privacy_editor(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 2 and len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes zero or one argument" % bits[0]
+    item = bits[1] if len(bits) == 2 else None
+    return PermissionEditor(item, is_global_permissions=False, privacy_only=True)
+
+@register.tag
 def item_permission_editor(parser, token):
     bits = list(token.split_contents())
     if len(bits) != 2 and len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes zero or one argument" % bits[0]
     item = bits[1] if len(bits) == 2 else None
-    return PermissionEditor(item, global_permissions=False)
+    return PermissionEditor(item, is_global_permissions=False, privacy_only=False)
 
 @register.tag
 def global_permission_editor(parser, token):
@@ -1229,5 +1247,5 @@ def global_permission_editor(parser, token):
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes zero arguments" % bits[0]
     item = None
-    return PermissionEditor(item, global_permissions=True)
+    return PermissionEditor(item, is_global_permissions=True, privacy_only=False)
 

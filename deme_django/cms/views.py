@@ -835,7 +835,7 @@ class ItemViewer(Viewer):
                 permission_datum[name] = value
         result = []
         if global_permissions:
-            #TODO make sure admin keeps do_anything ability
+            # Make sure admin keeps do_anything ability
             result.append(AgentGlobalPermission(agent_id=1, ability='do_anything', is_allowed=True))
         for permission_datum in permission_data.itervalues():
             ability = permission_datum['ability']
@@ -870,6 +870,21 @@ class ItemViewer(Viewer):
                 result.append(permission)
         return result
 
+    def item_updateprivacy_html(self):
+        if self.method == 'GET':
+            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
+        if not self.cur_agent_can('modify_privacy_settings', self.item):
+            raise DemePermissionDenied
+        new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
+        AgentItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
+        CollectionItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
+        EveryoneItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
+        for permission in new_permissions:
+            permission.item = self.item
+            permission.save()
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'privacy'}))
+        return HttpResponseRedirect(redirect)
+
     def item_updateitempermissions_html(self):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
@@ -898,6 +913,19 @@ class ItemViewer(Viewer):
             permission.save()
         redirect = self.request.GET.get('redirect', reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'globalpermissions'}))
         return HttpResponseRedirect(redirect)
+
+    def item_privacy_html(self):
+        if not self.cur_agent_can('modify_privacy_settings', self.item):
+            raise DemePermissionDenied
+        possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
+        default_permissions = []
+        for ability in possible_abilities:
+            if ability.startswith('view '):
+                default_allowed = self.permission_cache.default_ability_is_allowed(ability, self.item.actual_item_type())
+                default_permissions.append({'ability': ability, 'is_allowed': default_allowed})
+        template = loader.get_template('item/privacy.html')
+        self.context['default_permissions'] = default_permissions
+        return HttpResponse(template.render(self.context))
 
     def item_itempermissions_html(self):
         if not self.cur_agent_can('do_anything', self.item):
