@@ -7,9 +7,9 @@ http://github.com/mikemintz/deme/tree/master
 
 Dependencies
 ------------
-We currently run with Django from SVN, r10558.
+We currently run with Django from SVN, r9973.
 
-http://code.djangoproject.com/svn/django/trunk/django
+http://code.djangoproject.com/svn/django/trunk
 
 Because of the table-name size restriction in MySQL, we run on postgresql
 
@@ -18,7 +18,8 @@ Because of the table-name size restriction in MySQL, we run on postgresql
 * ``sudo apt-get install graphviz`` (optional: for gen_graph.py support)
 * ``sudo apt-get install python-sphinx`` (optional: for documentation generation)
 * ``sudo apt-get install python-openid`` (optional: for openid authentication)
-* ``sudo apt-get install postgresql python-psycopg2``
+* ``sudo apt-get install postfix`` (or some MTA)
+* ``sudo apt-get install postgresql python-psycopg2`` (you'll need to configure a user that Django can use to authenticate)
 
 Right now, all of the dependencies that are optional are actually required,
 since we don't degrade gracefully yet.
