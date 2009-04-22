@@ -16,6 +16,8 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Fix the multiple inheritance bug
+  - http://code.djangoproject.com/ticket/10808
 * Need initial permissions set on incoming email comments, group generated folios/groupagents, maybe other things too. Just search for save_versioned.
 * Make sure openid still works
 * Rename /static/ to /file/
