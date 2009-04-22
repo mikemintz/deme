@@ -906,6 +906,12 @@ class ItemViewer(Viewer):
         template = loader.get_template('item/globalpermissions.html')
         return HttpResponse(template.render(self.context))
 
+    def type_admin_html(self):
+        if not self.cur_agent_can_global('do_anything'):
+            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to access the admin page")
+        template = loader.get_template('item/admin.html')
+        return HttpResponse(template.render(self.context))
+
 
 class ContactMethodViewer(ItemViewer):
     accepted_item_type = ContactMethod

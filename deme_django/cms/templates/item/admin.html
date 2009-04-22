@@ -1,0 +1,13 @@
+{% extends layout %}
+{% load item_tags %}
+{% block favicon %}{{ accepted_item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ accepted_item_type|icon_url:24 }}" /> Admin{% endblock %}
+{% block content %}
+
+<ul>
+    <li><a href="{% url item_type_url viewer=viewer_name,action="globalpermissions" %}">Global permissions</a></li>
+    <li><a href="{% url item_type_url viewer="demesetting",action="modify" %}">Deme settings</a></li>
+</ul>
+
+{% endblock content %}
+
