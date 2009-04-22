@@ -187,6 +187,10 @@ def get_form_class_for_item_type(update_or_create, item_type, fields=None):
 # Viewer helper functions
 ###############################################################################
 
+class DemePermissionDenied(Exception):
+    "The agent does not have permission to perform the action"
+    pass
+
 def get_logged_in_agent(request):
     """
     Return the currently logged in Agent (based on the cur_agent_id parameter
@@ -461,7 +465,10 @@ class Viewer(object):
                 else:
                     if not isinstance(self.item, self.accepted_item_type):
                         return self.render_item_not_found()
-            return action_method()
+            try:
+                return action_method()
+            except DemePermissionDenied:
+                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to perform this action")
         else:
             return None
 
@@ -641,7 +648,7 @@ class ItemViewer(Viewer):
     def type_new_html(self):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
+            raise DemePermissionDenied
         form_initial = dict(self.request.GET.items())
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(initial=form_initial)
@@ -654,7 +661,7 @@ class ItemViewer(Viewer):
     def type_create_html(self):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
+            raise DemePermissionDenied
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
@@ -678,7 +685,7 @@ class ItemViewer(Viewer):
         from cms.templatetags.item_tags import get_viewable_name
         viewer = self
         if not self.cur_agent_can('view_action_notices', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to view action notices for this item")
+            raise DemePermissionDenied
         action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(creator=self.item)).order_by('created_at') #TODO limit
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
@@ -725,7 +732,7 @@ class ItemViewer(Viewer):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
+            raise DemePermissionDenied
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
         form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
         form = form_class(instance=self.item)
@@ -743,7 +750,7 @@ class ItemViewer(Viewer):
     def item_copy_html(self):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
+            raise DemePermissionDenied
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         fields_to_copy = [field_name for field_name in form_class.base_fields if self.cur_agent_can('view %s' % field_name, self.item)]
         form_initial = {}
@@ -768,7 +775,7 @@ class ItemViewer(Viewer):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
+            raise DemePermissionDenied
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x[0] == 'edit']
         form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
@@ -788,7 +795,7 @@ class ItemViewer(Viewer):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to deactivate this item")
+            raise DemePermissionDenied
         self.item.deactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
@@ -797,7 +804,7 @@ class ItemViewer(Viewer):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to reactivate this item")
+            raise DemePermissionDenied
         self.item.reactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
@@ -806,7 +813,7 @@ class ItemViewer(Viewer):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to destroy this item")
+            raise DemePermissionDenied
         self.item.destroy(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
@@ -863,7 +870,7 @@ class ItemViewer(Viewer):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can('do_anything', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
+            raise DemePermissionDenied
         new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
         AgentItemPermission.objects.filter(item=self.item).delete()
         CollectionItemPermission.objects.filter(item=self.item).delete()
@@ -878,7 +885,7 @@ class ItemViewer(Viewer):
         if self.method == 'GET':
             return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can_global('do_anything'):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify global permissions")
+            raise DemePermissionDenied
         new_permissions = self._get_permissions_from_post_data(None, True)
         AgentGlobalPermission.objects.filter().delete()
         CollectionGlobalPermission.objects.filter().delete()
@@ -890,7 +897,7 @@ class ItemViewer(Viewer):
 
     def item_itempermissions_html(self):
         if not self.cur_agent_can('do_anything', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify permissions of this item")
+            raise DemePermissionDenied
         possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
         default_permissions = []
         for ability in possible_abilities:
@@ -902,13 +909,13 @@ class ItemViewer(Viewer):
 
     def type_globalpermissions_html(self):
         if not self.cur_agent_can_global('do_anything'):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify global permissions")
+            raise DemePermissionDenied
         template = loader.get_template('item/globalpermissions.html')
         return HttpResponse(template.render(self.context))
 
     def type_admin_html(self):
         if not self.cur_agent_can_global('do_anything'):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to access the admin page")
+            raise DemePermissionDenied
         template = loader.get_template('item/admin.html')
         return HttpResponse(template.render(self.context))
 
@@ -924,7 +931,7 @@ class ContactMethodViewer(ItemViewer):
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding an contact method to")
         can_add_contact_method = self.cur_agent_can('add_contact_method', agent)
         if not can_add_contact_method:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add contact methods to this agent")
+            raise DemePermissionDenied
         form_initial = dict(self.request.GET.items())
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(initial=form_initial)
@@ -941,7 +948,7 @@ class ContactMethodViewer(ItemViewer):
             item = form.save(commit=False)
             can_add_contact_method = self.cur_agent_can('add_contact_method', item.agent)
             if not can_add_contact_method:
-                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add contact methods to this agent")
+                raise DemePermissionDenied
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
             item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
@@ -965,7 +972,7 @@ class AuthenticationMethodViewer(ItemViewer):
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding an authentication method to")
         can_add_authentication_method = self.cur_agent_can('add_authentication_method', agent)
         if not can_add_authentication_method:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add authentication methods to this agent")
+            raise DemePermissionDenied
         form_initial = dict(self.request.GET.items())
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(initial=form_initial)
@@ -982,7 +989,7 @@ class AuthenticationMethodViewer(ItemViewer):
             item = form.save(commit=False)
             can_add_authentication_method = self.cur_agent_can('add_authentication_method', item.agent)
             if not can_add_authentication_method:
-                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add authentication methods to this agent")
+                raise DemePermissionDenied
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
             item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
@@ -1153,7 +1160,7 @@ class GroupViewer(ItemViewer):
     def type_create_html(self):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
+            raise DemePermissionDenied
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
@@ -1191,7 +1198,7 @@ class ViewerRequestViewer(ItemViewer):
         if form.data['parent_url'] != str(self.item.pk):
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the parent url you are extending")
         if not self.cur_agent_can('add_sub_path', self.item):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add a sub path to this url")
+            raise DemePermissionDenied
         try:
             custom_url = CustomUrl.objects.get(parent_url=self.item, path=form.data['path'])
         except ObjectDoesNotExist:
@@ -1240,7 +1247,7 @@ class CollectionViewer(ItemViewer):
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('add_self', self.item))):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add this member to this Collection")
+            raise DemePermissionDenied
         try:
             membership = Membership.objects.get(collection=self.item, item=member)
             if not membership.active:
@@ -1258,7 +1265,7 @@ class CollectionViewer(ItemViewer):
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('remove_self', self.item))):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to remove this member from this Collection")
+            raise DemePermissionDenied
         try:
             membership = Membership.objects.get(collection=self.item, item=member)
             if membership.active:
@@ -1292,7 +1299,7 @@ class TextDocumentViewer(ItemViewer):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
+            raise DemePermissionDenied
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
         form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
 
@@ -1324,7 +1331,7 @@ class TextDocumentViewer(ItemViewer):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to edit this item")
+            raise DemePermissionDenied
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
         form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
@@ -1408,7 +1415,7 @@ class TextCommentViewer(TextDocumentViewer):
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
         can_comment_on = self.cur_agent_can('comment_on', item)
         if not can_comment_on:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to comment on this item")
+            raise DemePermissionDenied
         form_initial = dict(self.request.GET.items())
         form_class = NewTextCommentForm
         form = form_class(initial=form_initial)
@@ -1425,7 +1432,7 @@ class TextCommentViewer(TextDocumentViewer):
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
         can_comment_on = self.cur_agent_can('comment_on', item)
         if not can_comment_on:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to comment on this item")
+            raise DemePermissionDenied
         form_class = NewTextCommentForm
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
@@ -1466,7 +1473,7 @@ class TransclusionViewer(ItemViewer):
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are adding a transclusion to")
         can_add_transclusion = self.cur_agent_can('add_transclusion', from_item)
         if not can_add_transclusion:
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add transclusions to this item")
+            raise DemePermissionDenied
         form_initial = dict(self.request.GET.items())
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(initial=form_initial)
@@ -1484,7 +1491,7 @@ class TransclusionViewer(ItemViewer):
             item = form.save(commit=False)
             can_add_transclusion = self.cur_agent_can('add_transclusion', item.from_item)
             if not can_add_transclusion:
-                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add transclusions to this item")
+                raise DemePermissionDenied
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
             item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
@@ -1505,9 +1512,9 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
 
     def type_createmultiexcerpt_html(self):
         if not self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create %ss" % self.accepted_item_type.__name__)
+            raise DemePermissionDenied
         if not self.cur_agent_can_global('create Collection'):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to create Collections")
+            raise DemePermissionDenied
         excerpts = []
         for excerpt_form_datum in self.request.POST.getlist('excerpt'):
             try:
@@ -1521,7 +1528,7 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
             except:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not find the specified TextDocument")
             if not self.cur_agent_can('view body', text_document):
-                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to view the body of this item")
+                raise DemePermissionDenied
             body = text_document.body[start_index:start_index+length]
             excerpt = TextDocumentExcerpt(body=body, text_document=text_document, text_document_version_number=text_document_version_number, start_index=start_index, length=length)
             excerpts.append(excerpt)
@@ -1542,14 +1549,14 @@ class DemeSettingViewer(ItemViewer):
 
     def type_modify_html(self):
         if not self.cur_agent_can_global('do_anything'):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify DemeSettings")
+            raise DemePermissionDenied
         self.context['deme_settings'] = DemeSetting.objects.filter(active=True).order_by('key')
         template = loader.get_template('demesetting/modify.html')
         return HttpResponse(template.render(self.context))
 
     def type_addsetting_html(self):
         if not self.cur_agent_can_global('do_anything'):
-            return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to modify DemeSettings")
+            raise DemePermissionDenied
         key = self.request.POST.get('key')
         value = self.request.POST.get('value')
         DemeSetting.set(key, value, self.cur_agent)
@@ -1578,7 +1585,7 @@ class SubscriptionViewer(ItemViewer):
             item = form.save(commit=False)
             can_add_subscription = self.cur_agent_can('add_subscription', item.contact_method)
             if not can_add_subscription:
-                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to add subscriptions to this contact method")
+                raise DemePermissionDenied
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
             item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
