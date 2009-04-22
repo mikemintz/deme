@@ -1614,6 +1614,9 @@ class ActionNotice(models.Model):
         viewer.context['topmost_item'] = topmost_item
         viewer.context['url_prefix'] = 'http://%s' % settings.DEFAULT_HOSTNAME
         if isinstance(self, RelationActionNotice):
+            # We don't send RelationActionNotices for Comment.item to prevent duplicate emails
+            if self.from_field_name == 'item' and self.from_field_model == 'Comment':
+                return
             from_item_name = get_viewable_name(viewer.context, self.from_item)
             if self.relation_added:
                 subject = '[%s] Relation added to %s' % (subscribed_item_name, item_name)
