@@ -46,9 +46,7 @@ Interface
 * Make notifications have different messages for each RelationActionNotice (at least for many-to-many things like Membership and Transclusion)
 * Make the action at top-right of item more of a javascript menu, like in gmail
 * Get a variable <title> tag
-* Set action_summary whenever someone deactivates/reactivates/destroys that can go in ActionNotice.description
 * There should be a full interface for specifying CommentLocations
-* We should probably add back all the margins on <p> and stuff (look at base.css .regular_css for a start)
 * Some sort of arrows in the side-by-side comment interface, or just click->highlight/scroll (just for TextDocuments right now)
 * Include hCard in user profiles
 * Include iCal export of calendar
