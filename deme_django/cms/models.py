@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import SMTPConnection, EmailMessage, EmailMultiAlternatives
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
-from django.utils.text import capfirst
+from django.utils.text import capfirst, wrap
 from django.template import loader, Context
 from django.db.models import signals
 from email.utils import formataddr
@@ -1663,7 +1663,8 @@ class ActionNotice(models.Model):
         # Construct the EmailMessage
         template = loader.get_template("notification/%s_email.html" % template_name)
         body_html = template.render(viewer.context)
-        body_text = html2text.html2text(body_html)
+        body_text = html2text.html2text_file(body_html, None)
+        body_text = wrap(body_text, 78)
         from_email_address = '%s@%s' % ('noreply', settings.NOTIFICATION_EMAIL_HOSTNAME)
         reply_to_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
         from_email = formataddr((creator_name, from_email_address))

@@ -12,15 +12,15 @@ commented on
 <a href="{{ url_prefix }}{{ comment.get_absolute_url }}">{% viewable_name comment %}</a>
 </p>
 
-<p>
-<pre>
+<hr />
+
 {% ifagentcan 'view' 'body' comment %}
-{{ comment.body }}
+{{ comment.body|linebreaks }}
 {% else %}
+<p>
 [You do not have permission to view the body of this comment]
-{% endifagentcan %}
-</pre>
 </p>
+{% endifagentcan %}
 
 {% if description %}
 <p>
@@ -29,4 +29,3 @@ commented on
 {% endif %}
 
 {% endblock content %}
-
