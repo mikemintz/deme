@@ -14,6 +14,8 @@ from django.utils.timesince import timesince
 from django.utils.text import capfirst
 from django.utils import simplejson
 from django.utils.safestring import mark_safe
+from urlparse import urljoin
+import os
 
 register = template.Library()
 
@@ -64,6 +66,7 @@ def get_viewable_name(context, item):
 # Filters and templates
 ###############################################################################
 
+#TODO this should be a tag, not a filter
 @register.filter
 def icon_url(item_type, size=32):
     """
@@ -124,7 +127,18 @@ def icon_url(item_type, size=32):
     else:
         item_type = Item
     icon = item_type_to_icon.get(item_type, item_type_to_icon[Item])
-    return "/static/crystal_project/%dx%d/%s.png" % (size, size, icon)
+    return urljoin(settings.MEDIA_URL, "crystal_project/%dx%d/%s.png" % (size, size, icon))
+
+@register.simple_tag
+def media_url(path):
+    fs_path = os.path.join(settings.MEDIA_ROOT, path)
+    if os.path.exists(fs_path):
+        return urljoin(settings.MEDIA_URL, path)
+    else:
+        if settings.DEBUG:
+            return "[Couldn't find path %s on filesystem]" % path
+        else:
+            return '' # Fail silently for invalid paths.
 
 @register.simple_tag
 def list_results_navigator(viewer_name, collection, search_query, active, offset, limit, n_results, max_pages):

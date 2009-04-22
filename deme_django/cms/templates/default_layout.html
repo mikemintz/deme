@@ -5,19 +5,19 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Deme</title>
-    <link rel="shortcut icon" href="{% block favicon %}/static/favicon.ico{% endblock %}" type="image/x-icon" />
+    <link rel="shortcut icon" href="{% block favicon %}{% media_url "favicon.ico" %}{% endblock %}" type="image/x-icon" />
 
-    <link rel="stylesheet" href="/static/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection" />
-    <link rel="stylesheet" href="/static/stylesheets/blueprint/print.css" type="text/css" media="print" />
+    <link rel="stylesheet" href="{% media_url "stylesheets/blueprint/screen.css" %}" type="text/css" media="screen, projection" />
+    <link rel="stylesheet" href="{% media_url "stylesheets/blueprint/print.css" %}" type="text/css" media="print" />
     <!--[if IE]>
-      <link rel="stylesheet" href="/static/stylesheets/blueprint/ie.css" type="text/css" media="screen, projection" />
+        <link rel="stylesheet" href="{% media_url "stylesheets/blueprint/ie.css" %}" type="text/css" media="screen, projection" />
     <![endif]-->
-    <link href="/static/stylesheets/base.css" media="all" rel="Stylesheet" type="text/css" />
+    <link href="{% media_url "stylesheets/base.css" %}" media="all" rel="Stylesheet" type="text/css" />
 
-    <script type="text/javascript" src="/static/javascripts/jquery-1.3.2.min.js"></script>
-    <script type="text/javascript" src="/static/javascripts/jquery-ui-1.7.1.custom.min.js"></script>
-    <!--<script type="text/javascript" src="/static/javascripts/jquery-ui-layout-1.2.0.min.js"></script>-->
-    <link href="/static/stylesheets/smoothness/jquery-ui-1.7.1.custom.css" media="all" rel="Stylesheet" type="text/css" />
+    <script type="text/javascript" src="{% media_url "javascripts/jquery-1.3.2.min.js" %}"></script>
+    <script type="text/javascript" src="{% media_url "javascripts/jquery-ui-1.7.1.custom.min.js" %}"></script>
+    <!--<script type="text/javascript" src="{% media_url "javascripts/jquery-ui-layout-1.2.0.min.js" %}"></script>-->
+    <link href="{% media_url "stylesheets/smoothness/jquery-ui-1.7.1.custom.css" %}" media="all" rel="Stylesheet" type="text/css" />
 
     {% ifequal action 'show' %}
     {% if item %}

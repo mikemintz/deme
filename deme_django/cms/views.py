@@ -9,6 +9,7 @@ from django.utils import datastructures
 from django.template import Context, loader
 from django.db import models
 from django.db.models import Q
+from django.conf import settings
 from cms.models import *
 from django import forms
 from django.utils import simplejson
@@ -20,6 +21,7 @@ import re
 import os
 import subprocess
 import datetime
+from urlparse import urljoin
 
 ###############################################################################
 # Models, forms, and fields
@@ -540,10 +542,10 @@ class CodeGraphViewer(Viewer):
         Generate images for the graph of the Deme item type ontology, and
         display a page with links to them.
         """
-        # If cms/models.py was modified after static/codegraph.png was,
+        # If cms/models.py was modified after codegraph.png was,
         # re-render the graph before displaying this page.
         models_filename = os.path.join(os.path.dirname(__file__), 'models.py')
-        codegraph_filename = os.path.join(os.path.dirname(__file__), '..', 'static', 'codegraph.png')
+        codegraph_filename = os.path.join(settings.MEDIA_ROOT, 'codegraph.png')
         models_mtime = os.stat(models_filename)[8]
         try:
             codegraph_mtime = os.stat(codegraph_filename)[8]
@@ -551,14 +553,16 @@ class CodeGraphViewer(Viewer):
             codegraph_mtime = 0
         if models_mtime > codegraph_mtime:
             subprocess.call(os.path.join(os.path.dirname(__file__), '..', 'script', 'gen_graph.py'), shell=True)
+        code_graph_url = urljoin(settings.MEDIA_URL, 'codegraph.png?%d' % models_mtime)
+        code_graph_basic_url = urljoin(settings.MEDIA_URL, 'codegraph_basic.png?%d' % models_mtime)
         template = loader.get_template_from_string("""
         {%% extends layout %%}
         {%% block title %%}Deme Code Graph{%% endblock %%}
         {%% block content %%}
-        <div><a href="/static/codegraph.png?%d">Code graph</a></div>
-        <div><a href="/static/codegraph_basic.png?%d">Code graph (basic)</a></div>
+        <div><a href="%s">Code graph</a></div>
+        <div><a href="%s">Code graph (basic)</a></div>
         {%% endblock %%}
-        """ % (models_mtime, models_mtime))
+        """ % (code_graph_url, code_graph_basic_url))
         return HttpResponse(template.render(self.context))
 
 
@@ -1308,7 +1312,7 @@ class TextDocumentViewer(ItemViewer):
         body_as_list = list(self.item.body)
         for transclusion in transclusions:
             if issubclass(self.accepted_item_type, HtmlDocument):
-                transclusion_text = '<img id="transclusion_%s" src="/static/spacer.gif" title="Comment %s" style="margin: 0 2px 0 2px; background: #ddd; border: 1px dotted #777; height: 10px; width: 10px;"/>' % (transclusion.to_item_id, transclusion.to_item_id)
+                transclusion_text = '<img id="transclusion_%s" src="%s" title="Comment %s" style="margin: 0 2px 0 2px; background: #ddd; border: 1px dotted #777; height: 10px; width: 10px;"/>' % (transclusion.to_item_id, urljoin(settings.MEDIA_URL, 'spacer.gif'), transclusion.to_item_id)
             else:
                 transclusion_text = '<deme_transclusion id="%s"/>' % transclusion.to_item_id
             i = transclusion.from_item_index
