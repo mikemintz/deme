@@ -26,12 +26,10 @@ class StudentSymsysCareer(SymsysCareer):
 
 class BachelorsSymsysCareer(StudentSymsysCareer):
     indivdesignedconc = models.CharField(max_length=255, blank=True) # never editable
-    concentration = models.CharField(max_length=255, blank=True) # editable by the student BEFORE conferred
-    #TODO add choices for concentration
+    concentration = models.CharField(max_length=255, blank=True, choices=[('Applied Logic', 'Applied Logic'), ('Artificial Intelligence', 'Artificial Intelligence'), ('Cognition', 'Cognition'), ('Cognitive Science', 'Cognitive Science'), ('Computation', 'Computation'), ('Computer Music', 'Computer Music'), ('Decision Making and Rationality', 'Decision Making and Rationality'), ('Education and Learning', 'Education and Learning'), ('HCI', 'HCI'), ('Individually Designed Concentration', 'Individually Designed Concentration'), ('Learning', 'Learning'), ('Natural Language', 'Natural Language'), ('Neural Systems', 'Neural Systems'), ('Neurosciences', 'Neurosciences'), ('Philosophical Foundations', 'Philosophical Foundations'), ('Rationality', 'Rationality'), ('Undecided', 'Undecided')]) # editable by the student BEFORE conferred
 
 class MastersSymsysCareer(StudentSymsysCareer):
-    track = models.CharField(max_length=255, blank=True) # never editable
-    #TODO add choices for track
+    track = models.CharField(max_length=255, blank=True, choices=[('HCI', 'HCI'), ('Individually Designed Track', 'Individually Designed Track'), ('Natural Language Technology', 'Natural Language Technology')]) # never editable
     ms_idt = models.CharField(max_length=255, blank=True) # never editable
 
 class HonorsSymsysCareer(StudentSymsysCareer):
