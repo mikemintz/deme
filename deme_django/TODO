@@ -16,6 +16,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Make Deme work with newest version of Django (we get validation errors right now)
 * Fix the multiple inheritance bug
   - http://code.djangoproject.com/ticket/10808
 * Need initial permissions set on incoming email comments, group generated folios/groupagents, maybe other things too. Just search for save_versioned.
@@ -100,6 +101,7 @@ Distant Future (sorted by approximate order of planned implementation)
 * Add other types of subscriptions, like text messages / IMs
 * Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
 * Captchas
+* Way to subscribe to "all items", such that the subscription will include newly created items.
 * We will eventually want to have a item_type table
 * More efficient versioning (like like latest version in db, but have deltas to prev versions)
   - Consider not necessarily having linear deltas. If we start with version 1, a spammer comes in and messes it up for version 2, and I "edit" version 1 so that it becomes version 3, the delta would be more efficient if it knew I started with version 1 in order to get to version 3.
