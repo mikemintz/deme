@@ -1,0 +1,16 @@
+{% extends layout %}
+{% load item_tags %}
+{% block favicon %}{{ accepted_item_type|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ accepted_item_type|icon_url:24 }}" /> Recent Changes{% endblock %}
+{% block content %}
+
+{% for action_notice in action_notices %}
+<div style="margin-bottom: 5px; border: 1px #aaa solid; background: #ddd; -moz-border-radius: 8px; padding: 5px;">
+    {{ action_notice.created_at }}
+    <a href="{{ action_notice.item.get_absolute_url }}">{% viewable_name action_notice.item %}</a>
+    {% viewable_name action_notice.creator %} 
+</div>
+{% endfor %}
+
+{% endblock content %}
+

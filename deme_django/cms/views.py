@@ -670,6 +670,11 @@ class ItemViewer(Viewer):
             self.context['redirect'] = self.request.GET.get('redirect')
             return HttpResponse(template.render(self.context))
 
+    def type_recentchanges_html(self):
+        template = loader.get_template('item/recentchanges.html')
+        self.context['action_notices'] = ActionNotice.objects.order_by('created_at')[0:50]
+        return HttpResponse(template.render(self.context))
+
     def item_show_html(self):
         template = loader.get_template('item/show.html')
         return HttpResponse(template.render(self.context))
