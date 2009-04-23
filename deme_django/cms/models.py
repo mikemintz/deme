@@ -159,8 +159,8 @@ class Item(models.Model):
     destroyed        = models.BooleanField(_('destroyed'), default=False, editable=False)
     creator          = models.ForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
     created_at       = models.DateTimeField(_('created at'), editable=False)
-    name             = models.CharField(_('name'), max_length=255, blank=True)
-    description      = models.CharField(_('description'), max_length=255, blank=True)
+    name             = models.CharField(_('item title'), max_length=255, blank=True)
+    description      = models.CharField(_('preface'), max_length=255, blank=True)
 
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type_string, self.pk, self.name)
@@ -978,7 +978,7 @@ class Subscription(Item):
     # Fields
     contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'))
     item           = models.ForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'))
-    deep           = models.BooleanField('deep subscription', default=False)
+    deep           = models.BooleanField(_('deep subscription'), default=False)
 
 
 ###############################################################################
