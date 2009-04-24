@@ -683,7 +683,9 @@ class ItemViewer(Viewer):
 
     def type_recentchanges_html(self):
         template = loader.get_template('item/recentchanges.html')
-        self.context['action_notices'] = ActionNotice.objects.order_by('created_at')[0:50]
+        viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view_action_notices', Item.objects)
+        viewable_action_notices = ActionNotice.objects.filter(item__in=viewable_items.values("pk").query)
+        self.context['action_notices'] = viewable_action_notices[0:50]
         return HttpResponse(template.render(self.context))
 
     def item_show_html(self):
