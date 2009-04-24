@@ -372,7 +372,7 @@ class ItemHeader(template.Node):
                 result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add authentication method</a>' % add_authentication_method_url)
             if agentcan_helper(context, 'add_contact_method', item):
                 result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a>' % add_contact_method_url)
-        result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscibe</a>' % subscribe_url)
+        result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscribe</a>' % subscribe_url)
         if agentcan_helper(context, 'edit', item, wildcard_suffix=True):
             result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-pencil"></span>Edit</a>' % edit_url)
         if agentcan_global_helper(context, 'create %s' % item.item_type_string):
