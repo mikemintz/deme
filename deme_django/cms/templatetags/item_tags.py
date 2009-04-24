@@ -808,7 +808,6 @@ class CalculateActionNotices(template.Node):
         result = []
         if agentcan_helper(context, 'view_action_notices', item):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
-            result.append(u"<div><b>Action Notices</b></div>")
             result.append(u'<table class="list">')
             result.append(u'<tr><th>Date/Time</th><th>Agent</th><th>Action</th><th>Item</th><th>Description</th></tr>')
             action_notices = ActionNotice.objects.filter(Q(item=item) | Q(creator=item)).order_by('created_at')
