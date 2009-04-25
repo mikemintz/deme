@@ -18,31 +18,19 @@ div.site_inner {
     text-align: left;
     margin: 0 auto;
     padding: 0 0em;
-    width: 950px;
+    width: 960px;
 }
 
 .header {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-}
-
-.header .top_left {
-    float: left;
-    text-align: left;
 }
 
 .header .top_right {
-    float: right;
-    text-align: right;
-}
-
-.header .top_right .top_right_text {
-    font-size: 85%;
 }
 
 .header .top_right .top_right_actions {
-    margin-top: 10px;
+}
+
+.header .top_right .top_right_text {
 }
 
 .footer {
@@ -72,15 +60,9 @@ div.content_box {
 }
 
 div.title {
-    text-align: center;
+    text-align: left;
     font-weight: bold;
-    background: #333;
-    color: #ccc;
     font-size: 175%;
-    margin-bottom: 10px;
-    padding: 10px;
-    -moz-border-radius: 8px;
-    -webkit-border-radius: 8px;
 }
 
 div.title img {

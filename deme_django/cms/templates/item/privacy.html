@@ -1,7 +1,5 @@
 {% extends layout %}
 {% load item_tags %}
-{% block favicon %}{{ item|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ item|icon_url:24 }}" /> Privacy settings for {% viewable_name item %}{% endblock %}
 {% block content %}
 
 <form method="post" action="{% url item_url viewer=viewer_name,action="updateprivacy",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">

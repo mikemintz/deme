@@ -13,6 +13,7 @@ from django.conf import settings
 from cms.models import *
 from django import forms
 from django.utils import simplejson
+from django.utils.text import capfirst
 from django.core.exceptions import ObjectDoesNotExist
 import django.contrib.syndication.feeds
 import django.contrib.syndication.views
@@ -542,6 +543,7 @@ class CodeGraphViewer(Viewer):
         Generate images for the graph of the Deme item type ontology, and
         display a page with links to them.
         """
+        self.context['action_title'] = 'Code graph'
         # If cms/models.py was modified after codegraph.png was,
         # re-render the graph before displaying this page.
         models_filename = os.path.join(os.path.dirname(__file__), 'models.py')
@@ -623,6 +625,7 @@ class ItemViewer(Viewer):
         self.context['all_collections'] = self.permission_cache.filter_items(self.cur_agent, 'view name', Collection.objects.filter(active=True)).order_by('name')
 
     def type_list_html(self):
+        self.context['action_title'] = capfirst(self.accepted_item_type._meta.verbose_name_plural)
         self._type_list_helper()
         template = loader.get_template('item/list.html')
         return HttpResponse(template.render(self.context))
@@ -649,13 +652,15 @@ class ItemViewer(Viewer):
                 return item.created_at
         return django.contrib.syndication.views.feed(self.request, 'item_list', {'item_list': ItemListFeed})
 
-    def type_new_html(self):
+    def type_new_html(self, form=None):
+        self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
             raise DemePermissionDenied
-        form_initial = dict(self.request.GET.items())
-        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
-        form = form_class(initial=form_initial)
+        if form is None:
+            form_initial = dict(self.request.GET.items())
+            form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+            form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
@@ -675,13 +680,10 @@ class ItemViewer(Viewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            template = loader.get_template('item/new.html')
-            self.context['form'] = form
-            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-            self.context['redirect'] = self.request.GET.get('redirect')
-            return HttpResponse(template.render(self.context))
+            return self.type_new_html(form)
 
     def type_recentchanges_html(self):
+        self.context['action_title'] = 'Recent Changes'
         template = loader.get_template('item/recentchanges.html')
         viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view_action_notices', Item.objects)
         viewable_action_notices = ActionNotice.objects.filter(item__in=viewable_items.values("pk").query)
@@ -689,6 +691,7 @@ class ItemViewer(Viewer):
         return HttpResponse(template.render(self.context))
 
     def item_show_html(self):
+        self.context['action_title'] = ''
         template = loader.get_template('item/show.html')
         return HttpResponse(template.render(self.context))
 
@@ -739,26 +742,8 @@ class ItemViewer(Viewer):
                 return item['created_at']
         return django.contrib.syndication.views.feed(self.request, 'item_show', {'item_show': ItemShowFeed})
 
-    def item_edit_html(self):
-        abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if not can_edit:
-            raise DemePermissionDenied
-        fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
-        form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
-        form = form_class(instance=self.item)
-        fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
-        initial_fields_set = set(form.initial.iterkeys())
-        fields_must_blank = initial_fields_set - fields_can_view
-        for field_name in fields_must_blank:
-            del form.initial[field_name]
-        template = loader.get_template('item/edit.html')
-        self.context['form'] = form
-        self.context['query_string'] = self.request.META['QUERY_STRING']
-        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-        return HttpResponse(template.render(self.context))
-
     def item_copy_html(self):
+        self.context['action_title'] = 'Copy'
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
             raise DemePermissionDenied
@@ -782,6 +767,27 @@ class ItemViewer(Viewer):
             self.context['redirect'] = self.request.GET['redirect']
         return HttpResponse(template.render(self.context))
 
+    def item_edit_html(self, form=None):
+        self.context['action_title'] = 'Edit'
+        abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
+        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
+        if not can_edit:
+            raise DemePermissionDenied
+        if form is None:
+            fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
+            form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
+            form = form_class(instance=self.item)
+            fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
+            initial_fields_set = set(form.initial.iterkeys())
+            fields_must_blank = initial_fields_set - fields_can_view
+            for field_name in fields_must_blank:
+                del form.initial[field_name]
+        template = loader.get_template('item/edit.html')
+        self.context['form'] = form
+        self.context['query_string'] = self.request.META['QUERY_STRING']
+        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
+        return HttpResponse(template.render(self.context))
+
     def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
@@ -796,11 +802,7 @@ class ItemViewer(Viewer):
             new_item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
             return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
-            template = loader.get_template('item/edit.html')
-            self.context['form'] = form
-            self.context['query_string'] = self.request.META['QUERY_STRING']
-            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-            return HttpResponse(template.render(self.context))
+            return self.item_edit_html(form)
 
     def item_deactivate_html(self):
         if self.method == 'GET':
@@ -922,6 +924,7 @@ class ItemViewer(Viewer):
         return HttpResponseRedirect(redirect)
 
     def item_privacy_html(self):
+        self.context['action_title'] = 'Privacy settings'
         if not self.cur_agent_can('modify_privacy_settings', self.item):
             raise DemePermissionDenied
         possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
@@ -935,6 +938,7 @@ class ItemViewer(Viewer):
         return HttpResponse(template.render(self.context))
 
     def item_itempermissions_html(self):
+        self.context['action_title'] = 'Permissions'
         if not self.cur_agent_can('do_anything', self.item):
             raise DemePermissionDenied
         possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
@@ -947,12 +951,14 @@ class ItemViewer(Viewer):
         return HttpResponse(template.render(self.context))
 
     def type_globalpermissions_html(self):
+        self.context['action_title'] = 'Global permissions'
         if not self.cur_agent_can_global('do_anything'):
             raise DemePermissionDenied
         template = loader.get_template('item/globalpermissions.html')
         return HttpResponse(template.render(self.context))
 
     def type_admin_html(self):
+        self.context['action_title'] = 'Admin'
         if not self.cur_agent_can_global('do_anything'):
             raise DemePermissionDenied
         template = loader.get_template('item/admin.html')
@@ -963,17 +969,19 @@ class ContactMethodViewer(ItemViewer):
     accepted_item_type = ContactMethod
     viewer_name = 'contactmethod'
 
-    def type_new_html(self):
+    def type_new_html(self, form=None):
+        self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
         try:
-            agent = Item.objects.get(pk=self.request.GET.get('agent'))
+            agent = Item.objects.get(pk=self.request.REQUEST.get('agent'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding an contact method to")
+            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding a contact method to")
         can_add_contact_method = self.cur_agent_can('add_contact_method', agent)
         if not can_add_contact_method:
             raise DemePermissionDenied
-        form_initial = dict(self.request.GET.items())
-        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
-        form = form_class(initial=form_initial)
+        if form is None:
+            form_initial = dict(self.request.GET.items())
+            form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+            form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
@@ -993,28 +1001,26 @@ class ContactMethodViewer(ItemViewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            template = loader.get_template('item/new.html')
-            self.context['form'] = form
-            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-            self.context['redirect'] = self.request.GET.get('redirect')
-            return HttpResponse(template.render(self.context))
+            return self.type_new_html(form)
 
 
 class AuthenticationMethodViewer(ItemViewer):
     accepted_item_type = AuthenticationMethod
     viewer_name = 'authenticationmethod'
 
-    def type_new_html(self):
+    def type_new_html(self, form=None):
+        self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
         try:
-            agent = Item.objects.get(pk=self.request.GET.get('agent'))
+            agent = Item.objects.get(pk=self.request.REQUEST.get('agent'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding an authentication method to")
         can_add_authentication_method = self.cur_agent_can('add_authentication_method', agent)
         if not can_add_authentication_method:
             raise DemePermissionDenied
-        form_initial = dict(self.request.GET.items())
-        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
-        form = form_class(initial=form_initial)
+        if form is None:
+            form_initial = dict(self.request.GET.items())
+            form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+            form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
@@ -1034,13 +1040,10 @@ class AuthenticationMethodViewer(ItemViewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            template = loader.get_template('item/new.html')
-            self.context['form'] = form
-            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-            self.context['redirect'] = self.request.GET.get('redirect')
-            return HttpResponse(template.render(self.context))
+            return self.type_new_html(form)
 
     def type_login_html(self):
+        self.context['action_title'] = 'Login'
         """
         This is the view that takes care of all URLs dealing with logging in
         and logging out.
@@ -1196,24 +1199,8 @@ class GroupViewer(ItemViewer):
     accepted_item_type = Group
     viewer_name = 'group'
 
-    def type_create_html(self):
-        can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
-        if not can_create:
-            raise DemePermissionDenied
-        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
-        form = form_class(self.request.POST, self.request.FILES)
-        if form.is_valid():
-            new_item = form.save(commit=False)
-            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            new_item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
-            return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
-        else:
-            template = loader.get_template('item/new.html')
-            self.context['form'] = form
-            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-            return HttpResponse(template.render(self.context))
-
     def item_show_html(self):
+        self.context['action_title'] = ''
         template = loader.get_template('group/show.html')
         return HttpResponse(template.render(self.context))
 
@@ -1222,15 +1209,15 @@ class ViewerRequestViewer(ItemViewer):
     accepted_item_type = ViewerRequest
     viewer_name = 'viewerrequest'
 
-    def item_show_html(self):
+    def item_show_html(self, form=None):
+        self.context['action_title'] = ''
         site, custom_urls = self.item.calculate_full_path()
         self.context['site'] = site
         self.context['custom_urls'] = custom_urls
         self.context['child_urls'] = self.item.child_urls.filter(active=True)
-        self.context['addsubpath_form'] = AddSubPathForm(initial={'parent_url':self.item.pk})
+        self.context['addsubpath_form'] = form or AddSubPathForm(initial={'parent_url':self.item.pk})
         template = loader.get_template('viewerrequest/show.html')
         return HttpResponse(template.render(self.context))
-
 
     def item_addsubpath_html(self):
         form = AddSubPathForm(self.request.POST, self.request.FILES)
@@ -1252,13 +1239,7 @@ class ViewerRequestViewer(ItemViewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            site, custom_urls = self.item.calculate_full_path()
-            self.context['site'] = site
-            self.context['custom_urls'] = custom_urls
-            self.context['child_urls'] = self.item.child_urls.filter(active=True)
-            self.context['addsubpath_form'] = form
-            template = loader.get_template('viewerrequest/show.html')
-            return HttpResponse(template.render(self.context))
+            return self.item_show_html(form)
 
 
 class CollectionViewer(ItemViewer):
@@ -1266,6 +1247,7 @@ class CollectionViewer(ItemViewer):
     viewer_name = 'collection'
 
     def item_show_html(self):
+        self.context['action_title'] = ''
         memberships = self.item.child_memberships
         memberships = memberships.filter(active=True)
         memberships = memberships.filter(item__active=True)
@@ -1320,6 +1302,7 @@ class ImageDocumentViewer(ItemViewer):
     viewer_name = 'imagedocument'
 
     def item_show_html(self):
+        self.context['action_title'] = ''
         template = loader.get_template('imagedocument/show.html')
         return HttpResponse(template.render(self.context))
 
@@ -1329,19 +1312,17 @@ class TextDocumentViewer(ItemViewer):
     viewer_name = 'textdocument'
 
     def item_show_html(self):
+        self.context['action_title'] = ''
         template = loader.get_template('textdocument/show.html')
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
-
-    def item_edit_html(self):
+    def item_edit_html(self, form=None):
+        self.context['action_title'] = 'Edit'
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
         if not can_edit:
             raise DemePermissionDenied
-        fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
-        form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
-
 
         transclusions = Transclusion.objects.filter(from_item=self.item, from_item_version_number=self.item.version_number).order_by('-from_item_index')
         body_as_list = list(self.item.body)
@@ -1354,12 +1335,15 @@ class TextDocumentViewer(ItemViewer):
             body_as_list[i:i] = transclusion_text
         self.item.body = ''.join(body_as_list)
 
-        form = form_class(instance=self.item)
-        fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
-        initial_fields_set = set(form.initial.iterkeys())
-        fields_must_blank = initial_fields_set - fields_can_view
-        for field_name in fields_must_blank:
-            del form.initial[field_name]
+        if form is None:
+            fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
+            form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
+            form = form_class(instance=self.item)
+            fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
+            initial_fields_set = set(form.initial.iterkeys())
+            fields_must_blank = initial_fields_set - fields_can_view
+            for field_name in fields_must_blank:
+                del form.initial[field_name]
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
         self.context['query_string'] = self.request.META['QUERY_STRING']
@@ -1410,11 +1394,7 @@ class TextDocumentViewer(ItemViewer):
 
             return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
-            template = loader.get_template('item/edit.html')
-            self.context['form'] = form
-            self.context['query_string'] = self.request.META['QUERY_STRING']
-            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-            return HttpResponse(template.render(self.context))
+            return self.item_edit_html(form)
 
 
 class DjangoTemplateDocumentViewer(TextDocumentViewer):
@@ -1422,6 +1402,7 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
     viewer_name = 'djangotemplatedocument'
 
     def item_render_html(self):
+        self.context['action_title'] = ''
         cur_node = self.item
         while cur_node is not None:
             next_node = cur_node.layout
@@ -1447,17 +1428,19 @@ class TextCommentViewer(TextDocumentViewer):
     accepted_item_type = TextComment
     viewer_name = 'textcomment'
 
-    def type_new_html(self):
+    def type_new_html(self, form=None):
+        self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
         try:
-            item = Item.objects.get(pk=self.request.GET.get('item'))
+            item = Item.objects.get(pk=self.request.REQUEST.get('item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
         can_comment_on = self.cur_agent_can('comment_on', item)
         if not can_comment_on:
             raise DemePermissionDenied
-        form_initial = dict(self.request.GET.items())
-        form_class = NewTextCommentForm
-        form = form_class(initial=form_initial)
+        if form is None:
+            form_initial = dict(self.request.GET.items())
+            form_class = NewTextCommentForm
+            form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
@@ -1492,11 +1475,7 @@ class TextCommentViewer(TextDocumentViewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            template = loader.get_template('item/new.html')
-            self.context['form'] = form
-            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-            self.context['redirect'] = self.request.GET.get('redirect')
-            return HttpResponse(template.render(self.context))
+            return self.type_new_html(form)
 
     #TODO copy/edit/update comments
 
@@ -1505,17 +1484,19 @@ class TransclusionViewer(ItemViewer):
     accepted_item_type = Transclusion
     viewer_name = 'transclusion'
 
-    def type_new_html(self):
+    def type_new_html(self, form=None):
+        self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
         try:
-            from_item = Item.objects.get(pk=self.request.GET.get('from_item'))
+            from_item = Item.objects.get(pk=self.request.REQUEST.get('from_item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are adding a transclusion to")
         can_add_transclusion = self.cur_agent_can('add_transclusion', from_item)
         if not can_add_transclusion:
             raise DemePermissionDenied
-        form_initial = dict(self.request.GET.items())
-        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
-        form = form_class(initial=form_initial)
+        if form is None:
+            form_initial = dict(self.request.GET.items())
+            form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+            form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
@@ -1536,11 +1517,7 @@ class TransclusionViewer(ItemViewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            template = loader.get_template('item/new.html')
-            self.context['form'] = form
-            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-            self.context['redirect'] = self.request.GET.get('redirect')
-            return HttpResponse(template.render(self.context))
+            return self.type_new_html(form)
 
     #TODO copy/edit/update transclusions
 
@@ -1587,6 +1564,7 @@ class DemeSettingViewer(ItemViewer):
     viewer_name = 'demesetting'
 
     def type_modify_html(self):
+        self.context['action_title'] = 'Modify settings'
         if not self.cur_agent_can_global('do_anything'):
             raise DemePermissionDenied
         self.context['deme_settings'] = DemeSetting.objects.filter(active=True).order_by('key')
@@ -1607,10 +1585,12 @@ class SubscriptionViewer(ItemViewer):
     accepted_item_type = Subscription
     viewer_name = 'subscription'
 
-    def type_new_html(self):
-        form_initial = dict(self.request.GET.items())
-        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
-        form = form_class(initial=form_initial)
+    def type_new_html(self, form=None):
+        self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
+        if form is None:
+            form_initial = dict(self.request.GET.items())
+            form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+            form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
@@ -1630,11 +1610,7 @@ class SubscriptionViewer(ItemViewer):
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
-            template = loader.get_template('item/new.html')
-            self.context['form'] = form
-            self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-            self.context['redirect'] = self.request.GET.get('redirect')
-            return HttpResponse(template.render(self.context))
+            return self.type_new_html(form)
 
 
 # Dynamically create default viewers for the ones we don't have.

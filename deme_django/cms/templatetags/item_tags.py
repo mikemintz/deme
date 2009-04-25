@@ -182,6 +182,28 @@ def list_results_navigator(viewer_name, collection, search_query, active, offset
         result.append(link)
     return ''.join(result)
 
+class UniversalEditButton(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<UniversalEditButtonNode>"
+
+    def render(self, context):
+        item = context['item']
+        if item and agentcan_helper(context, 'edit', item, wildcard_suffix=True):
+            edit_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % item.version_number
+            return '<link rel="alternate" type="application/wiki" title="Edit" href="%s" />' % escape(edit_url)
+        else:
+            return ''
+
+@register.tag
+def universal_edit_button(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return UniversalEditButton()
+
 class IfAgentCan(template.Node):
     def __init__(self, ability, ability_parameter, item, nodelist_true, nodelist_false):
         self.ability = template.Variable(ability)
@@ -323,28 +345,14 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
             comment_dicts.append(child)
     return comment_dicts, len(comments)
 
-class ItemHeader(template.Node):
-    def __init__(self, page_name):
-        if page_name:
-            self.page_name = template.Variable(page_name)
-        else:
-            self.page_name = None
+class ItemToolbar(template.Node):
+    def __init__(self):
+        pass
 
     def __repr__(self):
-        return "<ItemHeaderNode>"
+        return "<ItemToolbarNode>"
 
     def render(self, context):
-        if self.page_name is None:
-            page_name = None
-        else:
-            try:
-                page_name = self.page_name.resolve(context)
-            except template.VariableDoesNotExist:
-                if settings.DEBUG:
-                    return "[Couldn't resolve page_name variable]"
-                else:
-                    return '' # Fail silently for invalid variables.
-
         item = context['item']
         version_number = item.version_number
         cur_item_type = context['_viewer'].accepted_item_type
@@ -364,7 +372,8 @@ class ItemHeader(template.Node):
         add_authentication_method_url = reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'new'}) + '?agent=%s' % item.pk
         add_contact_method_url = reverse('item_type_url', kwargs={'viewer': 'contactmethod', 'action': 'new'}) + '?agent=%s' % item.pk
 
-        result.append('<div class="fg-toolbar ui-widget-header ui-corner-all ui-helper-clearfix">')
+        #result.append('<div class="fg-toolbar ui-widget-header ui-corner-all ui-helper-clearfix">')
+        result.append('<div class="ui-helper-clearfix" style="font-size: 85%;">')
         result.append('<div class="fg-buttonset ui-helper-clearfix">')
 
         if isinstance(item, Agent):
@@ -453,36 +462,14 @@ class ItemHeader(template.Node):
         result.append('</div>')
         result.append('</div>')
 
-
-
-
-
-        result.append('<div class="crumbs">')
-        result.append('<div style="margin-bottom: 5px; margin-top: 5px;">')
-        for inherited_item_type in item_type_inheritance:
-            result.append(u'<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a> &raquo;' % (reverse('item_type_url', kwargs={'viewer': inherited_item_type.__name__.lower()}), icon_url(inherited_item_type, 16), capfirst(inherited_item_type._meta.verbose_name_plural)))
-        result.append('<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (item.get_absolute_url(), icon_url(item.item_type_string, 16), escape(get_viewable_name(context, item))))
-        if context['specific_version']:
-            result.append('&raquo; ')
-            result.append('v%d' % item.version_number)
-        if page_name is not None:
-            result.append('&raquo; ')
-            result.append(page_name)
-        result.append('</div>')
-        result.append('</div>')
-
         return '\n'.join(result)
 
 @register.tag
-def itemheader(parser, token):
+def itemtoolbar(parser, token):
     bits = list(token.split_contents())
-    if len(bits) < 1 or len(bits) > 2:
-        raise template.TemplateSyntaxError, "%r takes zero or one arguments" % bits[0]
-    if len(bits) == 2:
-        page_name = bits[1]
-    else:
-        page_name = None
-    return ItemHeader(page_name)
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes zero arguments" % bits[0]
+    return ItemToolbar()
 
 
 class ItemDetails(template.Node):
@@ -528,76 +515,6 @@ def itemdetails(parser, token):
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes zero arguments" % bits[0]
     return ItemDetails()
-
-
-class TypeHeader(template.Node):
-    def __init__(self, page_name):
-        if page_name:
-            self.page_name = template.Variable(page_name)
-        else:
-            self.page_name = None
-
-    def __repr__(self):
-        return "<TypeHeaderNode>"
-
-    def render(self, context):
-        if self.page_name is None:
-            page_name = None
-        else:
-            try:
-                page_name = self.page_name.resolve(context)
-            except template.VariableDoesNotExist:
-                if settings.DEBUG:
-                    return "[Couldn't resolve page_name variable]"
-                else:
-                    return '' # Fail silently for invalid variables.
-
-        item_type = context['_viewer'].accepted_item_type
-
-        cur_item_type = context['_viewer'].accepted_item_type
-        item_type_inheritance = []
-        while issubclass(cur_item_type, Item):
-            item_type_inheritance.insert(0, cur_item_type)
-            cur_item_type = cur_item_type.__base__
-
-        result = []
-
-        new_url = reverse('item_type_url', kwargs={'viewer': item_type.__name__.lower(), 'action': "new"})
-
-        result.append('<div class="crumbs">')
-        result.append('<div style="float: right; margin-bottom: 5px;">')
-        if agentcan_global_helper(context, 'create %s' % item_type.__name__):
-            result.append(u'<a href="%s" class="img_button"><img src="%s" /><span>New %s</span></a>' % (new_url, icon_url('new', 16), item_type._meta.verbose_name))
-        result.append('</div>')
-
-        result.append('<div style="float: left; margin-bottom: 5px; margin-top: 5px;">')
-        for i, inherited_item_type in enumerate(item_type_inheritance):
-            link = u'<a href="%s" class="img_link"><img src="%s" /><span>%s</span></a>' % (reverse('item_type_url', kwargs={'viewer': inherited_item_type.__name__.lower()}), icon_url(inherited_item_type, 16), capfirst(inherited_item_type._meta.verbose_name_plural))
-            if i > 0:
-                link = '&raquo; %s' % link
-            result.append(link)
-        if page_name is not None:
-            result.append('&raquo; ')
-            result.append(page_name)
-        result.append('</div>')
-
-        result.append('<div style="clear: both;">')
-        result.append('</div>')
-
-        result.append('</div>')
-
-        return '\n'.join(result)
-
-@register.tag
-def typeheader(parser, token):
-    bits = list(token.split_contents())
-    if len(bits) < 1 or len(bits) > 2:
-        raise template.TemplateSyntaxError, "%r takes zero or one arguments" % bits[0]
-    if len(bits) == 2:
-        page_name = bits[1]
-    else:
-        page_name = None
-    return TypeHeader(page_name)
 
 
 @register.simple_tag

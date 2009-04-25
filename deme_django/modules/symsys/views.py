@@ -11,6 +11,7 @@ class SymsysAffiliateViewer(ItemViewer):
     viewer_name = 'symsysaffiliate'
 
     def item_show_html(self):
+        self.context['action_title'] = 'Show'
         template = loader.get_template('symsysaffiliate/show.html')
         if self.cur_agent_can_global('do_anything'):
             recursive_filter = None

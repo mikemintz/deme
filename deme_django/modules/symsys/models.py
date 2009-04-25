@@ -2,7 +2,7 @@ from cms.models import *
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-__all__ = ['SymsysCareer', 'ThesisSymsysCareer', 'StudentSymsysCareer', 'BachelorsSymsysCareer', 'MastersSymsysCareer', 'HonorsSymsysCareer', 'FacultySymsysCareer', 'ProgramStaffSymsysCareer', 'AdministratorSymsysCareer', 'AFSymsysCareer', 'SymsysAffiliate', 'Event', 'Advertisement', 'TextAdvertisement', 'HtmlAdvertisement']
+__all__ = ['SymsysCareer', 'ThesisSymsysCareer', 'StudentSymsysCareer', 'BachelorsSymsysCareer', 'MastersSymsysCareer', 'HonorsSymsysCareer', 'FacultySymsysCareer', 'ProgramStaffSymsysCareer', 'SymsysAffiliate', 'Event', 'Advertisement', 'TextAdvertisement', 'HtmlAdvertisement']
 
 
 class SymsysCareer(Item):
@@ -18,14 +18,14 @@ class SymsysCareer(Item):
         verbose_name_plural = _('Symsys careers')
 
     # Fields
-    symsys_affiliate       = models.ForeignKey('SymsysAffiliate', verbose_name=_('Symsys affiliate'))
+    symsys_affiliate       = models.ForeignKey('SymsysAffiliate', verbose_name=_('Symsys affiliate'), related_name='symsys_careers')
     suid                   = models.PositiveIntegerField(_('SUID'), default=0)
     original_first_name    = models.CharField(_('original first name'), max_length=255)
     original_middle_names  = models.CharField(_('original middle names'), max_length=255, blank=True)
     original_last_name     = models.CharField(_('original last name'), max_length=255)
     original_suffix        = models.CharField(_('original suffix'), max_length=255, blank=True)
     first_affiliation_year = models.PositiveIntegerField(_('first affiliation year'), null=True, blank=True, default=None)
-    original_photo         = models.ForeignKey(ImageDocument, related_name='symsysaffiliates_with_then_image', verbose_name=_('original photo'), null=True, blank=True, default=None)
+    original_photo         = models.ForeignKey(ImageDocument, related_name='symsyscareers_with_original_photo', verbose_name=_('original photo'), null=True, blank=True, default=None)
 
 class ThesisSymsysCareer(SymsysCareer):
     # Setup
@@ -39,8 +39,6 @@ class ThesisSymsysCareer(SymsysCareer):
     # Fields
     second_reader = models.ForeignKey('SymsysAffiliate', null=True, blank=True, related_name="second_reader_group", verbose_name=_('second reader'), default=None) # editable by the student BEFORE conferred
     thesis        = models.ForeignKey(FileDocument, null=True, blank=True, related_name="careers_with_thesis", verbose_name=_('thesis'), default=None) # the student cannot edit this field, but as long as this field is blank, the student can upload a file using a special viewer which will generate a FileDocument that this points to
-
-#TODO continue after this line
 
 class StudentSymsysCareer(SymsysCareer):
     # Setup
@@ -58,6 +56,15 @@ class StudentSymsysCareer(SymsysCareer):
     advisor         = models.ForeignKey('SymsysAffiliate', null=True, blank=True, related_name="advisor_group", verbose_name=_('advisor'), default=None) # editable by the student BEFORE conferred
     other_degrees   = models.CharField(_('other degrees'), max_length=255, blank=True) # always editable
     conferred       = models.BooleanField(_('conferred'), default=False) # never editable
+
+class MinorSymsysCareer(StudentSymsysCareer):
+    # Setup
+    introduced_immutable_fields = frozenset()
+    introduced_abilities = frozenset([])
+    introduced_global_abilities = frozenset(['create MinorSymsysCareer'])
+    class Meta:
+        verbose_name = _('minor Symsys career')
+        verbose_name_plural = _('minor Symsys careers')
 
 class BachelorsSymsysCareer(StudentSymsysCareer):
     # Setup
@@ -108,8 +115,9 @@ class FacultySymsysCareer(SymsysCareer):
 
 class ProgramStaffSymsysCareer(SymsysCareer):
     # Setup
-    introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view admin_title', 'edit admin_title'])
+    introduced_immutable_fields = frozenset(['admin_title'])
+    introduced_abilities = frozenset(['view admin_title', 'view start_date', 'view end_date',
+                                      'view admin_title', 'view start_date', 'view end_date'])
     introduced_global_abilities = frozenset(['create ProgramStaffSymsysCareer'])
     class Meta:
         verbose_name = _('program staff Symsys career')
@@ -117,27 +125,8 @@ class ProgramStaffSymsysCareer(SymsysCareer):
 
     # Fields
     admin_title = models.CharField(_('admin title'), max_length=255, choices=[("Advising Fellow", "Advising Fellow"), ("Associate Director", "Associate Director"), ("Director Emeritus", "Director Emeritus"), ("Graduate Studies Director", "Graduate Studies Director"), ("Program Director", "Program Director"), ("Student Services Officer", "Student Services Officer"), ("Webmaster", "Webmaster")]) # never editable by the staff person, but editable by admins
-
-class AdministratorSymsysCareer(ProgramStaffSymsysCareer):
-    # Setup
-    introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset()
-    introduced_global_abilities = frozenset(['create AdministratorSymsysCareer'])
-    class Meta:
-        verbose_name = _('administrator Symsys career')
-        verbose_name_plural = _('administrator Symsys careers')
-
-class AFSymsysCareer(ProgramStaffSymsysCareer):
-    # Setup
-    introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view year', 'edit year'])
-    introduced_global_abilities = frozenset(['create AFSymsysCareer'])
-    class Meta:
-        verbose_name = _('AF Symsys career')
-        verbose_name_plural = _('AF Symsys careers')
-
-    # Fields
-    year = models.CharField(_('year'), max_length=255, choices=[('2008-2009', '2008-2009')]) # never editable by the AF, but editable by admins
+    start_date  = models.DateField(_('start date'))
+    end_date    = models.DateField(_('end date'), blank=True, null=True, default=None)
 
 
 class SymsysAffiliate(Person):
@@ -165,7 +154,7 @@ class Event(HtmlDocument):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view event_time', 'view location', 'view url', 'edit event_time', 'edit location', 'edit url'])
     introduced_global_abilities = frozenset(['create Event'])
-    event_time = models.DateTimeField()
+    event_time = models.DateTimeField() #TODO why can this be blank?
     location = models.TextField(blank=True)
     url = models.TextField(blank=True)
 

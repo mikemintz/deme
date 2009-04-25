@@ -4,8 +4,18 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Deme</title>
-    <link rel="shortcut icon" href="{% block favicon %}{% media_url "favicon.ico" %}{% endblock %}" type="image/x-icon" />
+
+    {% if item %}
+    <title>Deme &raquo; {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}{% if specific_version %} &raquo; v{{ item.version_number }}{% endif %}</title>
+    {% else %}
+    <title>Deme{% if action_title %} &raquo; {{ action_title }}{% endif %}</title>
+    {% endif %}
+
+    
+    <link rel="shortcut icon" href="{% block favicon %}{% if item %}{{ item.actual_item_type|icon_url:24 }}{% else %}{{ accepted_item_type|icon_url:24 }}{% endif %}{% endblock favicon %}" type="image/x-icon" />
+    <!--<link rel="shortcut icon" href="{% media_url "favicon.ico" %}" type="image/x-icon" />-->
+
+    {% universal_edit_button %}
 
     <link rel="stylesheet" href="{% media_url "stylesheets/blueprint/screen.css" %}" type="text/css" media="screen, projection" />
     <link rel="stylesheet" href="{% media_url "stylesheets/blueprint/print.css" %}" type="text/css" media="print" />
@@ -51,7 +61,68 @@
                 }
             });
         });
+
+        // To give the gray "Search" text in the search box
+        $(document).ready(function () {
+            var search_box_changed = {% if search_query %}true{% else %}false{% endif %};
+            var search_box = document.getElementById('search_box');
+            search_box.onfocus = function(e){
+                if (!search_box_changed) {
+                    search_box_changed = true;
+                    search_box.value = '';
+                    search_box.style.color = 'inherit';
+                }
+            };
+            search_box.onblur = function(e){
+                if (search_box.value == '') {
+                    search_box_changed = false;
+                    search_box.value = 'Search';
+                    search_box.style.color = '#777';
+                }
+            };
+            search_box.onblur();
+        });
+
+        $(document).ready(function () {
+            $("#right_accordion").accordion({
+                fillSpace: false,
+                autoHeight: false,
+            });
+        });
     </script>        
+
+    <script type="text/javascript" src="{% media_url "javascripts/sha1.js" %}"></script>
+    <script type="text/javascript" src="{% media_url "javascripts/mysql_pre41_password.js" %}"></script>
+
+    <script type="text/javascript">
+
+        function get_encrypted_password(raw_password, algo, salt, nonce) {
+            var original_hashed_password;
+            if (algo == 'sha1') {
+                original_hashed_password = SHA1(salt + raw_password);
+            } else if (algo == 'mysql_pre41_password') {
+                original_hashed_password = mysql_pre41_password(raw_password);
+            } else {
+                return 'unknown algo: ' + algo;
+            }
+            return SHA1(nonce + original_hashed_password);
+        }
+
+        function encrypt_password() {
+            var raw_password = document.forms['password_form']['password'].value;
+            var url = '{% url item_type_url viewer="authenticationmethod",action="login" %}';
+            jQuery.getJSON(url, {getencryptionmethod:document.forms['password_form']['username'].value}, function(json) {
+                    var algo = json.algo;
+                    var salt = json.salt;
+                    var nonce = json.nonce;
+                    var encrypted_password = get_encrypted_password(raw_password, algo, salt, nonce);
+                    document.forms['real_password_form']['hashed_password'].value = encrypted_password;
+                    document.forms['real_password_form']['username'].value = document.forms['password_form']['username'].value;
+                    document.forms['real_password_form'].submit();
+                    });
+        }
+    </script>
+    
 </head>
 
 <body>
@@ -59,61 +130,133 @@
 <div class="site_outer">
 <div class="site_inner">
 
-<div class="header">
+<div class="header" style="padding-top: 3px; padding-bottom: 3px;">
 
-    <div class="top_left">
-        <div style="height: 100px; width: 200px; border: 1px solid #aaa; text-align: center;">
-            Deme logo
-        </div>
-    </div>
+    <table style="margin-bottom: 0;">
+        <tr>
+            <td style="vertical-align: top; width: 200px; padding: 0;" rowspan="2">
+                <div class="top_left">
+                    <a href="/"><img src="{% media_url "spacer.gif" %}" alt="Deme Logo" style="height: 100px; width: 200px; border: 1px solid #aaa; background-color: #00c; -moz-border-radius: 8px; -webkit-border-radius: 8px;" /></a>
+                </div>
 
-    <div class="top_right">
-        <div class="top_right_text">
-            <form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">
-                <input type="hidden" name="login_type" value="logout" />
-            </form>
-            {% ifequal cur_agent.item_type_string 'AnonymousAgent' %}
-            You are not logged in
-            [<a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login</a>]
-            {% else %}
-            You are logged in as <a href="{{ cur_agent.get_absolute_url }}">{% viewable_name cur_agent %}</a>
-            [<a href="#" onclick="document.forms['logout_form'].submit(); return false;">Logout</a>]
-            [<a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]
-            {% endifequal %}
-        </div>
-        <div class="top_right_actions">
-            <a href="{% url item_type_url viewer="item" %}" class="img_button"><img src="{{ "Item"|icon_url:16 }}" /><span>Items</span></a> {#TODO more sophisticaed item type menu #}
-            <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline;">
-                <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
-                {# TODO add magnifying glass #}
-            </form>
-        </div>
-        <script type="text/javascript">
-            $(document).ready(function () {
-                var search_box_changed = {% if search_query %}true{% else %}false{% endif %};
-                var search_box = document.getElementById('search_box');
-                search_box.onfocus = function(e){
-                    if (!search_box_changed) {
-                        search_box_changed = true;
-                        search_box.value = '';
-                        search_box.style.color = 'inherit';
-                    }
-                };
-                search_box.onblur = function(e){
-                    if (search_box.value == '') {
-                        search_box_changed = false;
-                        search_box.value = 'Search';
-                        search_box.style.color = '#777';
-                    }
-                };
-                search_box.onblur();
-            });
-        </script>
-    </div>
+            </td>
+            <td style="vertical-align: top; text-align: center; padding: 0; padding-left: 5px; padding-right: 5px;">
+                <a href="{% url item_type_url viewer="item" %}" class="fg-button ui-state-default fg-button-icon-right ui-corner-all">Items<span class="ui-icon ui-icon-triangle-1-s"></span></a>
+                <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline;">
+                    <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
+                    {# TODO add magnifying glass #}
+                </form>
+            </td>
+            <td style="vertical-align: top; text-align: right; padding: 0;">
+                <div style="float: right;">
+                {% ifequal cur_agent.item_type_string 'AnonymousAgent' %}
+                <div style="display: none;" id="login_dialog_password">
+                    <form name="password_form" onsubmit="$('#login_dialog_openid').dialog('hide'); encrypt_password(); return false;">
+                        <div>Username:</div>
+                        <div><input type="text" name="username" /></div>
+                        <div>Password:</div>
+                        <div><input type="password" name="password" /></div>
+                    </form>
 
-    <div style="clear: both;"></div>
+                    <form name="real_password_form" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ redirect|urlencode }}" method="post">
+                        <input type="hidden" name="login_type" value="password" />
+                        <input type="hidden" name="username" />
+                        <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
+                    </form>
+                </div>
+                <div style="display: none;" id="login_dialog_openid">
+                    <form name="openid_form" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ redirect|urlencode }}" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
+                        <input type="hidden" name="login_type" value="openid" />
+                        <label>OpenID URL: <input type="text" name="openid_url" /></label>
+                    </form>
+                </div>
+                <div style="z-index: 100000; position: relative;" id="login_dropdown_outer">
+                    <div>
+                        <div style="text-align: left; border: 1px solid #aaa; position: absolute; padding: 3px; background: #fff; display: none;" id="login_dropdown_items">
+                            <div><a href="#" onclick="$('#login_dialog_password').dialog('open'); return false;">Deme account</a></div>
+                            <div><a href="#" onclick="$('#login_dialog_openid').dialog('open'); return false;">OpenID</a></div>
+                            <div><a href="{% url item_type_url viewer="webauth",action="login" %}?redirect={{ redirect|urlencode }}">Webauth</a></div>
+                            <div><a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login as</a></div>
+                        </div>
+                    </div>
+                    <a id="login_dropdown_link" href="#" onclick="return false;" class="fg-button ui-state-default fg-button-icon-right ui-corner-all">Login<span class="ui-icon ui-icon-triangle-1-s"></span></a>
+                    <script type="text/javascript">
+                        $(document).ready(function () {
+                            $('#login_dropdown_outer').hover(function(){$('#login_dropdown_items').css('margin-top', $('#login_dropdown_link').outerHeight()).css('min-width', $('#login_dropdown_link').outerWidth()).show()}, function(){$('#login_dropdown_items').hide()});
+                            $('#login_dialog_password').dialog({
+                                autoOpen: false,
+                                buttons: {"Login": function(){$(this).dialog('close'); document.forms['password_form'].onsubmit()}, "Cancel": function(){$(this).dialog("close")} },
+                            });
+                            $('#login_dialog_openid').dialog({
+                                autoOpen: false,
+                                buttons: {"Login": function(){$(this).dialog('close'); document.forms['openid_form'].submit()}, "Cancel": function(){$(this).dialog("close")} },
+                            });
+                        });
+                    </script>
+                </div>
+                {% else %}
+                <form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">
+                    <input type="hidden" name="login_type" value="logout" />
+                </form>
+                <div style="z-index: 100000; position: relative;" id="logout_dropdown_outer">
+                    <div>
+                        <div style="text-align: left; border: 1px solid #aaa; position: absolute; padding: 3px; background: #fff; display: none;" id="logout_dropdown_items">
+                            <div><a href="{{ cur_agent.get_absolute_url }}">My account</a></div>
+                            <div><a href="#" onclick="document.forms['logout_form'].submit(); return false;">Logout</a></div>
+                            <div><a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login as</a></div>
+                        </div>
+                    </div>
+                    <a id="logout_dropdown_link" href="#" onclick="return false;" class="fg-button ui-state-default fg-button-icon-right ui-corner-all">Logged in as {% viewable_name cur_agent %}<span class="ui-icon ui-icon-triangle-1-s"></span></a>
+                    <script type="text/javascript">
+                        $(document).ready(function () {
+                            $('#logout_dropdown_outer').hover(function(){$('#logout_dropdown_items').css('margin-top', $('#logout_dropdown_link').outerHeight()).css('min-width', $('#logout_dropdown_link').outerWidth()).show()}, function(){$('#logout_dropdown_items').hide()});
+                        });
+                    </script>
+                </div>
+                {% endifequal %}
+                </div>
+                <div style="clear: both;">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td style="vertical-align: bottom; padding: 0; padding-left: 5px;" colspan="2">
+                <div style="clear: both;"></div>
+                {% if item %}
+                <div style="float: right;">
+                    {% itemtoolbar %}
+                </div>
+                {% endif %}
+
+                <div class="title">
+                {% block title %}
+                {% if item %}
+                <a href="{% url item_url viewer=viewer_name,action="show",noun=item.pk %}" class="img_link"><img src="{{ item.actual_item_type|icon_url:24 }}" /> <span>{% viewable_name item %}</span></a>{% if action_title %} &raquo; {{ action_title }}{% endif %}{% if specific_version %} &raquo; v{{ item.version_number }}{% endif %}
+                {% else %}
+                <img src="{{ accepted_item_type|icon_url:24 }}" />{% if action_title %} {{ action_title }}{% endif %}
+                {% endif %}
+                {% endblock title %}
+                </div>
+            </td>
+        </tr>
+    </table>
+
 </div>
 
+<script type="text/javascript">
+    //TODO figure out padding
+    function hide_column_right() {
+        $('#right_table_column').hide();
+        $('#right_table_column_hidden').show();
+        $('#right_table_column_hidden').width($('#right_table_column_hidden a').width());
+        $('#center_table_column').width(960 - $('#right_table_column_hidden').width() - $('#left_table_column_hidden').width());
+    }
+    function show_column_right() {
+        $('#right_table_column').show();
+        $('#right_table_column_hidden').hide();
+        $('#center_table_column').width(960 - $('#right_table_column').width() - $('#left_table_column').width());
+    }
+</script>
 
 <div class="content_box">
     {% if layout_permissions_problem %}
@@ -122,20 +265,9 @@
     </div>
     {% endif %}
 
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $("#right_accordion").accordion({
-                fillSpace: false,
-                autoHeight: false,
-            });
-        });
-    </script>
-
-    <div class="title">{% block title %}{% endblock %}</div>
-
     <table cellspacing="0">
         <tr>
-            <td style="vertical-align: top; width: 120px;">
+            <td style="vertical-align: top; width: 120px; padding:0;" id="left_table_column">
                 <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
                     Navigation
                 </div>
@@ -148,33 +280,22 @@
                     </ul>
                 </div>
             </td>
-            <td style="vertical-align: top; width: 590px;">
+            <td style="vertical-align: top; width: 600px; padding:0;" id="center_table_column">
                 <div style="padding: 0 5px 0 5px;">
-                    {% if item %}
-                    {% itemheader %} {#TODO include argument for page title#}
-                    {% else %}
-                    {% typeheader %} {#TODO include argument for page title#}
-                    {% endif %}
                     {% block content %}
                     {% endblock %}
                 </div>
             </td>
-            <td style="vertical-align: top; width: 240px;">
-                <div class="fg-toolbar ui-widget-header ui-corner-all ui-helper-clearfix">
-                <div class="fg-buttonset ui-helper-clearfix">
-                {% if item %}
-                     <a href="#" onclick="$('#right_accordion').accordion('activate', 0); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Item details"><span class="ui-icon ui-icon-lightbulb"></span> Item details</a>
-                     <a href="#" onclick="$('#right_accordion').accordion('activate', 1); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Comments"><span class="ui-icon ui-icon-comment"></span> Comments</a>
-                     <a href="#" onclick="$('#right_accordion').accordion('activate', 2); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Action notices"><span class="ui-icon ui-icon-wrench"></span> Action notices</a>
-                     <a href="#" onclick="$('#right_accordion').accordion('activate', 3); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="History"><span class="ui-icon ui-icon-clock"></span> History</a>
-                     <a href="#" onclick="$('#right_accordion').accordion('activate', 4); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Related items"><span class="ui-icon ui-icon-transferthick-e-w"></span> Related items</a>
-                     <a href="#" onclick="$('#right_accordion').accordion('activate', 5); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Permissions"><span class="ui-icon ui-icon-locked"></span> Permissions</a>
-                {% else %}
-                     <a href="#" onclick="$('#right_accordion').accordion('activate', 0); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Filters"><span class="ui-icon ui-icon-lightbulb"></span> Filters</a>
-                {% endif %}
+            <td style="vertical-align: top; display: none; padding:0;" id="right_table_column_hidden">
+                <div class="ui-helper-clearfix" style="font-size: 60%;">
+                    <a href="#" onclick="show_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Show"><span class="ui-icon ui-icon-arrowthickstop-1-w"></span> Show</a>
                 </div>
+            </td>
+            <td style="vertical-align: top; width: 240px; padding:0;" id="right_table_column">
+                <div class="ui-helper-clearfix" style="font-size: 60%;">
+                    <a href="#" onclick="hide_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Hide"><span class="ui-icon ui-icon-arrowthickstop-1-e"></span> Hide</a>
                 </div>
-                
+
                 {# TODO links are black because of ui-widget-content to a #}
                 <div id="right_accordion">
                     {% if item %}
@@ -216,9 +337,8 @@
 
                     {% else %}
 
-                    <h3><a href="#">Filters</a></h3>
+                    <h3><a href="#"></a></h3>
                     <div>
-                        blah blah {#TODO put stuff here #}
                     </div>
 
                     {% endif %}
@@ -230,7 +350,7 @@
 </div>
 
 <div class="footer">
-    <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer=viewer_name,action="admin" %}">Admin</a></p>
+    <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a></p>
     <p>Desktop browser | <a href="list.mobi">Mobile</a> | <a href="list.rss">RSS</a></p> {# TODO generate formats list #}
 </div>
 

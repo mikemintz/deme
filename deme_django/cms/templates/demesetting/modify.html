@@ -1,7 +1,5 @@
 {% extends layout %}
 {% load item_tags %}
-{% block favicon %}{{ accepted_item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ accepted_item_type|icon_url:24 }}" /> Modify DemeSettings{% endblock %}
 {% block content %}
 
 <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer="demesetting",action="addsetting" %}?redirect={{ full_path|urlencode }}" class="item_form">

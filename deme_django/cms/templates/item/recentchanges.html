@@ -1,7 +1,5 @@
 {% extends layout %}
 {% load item_tags %}
-{% block favicon %}{{ accepted_item_type|icon_url:16 }}{% endblock %}
-{% block title %}<img src="{{ accepted_item_type|icon_url:24 }}" /> Recent Changes{% endblock %}
 {% block content %}
 
 {% for action_notice in action_notices %}

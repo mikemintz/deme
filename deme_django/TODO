@@ -128,4 +128,5 @@ Performance
 * See if permissions speed up with more postgres memory (so far it doesn't look like it's helping)
 * Use spaceless tag to compress whitespace
   - Be careful, since it will screw with body_str in TextDocumentViewer.show
+* When admin (id=1) adds an item, no need to by default include the permission that he gets do_anything
 

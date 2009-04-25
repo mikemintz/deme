@@ -42,7 +42,7 @@ for item_type in all_item_types():
         if ability == 'do_anything':
             setting_value = 'none'
         DemeSetting.set(setting_name, setting_value, admin)
-        EveryoneItemPermission(item=DemeSetting.objects.get(key=setting_name), ability='view name', is_allowed=False).save()
+        EveryoneItemPermission(item=DemeSetting.objects.get(key=setting_name), ability='view name', is_allowed=False).save() #TODO is this necessary?
 
 print 'Other stuff...'
 
@@ -74,7 +74,6 @@ git_commit = re.search(r'commit (.+)\nAuthor:', git_log).group(1)
 git_date = re.search(r'Date:\s*(.*) (-|\+)\d+', git_log).group(1)
 formatted_git_date = time.strftime("%Y-%m-%d", time.strptime(git_date, "%a %b %d %H:%M:%S %Y"))
 home_page = DjangoTemplateDocument(name='Deme Home Page', body="""
-{%% block title %%}Welcome to Deme!{%% endblock %%}
 {%% block content %%}
 Welcome to Deme!
 <br/><br/>
@@ -125,7 +124,6 @@ joe_email_contact_method = EmailContactMethod(name="Joe's Email Contact Method",
 joe_email_contact_method.save_versioned(action_agent=joe, initial_permissions=[AgentItemPermission(agent=joe, ability='do_anything', is_allowed=True)])
 
 hello_page = DjangoTemplateDocument(name="Hello Page", body="""
-{% block title %}Sample Home Page{% endblock %}
 {% block content %}
 Hello World!
 {% endblock content %}
