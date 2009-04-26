@@ -158,14 +158,14 @@
                         <div><input type="password" name="password" /></div>
                     </form>
 
-                    <form name="real_password_form" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ redirect|urlencode }}" method="post">
+                    <form name="real_password_form" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}" method="post">
                         <input type="hidden" name="login_type" value="password" />
                         <input type="hidden" name="username" />
                         <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
                     </form>
                 </div>
                 <div style="display: none;" id="login_dialog_openid">
-                    <form name="openid_form" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ redirect|urlencode }}" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
+                    <form name="openid_form" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
                         <input type="hidden" name="login_type" value="openid" />
                         <label>OpenID URL: <input type="text" name="openid_url" /></label>
                     </form>
@@ -175,7 +175,7 @@
                         <div style="text-align: left; border: 1px solid #aaa; position: absolute; padding: 3px; background: #fff; display: none;" id="login_dropdown_items">
                             <div><a href="#" onclick="$('#login_dialog_password').dialog('open'); return false;">Deme account</a></div>
                             <div><a href="#" onclick="$('#login_dialog_openid').dialog('open'); return false;">OpenID</a></div>
-                            <div><a href="{% url item_type_url viewer="webauth",action="login" %}?redirect={{ redirect|urlencode }}">Webauth</a></div>
+                            <div><a href="{% url item_type_url viewer="webauth",action="login" %}?redirect={{ full_path|urlencode }}">Webauth</a></div>
                             <div><a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login as</a></div>
                         </div>
                     </div>
