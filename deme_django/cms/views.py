@@ -1104,7 +1104,7 @@ class AuthenticationMethodViewer(ItemViewer):
                 login_as_agents = Agent.objects.filter(active=True).order_by('name')
                 login_as_agents = self.permission_cache.filter_items(self.cur_agent, 'login_as', login_as_agents)
                 self.permission_cache.filter_items(self.cur_agent, 'view name', login_as_agents)
-                template = loader.get_template('login.html')
+                template = loader.get_template('authenticationmethod/login.html')
                 self.context['redirect'] = self.request.GET['redirect']
                 self.context['login_as_agents'] = login_as_agents
                 return HttpResponse(template.render(self.context))
