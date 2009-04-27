@@ -233,7 +233,7 @@ RelationActionNotices are more interesting: when an agent modifies an item (the 
 
 A good example of a RelationActionNotice is a membership that points to a collection. If I'm viewing the ActionNotices for the collection, I will see a RelationActionNotice saying that at some date, some user set the membership to point to this collection. Or in other words, an item was added to this collection.
 
-In order to view ActionNotices, an agent must have the ``view_action_notices`` permission with respect to the item. For RelationActionNotices, an agent must also have permission to view the pointing field in the *from* item.
+In order to view ActionNotices, an agent must have the ``view action_notices`` permission with respect to the item. For RelationActionNotices, an agent must also have permission to view the pointing field in the *from* item.
 
 If you are subscribed to an item (via the Subscription item type), and you have permission to view ActionNotices on that item, you will receive notifications by email every time an ActionNotice is generated.
 

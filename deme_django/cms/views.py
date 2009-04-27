@@ -685,7 +685,7 @@ class ItemViewer(Viewer):
     def type_recentchanges_html(self):
         self.context['action_title'] = 'Recent Changes'
         template = loader.get_template('item/recentchanges.html')
-        viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view_action_notices', Item.objects)
+        viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view action_notices', Item.objects)
         viewable_action_notices = ActionNotice.objects.filter(item__in=viewable_items.values("pk").query)
         self.context['action_notices'] = viewable_action_notices[0:50]
         return HttpResponse(template.render(self.context))
@@ -698,7 +698,7 @@ class ItemViewer(Viewer):
     def item_show_rss(self):
         from cms.templatetags.item_tags import get_viewable_name
         viewer = self
-        if not self.cur_agent_can('view_action_notices', self.item):
+        if not self.cur_agent_can('view action_notices', self.item):
             raise DemePermissionDenied
         action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(creator=self.item)).order_by('created_at') #TODO limit
         action_notice_pk_to_object_map = {}
