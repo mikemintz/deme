@@ -1043,11 +1043,11 @@ class AuthenticationMethodViewer(ItemViewer):
             return self.type_new_html(form)
 
     def type_login_html(self):
-        self.context['action_title'] = 'Login'
         """
         This is the view that takes care of all URLs dealing with logging in
         and logging out.
         """
+        self.context['action_title'] = 'Login'
         if self.request.method == 'GET':
             # If getencryptionmethod is a key in the query string, return a JSON
             # response with the details about the PasswordAuthenticationMethod
@@ -1170,7 +1170,16 @@ class AuthenticationMethodViewer(ItemViewer):
                 return HttpResponseRedirect(auth_request.redirectURL(trust_root, full_redirect))
             # Invalid login_type parameter.
             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-
+   
+    def type_logout_html(self):
+        self.context['action_title'] = 'Logged out'
+        redirect = self.request.GET['redirect']
+        if 'cur_agent_id' in self.request.session:
+            del self.request.session['cur_agent_id']
+        self.context["redirect"] = redirect
+        template = loader.get_template('authenticationmethod/logout.html')
+        return HttpResponse(template.render(self.context))
+ 
 
 class WebauthAuthenticationMethodViewer(ItemViewer):
     accepted_item_type = WebauthAuthenticationMethod
