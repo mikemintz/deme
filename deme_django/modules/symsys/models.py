@@ -1,35 +1,120 @@
 from cms.models import *
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.core.exceptions import ObjectDoesNotExist
 
 __all__ = ['SymsysCareer', 'ThesisSymsysCareer', 'StudentSymsysCareer', 'MinorSymsysCareer', 'BachelorsSymsysCareer', 'MastersSymsysCareer', 'HonorsSymsysCareer', 'FacultySymsysCareer', 'ProgramStaffSymsysCareer', 'SymsysAffiliate', 'Event', 'Advertisement', 'TextAdvertisement', 'HtmlAdvertisement']
 
 
 class SymsysCareer(Item):
     # Setup
-    introduced_immutable_fields = frozenset()
+    introduced_immutable_fields = frozenset(['symsys_affiliate'])
     introduced_abilities = frozenset(['view symsys_affiliate', 'view suid', 'view original_first_name', 'view original_middle_names',
-                                      'view original_last_name', 'view original_suffix', 'view first_affiliation_year', 'view original_photo',
+                                      'view original_last_name', 'view original_suffix', 'view original_photo', 'view start_date', 'view end_date', 'view finished',
                                       'edit suid', 'edit original_first_name', 'edit original_middle_names',
-                                      'edit original_last_name', 'edit original_suffix', 'edit first_affiliation_year', 'edit original_photo'])
-    introduced_global_abilities = frozenset('symsys_affiliate')
+                                      'edit original_last_name', 'edit original_suffix', 'edit original_photo', 'edit start_date', 'edit end_date', 'edit finished'])
+    introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('Symsys career')
         verbose_name_plural = _('Symsys careers')
 
     # Fields
-    symsys_affiliate       = models.ForeignKey('SymsysAffiliate', verbose_name=_('Symsys affiliate'), related_name='symsys_careers')
-    suid                   = models.PositiveIntegerField(_('SUID'), default=0)
-    original_first_name    = models.CharField(_('original first name'), max_length=255)
-    original_middle_names  = models.CharField(_('original middle names'), max_length=255, blank=True)
-    original_last_name     = models.CharField(_('original last name'), max_length=255)
-    original_suffix        = models.CharField(_('original suffix'), max_length=255, blank=True)
-    first_affiliation_year = models.PositiveIntegerField(_('first affiliation year'), null=True, blank=True, default=None)
-    original_photo         = models.ForeignKey(ImageDocument, related_name='symsyscareers_with_original_photo', verbose_name=_('original photo'), null=True, blank=True, default=None)
+    symsys_affiliate      = models.ForeignKey('SymsysAffiliate', verbose_name=_('Symsys affiliate'), related_name='symsys_careers')
+    suid                  = models.PositiveIntegerField(_('SUID'), default=0)
+    original_first_name   = models.CharField(_('original first name'), max_length=255)
+    original_middle_names = models.CharField(_('original middle names'), max_length=255, blank=True)
+    original_last_name    = models.CharField(_('original last name'), max_length=255)
+    original_suffix       = models.CharField(_('original suffix'), max_length=255, blank=True)
+    original_photo        = models.ForeignKey(ImageDocument, related_name='symsyscareers_with_original_photo', verbose_name=_('original photo'), null=True, blank=True, default=None)
+    finished              = models.BooleanField(_('finished'), default=False)
+    start_date            = models.DateField(_('start date'))
+    end_date              = models.DateField(_('end date'), blank=True, null=True, default=None)
 
-    #TODO figure dates out, get rid of first_affiliation_year
-    #start_date             = models.DateField(_('start date'))
-    #end_date               = models.DateField(_('end date'), blank=True, null=True, default=None)
+    def _after_create(self, action_agent, action_summary, action_time):
+        super(SymsysCareer, self)._after_create(action_agent, action_summary, action_time)
+        self._guarantee_consistency_after_changes()
+
+    def _after_edit(self, action_agent, action_summary, action_time):
+        super(SymsysCareer, self)._after_edit(action_agent, action_summary, action_time)
+        self._guarantee_consistency_after_changes()
+
+    def _after_deactivate(self, action_agent, action_summary, action_time):
+        super(SymsysCareer, self)._after_deactivate(action_agent, action_summary, action_time)
+        self._guarantee_consistency_after_changes()
+
+    def _after_reactivate(self, action_agent, action_summary, action_time):
+        super(SymsysCareer, self)._after_reactivate(action_agent, action_summary, action_time)
+        self._guarantee_consistency_after_changes()
+
+    def _guarantee_consistency_after_changes(self):
+
+        group_creator = Agent.objects.get(pk=1) #TODO or a symsys-bot
+
+        def get_or_create_group(key, name):
+            deme_setting_key = 'symsys.groups.%s' % key
+            group_pk = DemeSetting.get(deme_setting_key)
+            if group_pk:
+                group = Group.objects.get(pk=group_pk)
+            else:
+                group = Group(name=name)
+                group.save_versioned(action_agent=group_creator)
+                DemeSetting.set(deme_setting_key, group.pk, group_creator)
+            return group
+                
+
+        agent = self.symsys_affiliate
+        all_possible_groups = Group.objects.filter(pk__in=map(int, DemeSetting.objects.filter(active=True, key__startswith="symsys.groups.").values_list('value', flat=True)))
+        groups = []
+
+        if MinorSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=True):
+            groups.append(get_or_create_group('conferred_minors', 'Conferred Minors'))
+        if MinorSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=False):
+            groups.append(get_or_create_group('active_minors', 'Active Minors'))
+
+        if BachelorsSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=True):
+            groups.append(get_or_create_group('conferred_bs', 'Conferred Bachelors'))
+        if BachelorsSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=False):
+            groups.append(get_or_create_group('active_bs', 'Active Bachelors'))
+
+        if MastersSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=True):
+            groups.append(get_or_create_group('conferred_ms', 'Conferred Masters'))
+        if MastersSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=False):
+            groups.append(get_or_create_group('active_ms', 'Active Masters'))
+
+        if HonorsSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=True):
+            groups.append(get_or_create_group('conferred_honors', 'Conferred Honors'))
+        if HonorsSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=False):
+            groups.append(get_or_create_group('active_honors', 'Active Honors'))
+
+        if FacultySymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=True):
+            groups.append(get_or_create_group('past_faculty', 'Past Faculty'))
+        if FacultySymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=False):
+            groups.append(get_or_create_group('present_faculty', 'Present Faculty'))
+
+        if ProgramStaffSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=True):
+            groups.append(get_or_create_group('past_staff', 'Past Staff'))
+        if ProgramStaffSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=False):
+            groups.append(get_or_create_group('present_staff', 'Present Staff'))
+
+        for career in StudentSymsysCareer.objects.filter(symsys_affiliate=agent, active=True):
+            if career.class_year:
+                groups.append(get_or_create_group('class%d' % career.class_year, 'Class of %d' % career.class_year))
+
+        for group in groups:
+            try:
+                membership = Membership.objects.get(item=agent, collection=group)
+                if not membership.active:
+                    membership.reactivate(action_agent=group_creator)
+            except ObjectDoesNotExist:
+                membership = Membership(item=agent, collection=group)
+                membership.save_versioned(action_agent=group_creator)
+        for membership_to_remove in Membership.objects.filter(active=True, item=agent, collection__in=all_possible_groups.exclude(pk__in=[x.pk for x in groups])):
+            membership_to_remove.deactivate(action_agent=group_creator)
+        #TODO permissions of these memberships
+        #TODO based on current status, set the permissions for the agent to modify fields of this career
+
+
+    _guarantee_consistency_after_changes.alters_data = True
 
 class ThesisSymsysCareer(SymsysCareer):
     # Setup
@@ -47,8 +132,8 @@ class ThesisSymsysCareer(SymsysCareer):
 class StudentSymsysCareer(SymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view class_year', 'view graduation_year', 'view advisor', 'view other_degrees', 'view conferred',
-                                      'edit class_year', 'edit graduation_year', 'edit advisor', 'edit other_degrees', 'edit conferred'])
+    introduced_abilities = frozenset(['view class_year', 'view advisor', 'view other_degrees',
+                                      'edit class_year', 'edit advisor', 'edit other_degrees'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('student Symsys career')
@@ -56,10 +141,8 @@ class StudentSymsysCareer(SymsysCareer):
 
     # Fields
     class_year      = models.PositiveIntegerField(_('class year'), null=True, blank=True, default=None) # editable by the student AFTER conferred
-    graduation_year = models.PositiveIntegerField(_('graduation year'), null=True, blank=True, default=None) # editable by the student BEFORE conferred
     advisor         = models.ForeignKey('SymsysAffiliate', null=True, blank=True, related_name="advisor_group", verbose_name=_('advisor'), default=None) # editable by the student BEFORE conferred
     other_degrees   = models.CharField(_('other degrees'), max_length=255, blank=True) # always editable
-    conferred       = models.BooleanField(_('conferred'), default=False) # never editable
 
 class MinorSymsysCareer(StudentSymsysCareer):
     # Setup
