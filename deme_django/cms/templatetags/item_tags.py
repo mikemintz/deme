@@ -723,7 +723,7 @@ class CalculateActionNotices(template.Node):
         item = context['item']
 
         result = []
-        if agentcan_helper(context, 'view_action_notices', item):
+        if agentcan_helper(context, 'view action_notices', item):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
             result.append(u'<table class="list">')
             result.append(u'<tr><th>Date/Time</th><th>Agent</th><th>Action</th><th>Item</th><th>Description</th></tr>')

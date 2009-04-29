@@ -195,8 +195,7 @@
                     </script>
                 </div>
                 {% else %}
-                <form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">
-                    <input type="hidden" name="login_type" value="logout" />
+                <form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="logout" %}?redirect={{ full_path|urlencode }}">
                 </form>
                 <div style="z-index: 100000; position: relative;" id="logout_dropdown_outer">
                     <div>

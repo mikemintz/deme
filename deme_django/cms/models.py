@@ -145,7 +145,7 @@ class Item(models.Model):
     # Setup
     __metaclass__ = ItemMetaClass
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'comment_on', 'view_action_notices', 'delete', 'view name',
+    introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'comment_on', 'view action_notices', 'delete', 'view name',
                                       'view description', 'view creator', 'view created_at', 'edit name', 'edit description'])
     introduced_global_abilities = frozenset(['do_anything'])
     class Meta:
@@ -1578,7 +1578,7 @@ class ActionNotice(models.Model):
             creator_parent_pks_query = self.creator.all_parents_in_thread(True, recursive_filter).values('pk').query
             return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=creator_parent_pks_query),
                                                active=True, contact_method=email_contact_method, deep=True)
-        if not (permission_cache.agent_can(agent, 'view_action_notices', self.item) or permission_cache.agent_can(agent, 'view_action_notices', self.creator)):
+        if not (permission_cache.agent_can(agent, 'view action_notices', self.item) or permission_cache.agent_can(agent, 'view action_notices', self.creator)):
             return None
         if isinstance(self, RelationActionNotice):
             if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
