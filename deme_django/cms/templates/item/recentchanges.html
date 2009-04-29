@@ -2,15 +2,18 @@
 {% load item_tags %}
 {% block content %}
 
-{% for action_notice in action_notices %}
+{% for details in action_notices %}
 <div style="margin-bottom: 5px; border: 1px #aaa solid; background: #ddd; -moz-border-radius: 8px; padding: 5px;">
-    <span title="{{ action_notice.created_at|date:"Y-m-d H:m:s" }}">
-        {{ action_notice.created_at|timesince }}
+    <span title="{{ details.action_notice.created_at|date:"Y-m-d H:m:s" }}">
+        {{ details.action_notice.created_at|timesince }}
         ago
     </span>
-    <a href="{{ action_notice.item.get_absolute_url }}">{% viewable_name action_notice.item %}</a>
+    Type:
+    {{ details.type }}
+
+    <a href="{{ details.action_notice.item.get_absolute_url }}">{% viewable_name details.action_notice.item %}</a>
     Made by:
-    <a href="{{ action_notice.creator.get_absolute_url }}">{% viewable_name action_notice.creator %}</a> 
+    <a href="{{ details.action_notice.creator.get_absolute_url }}">{% viewable_name details.action_notice.creator %}</a> 
 </div>
 {% endfor %}
 

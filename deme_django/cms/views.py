@@ -686,8 +686,23 @@ class ItemViewer(Viewer):
         self.context['action_title'] = 'Recent Changes'
         template = loader.get_template('item/recentchanges.html')
         viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view action_notices', Item.objects)
-        viewable_action_notices = ActionNotice.objects.filter(item__in=viewable_items.values("pk").query)
-        self.context['action_notices'] = viewable_action_notices[0:50]
+        viewable_action_notices = ActionNotice.objects.filter(item__in=viewable_items.values("pk").query)[0:50]
+        action_notice_pk_to_object_map = {}
+        for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
+            specific_action_notices = action_notice_subclass.objects.filter(pk__in=viewable_action_notices.values('pk').query)
+            #TODO check permissions of relation action notices from item
+            for action_notice in specific_action_notices:
+                action_notice_pk_to_object_map[action_notice.pk] = action_notice
+
+        action_notice_details = []
+        for action_notice in viewable_action_notices:
+            specific_action_notice = action_notice_pk_to_object_map[action_notice.pk]
+            details = {}
+            details["type"] = type(specific_action_notice).__name__
+            details["action_notice"] = action_notice
+            action_notice_details.append(details)
+
+        self.context['action_notices'] = action_notice_details
         return HttpResponse(template.render(self.context))
 
     def item_show_html(self):
