@@ -2,17 +2,17 @@ from cms.models import *
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-__all__ = ['SymsysCareer', 'ThesisSymsysCareer', 'StudentSymsysCareer', 'BachelorsSymsysCareer', 'MastersSymsysCareer', 'HonorsSymsysCareer', 'FacultySymsysCareer', 'ProgramStaffSymsysCareer', 'SymsysAffiliate', 'Event', 'Advertisement', 'TextAdvertisement', 'HtmlAdvertisement']
+__all__ = ['SymsysCareer', 'ThesisSymsysCareer', 'StudentSymsysCareer', 'MinorSymsysCareer', 'BachelorsSymsysCareer', 'MastersSymsysCareer', 'HonorsSymsysCareer', 'FacultySymsysCareer', 'ProgramStaffSymsysCareer', 'SymsysAffiliate', 'Event', 'Advertisement', 'TextAdvertisement', 'HtmlAdvertisement']
 
 
 class SymsysCareer(Item):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view student', 'view suid', 'view original_first_name', 'view original_middle_names',
+    introduced_abilities = frozenset(['view symsys_affiliate', 'view suid', 'view original_first_name', 'view original_middle_names',
                                       'view original_last_name', 'view original_suffix', 'view first_affiliation_year', 'view original_photo',
-                                      'edit student', 'edit suid', 'edit original_first_name', 'edit original_middle_names',
+                                      'edit suid', 'edit original_first_name', 'edit original_middle_names',
                                       'edit original_last_name', 'edit original_suffix', 'edit first_affiliation_year', 'edit original_photo'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset('symsys_affiliate')
     class Meta:
         verbose_name = _('Symsys career')
         verbose_name_plural = _('Symsys careers')
@@ -26,6 +26,10 @@ class SymsysCareer(Item):
     original_suffix        = models.CharField(_('original suffix'), max_length=255, blank=True)
     first_affiliation_year = models.PositiveIntegerField(_('first affiliation year'), null=True, blank=True, default=None)
     original_photo         = models.ForeignKey(ImageDocument, related_name='symsyscareers_with_original_photo', verbose_name=_('original photo'), null=True, blank=True, default=None)
+
+    #TODO figure dates out, get rid of first_affiliation_year
+    #start_date             = models.DateField(_('start date'))
+    #end_date               = models.DateField(_('end date'), blank=True, null=True, default=None)
 
 class ThesisSymsysCareer(SymsysCareer):
     # Setup
@@ -125,8 +129,6 @@ class ProgramStaffSymsysCareer(SymsysCareer):
 
     # Fields
     admin_title = models.CharField(_('admin title'), max_length=255, choices=[("Advising Fellow", "Advising Fellow"), ("Associate Director", "Associate Director"), ("Director Emeritus", "Director Emeritus"), ("Graduate Studies Director", "Graduate Studies Director"), ("Program Director", "Program Director"), ("Student Services Officer", "Student Services Officer"), ("Webmaster", "Webmaster")]) # never editable by the staff person, but editable by admins
-    start_date  = models.DateField(_('start date'))
-    end_date    = models.DateField(_('end date'), blank=True, null=True, default=None)
 
 
 class SymsysAffiliate(Person):
