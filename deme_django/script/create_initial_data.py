@@ -24,7 +24,6 @@ if Item.objects.count() != 0:
 
 admin = Agent(name="Admin")
 admin.save_versioned(action_agent=None, first_agent=True)
-AgentItemPermission(agent=admin, item=admin, ability='do_anything', is_allowed=True).save()
 
 print 'Creating defaults for the permission framework'
 for item_type in all_item_types():
