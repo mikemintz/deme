@@ -17,6 +17,7 @@ from django.utils.text import capfirst
 from django.core.exceptions import ObjectDoesNotExist
 import django.contrib.syndication.feeds
 import django.contrib.syndication.views
+from django.views.decorators.http import require_POST
 from permissions import PermissionCache
 import re
 import os
@@ -667,6 +668,7 @@ class ItemViewer(Viewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def type_create_html(self):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
@@ -788,6 +790,7 @@ class ItemViewer(Viewer):
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
@@ -804,27 +807,24 @@ class ItemViewer(Viewer):
         else:
             return self.item_edit_html(form)
 
+    @require_POST
     def item_deactivate_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
             raise DemePermissionDenied
         self.item.deactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
+    @require_POST
     def item_reactivate_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
             raise DemePermissionDenied
         self.item.reactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
+    @require_POST
     def item_destroy_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
             raise DemePermissionDenied
         self.item.destroy(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
@@ -879,9 +879,8 @@ class ItemViewer(Viewer):
                 result.append(permission)
         return result
 
+    @require_POST
     def item_updateprivacy_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can('modify_privacy_settings', self.item):
             raise DemePermissionDenied
         new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
@@ -894,9 +893,8 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'privacy'}))
         return HttpResponseRedirect(redirect)
 
+    @require_POST
     def item_updateitempermissions_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can('do_anything', self.item):
             raise DemePermissionDenied
         new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
@@ -909,9 +907,8 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'itempermissions'}))
         return HttpResponseRedirect(redirect)
 
+    @require_POST
     def type_updateglobalpermissions_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can_global('do_anything'):
             raise DemePermissionDenied
         new_permissions = self._get_permissions_from_post_data(None, True)
@@ -988,6 +985,7 @@ class ContactMethodViewer(ItemViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def type_create_html(self):
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
@@ -1027,6 +1025,7 @@ class AuthenticationMethodViewer(ItemViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def type_create_html(self):
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
@@ -1359,6 +1358,7 @@ class TextDocumentViewer(ItemViewer):
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
@@ -1456,6 +1456,7 @@ class TextCommentViewer(TextDocumentViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def type_create_html(self):
         try:
             item = Item.objects.get(pk=self.request.POST.get('item'))
@@ -1512,6 +1513,7 @@ class TransclusionViewer(ItemViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def type_create_html(self):
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
@@ -1606,6 +1608,7 @@ class SubscriptionViewer(ItemViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def type_create_html(self):
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
