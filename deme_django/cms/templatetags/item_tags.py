@@ -729,7 +729,7 @@ class CalculateActionNotices(template.Node):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
             result.append(u'<table class="list">')
             result.append(u'<tr><th>Date/Time</th><th>Agent</th><th>Action</th><th>Item</th><th>Summary</th></tr>')
-            action_notices = ActionNotice.objects.filter(Q(item=item) | Q(creator=item)).order_by('created_at')
+            action_notices = ActionNotice.objects.filter(Q(item=item) | Q(creator=item)).order_by('action_time')
             action_notice_pk_to_object_map = {}
             for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
                 select_related_fields = ['creator__name', 'item__name']
@@ -746,7 +746,7 @@ class CalculateActionNotices(template.Node):
                 if isinstance(action_notice, RelationActionNotice):
                     if not agentcan_helper(context, 'view %s' % action_notice.from_field_name, action_notice.from_item):
                         continue
-                created_at_text = '<span title="%s">%s ago</span>' % (action_notice.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.created_at))
+                created_at_text = '<span title="%s">%s ago</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
                 creator_name = get_viewable_name(context, action_notice.creator)
                 agent_text = u'<a href="%s">%s</a>' % (escape(action_notice.creator.get_absolute_url()), escape(creator_name))
                 item_name = get_viewable_name(context, action_notice.item)

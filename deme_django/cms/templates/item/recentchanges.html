@@ -4,8 +4,8 @@
 
 {% for action_notice in action_notices %}
 <div style="margin-bottom: 5px; border: 1px #aaa solid; background: #ddd; -moz-border-radius: 8px; padding: 5px;">
-    <span title="{{ action_notice.created_at|date:"Y-m-d H:m:s" }}">
-        {{ action_notice.created_at|timesince }}
+    <span title="{{ action_notice.action_time|date:"Y-m-d H:m:s" }}">
+        {{ action_notice.action_time|timesince }}
         ago
     </span>
     <a href="{{ action_notice.item.get_absolute_url }}">{% viewable_name action_notice.item %}</a>

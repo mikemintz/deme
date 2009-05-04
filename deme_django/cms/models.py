@@ -332,7 +332,7 @@ class Item(models.Model):
         # Execute callbacks
         self._after_deactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        DeactivateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, action_summary=action_summary).save()
+        DeactivateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, action_time=action_time, action_summary=action_summary).save()
         old_item = self
         new_item = None
         RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=False)
@@ -354,7 +354,7 @@ class Item(models.Model):
         # Execute callbacks
         self._after_reactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        ReactivateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, action_summary=action_summary).save()
+        ReactivateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, action_time=action_time, action_summary=action_summary).save()
         old_item = None
         new_item = self
         RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
@@ -399,7 +399,7 @@ class Item(models.Model):
         # Execute callbacks
         self._after_destroy(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        DestroyActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, action_summary=action_summary).save()
+        DestroyActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, action_time=action_time, action_summary=action_summary).save()
     destroy.alters_data = True
 
     @transaction.commit_on_success
@@ -465,11 +465,11 @@ class Item(models.Model):
 
         # Create relevant ActionNotices
         if is_new:
-            CreateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, action_summary=action_summary).save()
+            CreateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, action_time=action_time, action_summary=action_summary).save()
             if self.active:
                 RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
         else:
-            EditActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, action_summary=action_summary).save()
+            EditActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, action_time=action_time, action_summary=action_summary).save()
             if self.active:
                 RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=True)
     save_versioned.alters_data = True
@@ -1543,7 +1543,7 @@ class ActionNotice(models.Model):
     item                = models.ForeignKey(Item, related_name='action_notices', verbose_name=_('item'))
     item_version_number = models.PositiveIntegerField(_('item version number'))
     creator             = models.ForeignKey(Agent, related_name='action_notices_created', verbose_name=_('creator'))
-    created_at          = models.DateTimeField(_('created at'))
+    action_time         = models.DateTimeField(_('action time'))
     action_summary      = models.CharField(_('action summary'), max_length=255, blank=True)
 
     def notification_reply_item(self):
@@ -1620,7 +1620,7 @@ class ActionNotice(models.Model):
         viewer.context['item'] = self.item
         viewer.context['item_version_number'] = self.item_version_number
         viewer.context['creator'] = self.creator
-        viewer.context['created_at'] = self.created_at
+        viewer.context['action_time'] = self.action_time
         viewer.context['action_summary'] = self.action_summary
         viewer.context['topmost_item'] = topmost_item
         viewer.context['url_prefix'] = 'http://%s' % settings.DEFAULT_HOSTNAME
@@ -1697,7 +1697,7 @@ class ActionNotice(models.Model):
         headers['To'] = reply_item_email
         def messageid(x):
             prefix = 'notice' if isinstance(x, ActionNotice) else 'item'
-            date = x.created_at.strftime("%Y%m%d%H%M%S")
+            date = (x.action_time if isinstance(x, ActionNotice) else x.created_at).strftime("%Y%m%d%H%M%S")
             return '<%s-%s-%s@%s>' % (prefix, x.pk, date, settings.NOTIFICATION_EMAIL_HOSTNAME)
         if reply_item == item:
             headers['Message-ID'] = messageid(self)
@@ -1812,7 +1812,7 @@ class RelationActionNotice(ActionNotice):
                             action_notice.item = value
                             action_notice.item_version_number = value.version_number
                             action_notice.creator = action_agent
-                            action_notice.created_at = action_time
+                            action_notice.action_time = action_time
                             action_notice.action_summary = action_summary
                             action_notice.from_item = item
                             action_notice.from_item_version_number = item.version_number

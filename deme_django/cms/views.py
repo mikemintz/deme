@@ -706,7 +706,7 @@ class ItemViewer(Viewer):
         viewer = self
         if not self.cur_agent_can('view action_notices', self.item):
             raise DemePermissionDenied
-        action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(creator=self.item)).order_by('created_at') #TODO limit
+        action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(creator=self.item)).order_by('action_time') #TODO limit
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
@@ -727,7 +727,7 @@ class ItemViewer(Viewer):
                         if not viewer.cur_agent_can('view %s' % action_notice.from_field_name, action_notice.from_item):
                             continue
                     item = {}
-                    item['created_at'] = action_notice.created_at
+                    item['action_time'] = action_notice.action_time
                     item['creator_name'] = get_viewable_name(viewer.context, action_notice.creator)
                     item['creator_link'] = action_notice.creator.get_absolute_url()
                     item['item_name'] = get_viewable_name(viewer.context, action_notice.item)
@@ -745,7 +745,7 @@ class ItemViewer(Viewer):
             def item_link(self, item):
                 return item['link']
             def item_pubdate(self, item):
-                return item['created_at']
+                return item['action_time']
         return django.contrib.syndication.views.feed(self.request, 'item_show', {'item_show': ItemShowFeed})
 
     def item_copy_html(self):
