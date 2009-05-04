@@ -1665,13 +1665,13 @@ class ActionNotice(models.Model):
         body_html = template.render(viewer.context)
         body_text = html2text.html2text_file(body_html, None)
         body_text = wrap(body_text, 78)
-        from_email_address = '%s@%s' % ('noreply', settings.NOTIFICATION_EMAIL_HOSTNAME)
+        from_email_address = '%s@%s' % ('NOREPLY', settings.NOTIFICATION_EMAIL_HOSTNAME)
         reply_to_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
         from_email = formataddr((creator_name, from_email_address))
-        reply_to_email = formataddr((reply_item_name, reply_to_email_address))
-        to_email = formataddr((recipient_name, email_contact_method.email))
+        item_email = formataddr((reply_item_name, reply_to_email_address))
+        recipient_email = formataddr((recipient_name, email_contact_method.email))
         headers = {}
-        headers['Reply-To'] = reply_to_email
+        headers['To'] = item_email
         def messageid(x):
             prefix = 'notice' if isinstance(x, ActionNotice) else 'item'
             date = x.created_at.strftime("%Y%m%d%H%M%S")
@@ -1682,7 +1682,7 @@ class ActionNotice(models.Model):
             headers['Message-ID'] = messageid(reply_item)
         headers['In-Reply-To'] = messageid(item)
         headers['References'] = '%s %s' % (messageid(topmost_item), messageid(item))
-        email_message = EmailMultiAlternatives(subject, body_text, from_email, [to_email], headers=headers)
+        email_message = EmailMultiAlternatives(subject, body_text, from_email, bcc=[recipient_email], headers=headers)
         email_message.attach_alternative(body_html, 'text/html')
         return email_message
 
