@@ -159,8 +159,8 @@ class Item(models.Model):
     destroyed        = models.BooleanField(_('destroyed'), default=False, editable=False)
     creator          = models.ForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
     created_at       = models.DateTimeField(_('created at'), editable=False)
-    name             = models.CharField(_('item title'), max_length=255, blank=True)
-    description      = models.CharField(_('preface'), max_length=255, blank=True)
+    name             = models.CharField(_('item title'), max_length=255, blank=True, help_text=_('The title used to refer to this item'))
+    description      = models.CharField(_('preface'), max_length=255, blank=True, help_text=_('Description of the purpose of this item'))
 
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type_string, self.pk, self.name)
