@@ -66,8 +66,7 @@ class AjaxModelChoiceWidget(forms.Widget):
             jQuery.getJSON('%(ajax_url)s', {q:e.value}, function(json) {
               json.splice(0, 0, ['[NULL]', '']);
               $(results_div.childNodes).remove();
-              for (var i in json) {
-                var datum = json[i];
+              $.each(json, function(i, datum){
                 var option = document.createElement('div');
                 option.className = 'ajax_choice_option';
                 option.innerHTML = datum[0];
@@ -82,7 +81,7 @@ class AjaxModelChoiceWidget(forms.Widget):
                 });
                 x = results_div;
                 results_div.appendChild(option);
-              }
+              });
               $(results_div).show();
             });
           };
