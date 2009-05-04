@@ -175,6 +175,8 @@ Annotations (Transclusions, Comments, and Excerpts)
 
   If somebody creates Item 1, someone creates Comment 2 about Item 2, and someone responds to Comment 2 with Comment 3, then one would say that Comment 3 is a *direct* comment on Comment 2, and Comment 3 is an *indirect* comment on Item 1. The Comment item type only stores information about direct comments, but behind the scenes, the RecursiveComment table (which does not inherit from Item) keeps track of all of the indirect commenting so that viewers can efficiently render entire threads.
 
+  A Comment also specifies a ``from_contact_method`` field, which points to a ContactMethod that was used to generate this comment. Often this will be null, but in cases where people send emails to generate comments, this will point to the EmailContactMethod, and is used to set an appropriate reply address.
+
 * **TextComment:** A TextComment is a Comment and a TextDocument combined. It is currently the only form of user-generated comments. It defines no new fields.
 
 * **Excerpt:** An Excerpt is an Item that refers to a portion of another Item (or an external resource, such as a webpage). Excerpt is meant to be abstract, so developers should always create subclasses rather than creating raw Excerpts.
@@ -449,6 +451,7 @@ Below is a list of item types and the item abilities they introduce:
 
   * ``view item``
   * ``view item_version_number``
+  * ``view from_contact_method``
 
 * TextDocumentExcerpt
 
