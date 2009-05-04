@@ -129,6 +129,7 @@ class SymsysCareer(Item):
         if isinstance(self, ThesisSymsysCareer):
             if not self.finished:
                 agents_own_abilities.append('edit second_reader')
+                agents_own_abilities.append('edit thesis_title')
         if isinstance(self, StudentSymsysCareer):
             if self.finished:
                 agents_own_abilities.append('edit class_year')
@@ -147,7 +148,7 @@ class SymsysCareer(Item):
 class ThesisSymsysCareer(SymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view second_reader', 'view thesis', 'edit second_reader', 'edit thesis'])
+    introduced_abilities = frozenset(['view second_reader', 'view thesis', 'view thesis_title', 'edit second_reader', 'edit thesis', 'edit thesis_title'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('thesis Symsys career')
@@ -156,6 +157,7 @@ class ThesisSymsysCareer(SymsysCareer):
     # Fields
     second_reader = models.ForeignKey('SymsysAffiliate', null=True, blank=True, related_name="second_reader_group", verbose_name=_('second reader'), default=None)
     thesis        = models.ForeignKey(FileDocument, null=True, blank=True, related_name="careers_with_thesis", verbose_name=_('thesis'), default=None)
+    thesis_title  = models.CharField(_('thesis title'), max_length=255, blank=True)
     #TODO: make a special viewer for the student to upload a file into a FileDocument have have this field point to it (only if blank right now?)
 
 class StudentSymsysCareer(SymsysCareer):

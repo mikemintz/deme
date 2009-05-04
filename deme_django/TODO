@@ -14,6 +14,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Versions should only store past versions, not current version
 * Make Deme work with newest version of Django (we get validation errors right now)
 * Fix the multiple inheritance bug
   - http://code.djangoproject.com/ticket/10808
@@ -56,6 +57,7 @@ Documentation
 * Document more functions with docstrings more
 * Make some sort of API doc
 * Make the README better (it points to docs/ directory, but users don't know how to compile docs)
+* Explain in installation about moving the settings file, creating the database, etc.
 
 Small Details
 -------------
