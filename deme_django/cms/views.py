@@ -731,7 +731,7 @@ class ItemViewer(Viewer):
                     item['creator_name'] = get_viewable_name(viewer.context, action_notice.creator)
                     item['creator_link'] = action_notice.creator.get_absolute_url()
                     item['item_name'] = get_viewable_name(viewer.context, action_notice.item)
-                    item['description'] = action_notice.description
+                    item['action_summary'] = action_notice.action_summary
                     if isinstance(action_notice, RelationActionNotice):
                         item['from_item_name'] = get_viewable_name(viewer.context, action_notice.from_item)
                         item['from_field_name'] = action_notice.from_field_name

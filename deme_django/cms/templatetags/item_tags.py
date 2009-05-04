@@ -504,7 +504,7 @@ class ItemDetails(template.Node):
 
         result.append('<div style="font-size: 8pt; color: #aaa; margin-bottom: 10px;">')
         if agentcan_helper(context, 'view description', item) and item.description.strip():
-            result.append('Description: %s' % escape(item.description))
+            result.append('Preface: %s' % escape(item.description))
         result.append('</div>')
 
         return '\n'.join(result)
@@ -728,7 +728,7 @@ class CalculateActionNotices(template.Node):
         if agentcan_helper(context, 'view action_notices', item):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
             result.append(u'<table class="list">')
-            result.append(u'<tr><th>Date/Time</th><th>Agent</th><th>Action</th><th>Item</th><th>Description</th></tr>')
+            result.append(u'<tr><th>Date/Time</th><th>Agent</th><th>Action</th><th>Item</th><th>Summary</th></tr>')
             action_notices = ActionNotice.objects.filter(Q(item=item) | Q(creator=item)).order_by('created_at')
             action_notice_pk_to_object_map = {}
             for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
@@ -751,7 +751,7 @@ class CalculateActionNotices(template.Node):
                 agent_text = u'<a href="%s">%s</a>' % (escape(action_notice.creator.get_absolute_url()), escape(creator_name))
                 item_name = get_viewable_name(context, action_notice.item)
                 item_text = u'<a href="%s">%s</a>' % (escape(action_notice.item.get_absolute_url() + '?version=%d' % action_notice.item_version_number), escape(item_name))
-                description_text = action_notice.description
+                action_summary_text = action_notice.action_summary
                 if isinstance(action_notice, RelationActionNotice):
                     from_item_name = get_viewable_name(context, action_notice.from_item)
                     from_item_text = u'<a href="%s">%s</a>' % (escape(action_notice.from_item.get_absolute_url() + '?version=%d' % action_notice.from_item_version_number), escape(from_item_name))
@@ -769,7 +769,7 @@ class CalculateActionNotices(template.Node):
                     action_text = 'Created'
                 if isinstance(action_notice, EditActionNotice):
                     action_text = 'Edited'
-                result.append(u"<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (created_at_text, agent_text, action_text, item_text, description_text))
+                result.append(u"<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (created_at_text, agent_text, action_text, item_text, action_summary_text))
             result.append(u"</table>")
         else:
             action_notices = []
