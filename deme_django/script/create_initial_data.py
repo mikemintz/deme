@@ -122,6 +122,11 @@ WebauthAuthenticationMethod(username="jmarrama", agent=joe).save_versioned(actio
 joe_email_contact_method = EmailContactMethod(name="Joe's Email Contact Method", email="joe@example.com", agent=joe)
 joe_email_contact_method.save_versioned(action_agent=joe, initial_permissions=[AgentItemPermission(agent=joe, ability='do_anything', is_allowed=True)])
 
+github_agent = Agent(name="Github")
+github_agent.save_versioned(action_agent=admin)
+github_email_contact_method = EmailContactMethod(email="noreply@github.com", agent=github_agent)
+github_email_contact_method.save_versioned(action_agent=admin)
+
 hello_page = DjangoTemplateDocument(name="Hello Page", body="""
 {% block content %}
 Hello World!
