@@ -700,8 +700,10 @@ class CalculateHistory(template.Node):
         for version in versions:
             version_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk}) + '?version=%s' % version.version_number
             result.append("""<div><a href="%s">Version %s</a></div>""" % (version_url, version.version_number))
+        current_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk})
+        result.append("""<div><a href="%s">Current version</a></div>""" % (current_url,))
         context['history_box'] = mark_safe('\n'.join(result))
-        context['n_versions'] = len(versions)
+        context['n_versions'] = len(versions) + 1
         return ''
 
 @register.tag

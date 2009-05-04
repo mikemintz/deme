@@ -282,6 +282,8 @@ class Item(models.Model):
         if self.destroyed:
             self.version_number = int(version_number)
             return
+        if version_number == self.version_number:
+            return
         itemversion = type(self).Version.objects.get(current_item=self, version_number=version_number)
         fields = {}
         for field in itemversion._meta.fields:
@@ -428,6 +430,13 @@ class Item(models.Model):
         action_time = action_time or datetime.datetime.now()
         is_new = not self.pk
 
+        # Save the old item version
+        if not is_new:
+            old_version = type(self).Version()
+            old_self = type(self).objects.get(pk=self.pk)
+            old_self.copy_fields_to_itemversion(old_version)
+            old_version.save()
+
         # Update the item
         self.item_type_string = type(self).__name__
         if first_agent:
@@ -441,11 +450,6 @@ class Item(models.Model):
         if first_agent:
             self.creator_id = 1
         self.save()
-
-        # Create the new item version
-        new_version = type(self).Version()
-        self.copy_fields_to_itemversion(new_version)
-        new_version.save()
 
         # Create the permissions
         if initial_permissions:

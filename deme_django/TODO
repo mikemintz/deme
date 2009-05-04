@@ -14,7 +14,6 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
-* Versions should only store past versions, not current version
 * Make Deme work with newest version of Django (we get validation errors right now)
 * Fix the multiple inheritance bug
   - http://code.djangoproject.com/ticket/10808
