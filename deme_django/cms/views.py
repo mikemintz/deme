@@ -526,11 +526,11 @@ def get_viewer_class_for_viewer_name(viewer_name):
 
 
 def get_versioned_item(item, version_number):
-    try:
-        version_number = int(version_number)
-    except ValueError:
-        return None
     if version_number is not None:
+        try:
+            version_number = int(version_number)
+        except:
+            return None
         item.copy_fields_from_version(version_number)
     return item
 
