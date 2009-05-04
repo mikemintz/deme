@@ -808,7 +808,11 @@ class SubclassFieldsBox(template.Node):
         viewer_item_type_field_names = set([x.name for x in viewer_item_type._meta.fields])
         item = context['item']
         fields = []
+        field_names_used = set()
         for field in item._meta.fields:
+            if field.name in field_names_used:
+                continue
+            field_names_used.add(field.name)
             if field.name in viewer_item_type_field_names:
                 continue
             if isinstance(field, (models.OneToOneField, models.ManyToManyField)):
