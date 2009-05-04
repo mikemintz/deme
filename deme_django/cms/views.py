@@ -1081,7 +1081,8 @@ class AuthenticationMethodViewer(ItemViewer):
                 
                 if openid_response.status == openid.consumer.consumer.SUCCESS:
                     identity_url = openid_response.identity_url
-                    display_identifier = openid_response.getDisplayIdentifier()
+                    # If we want to use display_identifier, we need to have python-openid >=2.1, which isn't in Ubuntu Hardy
+                    #display_identifier = openid_response.getDisplayIdentifier()
                     sreg = openid_response.extensionResponse('sreg', False)
                     try:
                         openid_authentication_method = OpenidAuthenticationMethod.objects.get(openid_url=identity_url)
