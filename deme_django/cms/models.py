@@ -1279,8 +1279,8 @@ class Comment(Item):
     """
 
     # Setup
-    introduced_immutable_fields = frozenset(['item'])
-    introduced_abilities = frozenset(['view item', 'view item_version_number'])
+    introduced_immutable_fields = frozenset(['item', 'item_version_number'])
+    introduced_abilities = frozenset(['view item', 'view item_version_number', 'view from_contact_method'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('comment')
@@ -1289,6 +1289,7 @@ class Comment(Item):
     # Fields
     item                = models.ForeignKey(Item, related_name='comments', verbose_name=_('item'))
     item_version_number = models.PositiveIntegerField(_('item version number'))
+    from_contact_method = models.ForeignKey(ContactMethod, related_name='comments_from_contactmethod', null=True, blank=True, default=None, editable=False, verbose_name=_('from contact method'))
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(Comment, self)._after_create(action_agent, action_summary, action_time)
@@ -1609,6 +1610,12 @@ class ActionNotice(models.Model):
         creator_name = get_viewable_name(viewer.context, self.creator)
         recipient_name = get_viewable_name(viewer.context, agent)
 
+        generic_from_email_name = 'Deme notifier'
+        from_email_name = None
+        from_email_address = None
+        reply_item_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
+        recipient_email_address = email_contact_method.email
+
         # Generate the subject and body
         viewer.context['item'] = self.item
         viewer.context['item_version_number'] = self.item_version_number
@@ -1623,9 +1630,9 @@ class ActionNotice(models.Model):
                 return
             from_item_name = get_viewable_name(viewer.context, self.from_item)
             if self.relation_added:
-                subject = '[%s] Relation added to %s' % (subscribed_item_name, item_name)
+                subject = '[%s] %s added relation to %s' % (subscribed_item_name, creator_name, item_name)
             else:
-                subject = '[%s] Relation removed from %s' % (subscribed_item_name, item_name)
+                subject = '[%s] %s removed relation from %s' % (subscribed_item_name, creator_name, item_name)
             template_name = 'relation'
             viewer.context['relation_added'] = self.relation_added
             viewer.context['from_item'] = self.from_item
@@ -1633,32 +1640,43 @@ class ActionNotice(models.Model):
             viewer.context['from_field_name'] = self.from_field_name
             viewer.context['from_field_model'] = self.from_field_model
         elif isinstance(self, DeactivateActionNotice):
-            subject = '[%s] Deactivated %s' % (subscribed_item_name, item_name)
+            subject = '[%s] %s deactivated %s' % (subscribed_item_name, creator_name, item_name)
             template_name = 'delete'
             viewer.context['delete_type'] = 'deactivate'
         elif isinstance(self, ReactivateActionNotice):
-            subject = '[%s] Reactivated %s' % (subscribed_item_name, item_name)
+            subject = '[%s] %s reactivated %s' % (subscribed_item_name, creator_name, item_name)
             template_name = 'delete'
             viewer.context['delete_type'] = 'reactivate'
         elif isinstance(self, DestroyActionNotice):
-            subject = '[%s] Destroyed %s' % (subscribed_item_name, item_name)
+            subject = '[%s] %s destroyed %s' % (subscribed_item_name, creator_name, item_name)
             template_name = 'delete'
             viewer.context['delete_type'] = 'destroy'
         elif isinstance(self, CreateActionNotice):
             if issubclass(item.actual_item_type(), TextComment):
                 comment = item.downcast()
                 comment_name = get_viewable_name(viewer.context, comment)
-                subject = '[%s] New comment on %s' % (subscribed_item_name, topmost_item_name)
+                comment_creator_email_address = None
+                if comment.from_contact_method and issubclass(comment.from_contact_method.actual_item_type(), EmailContactMethod):
+                    if permission_cache.agent_can(agent, 'view from_contact_method', comment):
+                        from_email_contact_method = comment.from_contact_method.downcast()
+                        if permission_cache.agent_can(agent, 'view email', from_email_contact_method):
+                            comment_creator_email_address = from_email_contact_method.email
+                if comment_creator_email_address:
+                    from_email_name = creator_name
+                    from_email_address = comment_creator_email_address
+                    subject = '[%s] New comment on %s' % (subscribed_item_name, topmost_item_name)
+                else:
+                    subject = '[%s] %s commented on %s' % (subscribed_item_name, creator_name, topmost_item_name)
                 if issubclass(comment.item.actual_item_type(), Comment):
                     subject = 'Re: ' + subject
                 template_name = 'comment'
                 viewer.context['comment'] = comment
             else:
-                subject = '[%s] Created %s' % (subscribed_item_name, item_name)
+                subject = '[%s] %s created %s' % (subscribed_item_name, creator_name, item_name)
                 template_name = 'save'
                 viewer.context['save_type'] = 'create'
         elif isinstance(self, EditActionNotice):
-            subject = '[%s] Edited %s' % (subscribed_item_name, item_name)
+            subject = '[%s] %s edited %s' % (subscribed_item_name, creator_name, item_name)
             template_name = 'save'
             viewer.context['save_type'] = 'edit'
         else:
@@ -1669,13 +1687,14 @@ class ActionNotice(models.Model):
         body_html = template.render(viewer.context)
         body_text = html2text.html2text_file(body_html, None)
         body_text = wrap(body_text, 78)
-        from_email_address = '%s@%s' % ('NOREPLY', settings.NOTIFICATION_EMAIL_HOSTNAME)
-        reply_to_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
-        from_email = formataddr((creator_name, from_email_address))
-        item_email = formataddr((reply_item_name, reply_to_email_address))
-        recipient_email = formataddr((recipient_name, email_contact_method.email))
+        reply_item_email = formataddr((reply_item_name, reply_item_email_address))
+        recipient_email = formataddr((recipient_name, recipient_email_address))
+        if from_email_address is None:
+            from_email = formataddr((generic_from_email_name, reply_item_email_address))
+        else:
+            from_email = formataddr((from_email_name, from_email_address))
         headers = {}
-        headers['To'] = item_email
+        headers['To'] = reply_item_email
         def messageid(x):
             prefix = 'notice' if isinstance(x, ActionNotice) else 'item'
             date = x.created_at.strftime("%Y%m%d%H%M%S")

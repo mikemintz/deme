@@ -51,7 +51,7 @@ def main():
     if not comment_name.lower().startswith('re: '):
         comment_name = 'Re: %s' % comment_name
     
-    comment = TextComment(item=item, item_version_number=item.version_number, name=comment_name, body=body)
+    comment = TextComment(item=item, item_version_number=item.version_number, name=comment_name, body=body, from_contact_method=email_contact_method)
     comment.name = comment_name #TODO this is a hack due to multiple inheritance bug in Django. remove it when bug is fixed
     comment.save_versioned(action_agent=email_contact_method.agent)
 

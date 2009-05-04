@@ -88,7 +88,6 @@ Distant Future (sorted by approximate order of planned implementation)
 * Internationalize using ugettext_lazy
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * Customizable email template per site that gets sent out for each notification
-* If someone has a public EmailContactMethod, then the from_email of notifications they sent out should be one of those email addresses.
 * Facebook API
 * Installation-to-installation API
   - Allow, as an option, an alias to refer to the hostname of the installation, such as i-numbers (to allow a consistent identifier when people change hostnames for their installation).
