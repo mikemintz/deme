@@ -21,6 +21,7 @@ Required Dependencies
 Python
 ^^^^^^
 We require Python 2.5 (although 2.6 will probably work, but 3.x will not).
+
 * On Ubuntu: ``sudo apt-get install python``
 * On Mac OS X: You probably have it already, but if you don't, try http://python.org/ftp/python/2.6.2/python-2.6.2-macosx2009-04-16.dmg
 * Other OS: Find out at http://python.org/download/
@@ -36,13 +37,16 @@ When you check out Django from SVN, be sure to include the argument ``-r9973``, 
 PostgreSQL
 ^^^^^^^^^^
 We develop against PostgreSQL 8.3 as our database, although other database engines may be supported. To install PostgreSQL:
+
 * On Ubuntu: ``sudo apt-get install postgresql``
 * On Mac OS X: Download http://www.enterprisedb.com/getfile.jsp?fileid=484
 * Other OS: Download the database at http://www.postgresql.org/download/ and the Python plugin at
 
 You'll also need the Python plugin to PostgreSQL:
+
 * On Ubuntu: ``sudo apt-get install python-psycopg2``
-* Other OS: I don't remember the easiest way to install it, but you'll want postgresql_psycopg2, and the publisher is at http://initd.org/pub/software/psycopg/
+* On Mac OS X: I think ``sudo easy_install psycopg2`` should work
+* Other OS: You'll want postgresql_psycopg2. The publisher is at http://initd.org/pub/software/psycopg/
 
 You'll also need to configure a user that Django can use to authenticate. If you don't know how to set up users in PostgreSQL, search Google for setting up PostgreSQL and Django on your OS of choice, and find a tutorial.
 
@@ -65,6 +69,7 @@ You'll want to unzip it as ``static/crystal_project``. To ensure you have the pa
 Postfix
 ^^^^^^^
 We use Postfix to deliver notifications and process incoming emails. Other MTAs may work too, but we give configuration instructions for Postfix. To install:
+
 * On Ubuntu: ``sudo apt-get install postfix``
 * On Mac OS X: You should already have it, but if it's not running you'll want to type ``sudo postfix start``
 * Other OS: Find out at http://www.postfix.org/
@@ -93,6 +98,7 @@ Optional Dependencies
 Python-OpenID
 ^^^^^^^^^^^^^
 If you want to enable OpenID for authentication, you will have to install the Python OpenID library.
+
 * On Ubuntu: ``sudo apt-get install python-openid``
 * On Mac OS X: ``sudo easy_install python-openid``
 * Other OS: Find out at http://openidenabled.com/python-openid/
@@ -100,6 +106,7 @@ If you want to enable OpenID for authentication, you will have to install the Py
 Graphviz
 ^^^^^^^^
 If you want to generate and display the Deme item type "code graph", you will need to install graphviz.
+
 * On Ubuntu: ``sudo apt-get install graphviz``
 * Other OS: Find out at http://www.graphviz.org/
 
