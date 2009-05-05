@@ -1081,17 +1081,18 @@ class AuthenticationMethodViewer(ItemViewer):
                 
                 if openid_response.status == openid.consumer.consumer.SUCCESS:
                     identity_url = openid_response.identity_url
+                    identity_url_without_fragment = identity_url.split('#')[0]
                     # If we want to use display_identifier, we need to have python-openid >=2.1, which isn't in Ubuntu Hardy
                     #display_identifier = openid_response.getDisplayIdentifier()
                     sreg = openid_response.extensionResponse('sreg', False)
                     try:
-                        openid_authentication_method = OpenidAuthenticationMethod.objects.get(openid_url=identity_url)
+                        openid_authentication_method = OpenidAuthenticationMethod.objects.get(Q(openid_url=identity_url_without_fragment) | Q(openid_url__startswith=identity_url_without_fragment + '#'))
                     except ObjectDoesNotExist:
                         # No OpenidAuthenticationMethod has this openid_url.
-                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID")
+                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID (1)")
                     if not openid_authentication_method.active or not openid_authentication_method.agent.active: 
                         # The Agent or OpenidAuthenticationMethod is inactive.
-                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID")
+                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID (2)")
                     self.request.session['cur_agent_id'] = openid_authentication_method.agent.pk
                     return HttpResponseRedirect(redirect)
                 elif openid_response.status == openid.consumer.consumer.CANCEL:
