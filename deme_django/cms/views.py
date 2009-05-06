@@ -30,6 +30,7 @@ from urlparse import urljoin
 ###############################################################################
 
 class AjaxModelChoiceWidget(forms.Widget):
+    """Ajax auto-complete widget for ForeignKey fields."""
     def render(self, name, value, attrs=None):
         model = self.choices.queryset.model
         #field = self.choices.field
@@ -96,13 +97,12 @@ class AjaxModelChoiceWidget(forms.Widget):
         return result
 
 class AjaxModelChoiceField(forms.ModelChoiceField):
+    """Ajax auto-complete field for ForeignKey fields."""
     widget = AjaxModelChoiceWidget
 
 class HiddenModelChoiceField(forms.ModelChoiceField):
+    """Hidden field for ForeignKey fields."""
     widget = forms.HiddenInput
-
-class TextModelChoiceField(forms.ModelChoiceField):
-    widget = forms.TextInput
 
 class AddSubPathForm(forms.ModelForm):
     aliased_item = super(models.ForeignKey, CustomUrl._meta.get_field_by_name('aliased_item')[0]).formfield(queryset=CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.to._default_manager.complex_filter(CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.field_name)
@@ -517,7 +517,6 @@ class Viewer(object):
             self.context['layout'] = self.context['layout%s' % self.cur_site.default_layout.pk]
         else:
             self.context['layout'] = 'default_layout.html'
-
 
 
 def get_viewer_class_for_viewer_name(viewer_name):
@@ -1214,6 +1213,13 @@ class GroupViewer(ItemViewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        try:
+            folio = self.item.folios.get()
+            if not self.permission_cache.agent_can(self.cur_agent, 'view group', folio):
+                folio = None
+        except:
+            folio = None
+        self.context['folio'] = folio
         template = loader.get_template('group/show.html')
         return HttpResponse(template.render(self.context))
 

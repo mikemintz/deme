@@ -4,11 +4,12 @@
 
 {% subclassfields %}
 
+{% if folio %}
 <div style="font-size: larger; margin: 10px 0 10px 0;">Folio</div>
 <div>
-    {# TODO permission to know folio is associated with group? #}
-    {% embed 'folio' item.folios.get %}
+    {% embed 'folio' folio %}
 </div>
+{% endif %}
 
 <div style="font-size: larger; margin: 10px 0 10px 0;">Roster</div>
 <div>
