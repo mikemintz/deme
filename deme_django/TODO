@@ -51,7 +51,6 @@ Interface
 
 Documentation
 -------------
-* Update documentation to reflect how we deal with formats now
 * Document more functions with docstrings more
 * Make some sort of API doc
 

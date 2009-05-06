@@ -527,7 +527,7 @@ Item actions take in a noun in the URL, which is the unique id of the item it ac
 
 Formats
 ^^^^^^^
-An additional parameter is passed in defining the response format, like HTML or XML. The default is HTML. Most viewers ignore this now, but it's easy to act upon it. We might add something where viewers have to register which formats they respond to, so that we can display error messages when you type the wrong format rather than ignoring it. Note that the format only specifies the response format. The request format (what the browser sends to the server) is always the same: all parameters encoded in the URL or the HTTP post data. We will only be using HTTP as the transport for viewers (although we can define things that accept emails and SSH and other protocols, they just won't be called viewers).
+An additional parameter is passed in defining the response format, like HTML or XML. The default is HTML. Each action specifies a different behavior for each format it accepts. For example, in the "show" action, the "html" format will display a page showing everything about the item, while the "rss" format will render an RSS document with the latest action notices. Note that the format only specifies the response format. The request format (what the browser sends to the server) is always the same: all parameters encoded in the URL or the HTTP post data. We will only be using HTTP as the transport for viewers (although we can define things that accept emails and SSH and other protocols, they just won't be called viewers).
 
 Authentication
 ^^^^^^^^^^^^^^
