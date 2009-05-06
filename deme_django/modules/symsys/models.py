@@ -5,6 +5,59 @@ from django.core.exceptions import ObjectDoesNotExist
 
 __all__ = ['SymsysCareer', 'ThesisSymsysCareer', 'StudentSymsysCareer', 'MinorSymsysCareer', 'BachelorsSymsysCareer', 'MastersSymsysCareer', 'HonorsSymsysCareer', 'FacultySymsysCareer', 'ProgramStaffSymsysCareer', 'SymsysAffiliate', 'Event', 'Advertisement', 'TextAdvertisement', 'HtmlAdvertisement']
 
+BS_CONCENTRATIONS = [
+    'Applied Logic',
+    'Artificial Intelligence',
+    'Cognition',
+    'Cognitive Science',
+    'Computation',
+    'Computer Music',
+    'Decision Making and Rationality',
+    'Education and Learning',
+    'HCI',
+    'Individually Designed Concentration',
+    'Learning',
+    'Natural Language',
+    'Neural Systems',
+    'Neurosciences',
+    'Philosophical Foundations',
+    'Rationality',
+    'Undecided',
+]
+
+MS_TRACKS = [
+    'HCI',
+    'Individually Designed Track',
+    'Natural Language Technology',
+]
+
+ACADEMIC_TITLES = [
+    "Assistant Professor",
+    "Associate Professor",
+    "Consulting Assistant Professor",
+    "Consulting Associate Professor",
+    "Consulting Professor",
+    "Engineering Research Associate",
+    "Executive Director",
+    "Lecturer",
+    "Professor",
+    "Professor Emeritus",
+    "Senior Lecturer",
+    "Senior Research Engineer",
+    "Student Services Officer",
+    "University Affiliate",
+    "Wasow Visiting Lecturer",
+]
+
+ADMIN_TITLES = [
+    "Advising Fellow",
+    "Associate Director",
+    "Director Emeritus",
+    "Graduate Studies Director",
+    "Program Director",
+    "Student Services Officer",
+    "Webmaster",
+]
 
 def get_or_create_group(key, name, group_creator):
     deme_setting_key = 'symsys.groups.%s' % key
@@ -59,12 +112,16 @@ class SymsysCareer(Item):
         self._guarantee_consistency_after_changes()
 
     def _guarantee_consistency_after_changes(self):
-        #TODO perhaps this should be called after modifying permissions, although it doesn't seem necessary
+        #TODO perhaps this should be called after modifying permissions, although it doesn't seem necessary.
+        # although it would be necessary to ensure AFs can always edit stuff, but that's kind of a hack
+
+        #TODO cleanup this function, and get the final hierarchy of symsys groups in here
 
         group_creator = Agent.objects.get(pk=DemeSetting.get("symsys.symsys_bot"))
 
         agent = self.symsys_affiliate
-        all_possible_groups = Group.objects.filter(pk__in=map(int, DemeSetting.objects.filter(active=True, key__startswith="symsys.groups.").values_list('value', flat=True)))
+        all_possible_group_ids = DemeSetting.objects.filter(active=True, key__startswith="symsys.groups.").values_list('value', flat=True)
+        all_possible_groups = Group.objects.filter(pk__in=map(int, all_possible_group_ids))
         groups = []
 
         groups.append(get_or_create_group('all_ssp_users', 'All SSP Users', group_creator))
@@ -139,16 +196,20 @@ class SymsysCareer(Item):
         if isinstance(self, BachelorsSymsysCareer):
             if not self.finished:
                 agents_own_abilities.append('edit concentration')
+        if isinstance(self, FacultySymsysCareer):
+            agents_own_abilities.append('edit academic_title')
         AgentItemPermission.objects.filter(agent=agent, item=self, ability__startswith='edit ').delete()
         for ability in agents_own_abilities:
             AgentItemPermission(agent=agent, item=self, is_allowed=True, ability=ability).save()
 
     _guarantee_consistency_after_changes.alters_data = True
 
+
 class ThesisSymsysCareer(SymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view second_reader', 'view thesis', 'view thesis_title', 'edit second_reader', 'edit thesis', 'edit thesis_title'])
+    introduced_abilities = frozenset(['view second_reader', 'view thesis', 'view thesis_title',
+                                      'edit second_reader', 'edit thesis', 'edit thesis_title'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('thesis Symsys career')
@@ -159,6 +220,7 @@ class ThesisSymsysCareer(SymsysCareer):
     thesis        = models.ForeignKey(FileDocument, null=True, blank=True, related_name="careers_with_thesis", verbose_name=_('thesis'), default=None)
     thesis_title  = models.CharField(_('thesis title'), max_length=255, blank=True)
     #TODO: make a special viewer for the student to upload a file into a FileDocument have have this field point to it (only if blank right now?)
+
 
 class StudentSymsysCareer(SymsysCareer):
     # Setup
@@ -175,6 +237,7 @@ class StudentSymsysCareer(SymsysCareer):
     advisor         = models.ForeignKey('SymsysAffiliate', null=True, blank=True, related_name="advisor_group", verbose_name=_('advisor'), default=None)
     other_degrees   = models.CharField(_('other degrees'), max_length=255, blank=True)
 
+
 class MinorSymsysCareer(StudentSymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset()
@@ -183,6 +246,7 @@ class MinorSymsysCareer(StudentSymsysCareer):
     class Meta:
         verbose_name = _('minor Symsys career')
         verbose_name_plural = _('minor Symsys careers')
+
 
 class BachelorsSymsysCareer(StudentSymsysCareer):
     # Setup
@@ -194,8 +258,9 @@ class BachelorsSymsysCareer(StudentSymsysCareer):
         verbose_name_plural = _('bachelors Symsys careers')
 
     # Fields
-    concentration     = models.CharField(_('concentration'), max_length=255, blank=True, choices=[('Applied Logic', 'Applied Logic'), ('Artificial Intelligence', 'Artificial Intelligence'), ('Cognition', 'Cognition'), ('Cognitive Science', 'Cognitive Science'), ('Computation', 'Computation'), ('Computer Music', 'Computer Music'), ('Decision Making and Rationality', 'Decision Making and Rationality'), ('Education and Learning', 'Education and Learning'), ('HCI', 'HCI'), ('Individually Designed Concentration', 'Individually Designed Concentration'), ('Learning', 'Learning'), ('Natural Language', 'Natural Language'), ('Neural Systems', 'Neural Systems'), ('Neurosciences', 'Neurosciences'), ('Philosophical Foundations', 'Philosophical Foundations'), ('Rationality', 'Rationality'), ('Undecided', 'Undecided')])
+    concentration     = models.CharField(_('concentration'), max_length=255, blank=True, choices=[(x,x) for x in BS_CONCENTRATIONS])
     indivdesignedconc = models.CharField(_('individually designed concentration'), max_length=255, blank=True)
+
 
 class MastersSymsysCareer(StudentSymsysCareer, ThesisSymsysCareer):
     # Setup
@@ -207,8 +272,9 @@ class MastersSymsysCareer(StudentSymsysCareer, ThesisSymsysCareer):
         verbose_name_plural = _('masters Symsys careers')
 
     # Fields
-    track  = models.CharField(_('track'), max_length=255, blank=True, choices=[('HCI', 'HCI'), ('Individually Designed Track', 'Individually Designed Track'), ('Natural Language Technology', 'Natural Language Technology')])
+    track  = models.CharField(_('track'), max_length=255, blank=True, choices=[(x,x) for x in MS_TRACKS])
     indivdesignedtrack = models.CharField(_('individually designed track'), max_length=255, blank=True)
+
 
 class HonorsSymsysCareer(ThesisSymsysCareer):
     # Setup
@@ -218,6 +284,10 @@ class HonorsSymsysCareer(ThesisSymsysCareer):
     class Meta:
         verbose_name = _('honors Symsys career')
         verbose_name_plural = _('honors Symsys careers')
+
+    # Fields
+    advisor = models.ForeignKey('SymsysAffiliate', null=True, blank=True, related_name="honors_advisor_group", verbose_name=_('advisor'), default=None)
+
 
 class FacultySymsysCareer(SymsysCareer):
     # Setup
@@ -229,7 +299,8 @@ class FacultySymsysCareer(SymsysCareer):
         verbose_name_plural = _('faculty Symsys careers')
 
     # Fields
-    academic_title = models.CharField(_('academic title'), max_length=255, choices=[("Assistant Professor", "Assistant Professor"), ("Associate Professor", "Associate Professor"), ("Consulting Assistant Professor", "Consulting Assistant Professor"), ("Consulting Associate Professor", "Consulting Associate Professor"), ("Consulting Professor", "Consulting Professor"), ("Engineering Research Associate", "Engineering Research Associate"), ("Executive Director", "Executive Director"), ("Lecturer", "Lecturer"), ("Professor", "Professor"), ("Professor Emeritus", "Professor Emeritus"), ("Senior Lecturer", "Senior Lecturer"), ("Senior Research Engineer", "Senior Research Engineer"), ("Student Services Officer", "Student Services Officer"), ("University Affiliate", "University Affiliate"), ("Wasow Visiting Lecturer", "Wasow Visiting Lecturer")]) # always editable by the faculty
+    academic_title = models.CharField(_('academic title'), max_length=255, choices=[(x,x) for x in ACADEMIC_TITLES]) # always editable by the faculty
+
 
 class ProgramStaffSymsysCareer(SymsysCareer):
     # Setup
@@ -242,13 +313,16 @@ class ProgramStaffSymsysCareer(SymsysCareer):
         verbose_name_plural = _('program staff Symsys careers')
 
     # Fields
-    admin_title = models.CharField(_('admin title'), max_length=255, choices=[("Advising Fellow", "Advising Fellow"), ("Associate Director", "Associate Director"), ("Director Emeritus", "Director Emeritus"), ("Graduate Studies Director", "Graduate Studies Director"), ("Program Director", "Program Director"), ("Student Services Officer", "Student Services Officer"), ("Webmaster", "Webmaster")])
+    admin_title = models.CharField(_('admin title'), max_length=255, choices=[(x,x) for x in ADMIN_TITLES])
 
 
 class SymsysAffiliate(Person):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view w_organization', 'view w_position', 'view background', 'view doing_now', 'view interests', 'view publications', 'view office_hours', 'view about', 'view photo', 'edit w_organization', 'edit w_position', 'edit background', 'edit doing_now', 'edit interests', 'edit publications', 'edit office_hours', 'edit about', 'edit photo'])
+    introduced_abilities = frozenset(['view w_organization', 'view w_position', 'view background', 'view doing_now',
+                                      'view interests', 'view publications', 'view office_hours', 'view about', 'view photo',
+                                      'edit w_organization', 'edit w_position', 'edit background', 'edit doing_now',
+                                      'edit interests', 'edit publications', 'edit office_hours', 'edit about', 'edit photo'])
     introduced_global_abilities = frozenset(['create SymsysAffiliate'])
     class Meta:
         verbose_name = _('Symsys affiliate')
@@ -275,30 +349,50 @@ class SymsysAffiliate(Person):
 
 
 class Event(HtmlDocument):
+    # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view event_time', 'view location', 'view url', 'edit event_time', 'edit location', 'edit url'])
     introduced_global_abilities = frozenset(['create Event'])
+    class Meta:
+        verbose_name = _('event')
+        verbose_name_plural = _('event')
+
+    # Fields
     event_time = models.DateTimeField() #TODO why can this be blank?
-    location = models.TextField(blank=True)
-    url = models.TextField(blank=True)
+    location   = models.TextField(blank=True)
+    url        = models.TextField(blank=True)
 
 
 class Advertisement(Document):
+    # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view contact_info', 'view expires_at', 'edit contact_info', 'edit expires_at'])
     introduced_global_abilities = frozenset()
-    contact_info = models.TextField()
-    expires_at = models.DateTimeField(null=True, blank=True, default=None)
+    class Meta:
+        verbose_name = _('advertisement')
+        verbose_name_plural = _('advertisements')
+
+    # Fields
+    contact_info = models.TextField(_('contact info'))
+    expires_at   = models.DateTimeField(_('expires at'), null=True, blank=True, default=None)
 
 
 class TextAdvertisement(TextDocument, Advertisement):
+    # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create TextAdvertisement'])
+    class Meta:
+        verbose_name = _('text advertisement')
+        verbose_name_plural = _('text advertisements')
 
 
 class HtmlAdvertisement(HtmlDocument, Advertisement):
+    # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create HtmlAdvertisement'])
+    class Meta:
+        verbose_name = _('HTML advertisement')
+        verbose_name_plural = _('HTML advertisements')
 
