@@ -18,7 +18,6 @@ Code correctness/consistency/bugs
 * Fix the multiple inheritance bug
   - http://code.djangoproject.com/ticket/10808
 * Need initial permissions set on incoming email comments, group generated folios/groupagents, maybe other things too. Just search for save_versioned.
-* Make sure openid still works
 * Rename /static/ to /file/
 * Rename PasswordAuthenticationMethod to DemeAccount. Rename WebauthAuthenticationMethod to WebauthAccount. Rename OpenidAuthenticationMethod to OpenidAccount.
 * The viewer should probably define a list of actions for each item type to be displayed in a menu
