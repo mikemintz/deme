@@ -715,7 +715,7 @@ class ItemViewer(Viewer):
         viewer = self
         if not self.cur_agent_can('view action_notices', self.item):
             raise DemePermissionDenied
-        action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(creator=self.item)).order_by('created_at') #TODO limit
+        action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(action_agent=self.item)).order_by('created_at') #TODO limit
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
@@ -723,7 +723,7 @@ class ItemViewer(Viewer):
                 self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
             for action_notice in specific_action_notices:
                 action_notice_pk_to_object_map[action_notice.pk] = action_notice
-        self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('creator').query)))
+        self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('action_agent').query)))
         class ItemShowFeed(django.contrib.syndication.feeds.Feed):
             title = get_viewable_name(viewer.context, viewer.item)
             description = viewer.item.description if viewer.cur_agent_can('view description', viewer.item) else ''
@@ -737,8 +737,8 @@ class ItemViewer(Viewer):
                             continue
                     item = {}
                     item['created_at'] = action_notice.created_at
-                    item['creator_name'] = get_viewable_name(viewer.context, action_notice.creator)
-                    item['creator_link'] = action_notice.creator.get_absolute_url()
+                    item['action_agent_name'] = get_viewable_name(viewer.context, action_notice.action_agent)
+                    item['action_agent_link'] = action_notice.action_agent.get_absolute_url()
                     item['item_name'] = get_viewable_name(viewer.context, action_notice.item)
                     item['description'] = action_notice.description
                     if isinstance(action_notice, RelationActionNotice):

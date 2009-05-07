@@ -13,7 +13,7 @@
 
     <a href="{{ details.action_notice.item.get_absolute_url }}">{% viewable_name details.action_notice.item %}</a>
     Made by:
-    <a href="{{ details.action_notice.creator.get_absolute_url }}">{% viewable_name details.action_notice.creator %}</a> 
+    <a href="{{ details.action_notice.action_agent.get_absolute_url }}">{% viewable_name details.action_notice.action_agent %}</a> 
 </div>
 {% endfor %}
 

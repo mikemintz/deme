@@ -330,7 +330,7 @@ class Item(models.Model):
         # Execute callbacks
         self._after_deactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        DeactivateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+        DeactivateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, created_at=action_time, description=action_summary).save()
         old_item = self
         new_item = None
         RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=False)
@@ -352,7 +352,7 @@ class Item(models.Model):
         # Execute callbacks
         self._after_reactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        ReactivateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+        ReactivateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, created_at=action_time, description=action_summary).save()
         old_item = None
         new_item = self
         RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
@@ -397,7 +397,7 @@ class Item(models.Model):
         # Execute callbacks
         self._after_destroy(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        DestroyActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+        DestroyActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, created_at=action_time, description=action_summary).save()
     destroy.alters_data = True
 
     @transaction.commit_on_success
@@ -461,11 +461,11 @@ class Item(models.Model):
 
         # Create relevant ActionNotices
         if is_new:
-            CreateActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+            CreateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, created_at=action_time, description=action_summary).save()
             if self.active:
                 RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
         else:
-            EditActionNotice(item=self, item_version_number=self.version_number, creator=action_agent, created_at=action_time, description=action_summary).save()
+            EditActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, created_at=action_time, description=action_summary).save()
             if self.active:
                 RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=True)
     save_versioned.alters_data = True
@@ -1537,7 +1537,7 @@ class ActionNotice(models.Model):
     """
     item                = models.ForeignKey(Item, related_name='action_notices', verbose_name=_('item'))
     item_version_number = models.PositiveIntegerField(_('item version number'))
-    creator             = models.ForeignKey(Agent, related_name='action_notices_created', verbose_name=_('creator'))
+    action_agent        = models.ForeignKey(Agent, related_name='action_notices_created', verbose_name=_('action agent'))
     created_at          = models.DateTimeField(_('created at'))
     description         = models.CharField(_('description'), max_length=255, blank=True)
 
@@ -1565,8 +1565,8 @@ class ActionNotice(models.Model):
         # Decide if we're allowed to get this notification at all
         def direct_subscriptions():
             item_parent_pks_query = self.item.all_parents_in_thread().values('pk').query
-            creator_parent_pks_query = self.creator.all_parents_in_thread().values('pk').query
-            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=creator_parent_pks_query),
+            action_agent_parent_pks_query = self.action_agent.all_parents_in_thread().values('pk').query
+            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
                                                active=True, contact_method=email_contact_method)
         def deep_subscriptions():
             if permission_cache.agent_can_global(agent, 'do_anything'):
@@ -1575,10 +1575,10 @@ class ActionNotice(models.Model):
                 visible_memberships = permission_cache.filter_items(agent, 'view item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             item_parent_pks_query = self.item.all_parents_in_thread(True, recursive_filter).values('pk').query
-            creator_parent_pks_query = self.creator.all_parents_in_thread(True, recursive_filter).values('pk').query
-            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=creator_parent_pks_query),
+            action_agent_parent_pks_query = self.action_agent.all_parents_in_thread(True, recursive_filter).values('pk').query
+            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
                                                active=True, contact_method=email_contact_method, deep=True)
-        if not (permission_cache.agent_can(agent, 'view action_notices', self.item) or permission_cache.agent_can(agent, 'view action_notices', self.creator)):
+        if not (permission_cache.agent_can(agent, 'view action_notices', self.item) or permission_cache.agent_can(agent, 'view action_notices', self.action_agent)):
             return None
         if isinstance(self, RelationActionNotice):
             if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
@@ -1602,13 +1602,13 @@ class ActionNotice(models.Model):
         item_name = get_viewable_name(viewer.context, item)
         reply_item_name = get_viewable_name(viewer.context, reply_item)
         topmost_item_name = get_viewable_name(viewer.context, topmost_item)
-        creator_name = get_viewable_name(viewer.context, self.creator)
+        action_agent_name = get_viewable_name(viewer.context, self.action_agent)
         recipient_name = get_viewable_name(viewer.context, agent)
 
         # Generate the subject and body
         viewer.context['item'] = self.item
         viewer.context['item_version_number'] = self.item_version_number
-        viewer.context['creator'] = self.creator
+        viewer.context['action_agent'] = self.action_agent
         viewer.context['created_at'] = self.created_at
         viewer.context['description'] = self.description
         viewer.context['topmost_item'] = topmost_item
@@ -1667,7 +1667,7 @@ class ActionNotice(models.Model):
         body_text = wrap(body_text, 78)
         from_email_address = '%s@%s' % ('noreply', settings.NOTIFICATION_EMAIL_HOSTNAME)
         reply_to_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
-        from_email = formataddr((creator_name, from_email_address))
+        from_email = formataddr((action_agent_name, from_email_address))
         reply_to_email = formataddr((reply_item_name, reply_to_email_address))
         to_email = formataddr((recipient_name, email_contact_method.email))
         headers = {}
@@ -1697,10 +1697,10 @@ def _action_notice_post_save_handler(sender, **kwargs):
     action_notice = kwargs['instance']
     # Email everyone subscribed to items this notice is relevant for
     direct_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.item.all_parents_in_thread().values('pk').query) |
-                                                       Q(item__in=action_notice.creator.all_parents_in_thread().values('pk').query),
+                                                       Q(item__in=action_notice.action_agent.all_parents_in_thread().values('pk').query),
                                                        active=True)
     deep_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.item.all_parents_in_thread(True).values('pk').query) |
-                                                     Q(item__in=action_notice.creator.all_parents_in_thread(True).values('pk').query),
+                                                     Q(item__in=action_notice.action_agent.all_parents_in_thread(True).values('pk').query),
                                                      deep=True,
                                                      active=True)
     direct_q = Q(pk__in=direct_subscriptions.values('contact_method').query)
@@ -1788,7 +1788,7 @@ class RelationActionNotice(ActionNotice):
                             action_notice = RelationActionNotice()
                             action_notice.item = value
                             action_notice.item_version_number = value.version_number
-                            action_notice.creator = action_agent
+                            action_notice.action_agent = action_agent
                             action_notice.created_at = action_time
                             action_notice.description = action_summary
                             action_notice.from_item = item

@@ -5,7 +5,7 @@
 <p>
 
 Courtesy of
-<a href="{{ url_prefix }}{{ creator.get_absolute_url }}">{% viewable_name creator %}</a>,
+<a href="{{ url_prefix }}{{ action_agent.get_absolute_url }}">{% viewable_name action_agent %}</a>,
 the "{{ from_field_name }}" field of
 <a href="{{ url_prefix }}{{ from_item.get_absolute_url }}">{% viewable_name from_item %}</a>
 {% if relation_added %}
