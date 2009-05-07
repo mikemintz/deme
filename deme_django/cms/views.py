@@ -17,6 +17,7 @@ from django.utils.text import capfirst
 from django.core.exceptions import ObjectDoesNotExist
 import django.contrib.syndication.feeds
 import django.contrib.syndication.views
+from django.views.decorators.http import require_POST
 from permissions import PermissionCache
 import re
 import os
@@ -29,6 +30,7 @@ from urlparse import urljoin
 ###############################################################################
 
 class AjaxModelChoiceWidget(forms.Widget):
+    """Ajax auto-complete widget for ForeignKey fields."""
     def render(self, name, value, attrs=None):
         model = self.choices.queryset.model
         #field = self.choices.field
@@ -65,8 +67,7 @@ class AjaxModelChoiceWidget(forms.Widget):
             jQuery.getJSON('%(ajax_url)s', {q:e.value}, function(json) {
               json.splice(0, 0, ['[NULL]', '']);
               $(results_div.childNodes).remove();
-              for (var i in json) {
-                var datum = json[i];
+              $.each(json, function(i, datum){
                 var option = document.createElement('div');
                 option.className = 'ajax_choice_option';
                 option.innerHTML = datum[0];
@@ -81,7 +82,7 @@ class AjaxModelChoiceWidget(forms.Widget):
                 });
                 x = results_div;
                 results_div.appendChild(option);
-              }
+              });
               $(results_div).show();
             });
           };
@@ -96,13 +97,12 @@ class AjaxModelChoiceWidget(forms.Widget):
         return result
 
 class AjaxModelChoiceField(forms.ModelChoiceField):
+    """Ajax auto-complete field for ForeignKey fields."""
     widget = AjaxModelChoiceWidget
 
 class HiddenModelChoiceField(forms.ModelChoiceField):
+    """Hidden field for ForeignKey fields."""
     widget = forms.HiddenInput
-
-class TextModelChoiceField(forms.ModelChoiceField):
-    widget = forms.TextInput
 
 class AddSubPathForm(forms.ModelForm):
     aliased_item = super(models.ForeignKey, CustomUrl._meta.get_field_by_name('aliased_item')[0]).formfield(queryset=CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.to._default_manager.complex_filter(CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.field_name)
@@ -519,13 +519,16 @@ class Viewer(object):
             self.context['layout'] = 'default_layout.html'
 
 
-
 def get_viewer_class_for_viewer_name(viewer_name):
     return ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
 
 
 def get_versioned_item(item, version_number):
     if version_number is not None:
+        try:
+            version_number = int(version_number)
+        except:
+            return None
         item.copy_fields_from_version(version_number)
     return item
 
@@ -667,6 +670,7 @@ class ItemViewer(Viewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def type_create_html(self):
         can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
         if not can_create:
@@ -715,7 +719,7 @@ class ItemViewer(Viewer):
         viewer = self
         if not self.cur_agent_can('view action_notices', self.item):
             raise DemePermissionDenied
-        action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(action_agent=self.item)).order_by('created_at') #TODO limit
+        action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(action_agent=self.item)).order_by('action_time') #TODO limit
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
@@ -736,11 +740,11 @@ class ItemViewer(Viewer):
                         if not viewer.cur_agent_can('view %s' % action_notice.from_field_name, action_notice.from_item):
                             continue
                     item = {}
-                    item['created_at'] = action_notice.created_at
+                    item['action_time'] = action_notice.action_time
                     item['action_agent_name'] = get_viewable_name(viewer.context, action_notice.action_agent)
                     item['action_agent_link'] = action_notice.action_agent.get_absolute_url()
                     item['item_name'] = get_viewable_name(viewer.context, action_notice.item)
-                    item['description'] = action_notice.description
+                    item['action_summary'] = action_notice.action_summary
                     if isinstance(action_notice, RelationActionNotice):
                         item['from_item_name'] = get_viewable_name(viewer.context, action_notice.from_item)
                         item['from_field_name'] = action_notice.from_field_name
@@ -754,7 +758,7 @@ class ItemViewer(Viewer):
             def item_link(self, item):
                 return item['link']
             def item_pubdate(self, item):
-                return item['created_at']
+                return item['action_time']
         return django.contrib.syndication.views.feed(self.request, 'item_show', {'item_show': ItemShowFeed})
 
     def item_copy_html(self):
@@ -803,6 +807,7 @@ class ItemViewer(Viewer):
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
@@ -819,27 +824,24 @@ class ItemViewer(Viewer):
         else:
             return self.item_edit_html(form)
 
+    @require_POST
     def item_deactivate_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
             raise DemePermissionDenied
         self.item.deactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
+    @require_POST
     def item_reactivate_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
             raise DemePermissionDenied
         self.item.reactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
+    @require_POST
     def item_destroy_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
             raise DemePermissionDenied
         self.item.destroy(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
@@ -894,9 +896,8 @@ class ItemViewer(Viewer):
                 result.append(permission)
         return result
 
+    @require_POST
     def item_updateprivacy_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can('modify_privacy_settings', self.item):
             raise DemePermissionDenied
         new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
@@ -909,9 +910,8 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'privacy'}))
         return HttpResponseRedirect(redirect)
 
+    @require_POST
     def item_updateitempermissions_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can('do_anything', self.item):
             raise DemePermissionDenied
         new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
@@ -924,9 +924,8 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'itempermissions'}))
         return HttpResponseRedirect(redirect)
 
+    @require_POST
     def type_updateglobalpermissions_html(self):
-        if self.method == 'GET':
-            return self.render_error(HttpResponseBadRequest, 'Invalid Method', "You cannot visit this URL using the GET method")
         if not self.cur_agent_can_global('do_anything'):
             raise DemePermissionDenied
         new_permissions = self._get_permissions_from_post_data(None, True)
@@ -1003,6 +1002,7 @@ class ContactMethodViewer(ItemViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def type_create_html(self):
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
@@ -1042,6 +1042,7 @@ class AuthenticationMethodViewer(ItemViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def type_create_html(self):
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
@@ -1094,16 +1095,18 @@ class AuthenticationMethodViewer(ItemViewer):
                 
                 if openid_response.status == openid.consumer.consumer.SUCCESS:
                     identity_url = openid_response.identity_url
-                    display_identifier = openid_response.getDisplayIdentifier()
+                    identity_url_without_fragment = identity_url.split('#')[0]
+                    # If we want to use display_identifier, we need to have python-openid >=2.1, which isn't in Ubuntu Hardy
+                    #display_identifier = openid_response.getDisplayIdentifier()
                     sreg = openid_response.extensionResponse('sreg', False)
                     try:
-                        openid_authentication_method = OpenidAuthenticationMethod.objects.get(openid_url=identity_url)
+                        openid_authentication_method = OpenidAuthenticationMethod.objects.get(Q(openid_url=identity_url_without_fragment) | Q(openid_url__startswith=identity_url_without_fragment + '#'))
                     except ObjectDoesNotExist:
                         # No OpenidAuthenticationMethod has this openid_url.
-                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID")
+                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID (1)")
                     if not openid_authentication_method.active or not openid_authentication_method.agent.active: 
                         # The Agent or OpenidAuthenticationMethod is inactive.
-                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID")
+                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID (2)")
                     self.request.session['cur_agent_id'] = openid_authentication_method.agent.pk
                     return HttpResponseRedirect(redirect)
                 elif openid_response.status == openid.consumer.consumer.CANCEL:
@@ -1225,6 +1228,13 @@ class GroupViewer(ItemViewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        try:
+            folio = self.item.folios.get()
+            if not self.permission_cache.agent_can(self.cur_agent, 'view group', folio):
+                folio = None
+        except:
+            folio = None
+        self.context['folio'] = folio
         template = loader.get_template('group/show.html')
         return HttpResponse(template.render(self.context))
 
@@ -1374,6 +1384,7 @@ class TextDocumentViewer(ItemViewer):
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
@@ -1471,6 +1482,7 @@ class TextCommentViewer(TextDocumentViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def type_create_html(self):
         try:
             item = Item.objects.get(pk=self.request.POST.get('item'))
@@ -1527,6 +1539,7 @@ class TransclusionViewer(ItemViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def type_create_html(self):
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
@@ -1621,6 +1634,7 @@ class SubscriptionViewer(ItemViewer):
         self.context['redirect'] = self.request.GET.get('redirect')
         return HttpResponse(template.render(self.context))
 
+    @require_POST
     def type_create_html(self):
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)

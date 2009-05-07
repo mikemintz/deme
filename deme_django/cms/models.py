@@ -159,8 +159,8 @@ class Item(models.Model):
     destroyed        = models.BooleanField(_('destroyed'), default=False, editable=False)
     creator          = models.ForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
     created_at       = models.DateTimeField(_('created at'), editable=False)
-    name             = models.CharField(_('item title'), max_length=255, blank=True)
-    description      = models.CharField(_('preface'), max_length=255, blank=True)
+    name             = models.CharField(_('item title'), max_length=255, blank=True, help_text=_('The title used to refer to this item'))
+    description      = models.CharField(_('preface'), max_length=255, blank=True, help_text=_('Description of the purpose of this item'))
 
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type_string, self.pk, self.name)
@@ -282,6 +282,8 @@ class Item(models.Model):
         if self.destroyed:
             self.version_number = int(version_number)
             return
+        if version_number == self.version_number:
+            return
         itemversion = type(self).Version.objects.get(current_item=self, version_number=version_number)
         fields = {}
         for field in itemversion._meta.fields:
@@ -330,7 +332,7 @@ class Item(models.Model):
         # Execute callbacks
         self._after_deactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        DeactivateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, created_at=action_time, description=action_summary).save()
+        DeactivateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
         old_item = self
         new_item = None
         RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=False)
@@ -352,7 +354,7 @@ class Item(models.Model):
         # Execute callbacks
         self._after_reactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        ReactivateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, created_at=action_time, description=action_summary).save()
+        ReactivateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
         old_item = None
         new_item = self
         RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
@@ -397,7 +399,7 @@ class Item(models.Model):
         # Execute callbacks
         self._after_destroy(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        DestroyActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, created_at=action_time, description=action_summary).save()
+        DestroyActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
     destroy.alters_data = True
 
     @transaction.commit_on_success
@@ -428,6 +430,13 @@ class Item(models.Model):
         action_time = action_time or datetime.datetime.now()
         is_new = not self.pk
 
+        # Save the old item version
+        if not is_new:
+            old_version = type(self).Version()
+            old_self = type(self).objects.get(pk=self.pk)
+            old_self.copy_fields_to_itemversion(old_version)
+            old_version.save()
+
         # Update the item
         self.item_type_string = type(self).__name__
         if first_agent:
@@ -441,11 +450,6 @@ class Item(models.Model):
         if first_agent:
             self.creator_id = 1
         self.save()
-
-        # Create the new item version
-        new_version = type(self).Version()
-        self.copy_fields_to_itemversion(new_version)
-        new_version.save()
 
         # Create the permissions
         if initial_permissions:
@@ -461,11 +465,11 @@ class Item(models.Model):
 
         # Create relevant ActionNotices
         if is_new:
-            CreateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, created_at=action_time, description=action_summary).save()
+            CreateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
             if self.active:
                 RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
         else:
-            EditActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, created_at=action_time, description=action_summary).save()
+            EditActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
             if self.active:
                 RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=True)
     save_versioned.alters_data = True
@@ -1275,8 +1279,8 @@ class Comment(Item):
     """
 
     # Setup
-    introduced_immutable_fields = frozenset(['item'])
-    introduced_abilities = frozenset(['view item', 'view item_version_number'])
+    introduced_immutable_fields = frozenset(['item', 'item_version_number'])
+    introduced_abilities = frozenset(['view item', 'view item_version_number', 'view from_contact_method'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('comment')
@@ -1285,6 +1289,7 @@ class Comment(Item):
     # Fields
     item                = models.ForeignKey(Item, related_name='comments', verbose_name=_('item'))
     item_version_number = models.PositiveIntegerField(_('item version number'))
+    from_contact_method = models.ForeignKey(ContactMethod, related_name='comments_from_contactmethod', null=True, blank=True, default=None, editable=False, verbose_name=_('from contact method'))
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(Comment, self)._after_create(action_agent, action_summary, action_time)
@@ -1538,8 +1543,8 @@ class ActionNotice(models.Model):
     item                = models.ForeignKey(Item, related_name='action_notices', verbose_name=_('item'))
     item_version_number = models.PositiveIntegerField(_('item version number'))
     action_agent        = models.ForeignKey(Agent, related_name='action_notices_created', verbose_name=_('action agent'))
-    created_at          = models.DateTimeField(_('created at'))
-    description         = models.CharField(_('description'), max_length=255, blank=True)
+    action_time         = models.DateTimeField(_('action time'))
+    action_summary      = models.CharField(_('action summary'), max_length=255, blank=True)
 
     def notification_reply_item(self):
         """
@@ -1605,12 +1610,18 @@ class ActionNotice(models.Model):
         action_agent_name = get_viewable_name(viewer.context, self.action_agent)
         recipient_name = get_viewable_name(viewer.context, agent)
 
+        generic_from_email_name = 'Deme notifier'
+        from_email_name = None
+        from_email_address = None
+        reply_item_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
+        recipient_email_address = email_contact_method.email
+
         # Generate the subject and body
         viewer.context['item'] = self.item
         viewer.context['item_version_number'] = self.item_version_number
         viewer.context['action_agent'] = self.action_agent
-        viewer.context['created_at'] = self.created_at
-        viewer.context['description'] = self.description
+        viewer.context['action_time'] = self.action_time
+        viewer.context['action_summary'] = self.action_summary
         viewer.context['topmost_item'] = topmost_item
         viewer.context['url_prefix'] = 'http://%s' % settings.DEFAULT_HOSTNAME
         if isinstance(self, RelationActionNotice):
@@ -1619,9 +1630,9 @@ class ActionNotice(models.Model):
                 return
             from_item_name = get_viewable_name(viewer.context, self.from_item)
             if self.relation_added:
-                subject = '[%s] Relation added to %s' % (subscribed_item_name, item_name)
+                subject = '[%s] %s added relation to %s' % (subscribed_item_name, action_agent_name, item_name)
             else:
-                subject = '[%s] Relation removed from %s' % (subscribed_item_name, item_name)
+                subject = '[%s] %s removed relation from %s' % (subscribed_item_name, action_agent_name, item_name)
             template_name = 'relation'
             viewer.context['relation_added'] = self.relation_added
             viewer.context['from_item'] = self.from_item
@@ -1629,32 +1640,43 @@ class ActionNotice(models.Model):
             viewer.context['from_field_name'] = self.from_field_name
             viewer.context['from_field_model'] = self.from_field_model
         elif isinstance(self, DeactivateActionNotice):
-            subject = '[%s] Deactivated %s' % (subscribed_item_name, item_name)
+            subject = '[%s] %s deactivated %s' % (subscribed_item_name, action_agent_name, item_name)
             template_name = 'delete'
             viewer.context['delete_type'] = 'deactivate'
         elif isinstance(self, ReactivateActionNotice):
-            subject = '[%s] Reactivated %s' % (subscribed_item_name, item_name)
+            subject = '[%s] %s reactivated %s' % (subscribed_item_name, action_agent_name, item_name)
             template_name = 'delete'
             viewer.context['delete_type'] = 'reactivate'
         elif isinstance(self, DestroyActionNotice):
-            subject = '[%s] Destroyed %s' % (subscribed_item_name, item_name)
+            subject = '[%s] %s destroyed %s' % (subscribed_item_name, action_agent_name, item_name)
             template_name = 'delete'
             viewer.context['delete_type'] = 'destroy'
         elif isinstance(self, CreateActionNotice):
             if issubclass(item.actual_item_type(), TextComment):
                 comment = item.downcast()
                 comment_name = get_viewable_name(viewer.context, comment)
-                subject = '[%s] New comment on %s' % (subscribed_item_name, topmost_item_name)
+                comment_creator_email_address = None
+                if comment.from_contact_method and issubclass(comment.from_contact_method.actual_item_type(), EmailContactMethod):
+                    if permission_cache.agent_can(agent, 'view from_contact_method', comment):
+                        from_email_contact_method = comment.from_contact_method.downcast()
+                        if permission_cache.agent_can(agent, 'view email', from_email_contact_method):
+                            comment_creator_email_address = from_email_contact_method.email
+                if comment_creator_email_address:
+                    from_email_name = action_agent_name
+                    from_email_address = comment_creator_email_address
+                    subject = '[%s] New comment on %s' % (subscribed_item_name, topmost_item_name)
+                else:
+                    subject = '[%s] %s commented on %s' % (subscribed_item_name, action_agent_name, topmost_item_name)
                 if issubclass(comment.item.actual_item_type(), Comment):
                     subject = 'Re: ' + subject
                 template_name = 'comment'
                 viewer.context['comment'] = comment
             else:
-                subject = '[%s] Created %s' % (subscribed_item_name, item_name)
+                subject = '[%s] %s created %s' % (subscribed_item_name, action_agent_name, item_name)
                 template_name = 'save'
                 viewer.context['save_type'] = 'create'
         elif isinstance(self, EditActionNotice):
-            subject = '[%s] Edited %s' % (subscribed_item_name, item_name)
+            subject = '[%s] %s edited %s' % (subscribed_item_name, action_agent_name, item_name)
             template_name = 'save'
             viewer.context['save_type'] = 'edit'
         else:
@@ -1665,16 +1687,17 @@ class ActionNotice(models.Model):
         body_html = template.render(viewer.context)
         body_text = html2text.html2text_file(body_html, None)
         body_text = wrap(body_text, 78)
-        from_email_address = '%s@%s' % ('noreply', settings.NOTIFICATION_EMAIL_HOSTNAME)
-        reply_to_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
-        from_email = formataddr((action_agent_name, from_email_address))
-        reply_to_email = formataddr((reply_item_name, reply_to_email_address))
-        to_email = formataddr((recipient_name, email_contact_method.email))
+        reply_item_email = formataddr((reply_item_name, reply_item_email_address))
+        recipient_email = formataddr((recipient_name, recipient_email_address))
+        if from_email_address is None:
+            from_email = formataddr((generic_from_email_name, reply_item_email_address))
+        else:
+            from_email = formataddr((from_email_name, from_email_address))
         headers = {}
-        headers['Reply-To'] = reply_to_email
+        headers['To'] = reply_item_email
         def messageid(x):
             prefix = 'notice' if isinstance(x, ActionNotice) else 'item'
-            date = x.created_at.strftime("%Y%m%d%H%M%S")
+            date = (x.action_time if isinstance(x, ActionNotice) else x.created_at).strftime("%Y%m%d%H%M%S")
             return '<%s-%s-%s@%s>' % (prefix, x.pk, date, settings.NOTIFICATION_EMAIL_HOSTNAME)
         if reply_item == item:
             headers['Message-ID'] = messageid(self)
@@ -1682,7 +1705,7 @@ class ActionNotice(models.Model):
             headers['Message-ID'] = messageid(reply_item)
         headers['In-Reply-To'] = messageid(item)
         headers['References'] = '%s %s' % (messageid(topmost_item), messageid(item))
-        email_message = EmailMultiAlternatives(subject, body_text, from_email, [to_email], headers=headers)
+        email_message = EmailMultiAlternatives(subject, body_text, from_email, bcc=[recipient_email], headers=headers)
         email_message.attach_alternative(body_html, 'text/html')
         return email_message
 
@@ -1789,8 +1812,8 @@ class RelationActionNotice(ActionNotice):
                             action_notice.item = value
                             action_notice.item_version_number = value.version_number
                             action_notice.action_agent = action_agent
-                            action_notice.created_at = action_time
-                            action_notice.description = action_summary
+                            action_notice.action_time = action_time
+                            action_notice.action_summary = action_summary
                             action_notice.from_item = item
                             action_notice.from_item_version_number = item.version_number
                             action_notice.from_field_name = field.name

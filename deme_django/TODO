@@ -5,8 +5,6 @@
 
 Symsys module
 -------------
-* permissions for symsysusers will just be interpreted in the viewer, they don't get "modify_permissions"
-* joining and leaving groups is somehow covered by permissions
 * come up with specification for new symsys layout
 * Figure out how to port mailing lists over
   - announce list == manually created subscriptions with special permissions, such that you cannot unsubscribe, and announcements are just comments on the group
@@ -20,7 +18,6 @@ Code correctness/consistency/bugs
 * Fix the multiple inheritance bug
   - http://code.djangoproject.com/ticket/10808
 * Need initial permissions set on incoming email comments, group generated folios/groupagents, maybe other things too. Just search for save_versioned.
-* Make sure openid still works
 * Rename /static/ to /file/
 * Rename PasswordAuthenticationMethod to DemeAccount. Rename WebauthAuthenticationMethod to WebauthAccount. Rename OpenidAuthenticationMethod to OpenidAccount.
 * The viewer should probably define a list of actions for each item type to be displayed in a menu
@@ -46,7 +43,6 @@ Interface
 ---------
 * Make notifications have different messages for each RelationActionNotice (at least for many-to-many things like Membership and Transclusion)
 * Make the action at top-right of item more of a javascript menu, like in gmail
-* Get a variable <title> tag
 * There should be a full interface for specifying CommentLocations
 * Some sort of arrows in the side-by-side comment interface, or just click->highlight/scroll (just for TextDocuments right now)
 * Include hCard in user profiles
@@ -55,10 +51,8 @@ Interface
 
 Documentation
 -------------
-* Update documentation to reflect how we deal with formats now
 * Document more functions with docstrings more
 * Make some sort of API doc
-* Make the README better (it points to docs/ directory, but users don't know how to compile docs)
 
 Small Details
 -------------
@@ -92,7 +86,6 @@ Distant Future (sorted by approximate order of planned implementation)
 * Internationalize using ugettext_lazy
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * Customizable email template per site that gets sent out for each notification
-* If someone has a public EmailContactMethod, then the from_email of notifications they sent out should be one of those email addresses.
 * Facebook API
 * Installation-to-installation API
   - Allow, as an option, an alias to refer to the hostname of the installation, such as i-numbers (to allow a consistent identifier when people change hostnames for their installation).

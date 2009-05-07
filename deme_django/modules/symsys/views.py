@@ -1,7 +1,6 @@
 from django.template import Context, loader
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
+from django.http import HttpResponse
 from cms.views import ItemViewer
-from cms import permissions
 from cms.models import *
 from modules.symsys.models import *
 from django.db.models import Q

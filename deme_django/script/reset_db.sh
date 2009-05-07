@@ -1,4 +1,9 @@
 #!/bin/sh
 
-rm -rf static/filedocument/*
-psql -U postgres -c "drop database deme_django;" ; psql -U postgres -c "create database deme_django WITH OWNER = postgres ENCODING = 'UTF8' TABLESPACE = pg_default;" && ./manage.py syncdb && script/create_initial_data.py test
+cur_dir=`dirname $0`
+base_dir="$cur_dir/.."
+rm -rf "$base_dir/static/filedocument/*"
+psql -U postgres -c "drop database deme_django;"
+psql -U postgres -c "create database deme_django WITH OWNER = postgres ENCODING = 'UTF8' TABLESPACE = pg_default;"
+$base_dir/manage.py syncdb
+$base_dir/script/create_initial_data.py test

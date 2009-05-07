@@ -175,6 +175,8 @@ Annotations (Transclusions, Comments, and Excerpts)
 
   If somebody creates Item 1, someone creates Comment 2 about Item 2, and someone responds to Comment 2 with Comment 3, then one would say that Comment 3 is a *direct* comment on Comment 2, and Comment 3 is an *indirect* comment on Item 1. The Comment item type only stores information about direct comments, but behind the scenes, the RecursiveComment table (which does not inherit from Item) keeps track of all of the indirect commenting so that viewers can efficiently render entire threads.
 
+  A Comment also specifies a ``from_contact_method`` field, which points to a ContactMethod that was used to generate this comment. Often this will be null, but in cases where people send emails to generate comments, this will point to the EmailContactMethod, and is used to set an appropriate reply address.
+
 * **TextComment:** A TextComment is a Comment and a TextDocument combined. It is currently the only form of user-generated comments. It defines no new fields.
 
 * **Excerpt:** An Excerpt is an Item that refers to a portion of another Item (or an external resource, such as a webpage). Excerpt is meant to be abstract, so developers should always create subclasses rather than creating raw Excerpts.
@@ -449,6 +451,7 @@ Below is a list of item types and the item abilities they introduce:
 
   * ``view item``
   * ``view item_version_number``
+  * ``view from_contact_method``
 
 * TextDocumentExcerpt
 
@@ -524,7 +527,7 @@ Item actions take in a noun in the URL, which is the unique id of the item it ac
 
 Formats
 ^^^^^^^
-An additional parameter is passed in defining the response format, like HTML or XML. The default is HTML. Most viewers ignore this now, but it's easy to act upon it. We might add something where viewers have to register which formats they respond to, so that we can display error messages when you type the wrong format rather than ignoring it. Note that the format only specifies the response format. The request format (what the browser sends to the server) is always the same: all parameters encoded in the URL or the HTTP post data. We will only be using HTTP as the transport for viewers (although we can define things that accept emails and SSH and other protocols, they just won't be called viewers).
+An additional parameter is passed in defining the response format, like HTML or XML. The default is HTML. Each action specifies a different behavior for each format it accepts. For example, in the "show" action, the "html" format will display a page showing everything about the item, while the "rss" format will render an RSS document with the latest action notices. Note that the format only specifies the response format. The request format (what the browser sends to the server) is always the same: all parameters encoded in the URL or the HTTP post data. We will only be using HTTP as the transport for viewers (although we can define things that accept emails and SSH and other protocols, they just won't be called viewers).
 
 Authentication
 ^^^^^^^^^^^^^^

@@ -10,8 +10,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   architecture
    installation
+   usage
+   architecture
    code
 
 Indices and tables

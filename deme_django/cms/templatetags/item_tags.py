@@ -504,7 +504,7 @@ class ItemDetails(template.Node):
 
         result.append('<div style="font-size: 8pt; color: #aaa; margin-bottom: 10px;">')
         if agentcan_helper(context, 'view description', item) and item.description.strip():
-            result.append('Description: %s' % escape(item.description))
+            result.append('Preface: %s' % escape(item.description))
         result.append('</div>')
 
         return '\n'.join(result)
@@ -700,8 +700,10 @@ class CalculateHistory(template.Node):
         for version in versions:
             version_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk}) + '?version=%s' % version.version_number
             result.append("""<div><a href="%s">Version %s</a></div>""" % (version_url, version.version_number))
+        current_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk})
+        result.append("""<div><a href="%s">Current version</a></div>""" % (current_url,))
         context['history_box'] = mark_safe('\n'.join(result))
-        context['n_versions'] = len(versions)
+        context['n_versions'] = len(versions) + 1
         return ''
 
 @register.tag
@@ -727,7 +729,7 @@ class CalculateActionNotices(template.Node):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
             result.append(u'<table class="list">')
             result.append(u'<tr><th>Date/Time</th><th>Agent</th><th>Action</th><th>Item</th><th>Description</th></tr>')
-            action_notices = ActionNotice.objects.filter(Q(item=item) | Q(action_agent=item)).order_by('created_at')
+            action_notices = ActionNotice.objects.filter(Q(item=item) | Q(action_agent=item)).order_by('action_time')
             action_notice_pk_to_object_map = {}
             for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
                 select_related_fields = ['action_agent__name', 'item__name']
@@ -744,12 +746,12 @@ class CalculateActionNotices(template.Node):
                 if isinstance(action_notice, RelationActionNotice):
                     if not agentcan_helper(context, 'view %s' % action_notice.from_field_name, action_notice.from_item):
                         continue
-                created_at_text = '<span title="%s">%s ago</span>' % (action_notice.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.created_at))
+                time_text = '<span title="%s">%s ago</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
                 action_agent_name = get_viewable_name(context, action_notice.action_agent)
                 agent_text = u'<a href="%s">%s</a>' % (escape(action_notice.action_agent.get_absolute_url()), escape(action_agent_name))
                 item_name = get_viewable_name(context, action_notice.item)
                 item_text = u'<a href="%s">%s</a>' % (escape(action_notice.item.get_absolute_url() + '?version=%d' % action_notice.item_version_number), escape(item_name))
-                description_text = action_notice.description
+                action_summary_text = action_notice.action_summary
                 if isinstance(action_notice, RelationActionNotice):
                     from_item_name = get_viewable_name(context, action_notice.from_item)
                     from_item_text = u'<a href="%s">%s</a>' % (escape(action_notice.from_item.get_absolute_url() + '?version=%d' % action_notice.from_item_version_number), escape(from_item_name))
@@ -767,7 +769,7 @@ class CalculateActionNotices(template.Node):
                     action_text = 'Created'
                 if isinstance(action_notice, EditActionNotice):
                     action_text = 'Edited'
-                result.append(u"<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (created_at_text, agent_text, action_text, item_text, description_text))
+                result.append(u"<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (time_text, agent_text, action_text, item_text, action_summary_text))
             result.append(u"</table>")
         else:
             action_notices = []
@@ -808,7 +810,11 @@ class SubclassFieldsBox(template.Node):
         viewer_item_type_field_names = set([x.name for x in viewer_item_type._meta.fields])
         item = context['item']
         fields = []
+        field_names_used = set()
         for field in item._meta.fields:
+            if field.name in field_names_used:
+                continue
+            field_names_used.add(field.name)
             if field.name in viewer_item_type_field_names:
                 continue
             if isinstance(field, (models.OneToOneField, models.ManyToManyField)):

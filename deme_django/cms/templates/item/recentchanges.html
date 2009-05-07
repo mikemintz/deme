@@ -4,8 +4,8 @@
 
 {% for details in action_notices %}
 <div style="margin-bottom: 5px; border: 1px #aaa solid; background: #ddd; -moz-border-radius: 8px; padding: 5px;">
-    <span title="{{ details.action_notice.created_at|date:"Y-m-d H:m:s" }}">
-        {{ details.action_notice.created_at|timesince }}
+    <span title="{{ action_notice.action_time|date:"Y-m-d H:m:s" }}">
+        {{ action_notice.action_time|timesince }}
         ago
     </span>
     Type:

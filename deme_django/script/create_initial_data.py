@@ -24,7 +24,6 @@ if Item.objects.count() != 0:
 
 admin = Agent(name="Admin")
 admin.save_versioned(action_agent=None, first_agent=True)
-AgentItemPermission(agent=admin, item=admin, ability='do_anything', is_allowed=True).save()
 
 print 'Creating defaults for the permission framework'
 for item_type in all_item_types():
@@ -122,6 +121,11 @@ joe_authentication_method.save_versioned(action_agent=joe, initial_permissions=[
 WebauthAuthenticationMethod(username="jmarrama", agent=joe).save_versioned(action_agent=joe, initial_permissions=[AgentItemPermission(agent=joe, ability='do_anything', is_allowed=True)])
 joe_email_contact_method = EmailContactMethod(name="Joe's Email Contact Method", email="joe@example.com", agent=joe)
 joe_email_contact_method.save_versioned(action_agent=joe, initial_permissions=[AgentItemPermission(agent=joe, ability='do_anything', is_allowed=True)])
+
+github_agent = Agent(name="Github")
+github_agent.save_versioned(action_agent=admin)
+github_email_contact_method = EmailContactMethod(email="noreply@github.com", agent=github_agent)
+github_email_contact_method.save_versioned(action_agent=admin)
 
 hello_page = DjangoTemplateDocument(name="Hello Page", body="""
 {% block content %}
