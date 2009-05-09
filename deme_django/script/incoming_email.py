@@ -27,14 +27,14 @@ def main():
 
     permission_cache = PermissionCache()
     msg = email.message_from_file(sys.stdin)
-    subject = msg['Subject']
+    subject = msg['Subject'].replace('\n', '').replace('\t', '')
     if msg.is_multipart():
         body = msg.get_payload(0).get_payload()
     else:
         body = msg.get_payload()
     from_email = email.utils.parseaddr(msg['From'])[1]
-    to_email = email.utils.parseaddr(msg['To'])[1]
     item_id = mailbox
+    to_email = "%s@%s" % (item_id, settings.NOTIFICATION_EMAIL_HOSTNAME)
     try:
         email_contact_method = EmailContactMethod.objects.get(email=from_email)
     except ObjectDoesNotExist:
