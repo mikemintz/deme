@@ -106,7 +106,6 @@ class ViewerMetaClass(type):
         result = super(ViewerMetaClass, cls).__new__(cls, name, bases, attrs)
         if name != 'Viewer':
             ViewerMetaClass.viewer_name_dict[attrs['viewer_name']] = result
-        print 'Defining %s' % name
         return result
 
 
@@ -277,7 +276,7 @@ class Viewer(object):
     def dispatch(self):
         if hasattr(self.request, 'virtual_requests_too_deep'):
             if self.request.virtual_requests_too_deep(MAXIMUM_VIRTUAL_REQUEST_DEPTH):
-                return self.render_virtual_requests_too_deep()
+                return self.render_error(HttpResponseNotFound, "Exceeded maximum recursion depth", 'The depth of embedded pages is too high.')
         if self.noun is None:
             action_method = getattr(self, 'type_%s_%s' % (self.action, self.format), None)
         else:
@@ -297,11 +296,6 @@ class Viewer(object):
                 return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to perform this action")
         else:
             return None
-
-    def render_virtual_requests_too_deep(self):
-        title = "Exceeded maximum recursion depth"
-        body = 'The depth of embedded pages is too high.'
-        return self.render_error(HttpResponseNotFound, title, body)
 
     def render_item_not_found(self):
         if self.item:
