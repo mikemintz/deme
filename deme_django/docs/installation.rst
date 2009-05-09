@@ -80,13 +80,13 @@ You need to route incoming mail to ``script/incoming_email.py``. I have Deme ins
 
   # Deme incoming mail
   deme      unix  -       n       n       -       -       pipe
-    flags= user=www-data argv=/var/www/deme/deme_django/script/incoming_email.py
+    flags= user=www-data argv=/var/www/deme/deme_django/script/incoming_email.py ${mailbox}
 
 I then added the following to the end of ``/etc/postfix/main.cf``::
 
   # Deme incoming mail    
   transport_maps = regexp:/etc/postfix/deme_transport
-  virtual_mailbox_domains = deme.stanford.edu                                                             
+  virtual_mailbox_domains = deme.stanford.edu
 
 I then created a file called ``/etc/postfix/deme_transport`` containing the following::
 
