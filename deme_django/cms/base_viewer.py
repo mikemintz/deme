@@ -203,7 +203,9 @@ class Viewer(object):
             try:
                 self.item = Item.objects.get(pk=self.noun)
                 self.item = self.item.downcast()
-                self.item = get_versioned_item(self.item, self.request.GET.get('version'))
+                version_number = self.request.GET.get('version')
+                if version_number is not None:
+                    self.item.copy_fields_from_version(version_number)
                 self.context['specific_version'] = ('version' in self.request.GET)
             except ObjectDoesNotExist:
                 self.item = None
@@ -340,7 +342,7 @@ class Viewer(object):
             self.context['layout'] = 'default_layout.html'
 
 
-def get_viewer_class_for_viewer_name(viewer_name):
+def get_viewer_class_by_name(viewer_name):
     result = ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
     if result is not None:
         return result
@@ -360,15 +362,4 @@ def get_viewer_class_for_viewer_name(viewer_name):
         return result
     else:
         return None
-
-
-#TODO this should go into models
-def get_versioned_item(item, version_number):
-    if version_number is not None:
-        try:
-            version_number = int(version_number)
-        except:
-            return None
-        item.copy_fields_from_version(version_number)
-    return item
 

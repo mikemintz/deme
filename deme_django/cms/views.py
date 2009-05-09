@@ -17,7 +17,7 @@ from django.core.exceptions import ObjectDoesNotExist
 import django.contrib.syndication.feeds
 import django.contrib.syndication.views
 from django.views.decorators.http import require_POST
-from base_viewer import DemePermissionDenied, ViewerMetaClass, Viewer, get_versioned_item
+from base_viewer import DemePermissionDenied, Viewer
 import re
 import os
 import subprocess
@@ -1229,7 +1229,8 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
             except ValueError:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not parse the excerpt data in the form")
             try:
-                text_document = get_versioned_item(TextDocument.objects.get(pk=text_document_id), text_document_version_number)
+                text_document = TextDocument.objects.get(pk=text_document_id)
+                text_document.copy_fields_from_version(text_document_version_number)
             except:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not find the specified TextDocument")
             if not self.cur_agent_can('view body', text_document):

@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.utils import datastructures, simplejson
 from cms.views import ItemViewer
-from cms.base_viewer import get_viewer_class_for_viewer_name, get_current_site
+from cms.base_viewer import get_viewer_class_by_name, get_current_site
 from django.conf import settings
 
 # Import viewers from modules so they get registered with ViewerMetaClass
@@ -27,7 +27,7 @@ def item_view(request, *args, **kwargs):
     action = kwargs.get('action')
     noun = kwargs.get('noun')
     format = kwargs.get('format')
-    viewer_class = get_viewer_class_for_viewer_name(viewer_name)
+    viewer_class = get_viewer_class_by_name(viewer_name)
     if viewer_class:
         viewer = viewer_class()
         viewer.init_for_http(request, action, noun, format)

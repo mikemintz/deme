@@ -868,9 +868,9 @@ class EmbeddedItem(template.Node):
         return "<EmbeddedItemNode>"
 
     def render(self, context):
-        from cms.views import get_viewer_class_for_viewer_name, get_versioned_item
+        from cms.views import get_viewer_class_by_name
         viewer_name = self.viewer_name.resolve(context)
-        viewer_class = get_viewer_class_for_viewer_name(viewer_name)
+        viewer_class = get_viewer_class_by_name(viewer_name)
         if viewer_class is None:
             return ''
         item = self.item.resolve(context)
@@ -882,7 +882,6 @@ class EmbeddedItem(template.Node):
         if not isinstance(item, Item):
             return ''
         item = item.downcast()
-        item = get_versioned_item(item, None)
         viewer = viewer_class()
         viewer.init_for_div(context['_viewer'], 'show', item)
         return """<div style="padding: 10px; border: thick solid #aaa;">%s</div>""" % viewer.dispatch().content

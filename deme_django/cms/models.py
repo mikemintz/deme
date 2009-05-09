@@ -279,6 +279,7 @@ class Item(models.Model):
         Set the fields of self to what they were at the given version number.
         This method does not make any database writes.
         """
+        version_number = int(version_number)
         if self.destroyed:
             self.version_number = int(version_number)
             return
