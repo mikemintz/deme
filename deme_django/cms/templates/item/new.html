@@ -33,11 +33,12 @@ tinyMCE.init({
     <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=viewer_name,action="create" %}" class="item_form">
     {% endif %}
         <table cellspacing="0">
-            <tr>
+           {{ form.as_table }}
+             <tr>
                 <th><label for="id_action_summary">Action summary:</label></th>
                 <td><input id="id_action_summary" type="text" name="action_summary" value="" maxlength="255" /><br />Reason for creating this item</td>
             </tr>
-            {{ form.as_table }}
+
         </table>
         <div>
             <button type="button" onclick="$('#permission_editor').toggle();"><img src="{{ "permissions"|icon_url:16 }}" /> <span>Permissions</span></button>
