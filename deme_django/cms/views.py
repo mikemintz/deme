@@ -309,9 +309,7 @@ class ItemViewer(Viewer):
 
     def type_new_html(self, form=None):
         self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
-        can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
-        if not can_create:
-            raise DemePermissionDenied
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         if form is None:
             form_initial = dict(self.request.GET.items())
             form_class = get_form_class_for_item_type('create', self.accepted_item_type)
@@ -324,9 +322,7 @@ class ItemViewer(Viewer):
 
     @require_POST
     def type_create_html(self):
-        can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
-        if not can_create:
-            raise DemePermissionDenied
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
@@ -369,8 +365,7 @@ class ItemViewer(Viewer):
     def item_show_rss(self):
         from cms.templatetags.item_tags import get_viewable_name
         viewer = self
-        if not self.cur_agent_can('view action_notices', self.item):
-            raise DemePermissionDenied
+        self.require_ability('view action_notices', self.item)
         action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(action_agent=self.item)).order_by('action_time') #TODO limit
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
@@ -415,9 +410,7 @@ class ItemViewer(Viewer):
 
     def item_copy_html(self):
         self.context['action_title'] = 'Copy'
-        can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
-        if not can_create:
-            raise DemePermissionDenied
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         fields_to_copy = [field_name for field_name in form_class.base_fields if self.cur_agent_can('view %s' % field_name, self.item)]
         form_initial = {}
@@ -478,24 +471,27 @@ class ItemViewer(Viewer):
 
     @require_POST
     def item_deactivate_html(self):
-        if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
+        if not self.item.can_be_deleted():
             raise DemePermissionDenied
+        self.require_ability('delete', self.item)
         self.item.deactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
     @require_POST
     def item_reactivate_html(self):
-        if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
+        if not self.item.can_be_deleted():
             raise DemePermissionDenied
+        self.require_ability('delete', self.item)
         self.item.reactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
     @require_POST
     def item_destroy_html(self):
-        if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
+        if not self.item.can_be_deleted():
             raise DemePermissionDenied
+        self.require_ability('delete', self.item)
         self.item.destroy(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
@@ -550,8 +546,7 @@ class ItemViewer(Viewer):
 
     @require_POST
     def item_updateprivacy_html(self):
-        if not self.cur_agent_can('modify_privacy_settings', self.item):
-            raise DemePermissionDenied
+        self.require_ability('modify_privacy_settings', self.item)
         new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
         AgentItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
         CollectionItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
@@ -564,8 +559,7 @@ class ItemViewer(Viewer):
 
     @require_POST
     def item_updateitempermissions_html(self):
-        if not self.cur_agent_can('do_anything', self.item):
-            raise DemePermissionDenied
+        self.require_ability('do_anything', self.item)
         new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
         AgentItemPermission.objects.filter(item=self.item).delete()
         CollectionItemPermission.objects.filter(item=self.item).delete()
@@ -578,8 +572,7 @@ class ItemViewer(Viewer):
 
     @require_POST
     def type_updateglobalpermissions_html(self):
-        if not self.cur_agent_can_global('do_anything'):
-            raise DemePermissionDenied
+        self.require_ability('do_anything', self.item)
         new_permissions = self._get_permissions_from_post_data(None, True)
         AgentGlobalPermission.objects.filter().delete()
         CollectionGlobalPermission.objects.filter().delete()
@@ -591,8 +584,7 @@ class ItemViewer(Viewer):
 
     def item_privacy_html(self):
         self.context['action_title'] = 'Privacy settings'
-        if not self.cur_agent_can('modify_privacy_settings', self.item):
-            raise DemePermissionDenied
+        self.require_ability('modify_privacy_settings', self.item)
         possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
         default_permissions = []
         for ability in possible_abilities:
@@ -605,8 +597,7 @@ class ItemViewer(Viewer):
 
     def item_itempermissions_html(self):
         self.context['action_title'] = 'Permissions'
-        if not self.cur_agent_can('do_anything', self.item):
-            raise DemePermissionDenied
+        self.require_ability('do_anything', self.item)
         possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
         default_permissions = []
         for ability in possible_abilities:
@@ -618,15 +609,13 @@ class ItemViewer(Viewer):
 
     def type_globalpermissions_html(self):
         self.context['action_title'] = 'Global permissions'
-        if not self.cur_agent_can_global('do_anything'):
-            raise DemePermissionDenied
+        self.require_global_ability('do_anything')
         template = loader.get_template('item/globalpermissions.html')
         return HttpResponse(template.render(self.context))
 
     def type_admin_html(self):
         self.context['action_title'] = 'Admin'
-        if not self.cur_agent_can_global('do_anything'):
-            raise DemePermissionDenied
+        self.require_global_ability('do_anything')
         template = loader.get_template('item/admin.html')
         return HttpResponse(template.render(self.context))
 
@@ -641,9 +630,7 @@ class ContactMethodViewer(ItemViewer):
             agent = Item.objects.get(pk=self.request.REQUEST.get('agent'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding a contact method to")
-        can_add_contact_method = self.cur_agent_can('add_contact_method', agent)
-        if not can_add_contact_method:
-            raise DemePermissionDenied
+        self.require_ability('add_contact_method', agent)
         if form is None:
             form_initial = dict(self.request.GET.items())
             form_class = get_form_class_for_item_type('create', self.accepted_item_type)
@@ -660,9 +647,7 @@ class ContactMethodViewer(ItemViewer):
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            can_add_contact_method = self.cur_agent_can('add_contact_method', item.agent)
-            if not can_add_contact_method:
-                raise DemePermissionDenied
+            self.require_ability('add_contact_method', item.agent)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
             item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
@@ -681,9 +666,7 @@ class AuthenticationMethodViewer(ItemViewer):
             agent = Item.objects.get(pk=self.request.REQUEST.get('agent'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding an authentication method to")
-        can_add_authentication_method = self.cur_agent_can('add_authentication_method', agent)
-        if not can_add_authentication_method:
-            raise DemePermissionDenied
+        self.require_ability('add_authentication_method', agent)
         if form is None:
             form_initial = dict(self.request.GET.items())
             form_class = get_form_class_for_item_type('create', self.accepted_item_type)
@@ -700,9 +683,7 @@ class AuthenticationMethodViewer(ItemViewer):
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            can_add_authentication_method = self.cur_agent_can('add_authentication_method', item.agent)
-            if not can_add_authentication_method:
-                raise DemePermissionDenied
+            self.require_ability('add_authentication_method', item.agent)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
             item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
@@ -909,8 +890,7 @@ class ViewerRequestViewer(ItemViewer):
         form = AddSubPathForm(self.request.POST, self.request.FILES)
         if form.data['parent_url'] != str(self.item.pk):
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the parent url you are extending")
-        if not self.cur_agent_can('add_sub_path', self.item):
-            raise DemePermissionDenied
+        self.require_ability('add_sub_path', self.item)
         try:
             custom_url = CustomUrl.objects.get(parent_url=self.item, path=form.data['path'])
         except ObjectDoesNotExist:
@@ -1121,9 +1101,7 @@ class TextCommentViewer(TextDocumentViewer):
             item = Item.objects.get(pk=self.request.REQUEST.get('item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
-        can_comment_on = self.cur_agent_can('comment_on', item)
-        if not can_comment_on:
-            raise DemePermissionDenied
+        self.require_ability('comment_on', item)
         if form is None:
             form_initial = dict(self.request.GET.items())
             form_class = NewTextCommentForm
@@ -1140,9 +1118,7 @@ class TextCommentViewer(TextDocumentViewer):
             item = Item.objects.get(pk=self.request.POST.get('item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
-        can_comment_on = self.cur_agent_can('comment_on', item)
-        if not can_comment_on:
-            raise DemePermissionDenied
+        self.require_ability('comment_on', item)
         form_class = NewTextCommentForm
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
@@ -1178,9 +1154,7 @@ class TransclusionViewer(ItemViewer):
             from_item = Item.objects.get(pk=self.request.REQUEST.get('from_item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are adding a transclusion to")
-        can_add_transclusion = self.cur_agent_can('add_transclusion', from_item)
-        if not can_add_transclusion:
-            raise DemePermissionDenied
+        self.require_ability('add_transclusion', from_item)
         if form is None:
             form_initial = dict(self.request.GET.items())
             form_class = get_form_class_for_item_type('create', self.accepted_item_type)
@@ -1198,9 +1172,7 @@ class TransclusionViewer(ItemViewer):
         if form.is_valid():
             #TODO use transactions to make the Transclusion save at the same time as the Comment
             item = form.save(commit=False)
-            can_add_transclusion = self.cur_agent_can('add_transclusion', item.from_item)
-            if not can_add_transclusion:
-                raise DemePermissionDenied
+            self.require_ability('add_transclusion', item.from_item)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
             item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
@@ -1216,10 +1188,8 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
     viewer_name = 'textdocumentexcerpt'
 
     def type_createmultiexcerpt_html(self):
-        if not self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__):
-            raise DemePermissionDenied
-        if not self.cur_agent_can_global('create Collection'):
-            raise DemePermissionDenied
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
+        self.require_global_ability('create Collection')
         excerpts = []
         for excerpt_form_datum in self.request.POST.getlist('excerpt'):
             try:
@@ -1233,8 +1203,7 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
                 text_document.copy_fields_from_version(text_document_version_number)
             except:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not find the specified TextDocument")
-            if not self.cur_agent_can('view body', text_document):
-                raise DemePermissionDenied
+            self.require_ability('view body', text_document)
             body = text_document.body[start_index:start_index+length]
             excerpt = TextDocumentExcerpt(body=body, text_document=text_document, text_document_version_number=text_document_version_number, start_index=start_index, length=length)
             excerpts.append(excerpt)
@@ -1255,15 +1224,13 @@ class DemeSettingViewer(ItemViewer):
 
     def type_modify_html(self):
         self.context['action_title'] = 'Modify settings'
-        if not self.cur_agent_can_global('do_anything'):
-            raise DemePermissionDenied
+        self.require_global_ability('do_anything')
         self.context['deme_settings'] = DemeSetting.objects.filter(active=True).order_by('key')
         template = loader.get_template('demesetting/modify.html')
         return HttpResponse(template.render(self.context))
 
     def type_addsetting_html(self):
-        if not self.cur_agent_can_global('do_anything'):
-            raise DemePermissionDenied
+        self.require_global_ability('do_anything')
         key = self.request.POST.get('key')
         value = self.request.POST.get('value')
         DemeSetting.set(key, value, self.cur_agent)
@@ -1293,9 +1260,7 @@ class SubscriptionViewer(ItemViewer):
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            can_add_subscription = self.cur_agent_can('add_subscription', item.contact_method)
-            if not can_add_subscription:
-                raise DemePermissionDenied
+            self.require_ability('add_subscription', item.contact_method)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
             item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))

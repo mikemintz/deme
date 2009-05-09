@@ -13,6 +13,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from permissions import PermissionCache
 import datetime
 
+#TODO obey self.format when rendering an error if possible
+
 class DemePermissionDenied(Exception):
     "The agent does not have permission to perform the action"
     pass
@@ -171,6 +173,24 @@ class Viewer(object):
         with respect to the given item.
         """
         return self.permission_cache.agent_can(self.cur_agent, ability, item)
+
+    def require_global_ability(self, ability):
+        """
+        Raise a DemePermissionDenied exception if the current agent does not
+        have the specified global ability.
+        """
+        #TODO put the details in the exception so we can display them
+        if not self.cur_agent_can_global(ability):
+            raise DemePermissionDenied
+
+    def require_ability(self, ability, item):
+        """
+        Raise a DemePermissionDenied exception if the current agent does not
+        have the specified ability with respect to the specified item.
+        """
+        #TODO put the details in the exception so we can display them
+        if not self.cur_agent_can(ability, item):
+            raise DemePermissionDenied
 
     def render_error(self, request_class, title, body):
         """
