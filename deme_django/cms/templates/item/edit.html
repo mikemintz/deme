@@ -29,11 +29,12 @@ tinyMCE.init({
 <div>
     <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,noun=item.pk,action="update" %}?version={{ item.version_number }}" class="item_form">
         <table cellspacing="0">
+            {{ form.as_table }}
             <tr>
                 <th><label for="id_action_summary">Action summary:</label></th>
-                <td><input id="id_action_summary" type="text" name="action_summary" value="" maxlength="255" /><br />Reason for editing this item</td>
+                <td><input id="id_action_summary" type="text" name="action_summary" value="" maxlength="255" /><br />Reason for creating this item</td>
             </tr>
-            {{ form.as_table }}
+ 
         </table>
     <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Save {{ accepted_item_type_name }}</span></button>
     </form>
