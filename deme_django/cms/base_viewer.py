@@ -248,7 +248,6 @@ class Viewer(object):
         self.context['full_path'] = self.request.get_full_path()
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
-        self.context['_permission_cache'] = self.permission_cache
         self.context['_viewer'] = self
         self._set_default_layout()
 
@@ -275,7 +274,6 @@ class Viewer(object):
         self.context['full_path'] = self.request.get_full_path()
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
-        self.context['_permission_cache'] = self.permission_cache
         self.context['_viewer'] = self
         self.context['layout'] = 'blank.html'
 
@@ -300,7 +298,6 @@ class Viewer(object):
         self.cur_site = get_default_site()
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
-        self.context['_permission_cache'] = self.permission_cache
         self.context['_viewer'] = self
         self.context['layout'] = 'blank.html'
 
