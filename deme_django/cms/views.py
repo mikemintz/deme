@@ -311,7 +311,8 @@ class Viewer(object):
       scheme.
     
     There are two types of views subclasses can define: item-specific views,
-    and type-wide views. Item-specific views expect an item in the URL (the noun), while type-wide views do not expect a particular item.
+    and type-wide views. Item-specific views expect an item in the URL (the noun),
+    while type-wide views do not expect a particular item.
     1. To define an item-speicfic view, define a method with the name
       `item_method_format`, where `method` is the name of the view (which shows
       up in the URL as the action), and format is the output format (which shows
@@ -363,21 +364,19 @@ class Viewer(object):
         """ % (title, body))
         return request_class(template.render(self.context))
 
-    def init_from_http(self, request, action, noun, format):
+    def init_for_http(self, request, action, noun, format):
         self.context = Context()
         self.permission_cache = PermissionCache()
-        self.action = action
+        self.action = action or ('show' if noun else 'list')
         self.noun = noun
         self.format = format or 'html'
         self.method = (request.GET.get('_method', None) or request.method).upper()
         self.request = request
+        self.cur_agent = get_logged_in_agent(request)
+        self.cur_site = get_current_site(request)
         if self.noun is None:
-            if self.action is None:
-                self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'deactivate'}.get(self.method, 'list')
             self.item = None
         else:
-            if self.action is None:
-                self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'deactivate'}.get(self.method, 'show')
             try:
                 self.item = Item.objects.get(pk=self.noun)
                 self.item = self.item.downcast()
@@ -392,19 +391,19 @@ class Viewer(object):
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = self.request.get_full_path()
-        self.cur_agent = get_logged_in_agent(request)
-        self.cur_site = get_current_site(request)
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
         self.context['_permission_cache'] = self.permission_cache
         self.context['_viewer'] = self
         self._set_default_layout()
 
-    def init_from_div(self, original_viewer, action, item):
+    def init_for_div(self, original_viewer, action, item):
         path = reverse('item_url', kwargs={'viewer': self.viewer_name, 'action': action, 'noun': item.pk})
         query_string = ''
         self.permission_cache = original_viewer.permission_cache
         self.request = VirtualRequest(original_viewer.request, path, query_string)
+        self.cur_agent = original_viewer.cur_agent
+        self.cur_site = original_viewer.cur_site
         self.format = 'html'
         self.method = 'GET'
         self.noun = item.pk
@@ -419,8 +418,6 @@ class Viewer(object):
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = self.request.get_full_path()
-        self.cur_agent = original_viewer.cur_agent
-        self.cur_site = original_viewer.cur_site
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
         self.context['_permission_cache'] = self.permission_cache
