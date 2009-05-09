@@ -30,7 +30,7 @@ def agentcan_global_helper(context, ability, wildcard_suffix=False):
     global ability whose first word is the specified ability.
     """
     agent = context['cur_agent']
-    permission_cache = context['_permission_cache']
+    permission_cache = context['_viewer'].permission_cache
     if wildcard_suffix:
         global_abilities = permission_cache.global_abilities(agent)
         return any(x.startswith(ability) for x in global_abilities)
@@ -45,7 +45,7 @@ def agentcan_helper(context, ability, item, wildcard_suffix=False):
     whose first word is the specified ability.
     """
     agent = context['cur_agent']
-    permission_cache = context['_permission_cache']
+    permission_cache = context['_viewer'].permission_cache
     if wildcard_suffix:
         abilities_for_item = permission_cache.item_abilities(agent, item)
         return any(x.startswith(ability) for x in abilities_for_item)
@@ -306,7 +306,7 @@ def ifagentcanglobal(parser, token):
 
 # remember this includes inactive comments, which should be displayed differently after calling this
 def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments):
-    permission_cache = context['_permission_cache']
+    permission_cache = context['_viewer'].permission_cache
     comment_subclasses = [TextComment]
     comments = []
     if include_recursive_collection_comments:
@@ -607,7 +607,7 @@ class PermissionsBox(template.Node):
         return "<PermissionsBoxNode>"
 
     def render(self, context):
-        permission_cache = context['_permission_cache']
+        permission_cache = context['_viewer'].permission_cache
         item = context['item']
         cur_agent = context['cur_agent']
         abilities = sorted(permission_cache.item_abilities(cur_agent, item))
@@ -639,7 +639,7 @@ class CalculateRelationships(template.Node):
         return "<CalculateRelationshipsNode>"
 
     def render(self, context):
-        permission_cache = context['_permission_cache']
+        permission_cache = context['_viewer'].permission_cache
         item = context['item']
         cur_agent = context['cur_agent']
 
@@ -737,10 +737,10 @@ class CalculateActionNotices(template.Node):
                     select_related_fields.append('from_item__name')
                 specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query).select_related(*select_related_fields)
                 if action_notice_subclass == RelationActionNotice:
-                    context['_permission_cache'].filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
+                    context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
                 for action_notice in specific_action_notices:
                     action_notice_pk_to_object_map[action_notice.pk] = action_notice
-            context['_permission_cache'].filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('action_agent').query)))
+            context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('action_agent').query)))
             for action_notice in action_notices:
                 action_notice = action_notice_pk_to_object_map[action_notice.pk]
                 if isinstance(action_notice, RelationActionNotice):
@@ -868,9 +868,9 @@ class EmbeddedItem(template.Node):
         return "<EmbeddedItemNode>"
 
     def render(self, context):
-        from cms.views import get_viewer_class_for_viewer_name, get_versioned_item
+        from cms.views import get_viewer_class_by_name
         viewer_name = self.viewer_name.resolve(context)
-        viewer_class = get_viewer_class_for_viewer_name(viewer_name)
+        viewer_class = get_viewer_class_by_name(viewer_name)
         if viewer_class is None:
             return ''
         item = self.item.resolve(context)
@@ -882,9 +882,8 @@ class EmbeddedItem(template.Node):
         if not isinstance(item, Item):
             return ''
         item = item.downcast()
-        item = get_versioned_item(item, None)
         viewer = viewer_class()
-        viewer.init_from_div(context['_viewer'], 'show', item)
+        viewer.init_for_div(context['_viewer'], 'show', item)
         return """<div style="padding: 10px; border: thick solid #aaa;">%s</div>""" % viewer.dispatch().content
 
 

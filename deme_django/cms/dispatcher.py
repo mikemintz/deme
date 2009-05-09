@@ -8,7 +8,8 @@ from cms.models import *
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.utils import datastructures, simplejson
-from cms.views import get_viewer_class_for_viewer_name, get_current_site, ItemViewer
+from cms.views import ItemViewer
+from cms.base_viewer import get_viewer_class_by_name, get_current_site
 from django.conf import settings
 
 # Import viewers from modules so they get registered with ViewerMetaClass
@@ -26,10 +27,10 @@ def item_view(request, *args, **kwargs):
     action = kwargs.get('action')
     noun = kwargs.get('noun')
     format = kwargs.get('format')
-    viewer_class = get_viewer_class_for_viewer_name(viewer_name)
+    viewer_class = get_viewer_class_by_name(viewer_name)
     if viewer_class:
         viewer = viewer_class()
-        viewer.init_from_http(request, action, noun, format)
+        viewer.init_for_http(request, action, noun, format)
         response = viewer.dispatch()
         if response is None:
             return viewer.render_error(HttpResponseNotFound, "Action Not Found", "We could not find any action matching your URL.")
@@ -37,7 +38,7 @@ def item_view(request, *args, **kwargs):
             return response
     else:
         viewer = ItemViewer()
-        viewer.init_from_http(request, action, noun, format)
+        viewer.init_for_http(request, action, noun, format)
         return viewer.render_error(HttpResponseNotFound, "Viewer Not Found", "We could not find any viewer matching your URL.")
 
 
@@ -47,7 +48,7 @@ def invalid_url_view(request, *args, **kwargs):
     pattern.
     """
     viewer = ItemViewer()
-    viewer.init_from_http(request, 'error', None, 'html')
+    viewer.init_for_http(request, 'error', None, 'html')
     return viewer.render_error(HttpResponseNotFound, "Invalid URL", "The URL you typed in is invalid.")
 
 
@@ -67,7 +68,7 @@ def alias_view(request, *args, **kwargs):
             viewer_request = CustomUrl.objects.get(path=path_part, parent_url=viewer_request)
     except ObjectDoesNotExist:
         viewer = ItemViewer()
-        viewer.init_from_http(request, 'error', None, 'html')
+        viewer.init_for_http(request, 'error', None, 'html')
         return viewer.render_error(HttpResponseNotFound, "Alias Not Found",
                                    "We could not find any alias matching your URL http://%s%s." % (request.get_host(), request.path))
     item = viewer_request.aliased_item

@@ -1,12 +1,11 @@
 #TODO completely clean up code
 
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound, HttpRequest, QueryDict
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.utils.http import urlquote
 from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
-from django.utils import datastructures
-from django.template import Context, loader
+from django.template import loader
 from django.db import models
 from django.db.models import Q
 from django.conf import settings
@@ -18,11 +17,10 @@ from django.core.exceptions import ObjectDoesNotExist
 import django.contrib.syndication.feeds
 import django.contrib.syndication.views
 from django.views.decorators.http import require_POST
-from permissions import PermissionCache
+from base_viewer import DemePermissionDenied, Viewer
 import re
 import os
 import subprocess
-import datetime
 from urlparse import urljoin
 
 ###############################################################################
@@ -188,353 +186,6 @@ def get_form_class_for_item_type(update_or_create, item_type, fields=None):
 
 
 ###############################################################################
-# Viewer helper functions
-###############################################################################
-
-class DemePermissionDenied(Exception):
-    "The agent does not have permission to perform the action"
-    pass
-
-def get_logged_in_agent(request):
-    """
-    Return the currently logged in Agent (based on the cur_agent_id parameter
-    in request.session), or return the AnonymousAgent if the cur_agent_id is
-    missing or invalid.
-    
-    Also update last_online_at for the resulting Agent to the current time.
-    """
-    cur_agent_id = request.session.get('cur_agent_id', None)
-    cur_agent = None
-    if cur_agent_id is not None:
-        try:
-            cur_agent = Agent.objects.get(active=True, pk=cur_agent_id).downcast()
-        except ObjectDoesNotExist:
-            if 'cur_agent_id' in request.session:
-                del request.session['cur_agent_id']
-    if not cur_agent:
-        try:
-            cur_agent = AnonymousAgent.objects.filter(active=True)[0:1].get()
-        except ObjectDoesNotExist:
-            raise Exception("You must create an anonymous agent")
-    Agent.objects.filter(pk=cur_agent.pk).update(last_online_at=datetime.datetime.now())
-    return cur_agent
-
-
-def get_default_site():
-    """
-    Return the default site, or raise an Exception if there is none.
-    """
-    try:
-        return Site.objects.get(pk=DemeSetting.get('cms.default_site'))
-    except ObjectDoesNotExist:
-        raise Exception("You must create a default Site")
-
-def get_current_site(request):
-    """
-    Return the Site that corresponds to the URL in the request, or return the
-    default site (based on the DemeSetting cms.default_site) if no Site
-    matches.
-    """
-    hostname = request.get_host().split(':')[0]
-    try:
-        return Site.objects.filter(hostname=hostname).get()
-    except ObjectDoesNotExist:
-        return get_default_site()
-
-
-class VirtualRequest(HttpRequest):
-
-    def __init__(self, original_request, path, query_string):
-        self.original_request = original_request
-        self.path = path
-        self.query_string = query_string
-        self.encoding = self.original_request.encoding
-        self.GET = QueryDict(self.query_string, encoding=self._encoding)
-        self.POST = QueryDict('', encoding=self._encoding)
-        self.FILES = QueryDict('', encoding=self._encoding)
-        self.REQUEST = datastructures.MergeDict(self.POST, self.GET)
-        self.COOKIES = self.original_request.COOKIES
-        self.META = {}
-        self.raw_post_data = ''
-        #TODO: will we ever need META, path_info, or script_name?
-        self.method = 'GET'
-
-    def get_full_path(self):
-        return '%s%s' % (self.path, self.query_string and ('?' + self.query_string) or '')
-
-    def is_secure(self):
-        return self.original_request.is_secure()
-
-    def virtual_requests_too_deep(self, n):
-        if n <= 1:
-            return True
-        elif not hasattr(self.original_request, 'virtual_requests_too_deep'):
-            return False
-        else:
-            return self.original_request.virtual_requests_too_deep(n - 1)
-
-
-class ViewerMetaClass(type):
-    """
-    Metaclass for viewers. Defines ViewerMetaClass.viewer_name_dict, a mapping
-    from viewer names to viewer classes.
-    """
-    viewer_name_dict = {}
-    def __new__(cls, name, bases, attrs):
-        result = super(ViewerMetaClass, cls).__new__(cls, name, bases, attrs)
-        if name != 'Viewer':
-            ViewerMetaClass.viewer_name_dict[attrs['viewer_name']] = result
-        return result
-
-
-MAXIMUM_VIRTUAL_REQUEST_DEPTH = 10
-
-
-class Viewer(object):
-    """
-    Superclass of all viewers. Implements all of the common functionality
-    like dispatching and convenience methods, but does not define any views.
-    
-    Although most viewers will want to inherit from ItemViewer, since it
-    defines the basic views (like list, show, edit), some viewers may want to
-    inherit from this abstract Viewer so they can ensure no views will be
-    inherited.
-    
-    Subclasses must define the following fields:
-    * `accepted_item_type`: The item type that this viewer is defined over. For
-      example, if accepted_item_type == Agent, this viewer can be used to view
-      Agents and all subclasses of Agents (e.g., Person), but an error will be
-      rendered if a user tries to view something else (e.g., a Document) with
-      this viewer.
-    * `viewer_name`: The name of the viewer, which shows up in the URL. This
-      should only consist of lowercase letters, in accordance with the Deme URL
-      scheme.
-    
-    There are two types of views subclasses can define: item-specific views,
-    and type-wide views. Item-specific views expect an item in the URL (the noun), while type-wide views do not expect a particular item.
-    1. To define an item-speicfic view, define a method with the name
-      `item_method_format`, where `method` is the name of the view (which shows
-      up in the URL as the action), and format is the output format (which shows
-      up in the URL as the format). For example, the method item_edit_html(self)
-      in an agent viewer represents the item-specific view with action="edit" and
-      format="html", and would respond to the URL `/item/agent/123/edit.html`.
-    2. To define a type-wide view, define a method with the name
-      `type_method_format`. For example, the method type_new_html(self) in an
-      agent viewer represents the type-wide view with action="new" and
-      format="html", and would respond to the URL `/item/agent/new.html`.
-    
-    View methods take no parameters (except self), since all of the details of
-    the request are defined as instance variables in the viewer before
-    dispatch. They must return an HttpResponse. They should take advantage of
-    self.context, which is defined before the view is called.
-    """
-    __metaclass__ = ViewerMetaClass
-
-    def __init__(self):
-        # Nothing happens in the constructor. All of the initialization happens
-        # in the init_from_* methods, based on how the viewer was loaded.
-        pass
-
-    def cur_agent_can_global(self, ability):
-        """
-        Return whether the currently logged in agent has the given global
-        ability.
-        """
-        return self.permission_cache.agent_can_global(self.cur_agent, ability)
-
-    def cur_agent_can(self, ability, item):
-        """
-        Return whether the currently logged in agent has the given item ability
-        with respect to the given item.
-        """
-        return self.permission_cache.agent_can(self.cur_agent, ability, item)
-
-    def render_error(self, request_class, title, body):
-        """
-        Return an HttpResponse (of type request_class) that displays a simple
-        error page with the specified title and body.
-        """
-        template = loader.get_template_from_string("""
-        {%% extends layout %%}
-        {%% load item_tags %%}
-        {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
-        {%% block title %%}<img src="{{ "error"|icon_url:24 }}" /> %s{%% endblock %%}
-        {%% block content %%}%s{%% endblock content %%}
-        """ % (title, body))
-        return request_class(template.render(self.context))
-
-    def init_from_http(self, request, action, noun, format):
-        self.context = Context()
-        self.permission_cache = PermissionCache()
-        self.action = action
-        self.noun = noun
-        self.format = format or 'html'
-        self.method = (request.GET.get('_method', None) or request.method).upper()
-        self.request = request
-        if self.noun is None:
-            if self.action is None:
-                self.action = {'GET': 'list', 'POST': 'create', 'PUT': 'update', 'DELETE': 'deactivate'}.get(self.method, 'list')
-            self.item = None
-        else:
-            if self.action is None:
-                self.action = {'GET': 'show', 'POST': 'create', 'PUT': 'update', 'DELETE': 'deactivate'}.get(self.method, 'show')
-            try:
-                self.item = Item.objects.get(pk=self.noun)
-                self.item = self.item.downcast()
-                self.item = get_versioned_item(self.item, self.request.GET.get('version'))
-                self.context['specific_version'] = ('version' in self.request.GET)
-            except ObjectDoesNotExist:
-                self.item = None
-        self.context['action'] = self.action
-        self.context['item'] = self.item
-        self.context['viewer_name'] = self.viewer_name
-        self.context['accepted_item_type'] = self.accepted_item_type
-        self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
-        self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
-        self.context['full_path'] = self.request.get_full_path()
-        self.cur_agent = get_logged_in_agent(request)
-        self.cur_site = get_current_site(request)
-        self.context['cur_agent'] = self.cur_agent
-        self.context['cur_site'] = self.cur_site
-        self.context['_permission_cache'] = self.permission_cache
-        self.context['_viewer'] = self
-        self._set_default_layout()
-
-    def init_from_div(self, original_viewer, action, item):
-        path = reverse('item_url', kwargs={'viewer': self.viewer_name, 'action': action, 'noun': item.pk})
-        query_string = ''
-        self.permission_cache = original_viewer.permission_cache
-        self.request = VirtualRequest(original_viewer.request, path, query_string)
-        self.format = 'html'
-        self.method = 'GET'
-        self.noun = item.pk
-        self.item = item
-        self.action = action
-        self.context = Context()
-        self.context['action'] = self.action
-        self.context['item'] = self.item
-        self.context['specific_version'] = False
-        self.context['viewer_name'] = self.viewer_name
-        self.context['accepted_item_type'] = self.accepted_item_type
-        self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
-        self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
-        self.context['full_path'] = self.request.get_full_path()
-        self.cur_agent = original_viewer.cur_agent
-        self.cur_site = original_viewer.cur_site
-        self.context['cur_agent'] = self.cur_agent
-        self.context['cur_site'] = self.cur_site
-        self.context['_permission_cache'] = self.permission_cache
-        self.context['_viewer'] = self
-        self.context['layout'] = 'blank.html'
-
-    def init_for_outgoing_email(self, agent):
-        self.permission_cache = PermissionCache()
-        self.request = None
-        self.format = 'html'
-        self.method = 'GET'
-        self.noun = None
-        self.item = None
-        self.action = 'list'
-        self.context = Context()
-        self.context['action'] = self.action
-        self.context['item'] = self.item
-        self.context['specific_version'] = False
-        self.context['viewer_name'] = self.viewer_name
-        self.context['accepted_item_type'] = self.accepted_item_type
-        self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
-        self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
-        self.context['full_path'] = '/'
-        self.cur_agent = agent
-        self.cur_site = get_default_site()
-        self.context['cur_agent'] = self.cur_agent
-        self.context['cur_site'] = self.cur_site
-        self.context['_permission_cache'] = self.permission_cache
-        self.context['_viewer'] = self
-        self.context['layout'] = 'blank.html'
-
-    def dispatch(self):
-        if hasattr(self.request, 'virtual_requests_too_deep'):
-            if self.request.virtual_requests_too_deep(MAXIMUM_VIRTUAL_REQUEST_DEPTH):
-                return self.render_virtual_requests_too_deep()
-        if self.noun is None:
-            action_method = getattr(self, 'type_%s_%s' % (self.action, self.format), None)
-        else:
-            action_method = getattr(self, 'item_%s_%s' % (self.action, self.format), None)
-        if action_method:
-            if self.noun != None:
-                if self.item is None:
-                    return self.render_item_not_found()
-                elif self.action == 'copy':
-                    pass
-                else:
-                    if not isinstance(self.item, self.accepted_item_type):
-                        return self.render_item_not_found()
-            try:
-                return action_method()
-            except DemePermissionDenied:
-                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to perform this action")
-        else:
-            return None
-
-    def render_virtual_requests_too_deep(self):
-        title = "Exceeded maximum recursion depth"
-        body = 'The depth of embedded pages is too high.'
-        return self.render_error(HttpResponseNotFound, title, body)
-
-    def render_item_not_found(self):
-        if self.item:
-            title = "%s Not Found" % self.accepted_item_type.__name__
-            body = 'You cannot view item %s in this viewer. Try viewing it in the <a href="%s">%s viewer</a>.' % (self.noun, reverse('item_url', kwargs={'viewer': self.item.item_type_string.lower(), 'noun': self.item.pk}), self.item.item_type_string)
-        else:
-            title = "Item Not Found"
-            version = self.request.GET.get('version')
-            if version is None:
-                body = 'There is no item %s.' % self.noun
-            else:
-                body = 'There is no item %s version %s.' % (self.noun, version)
-        return self.render_error(HttpResponseNotFound, title, body)
-
-    def _set_default_layout(self):
-        cur_node = self.cur_site.default_layout
-        while cur_node is not None:
-            next_node = cur_node.layout
-            if next_node is None:
-                if cur_node.override_default_layout:
-                    extends_string = ''
-                else:
-                    extends_string = "{% extends 'default_layout.html' %}\n"
-            else:
-                extends_string = "{%% extends layout%s %%}\n" % next_node.pk
-            if self.permission_cache.agent_can(self.cur_agent, 'view body', cur_node):
-                template_string = extends_string + cur_node.body
-            else:
-                template_string = "{% extends 'default_layout.html' %}\n"
-                self.context['layout_permissions_problem'] = True
-                next_node = None
-            t = loader.get_template_from_string(template_string)
-            self.context['layout%d' % cur_node.pk] = t
-            cur_node = next_node
-        if self.cur_site.default_layout:
-            self.context['layout'] = self.context['layout%s' % self.cur_site.default_layout.pk]
-        else:
-            self.context['layout'] = 'default_layout.html'
-
-
-def get_viewer_class_for_viewer_name(viewer_name):
-    return ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
-
-
-def get_versioned_item(item, version_number):
-    if version_number is not None:
-        try:
-            version_number = int(version_number)
-        except:
-            return None
-        item.copy_fields_from_version(version_number)
-    return item
-
-
-###############################################################################
 # Viewers
 ###############################################################################
 
@@ -658,9 +309,7 @@ class ItemViewer(Viewer):
 
     def type_new_html(self, form=None):
         self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
-        can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
-        if not can_create:
-            raise DemePermissionDenied
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         if form is None:
             form_initial = dict(self.request.GET.items())
             form_class = get_form_class_for_item_type('create', self.accepted_item_type)
@@ -673,9 +322,7 @@ class ItemViewer(Viewer):
 
     @require_POST
     def type_create_html(self):
-        can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
-        if not can_create:
-            raise DemePermissionDenied
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
@@ -695,7 +342,6 @@ class ItemViewer(Viewer):
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, EditActionNotice, CreateActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=viewable_action_notices.values('pk').query)
-            #TODO check permissions of relation action notices from item
             for action_notice in specific_action_notices:
                 action_notice_pk_to_object_map[action_notice.pk] = action_notice
 
@@ -719,8 +365,7 @@ class ItemViewer(Viewer):
     def item_show_rss(self):
         from cms.templatetags.item_tags import get_viewable_name
         viewer = self
-        if not self.cur_agent_can('view action_notices', self.item):
-            raise DemePermissionDenied
+        self.require_ability('view action_notices', self.item)
         action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(action_agent=self.item)).order_by('action_time') #TODO limit
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
@@ -765,9 +410,7 @@ class ItemViewer(Viewer):
 
     def item_copy_html(self):
         self.context['action_title'] = 'Copy'
-        can_create = self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__)
-        if not can_create:
-            raise DemePermissionDenied
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         form_class = get_form_class_for_item_type('create', self.accepted_item_type)
         fields_to_copy = [field_name for field_name in form_class.base_fields if self.cur_agent_can('view %s' % field_name, self.item)]
         form_initial = {}
@@ -791,9 +434,7 @@ class ItemViewer(Viewer):
     def item_edit_html(self, form=None):
         self.context['action_title'] = 'Edit'
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if not can_edit:
-            raise DemePermissionDenied
+        self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
         if form is None:
             fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
             form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
@@ -812,9 +453,7 @@ class ItemViewer(Viewer):
     @require_POST
     def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if not can_edit:
-            raise DemePermissionDenied
+        self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x[0] == 'edit']
         form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
@@ -828,24 +467,27 @@ class ItemViewer(Viewer):
 
     @require_POST
     def item_deactivate_html(self):
-        if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
-            raise DemePermissionDenied
+        if not self.item.can_be_deleted():
+            return self.render_error(HttpResponseBadRequest, 'Cannot delete', "This item may not be deleted")
+        self.require_ability('delete', self.item)
         self.item.deactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
     @require_POST
     def item_reactivate_html(self):
-        if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
-            raise DemePermissionDenied
+        if not self.item.can_be_deleted():
+            return self.render_error(HttpResponseBadRequest, 'Cannot delete', "This item may not be deleted")
+        self.require_ability('delete', self.item)
         self.item.reactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
     @require_POST
     def item_destroy_html(self):
-        if not self.item.can_be_deleted() or not self.cur_agent_can('delete', self.item):
-            raise DemePermissionDenied
+        if not self.item.can_be_deleted():
+            return self.render_error(HttpResponseBadRequest, 'Cannot delete', "This item may not be deleted")
+        self.require_ability('delete', self.item)
         self.item.destroy(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
@@ -900,8 +542,7 @@ class ItemViewer(Viewer):
 
     @require_POST
     def item_updateprivacy_html(self):
-        if not self.cur_agent_can('modify_privacy_settings', self.item):
-            raise DemePermissionDenied
+        self.require_ability('modify_privacy_settings', self.item)
         new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
         AgentItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
         CollectionItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
@@ -914,8 +555,7 @@ class ItemViewer(Viewer):
 
     @require_POST
     def item_updateitempermissions_html(self):
-        if not self.cur_agent_can('do_anything', self.item):
-            raise DemePermissionDenied
+        self.require_ability('do_anything', self.item)
         new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
         AgentItemPermission.objects.filter(item=self.item).delete()
         CollectionItemPermission.objects.filter(item=self.item).delete()
@@ -928,8 +568,7 @@ class ItemViewer(Viewer):
 
     @require_POST
     def type_updateglobalpermissions_html(self):
-        if not self.cur_agent_can_global('do_anything'):
-            raise DemePermissionDenied
+        self.require_ability('do_anything', self.item)
         new_permissions = self._get_permissions_from_post_data(None, True)
         AgentGlobalPermission.objects.filter().delete()
         CollectionGlobalPermission.objects.filter().delete()
@@ -941,8 +580,7 @@ class ItemViewer(Viewer):
 
     def item_privacy_html(self):
         self.context['action_title'] = 'Privacy settings'
-        if not self.cur_agent_can('modify_privacy_settings', self.item):
-            raise DemePermissionDenied
+        self.require_ability('modify_privacy_settings', self.item)
         possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
         default_permissions = []
         for ability in possible_abilities:
@@ -955,8 +593,7 @@ class ItemViewer(Viewer):
 
     def item_itempermissions_html(self):
         self.context['action_title'] = 'Permissions'
-        if not self.cur_agent_can('do_anything', self.item):
-            raise DemePermissionDenied
+        self.require_ability('do_anything', self.item)
         possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
         default_permissions = []
         for ability in possible_abilities:
@@ -968,15 +605,13 @@ class ItemViewer(Viewer):
 
     def type_globalpermissions_html(self):
         self.context['action_title'] = 'Global permissions'
-        if not self.cur_agent_can_global('do_anything'):
-            raise DemePermissionDenied
+        self.require_global_ability('do_anything')
         template = loader.get_template('item/globalpermissions.html')
         return HttpResponse(template.render(self.context))
 
     def type_admin_html(self):
         self.context['action_title'] = 'Admin'
-        if not self.cur_agent_can_global('do_anything'):
-            raise DemePermissionDenied
+        self.require_global_ability('do_anything')
         template = loader.get_template('item/admin.html')
         return HttpResponse(template.render(self.context))
 
@@ -991,9 +626,7 @@ class ContactMethodViewer(ItemViewer):
             agent = Item.objects.get(pk=self.request.REQUEST.get('agent'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding a contact method to")
-        can_add_contact_method = self.cur_agent_can('add_contact_method', agent)
-        if not can_add_contact_method:
-            raise DemePermissionDenied
+        self.require_ability('add_contact_method', agent)
         if form is None:
             form_initial = dict(self.request.GET.items())
             form_class = get_form_class_for_item_type('create', self.accepted_item_type)
@@ -1010,9 +643,7 @@ class ContactMethodViewer(ItemViewer):
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            can_add_contact_method = self.cur_agent_can('add_contact_method', item.agent)
-            if not can_add_contact_method:
-                raise DemePermissionDenied
+            self.require_ability('add_contact_method', item.agent)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
             item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
@@ -1031,9 +662,7 @@ class AuthenticationMethodViewer(ItemViewer):
             agent = Item.objects.get(pk=self.request.REQUEST.get('agent'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding an authentication method to")
-        can_add_authentication_method = self.cur_agent_can('add_authentication_method', agent)
-        if not can_add_authentication_method:
-            raise DemePermissionDenied
+        self.require_ability('add_authentication_method', agent)
         if form is None:
             form_initial = dict(self.request.GET.items())
             form_class = get_form_class_for_item_type('create', self.accepted_item_type)
@@ -1050,9 +679,7 @@ class AuthenticationMethodViewer(ItemViewer):
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            can_add_authentication_method = self.cur_agent_can('add_authentication_method', item.agent)
-            if not can_add_authentication_method:
-                raise DemePermissionDenied
+            self.require_ability('add_authentication_method', item.agent)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
             item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
@@ -1259,8 +886,7 @@ class ViewerRequestViewer(ItemViewer):
         form = AddSubPathForm(self.request.POST, self.request.FILES)
         if form.data['parent_url'] != str(self.item.pk):
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the parent url you are extending")
-        if not self.cur_agent_can('add_sub_path', self.item):
-            raise DemePermissionDenied
+        self.require_ability('add_sub_path', self.item)
         try:
             custom_url = CustomUrl.objects.get(parent_url=self.item, path=form.data['path'])
         except ObjectDoesNotExist:
@@ -1356,9 +982,7 @@ class TextDocumentViewer(ItemViewer):
     def item_edit_html(self, form=None):
         self.context['action_title'] = 'Edit'
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if not can_edit:
-            raise DemePermissionDenied
+        self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
 
         transclusions = Transclusion.objects.filter(from_item=self.item, from_item_version_number=self.item.version_number).order_by('-from_item_index')
         body_as_list = list(self.item.body)
@@ -1389,9 +1013,7 @@ class TextDocumentViewer(ItemViewer):
     @require_POST
     def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if not can_edit:
-            raise DemePermissionDenied
+        self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
         form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
@@ -1471,9 +1093,7 @@ class TextCommentViewer(TextDocumentViewer):
             item = Item.objects.get(pk=self.request.REQUEST.get('item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
-        can_comment_on = self.cur_agent_can('comment_on', item)
-        if not can_comment_on:
-            raise DemePermissionDenied
+        self.require_ability('comment_on', item)
         if form is None:
             form_initial = dict(self.request.GET.items())
             form_class = NewTextCommentForm
@@ -1490,9 +1110,7 @@ class TextCommentViewer(TextDocumentViewer):
             item = Item.objects.get(pk=self.request.POST.get('item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
-        can_comment_on = self.cur_agent_can('comment_on', item)
-        if not can_comment_on:
-            raise DemePermissionDenied
+        self.require_ability('comment_on', item)
         form_class = NewTextCommentForm
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
@@ -1528,9 +1146,7 @@ class TransclusionViewer(ItemViewer):
             from_item = Item.objects.get(pk=self.request.REQUEST.get('from_item'))
         except:
             return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are adding a transclusion to")
-        can_add_transclusion = self.cur_agent_can('add_transclusion', from_item)
-        if not can_add_transclusion:
-            raise DemePermissionDenied
+        self.require_ability('add_transclusion', from_item)
         if form is None:
             form_initial = dict(self.request.GET.items())
             form_class = get_form_class_for_item_type('create', self.accepted_item_type)
@@ -1548,9 +1164,7 @@ class TransclusionViewer(ItemViewer):
         if form.is_valid():
             #TODO use transactions to make the Transclusion save at the same time as the Comment
             item = form.save(commit=False)
-            can_add_transclusion = self.cur_agent_can('add_transclusion', item.from_item)
-            if not can_add_transclusion:
-                raise DemePermissionDenied
+            self.require_ability('add_transclusion', item.from_item)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
             item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
@@ -1566,10 +1180,8 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
     viewer_name = 'textdocumentexcerpt'
 
     def type_createmultiexcerpt_html(self):
-        if not self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__):
-            raise DemePermissionDenied
-        if not self.cur_agent_can_global('create Collection'):
-            raise DemePermissionDenied
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
+        self.require_global_ability('create Collection')
         excerpts = []
         for excerpt_form_datum in self.request.POST.getlist('excerpt'):
             try:
@@ -1579,11 +1191,11 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
             except ValueError:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not parse the excerpt data in the form")
             try:
-                text_document = get_versioned_item(TextDocument.objects.get(pk=text_document_id), text_document_version_number)
+                text_document = TextDocument.objects.get(pk=text_document_id)
+                text_document.copy_fields_from_version(text_document_version_number)
             except:
                 return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not find the specified TextDocument")
-            if not self.cur_agent_can('view body', text_document):
-                raise DemePermissionDenied
+            self.require_ability('view body', text_document)
             body = text_document.body[start_index:start_index+length]
             excerpt = TextDocumentExcerpt(body=body, text_document=text_document, text_document_version_number=text_document_version_number, start_index=start_index, length=length)
             excerpts.append(excerpt)
@@ -1604,15 +1216,13 @@ class DemeSettingViewer(ItemViewer):
 
     def type_modify_html(self):
         self.context['action_title'] = 'Modify settings'
-        if not self.cur_agent_can_global('do_anything'):
-            raise DemePermissionDenied
+        self.require_global_ability('do_anything')
         self.context['deme_settings'] = DemeSetting.objects.filter(active=True).order_by('key')
         template = loader.get_template('demesetting/modify.html')
         return HttpResponse(template.render(self.context))
 
     def type_addsetting_html(self):
-        if not self.cur_agent_can_global('do_anything'):
-            raise DemePermissionDenied
+        self.require_global_ability('do_anything')
         key = self.request.POST.get('key')
         value = self.request.POST.get('value')
         DemeSetting.set(key, value, self.cur_agent)
@@ -1642,30 +1252,11 @@ class SubscriptionViewer(ItemViewer):
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            can_add_subscription = self.cur_agent_can('add_subscription', item.contact_method)
-            if not can_add_subscription:
-                raise DemePermissionDenied
+            self.require_ability('add_subscription', item.contact_method)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
             item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
             return self.type_new_html(form)
-
-
-# Dynamically create default viewers for the ones we don't have.
-for item_type in all_item_types():
-    viewer_name = item_type.__name__.lower()
-    if viewer_name not in ViewerMetaClass.viewer_name_dict:
-        parent_item_type_with_viewer = item_type
-        while issubclass(parent_item_type_with_viewer, Item):
-            parent_viewer_class = ViewerMetaClass.viewer_name_dict.get(parent_item_type_with_viewer.__name__.lower(), None)
-            if parent_viewer_class:
-                break
-            parent_item_type_with_viewer = parent_item_type_with_viewer.__base__
-        if parent_viewer_class:
-            viewer_class_name = '%sViewer' % item_type.__name__
-            ViewerMetaClass.__new__(ViewerMetaClass, viewer_class_name, (parent_viewer_class,), {'accepted_item_type': item_type, 'viewer_name': viewer_name})
-        else:
-            pass
 
