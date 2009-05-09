@@ -14,12 +14,12 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Move AuthenticationMethod stuff to their own viewers (and own modules at some point)
 * Make Deme work with newest version of Django (we get validation errors right now)
 * Fix the multiple inheritance bug
   - http://code.djangoproject.com/ticket/10808
 * Need initial permissions set on incoming email comments, group generated folios/groupagents, maybe other things too. Just search for save_versioned.
 * Rename /static/ to /file/
-* Rename PasswordAuthenticationMethod to DemeAccount. Rename WebauthAuthenticationMethod to WebauthAccount. Rename OpenidAuthenticationMethod to OpenidAccount.
 * The viewer should probably define a list of actions for each item type to be displayed in a menu
 * Probably don't need auto-load modules: INSTALLED_APPS is more explicit and familiar
 * Figure out correct way to manage assets (maybe like in rails)

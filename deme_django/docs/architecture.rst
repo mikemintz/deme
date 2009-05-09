@@ -24,7 +24,7 @@ Pointers do not represent an exclusive "ownership" relationship. I.e., just beca
 
 Fields cannot store data structures like lists. If you want to express X has many Y's,  rather than storing all the Y's in the X row, you should itemize the Y's, and have each Y point to the X that it belongs to. For example, an Agent has many ContactMethods. So rather than storing the ContactMethods as fields inside each Agent, we make ContactMethod an item type, and give it an "Agent pointer" field. So the contact methods for agent 123 are represented by all of the ContactMethods that have agent_pointer=123.
 
-The most important field is the id field (primary key in database-speak, memory address of the object in programming, inode number in filesystems). Every item has a unique id, an auto-incrementing integer starting at 1. Items share the same id with their parent-item-type versions (so Mike's row in the Person table has the same id as Mike's row in the Agent table and Item table). Pointer fields are effectively references to the id of the pointee. It is important that the id field never change so that there is always a single reliable way to refer to a particular item. No other field is guaranteed to be unique among all items (although some item types define unique fields within that item type, such as PasswordAuthenticationMethod's unique username).
+The most important field is the id field (primary key in database-speak, memory address of the object in programming, inode number in filesystems). Every item has a unique id, an auto-incrementing integer starting at 1. Items share the same id with their parent-item-type versions (so Mike's row in the Person table has the same id as Mike's row in the Agent table and Item table). Pointer fields are effectively references to the id of the pointee. It is important that the id field never change so that there is always a single reliable way to refer to a particular item. No other field is guaranteed to be unique among all items (although some item types define unique fields within that item type, such as DemeAccount's unique username).
 
 Some fields are specified as immutable, which means once they are set, they cannot be changed. The id field is a prime example of an immutable fields, but other fields like creator and created_at are immutable as well.
 
@@ -102,11 +102,11 @@ Agents and related item types
 
   This item type defines one field, an ``agent`` pointer that points to the agent that is holds this authentication method.
 
-* **OpenidAuthenticationMethod:** This is an AuthenticationMethod that allows a user to log on with an OpenID. The openid url must be unique across the entire Deme installation. It defines only one new field, ``openid_url``, which is all that we need to represent the identity.
+* **OpenidAccount:** This is an AuthenticationMethod that allows a user to log on with an OpenID. The openid url must be unique across the entire Deme installation. It defines only one new field, ``openid_url``, which is all that we need to represent the identity.
 
-* **WebauthAuthenticationMethod:** This is an AuthenticationMethod that allows a user to log on with Stanford's WebAuth system. The username must be unique across the entire Deme installation.
+* **WebauthAccount:** This is an AuthenticationMethod that allows a user to log on with Stanford's WebAuth system. The username must be unique across the entire Deme installation.
 
-* **PasswordAuthenticationMethod:** This is an AuthenticationMethod that allows a user to log on with a username and a password. The username must be unique across the entire Deme installation. The password field is formatted the same as in the User model of the Django admin app (algo$salt$hash), and is thus not stored in plain text.
+* **DemeAccount:** This is an AuthenticationMethod that allows a user to log on with a username and a password. The username must be unique across the entire Deme installation. The password field is formatted the same as in the User model of the Django admin app (algo$salt$hash), and is thus not stored in plain text.
 
   This item type defines four fields: ``username``, ``password``, ``password_question``, and ``password_answer`` (the last two can be used to reset the password and send it to the Agent via one of its ContactMethods).
 
@@ -320,15 +320,15 @@ Below is a list of item types and the item abilities they introduce:
 
   * ``view agent``
 
-* OpenidAuthenticationMethod
+* OpenidAccount
 
   * ``view openid_url``
 
-* WebauthAuthenticationMethod
+* WebauthAccount
 
   * ``view username``
 
-* PasswordAuthenticationMethod
+* DemeAccount
 
   * ``view username``
   * ``view password``

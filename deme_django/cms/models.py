@@ -19,7 +19,7 @@ import random
 import hashlib
 import html2text
 
-__all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAuthenticationMethod', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'PasswordAuthenticationMethod', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ViewerRequest', 'WebauthAuthenticationMethod', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice', 'ReactivateActionNotice', 'DestroyActionNotice', 'CreateActionNotice', 'EditActionNotice']
+__all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAccount', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'DemeAccount', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ViewerRequest', 'WebauthAccount', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice', 'ReactivateActionNotice', 'DestroyActionNotice', 'CreateActionNotice', 'EditActionNotice']
 
 ###############################################################################
 # Item framework
@@ -668,7 +668,7 @@ class AuthenticationMethod(Item):
     agent = models.ForeignKey(Agent, related_name='authentication_methods', verbose_name=_('agent'))
 
 
-class OpenidAuthenticationMethod(AuthenticationMethod):
+class OpenidAccount(AuthenticationMethod):
     """
     This is an AuthenticationMethod that allows a user to log on with an
     OpenID.
@@ -688,7 +688,7 @@ class OpenidAuthenticationMethod(AuthenticationMethod):
     openid_url = models.CharField(_('OpenID URL'), max_length=2047, unique=True)
 
 
-class WebauthAuthenticationMethod(AuthenticationMethod):
+class WebauthAccount(AuthenticationMethod):
     """
     This is an AuthenticationMethod that allows a user to log on with
     Stanford's WebAuth system.
@@ -708,7 +708,7 @@ class WebauthAuthenticationMethod(AuthenticationMethod):
     username = models.CharField(_('username'), max_length=255, unique=True)
 
 
-class PasswordAuthenticationMethod(AuthenticationMethod):
+class DemeAccount(AuthenticationMethod):
     """
     This is an AuthenticationMethod that allows a user to log on with a
     username and a password.
@@ -739,8 +739,8 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
         password. This method does not make any database writes.
         """
         algo = 'sha1'
-        salt = PasswordAuthenticationMethod.get_random_hash()[:5]
-        hsh = PasswordAuthenticationMethod.get_hexdigest(algo, salt, raw_password)
+        salt = DemeAccount.get_random_hash()[:5]
+        hsh = DemeAccount.get_hexdigest(algo, salt, raw_password)
         self.password = '%s$%s$%s' % (algo, salt, hsh)
     set_password.alters_data = True
 
@@ -750,7 +750,7 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
         encryption formats behind the scenes.
         """
         algo, salt, hsh = self.password.split('$')
-        return hsh == PasswordAuthenticationMethod.get_hexdigest(algo, salt, raw_password)
+        return hsh == DemeAccount.get_hexdigest(algo, salt, raw_password)
 
     def check_nonced_password(self, hashed_password, nonce):
         """
@@ -764,7 +764,7 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
             sha1(nonce, algo(salt, raw_password))
         """
         algo, salt, hsh = self.password.split('$')
-        return PasswordAuthenticationMethod.get_hexdigest('sha1', nonce, hsh) == hashed_password
+        return DemeAccount.get_hexdigest('sha1', nonce, hsh) == hashed_password
 
     @staticmethod
     def mysql_pre41_password(raw_password):
@@ -801,13 +801,13 @@ class PasswordAuthenticationMethod(AuthenticationMethod):
         if algorithm == 'sha1':
             return hashlib.sha1(salt + raw_password).hexdigest()
         elif algorithm == 'mysql_pre41_password':
-            return PasswordAuthenticationMethod.mysql_pre41_password(raw_password)
+            return DemeAccount.mysql_pre41_password(raw_password)
         raise ValueError("Got unknown password algorithm type in password.")
 
     @staticmethod
     def get_random_hash():
         """Return a random 40-digit hexadecimal string. """
-        return PasswordAuthenticationMethod.get_hexdigest('sha1', str(random.random()), str(random.random()))
+        return DemeAccount.get_hexdigest('sha1', str(random.random()), str(random.random()))
 
 
 class Person(Agent):

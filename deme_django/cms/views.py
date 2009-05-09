@@ -124,12 +124,12 @@ class NewTextCommentForm(forms.ModelForm):
         model = TextComment
         fields = ['name', 'description', 'body', 'item', 'item_version_number']
 
-class NewPasswordAuthenticationMethodForm(forms.ModelForm):
+class NewDemeAccountForm(forms.ModelForm):
     agent = AjaxModelChoiceField(Agent.objects)
     password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
     class Meta:
-        model = PasswordAuthenticationMethod
+        model = DemeAccount
         exclude = ['password']
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1", "")
@@ -138,17 +138,17 @@ class NewPasswordAuthenticationMethodForm(forms.ModelForm):
             raise forms.ValidationError(_("The two password fields didn't match."))
         return password2
     def save(self, commit=True):
-        item = super(NewPasswordAuthenticationMethodForm, self).save(commit=False)
+        item = super(NewDemeAccountForm, self).save(commit=False)
         item.set_password(self.cleaned_data["password1"])
         if commit:
             item.save()
         return item
 
-class EditPasswordAuthenticationMethodForm(forms.ModelForm):
+class EditDemeAccountForm(forms.ModelForm):
     password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
     class Meta:
-        model = PasswordAuthenticationMethod
+        model = DemeAccount
         exclude = ['password', 'agent']
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1", "")
@@ -157,18 +157,18 @@ class EditPasswordAuthenticationMethodForm(forms.ModelForm):
             raise forms.ValidationError(_("The two password fields didn't match."))
         return password2
     def save(self, commit=True):
-        item = super(EditPasswordAuthenticationMethodForm, self).save(commit=False)
+        item = super(EditDemeAccountForm, self).save(commit=False)
         item.set_password(self.cleaned_data["password1"])
         if commit:
             item.save()
         return item
 
 def get_form_class_for_item_type(update_or_create, item_type, fields=None):
-    if issubclass(item_type, PasswordAuthenticationMethod):
+    if issubclass(item_type, DemeAccount):
         if update_or_create == 'update':
-            return EditPasswordAuthenticationMethodForm
+            return EditDemeAccountForm
         else:
-            return NewPasswordAuthenticationMethodForm
+            return NewDemeAccountForm
     # For now, this is how we prevent manual creation of TextDocumentExcerpts
     if issubclass(item_type, TextDocumentExcerpt):
         return forms.models.modelform_factory(item_type, fields=['name'])
@@ -695,14 +695,14 @@ class AuthenticationMethodViewer(ItemViewer):
         self.context['action_title'] = 'Login'
         if self.request.method == 'GET':
             # If getencryptionmethod is a key in the query string, return a JSON
-            # response with the details about the PasswordAuthenticationMethod
+            # response with the details about the DemeAccount
             # necessary for JavaScript to encrypt the password.
             if 'getencryptionmethod' in self.request.GET:
                 username = self.request.GET['getencryptionmethod']
-                nonce = PasswordAuthenticationMethod.get_random_hash()[:5]
+                nonce = DemeAccount.get_random_hash()[:5]
                 self.request.session['login_nonce'] = nonce
                 try:
-                    password = PasswordAuthenticationMethod.objects.get(username=username).password
+                    password = DemeAccount.objects.get(username=username).password
                     algo, salt, hsh = password.split('$')
                     response_data = {'nonce':nonce, 'algo':algo, 'salt':salt}
                 except ObjectDoesNotExist:
@@ -729,12 +729,12 @@ class AuthenticationMethodViewer(ItemViewer):
                     #display_identifier = openid_response.getDisplayIdentifier()
                     sreg = openid_response.extensionResponse('sreg', False)
                     try:
-                        openid_authentication_method = OpenidAuthenticationMethod.objects.get(Q(openid_url=identity_url_without_fragment) | Q(openid_url__startswith=identity_url_without_fragment + '#'))
+                        openid_authentication_method = OpenidAccount.objects.get(Q(openid_url=identity_url_without_fragment) | Q(openid_url__startswith=identity_url_without_fragment + '#'))
                     except ObjectDoesNotExist:
-                        # No OpenidAuthenticationMethod has this openid_url.
+                        # No OpenidAccount has this openid_url.
                         return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID (1)")
                     if not openid_authentication_method.active or not openid_authentication_method.agent.active: 
-                        # The Agent or OpenidAuthenticationMethod is inactive.
+                        # The Agent or OpenidAccount is inactive.
                         return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID (2)")
                     self.request.session['cur_agent_id'] = openid_authentication_method.agent.pk
                     return HttpResponseRedirect(redirect)
@@ -769,18 +769,18 @@ class AuthenticationMethodViewer(ItemViewer):
                 username = self.request.POST['username']
                 hashed_password = self.request.POST['hashed_password']
                 try:
-                    password_authentication_method = PasswordAuthenticationMethod.objects.get(username=username)
+                    password_authentication_method = DemeAccount.objects.get(username=username)
                 except ObjectDoesNotExist:
-                    # No PasswordAuthenticationMethod has this username.
+                    # No DemeAccount has this username.
                     return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
                 if not password_authentication_method.active or not password_authentication_method.agent.active:
-                    # The Agent or PasswordAuthenticationMethod is inactive.
+                    # The Agent or DemeAccount is inactive.
                     return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
                 if password_authentication_method.check_nonced_password(hashed_password, nonce):
                     self.request.session['cur_agent_id'] = password_authentication_method.agent.pk
                     return HttpResponseRedirect(redirect)
                 else:
-                    # The password given does not correspond to the PasswordAuthenticationMethod.
+                    # The password given does not correspond to the DemeAccount.
                     return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
             elif login_type == 'login_as':
                 for key in self.request.POST.iterkeys():
@@ -828,8 +828,8 @@ class AuthenticationMethodViewer(ItemViewer):
         return HttpResponse(template.render(self.context))
  
 
-class WebauthAuthenticationMethodViewer(ItemViewer):
-    accepted_item_type = WebauthAuthenticationMethod
+class WebauthAccountViewer(ItemViewer):
+    accepted_item_type = WebauthAccount
     viewer_name = 'webauth'
 
     def type_login_html(self):
@@ -839,12 +839,12 @@ class WebauthAuthenticationMethodViewer(ItemViewer):
             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "WebAuth is not supported in this installation")
         username = self.request.META['REMOTE_USER']
         try:
-            webauth_authentication_method = WebauthAuthenticationMethod.objects.get(username=username)
+            webauth_authentication_method = WebauthAccount.objects.get(username=username)
         except ObjectDoesNotExist:
-            # No WebauthAuthenticationMethod has this username.
+            # No WebauthAccount has this username.
             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that webauth username")
         if not webauth_authentication_method.active or not webauth_authentication_method.agent.active: 
-            # The Agent or WebauthAuthenticationMethod is inactive.
+            # The Agent or WebauthAccount is inactive.
             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that webauth username")
         self.request.session['cur_agent_id'] = webauth_authentication_method.agent.pk
         redirect = self.request.GET['redirect']
