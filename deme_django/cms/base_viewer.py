@@ -280,6 +280,8 @@ class Viewer(object):
     def init_for_outgoing_email(self, agent):
         self.permission_cache = PermissionCache()
         self.request = None
+        self.cur_agent = agent
+        self.cur_site = get_default_site()
         self.format = 'html'
         self.method = 'GET'
         self.noun = None
@@ -294,8 +296,6 @@ class Viewer(object):
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = '/'
-        self.cur_agent = agent
-        self.cur_site = get_default_site()
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
         self.context['_viewer'] = self
@@ -365,13 +365,20 @@ class Viewer(object):
 
 
 def get_viewer_class_by_name(viewer_name):
+    """
+    Return the viewer class with the given name. If no such class exists, see
+    if an item type exists with that same name (case insensitive), and if so,
+    dynamically define a viewer for that item type. Otherwise, return None.
+    """
+    # Check the defined viewers in ViewerMetaClass.viewer_name_dict
     result = ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
     if result is not None:
         return result
+    # If the viewer isn't defined, see if there is an item type with the same name
     item_type = get_item_type_with_name(viewer_name, case_sensitive=False)
     if item_type is None:
         return None
-    # Define the viewer dynamically
+    # Define an empty viewer dynamically (inheriting from a defined viewer)
     parent_item_type_with_viewer = item_type
     while issubclass(parent_item_type_with_viewer, Item):
         parent_viewer_class = ViewerMetaClass.viewer_name_dict.get(parent_item_type_with_viewer.__name__.lower(), None)
@@ -379,8 +386,10 @@ def get_viewer_class_by_name(viewer_name):
             break
         parent_item_type_with_viewer = parent_item_type_with_viewer.__base__
     if parent_viewer_class:
-        viewer_class_name = '%sViewer' % item_type.__name__
-        result = ViewerMetaClass.__new__(ViewerMetaClass, viewer_class_name, (parent_viewer_class,), {'accepted_item_type': item_type, 'viewer_name': viewer_name})
+        class_name = '%sViewer' % item_type.__name__
+        bases = (parent_viewer_class,)
+        attrs = {'accepted_item_type': item_type, 'viewer_name': viewer_name}
+        result = ViewerMetaClass.__new__(ViewerMetaClass, class_name, bases, attrs)
         return result
     else:
         return None
