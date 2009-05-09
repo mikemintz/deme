@@ -121,6 +121,7 @@ class NewTextCommentForm(forms.ModelForm):
     item = HiddenModelChoiceField(Item.objects)
     item_version_number = forms.IntegerField(widget=forms.HiddenInput())
     item_index = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    name = forms.CharField(label=_("Comment title"), help_text=_("A brief description of the comment"), widget=forms.TextInput)
     class Meta:
         model = TextComment
         fields = ['name', 'description', 'body', 'item', 'item_version_number']

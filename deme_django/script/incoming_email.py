@@ -46,10 +46,13 @@ def main():
         send_mail('Re: %s' % subject, 'Error: Deme could not create your comment because you do not have permission to comment on the item with id %s' % item_id, to_email, [from_email])
         return 
 
+    comment_name = subject
+
+    # The code commented below ignores the subject and just makes the comment name "Re: <commented item name>"
     #TODO permissions to view name: technically you could figure out the name of an item by commenting on it here (same issue in cms/views.py)
-    comment_name = item.display_name()
-    if not comment_name.lower().startswith('re: '):
-        comment_name = 'Re: %s' % comment_name
+    #comment_name = item.display_name()
+    #if not comment_name.lower().startswith('re: '):
+    #    comment_name = 'Re: %s' % comment_name
     
     comment = TextComment(item=item, item_version_number=item.version_number, name=comment_name, body=body, from_contact_method=email_contact_method)
     comment.name = comment_name #TODO this is a hack due to multiple inheritance bug in Django. remove it when bug is fixed

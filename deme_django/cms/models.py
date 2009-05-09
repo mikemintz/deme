@@ -1664,11 +1664,7 @@ class ActionNotice(models.Model):
                 if comment_creator_email_address:
                     from_email_name = action_agent_name
                     from_email_address = comment_creator_email_address
-                    subject = '[%s] New comment on %s' % (subscribed_item_name, topmost_item_name)
-                else:
-                    subject = '[%s] %s commented on %s' % (subscribed_item_name, action_agent_name, topmost_item_name)
-                if issubclass(comment.item.actual_item_type(), Comment):
-                    subject = 'Re: ' + subject
+                subject = comment_name
                 template_name = 'comment'
                 viewer.context['comment'] = comment
             else:
