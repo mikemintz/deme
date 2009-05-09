@@ -22,6 +22,9 @@ from django.core.exceptions import ObjectDoesNotExist
 #TODO let people comment on specific versions, like 123.2@deme.stanford.edu
 
 def main():
+    assert len(sys.argv) == 2
+    mailbox = sys.argv[1]
+
     permission_cache = PermissionCache()
     msg = email.message_from_file(sys.stdin)
     subject = msg['Subject']
@@ -31,7 +34,7 @@ def main():
         body = msg.get_payload()
     from_email = email.utils.parseaddr(msg['From'])[1]
     to_email = email.utils.parseaddr(msg['To'])[1]
-    item_id = to_email.split('@')[0]
+    item_id = mailbox
     try:
         email_contact_method = EmailContactMethod.objects.get(email=from_email)
     except ObjectDoesNotExist:
