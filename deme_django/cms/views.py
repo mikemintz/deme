@@ -342,7 +342,6 @@ class ItemViewer(Viewer):
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, EditActionNotice, CreateActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=viewable_action_notices.values('pk').query)
-            #TODO check permissions of relation action notices from item
             for action_notice in specific_action_notices:
                 action_notice_pk_to_object_map[action_notice.pk] = action_notice
 
