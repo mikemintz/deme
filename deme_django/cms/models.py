@@ -2110,13 +2110,16 @@ def all_item_types():
     result = [x for x in models.loading.get_models() if issubclass(x, Item)]
     return result
 
-def get_item_type_with_name(name):
+def get_item_type_with_name(name, case_sensitive=True):
     """
-    Return the item type class with the given name (case-sensitive), or return
-    None if there is no item type with the name.
+    Return the item type class with the given name (case-sensitive or not,
+    as specified), or return None if there is no item type with the name.
     """
     try:
-        return (x for x in all_item_types() if x.__name__ == name).next()
+        if case_sensitive:
+            return (x for x in all_item_types() if x.__name__ == name).next()
+        else:
+            return (x for x in all_item_types() if x.__name__.lower() == name.lower()).next()
     except StopIteration:
         return None
 

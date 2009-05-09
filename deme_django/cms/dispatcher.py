@@ -8,7 +8,8 @@ from cms.models import *
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.utils import datastructures, simplejson
-from cms.views import get_viewer_class_for_viewer_name, get_current_site, ItemViewer
+from cms.views import ItemViewer
+from cms.base_viewer import get_viewer_class_for_viewer_name, get_current_site
 from django.conf import settings
 
 # Import viewers from modules so they get registered with ViewerMetaClass
