@@ -160,36 +160,47 @@ class Viewer(object):
         # in the init_from_* methods, based on how the viewer was loaded.
         pass
 
-    def cur_agent_can_global(self, ability):
+    def cur_agent_can_global(self, ability, wildcard_suffix=False):
         """
         Return whether the currently logged in agent has the given global
-        ability.
+        ability. If wildcard_suffix=True, then return True if the agent has
+        **any** global ability whose first word is the specified ability.
         """
-        return self.permission_cache.agent_can_global(self.cur_agent, ability)
+        if wildcard_suffix:
+            global_abilities = self.permission_cache.global_abilities(self.cur_agent)
+            return any(x.startswith(ability) for x in global_abilities)
+        else:
+            return self.permission_cache.agent_can_global(self.cur_agent, ability)
 
-    def cur_agent_can(self, ability, item):
+    def cur_agent_can(self, ability, item, wildcard_suffix=False):
         """
         Return whether the currently logged in agent has the given item ability
-        with respect to the given item.
+        with respect to the given item. If wildcard_suffix=True, then return
+        True if the agent has **any** ability whose first word is the specified
+        ability.
         """
-        return self.permission_cache.agent_can(self.cur_agent, ability, item)
+        if wildcard_suffix:
+            abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, item)
+            return any(x.startswith(ability) for x in abilities_for_item)
+        else:
+            return self.permission_cache.agent_can(self.cur_agent, ability, item)
 
-    def require_global_ability(self, ability):
+    def require_global_ability(self, ability, wildcard_suffix=False):
         """
         Raise a DemePermissionDenied exception if the current agent does not
         have the specified global ability.
         """
         #TODO put the details in the exception so we can display them
-        if not self.cur_agent_can_global(ability):
+        if not self.cur_agent_can_global(ability, wildcard_suffix):
             raise DemePermissionDenied
 
-    def require_ability(self, ability, item):
+    def require_ability(self, ability, item, wildcard_suffix=False):
         """
         Raise a DemePermissionDenied exception if the current agent does not
         have the specified ability with respect to the specified item.
         """
         #TODO put the details in the exception so we can display them
-        if not self.cur_agent_can(ability, item):
+        if not self.cur_agent_can(ability, item, wildcard_suffix):
             raise DemePermissionDenied
 
     def render_error(self, request_class, title, body):

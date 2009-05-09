@@ -434,9 +434,7 @@ class ItemViewer(Viewer):
     def item_edit_html(self, form=None):
         self.context['action_title'] = 'Edit'
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if not can_edit:
-            raise DemePermissionDenied
+        self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
         if form is None:
             fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
             form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
@@ -455,9 +453,7 @@ class ItemViewer(Viewer):
     @require_POST
     def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if not can_edit:
-            raise DemePermissionDenied
+        self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x[0] == 'edit']
         form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
@@ -472,7 +468,7 @@ class ItemViewer(Viewer):
     @require_POST
     def item_deactivate_html(self):
         if not self.item.can_be_deleted():
-            raise DemePermissionDenied
+            return self.render_error(HttpResponseBadRequest, 'Cannot delete', "This item may not be deleted")
         self.require_ability('delete', self.item)
         self.item.deactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -481,7 +477,7 @@ class ItemViewer(Viewer):
     @require_POST
     def item_reactivate_html(self):
         if not self.item.can_be_deleted():
-            raise DemePermissionDenied
+            return self.render_error(HttpResponseBadRequest, 'Cannot delete', "This item may not be deleted")
         self.require_ability('delete', self.item)
         self.item.reactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -490,7 +486,7 @@ class ItemViewer(Viewer):
     @require_POST
     def item_destroy_html(self):
         if not self.item.can_be_deleted():
-            raise DemePermissionDenied
+            return self.render_error(HttpResponseBadRequest, 'Cannot delete', "This item may not be deleted")
         self.require_ability('delete', self.item)
         self.item.destroy(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -986,9 +982,7 @@ class TextDocumentViewer(ItemViewer):
     def item_edit_html(self, form=None):
         self.context['action_title'] = 'Edit'
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if not can_edit:
-            raise DemePermissionDenied
+        self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
 
         transclusions = Transclusion.objects.filter(from_item=self.item, from_item_version_number=self.item.version_number).order_by('-from_item_index')
         body_as_list = list(self.item.body)
@@ -1019,9 +1013,7 @@ class TextDocumentViewer(ItemViewer):
     @require_POST
     def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        can_edit = any(x.split(' ')[0] == 'edit' for x in abilities_for_item)
-        if not can_edit:
-            raise DemePermissionDenied
+        self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
         form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
