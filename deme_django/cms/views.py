@@ -27,6 +27,14 @@ from urlparse import urljoin
 # Models, forms, and fields
 ###############################################################################
 
+class JustTextNoInputWidget(forms.Widget):
+    """A form widget that just displays text without any sort of input."""
+    def render(self, name, value, attrs=None):
+        if value is None: value = ''
+        if attrs is None: attrs = {}
+        #TODO this is small and gray
+        return """<span id="%(id)s">%(value)s</span>""" % {'id': attrs.get('id', ''), 'value': value}
+
 class AjaxModelChoiceWidget(forms.Widget):
     """Ajax auto-complete widget for ForeignKey fields."""
     def render(self, name, value, attrs=None):
@@ -105,12 +113,14 @@ class HiddenModelChoiceField(forms.ModelChoiceField):
 class AddSubPathForm(forms.ModelForm):
     aliased_item = super(models.ForeignKey, CustomUrl._meta.get_field_by_name('aliased_item')[0]).formfield(queryset=CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.to._default_manager.complex_filter(CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.field_name)
     parent_url = super(models.ForeignKey, CustomUrl._meta.get_field_by_name('parent_url')[0]).formfield(queryset=CustomUrl._meta.get_field_by_name('parent_url')[0].rel.to._default_manager.complex_filter(CustomUrl._meta.get_field_by_name('parent_url')[0].rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=CustomUrl._meta.get_field_by_name('parent_url')[0].rel.field_name)
+    action_summary = forms.CharField(label=_("Action summary"), help_text=_("Reason for adding this subpath"), widget=forms.TextInput, required=False)
     class Meta:
         model = CustomUrl
         fields = ['aliased_item', 'viewer', 'action', 'query_string', 'format', 'parent_url', 'path']
 
 class NewMembershipForm(forms.ModelForm):
     item = AjaxModelChoiceField(Item.objects)
+    action_summary = forms.CharField(label=_("Action summary"), help_text=_("Reason for adding this item"), widget=forms.TextInput, required=False)
     class Meta:
         model = Membership
         fields = ['item']
@@ -119,15 +129,16 @@ class NewTextCommentForm(forms.ModelForm):
     item = HiddenModelChoiceField(Item.objects)
     item_version_number = forms.IntegerField(widget=forms.HiddenInput())
     item_index = forms.IntegerField(widget=forms.HiddenInput(), required=False)
-    name = forms.CharField(label=_("Comment title"), help_text=_("A brief description of the comment"), widget=forms.TextInput)
+    name = forms.CharField(label=_("Comment title"), help_text=_("A brief description of the comment"), widget=forms.TextInput, required=False)
     class Meta:
         model = TextComment
-        fields = ['name', 'description', 'body', 'item', 'item_version_number']
+        fields = ['name', 'body', 'item', 'item_version_number']
 
 class NewDemeAccountForm(forms.ModelForm):
     agent = AjaxModelChoiceField(Agent.objects)
     password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
+    action_summary = forms.CharField(label=_("Action summary"), help_text=_("Reason for creating this item"), widget=forms.TextInput, required=False)
     class Meta:
         model = DemeAccount
         exclude = ['password']
@@ -147,6 +158,7 @@ class NewDemeAccountForm(forms.ModelForm):
 class EditDemeAccountForm(forms.ModelForm):
     password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
+    action_summary = forms.CharField(label=_("Action summary"), help_text=_("Reason for editing this item"), widget=forms.TextInput, required=False)
     class Meta:
         model = DemeAccount
         exclude = ['password', 'agent']
@@ -182,7 +194,18 @@ def get_form_class_for_item_type(update_or_create, item_type, fields=None):
             return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
         else:
             return f.formfield()
-    return forms.models.modelform_factory(item_type, exclude=exclude, fields=fields, formfield_callback=formfield_callback)
+
+    #TODO check modelform_factory to see if there are updates to this
+    class Meta:
+        pass
+    setattr(Meta, 'model', item_type)
+    setattr(Meta, 'fields', fields)
+    setattr(Meta, 'exclude', exclude)
+    class_name = item_type.__name__ + 'Form'
+    attrs = {'Meta': Meta, 'formfield_callback': formfield_callback}
+    attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("Reason for %s this item" % ('editing' if update_or_create == 'update' else 'creating')), widget=forms.TextInput, required=False)
+    form_class = forms.models.ModelFormMetaclass(class_name, (forms.models.ModelForm,), attrs)
+    return form_class
 
 
 ###############################################################################
@@ -1098,6 +1121,13 @@ class TextCommentViewer(TextDocumentViewer):
             form_initial = dict(self.request.GET.items())
             form_class = NewTextCommentForm
             form = form_class(initial=form_initial)
+            if issubclass(item.actual_item_type(), Comment):
+                comment_name = item.display_name()
+                if not comment_name.lower().startswith('re: '):
+                    comment_name = 'Re: %s' % comment_name
+                form.fields['name'].initial = comment_name
+                form.fields['name'].widget = JustTextNoInputWidget()
+                form.fields['name'].help_text = None
         template = loader.get_template('item/new.html')
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)

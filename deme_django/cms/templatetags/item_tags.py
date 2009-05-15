@@ -11,7 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timesince import timesince
-from django.utils.text import capfirst
+from django.utils.text import capfirst, truncate_words
 from django.utils import simplejson
 from django.utils.safestring import mark_safe
 from urlparse import urljoin
@@ -562,7 +562,13 @@ class CalculateComments(template.Node):
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
                 result.append("""<div style="float: right;"><a href="%s?item=%s&amp;item_version_number=%s&amp;redirect=%s">[+] Reply</a></div>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
-                comment_name = escape(get_viewable_name(context, comment))
+                if issubclass(comment.item.actual_item_type(), Comment):
+                    if agentcan_helper(context, 'view body', comment):
+                        comment_name = escape(truncate_words(comment.body, 4))
+                    else:
+                        comment_name = comment.display_name(can_view_name_field=False)
+                else:
+                    comment_name = escape(get_viewable_name(context, comment))
                 result.append("""<a href="%s">%s</a>""" % (comment.get_absolute_url(), comment_name))
                 if agentcan_helper(context, 'view creator', comment):
                     result.append('by <a href="%s">%s</a>' % (comment.creator.get_absolute_url(), escape(get_viewable_name(context, comment.creator))))
@@ -728,7 +734,7 @@ class CalculateActionNotices(template.Node):
         if agentcan_helper(context, 'view action_notices', item):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
             result.append(u'<table class="list">')
-            result.append(u'<tr><th>Date/Time</th><th>Agent</th><th>Action</th><th>Item</th><th>Description</th></tr>')
+            result.append(u'<tr><th>Date/Time</th><th>Agent</th><th>Action</th><th>Item</th><th>Reason</th></tr>')
             action_notices = ActionNotice.objects.filter(Q(item=item) | Q(action_agent=item)).order_by('action_time')
             action_notice_pk_to_object_map = {}
             for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
@@ -868,7 +874,7 @@ class EmbeddedItem(template.Node):
         return "<EmbeddedItemNode>"
 
     def render(self, context):
-        from cms.views import get_viewer_class_by_name
+        from cms.base_viewer import get_viewer_class_by_name
         viewer_name = self.viewer_name.resolve(context)
         viewer_class = get_viewer_class_by_name(viewer_name)
         if viewer_class is None:

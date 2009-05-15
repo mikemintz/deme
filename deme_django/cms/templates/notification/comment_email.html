@@ -9,7 +9,8 @@ commented on
 </p>
 
 <p>
-<a href="{{ url_prefix }}{{ comment.get_absolute_url }}">{% viewable_name comment %}</a>
+<a href="{{ url_prefix }}{{ topmost_item.get_absolute_url }}?highlighted_comment={{ comment.pk }}">Click here to view this comment in context</a>
+{#TODO make the comment highlighted when you go there #}
 </p>
 
 <hr />

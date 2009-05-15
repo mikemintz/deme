@@ -5,7 +5,7 @@
 {% subclassfields %}
 
 {% if folio %}
-<div style="font-size: larger; margin: 10px 0 10px 0;">Folio</div>
+<div style="font-size: larger; margin: 10px 0 10px 0;"><a href="{{ folio.get_absolute_url }}">Folio</a></div>
 <div>
     {% embed 'folio' folio %}
 </div>
