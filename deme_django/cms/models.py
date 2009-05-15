@@ -1830,7 +1830,7 @@ signals.post_save.connect(_action_notice_post_save_handler, sender=DeactivateAct
 
 class ReactivateActionNotice(ActionNotice):
     """
-    A DeactivateActionNotice is generated whenever someone reactivates an item.
+    A ReactivateActionNotice is generated whenever someone reactivates an item.
     """
     pass
 signals.post_save.connect(_action_notice_post_save_handler, sender=ReactivateActionNotice, dispatch_uid='ReactivateActionNotice post_save')
@@ -1838,7 +1838,7 @@ signals.post_save.connect(_action_notice_post_save_handler, sender=ReactivateAct
 
 class DestroyActionNotice(ActionNotice):
     """
-    A DeactivateActionNotice is generated whenever someone destroys an item.
+    A DestroyActionNotice is generated whenever someone destroys an item.
     """
     pass
 signals.post_save.connect(_action_notice_post_save_handler, sender=DestroyActionNotice, dispatch_uid='DestroyActionNotice post_save')
@@ -1846,14 +1846,14 @@ signals.post_save.connect(_action_notice_post_save_handler, sender=DestroyAction
 
 class CreateActionNotice(ActionNotice):
     """
-    A DeactivateActionNotice is generated whenever someone creates an item.
+    A CreateActionNotice is generated whenever someone creates an item.
     """
     pass
 signals.post_save.connect(_action_notice_post_save_handler, sender=CreateActionNotice, dispatch_uid='CreateActionNotice post_save')
 
 class EditActionNotice(ActionNotice):
     """
-    A DeactivateActionNotice is generated whenever someone edits an item.
+    An EditActionNotice is generated whenever someone edits an item.
     """
     pass
 signals.post_save.connect(_action_notice_post_save_handler, sender=EditActionNotice, dispatch_uid='EditActionNotice post_save')

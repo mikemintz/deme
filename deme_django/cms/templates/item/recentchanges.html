@@ -3,17 +3,54 @@
 {% block content %}
 
 {% for details in action_notices %}
-<div style="margin-bottom: 5px; border: 1px #aaa solid; background: #ddd; -moz-border-radius: 8px; padding: 5px;">
-    <span title="{{ details.action_notice.action_time|date:"Y-m-d H:m:s" }}">
+<div style="margin-bottom: 2px; border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px;">
+    <span title="{{ details.action_notice.action_time|date:"Y-m-d H:m:s" }}" style="width: 13em; display: inline-block;">
         {{ details.action_notice.action_time|timesince }}
         ago
     </span>
-    Type:
-    {{ details.type }}
+    
+    {% ifequal details.type "CreateActionNotice" %}
+        <span style="width: 25em; display: inline-block;">
+            <a href="{{ details.action_notice.action_agent.get_absolute_url }}">{% viewable_name details.action_notice.action_agent %}</a> 
+            created 
+            <a href="{{ details.action_notice.item.get_absolute_url }}">{% viewable_name details.action_notice.item %}</a>
+        </span>
+    {% endifequal %}
 
-    <a href="{{ details.action_notice.item.get_absolute_url }}">{% viewable_name details.action_notice.item %}</a>
-    Made by:
-    <a href="{{ details.action_notice.action_agent.get_absolute_url }}">{% viewable_name details.action_notice.action_agent %}</a> 
+    {% ifequal details.type "EditActionNotice" %}
+        <span style="width: 25em; display: inline-block;">
+            <a href="{{ details.action_notice.action_agent.get_absolute_url }}">{% viewable_name details.action_notice.action_agent %}</a> 
+            edited
+            <a href="{{ details.action_notice.item.get_absolute_url }}">{% viewable_name details.action_notice.item %}</a>
+        </span>
+    {% endifequal %}
+
+    {% ifequal details.type "DestroyActionNotice" %}
+        <span style="width: 25em; display: inline-block;">
+            <a href="{{ details.action_notice.action_agent.get_absolute_url }}">{% viewable_name details.action_notice.action_agent %}</a> 
+            destroyed
+            <a href="{{ details.action_notice.item.get_absolute_url }}">{% viewable_name details.action_notice.item %}</a>
+        </span>
+    {% endifequal %}
+
+    {% ifequal details.type "DeactivateActionNotice" %}
+        <span style="width: 25em; display: inline-block;">
+            <a href="{{ details.action_notice.action_agent.get_absolute_url }}">{% viewable_name details.action_notice.action_agent %}</a> 
+            deactivated
+            <a href="{{ details.action_notice.item.get_absolute_url }}">{% viewable_name details.action_notice.item %}</a>
+        </span>    
+    {% endifequal %}
+
+    {% ifequal details.type "ReactivatedActionNotice" %}
+        <span style="width: 25em; display: inline-block;">
+            <a href="{{ details.action_notice.action_agent.get_absolute_url }}">{% viewable_name details.action_notice.action_agent %}</a> 
+            reactivated
+            <a href="{{ details.action_notice.item.get_absolute_url }}">{% viewable_name details.action_notice.item %}</a>
+        </span>
+    {% endifequal %}
+
+    <i>{{ details.action_notice.action_summary }}</i>
+
 </div>
 {% endfor %}
 
