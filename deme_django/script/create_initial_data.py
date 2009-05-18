@@ -10,6 +10,7 @@ from deme_django import settings
 setup_environ(settings)
 
 from cms.models import *
+from modules.webauth.models import *
 from django import db
 import subprocess
 import re

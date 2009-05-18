@@ -1,4 +1,5 @@
-from django.template import Context, loader
+#TODO completely clean up code
+
 from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from cms.views import AuthenticationMethodViewer
 from cms.models import *
