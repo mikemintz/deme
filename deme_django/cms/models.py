@@ -681,8 +681,8 @@ class OpenidAccount(AuthenticationMethod):
     introduced_abilities = frozenset(['view openid_url'])
     introduced_global_abilities = frozenset()
     class Meta:
-        verbose_name = _('OpenID authentication method')
-        verbose_name_plural = _('OpenID authentication methods')
+        verbose_name = _('OpenID account')
+        verbose_name_plural = _('OpenID accounts')
 
     # Fields
     openid_url = models.CharField(_('OpenID URL'), max_length=2047, unique=True)
@@ -701,8 +701,8 @@ class WebauthAccount(AuthenticationMethod):
     introduced_abilities = frozenset(['view username', 'edit username'])
     introduced_global_abilities = frozenset()
     class Meta:
-        verbose_name = _('WebAuth authentication method')
-        verbose_name_plural = _('WebAuth authentication methods')
+        verbose_name = _('WebAuth account')
+        verbose_name_plural = _('WebAuth accounts')
 
     # Fields
     username = models.CharField(_('username'), max_length=255, unique=True)
@@ -724,8 +724,8 @@ class DemeAccount(AuthenticationMethod):
                                       'edit username', 'edit password', 'edit password_question', 'edit password_answer'])
     introduced_global_abilities = frozenset()
     class Meta:
-        verbose_name = _('password authentication method')
-        verbose_name_plural = _('password authentication methods')
+        verbose_name = _('password account')
+        verbose_name_plural = _('password accounts')
 
     # Fields
     username          = models.CharField(_('username'), max_length=255, unique=True)
