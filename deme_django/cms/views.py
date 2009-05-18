@@ -491,7 +491,7 @@ class ItemViewer(Viewer):
     @require_POST
     def item_deactivate_html(self):
         if not self.item.can_be_deleted():
-            return self.render_error(HttpResponseBadRequest, 'Cannot delete', "This item may not be deleted")
+            return self.render_error('Cannot delete', "This item may not be deleted")
         self.require_ability('delete', self.item)
         self.item.deactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -500,7 +500,7 @@ class ItemViewer(Viewer):
     @require_POST
     def item_reactivate_html(self):
         if not self.item.can_be_deleted():
-            return self.render_error(HttpResponseBadRequest, 'Cannot delete', "This item may not be deleted")
+            return self.render_error('Cannot delete', "This item may not be deleted")
         self.require_ability('delete', self.item)
         self.item.reactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -509,7 +509,7 @@ class ItemViewer(Viewer):
     @require_POST
     def item_destroy_html(self):
         if not self.item.can_be_deleted():
-            return self.render_error(HttpResponseBadRequest, 'Cannot delete', "This item may not be deleted")
+            return self.render_error('Cannot delete', "This item may not be deleted")
         self.require_ability('delete', self.item)
         self.item.destroy(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -533,7 +533,7 @@ class ItemViewer(Viewer):
         for permission_datum in permission_data.itervalues():
             ability = permission_datum['ability']
             if ability not in possible_abilities:
-                return self.render_error(HttpResponseBadRequest, 'Form Error', "Invalid ability")
+                return self.render_error('Form Error', "Invalid ability")
             is_allowed = (permission_datum.get('is_allowed') == 'on')
             permission_type = permission_datum['permission_type']
             agent_or_collection_id = permission_datum['agent_or_collection_id']
@@ -555,7 +555,7 @@ class ItemViewer(Viewer):
                 else:
                     permission = EveryoneItemPermission()
             else:
-                return self.render_error(HttpResponseBadRequest, 'Form Error', "Invalid permission_type")
+                return self.render_error('Form Error', "Invalid permission_type")
             permission.ability = ability
             permission.is_allowed = is_allowed
             permission_key_fn = lambda x: (x.ability, getattr(x, 'agent', None), getattr(x, 'collection', None))
@@ -648,7 +648,7 @@ class ContactMethodViewer(ItemViewer):
         try:
             agent = Item.objects.get(pk=self.request.REQUEST.get('agent'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding a contact method to")
+            return self.render_error('Invalid URL', "You must specify the agent you are adding a contact method to")
         self.require_ability('add_contact_method', agent)
         if form is None:
             form_initial = dict(self.request.GET.items())
@@ -684,7 +684,7 @@ class AuthenticationMethodViewer(ItemViewer):
         try:
             agent = Item.objects.get(pk=self.request.REQUEST.get('agent'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding an authentication method to")
+            return self.render_error('Invalid URL', "You must specify the agent you are adding an authentication method to")
         self.require_ability('add_authentication_method', agent)
         if form is None:
             form_initial = dict(self.request.GET.items())
@@ -730,10 +730,10 @@ class AuthenticationMethodViewer(ItemViewer):
                         new_agent = Agent.objects.get(pk=new_agent_id)
                     except ObjectDoesNotExist:
                         # There is no Agent with the specified id.
-                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+                        return self.render_error("Authentication Failed", "There was a problem with your login form")
                     if not new_agent.active:
                         # The specified agent is inactive.
-                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+                        return self.render_error("Authentication Failed", "There was a problem with your login form")
                     self.require_ability('login_as', new_agent)
                     self.request.session['cur_agent_id'] = new_agent.pk
                     full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
@@ -772,17 +772,17 @@ class DemeAccountViewer(AuthenticationMethodViewer):
             password_authentication_method = DemeAccount.objects.get(username=username)
         except ObjectDoesNotExist:
             # No DemeAccount has this username.
-            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+            return self.render_error("Authentication Failed", "There was a problem with your login form")
         if not password_authentication_method.active or not password_authentication_method.agent.active:
             # The Agent or DemeAccount is inactive.
-            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+            return self.render_error("Authentication Failed", "There was a problem with your login form")
         if password_authentication_method.check_nonced_password(hashed_password, nonce):
             self.request.session['cur_agent_id'] = password_authentication_method.agent.pk
             full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
             return HttpResponseRedirect(full_redirect)
         else:
             # The password given does not correspond to the DemeAccount.
-            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+            return self.render_error("Authentication Failed", "There was a problem with your login form")
 
     def type_getencryptionmethod_html(self):
         # Return a JSON response with the details about the DemeAccount
@@ -834,7 +834,7 @@ class ViewerRequestViewer(ItemViewer):
     def item_addsubpath_html(self):
         form = AddSubPathForm(self.request.POST, self.request.FILES)
         if form.data['parent_url'] != str(self.item.pk):
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the parent url you are extending")
+            return self.render_error('Invalid URL', "You must specify the parent url you are extending")
         self.require_ability('add_sub_path', self.item)
         try:
             custom_url = CustomUrl.objects.get(parent_url=self.item, path=form.data['path'])
@@ -877,7 +877,7 @@ class CollectionViewer(ItemViewer):
         try:
             member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
+            return self.render_error('Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('add_self', self.item))):
             raise DemePermissionDenied
         try:
@@ -895,7 +895,7 @@ class CollectionViewer(ItemViewer):
         try:
             member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
+            return self.render_error('Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('remove_self', self.item))):
             raise DemePermissionDenied
         try:
@@ -1041,7 +1041,7 @@ class TextCommentViewer(TextDocumentViewer):
         try:
             item = Item.objects.get(pk=self.request.REQUEST.get('item'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
+            return self.render_error('Invalid URL', "You must specify the item you are commenting on")
         self.require_ability('comment_on', item)
         if form is None:
             form_initial = dict(self.request.GET.items())
@@ -1065,7 +1065,7 @@ class TextCommentViewer(TextDocumentViewer):
         try:
             item = Item.objects.get(pk=self.request.POST.get('item'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
+            return self.render_error('Invalid URL', "You must specify the item you are commenting on")
         self.require_ability('comment_on', item)
         form_class = NewTextCommentForm
         form = form_class(self.request.POST, self.request.FILES)
@@ -1101,7 +1101,7 @@ class TransclusionViewer(ItemViewer):
         try:
             from_item = Item.objects.get(pk=self.request.REQUEST.get('from_item'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are adding a transclusion to")
+            return self.render_error('Invalid URL', "You must specify the item you are adding a transclusion to")
         self.require_ability('add_transclusion', from_item)
         if form is None:
             form_initial = dict(self.request.GET.items())
@@ -1145,18 +1145,18 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
                 start_index = int(start_index)
                 length = int(length)
             except ValueError:
-                return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not parse the excerpt data in the form")
+                return self.render_error('Invalid Form Data', "Could not parse the excerpt data in the form")
             try:
                 text_document = TextDocument.objects.get(pk=text_document_id)
                 text_document.copy_fields_from_version(text_document_version_number)
             except:
-                return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not find the specified TextDocument")
+                return self.render_error('Invalid Form Data', "Could not find the specified TextDocument")
             self.require_ability('view body', text_document)
             body = text_document.body[start_index:start_index+length]
             excerpt = TextDocumentExcerpt(body=body, text_document=text_document, text_document_version_number=text_document_version_number, start_index=start_index, length=length)
             excerpts.append(excerpt)
         if not excerpts:
-            return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "You must submit at least one excerpt")
+            return self.render_error('Invalid Form Data', "You must submit at least one excerpt")
         collection = Collection()
         collection.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         for excerpt in excerpts:

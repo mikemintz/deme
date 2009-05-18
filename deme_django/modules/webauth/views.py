@@ -1,6 +1,4 @@
-#TODO completely clean up code
-
-from django.http import HttpResponseRedirect, HttpResponseBadRequest
+from django.http import HttpResponseRedirect
 from cms.views import AuthenticationMethodViewer
 from cms.models import *
 from modules.webauth.models import *
@@ -13,20 +11,25 @@ class WebauthAccountViewer(AuthenticationMethodViewer):
     viewer_name = 'webauth'
 
     def type_login_html(self):
+        # We must be using SSL for WebAuth to work
         if not self.request.is_secure():
             return HttpResponseRedirect('https://%s%s' % (self.request.get_host(), self.request.get_full_path()))
+
+        # Assert that the proper environment variables are set
         if self.request.META.get('AUTH_TYPE') != 'WebAuth' or not self.request.META.get('REMOTE_USER'):
-            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "WebAuth is not supported in this installation")
+            return self.render_error("WebAuth Error", "WebAuth is not supported in this installation")
+
+        # Find the WebauthAccount
         username = self.request.META['REMOTE_USER']
         try:
-            webauth_authentication_method = WebauthAccount.objects.get(username=username)
+            webauth_account = WebauthAccount.objects.get(username=username, active=True, agent__active=True)
         except ObjectDoesNotExist:
-            # No WebauthAccount has this username.
-            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that webauth username")
-        if not webauth_authentication_method.active or not webauth_authentication_method.agent.active: 
-            # The Agent or WebauthAccount is inactive.
-            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that webauth username")
-        self.request.session['cur_agent_id'] = webauth_authentication_method.agent.pk
+            return self.render_error("WebAuth Error", "There is no active agent with that webauth username")
+
+        # Record the user's login in the session
+        self.request.session['cur_agent_id'] = webauth_account.agent.pk
+
+        # Redirect the browser to the loggedinorout page
         redirect = self.request.GET['redirect']
         full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
         return HttpResponseRedirect(full_redirect)

@@ -203,7 +203,7 @@ class Viewer(object):
         if not self.cur_agent_can(ability, item, wildcard_suffix):
             raise DemePermissionDenied
 
-    def render_error(self, request_class, title, body):
+    def render_error(self, title, body, request_class=HttpResponseBadRequest):
         """
         Return an HttpResponse (of type request_class) that displays a simple
         error page with the specified title and body.
@@ -304,7 +304,7 @@ class Viewer(object):
     def dispatch(self):
         if hasattr(self.request, 'virtual_requests_too_deep'):
             if self.request.virtual_requests_too_deep(MAXIMUM_VIRTUAL_REQUEST_DEPTH):
-                return self.render_error(HttpResponseNotFound, "Exceeded maximum recursion depth", 'The depth of embedded pages is too high.')
+                return self.render_error("Exceeded maximum recursion depth", 'The depth of embedded pages is too high.', HttpResponseNotFound)
         if self.noun is None:
             action_method = getattr(self, 'type_%s_%s' % (self.action, self.format), None)
         else:
@@ -321,7 +321,7 @@ class Viewer(object):
             try:
                 return action_method()
             except DemePermissionDenied:
-                return self.render_error(HttpResponseBadRequest, 'Permission Denied', "You do not have permission to perform this action")
+                return self.render_error('Permission Denied', "You do not have permission to perform this action")
         else:
             return None
 
@@ -336,7 +336,7 @@ class Viewer(object):
                 body = 'There is no item %s.' % self.noun
             else:
                 body = 'There is no item %s version %s.' % (self.noun, version)
-        return self.render_error(HttpResponseNotFound, title, body)
+        return self.render_error(title, body, HttpResponseNotFound)
 
     def _set_default_layout(self):
         cur_node = self.cur_site.default_layout
