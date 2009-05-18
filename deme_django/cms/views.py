@@ -745,11 +745,7 @@ class AuthenticationMethodViewer(ItemViewer):
             # The user just submitted a login form, so we try to authenticate.
             redirect = self.request.GET['redirect']
             login_type = self.request.POST['login_type']
-            if login_type == 'logout':
-                if 'cur_agent_id' in self.request.session:
-                    del self.request.session['cur_agent_id']
-                return HttpResponseRedirect(redirect)
-            elif login_type == 'password':
+            if login_type == 'password':
                 nonce = self.request.session['login_nonce']
                 del self.request.session['login_nonce']
                 username = self.request.POST['username']
