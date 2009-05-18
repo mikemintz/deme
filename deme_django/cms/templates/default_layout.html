@@ -153,20 +153,19 @@
             <td style="vertical-align: top; text-align: right; padding: 0;">
                 <div style="float: right;">
                 {% ifequal cur_agent.item_type_string 'AnonymousAgent' %}
-                <div style="display: none;" id="login_dialog_password">
-                    <form name="password_form" onsubmit="$('#login_dialog_openid').dialog('hide'); encrypt_password(); return false;">
+                <div style="display: none;" id="login_dialog_password" title="Login">
+                    <form name="password_form" onsubmit="$('#login_dialog_password').dialog('hide'); encrypt_password(); return false;">
                         <div>Username:</div>
                         <div><input type="text" name="username" /></div>
                         <div>Password:</div>
                         <div><input type="password" name="password" /></div>
                     </form>
-
                     <form name="real_password_form" action="{% url item_type_url viewer="demeaccount",action="login" %}?redirect={{ full_path|urlencode }}" method="post">
                         <input type="hidden" name="username" />
                         <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
                     </form>
                 </div>
-                <div style="display: none;" id="login_dialog_openid">
+                <div style="display: none;" id="login_dialog_openid" title="Login">
                     <form name="openid_form" action="{% url item_type_url viewer="openidaccount",action="login" %}?redirect={{ full_path|urlencode }}" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
                         <label>OpenID URL: <input type="text" name="openid_url" /></label>
                     </form>
@@ -187,10 +186,14 @@
                             $('#login_dialog_password').dialog({
                                 autoOpen: false,
                                 buttons: {"Login": function(){$(this).dialog('close'); document.forms['password_form'].onsubmit()}, "Cancel": function(){$(this).dialog("close")} },
+                                modal: true,
+                                bgiframe: true,
                             });
                             $('#login_dialog_openid').dialog({
                                 autoOpen: false,
                                 buttons: {"Login": function(){$(this).dialog('close'); document.forms['openid_form'].submit()}, "Cancel": function(){$(this).dialog("close")} },
+                                modal: true,
+                                bgiframe: true,
                             });
                         });
                     </script>
