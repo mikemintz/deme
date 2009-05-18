@@ -711,89 +711,94 @@ class AuthenticationMethodViewer(ItemViewer):
             return self.type_new_html(form)
 
     def type_login_html(self):
-        """
-        This is the view that takes care of all URLs dealing with logging in
-        and logging out.
-        """
         self.context['action_title'] = 'Login'
         if self.request.method == 'GET':
-            # If getencryptionmethod is a key in the query string, return a JSON
-            # response with the details about the DemeAccount
-            # necessary for JavaScript to encrypt the password.
-            if 'getencryptionmethod' in self.request.GET:
-                username = self.request.GET['getencryptionmethod']
-                nonce = DemeAccount.get_random_hash()[:5]
-                self.request.session['login_nonce'] = nonce
-                try:
-                    password = DemeAccount.objects.get(username=username).password
-                    algo, salt, hsh = password.split('$')
-                    response_data = {'nonce':nonce, 'algo':algo, 'salt':salt}
-                except ObjectDoesNotExist:
-                    response_data = {'nonce':nonce, 'algo':'sha1', 'salt':'x'}
-                json_data = simplejson.dumps(response_data, separators=(',',':'))
-                return HttpResponse(json_data, mimetype='application/json')
-            # Otherwise, return the login.html page.
-            else:
-                login_as_agents = Agent.objects.filter(active=True).order_by('name')
-                login_as_agents = self.permission_cache.filter_items(self.cur_agent, 'login_as', login_as_agents)
-                self.permission_cache.filter_items(self.cur_agent, 'view name', login_as_agents)
-                template = loader.get_template('authenticationmethod/login.html')
-                self.context['redirect'] = self.request.GET['redirect']
-                self.context['login_as_agents'] = login_as_agents
-                return HttpResponse(template.render(self.context))
+            login_as_agents = Agent.objects.filter(active=True).order_by('name')
+            login_as_agents = self.permission_cache.filter_items(self.cur_agent, 'login_as', login_as_agents)
+            self.permission_cache.filter_items(self.cur_agent, 'view name', login_as_agents)
+            template = loader.get_template('authenticationmethod/login.html')
+            self.context['redirect'] = self.request.GET['redirect']
+            self.context['login_as_agents'] = login_as_agents
+            return HttpResponse(template.render(self.context))
         else:
             # The user just submitted a login form, so we try to authenticate.
             redirect = self.request.GET['redirect']
-            login_type = self.request.POST['login_type']
-            if login_type == 'password':
-                nonce = self.request.session['login_nonce']
-                del self.request.session['login_nonce']
-                username = self.request.POST['username']
-                hashed_password = self.request.POST['hashed_password']
-                try:
-                    password_authentication_method = DemeAccount.objects.get(username=username)
-                except ObjectDoesNotExist:
-                    # No DemeAccount has this username.
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-                if not password_authentication_method.active or not password_authentication_method.agent.active:
-                    # The Agent or DemeAccount is inactive.
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-                if password_authentication_method.check_nonced_password(hashed_password, nonce):
-                    self.request.session['cur_agent_id'] = password_authentication_method.agent.pk
-                    return HttpResponseRedirect(redirect)
-                else:
-                    # The password given does not correspond to the DemeAccount.
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-            elif login_type == 'login_as':
-                for key in self.request.POST.iterkeys():
-                    if key.startswith('login_as_'):
-                        new_agent_id = key.split('login_as_')[1]
-                        try:
-                            new_agent = Agent.objects.get(pk=new_agent_id)
-                        except ObjectDoesNotExist:
-                            # There is no Agent with the specified id.
-                            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-                        if not new_agent.active:
-                            # The specified agent is inactive.
-                            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-                        if self.permission_cache.agent_can(self.cur_agent, 'login_as', new_agent):
-                            self.request.session['cur_agent_id'] = new_agent.pk
-                            return HttpResponseRedirect(redirect)
-                        else:
-                            # The current agent does not have permission to login_as the specified agent.
-                            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-            # Invalid login_type parameter.
-            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+            for key in self.request.POST.iterkeys():
+                if key.startswith('login_as_'):
+                    new_agent_id = key.split('login_as_')[1]
+                    try:
+                        new_agent = Agent.objects.get(pk=new_agent_id)
+                    except ObjectDoesNotExist:
+                        # There is no Agent with the specified id.
+                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+                    if not new_agent.active:
+                        # The specified agent is inactive.
+                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+                    self.require_ability('login_as', new_agent)
+                    self.request.session['cur_agent_id'] = new_agent.pk
+                    full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
+                    return HttpResponseRedirect(full_redirect)
    
+    @require_POST
     def type_logout_html(self):
-        self.context['action_title'] = 'Logged out'
-        redirect = self.request.GET['redirect']
         if 'cur_agent_id' in self.request.session:
             del self.request.session['cur_agent_id']
+        redirect = self.request.GET['redirect']
+        full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
+        return HttpResponseRedirect(full_redirect)
+
+    def type_loggedinorout_html(self):
+        if self.cur_agent.item_type_string == 'AnonymousAgent':
+            self.context['action_title'] = 'Logged out'
+        else:
+            self.context['action_title'] = 'Logged in'
+        redirect = self.request.GET['redirect']
         self.context['redirect'] = redirect
-        template = loader.get_template('authenticationmethod/logout.html')
+        template = loader.get_template('authenticationmethod/loggedinorout.html')
         return HttpResponse(template.render(self.context))
  
+
+class DemeAccountViewer(AuthenticationMethodViewer):
+    accepted_item_type = DemeAccount
+    viewer_name = 'demeaccount'
+
+    def type_login_html(self):
+        redirect = self.request.GET['redirect']
+        nonce = self.request.session['login_nonce']
+        del self.request.session['login_nonce']
+        username = self.request.POST['username']
+        hashed_password = self.request.POST['hashed_password']
+        try:
+            password_authentication_method = DemeAccount.objects.get(username=username)
+        except ObjectDoesNotExist:
+            # No DemeAccount has this username.
+            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+        if not password_authentication_method.active or not password_authentication_method.agent.active:
+            # The Agent or DemeAccount is inactive.
+            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+        if password_authentication_method.check_nonced_password(hashed_password, nonce):
+            self.request.session['cur_agent_id'] = password_authentication_method.agent.pk
+            full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
+            return HttpResponseRedirect(full_redirect)
+        else:
+            # The password given does not correspond to the DemeAccount.
+            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+
+    def type_getencryptionmethod_html(self):
+        # Return a JSON response with the details about the DemeAccount
+        # necessary for JavaScript to encrypt the password.
+        username = self.request.GET['username']
+        nonce = DemeAccount.get_random_hash()[:5]
+        self.request.session['login_nonce'] = nonce
+        try:
+            password = DemeAccount.objects.get(username=username).password
+            algo, salt, hsh = password.split('$')
+            response_data = {'nonce':nonce, 'algo':algo, 'salt':salt}
+        except ObjectDoesNotExist:
+            response_data = {'nonce':nonce, 'algo':'sha1', 'salt':'x'}
+        json_data = simplejson.dumps(response_data, separators=(',',':'))
+        return HttpResponse(json_data, mimetype='application/json')
+        
 
 class OpenidAccountViewer(AuthenticationMethodViewer):
     accepted_item_type = OpenidAccount
@@ -842,7 +847,8 @@ class OpenidAccountViewer(AuthenticationMethodViewer):
                 # The Agent or OpenidAccount is inactive.
                 return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID (2)")
             self.request.session['cur_agent_id'] = openid_authentication_method.agent.pk
-            return HttpResponseRedirect(redirect)
+            full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
+            return HttpResponseRedirect(full_redirect)
         elif openid_response.status == openid.consumer.consumer.CANCEL:
             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID request was cancelled")
         elif openid_response.status == openid.consumer.consumer.FAILURE:
@@ -873,7 +879,9 @@ class WebauthAccountViewer(AuthenticationMethodViewer):
             return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that webauth username")
         self.request.session['cur_agent_id'] = webauth_authentication_method.agent.pk
         redirect = self.request.GET['redirect']
-        return HttpResponseRedirect(redirect)
+        full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
+        return HttpResponseRedirect(full_redirect)
+
 
 
 class GroupViewer(ItemViewer):

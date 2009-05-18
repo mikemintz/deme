@@ -110,16 +110,16 @@
 
         function encrypt_password() {
             var raw_password = document.forms['password_form']['password'].value;
-            var url = '{% url item_type_url viewer="authenticationmethod",action="login" %}';
-            jQuery.getJSON(url, {getencryptionmethod:document.forms['password_form']['username'].value}, function(json) {
-                    var algo = json.algo;
-                    var salt = json.salt;
-                    var nonce = json.nonce;
-                    var encrypted_password = get_encrypted_password(raw_password, algo, salt, nonce);
-                    document.forms['real_password_form']['hashed_password'].value = encrypted_password;
-                    document.forms['real_password_form']['username'].value = document.forms['password_form']['username'].value;
-                    document.forms['real_password_form'].submit();
-                    });
+            var url = '{% url item_type_url viewer="demeaccount",action="getencryptionmethod" %}';
+            jQuery.getJSON(url, {username:document.forms['password_form']['username'].value}, function(json) {
+                var algo = json.algo;
+                var salt = json.salt;
+                var nonce = json.nonce;
+                var encrypted_password = get_encrypted_password(raw_password, algo, salt, nonce);
+                document.forms['real_password_form']['hashed_password'].value = encrypted_password;
+                document.forms['real_password_form']['username'].value = document.forms['password_form']['username'].value;
+                document.forms['real_password_form'].submit();
+            });
         }
     </script>
     
@@ -134,12 +134,14 @@
 
     <table style="margin-bottom: 0;">
         <tr>
+
             <td style="vertical-align: top; width: 200px; padding: 0;" rowspan="2">
                 <div class="top_left">
                     <a href="/"><img src="{% media_url "spacer.gif" %}" alt="Deme Logo" style="height: 100px; width: 200px; border: 1px solid #aaa; background-color: #00c; -moz-border-radius: 8px; -webkit-border-radius: 8px;" /></a>
                 </div>
 
             </td>
+
             <td style="vertical-align: top; text-align: center; padding: 0; padding-left: 5px; padding-right: 5px;">
                 <a href="{% url item_type_url viewer="item" %}" class="fg-button ui-state-default fg-button-icon-right ui-corner-all">Items<span class="ui-icon ui-icon-triangle-1-s"></span></a>
                 <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline;">
@@ -147,6 +149,7 @@
                     {# TODO add magnifying glass #}
                 </form>
             </td>
+
             <td style="vertical-align: top; text-align: right; padding: 0;">
                 <div style="float: right;">
                 {% ifequal cur_agent.item_type_string 'AnonymousAgent' %}
@@ -158,8 +161,7 @@
                         <div><input type="password" name="password" /></div>
                     </form>
 
-                    <form name="real_password_form" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}" method="post">
-                        <input type="hidden" name="login_type" value="password" />
+                    <form name="real_password_form" action="{% url item_type_url viewer="demeaccount",action="login" %}?redirect={{ full_path|urlencode }}" method="post">
                         <input type="hidden" name="username" />
                         <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
                     </form>
@@ -216,6 +218,7 @@
                 <div style="clear: both;">
                 </div>
             </td>
+
         </tr>
         <tr>
             <td style="vertical-align: bottom; padding: 0; padding-left: 5px;" colspan="2">
