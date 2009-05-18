@@ -769,20 +769,17 @@ class DemeAccountViewer(AuthenticationMethodViewer):
         username = self.request.POST['username']
         hashed_password = self.request.POST['hashed_password']
         try:
-            password_authentication_method = DemeAccount.objects.get(username=username)
+            password_authentication_method = DemeAccount.objects.get(username=username, active=True, agent__active=True)
         except ObjectDoesNotExist:
-            # No DemeAccount has this username.
-            return self.render_error("Authentication Failed", "There was a problem with your login form")
-        if not password_authentication_method.active or not password_authentication_method.agent.active:
-            # The Agent or DemeAccount is inactive.
-            return self.render_error("Authentication Failed", "There was a problem with your login form")
+            # No active DemeAccount has this username.
+            return self.render_error("Authentication Failed", "Invalid username/password")
         if password_authentication_method.check_nonced_password(hashed_password, nonce):
             self.request.session['cur_agent_id'] = password_authentication_method.agent.pk
             full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
             return HttpResponseRedirect(full_redirect)
         else:
             # The password given does not correspond to the DemeAccount.
-            return self.render_error("Authentication Failed", "There was a problem with your login form")
+            return self.render_error("Authentication Failed", "Invalid username/password")
 
     def type_getencryptionmethod_html(self):
         # Return a JSON response with the details about the DemeAccount
@@ -795,7 +792,9 @@ class DemeAccountViewer(AuthenticationMethodViewer):
             algo, salt, hsh = password.split('$')
             response_data = {'nonce':nonce, 'algo':algo, 'salt':salt}
         except ObjectDoesNotExist:
-            response_data = {'nonce':nonce, 'algo':'sha1', 'salt':'x'}
+            # We need a fake salt so it looks like the account could exist
+            salt = DemeAccount.get_hexdigest('sha1', username, settings.SECRET_KEY)[:5]
+            response_data = {'nonce':nonce, 'algo':'sha1', 'salt':salt}
         json_data = simplejson.dumps(response_data, separators=(',',':'))
         return HttpResponse(json_data, mimetype='application/json')
         

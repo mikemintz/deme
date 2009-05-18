@@ -50,13 +50,12 @@ class OpenidAccountViewer(AuthenticationMethodViewer):
             #display_identifier = openid_response.getDisplayIdentifier()
             sreg = openid_response.extensionResponse('sreg', False)
             try:
-                openid_authentication_method = OpenidAccount.objects.get(Q(openid_url=identity_url_without_fragment) | Q(openid_url__startswith=identity_url_without_fragment + '#'))
+                openid_authentication_method = OpenidAccount.objects.get(Q(openid_url=identity_url_without_fragment) |
+                                                                         Q(openid_url__startswith=identity_url_without_fragment + '#'),
+                                                                         active=True, agent__active=True)
             except ObjectDoesNotExist:
-                # No OpenidAccount has this openid_url.
-                return self.render_error("OpenID Error", "There is no active agent with that OpenID (1)")
-            if not openid_authentication_method.active or not openid_authentication_method.agent.active: 
-                # The Agent or OpenidAccount is inactive.
-                return self.render_error("OpenID Error", "There is no active agent with that OpenID (2)")
+                # No active OpenidAccount has this openid_url.
+                return self.render_error("OpenID Error", "There is no active agent with that OpenID")
             self.request.session['cur_agent_id'] = openid_authentication_method.agent.pk
             full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
             return HttpResponseRedirect(full_redirect)
