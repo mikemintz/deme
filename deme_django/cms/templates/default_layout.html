@@ -165,8 +165,7 @@
                     </form>
                 </div>
                 <div style="display: none;" id="login_dialog_openid">
-                    <form name="openid_form" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
-                        <input type="hidden" name="login_type" value="openid" />
+                    <form name="openid_form" action="{% url item_type_url viewer="openidaccount",action="login" %}?redirect={{ full_path|urlencode }}" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
                         <label>OpenID URL: <input type="text" name="openid_url" /></label>
                     </form>
                 </div>
