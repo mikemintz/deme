@@ -33,13 +33,13 @@ def item_view(request, *args, **kwargs):
         viewer.init_for_http(request, action, noun, format)
         response = viewer.dispatch()
         if response is None:
-            return viewer.render_error(HttpResponseNotFound, "Action Not Found", "We could not find any action matching your URL.")
+            return viewer.render_error("Action Not Found", "We could not find any action matching your URL.", HttpResponseNotFound)
         else:
             return response
     else:
         viewer = ItemViewer()
         viewer.init_for_http(request, action, noun, format)
-        return viewer.render_error(HttpResponseNotFound, "Viewer Not Found", "We could not find any viewer matching your URL.")
+        return viewer.render_error("Viewer Not Found", "We could not find any viewer matching your URL.", HttpResponseNotFound)
 
 
 def invalid_url_view(request, *args, **kwargs):
@@ -49,7 +49,7 @@ def invalid_url_view(request, *args, **kwargs):
     """
     viewer = ItemViewer()
     viewer.init_for_http(request, 'error', None, 'html')
-    return viewer.render_error(HttpResponseNotFound, "Invalid URL", "The URL you typed in is invalid.")
+    return viewer.render_error("Invalid URL", "The URL you typed in is invalid.", HttpResponseNotFound)
 
 
 def alias_view(request, *args, **kwargs):
@@ -69,8 +69,8 @@ def alias_view(request, *args, **kwargs):
     except ObjectDoesNotExist:
         viewer = ItemViewer()
         viewer.init_for_http(request, 'error', None, 'html')
-        return viewer.render_error(HttpResponseNotFound, "Alias Not Found",
-                                   "We could not find any alias matching your URL http://%s%s." % (request.get_host(), request.path))
+        url = 'http://%s%s' % (request.get_host(), request.path)
+        return viewer.render_error("Page Not Found", "We could not find any page matching your URL %s" % url, HttpResponseNotFound)
     item = viewer_request.aliased_item
     kwargs = {}
     kwargs['viewer'] = viewer_request.viewer

@@ -3,7 +3,11 @@
 {% block content %}
 
 <div style="padding: 5px; margin-bottom: 5px; font-size: 125%;">
+{% ifequal cur_agent.item_type_string 'AnonymousAgent' %}
 You are now logged out. 
+{% else %}
+You are now logged in as {% viewable_name cur_agent %}.
+{% endifequal %}
 </div>
 
 <div style="padding: 5px; margin-bottom: 5px; font-size: 125%;">
@@ -13,5 +17,4 @@ or
 </div>
 
 
-{%endblock content %}
-
+{% endblock content %}

@@ -508,7 +508,7 @@ class ItemViewer(Viewer):
     @require_POST
     def item_deactivate_html(self):
         if not self.item.can_be_deleted():
-            return self.render_error(HttpResponseBadRequest, 'Cannot delete', "This item may not be deleted")
+            return self.render_error('Cannot delete', "This item may not be deleted")
         self.require_ability('delete', self.item)
         self.item.deactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -517,7 +517,7 @@ class ItemViewer(Viewer):
     @require_POST
     def item_reactivate_html(self):
         if not self.item.can_be_deleted():
-            return self.render_error(HttpResponseBadRequest, 'Cannot delete', "This item may not be deleted")
+            return self.render_error('Cannot delete', "This item may not be deleted")
         self.require_ability('delete', self.item)
         self.item.reactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -526,7 +526,7 @@ class ItemViewer(Viewer):
     @require_POST
     def item_destroy_html(self):
         if not self.item.can_be_deleted():
-            return self.render_error(HttpResponseBadRequest, 'Cannot delete', "This item may not be deleted")
+            return self.render_error('Cannot delete', "This item may not be deleted")
         self.require_ability('delete', self.item)
         self.item.destroy(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -550,7 +550,7 @@ class ItemViewer(Viewer):
         for permission_datum in permission_data.itervalues():
             ability = permission_datum['ability']
             if ability not in possible_abilities:
-                return self.render_error(HttpResponseBadRequest, 'Form Error', "Invalid ability")
+                return self.render_error('Form Error', "Invalid ability")
             is_allowed = (permission_datum.get('is_allowed') == 'on')
             permission_type = permission_datum['permission_type']
             agent_or_collection_id = permission_datum['agent_or_collection_id']
@@ -572,7 +572,7 @@ class ItemViewer(Viewer):
                 else:
                     permission = EveryoneItemPermission()
             else:
-                return self.render_error(HttpResponseBadRequest, 'Form Error', "Invalid permission_type")
+                return self.render_error('Form Error', "Invalid permission_type")
             permission.ability = ability
             permission.is_allowed = is_allowed
             permission_key_fn = lambda x: (x.ability, getattr(x, 'agent', None), getattr(x, 'collection', None))
@@ -665,7 +665,7 @@ class ContactMethodViewer(ItemViewer):
         try:
             agent = Item.objects.get(pk=self.request.REQUEST.get('agent'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding a contact method to")
+            return self.render_error('Invalid URL', "You must specify the agent you are adding a contact method to")
         self.require_ability('add_contact_method', agent)
         if form is None:
             form_initial = dict(self.request.GET.items())
@@ -701,7 +701,7 @@ class AuthenticationMethodViewer(ItemViewer):
         try:
             agent = Item.objects.get(pk=self.request.REQUEST.get('agent'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the agent you are adding an authentication method to")
+            return self.render_error('Invalid URL', "You must specify the agent you are adding an authentication method to")
         self.require_ability('add_authentication_method', agent)
         if form is None:
             form_initial = dict(self.request.GET.items())
@@ -728,168 +728,93 @@ class AuthenticationMethodViewer(ItemViewer):
             return self.type_new_html(form)
 
     def type_login_html(self):
-        """
-        This is the view that takes care of all URLs dealing with logging in
-        and logging out.
-        """
         self.context['action_title'] = 'Login'
         if self.request.method == 'GET':
-            # If getencryptionmethod is a key in the query string, return a JSON
-            # response with the details about the DemeAccount
-            # necessary for JavaScript to encrypt the password.
-            if 'getencryptionmethod' in self.request.GET:
-                username = self.request.GET['getencryptionmethod']
-                nonce = DemeAccount.get_random_hash()[:5]
-                self.request.session['login_nonce'] = nonce
-                try:
-                    password = DemeAccount.objects.get(username=username).password
-                    algo, salt, hsh = password.split('$')
-                    response_data = {'nonce':nonce, 'algo':algo, 'salt':salt}
-                except ObjectDoesNotExist:
-                    response_data = {'nonce':nonce, 'algo':'sha1', 'salt':'x'}
-                json_data = simplejson.dumps(response_data, separators=(',',':'))
-                return HttpResponse(json_data, mimetype='application/json')
-            # If openidcomplete is a key in the query string, the user has just
-            # authenticated with OpenID
-            elif 'openidcomplete' in self.request.GET:
-                redirect = self.request.GET['redirect']
-                try:
-                    import openid.consumer.consumer
-                except ImportError:
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID is not supported in this installation")
-                consumer = openid.consumer.consumer.Consumer(self.request.session, None)
-                query_dict = dict((k,v) for k,v in self.request.GET.items())
-                current_url = self.request.build_absolute_uri().split('?')[0]
-                openid_response = consumer.complete(query_dict, current_url)
-                
-                if openid_response.status == openid.consumer.consumer.SUCCESS:
-                    identity_url = openid_response.identity_url
-                    identity_url_without_fragment = identity_url.split('#')[0]
-                    # If we want to use display_identifier, we need to have python-openid >=2.1, which isn't in Ubuntu Hardy
-                    #display_identifier = openid_response.getDisplayIdentifier()
-                    sreg = openid_response.extensionResponse('sreg', False)
-                    try:
-                        openid_authentication_method = OpenidAccount.objects.get(Q(openid_url=identity_url_without_fragment) | Q(openid_url__startswith=identity_url_without_fragment + '#'))
-                    except ObjectDoesNotExist:
-                        # No OpenidAccount has this openid_url.
-                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID (1)")
-                    if not openid_authentication_method.active or not openid_authentication_method.agent.active: 
-                        # The Agent or OpenidAccount is inactive.
-                        return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that OpenID (2)")
-                    self.request.session['cur_agent_id'] = openid_authentication_method.agent.pk
-                    return HttpResponseRedirect(redirect)
-                elif openid_response.status == openid.consumer.consumer.CANCEL:
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID request was cancelled")
-                elif openid_response.status == openid.consumer.consumer.FAILURE:
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID error: %s" % escape(openid_response.message))
-                elif openid_response.status == openid.consumer.consumer.SETUP_NEEDED:
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID setup needed")
-                else:
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "Invalid OpenID status: %s" % escape(openid_response.status))
-            # Otherwise, return the login.html page.
-            else:
-                login_as_agents = Agent.objects.filter(active=True).order_by('name')
-                login_as_agents = self.permission_cache.filter_items(self.cur_agent, 'login_as', login_as_agents)
-                self.permission_cache.filter_items(self.cur_agent, 'view name', login_as_agents)
-                template = loader.get_template('authenticationmethod/login.html')
-                self.context['redirect'] = self.request.GET['redirect']
-                self.context['login_as_agents'] = login_as_agents
-                return HttpResponse(template.render(self.context))
+            login_as_agents = Agent.objects.filter(active=True).order_by('name')
+            login_as_agents = self.permission_cache.filter_items(self.cur_agent, 'login_as', login_as_agents)
+            self.permission_cache.filter_items(self.cur_agent, 'view name', login_as_agents)
+            template = loader.get_template('authenticationmethod/login.html')
+            self.context['redirect'] = self.request.GET['redirect']
+            self.context['login_as_agents'] = login_as_agents
+            return HttpResponse(template.render(self.context))
         else:
             # The user just submitted a login form, so we try to authenticate.
             redirect = self.request.GET['redirect']
-            login_type = self.request.POST['login_type']
-            if login_type == 'logout':
-                if 'cur_agent_id' in self.request.session:
-                    del self.request.session['cur_agent_id']
-                return HttpResponseRedirect(redirect)
-            elif login_type == 'password':
-                nonce = self.request.session['login_nonce']
-                del self.request.session['login_nonce']
-                username = self.request.POST['username']
-                hashed_password = self.request.POST['hashed_password']
-                try:
-                    password_authentication_method = DemeAccount.objects.get(username=username)
-                except ObjectDoesNotExist:
-                    # No DemeAccount has this username.
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-                if not password_authentication_method.active or not password_authentication_method.agent.active:
-                    # The Agent or DemeAccount is inactive.
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-                if password_authentication_method.check_nonced_password(hashed_password, nonce):
-                    self.request.session['cur_agent_id'] = password_authentication_method.agent.pk
-                    return HttpResponseRedirect(redirect)
-                else:
-                    # The password given does not correspond to the DemeAccount.
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-            elif login_type == 'login_as':
-                for key in self.request.POST.iterkeys():
-                    if key.startswith('login_as_'):
-                        new_agent_id = key.split('login_as_')[1]
-                        try:
-                            new_agent = Agent.objects.get(pk=new_agent_id)
-                        except ObjectDoesNotExist:
-                            # There is no Agent with the specified id.
-                            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-                        if not new_agent.active:
-                            # The specified agent is inactive.
-                            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-                        if self.permission_cache.agent_can(self.cur_agent, 'login_as', new_agent):
-                            self.request.session['cur_agent_id'] = new_agent.pk
-                            return HttpResponseRedirect(redirect)
-                        else:
-                            # The current agent does not have permission to login_as the specified agent.
-                            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
-            elif login_type == 'openid':
-                try:
-                    import openid.consumer.consumer
-                except ImportError:
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "OpenID is not supported in this installation")
-                trust_root = self.request.build_absolute_uri('/')
-                full_redirect = self.request.build_absolute_uri('%s?openidcomplete=1&redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'login'}), urlquote(redirect)))
-                user_url = self.request.POST['openid_url']
-                consumer = openid.consumer.consumer.Consumer(self.request.session, None)
-                try:
-                    auth_request = consumer.begin(user_url)
-                except openid.consumer.consumer.DiscoveryFailure:
-                    return self.render_error(HttpResponseBadRequest, "Authentication Failed", "Invalid OpenID URL")
-                auth_request.addExtensionArg('sreg', 'optional', 'nickname,email,fullname')
-                return HttpResponseRedirect(auth_request.redirectURL(trust_root, full_redirect))
-            # Invalid login_type parameter.
-            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There was a problem with your login form")
+            for key in self.request.POST.iterkeys():
+                if key.startswith('login_as_'):
+                    new_agent_id = key.split('login_as_')[1]
+                    try:
+                        new_agent = Agent.objects.get(pk=new_agent_id)
+                    except ObjectDoesNotExist:
+                        # There is no Agent with the specified id.
+                        return self.render_error("Authentication Failed", "There was a problem with your login form")
+                    if not new_agent.active:
+                        # The specified agent is inactive.
+                        return self.render_error("Authentication Failed", "There was a problem with your login form")
+                    self.require_ability('login_as', new_agent)
+                    self.request.session['cur_agent_id'] = new_agent.pk
+                    full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
+                    return HttpResponseRedirect(full_redirect)
    
+    @require_POST
     def type_logout_html(self):
-        self.context['action_title'] = 'Logged out'
-        redirect = self.request.GET['redirect']
         if 'cur_agent_id' in self.request.session:
             del self.request.session['cur_agent_id']
-        self.context["redirect"] = redirect
-        template = loader.get_template('authenticationmethod/logout.html')
+        redirect = self.request.GET['redirect']
+        full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
+        return HttpResponseRedirect(full_redirect)
+
+    def type_loggedinorout_html(self):
+        if self.cur_agent.item_type_string == 'AnonymousAgent':
+            self.context['action_title'] = 'Logged out'
+        else:
+            self.context['action_title'] = 'Logged in'
+        redirect = self.request.GET['redirect']
+        self.context['redirect'] = redirect
+        template = loader.get_template('authenticationmethod/loggedinorout.html')
         return HttpResponse(template.render(self.context))
  
 
-class WebauthAccountViewer(ItemViewer):
-    accepted_item_type = WebauthAccount
-    viewer_name = 'webauth'
+class DemeAccountViewer(AuthenticationMethodViewer):
+    accepted_item_type = DemeAccount
+    viewer_name = 'demeaccount'
 
     def type_login_html(self):
-        if not self.request.is_secure():
-            return HttpResponseRedirect('https://%s%s' % (self.request.get_host(), self.request.get_full_path()))
-        if self.request.META.get('AUTH_TYPE') != 'WebAuth' or not self.request.META.get('REMOTE_USER'):
-            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "WebAuth is not supported in this installation")
-        username = self.request.META['REMOTE_USER']
-        try:
-            webauth_authentication_method = WebauthAccount.objects.get(username=username)
-        except ObjectDoesNotExist:
-            # No WebauthAccount has this username.
-            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that webauth username")
-        if not webauth_authentication_method.active or not webauth_authentication_method.agent.active: 
-            # The Agent or WebauthAccount is inactive.
-            return self.render_error(HttpResponseBadRequest, "Authentication Failed", "There is no active agent with that webauth username")
-        self.request.session['cur_agent_id'] = webauth_authentication_method.agent.pk
         redirect = self.request.GET['redirect']
-        return HttpResponseRedirect(redirect)
+        nonce = self.request.session['login_nonce']
+        del self.request.session['login_nonce']
+        username = self.request.POST['username']
+        hashed_password = self.request.POST['hashed_password']
+        try:
+            password_authentication_method = DemeAccount.objects.get(username=username, active=True, agent__active=True)
+        except ObjectDoesNotExist:
+            # No active DemeAccount has this username.
+            return self.render_error("Authentication Failed", "Invalid username/password")
+        if password_authentication_method.check_nonced_password(hashed_password, nonce):
+            self.request.session['cur_agent_id'] = password_authentication_method.agent.pk
+            full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
+            return HttpResponseRedirect(full_redirect)
+        else:
+            # The password given does not correspond to the DemeAccount.
+            return self.render_error("Authentication Failed", "Invalid username/password")
 
+    def type_getencryptionmethod_html(self):
+        # Return a JSON response with the details about the DemeAccount
+        # necessary for JavaScript to encrypt the password.
+        username = self.request.GET['username']
+        nonce = DemeAccount.get_random_hash()[:5]
+        self.request.session['login_nonce'] = nonce
+        try:
+            password = DemeAccount.objects.get(username=username).password
+            algo, salt, hsh = password.split('$')
+            response_data = {'nonce':nonce, 'algo':algo, 'salt':salt}
+        except ObjectDoesNotExist:
+            # We need a fake salt so it looks like the account could exist
+            salt = DemeAccount.get_hexdigest('sha1', username, settings.SECRET_KEY)[:5]
+            response_data = {'nonce':nonce, 'algo':'sha1', 'salt':salt}
+        json_data = simplejson.dumps(response_data, separators=(',',':'))
+        return HttpResponse(json_data, mimetype='application/json')
+        
 
 class GroupViewer(ItemViewer):
     accepted_item_type = Group
@@ -925,7 +850,7 @@ class ViewerRequestViewer(ItemViewer):
     def item_addsubpath_html(self):
         form = AddSubPathForm(self.request.POST, self.request.FILES)
         if form.data['parent_url'] != str(self.item.pk):
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the parent url you are extending")
+            return self.render_error('Invalid URL', "You must specify the parent url you are extending")
         self.require_ability('add_sub_path', self.item)
         try:
             custom_url = CustomUrl.objects.get(parent_url=self.item, path=form.data['path'])
@@ -968,7 +893,7 @@ class CollectionViewer(ItemViewer):
         try:
             member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
+            return self.render_error('Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('add_self', self.item))):
             raise DemePermissionDenied
         try:
@@ -986,7 +911,7 @@ class CollectionViewer(ItemViewer):
         try:
             member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the member you are adding")
+            return self.render_error('Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('remove_self', self.item))):
             raise DemePermissionDenied
         try:
@@ -1132,7 +1057,7 @@ class TextCommentViewer(TextDocumentViewer):
         try:
             item = Item.objects.get(pk=self.request.REQUEST.get('item'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
+            return self.render_error('Invalid URL', "You must specify the item you are commenting on")
         self.require_ability('comment_on', item)
         if form is None:
             form_initial = dict(self.request.GET.items())
@@ -1156,7 +1081,7 @@ class TextCommentViewer(TextDocumentViewer):
         try:
             item = Item.objects.get(pk=self.request.POST.get('item'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are commenting on")
+            return self.render_error('Invalid URL', "You must specify the item you are commenting on")
         self.require_ability('comment_on', item)
         form_class = NewTextCommentForm
         form = form_class(self.request.POST, self.request.FILES)
@@ -1192,7 +1117,7 @@ class TransclusionViewer(ItemViewer):
         try:
             from_item = Item.objects.get(pk=self.request.REQUEST.get('from_item'))
         except:
-            return self.render_error(HttpResponseBadRequest, 'Invalid URL', "You must specify the item you are adding a transclusion to")
+            return self.render_error('Invalid URL', "You must specify the item you are adding a transclusion to")
         self.require_ability('add_transclusion', from_item)
         if form is None:
             form_initial = dict(self.request.GET.items())
@@ -1236,18 +1161,18 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
                 start_index = int(start_index)
                 length = int(length)
             except ValueError:
-                return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not parse the excerpt data in the form")
+                return self.render_error('Invalid Form Data', "Could not parse the excerpt data in the form")
             try:
                 text_document = TextDocument.objects.get(pk=text_document_id)
                 text_document.copy_fields_from_version(text_document_version_number)
             except:
-                return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "Could not find the specified TextDocument")
+                return self.render_error('Invalid Form Data', "Could not find the specified TextDocument")
             self.require_ability('view body', text_document)
             body = text_document.body[start_index:start_index+length]
             excerpt = TextDocumentExcerpt(body=body, text_document=text_document, text_document_version_number=text_document_version_number, start_index=start_index, length=length)
             excerpts.append(excerpt)
         if not excerpts:
-            return self.render_error(HttpResponseBadRequest, 'Invalid Form Data', "You must submit at least one excerpt")
+            return self.render_error('Invalid Form Data', "You must submit at least one excerpt")
         collection = Collection()
         collection.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         for excerpt in excerpts:

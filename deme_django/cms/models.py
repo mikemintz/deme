@@ -19,7 +19,7 @@ import random
 import hashlib
 import html2text
 
-__all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'OpenidAccount', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'DemeAccount', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ViewerRequest', 'WebauthAccount', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice', 'ReactivateActionNotice', 'DestroyActionNotice', 'CreateActionNotice', 'EditActionNotice']
+__all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'DemeAccount', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice', 'ReactivateActionNotice', 'DestroyActionNotice', 'CreateActionNotice', 'EditActionNotice']
 
 ###############################################################################
 # Item framework
@@ -666,46 +666,6 @@ class AuthenticationMethod(Item):
 
     # Fields
     agent = models.ForeignKey(Agent, related_name='authentication_methods', verbose_name=_('agent'))
-
-
-class OpenidAccount(AuthenticationMethod):
-    """
-    This is an AuthenticationMethod that allows a user to log on with an
-    OpenID.
-    
-    The openid url must be unique across the entire Deme installation.
-    """
-
-    # Setup
-    introduced_immutable_fields = frozenset(['openid_url'])
-    introduced_abilities = frozenset(['view openid_url'])
-    introduced_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('OpenID account')
-        verbose_name_plural = _('OpenID accounts')
-
-    # Fields
-    openid_url = models.CharField(_('OpenID URL'), max_length=2047, unique=True)
-
-
-class WebauthAccount(AuthenticationMethod):
-    """
-    This is an AuthenticationMethod that allows a user to log on with
-    Stanford's WebAuth system.
-    
-    The username must be unique across the entire Deme installation.
-    """
-
-    # Setup
-    introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view username', 'edit username'])
-    introduced_global_abilities = frozenset()
-    class Meta:
-        verbose_name = _('WebAuth account')
-        verbose_name_plural = _('WebAuth accounts')
-
-    # Fields
-    username = models.CharField(_('username'), max_length=255, unique=True)
 
 
 class DemeAccount(AuthenticationMethod):
