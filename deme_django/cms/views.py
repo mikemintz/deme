@@ -1,6 +1,7 @@
 #TODO completely clean up code
 
 from django.core.urlresolvers import reverse
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.utils.http import urlquote
 from django.utils.html import escape
@@ -359,9 +360,10 @@ class ItemViewer(Viewer):
 
     def type_recentchanges_html(self):
         self.context['action_title'] = 'Recent Changes'
-        template = loader.get_template('item/recentchanges.html')
+        template = loader.get_template('item/recentchanges.html')    
         viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view action_notices', Item.objects)
         viewable_action_notices = ActionNotice.objects.filter(item__in=viewable_items.values("pk").query).order_by('-action_time')
+        
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, EditActionNotice, CreateActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=viewable_action_notices.values('pk').query)
@@ -377,7 +379,22 @@ class ItemViewer(Viewer):
                 details["action_notice"] = action_notice
                 action_notice_details.append(details)
 
-        self.context['action_notices'] = action_notice_details
+        paginator = Paginator(action_notice_details, 50)
+
+        try:
+            page = int(self.request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        try: 
+            newPage = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            newPage = paginator.page(paginator.num_pages)
+
+        self.context['action_notices'] = newPage
+        self.context['count'] = paginator.count
+        self.context['page_range'] = paginator.page_range
+           
         return HttpResponse(template.render(self.context))
 
     def item_show_html(self):

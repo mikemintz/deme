@@ -2,7 +2,32 @@
 {% load item_tags %}
 {% block content %}
 
-{% for details in action_notices %}
+            
+<div style="text-align: right; font-size:smaller;">
+    Displaying changes {{ action_notices.start_index }} - {{ action_notices.end_index }} of {{ count }} total changes.
+</div>
+
+<div style="margin-top: 10px; margin-bottom: 10px; text-align: center;">
+    {% if action_notices.has_previous %}
+        <a href="?page={{ action_notices.previous_page_number }}">~Prev</a>
+    {% endif %}
+
+    {% for page in page_range %}
+        {% ifequal page action_notices.number %} 
+            {{ action_notices.number }}
+        {% endifequal %}
+
+        {% ifnotequal page action_notices.number %}
+            <a href="?page={{ page }}">{{ page }}</a>
+        {% endifnotequal %}    
+    {% endfor %}
+
+    {% if action_notices.has_next %}
+        <a href= "?page={{ action_notices.next_page_number }}">Next~</a>
+    {% endif %}
+</div>
+
+{% for details in action_notices.object_list %}
 <div style="margin-bottom: 2px; border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px;">
     <span title="{{ details.action_notice.action_time|date:"Y-m-d H:m:s" }}" style="width: 13em; display: inline-block;">
         {{ details.action_notice.action_time|timesince }}
@@ -53,6 +78,26 @@
 
 </div>
 {% endfor %}
+
+<div style="margin-top: 10px; margin-bottom: 10px; text-align: center;">
+    {% if action_notices.has_previous %}
+        <a href="?page={{ action_notices.previous_page_number }}">~Prev</a>
+    {% endif %}
+
+    {% for page in page_range %}
+        {% ifequal page action_notices.number %} 
+            {{ action_notices.number }}
+        {% endifequal %}
+
+        {% ifnotequal page action_notices.number %}
+            <a href="?page={{ page }}">{{ page }}</a>
+        {% endifnotequal %}    
+    {% endfor %}
+
+    {% if action_notices.has_next %}
+        <a href= "?page={{ action_notices.next_page_number }}">Next~</a>
+    {% endif %}
+</div>
 
 {% endblock content %}
 
