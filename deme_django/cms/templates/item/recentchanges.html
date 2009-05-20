@@ -66,7 +66,7 @@
         </span>    
     {% endifequal %}
 
-    {% ifequal details.type "ReactivatedActionNotice" %}
+    {% ifequal details.type "ReactivateActionNotice" %}
         <span style="width: 25em; display: inline-block;">
             <a href="{{ details.action_notice.action_agent.get_absolute_url }}">{% viewable_name details.action_notice.action_agent %}</a> 
             reactivated
