@@ -17,7 +17,6 @@ Code correctness/consistency/bugs
 * Put the form/link code for each authentication method in its own module, and the default layout will somehow combine them
 * Methods that have to do with sending emails (about action notices) should go in EmailContactMethod, not ActionNotice
 * Move AuthenticationMethod stuff to their own viewers (and own modules at some point)
-* Make Deme work with newest version of Django (we get validation errors right now)
 * Fix the multiple inheritance bug
   - http://code.djangoproject.com/ticket/10808
 * Need initial permissions set on incoming email comments, group generated folios/groupagents, maybe other things too. Just search for save_versioned.
