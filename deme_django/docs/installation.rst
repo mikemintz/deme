@@ -32,7 +32,7 @@ We currently run with Django from SVN. You can follow the instructions for downl
 
 http://docs.djangoproject.com/en/dev/topics/install/#installing-development-version
 
-When you check out Django from SVN, be sure to include the argument ``-r9973``, since we are currently developing against that revision.
+When you check out Django from SVN, be sure to include the argument ``-r10834``, since we are currently developing against that revision.
 
 PostgreSQL
 ^^^^^^^^^^

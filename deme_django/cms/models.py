@@ -11,6 +11,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.text import capfirst, wrap
 from django.template import loader, Context
 from django.db.models import signals
+from django import forms
 from email.utils import formataddr
 import datetime
 import settings
@@ -19,7 +20,48 @@ import random
 import hashlib
 import html2text
 
-__all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent', 'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent', 'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission', 'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl', 'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting', 'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt', 'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission', 'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES', 'DemeAccount', 'ItemPermission', 'Person', 'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership', 'Site', 'Subscription', 'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion', 'ViewerRequest', 'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice', 'ReactivateActionNotice', 'DestroyActionNotice', 'CreateActionNotice', 'EditActionNotice']
+__all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
+        'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent',
+        'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission',
+        'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl',
+        'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting',
+        'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt',
+        'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission',
+        'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item',
+        'Membership', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES',
+        'DemeAccount', 'ItemPermission', 'Person', 'PhoneContactMethod',
+        'RecursiveComment', 'RecursiveMembership', 'Site', 'Subscription',
+        'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion',
+        'ViewerRequest', 'WebsiteContactMethod', 'all_item_types',
+        'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice',
+        'DeactivateActionNotice', 'ReactivateActionNotice',
+        'DestroyActionNotice', 'CreateActionNotice', 'EditActionNotice',
+        'FixedBooleanField']
+
+###############################################################################
+# Field types
+###############################################################################
+
+class FixedBooleanField(models.NullBooleanField):
+    """
+    This is a modified NullBooleanField that uses a checkbox-style FormField.
+    This is used to replace BooleanFields that are normally not supposed to
+    have a null options, but are allowed to have null options for the purpose
+    of deleting items. Because Django SVN revision r10456 made it so
+    BooleanFields cannot be null, we have to use this instead.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(FixedBooleanField, self).__init__(*args, **kwargs)
+
+    def formfield(self, **kwargs):
+        defaults = {
+            'form_class': forms.BooleanField,
+            'required': False,
+        }
+        defaults.update(kwargs)
+        return super(FixedBooleanField, self).formfield(**defaults)
+        
 
 ###############################################################################
 # Item framework
@@ -39,15 +81,18 @@ class ItemMetaClass(models.base.ModelBase):
                 field = value
                 if field.primary_key or isinstance(field, models.OneToOneField):
                     continue
-                elif field.name in UN_NULLABLE_FIELDS:
+                elif key in UN_NULLABLE_FIELDS:
                     continue
-                field.allowed_to_be_null_before_destroyed = field.null
                 # We must be able to nullify this field if we destroy the item
+                assert not isinstance(field, models.BooleanField), "Use cms.models.FixedBooleanField instead of models.BooleanField for %s.%s" % (name, key)
+                field.allowed_to_be_null_before_destroyed = field.null
                 field.null = True
                 if not field.has_default():
                     if isinstance(field, models.DateTimeField):
                         field.default = datetime.datetime.utcfromtimestamp(0)
-                    elif isinstance(field, models.BooleanField):
+                    elif isinstance(field, models.NullBooleanField):
+                        field.default = False
+                    elif isinstance(field, FixedBooleanField):
                         field.default = False
                     elif isinstance(field, models.IntegerField):
                         field.default = 1
@@ -943,7 +988,7 @@ class Subscription(Item):
     # Fields
     contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'))
     item           = models.ForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'))
-    deep           = models.BooleanField(_('deep subscription'), default=False)
+    deep           = FixedBooleanField(_('deep subscription'), default=False)
 
 
 ###############################################################################
@@ -1144,7 +1189,7 @@ class DjangoTemplateDocument(TextDocument):
 
     # Fields
     layout = models.ForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout'))
-    override_default_layout = models.BooleanField(_('override default layout'), default=False)
+    override_default_layout = FixedBooleanField(_('override default layout'), default=False)
 
 
 class HtmlDocument(TextDocument):
@@ -1708,7 +1753,7 @@ class RelationActionNotice(ActionNotice):
     from_item_version_number = models.PositiveIntegerField(_('from item version number'))
     from_field_name          = models.CharField(_('from field name'), max_length=255)
     from_field_model         = models.CharField(_('from field model'), max_length=255)
-    relation_added           = models.BooleanField(_('relation added'))
+    relation_added           = FixedBooleanField(_('relation added'))
 
     def notification_reply_item(self):
         """

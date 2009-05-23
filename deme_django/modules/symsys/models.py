@@ -3,7 +3,11 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ObjectDoesNotExist
 
-__all__ = ['SymsysCareer', 'ThesisSymsysCareer', 'StudentSymsysCareer', 'MinorSymsysCareer', 'BachelorsSymsysCareer', 'MastersSymsysCareer', 'HonorsSymsysCareer', 'FacultySymsysCareer', 'ProgramStaffSymsysCareer', 'SymsysAffiliate', 'Event', 'Advertisement', 'TextAdvertisement', 'HtmlAdvertisement']
+__all__ = ['SymsysCareer', 'ThesisSymsysCareer', 'StudentSymsysCareer',
+        'MinorSymsysCareer', 'BachelorsSymsysCareer', 'MastersSymsysCareer',
+        'HonorsSymsysCareer', 'FacultySymsysCareer',
+        'ProgramStaffSymsysCareer', 'SymsysAffiliate', 'Event',
+        'Advertisement', 'TextAdvertisement', 'HtmlAdvertisement']
 
 BS_CONCENTRATIONS = [
     'Applied Logic',
@@ -91,7 +95,7 @@ class SymsysCareer(Item):
     original_last_name    = models.CharField(_('original last name'), max_length=255)
     original_suffix       = models.CharField(_('original suffix'), max_length=255, blank=True)
     original_photo        = models.ForeignKey(ImageDocument, related_name='symsyscareers_with_original_photo', verbose_name=_('original photo'), null=True, blank=True, default=None)
-    finished              = models.BooleanField(_('finished'), default=False)
+    finished              = FixedBooleanField(_('finished'), default=False)
     start_date            = models.DateField(_('start date'))
     end_date              = models.DateField(_('end date'), blank=True, null=True, default=None)
 
