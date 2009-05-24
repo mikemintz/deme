@@ -28,7 +28,9 @@ class AjaxModelChoiceWidget(forms.Widget):
                 value_item = None
         except:
             value_item = None
-        initial_search = value_item.name if value_item else '' #TODO this poses a permission problem. someone can set an initial item, and figure out its name
+        #TODO this next line poses a permission problem. someone can set an initial item, and figure out its name
+        # To fix, we need to given this widget access to the viewer, so it can do a permission_cache check on cur_agent
+        initial_search = value_item.display_name() if value_item else ''
         if value is None: value = ''
         if attrs is None: attrs = {}
         ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'})
