@@ -15,38 +15,38 @@ import email
 from django.core.mail import send_mail
 from django.core.exceptions import ObjectDoesNotExist
 
-
-#TODO error handling (always send back an email, preferrably with same thread, on error)
 #TODO attachments? handle html formatting?
 #TODO let people comment on specific versions, like 123.2@deme.stanford.edu
 
-def main():
-    assert len(sys.argv) == 2
-    mailbox = sys.argv[1]
+class UserException(Exception):
+    def __init__(self, msg):
+        super(UserException, self).__init__(msg)
 
+def get_subject(msg):
+    return msg['Subject'].replace('\n', '').replace('\t', '')
+
+def get_from_email(msg):
+    return email.utils.parseaddr(msg['From'])[1]
+
+def handle_email(msg, item_id):
     permission_cache = PermissionCache()
-    msg = email.message_from_file(sys.stdin)
-    subject = msg['Subject'].replace('\n', '').replace('\t', '')
+    subject = get_subject(msg)
     if msg.is_multipart():
         body = msg.get_payload(0).get_payload()
     else:
         body = msg.get_payload()
-    from_email = email.utils.parseaddr(msg['From'])[1]
-    item_id = mailbox
+    from_email = get_from_email(msg)
     to_email = "%s@%s" % (item_id, settings.NOTIFICATION_EMAIL_HOSTNAME)
     try:
         email_contact_method = EmailContactMethod.objects.get(email=from_email)
     except ObjectDoesNotExist:
-        send_mail('Re: %s' % subject, 'Error: Deme could not create your comment because there does not exist a user with email address %s' % from_email, to_email, [from_email])
-        return 
+        raise UserException('Error: Your comment could not be created because there is no agent with email address %s' % from_email)
     try:
         item = Item.objects.get(pk=item_id)
     except ObjectDoesNotExist:
-        send_mail('Re: %s' % subject, 'Error: Deme could not create your comment because there does not exist an item with id %s' % item_id, to_email, [from_email])
-        return 
+        raise UserException('Error: Your comment could not be created because there does is no item %s' % item_id)
     if not permission_cache.agent_can(email_contact_method.agent, 'comment_on', item):
-        send_mail('Re: %s' % subject, 'Error: Deme could not create your comment because you do not have permission to comment on the item with id %s' % item_id, to_email, [from_email])
-        return 
+        raise UserException('Error: Your comment could not be created because you do not have permission to comment on the item %s' % item_id)
 
     agent = email_contact_method.agent
 
@@ -63,6 +63,18 @@ def main():
     permissions = [AgentItemPermission(agent=agent, ability='do_anything', is_allowed=True)]
     comment.save_versioned(action_agent=agent, initial_permissions=permissions)
 
+def main():
+    assert len(sys.argv) == 2
+    item_id = sys.argv[1] # I.e., the mailbox
+    msg = email.message_from_file(sys.stdin)
+    try:
+        handle_email(msg, item_id)
+    except UserException, e:
+        new_subject = 'Re: %s' % get_subject(msg)
+        new_body = e.message
+        our_email = "%s@%s" % (item_id, settings.NOTIFICATION_EMAIL_HOSTNAME)
+        their_email = get_from_email(msg)
+        send_mail(new_subject, new_body, our_email, [their_email])
 
 if __name__ == '__main__':
     main()
