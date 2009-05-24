@@ -31,7 +31,7 @@ Code correctness/consistency/bugs
 * Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun)
 * HTML special chars are being escaped twice in RSS feeds
   - http://code.djangoproject.com/ticket/6533
-* Do a more thorough job ensuring fields are not null (unless allowed_to_be_null_before_destroyed == True). We might have to wait for real model-based validations.
+* Do a more thorough job ensuring fields are not null (unless allowed_to_be_null_before_destroyed == True). We might have to wait for real model-based validations (Django 1.2).
 
 Features
 --------

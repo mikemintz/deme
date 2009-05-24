@@ -167,7 +167,7 @@ class ItemViewer(Viewer):
         if form.is_valid():
             item = form.save(commit=False)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -289,7 +289,7 @@ class ItemViewer(Viewer):
     def item_edit_html(self, form=None):
         self.context['action_title'] = 'Edit'
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
+        self.require_ability('edit ', self.item, wildcard_suffix=True)
         if form is None:
             fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
             form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
@@ -308,14 +308,14 @@ class ItemViewer(Viewer):
     @require_POST
     def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
+        self.require_ability('edit ', self.item, wildcard_suffix=True)
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x[0] == 'edit']
         form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
             new_item = form.save(commit=False)
-            new_item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            new_item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'])
             return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
             return self.item_edit_html(form)
@@ -500,7 +500,7 @@ class ContactMethodViewer(ItemViewer):
             item = form.save(commit=False)
             self.require_ability('add_contact_method', item.agent)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -536,7 +536,7 @@ class AuthenticationMethodViewer(ItemViewer):
             item = form.save(commit=False)
             self.require_ability('add_authentication_method', item.agent)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -675,7 +675,7 @@ class ViewerRequestViewer(ItemViewer):
         if form.is_valid():
             new_item = form.save(commit=False)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            new_item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
+            new_item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
             if not new_item.active:
                 new_item.reactivate(action_agent=self.cur_agent)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
@@ -717,7 +717,7 @@ class CollectionViewer(ItemViewer):
                 membership.reactivate(action_agent=self.cur_agent)
         except ObjectDoesNotExist:
             membership = Membership(collection=self.item, item=member)
-            membership.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            membership.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'])
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
@@ -762,7 +762,7 @@ class TextDocumentViewer(ItemViewer):
     def item_edit_html(self, form=None):
         self.context['action_title'] = 'Edit'
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
+        self.require_ability('edit ', self.item, wildcard_suffix=True)
 
         transclusions = Transclusion.objects.filter(from_item=self.item, from_item_version_number=self.item.version_number).order_by('-from_item_index')
         body_as_list = list(self.item.body)
@@ -793,7 +793,7 @@ class TextDocumentViewer(ItemViewer):
     @require_POST
     def item_update_html(self):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
-        self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
+        self.require_ability('edit ', self.item, wildcard_suffix=True)
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
         form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
@@ -816,7 +816,7 @@ class TextDocumentViewer(ItemViewer):
                 if n_subs == 0:
                     break
             
-            new_item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            new_item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'])
 
             for index, to_item_id in new_transclusions:
                 try:
@@ -829,7 +829,7 @@ class TextDocumentViewer(ItemViewer):
                     transclusion.from_item_index = index
                     transclusion.from_item_version_number = new_item.version_number
                     transclusion.to_item = to_item
-                    transclusion.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+                    transclusion.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'])
 
             return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
         else:
@@ -893,6 +893,7 @@ class TextCommentViewer(TextDocumentViewer):
 
     @require_POST
     def type_create_html(self):
+        #TODO do we need to allow action_summary here?
         try:
             item = Item.objects.get(pk=self.request.POST.get('item'))
         except:
@@ -911,10 +912,10 @@ class TextCommentViewer(TextDocumentViewer):
                 if not comment.name.lower().startswith('re: '):
                     comment.name = 'Re: %s' % comment.name
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            comment.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
+            comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
             if isinstance(item, TextDocument) and item_index is not None and self.permission_cache.agent_can(self.cur_agent, 'add_transclusion', item):
                 transclusion = Transclusion(from_item=item, from_item_version_number=comment.item_version_number, from_item_index=item_index, to_item=comment)
-                transclusion.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+                transclusion.save_versioned(action_agent=self.cur_agent)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -953,7 +954,7 @@ class TransclusionViewer(ItemViewer):
             item = form.save(commit=False)
             self.require_ability('add_transclusion', item.from_item)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -967,6 +968,7 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
     viewer_name = 'textdocumentexcerpt'
 
     def type_createmultiexcerpt_html(self):
+        #TODO get action_summary
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         self.require_global_ability('create Collection')
         excerpts = []
@@ -989,10 +991,10 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
         if not excerpts:
             return self.render_error('Invalid Form Data', "You must submit at least one excerpt")
         collection = Collection()
-        collection.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+        collection.save_versioned(action_agent=self.cur_agent)
         for excerpt in excerpts:
-            excerpt.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
-            Membership(item=excerpt, collection=collection).save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            excerpt.save_versioned(action_agent=self.cur_agent)
+            Membership(item=excerpt, collection=collection).save_versioned(action_agent=self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'collection', 'noun': collection.pk}))
         return HttpResponseRedirect(redirect)
 
@@ -1041,7 +1043,7 @@ class SubscriptionViewer(ItemViewer):
             item = form.save(commit=False)
             self.require_ability('add_subscription', item.contact_method)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            item.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
+            item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
         else:
