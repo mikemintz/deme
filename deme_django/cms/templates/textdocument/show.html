@@ -36,7 +36,7 @@
             targ = targ.parentNode;
         var tokenWrapper = targ;
         var index = tokenWrapper.deme_text_offset;
-        var url = '{% url item_type_url viewer="textcomment",action="new" %}?item={{ item.pk }}&amp;item_version_number={{ item.version_number }}&amp;redirect={{ full_path|urlencode }}&amp;item_index=' + index;
+        var url = '{% url item_type_url viewer="textcomment",action="new" %}?item={{ item.pk }}&item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&item_index=' + index;
         window.location = url;
         return false;
     }
@@ -50,7 +50,7 @@
             targ = targ.parentNode;
         var tokenWrapper = targ;
         var index = tokenWrapper.deme_text_offset;
-        var url = '{% url item_type_url viewer="transclusion",action="new" %}?from_item={{ item.pk }}&amp;from_item_version_number={{ item.version_number }}&amp;redirect={{ full_path|urlencode }}&amp;from_item_index=' + index;
+        var url = '{% url item_type_url viewer="transclusion",action="new" %}?from_item={{ item.pk }}&from_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&from_item_index=' + index;
         window.location = url;
         return false;
     }
@@ -127,7 +127,7 @@
             form_div.appendChild(remove_button);
             form_div.appendChild(selection.contents);
             $('#excerpt_form')[0].appendChild(form_div);
-            //var url = '{% url item_type_url viewer="textdocumentexcerpt",action="new" %}?text_document={{ item.pk }}&amp;text_document_version_number={{ item.version_number }}&amp;redirect={{ full_path|urlencode }}&amp;start_index=' + selection.start_offset + '&amp;length=' + length;
+            //var url = '{% url item_type_url viewer="textdocumentexcerpt",action="new" %}?text_document={{ item.pk }}&text_document_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&start_index=' + selection.start_offset + '&length=' + length;
             //window.location = url;
         }
     }
