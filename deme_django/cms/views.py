@@ -580,7 +580,7 @@ class AuthenticationMethodViewer(ItemViewer):
         return HttpResponseRedirect(full_redirect)
 
     def type_loggedinorout_html(self):
-        if self.cur_agent.item_type_string == 'AnonymousAgent':
+        if self.cur_agent.is_anonymous():
             self.context['action_title'] = 'Logged out'
         else:
             self.context['action_title'] = 'Logged in'

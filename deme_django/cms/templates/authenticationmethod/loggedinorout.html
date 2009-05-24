@@ -3,11 +3,11 @@
 {% block content %}
 
 <div style="padding: 5px; margin-bottom: 5px; font-size: 125%;">
-{% ifequal cur_agent.item_type_string 'AnonymousAgent' %}
+{% if cur_agent.is_anonymous %}
 You are now logged out. 
 {% else %}
 You are now logged in as {% viewable_name cur_agent %}.
-{% endifequal %}
+{% endif %}
 </div>
 
 <div style="padding: 5px; margin-bottom: 5px; font-size: 125%;">

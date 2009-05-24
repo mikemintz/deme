@@ -152,7 +152,7 @@
 
             <td style="vertical-align: top; text-align: right; padding: 0;">
                 <div style="float: right;">
-                {% ifequal cur_agent.item_type_string 'AnonymousAgent' %}
+                {% if cur_agent.is_anonymous %}
                 <div style="display: none;" id="login_dialog_password" title="Login">
                     <form name="password_form" onsubmit="$('#login_dialog_password').dialog('hide'); encrypt_password(); return false;">
                         <div>Username:</div>
@@ -216,7 +216,7 @@
                         });
                     </script>
                 </div>
-                {% endifequal %}
+                {% endif %}
                 </div>
                 <div style="clear: both;">
                 </div>
