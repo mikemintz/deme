@@ -1072,10 +1072,12 @@ class Group(Collection):
         super(Group, self)._after_create(action_agent, action_summary, action_time)
         # Create a folio for this group
         folio = Folio(group=self, name='%s folio' % self.display_name())
-        folio.save_versioned(action_agent, action_summary, action_time)
+        permissions = [AgentItemPermission(agent=action_agent, ability='do_anything', is_allowed=True)]
+        folio.save_versioned(action_agent, action_summary, action_time, initial_permissions=permissions)
         # Create a group agent for this group
         group_agent = GroupAgent(group=self, name='%s agent' % self.display_name())
-        group_agent.save_versioned(action_agent, action_summary, action_time)
+        permissions = [AgentItemPermission(agent=action_agent, ability='do_anything', is_allowed=True)]
+        group_agent.save_versioned(action_agent, action_summary, action_time, initial_permissions=permissions)
     _after_create.alters_data = True
 
 

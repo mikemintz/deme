@@ -705,6 +705,7 @@ class CollectionViewer(ItemViewer):
 
 
     def item_addmember_html(self):
+        #TODO use a form
         try:
             member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
@@ -717,12 +718,14 @@ class CollectionViewer(ItemViewer):
                 membership.reactivate(action_agent=self.cur_agent)
         except ObjectDoesNotExist:
             membership = Membership(collection=self.item, item=member)
-            membership.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'])
+            permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+            membership.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
 
     def item_removemember_html(self):
+        #TODO use a form
         try:
             member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
@@ -915,7 +918,9 @@ class TextCommentViewer(TextDocumentViewer):
             comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
             if isinstance(item, TextDocument) and item_index is not None and self.permission_cache.agent_can(self.cur_agent, 'add_transclusion', item):
                 transclusion = Transclusion(from_item=item, from_item_version_number=comment.item_version_number, from_item_index=item_index, to_item=comment)
-                transclusion.save_versioned(action_agent=self.cur_agent)
+                #TODO seems like there should be a way to set custom permissions on the transclusions
+                permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+                transclusion.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -969,6 +974,7 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
 
     def type_createmultiexcerpt_html(self):
         #TODO get action_summary
+        #TODO there should be a way to specify permissions on a multi-excerpts as soon as you create them
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         self.require_global_ability('create Collection')
         excerpts = []
@@ -991,10 +997,13 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
         if not excerpts:
             return self.render_error('Invalid Form Data', "You must submit at least one excerpt")
         collection = Collection()
-        collection.save_versioned(action_agent=self.cur_agent)
+        permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+        collection.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
         for excerpt in excerpts:
-            excerpt.save_versioned(action_agent=self.cur_agent)
-            Membership(item=excerpt, collection=collection).save_versioned(action_agent=self.cur_agent)
+            permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+            excerpt.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
+            permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+            Membership(item=excerpt, collection=collection).save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'collection', 'noun': collection.pk}))
         return HttpResponseRedirect(redirect)
 

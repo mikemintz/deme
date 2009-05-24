@@ -48,6 +48,8 @@ def main():
         send_mail('Re: %s' % subject, 'Error: Deme could not create your comment because you do not have permission to comment on the item with id %s' % item_id, to_email, [from_email])
         return 
 
+    agent = email_contact_method.agent
+
     #TODO permissions to view name: technically you could figure out the name of an item by commenting on it here (same issue in cms/views.py)
     if issubclass(item.actual_item_type(), Comment):
         comment_name = item.display_name()
@@ -58,7 +60,8 @@ def main():
     
     comment = TextComment(item=item, item_version_number=item.version_number, name=comment_name, body=body, from_contact_method=email_contact_method)
     comment.name = comment_name #TODO this is a hack due to multiple inheritance bug in Django. remove it when bug is fixed
-    comment.save_versioned(action_agent=email_contact_method.agent)
+    permissions = [AgentItemPermission(agent=agent, ability='do_anything', is_allowed=True)]
+    comment.save_versioned(action_agent=agent, initial_permissions=permissions)
 
 
 if __name__ == '__main__':
