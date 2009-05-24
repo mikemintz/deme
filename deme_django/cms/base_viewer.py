@@ -8,10 +8,15 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseBadRequest, HttpResponseNotFound, HttpRequest, QueryDict
 from django.utils import datastructures
 from django.template import Context, loader
-from cms.models import *
 from django.core.exceptions import ObjectDoesNotExist
-from permissions import PermissionCache
+from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
+from django.db import models
+from django import forms
 import datetime
+from cms.permissions import PermissionCache
+from cms.models import *
+from cms.forms import JavaScriptSpamDetectionField, AjaxModelChoiceField
 
 #TODO obey self.format when rendering an error if possible
 
@@ -337,6 +342,41 @@ class Viewer(object):
             else:
                 body = 'There is no item %s version %s.' % (self.noun, version)
         return self.render_error(title, body, HttpResponseNotFound)
+
+    def get_form_class_for_item_type(self, update_or_create, item_type, fields=None):
+        if issubclass(item_type, DemeAccount):
+            if update_or_create == 'update':
+                return EditDemeAccountForm
+            else:
+                return NewDemeAccountForm
+        # For now, this is how we prevent manual creation of TextDocumentExcerpts
+        if issubclass(item_type, TextDocumentExcerpt):
+            return forms.models.modelform_factory(item_type, fields=['name'])
+
+        exclude = []
+        for field in item_type._meta.fields:
+            if (field.rel and field.rel.parent_link) or (update_or_create == 'update' and field.name in item_type.all_immutable_fields()):
+                exclude.append(field.name)
+        def formfield_callback(f):
+            if isinstance(f, models.ForeignKey):
+                return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
+            else:
+                return f.formfield()
+
+        #TODO check modelform_factory to see if there are updates to this
+        class Meta:
+            pass
+        setattr(Meta, 'model', item_type)
+        setattr(Meta, 'fields', fields)
+        setattr(Meta, 'exclude', exclude)
+        class_name = item_type.__name__ + 'Form'
+        attrs = {'Meta': Meta, 'formfield_callback': formfield_callback}
+        attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("Reason for %s this item" % ('editing' if update_or_create == 'update' else 'creating')), widget=forms.TextInput, required=False)
+        if settings.USE_ANONYMOUS_JAVASCRIPT_SPAM_DETECTOR and self.cur_agent.is_anonymous():
+            self.request.session.modified = True # We want to guarantee a cookie is given
+            attrs['nospam'] = JavaScriptSpamDetectionField(self.request.session.session_key)
+        form_class = forms.models.ModelFormMetaclass(class_name, (forms.models.ModelForm,), attrs)
+        return form_class
 
     def _set_default_layout(self):
         cur_node = self.cur_site.default_layout

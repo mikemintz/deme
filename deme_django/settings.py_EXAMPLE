@@ -76,6 +76,9 @@ DEFAULT_HOSTNAME = 'localhost'
 # The hostname from which notification emails are sent
 NOTIFICATION_EMAIL_HOSTNAME = 'localhost'
 
+# Enable if you want to require anonymous users to pass an invisible JavaScript spam detector
+USE_ANONYMOUS_JAVASCRIPT_SPAM_DETECTOR = True
+
 INSTALLED_APPS = (
     'django.contrib.sessions',
     'deme_django.cms',

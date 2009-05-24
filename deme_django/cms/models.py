@@ -637,6 +637,9 @@ class Agent(Item):
             return False
         return super(Agent, self).can_be_deleted()
 
+    def is_anonymous(self):
+        return issubclass(self.actual_item_type(), AnonymousAgent)
+
 
 class AnonymousAgent(Agent):
     """

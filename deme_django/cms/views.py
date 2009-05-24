@@ -10,204 +10,19 @@ from django.template import loader
 from django.db import models
 from django.db.models import Q
 from django.conf import settings
-from cms.models import *
-from django import forms
 from django.utils import simplejson
 from django.utils.text import capfirst
 from django.core.exceptions import ObjectDoesNotExist
 import django.contrib.syndication.feeds
 import django.contrib.syndication.views
 from django.views.decorators.http import require_POST
-from base_viewer import DemePermissionDenied, Viewer
 import re
 import os
 import subprocess
 from urlparse import urljoin
-
-###############################################################################
-# Models, forms, and fields
-###############################################################################
-
-class JustTextNoInputWidget(forms.Widget):
-    """A form widget that just displays text without any sort of input."""
-    def render(self, name, value, attrs=None):
-        if value is None: value = ''
-        if attrs is None: attrs = {}
-        #TODO this is small and gray
-        return """<span id="%(id)s">%(value)s</span>""" % {'id': attrs.get('id', ''), 'value': value}
-
-class AjaxModelChoiceWidget(forms.Widget):
-    """Ajax auto-complete widget for ForeignKey fields."""
-    def render(self, name, value, attrs=None):
-        model = self.choices.queryset.model
-        #field = self.choices.field
-        try:
-            if issubclass(model, Item):
-                value_item = Item.objects.get(pk=value)
-            elif issubclass(model, Item.Version):
-                value_item = Item.Version.objects.get(pk=value)
-            else:
-                value_item = None
-        except:
-            value_item = None
-        initial_search = value_item.name if value_item else '' #TODO this poses a permission problem. someone can set an initial item, and figure out its name
-        if value is None: value = ''
-        if attrs is None: attrs = {}
-        ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'})
-        result = """
-        <input type="hidden" name="%(name)s" value="%(value)s" />
-        <input class="ajax_choice_field" type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" autocomplete="off" />
-        <div class="ajax_choice_results" style="display: none;"></div>
-        <script type="text/javascript">
-        fn = function(){
-          var search_onchange = function(e) {
-            if (e.value === e.last_value) return;
-            e.last_value = e.value;
-            var hidden_input = $(e).prev()[0];
-            var results_div = $(e).next()[0];
-            if (e.value == '') {
-              $(results_div.childNodes).remove();
-              $(results_div).hide();
-              hidden_input.value = '';
-              return;
-            }
-            jQuery.getJSON('%(ajax_url)s', {q:e.value}, function(json) {
-              json.splice(0, 0, ['[NULL]', '']);
-              $(results_div.childNodes).remove();
-              $.each(json, function(i, datum){
-                var option = document.createElement('div');
-                option.className = 'ajax_choice_option';
-                option.innerHTML = datum[0];
-                $(option).bind('click', function(event){
-                  window.clearInterval(e.ajax_timer);
-                  e.value = datum[0];
-                  e.last_value = datum[0];
-                  e.ajax_timer = window.setInterval(function(){search_onchange(e)}, 250); //TODO use bind on search_onchange?
-                  hidden_input.value = datum[1];
-                  $(results_div.childNodes).remove();
-                  $(results_div).hide();
-                });
-                x = results_div;
-                results_div.appendChild(option);
-              });
-              $(results_div).show();
-            });
-          };
-          $('.ajax_choice_field:not(.ajax_choice_field_activated)').addClass('ajax_choice_field_activated').each(function(i, input){
-            input.last_value = input.value;
-            input.ajax_timer = window.setInterval(function(){search_onchange(input)}, 250); //TODO use bind on search_onchange?
-          });
-        };
-        fn();
-        </script>
-        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search}
-        return result
-
-class AjaxModelChoiceField(forms.ModelChoiceField):
-    """Ajax auto-complete field for ForeignKey fields."""
-    widget = AjaxModelChoiceWidget
-
-class HiddenModelChoiceField(forms.ModelChoiceField):
-    """Hidden field for ForeignKey fields."""
-    widget = forms.HiddenInput
-
-class AddSubPathForm(forms.ModelForm):
-    aliased_item = super(models.ForeignKey, CustomUrl._meta.get_field_by_name('aliased_item')[0]).formfield(queryset=CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.to._default_manager.complex_filter(CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.field_name)
-    parent_url = super(models.ForeignKey, CustomUrl._meta.get_field_by_name('parent_url')[0]).formfield(queryset=CustomUrl._meta.get_field_by_name('parent_url')[0].rel.to._default_manager.complex_filter(CustomUrl._meta.get_field_by_name('parent_url')[0].rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=CustomUrl._meta.get_field_by_name('parent_url')[0].rel.field_name)
-    action_summary = forms.CharField(label=_("Action summary"), help_text=_("Reason for adding this subpath"), widget=forms.TextInput, required=False)
-    class Meta:
-        model = CustomUrl
-        fields = ['aliased_item', 'viewer', 'action', 'query_string', 'format', 'parent_url', 'path']
-
-class NewMembershipForm(forms.ModelForm):
-    item = AjaxModelChoiceField(Item.objects)
-    action_summary = forms.CharField(label=_("Action summary"), help_text=_("Reason for adding this item"), widget=forms.TextInput, required=False)
-    class Meta:
-        model = Membership
-        fields = ['item']
-
-class NewTextCommentForm(forms.ModelForm):
-    item = HiddenModelChoiceField(Item.objects)
-    item_version_number = forms.IntegerField(widget=forms.HiddenInput())
-    item_index = forms.IntegerField(widget=forms.HiddenInput(), required=False)
-    name = forms.CharField(label=_("Comment title"), help_text=_("A brief description of the comment"), widget=forms.TextInput, required=False)
-    class Meta:
-        model = TextComment
-        fields = ['name', 'body', 'item', 'item_version_number']
-
-class NewDemeAccountForm(forms.ModelForm):
-    agent = AjaxModelChoiceField(Agent.objects)
-    password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
-    password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
-    action_summary = forms.CharField(label=_("Action summary"), help_text=_("Reason for creating this item"), widget=forms.TextInput, required=False)
-    class Meta:
-        model = DemeAccount
-        exclude = ['password']
-    def clean_password2(self):
-        password1 = self.cleaned_data.get("password1", "")
-        password2 = self.cleaned_data["password2"]
-        if password1 != password2:
-            raise forms.ValidationError(_("The two password fields didn't match."))
-        return password2
-    def save(self, commit=True):
-        item = super(NewDemeAccountForm, self).save(commit=False)
-        item.set_password(self.cleaned_data["password1"])
-        if commit:
-            item.save()
-        return item
-
-class EditDemeAccountForm(forms.ModelForm):
-    password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
-    password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
-    action_summary = forms.CharField(label=_("Action summary"), help_text=_("Reason for editing this item"), widget=forms.TextInput, required=False)
-    class Meta:
-        model = DemeAccount
-        exclude = ['password', 'agent']
-    def clean_password2(self):
-        password1 = self.cleaned_data.get("password1", "")
-        password2 = self.cleaned_data["password2"]
-        if password1 != password2:
-            raise forms.ValidationError(_("The two password fields didn't match."))
-        return password2
-    def save(self, commit=True):
-        item = super(EditDemeAccountForm, self).save(commit=False)
-        item.set_password(self.cleaned_data["password1"])
-        if commit:
-            item.save()
-        return item
-
-def get_form_class_for_item_type(update_or_create, item_type, fields=None):
-    if issubclass(item_type, DemeAccount):
-        if update_or_create == 'update':
-            return EditDemeAccountForm
-        else:
-            return NewDemeAccountForm
-    # For now, this is how we prevent manual creation of TextDocumentExcerpts
-    if issubclass(item_type, TextDocumentExcerpt):
-        return forms.models.modelform_factory(item_type, fields=['name'])
-
-    exclude = []
-    for field in item_type._meta.fields:
-        if (field.rel and field.rel.parent_link) or (update_or_create == 'update' and field.name in item_type.all_immutable_fields()):
-            exclude.append(field.name)
-    def formfield_callback(f):
-        if isinstance(f, models.ForeignKey):
-            return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
-        else:
-            return f.formfield()
-
-    #TODO check modelform_factory to see if there are updates to this
-    class Meta:
-        pass
-    setattr(Meta, 'model', item_type)
-    setattr(Meta, 'fields', fields)
-    setattr(Meta, 'exclude', exclude)
-    class_name = item_type.__name__ + 'Form'
-    attrs = {'Meta': Meta, 'formfield_callback': formfield_callback}
-    attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("Reason for %s this item" % ('editing' if update_or_create == 'update' else 'creating')), widget=forms.TextInput, required=False)
-    form_class = forms.models.ModelFormMetaclass(class_name, (forms.models.ModelForm,), attrs)
-    return form_class
-
+from cms.models import *
+from cms.forms import *
+from cms.base_viewer import DemePermissionDenied, Viewer
 
 ###############################################################################
 # Viewers
@@ -336,7 +151,7 @@ class ItemViewer(Viewer):
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         if form is None:
             form_initial = dict(self.request.GET.items())
-            form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+            form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
             form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
@@ -347,7 +162,7 @@ class ItemViewer(Viewer):
     @require_POST
     def type_create_html(self):
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
-        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
@@ -451,7 +266,7 @@ class ItemViewer(Viewer):
     def item_copy_html(self):
         self.context['action_title'] = 'Copy'
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
-        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
         fields_to_copy = [field_name for field_name in form_class.base_fields if self.cur_agent_can('view %s' % field_name, self.item)]
         form_initial = {}
         for field_name in fields_to_copy:
@@ -477,7 +292,7 @@ class ItemViewer(Viewer):
         self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
         if form is None:
             fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
-            form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
+            form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
             form = form_class(instance=self.item)
             fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
             initial_fields_set = set(form.initial.iterkeys())
@@ -496,7 +311,7 @@ class ItemViewer(Viewer):
         self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x[0] == 'edit']
-        form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
+        form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
             new_item = form.save(commit=False)
@@ -669,7 +484,7 @@ class ContactMethodViewer(ItemViewer):
         self.require_ability('add_contact_method', agent)
         if form is None:
             form_initial = dict(self.request.GET.items())
-            form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+            form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
             form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
@@ -679,7 +494,7 @@ class ContactMethodViewer(ItemViewer):
 
     @require_POST
     def type_create_html(self):
-        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
@@ -705,7 +520,7 @@ class AuthenticationMethodViewer(ItemViewer):
         self.require_ability('add_authentication_method', agent)
         if form is None:
             form_initial = dict(self.request.GET.items())
-            form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+            form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
             form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
@@ -715,7 +530,7 @@ class AuthenticationMethodViewer(ItemViewer):
 
     @require_POST
     def type_create_html(self):
-        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
@@ -962,7 +777,7 @@ class TextDocumentViewer(ItemViewer):
 
         if form is None:
             fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
-            form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
+            form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
             form = form_class(instance=self.item)
             fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
             initial_fields_set = set(form.initial.iterkeys())
@@ -981,7 +796,7 @@ class TextDocumentViewer(ItemViewer):
         self.require_ability('edit ', self.cur_agent, wildcard_suffix=True)
         new_item = self.item
         fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
-        form_class = get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
+        form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
             new_item = form.save(commit=False)
@@ -1121,7 +936,7 @@ class TransclusionViewer(ItemViewer):
         self.require_ability('add_transclusion', from_item)
         if form is None:
             form_initial = dict(self.request.GET.items())
-            form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+            form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
             form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
@@ -1131,7 +946,7 @@ class TransclusionViewer(ItemViewer):
 
     @require_POST
     def type_create_html(self):
-        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             #TODO use transactions to make the Transclusion save at the same time as the Comment
@@ -1210,7 +1025,7 @@ class SubscriptionViewer(ItemViewer):
         self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
         if form is None:
             form_initial = dict(self.request.GET.items())
-            form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+            form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
             form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
@@ -1220,7 +1035,7 @@ class SubscriptionViewer(ItemViewer):
 
     @require_POST
     def type_create_html(self):
-        form_class = get_form_class_for_item_type('create', self.accepted_item_type)
+        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
