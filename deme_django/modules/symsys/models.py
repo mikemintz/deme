@@ -5,7 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 __all__ = ['SymsysCareer', 'ThesisSymsysCareer', 'StudentSymsysCareer',
         'MinorSymsysCareer', 'BachelorsSymsysCareer', 'MastersSymsysCareer',
-        'HonorsSymsysCareer', 'FacultySymsysCareer',
+        'HonorsSymsysCareer', 'ResearcherSymsysCareer', 'FacultySymsysCareer',
         'ProgramStaffSymsysCareer', 'SymsysAffiliate', 'Event',
         'Advertisement', 'TextAdvertisement', 'HtmlAdvertisement']
 
@@ -35,7 +35,7 @@ MS_TRACKS = [
     'Natural Language Technology',
 ]
 
-ACADEMIC_TITLES = [
+FACULTY_ACADEMIC_TITLES = [
     "Assistant Professor",
     "Associate Professor",
     "Consulting Assistant Professor",
@@ -152,6 +152,11 @@ class SymsysCareer(Item):
         if any(x.actual_item_type() == HonorsSymsysCareer and x.finished == False for x in my_careers):
             groups.append(get_or_create_group('active_honors', 'Active Honors', group_creator))
 
+        if any(x.actual_item_type() == ResearcherSymsysCareer and x.finished == True for x in my_careers):
+            groups.append(get_or_create_group('past_researchers', 'Past Researchers', group_creator))
+        if any(x.actual_item_type() == ResearcherSymsysCareer and x.finished == False for x in my_careers):
+            groups.append(get_or_create_group('present_researchers', 'Present Researchers', group_creator))
+
         if any(x.actual_item_type() == FacultySymsysCareer and x.finished == True for x in my_careers):
             groups.append(get_or_create_group('past_faculty', 'Past Faculty', group_creator))
         if any(x.actual_item_type() == FacultySymsysCareer and x.finished == False for x in my_careers):
@@ -200,6 +205,8 @@ class SymsysCareer(Item):
         if isinstance(self, BachelorsSymsysCareer):
             if not self.finished:
                 agents_own_abilities.append('edit concentration')
+        if isinstance(self, ResearcherSymsysCareer):
+            agents_own_abilities.append('edit academic_title')
         if isinstance(self, FacultySymsysCareer):
             agents_own_abilities.append('edit academic_title')
         AgentItemPermission.objects.filter(agent=agent, item=self, ability__startswith='edit ').delete()
@@ -293,6 +300,19 @@ class HonorsSymsysCareer(ThesisSymsysCareer):
     advisor = models.ForeignKey('SymsysAffiliate', null=True, blank=True, related_name="honors_advisor_group", verbose_name=_('advisor'), default=None)
 
 
+class ResearcherSymsysCareer(SymsysCareer):
+    # Setup
+    introduced_immutable_fields = frozenset()
+    introduced_abilities = frozenset(['view academic_title', 'edit academic_title'])
+    introduced_global_abilities = frozenset(['create ResearcherSymsysCareer'])
+    class Meta:
+        verbose_name = _('researcher Symsys career')
+        verbose_name_plural = _('researcher Symsys careers')
+
+    # Fields
+    academic_title = models.CharField(_('academic title'), max_length=255) # always editable by the researcher
+
+
 class FacultySymsysCareer(SymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset()
@@ -303,7 +323,7 @@ class FacultySymsysCareer(SymsysCareer):
         verbose_name_plural = _('faculty Symsys careers')
 
     # Fields
-    academic_title = models.CharField(_('academic title'), max_length=255, choices=[(x,x) for x in ACADEMIC_TITLES]) # always editable by the faculty
+    academic_title = models.CharField(_('academic title'), max_length=255, choices=[(x,x) for x in FACULTY_ACADEMIC_TITLES]) # always editable by the faculty
 
 
 class ProgramStaffSymsysCareer(SymsysCareer):

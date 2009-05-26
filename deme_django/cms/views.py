@@ -24,10 +24,6 @@ from cms.models import *
 from cms.forms import *
 from cms.base_viewer import DemePermissionDenied, Viewer
 
-###############################################################################
-# Viewers
-###############################################################################
-
 class CodeGraphViewer(Viewer):
     accepted_item_type = Item
     viewer_name = 'codegraph'
