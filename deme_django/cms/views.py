@@ -202,9 +202,16 @@ class ItemViewer(Viewer):
         except (EmptyPage, InvalidPage):
             newPage = paginator.page(paginator.num_pages)
 
+        page_range = paginator.page_range
+        for possible_page in page_range:
+            if (possible_page > page + 10):
+                page_range.remove(possible_page)
+            if (possible_page < page - 10):
+                page_range.remove(possible_page)
+
         self.context['action_notices'] = newPage
         self.context['count'] = paginator.count
-        self.context['page_range'] = paginator.page_range
+        self.context['page_range'] = page_range
            
         return HttpResponse(template.render(self.context))
 
