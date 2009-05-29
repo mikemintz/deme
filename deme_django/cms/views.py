@@ -474,76 +474,9 @@ class ItemViewer(Viewer):
         return HttpResponse(template.render(self.context))
 
 
-class ContactMethodViewer(ItemViewer):
-    accepted_item_type = ContactMethod
-    viewer_name = 'contactmethod'
-
-    def type_new_html(self, form=None):
-        self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
-        try:
-            agent = Item.objects.get(pk=self.request.REQUEST.get('agent'))
-        except:
-            return self.render_error('Invalid URL', "You must specify the agent you are adding a contact method to")
-        self.require_ability('add_contact_method', agent)
-        if form is None:
-            form_initial = dict(self.request.GET.items())
-            form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
-            form = form_class(initial=form_initial)
-        template = loader.get_template('item/new.html')
-        self.context['form'] = form
-        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-        self.context['redirect'] = self.request.GET.get('redirect')
-        return HttpResponse(template.render(self.context))
-
-    @require_POST
-    def type_create_html(self):
-        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
-        form = form_class(self.request.POST, self.request.FILES)
-        if form.is_valid():
-            item = form.save(commit=False)
-            self.require_ability('add_contact_method', item.agent)
-            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
-            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
-            return HttpResponseRedirect(redirect)
-        else:
-            return self.type_new_html(form)
-
-
 class AuthenticationMethodViewer(ItemViewer):
     accepted_item_type = AuthenticationMethod
     viewer_name = 'authenticationmethod'
-
-    def type_new_html(self, form=None):
-        self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
-        try:
-            agent = Item.objects.get(pk=self.request.REQUEST.get('agent'))
-        except:
-            return self.render_error('Invalid URL', "You must specify the agent you are adding an authentication method to")
-        self.require_ability('add_authentication_method', agent)
-        if form is None:
-            form_initial = dict(self.request.GET.items())
-            form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
-            form = form_class(initial=form_initial)
-        template = loader.get_template('item/new.html')
-        self.context['form'] = form
-        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-        self.context['redirect'] = self.request.GET.get('redirect')
-        return HttpResponse(template.render(self.context))
-
-    @require_POST
-    def type_create_html(self):
-        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
-        form = form_class(self.request.POST, self.request.FILES)
-        if form.is_valid():
-            item = form.save(commit=False)
-            self.require_ability('add_authentication_method', item.agent)
-            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
-            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
-            return HttpResponseRedirect(redirect)
-        else:
-            return self.type_new_html(form)
 
     def type_login_html(self):
         self.context['action_title'] = 'Login'
@@ -661,30 +594,8 @@ class ViewerRequestViewer(ItemViewer):
         self.context['site'] = site
         self.context['custom_urls'] = custom_urls
         self.context['child_urls'] = self.item.child_urls.filter(active=True)
-        self.context['addsubpath_form'] = form or AddSubPathForm(initial={'parent_url':self.item.pk})
         template = loader.get_template('viewerrequest/show.html')
         return HttpResponse(template.render(self.context))
-
-    def item_addsubpath_html(self):
-        form = AddSubPathForm(self.request.POST, self.request.FILES)
-        if form.data['parent_url'] != str(self.item.pk):
-            return self.render_error('Invalid URL', "You must specify the parent url you are extending")
-        self.require_ability('add_sub_path', self.item)
-        try:
-            custom_url = CustomUrl.objects.get(parent_url=self.item, path=form.data['path'])
-        except ObjectDoesNotExist:
-            custom_url = None
-        form = AddSubPathForm(self.request.POST, self.request.FILES, instance=custom_url)
-        if form.is_valid():
-            new_item = form.save(commit=False)
-            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            new_item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
-            if not new_item.active:
-                new_item.reactivate(action_agent=self.cur_agent)
-            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
-            return HttpResponseRedirect(redirect)
-        else:
-            return self.item_show_html(form)
 
 
 class CollectionViewer(ItemViewer):
@@ -702,10 +613,8 @@ class CollectionViewer(ItemViewer):
             self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
         self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can(self.cur_agent, 'view name', x.item), x.item.name))
         self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
-        self.context['addmember_form'] = NewMembershipForm()
         template = loader.get_template('collection/show.html')
         return HttpResponse(template.render(self.context))
-
 
     def item_addmember_html(self):
         #TODO use a form
@@ -875,14 +784,14 @@ class TextCommentViewer(TextDocumentViewer):
 
     def type_new_html(self, form=None):
         self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         try:
             item = Item.objects.get(pk=self.request.REQUEST.get('item'))
         except:
             return self.render_error('Invalid URL', "You must specify the item you are commenting on")
-        self.require_ability('comment_on', item)
         if form is None:
             form_initial = dict(self.request.GET.items())
-            form_class = NewTextCommentForm
+            form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
             form = form_class(initial=form_initial)
             if issubclass(item.actual_item_type(), Comment):
                 comment_name = item.display_name()
@@ -900,12 +809,13 @@ class TextCommentViewer(TextDocumentViewer):
     @require_POST
     def type_create_html(self):
         #TODO do we need to allow action_summary here?
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         try:
             item = Item.objects.get(pk=self.request.POST.get('item'))
         except:
             return self.render_error('Invalid URL', "You must specify the item you are commenting on")
         self.require_ability('comment_on', item)
-        form_class = NewTextCommentForm
+        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             #TODO use transactions to make the Transclusion save at the same time as the Comment
@@ -928,47 +838,6 @@ class TextCommentViewer(TextDocumentViewer):
             return HttpResponseRedirect(redirect)
         else:
             return self.type_new_html(form)
-
-    #TODO copy/edit/update comments
-
-
-class TransclusionViewer(ItemViewer):
-    accepted_item_type = Transclusion
-    viewer_name = 'transclusion'
-
-    def type_new_html(self, form=None):
-        self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
-        try:
-            from_item = Item.objects.get(pk=self.request.REQUEST.get('from_item'))
-        except:
-            return self.render_error('Invalid URL', "You must specify the item you are adding a transclusion to")
-        self.require_ability('add_transclusion', from_item)
-        if form is None:
-            form_initial = dict(self.request.GET.items())
-            form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
-            form = form_class(initial=form_initial)
-        template = loader.get_template('item/new.html')
-        self.context['form'] = form
-        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-        self.context['redirect'] = self.request.GET.get('redirect')
-        return HttpResponse(template.render(self.context))
-
-    @require_POST
-    def type_create_html(self):
-        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
-        form = form_class(self.request.POST, self.request.FILES)
-        if form.is_valid():
-            #TODO use transactions to make the Transclusion save at the same time as the Comment
-            item = form.save(commit=False)
-            self.require_ability('add_transclusion', item.from_item)
-            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
-            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
-            return HttpResponseRedirect(redirect)
-        else:
-            return self.type_new_html(form)
-
-    #TODO copy/edit/update transclusions
 
 
 class TextDocumentExcerptViewer(TextDocumentViewer):
@@ -1029,35 +898,4 @@ class DemeSettingViewer(ItemViewer):
         DemeSetting.set(key, value, self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'modify'}))
         return HttpResponseRedirect(redirect)
-
-
-class SubscriptionViewer(ItemViewer):
-    accepted_item_type = Subscription
-    viewer_name = 'subscription'
-
-    def type_new_html(self, form=None):
-        self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
-        if form is None:
-            form_initial = dict(self.request.GET.items())
-            form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
-            form = form_class(initial=form_initial)
-        template = loader.get_template('item/new.html')
-        self.context['form'] = form
-        self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
-        self.context['redirect'] = self.request.GET.get('redirect')
-        return HttpResponse(template.render(self.context))
-
-    @require_POST
-    def type_create_html(self):
-        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
-        form = form_class(self.request.POST, self.request.FILES)
-        if form.is_valid():
-            item = form.save(commit=False)
-            self.require_ability('add_subscription', item.contact_method)
-            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
-            item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
-            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
-            return HttpResponseRedirect(redirect)
-        else:
-            return self.type_new_html(form)
 

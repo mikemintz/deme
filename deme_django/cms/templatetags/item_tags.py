@@ -1008,8 +1008,8 @@ class PermissionEditor(template.Node):
         existing_permission_data.append(datum)
 
         from cms.views import AjaxModelChoiceField
-        new_agent_select_widget = AjaxModelChoiceField(Agent.objects).widget.render('new_agent', None)
-        new_collection_select_widget = AjaxModelChoiceField(Collection.objects).widget.render('new_collection', None)
+        new_agent_select_widget = AjaxModelChoiceField(Agent.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None)
+        new_collection_select_widget = AjaxModelChoiceField(Collection.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None)
         #TODO the widgets get centered-alignment in the dialog, which looks bad
 
         result = """
@@ -1147,8 +1147,8 @@ class PermissionEditor(template.Node):
         'new_img_url': icon_url('new', 16),
         'agent_img_url': icon_url('Agent', 16),
         'collection_img_url': icon_url('Collection', 16),
-        'new_agent_select_widget': AjaxModelChoiceField(Agent.objects).widget.render('new_agent', None),
-        'new_collection_select_widget': AjaxModelChoiceField(Collection.objects).widget.render('new_collection', None),
+        'new_agent_select_widget': AjaxModelChoiceField(Agent.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None),
+        'new_collection_select_widget': AjaxModelChoiceField(Collection.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None),
         }
         return result
 

@@ -36,7 +36,7 @@ __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
         'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice',
         'DeactivateActionNotice', 'ReactivateActionNotice',
         'DestroyActionNotice', 'CreateActionNotice', 'EditActionNotice',
-        'FixedBooleanField']
+        'FixedBooleanField', 'FixedForeignKey']
 
 ###############################################################################
 # Field types
@@ -61,6 +61,17 @@ class FixedBooleanField(models.NullBooleanField):
         }
         defaults.update(kwargs)
         return super(FixedBooleanField, self).formfield(**defaults)
+
+
+class FixedForeignKey(models.ForeignKey):
+    """
+    This is a modified ForeignKey that specifies the abilities required to
+    modify the field.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.required_abilities = kwargs.pop('required_abilities', [])
+        super(FixedForeignKey, self).__init__(*args, **kwargs)
         
 
 ###############################################################################
@@ -202,7 +213,7 @@ class Item(models.Model):
     item_type_string = models.CharField(_('item type'), max_length=255, editable=False)
     active           = models.BooleanField(_('active'), default=True, editable=False, db_index=True)
     destroyed        = models.BooleanField(_('destroyed'), default=False, editable=False)
-    creator          = models.ForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
+    creator          = FixedForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
     created_at       = models.DateTimeField(_('created at'), editable=False)
     name             = models.CharField(_('item name'), max_length=255, blank=True, help_text=_('The name used to refer to this item'))
     description      = models.CharField(_('preface'), max_length=255, blank=True, help_text=_('Description of the purpose of this item'))
@@ -687,7 +698,7 @@ class GroupAgent(Agent):
         verbose_name_plural = _('group agents')
 
     # Fields
-    group = models.ForeignKey('Group', related_name='group_agents', unique=True, editable=False, verbose_name=_('group'))
+    group = FixedForeignKey('Group', related_name='group_agents', unique=True, editable=False, verbose_name=_('group'))
 
 
 class AuthenticationMethod(Item):
@@ -713,7 +724,7 @@ class AuthenticationMethod(Item):
         verbose_name_plural = _('authentication methods')
 
     # Fields
-    agent = models.ForeignKey(Agent, related_name='authentication_methods', verbose_name=_('agent'))
+    agent = FixedForeignKey(Agent, related_name='authentication_methods', verbose_name=_('agent'), required_abilities=['add_authentication_method'])
 
 
 class DemeAccount(AuthenticationMethod):
@@ -730,7 +741,7 @@ class DemeAccount(AuthenticationMethod):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view username', 'view password', 'view password_question', 'view password_answer',
                                       'edit username', 'edit password', 'edit password_question', 'edit password_answer'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create DemeAccount'])
     class Meta:
         verbose_name = _('password account')
         verbose_name_plural = _('password accounts')
@@ -855,7 +866,7 @@ class ContactMethod(Item):
         verbose_name_plural = _('contact methods')
 
     # Fields
-    agent = models.ForeignKey(Agent, related_name='contact_methods', verbose_name=_('agent'))
+    agent = FixedForeignKey(Agent, related_name='contact_methods', verbose_name=_('agent'), required_abilities=['add_contact_method'])
 
 
 class EmailContactMethod(ContactMethod):
@@ -866,7 +877,7 @@ class EmailContactMethod(ContactMethod):
     # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view email', 'edit email'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create EmailContactMethod'])
     class Meta:
         verbose_name = _('email contact method')
         verbose_name_plural = _('email contact methods')
@@ -883,7 +894,7 @@ class PhoneContactMethod(ContactMethod):
     # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view phone', 'edit phone'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create PhoneContactMethod'])
     class Meta:
         verbose_name = _('phone contact method')
         verbose_name_plural = _('phone contact methods')
@@ -900,7 +911,7 @@ class FaxContactMethod(ContactMethod):
     # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view fax', 'edit fax'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create FaxContactMethod'])
     class Meta:
         verbose_name = _('fax contact method')
         verbose_name_plural = _('fax contact methods')
@@ -917,7 +928,7 @@ class WebsiteContactMethod(ContactMethod):
     # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view url', 'edit url'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create WebsiteContactMethod'])
     class Meta:
         verbose_name = _('website contact method')
         verbose_name_plural = _('website contact methods')
@@ -934,7 +945,7 @@ class AIMContactMethod(ContactMethod):
     # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view screen_name', 'edit screen_name'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create AIMContactMethod'])
     class Meta:
         verbose_name = _('AIM contact method')
         verbose_name_plural = _('AIM contact methods')
@@ -954,7 +965,7 @@ class AddressContactMethod(ContactMethod):
     introduced_abilities = frozenset(['view street1', 'view street2', 'view city', 'view state',
                                       'view country', 'view zip', 'edit street1', 'edit street2',
                                       'edit city', 'edit state', 'edit country', 'edit zip'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create AddressContactMethod'])
     class Meta:
         verbose_name = _('address contact method')
         verbose_name_plural = _('address contact methods')
@@ -982,15 +993,15 @@ class Subscription(Item):
     # Setup
     introduced_immutable_fields = frozenset(['contact_method', 'item'])
     introduced_abilities = frozenset(['view contact_method', 'view item', 'view deep', 'edit deep'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create Subscription'])
     class Meta:
         verbose_name = _('subscription')
         verbose_name_plural = _('subscriptions')
         unique_together = (('contact_method', 'item'),)
 
     # Fields
-    contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'))
-    item           = models.ForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'))
+    contact_method = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'])
+    item           = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view action_notices'])
     deep           = FixedBooleanField(_('deep subscription'), default=False)
 
 
@@ -1095,7 +1106,7 @@ class Folio(Collection):
         verbose_name_plural = _('folios')
 
     # Fields
-    group = models.ForeignKey(Group, related_name='folios', unique=True, editable=False, verbose_name=_('group'))
+    group = FixedForeignKey(Group, related_name='folios', unique=True, editable=False, verbose_name=_('group'))
 
 
 class Membership(Item):
@@ -1106,15 +1117,15 @@ class Membership(Item):
     # Setup
     introduced_immutable_fields = frozenset(['item', 'collection'])
     introduced_abilities = frozenset(['view item', 'view collection'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create Membership'])
     class Meta:
         verbose_name = _('membership')
         verbose_name_plural = _('memberships')
         unique_together = (('item', 'collection'),)
 
     # Fields
-    item       = models.ForeignKey(Item, related_name='memberships', verbose_name=_('item'))
-    collection = models.ForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'))
+    item       = FixedForeignKey(Item, related_name='memberships', verbose_name=_('item'))
+    collection = FixedForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'), required_abilities=['modify_membership'])
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(Membership, self)._after_create(action_agent, action_summary, action_time)
@@ -1193,7 +1204,7 @@ class DjangoTemplateDocument(TextDocument):
         verbose_name_plural = _('Django template documents')
 
     # Fields
-    layout = models.ForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout'))
+    layout = FixedForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout'))
     override_default_layout = FixedBooleanField(_('override default layout'), default=False)
 
 
@@ -1266,16 +1277,16 @@ class Transclusion(Item):
     introduced_immutable_fields = frozenset(['from_item', 'from_item_version_number', 'to_item'])
     introduced_abilities = frozenset(['view from_item', 'view from_item_version_number',
                                       'view from_item_index', 'view to_item', 'edit from_item_index'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create Transclusion'])
     class Meta:
         verbose_name = _('transclusion')
         verbose_name_plural = _('transclusions')
 
     # Fields
-    from_item                = models.ForeignKey(TextDocument, related_name='transclusions_from', verbose_name=_('from item'))
+    from_item                = FixedForeignKey(TextDocument, related_name='transclusions_from', verbose_name=_('from item'), required_abilities=['add_transclusion'])
     from_item_version_number = models.PositiveIntegerField(_('from item version number'))
     from_item_index          = models.PositiveIntegerField(_('from item index'))
-    to_item                  = models.ForeignKey(Item, related_name='transclusions_to', verbose_name=_('to item'))
+    to_item                  = FixedForeignKey(Item, related_name='transclusions_to', verbose_name=_('to item'))
 
 
 class Comment(Item):
@@ -1298,9 +1309,9 @@ class Comment(Item):
         verbose_name_plural = _('comments')
 
     # Fields
-    item                = models.ForeignKey(Item, related_name='comments', verbose_name=_('item'))
+    item                = FixedForeignKey(Item, related_name='comments', verbose_name=_('item'), required_abilities=['comment_on'])
     item_version_number = models.PositiveIntegerField(_('item version number'))
-    from_contact_method = models.ForeignKey(ContactMethod, related_name='comments_from_contactmethod', null=True, blank=True, default=None, editable=False, verbose_name=_('from contact method'))
+    from_contact_method = FixedForeignKey(ContactMethod, related_name='comments_from_contactmethod', null=True, blank=True, default=None, editable=False, verbose_name=_('from contact method'))
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(Comment, self)._after_create(action_agent, action_summary, action_time)
@@ -1325,7 +1336,7 @@ class TextComment(TextDocument, Comment):
     # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create TextComment'])
     class Meta:
         verbose_name = _('text comment')
         verbose_name_plural = _('text comments')
@@ -1369,7 +1380,7 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
         verbose_name_plural = _('text document excerpts')
 
     # Fields
-    text_document                = models.ForeignKey(TextDocument, related_name='text_document_excerpts', verbose_name=_('text document'))
+    text_document                = FixedForeignKey(TextDocument, related_name='text_document_excerpts', verbose_name=_('text document'))
     text_document_version_number = models.PositiveIntegerField(_('text document version number'))
     start_index                  = models.PositiveIntegerField(_('start index'))
     length                       = models.PositiveIntegerField(_('length'))
@@ -1407,7 +1418,7 @@ class ViewerRequest(Item):
     viewer       = models.CharField(_('viewer'), max_length=255)
     action       = models.CharField(_('action'), max_length=255)
     # If aliased_item is null, it is a collection action
-    aliased_item = models.ForeignKey(Item, related_name='viewer_requests', null=True, blank=True, default=None, verbose_name=_('aliased item'))
+    aliased_item = FixedForeignKey(Item, related_name='viewer_requests', null=True, blank=True, default=None, verbose_name=_('aliased item'))
     query_string = models.CharField(_('query string'), max_length=1024, blank=True)
     format       = models.CharField(_('format'), max_length=255, default='html')
 
@@ -1442,7 +1453,7 @@ class Site(ViewerRequest):
 
     # Fields
     hostname = models.CharField(_('hostname'), max_length=255, unique=True)
-    default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout'))
+    default_layout = FixedForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout'))
 
     def can_be_deleted(self):
         # Don't delete the default site
@@ -1465,14 +1476,14 @@ class CustomUrl(ViewerRequest):
     # Setup
     introduced_immutable_fields = frozenset(['parent_url', 'path'])
     introduced_abilities = frozenset(['view parent_url', 'view path'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create CustomUrl'])
     class Meta:
         verbose_name = _('custom URL')
         verbose_name_plural = _('custom URLs')
         unique_together = (('parent_url', 'path'),)
 
     # Fields
-    parent_url = models.ForeignKey(ViewerRequest, related_name='child_urls', verbose_name=_('parent URL'))
+    parent_url = FixedForeignKey(ViewerRequest, related_name='child_urls', verbose_name=_('parent URL'), required_abilities=['add_sub_path'])
     path       = models.CharField(_('path'), max_length=255)
 
 
@@ -1600,10 +1611,10 @@ class ActionNotice(models.Model):
             if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
                 return None
         try:
-            arbitrary_subscription = direct_subscriptions()[0]
+            arbitrary_subscription = direct_subscriptions().get()
         except ObjectDoesNotExist:
             try:
-                arbitrary_subscription = deep_subscriptions()[0]
+                arbitrary_subscription = deep_subscriptions().get()
             except ObjectDoesNotExist:
                 return None
 
@@ -1758,7 +1769,7 @@ class RelationActionNotice(ActionNotice):
     from_item_version_number = models.PositiveIntegerField(_('from item version number'))
     from_field_name          = models.CharField(_('from field name'), max_length=255)
     from_field_model         = models.CharField(_('from field model'), max_length=255)
-    relation_added           = FixedBooleanField(_('relation added'))
+    relation_added           = models.BooleanField(_('relation added'))
 
     def notification_reply_item(self):
         """

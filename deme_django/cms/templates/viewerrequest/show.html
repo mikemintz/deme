@@ -5,15 +5,7 @@
 {% subclassfields %}
 
 {% ifagentcan 'add_sub_path' '' item %}
-<div style="margin-bottom: 10px;">
-    <a href="#" onclick="$('#add_sub_path_form').toggle(); return false;">Add sub path</a>
-    <form id="add_sub_path_form" style="display: none;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="addsubpath",noun=item.pk %}?redirect={{ item.get_absolute_url }}" class="item_form">
-        <table cellspacing="0">
-            {{ addsubpath_form.as_table }}
-        </table>
-        <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Add subpath</span></button>
-    </form>
-</div>
+<a href="{% url item_type_url viewer="customurl",action="new"%}?parent_url={{ item.pk }}">Add sub path</a>
 {% endifagentcan %}
 
 <table cellspacing="0" class="twocol">

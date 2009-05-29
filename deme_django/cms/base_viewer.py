@@ -344,11 +344,6 @@ class Viewer(object):
         return self.render_error(title, body, HttpResponseNotFound)
 
     def get_form_class_for_item_type(self, update_or_create, item_type, fields=None):
-        if issubclass(item_type, DemeAccount):
-            if update_or_create == 'update':
-                return EditDemeAccountForm
-            else:
-                return NewDemeAccountForm
         # For now, this is how we prevent manual creation of TextDocumentExcerpts
         if issubclass(item_type, TextDocumentExcerpt):
             return forms.models.modelform_factory(item_type, fields=['name'])
@@ -359,19 +354,62 @@ class Viewer(object):
                 exclude.append(field.name)
         def formfield_callback(f):
             if isinstance(f, models.ForeignKey):
-                return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
+                options = {}
+                options['queryset'] = f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to)
+                options['form_class'] = AjaxModelChoiceField
+                options['to_field_name'] = f.rel.field_name
+                options['required_abilities'] = getattr(f, 'required_abilities', [])
+                options['permission_cache'] = self.permission_cache
+                options['cur_agent'] = self.cur_agent
+                return super(models.ForeignKey, f).formfield(**options)
             else:
                 return f.formfield()
 
         #TODO check modelform_factory to see if there are updates to this
+        attrs = {}
+
+        if issubclass(item_type, DemeAccount):
+            exclude.append('password')
+            attrs['password1'] = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
+            attrs['password2'] = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
+            def clean_password2(self):
+                password1 = self.cleaned_data.get("password1", "")
+                password2 = self.cleaned_data["password2"]
+                if password1 != password2:
+                    raise forms.ValidationError(_("The two password fields didn't match."))
+                return password2
+            def save(self, commit=True):
+                item = super(forms.models.ModelForm, self).save(commit=False)
+                item.set_password(self.cleaned_data["password1"])
+                if commit:
+                    item.save()
+                return item
+            attrs['clean_password2'] = clean_password2
+            attrs['save'] = save
+
+        if issubclass(item_type, TextComment):
+            if update_or_create == 'create':
+                attrs['item_version_number'] = forms.IntegerField(widget=forms.HiddenInput())
+                attrs['item_index'] = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+                attrs['name'] = forms.CharField(label=_("Comment title"), help_text=_("A brief description of the comment"), widget=forms.TextInput, required=False)
+                fields = ['name', 'body', 'item', 'item_version_number']
+                exclude.append('action_summary')
+        
+        if issubclass(item_type, Membership):
+            if update_or_create == 'create':
+                exclude.append('name')
+                exclude.append('description')
+        
         class Meta:
             pass
         setattr(Meta, 'model', item_type)
         setattr(Meta, 'fields', fields)
         setattr(Meta, 'exclude', exclude)
         class_name = item_type.__name__ + 'Form'
-        attrs = {'Meta': Meta, 'formfield_callback': formfield_callback}
-        attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("Reason for %s this item" % ('editing' if update_or_create == 'update' else 'creating')), widget=forms.TextInput, required=False)
+        attrs['Meta'] = Meta
+        attrs['formfield_callback'] = formfield_callback
+        if 'action_summary' not in exclude:
+            attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("Reason for %s this item" % ('editing' if update_or_create == 'update' else 'creating')), widget=forms.TextInput, required=False)
         if settings.USE_ANONYMOUS_JAVASCRIPT_SPAM_DETECTOR and self.cur_agent.is_anonymous():
             self.request.session.modified = True # We want to guarantee a cookie is given
             attrs['nospam'] = JavaScriptSpamDetectionField(self.request.session.session_key)

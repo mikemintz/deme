@@ -150,5 +150,12 @@ Subscription(contact_method=joe_email_contact_method, item=discuss_group.folios.
 EveryoneGlobalPermission(ability='create HtmlDocument', is_allowed=True).save()
 EveryoneGlobalPermission(ability='create TextDocumentExcerpt', is_allowed=True).save()
 EveryoneGlobalPermission(ability='create Collection', is_allowed=True).save()
+EveryoneGlobalPermission(ability='create EmailContactMethod', is_allowed=True).save()
+EveryoneGlobalPermission(ability='create DemeAccount', is_allowed=True).save()
+EveryoneGlobalPermission(ability='create Subscription', is_allowed=True).save()
+EveryoneGlobalPermission(ability='create CustomUrl', is_allowed=True).save()
+EveryoneGlobalPermission(ability='create TextComment', is_allowed=True).save()
+EveryoneGlobalPermission(ability='create Membership', is_allowed=True).save()
+EveryoneGlobalPermission(ability='create Transclusion', is_allowed=True).save()
 
 EveryoneItemPermission(item=admin, ability='login_as', is_allowed=True).save()
