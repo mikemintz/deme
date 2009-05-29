@@ -683,7 +683,7 @@ class TextDocumentViewer(ItemViewer):
         body_as_list = list(self.item.body)
         for transclusion in transclusions:
             if issubclass(self.accepted_item_type, HtmlDocument):
-                transclusion_text = '<img id="transclusion_%s" src="%s" title="Comment %s" style="margin: 0 2px 0 2px; background: #ddd; border: 1px dotted #777; height: 10px; width: 10px;"/>' % (transclusion.to_item_id, urljoin(settings.MEDIA_URL, 'spacer.gif'), transclusion.to_item_id)
+                transclusion_text = '<img id="transclusion_%s" src="%s" title="Item %s" style="margin: 0 2px 0 2px; background: #ddd; border: 1px dotted #777; height: 10px; width: 10px;"/>' % (transclusion.to_item_id, urljoin(settings.MEDIA_URL, 'spacer.gif'), transclusion.to_item_id)
             else:
                 transclusion_text = '<deme_transclusion id="%s"/>' % transclusion.to_item_id
             i = transclusion.from_item_index

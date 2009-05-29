@@ -652,11 +652,11 @@ class CalculateRelationships(template.Node):
         relationship_sets = []
         for name in sorted(item._meta.get_all_field_names()):
             field, model, direct, m2m = item._meta.get_field_by_name(name)
-            if type(field).__name__ != 'RelatedObject':
+            if not isinstance(field, models.related.RelatedObject):
                 continue
-            if type(field.field).__name__ != 'ForeignKey':
+            if not isinstance(field.field, models.ForeignKey):
                 continue
-            if issubclass(field.model, (ItemPermission, GlobalPermission)):
+            if isinstance(field.field, models.OneToOneField):
                 continue
             if not issubclass(field.model, Item):
                 continue
@@ -674,7 +674,8 @@ class CalculateRelationships(template.Node):
 
         result = []
         for relationship_set in relationship_sets:
-            result.append("""<div><b>%s</b></div>""" % relationship_set['name'])
+            friendly_name = capfirst(relationship_set['name']).replace('_', ' ')
+            result.append("""<div><b>%s</b></div>""" % friendly_name)
             for related_item in relationship_set['items']:
                 related_item_url = related_item.get_absolute_url()
                 related_item_name = get_viewable_name(context, related_item)

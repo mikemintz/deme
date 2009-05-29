@@ -66,7 +66,8 @@ class FixedBooleanField(models.NullBooleanField):
 class FixedForeignKey(models.ForeignKey):
     """
     This is a modified ForeignKey that specifies the abilities required to
-    modify the field.
+    modify the field. The abilities must be had by the action agent on the
+    pointee.
     """
 
     def __init__(self, *args, **kwargs):
