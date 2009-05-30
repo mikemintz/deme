@@ -744,8 +744,8 @@ class DemeAccount(AuthenticationMethod):
                                       'edit username', 'edit password', 'edit password_question', 'edit password_answer'])
     introduced_global_abilities = frozenset(['create DemeAccount'])
     class Meta:
-        verbose_name = _('password account')
-        verbose_name_plural = _('password accounts')
+        verbose_name = _('Deme account')
+        verbose_name_plural = _('Deme accounts')
 
     # Fields
     username          = models.CharField(_('username'), max_length=255, unique=True)
