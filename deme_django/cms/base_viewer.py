@@ -417,29 +417,53 @@ class Viewer(object):
         return form_class
 
     def _set_default_layout(self):
-        cur_node = self.cur_site.default_layout
-        while cur_node is not None:
-            next_node = cur_node.layout
-            if next_node is None:
-                if cur_node.override_default_layout:
-                    extends_string = ''
-                else:
-                    extends_string = "{% extends 'default_layout.html' %}\n"
-            else:
-                extends_string = "{%% extends layout%s %%}\n" % next_node.pk
-            if self.permission_cache.agent_can(self.cur_agent, 'view body', cur_node):
-                template_string = extends_string + cur_node.body
-            else:
-                template_string = "{% extends 'default_layout.html' %}\n"
-                self.context['layout_permissions_problem'] = True
-                next_node = None
-            t = loader.get_template_from_string(template_string)
-            self.context['layout%d' % cur_node.pk] = t
-            cur_node = next_node
-        if self.cur_site.default_layout:
-            self.context['layout'] = self.context['layout%s' % self.cur_site.default_layout.pk]
+        self.context['layout'] = 'default_layout.html'
+        if self.cur_agent_can('view default_layout', self.cur_site):
+            if self.cur_site.default_layout:
+                self.context['layout'] = self.construct_template(self.cur_site.default_layout)
         else:
-            self.context['layout'] = 'default_layout.html'
+            self.context['layout_permissions_problem'] = True
+
+    def construct_template(self, django_template_document):
+        cur_node = django_template_document
+        while cur_node is not None:
+            context_key = 'layout%d' % cur_node.pk
+            if context_key in self.context:
+                break
+
+            # Set next_node
+            if self.cur_agent_can('view layout', cur_node):
+                next_node = cur_node.layout
+            else:
+                next_node = None
+                self.context['layout_permissions_problem'] = True
+
+            # Set extends_string
+            if cur_node.override_default_layout:
+                extends_string = ''
+            elif not next_node:
+                if 'layout' in self.context:
+                    extends_string = "{% extends layout %}\n"
+                else:
+                    raise Exception("The default layout for this site cycles with itself")
+            else:
+                extends_string = '{%% extends layout%s %%}\n' % next_node.pk
+
+            # Set body_string
+            if self.cur_agent_can('view body', cur_node):
+                body_string = cur_node.body
+            else:
+                body_string = ''
+                if cur_node.override_default_layout:
+                    extends_string = "{% extends 'default_layout.html' %}"
+                self.context['layout_permissions_problem'] = True
+
+            # Create the template
+            t = loader.get_template_from_string(extends_string + body_string)
+            self.context[context_key] = t
+
+            cur_node = next_node
+        return self.context['layout%s' % django_template_document.pk]
 
 
 def get_viewer_class_by_name(viewer_name):

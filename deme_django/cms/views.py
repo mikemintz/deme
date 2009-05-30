@@ -757,24 +757,7 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
 
     def item_render_html(self):
         self.context['action_title'] = ''
-        cur_node = self.item
-        while cur_node is not None:
-            next_node = cur_node.layout
-            if cur_node.override_default_layout:
-                template_string = cur_node.body
-            else:
-                if self.cur_agent_can('view body', cur_node):
-                    template_string = '{%% extends layout%s %%}\n%s' % (next_node.pk if next_node else '', cur_node.body)
-                else:
-                    template_string = "{%% extends 'default_layout.html' %%}\n%s" % (cur_node.body,)
-                    self.context['layout_permissions_problem'] = True
-                    next_node = None
-            t = loader.get_template_from_string(template_string)
-            if cur_node is self.item:
-                template = t
-            else:
-                self.context['layout%d' % cur_node.pk] = t
-            cur_node = next_node
+        template = self.construct_template(self.item)
         return HttpResponse(template.render(self.context))
 
 
