@@ -736,10 +736,10 @@ class CalculateActionNotices(template.Node):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
             result.append(u'<table class="list">')
             result.append(u'<tr><th>Date/Time</th><th>Agent</th><th>Action</th><th>Item</th><th>Reason</th></tr>')
-            action_notices = ActionNotice.objects.filter(Q(item=item) | Q(action_agent=item)).order_by('action_time')
+            action_notices = ActionNotice.objects.filter(Q(action_item=item) | Q(action_agent=item)).order_by('action_time')
             action_notice_pk_to_object_map = {}
             for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
-                select_related_fields = ['action_agent__name', 'item__name']
+                select_related_fields = ['action_agent__name', 'action_item__name']
                 if action_notice_subclass == RelationActionNotice:
                     select_related_fields.append('from_item__name')
                 specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query).select_related(*select_related_fields)
@@ -747,17 +747,17 @@ class CalculateActionNotices(template.Node):
                     context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
                 for action_notice in specific_action_notices:
                     action_notice_pk_to_object_map[action_notice.pk] = action_notice
-            context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('action_agent').query)))
+            context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
             for action_notice in action_notices:
                 action_notice = action_notice_pk_to_object_map[action_notice.pk]
                 if isinstance(action_notice, RelationActionNotice):
                     if not agentcan_helper(context, 'view %s' % action_notice.from_field_name, action_notice.from_item):
                         continue
-                time_text = '<span title="%s">%s ago</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
+                action_time_text = '<span title="%s">%s ago</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
                 action_agent_name = get_viewable_name(context, action_notice.action_agent)
-                agent_text = u'<a href="%s">%s</a>' % (escape(action_notice.action_agent.get_absolute_url()), escape(action_agent_name))
-                item_name = get_viewable_name(context, action_notice.item)
-                item_text = u'<a href="%s">%s</a>' % (escape(action_notice.item.get_absolute_url() + '?version=%d' % action_notice.item_version_number), escape(item_name))
+                action_agent_text = u'<a href="%s">%s</a>' % (escape(action_notice.action_agent.get_absolute_url()), escape(action_agent_name))
+                action_item_name = get_viewable_name(context, action_notice.action_item)
+                action_item_text = u'<a href="%s">%s</a>' % (escape(action_notice.action_item.get_absolute_url() + '?version=%d' % action_notice.action_item_version_number), escape(action_item_name))
                 action_summary_text = action_notice.action_summary
                 if isinstance(action_notice, RelationActionNotice):
                     from_item_name = get_viewable_name(context, action_notice.from_item)
@@ -776,7 +776,7 @@ class CalculateActionNotices(template.Node):
                     action_text = 'Created'
                 if isinstance(action_notice, EditActionNotice):
                     action_text = 'Edited'
-                result.append(u"<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (time_text, agent_text, action_text, item_text, action_summary_text))
+                result.append(u"<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (action_time_text, action_agent_text, action_text, action_item_text, action_summary_text))
             result.append(u"</table>")
         else:
             action_notices = []

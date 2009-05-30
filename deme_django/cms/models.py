@@ -390,10 +390,10 @@ class Item(models.Model):
         # Execute callbacks
         self._after_deactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        DeactivateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
+        DeactivateActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
         old_item = self
         new_item = None
-        RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=False)
+        RelationActionNotice.create_notices(action_agent, action_summary, action_time, action_item=self, existed_before=True, existed_after=False)
     deactivate.alters_data = True
 
     @transaction.commit_on_success
@@ -412,10 +412,10 @@ class Item(models.Model):
         # Execute callbacks
         self._after_reactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        ReactivateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
+        ReactivateActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
         old_item = None
         new_item = self
-        RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
+        RelationActionNotice.create_notices(action_agent, action_summary, action_time, action_item=self, existed_before=False, existed_after=True)
     reactivate.alters_data = True
 
     @transaction.commit_on_success
@@ -457,7 +457,7 @@ class Item(models.Model):
         # Execute callbacks
         self._after_destroy(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        DestroyActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
+        DestroyActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
     destroy.alters_data = True
 
     @transaction.commit_on_success
@@ -523,13 +523,13 @@ class Item(models.Model):
 
         # Create relevant ActionNotices
         if is_new:
-            CreateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
+            CreateActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
             if self.active:
-                RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
+                RelationActionNotice.create_notices(action_agent, action_summary, action_time, action_item=self, existed_before=False, existed_after=True)
         else:
-            EditActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
+            EditActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
             if self.active:
-                RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=True)
+                RelationActionNotice.create_notices(action_agent, action_summary, action_time, action_item=self, existed_before=True, existed_after=True)
     save_versioned.alters_data = True
 
     def can_be_deleted(self):
@@ -1563,18 +1563,18 @@ class ActionNotice(models.Model):
     happening in Deme. ActionNotice is meant to be abstract, so only subclasses
     should ever be created.
     """
-    item                = models.ForeignKey(Item, related_name='action_notices', verbose_name=_('item'))
-    item_version_number = models.PositiveIntegerField(_('item version number'))
-    action_agent        = models.ForeignKey(Agent, related_name='action_notices_created', verbose_name=_('action agent'))
-    action_time         = models.DateTimeField(_('action time'))
-    action_summary      = models.CharField(_('action summary'), max_length=255, blank=True)
+    action_item                = models.ForeignKey(Item, related_name='action_notices', verbose_name=_('action item'))
+    action_item_version_number = models.PositiveIntegerField(_('action item version number'))
+    action_agent               = models.ForeignKey(Agent, related_name='action_notices_created', verbose_name=_('action agent'))
+    action_time                = models.DateTimeField(_('action time'))
+    action_summary             = models.CharField(_('action summary'), max_length=255, blank=True)
 
     def notification_reply_item(self):
         """
         Return the item that comments created about this notice (via replying
         to a notification email for this notice) are replies to.
         """
-        return self.item
+        return self.action_item
 
     def notification_email(self, email_contact_method):
         """
@@ -1592,7 +1592,7 @@ class ActionNotice(models.Model):
 
         # Decide if we're allowed to get this notification at all
         def direct_subscriptions():
-            item_parent_pks_query = self.item.all_parents_in_thread().values('pk').query
+            item_parent_pks_query = self.action_item.all_parents_in_thread().values('pk').query
             action_agent_parent_pks_query = self.action_agent.all_parents_in_thread().values('pk').query
             return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
                                                active=True, contact_method=email_contact_method)
@@ -1602,11 +1602,11 @@ class ActionNotice(models.Model):
             else:
                 visible_memberships = permission_cache.filter_items(agent, 'view item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-            item_parent_pks_query = self.item.all_parents_in_thread(True, recursive_filter).values('pk').query
+            item_parent_pks_query = self.action_item.all_parents_in_thread(True, recursive_filter).values('pk').query
             action_agent_parent_pks_query = self.action_agent.all_parents_in_thread(True, recursive_filter).values('pk').query
             return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
                                                active=True, contact_method=email_contact_method, deep=True)
-        if not (permission_cache.agent_can(agent, 'view action_notices', self.item) or permission_cache.agent_can(agent, 'view action_notices', self.action_agent)):
+        if not (permission_cache.agent_can(agent, 'view action_notices', self.action_item) or permission_cache.agent_can(agent, 'view action_notices', self.action_agent)):
             return None
         if isinstance(self, RelationActionNotice):
             if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
@@ -1621,7 +1621,7 @@ class ActionNotice(models.Model):
 
         # Get the fields we are allowed to view
         subscribed_item = arbitrary_subscription.item
-        item = self.item
+        item = self.action_item
         reply_item = self.notification_reply_item()
         topmost_item = item.original_item_in_thread()
         def get_url(x):
@@ -1640,8 +1640,8 @@ class ActionNotice(models.Model):
         recipient_email_address = email_contact_method.email
 
         # Generate the subject and body
-        viewer.context['item'] = self.item
-        viewer.context['item_version_number'] = self.item_version_number
+        viewer.context['action_item'] = self.action_item
+        viewer.context['action_item_version_number'] = self.action_item_version_number
         viewer.context['action_agent'] = self.action_agent
         viewer.context['action_time'] = self.action_time
         viewer.context['action_summary'] = self.action_summary
@@ -1738,10 +1738,10 @@ def _action_notice_post_save_handler(sender, **kwargs):
     """
     action_notice = kwargs['instance']
     # Email everyone subscribed to items this notice is relevant for
-    direct_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.item.all_parents_in_thread().values('pk').query) |
+    direct_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.action_item.all_parents_in_thread().values('pk').query) |
                                                        Q(item__in=action_notice.action_agent.all_parents_in_thread().values('pk').query),
                                                        active=True)
-    deep_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.item.all_parents_in_thread(True).values('pk').query) |
+    deep_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.action_item.all_parents_in_thread(True).values('pk').query) |
                                                      Q(item__in=action_notice.action_agent.all_parents_in_thread(True).values('pk').query),
                                                      deep=True,
                                                      active=True)
@@ -1783,7 +1783,7 @@ class RelationActionNotice(ActionNotice):
         return self.from_item
 
     @staticmethod
-    def create_notices(action_agent, action_summary, action_time, item, existed_before, existed_after):
+    def create_notices(action_agent, action_summary, action_time, action_item, existed_before, existed_after):
         """
         This method should be called whenever an item is created, edited,
         deactivated, or reactivated. It generates all relevant
@@ -1796,18 +1796,18 @@ class RelationActionNotice(ActionNotice):
         true.
         """
         if existed_before and existed_after:
-            old_item = type(item).objects.get(pk=item.pk)
-            old_item.copy_fields_from_version(item.version_number - 1)
-            new_item = item
+            old_item = type(action_item).objects.get(pk=action_item.pk)
+            old_item.copy_fields_from_version(action_item.version_number - 1)
+            new_item = action_item
         elif existed_before:
-            old_item = item
+            old_item = action_item
             new_item = None
         elif existed_after:
             old_item = None
-            new_item = item
+            new_item = action_item
         # Because of multiple inheritance, we need to put the field/model pairs
         # into a set to eliminate duplicates
-        fields_and_models = set(item._meta.get_fields_with_model())
+        fields_and_models = set(action_item._meta.get_fields_with_model())
         for field, model in fields_and_models:
             if isinstance(field, (models.OneToOneField, models.ManyToManyField)):
                 continue
@@ -1815,7 +1815,7 @@ class RelationActionNotice(ActionNotice):
                 continue # we do creator stuff separately
             if isinstance(field, models.ForeignKey):
                 if model is None:
-                    model = type(item)
+                    model = type(action_item)
                 if old_item is None:
                     old_value = None
                 else:
@@ -1828,13 +1828,13 @@ class RelationActionNotice(ActionNotice):
                     for value, relation_added in [(old_value, False), (new_value, True)]:
                         if value is not None:
                             action_notice = RelationActionNotice()
-                            action_notice.item = value
-                            action_notice.item_version_number = value.version_number
+                            action_notice.action_item = value
+                            action_notice.action_item_version_number = value.version_number
                             action_notice.action_agent = action_agent
                             action_notice.action_time = action_time
                             action_notice.action_summary = action_summary
-                            action_notice.from_item = item
-                            action_notice.from_item_version_number = item.version_number
+                            action_notice.from_item = action_item
+                            action_notice.from_item_version_number = action_item.version_number
                             action_notice.from_field_name = field.name
                             action_notice.from_field_model = model.__name__
                             action_notice.relation_added = relation_added

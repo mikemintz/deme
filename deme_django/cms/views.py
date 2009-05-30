@@ -180,7 +180,7 @@ class ItemViewer(Viewer):
         self.context['action_title'] = 'Recent Changes'
         template = loader.get_template('item/recentchanges.html')    
         viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view action_notices', Item.objects)
-        viewable_action_notices = ActionNotice.objects.filter(item__in=viewable_items.values("pk").query).order_by('-action_time')
+        viewable_action_notices = ActionNotice.objects.filter(action_item__in=viewable_items.values("pk").query).order_by('-action_time')
         
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, EditActionNotice, CreateActionNotice]:
@@ -231,7 +231,7 @@ class ItemViewer(Viewer):
         from cms.templatetags.item_tags import get_viewable_name
         viewer = self
         self.require_ability('view action_notices', self.item)
-        action_notices = ActionNotice.objects.filter(Q(item=self.item) | Q(action_agent=self.item)).order_by('action_time') #TODO limit
+        action_notices = ActionNotice.objects.filter(Q(action_item=self.item) | Q(action_agent=self.item)).order_by('action_time') #TODO limit
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
@@ -239,7 +239,7 @@ class ItemViewer(Viewer):
                 self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
             for action_notice in specific_action_notices:
                 action_notice_pk_to_object_map[action_notice.pk] = action_notice
-        self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('action_agent').query)))
+        self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
         class ItemShowFeed(django.contrib.syndication.feeds.Feed):
             title = get_viewable_name(viewer.context, viewer.item)
             description = viewer.item.description if viewer.cur_agent_can('view description', viewer.item) else ''
@@ -255,7 +255,7 @@ class ItemViewer(Viewer):
                     item['action_time'] = action_notice.action_time
                     item['action_agent_name'] = get_viewable_name(viewer.context, action_notice.action_agent)
                     item['action_agent_link'] = action_notice.action_agent.get_absolute_url()
-                    item['item_name'] = get_viewable_name(viewer.context, action_notice.item)
+                    item['action_item_name'] = get_viewable_name(viewer.context, action_notice.action_item)
                     item['action_summary'] = action_notice.action_summary
                     if isinstance(action_notice, RelationActionNotice):
                         item['from_item_name'] = get_viewable_name(viewer.context, action_notice.from_item)
@@ -263,7 +263,7 @@ class ItemViewer(Viewer):
                         item['relation_added'] = action_notice.relation_added
                         item['link'] = action_notice.from_item.get_absolute_url()
                     else:
-                        item['link'] = action_notice.item.get_absolute_url()
+                        item['link'] = action_notice.action_item.get_absolute_url()
                     item['action_notice_type'] = type(action_notice).__name__
                     result.append(item)
                 return result
