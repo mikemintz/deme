@@ -10,11 +10,15 @@
             Item Type Filter:
         </th>
         <td>
-            <select onchange="window.location = this.value;">
-                {% for item_type in item_types %}
-                <option style="background-repeat:no-repeat; background-position:bottom left; padding-left:18px; background-image:url({{ item_type.item_type|icon_url:16 }});" value="{% url item_type_url viewer=item_type.viewer %}"{% ifequal item_type.item_type accepted_item_type %} selected="selected"{% endifequal %}>{{ item_type.name_plural|capfirst }}</option>
-                {% endfor %}
-            </select>
+            {% for item_type in item_types %}
+            <span>[
+            {% ifequal item_type.item_type accepted_item_type %}
+            <b>{{ item_type.name_plural|capfirst }}</b>
+            {% else %}
+            <a href="{% url item_type_url viewer=item_type.viewer %}">{{ item_type.name_plural|capfirst }}</a>
+            {% endifequal %}
+            ]</span>
+            {% endfor %}
         </td>
     </tr>
     <tr>

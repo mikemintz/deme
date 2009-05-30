@@ -26,7 +26,20 @@ tinyMCE.init({
 </script>    
 {% endif %}
 
+<div style="border: thin solid #aaa; background: #eee; padding: 10px; margin-bottom: 10px;">
+    {% for item_type in item_types %}
+    <span>[
+    {% ifequal item_type.item_type accepted_item_type %}
+    <b>New {{ item_type.name|capfirst }}</b>
+    {% else %}
+    <a href="{% url item_type_url viewer=item_type.viewer,action="new" %}?{{ query_string }}">New {{ item_type.name|capfirst }}</a>
+    {% endifequal %}
+    ]</span>
+    {% endfor %}
+</div>
+
 <div>
+{% if form %}
     {% if redirect %}
     <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=viewer_name,action="create" %}?redirect={{ redirect|urlencode }}" class="item_form">
     {% else %}
@@ -43,7 +56,11 @@ tinyMCE.init({
         </div>
         <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Create {{ accepted_item_type_name }}</span></button>
     </form>
+{% else %}
+    You do not have permission to create {{ accepted_item_type_name_plural }}.
+{% endif %}
 </div>
+
 
 {% endblock content %}
 
