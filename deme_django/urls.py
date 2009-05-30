@@ -4,14 +4,18 @@ import os
 
 urlpatterns = patterns('')
 
-# Set up /static/modules/<module>/* to point to ./modules/<module>/static/*
-# Set up /static/* to point to ./static/*
+# Set up <MEDIA_URL>modules/<module>/* to point to ./modules/<module>/static/*
+# Set up <MEDIA_URL>* to point to ./static/*
 if settings.DJANGO_SERVES_STATIC_FILES:
+    if settings.MEDIA_URL.startswith('/'):
+        prefix = settings.MEDIA_URL[1:]
+    else:
+        raise Exception("You cannot use DJANGO_SERVES_STATIC_FILES if MEDIA_URL does not start with a slash.")
     for module_name in settings.MODULE_NAMES:
-        url = r'^static/modules/%s/(?P<path>.*)$' % module_name
+        url = r'^%smodules/%s/(?P<path>.*)$' % (prefix, module_name)
         filesys_path = os.path.join(settings.MODULES_DIR, module_name, 'static')
         urlpatterns += patterns('', (url, 'django.views.static.serve', {'document_root': filesys_path}))
-    url = r'^static/(?P<path>.*)$'
+    url = r'^%s(?P<path>.*)$' % prefix
     filesys_path = os.path.join(os.path.dirname(__file__), 'static')
     urlpatterns += patterns('', (url, 'django.views.static.serve', {'document_root': filesys_path}))
 
