@@ -155,7 +155,6 @@ class ItemViewer(Viewer):
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
-        self.context['query_string'] = self.request.META['QUERY_STRING']
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name': x._meta.verbose_name, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
         item_types.sort(key=lambda x:x['name'].lower())
         self.context['item_types'] = item_types
@@ -310,7 +309,6 @@ class ItemViewer(Viewer):
                 del form.initial[field_name]
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
-        self.context['query_string'] = self.request.META['QUERY_STRING']
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
@@ -707,7 +705,6 @@ class TextDocumentViewer(ItemViewer):
                 del form.initial[field_name]
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
-        self.context['query_string'] = self.request.META['QUERY_STRING']
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
 
@@ -799,7 +796,6 @@ class TextCommentViewer(TextDocumentViewer):
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
-        self.context['query_string'] = self.request.META['QUERY_STRING']
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name': x._meta.verbose_name, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
         item_types.sort(key=lambda x:x['name'].lower())
         self.context['item_types'] = item_types
