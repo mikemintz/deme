@@ -695,11 +695,11 @@ class CalculateRelationships(template.Node):
             relationship_set = {}
             relationship_set['name'] = name
             viewable_items = manager.filter(active=True)
+            viewable_items = permission_cache.filter_items(cur_agent, 'view %s' % field.field.name, viewable_items)
             if viewable_items.count() == 0:
                 continue
             relationship_item_type = manager.model
             permission_cache.filter_items(cur_agent, 'view name', viewable_items)
-            viewable_items = permission_cache.filter_items(cur_agent, 'view %s' % field.field.name, viewable_items)
             relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)
 
