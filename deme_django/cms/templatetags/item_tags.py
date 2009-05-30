@@ -483,29 +483,60 @@ class ItemDetails(template.Node):
         item = context['item']
         result = []
 
+        result.append('<table class="twocol" cellspacing="0" style="font-size: 85%;">')
+
+        if agentcan_helper(context, 'view name', item) and item.name:
+            result.append('<tr>')
+            result.append('<th>Name:</th>')
+            result.append('<td>')
+            result.append(escape(item.name))
+            result.append('</td>')
+            result.append('</tr>')
+
+        if agentcan_helper(context, 'view description', item) and item.description:
+            result.append('<tr>')
+            result.append('<th>Preface:</th>')
+            result.append('<td>')
+            result.append(escape(item.description))
+            result.append('</td>')
+            result.append('</tr>')
+
+        result.append('<tr>')
+        result.append('<th>Item type:</th>')
+        result.append('<td>')
+        result.append(u'%s' % capfirst(item.actual_item_type()._meta.verbose_name))
+        result.append('</td>')
+        result.append('</tr>')
+
+        result.append('<tr>')
+        result.append('<th>Status:</th>')
+        result.append('<td>')
         if item.destroyed:
-            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is destroyed</div>')
+            result.append('<span style="color: #c00;">Destroyed</span>')
         elif not item.active:
-            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is inactive</div>')
+            result.append('<span style="color: #c00;">Inactive</span>')
+        else:
+            result.append('<span style="color: #070;">Active</span>')
+        result.append('</td>')
+        result.append('</tr>')
 
         if agentcan_helper(context, 'view created_at', item):
-            created_at_text = '<span title="%s">%s ago</span>' % (item.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(item.created_at))
-        else:
-            created_at_text = ''
-        if agentcan_helper(context, 'view creator', item):
-            creator_text = 'by <a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(get_viewable_name(context, item.creator)))
-        else:
-            creator_text = ''
-        result.append('<div style="font-size: 8pt;">')
-        result.append(u'%s' % capfirst(item.actual_item_type()._meta.verbose_name))
-        if creator_text or created_at_text:
-            result.append('originally created %s %s' % (creator_text, created_at_text))
-        result.append('</div>')
+            result.append('<tr>')
+            result.append('<th>Created:</th>')
+            result.append('<td>')
+            result.append('<span title="%s">%s ago</span>' % (item.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(item.created_at)))
+            result.append('</td>')
+            result.append('</tr>')
 
-        result.append('<div style="font-size: 8pt; color: #aaa; margin-bottom: 10px;">')
-        if agentcan_helper(context, 'view description', item) and item.description.strip():
-            result.append('Preface: %s' % escape(item.description))
-        result.append('</div>')
+        if agentcan_helper(context, 'view creator', item):
+            result.append('<tr>')
+            result.append('<th>Creator:</th>')
+            result.append('<td>')
+            result.append('<a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(get_viewable_name(context, item.creator))))
+            result.append('</td>')
+            result.append('</tr>')
+
+        result.append('</table>')
 
         return '\n'.join(result)
 
