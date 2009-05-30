@@ -4,6 +4,7 @@ from django.core.urlresolvers import reverse
 from django import forms
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.utils.http import urlquote
 from cms.models import *
 
 class JustTextNoInputWidget(forms.Widget):
@@ -16,6 +17,11 @@ class JustTextNoInputWidget(forms.Widget):
 
 class AjaxModelChoiceWidget(forms.Widget):
     """Ajax auto-complete widget for ForeignKey fields."""
+
+    def __init__(self, *args, **kwargs):
+        self.required_abilities = kwargs.pop('required_abilities')
+        super(AjaxModelChoiceWidget, self).__init__(*args, **kwargs)
+
     def render(self, name, value, attrs=None):
         model = self.choices.queryset.model
         #field = self.choices.field
@@ -33,7 +39,8 @@ class AjaxModelChoiceWidget(forms.Widget):
         initial_search = value_item.display_name() if value_item else ''
         if value is None: value = ''
         if attrs is None: attrs = {}
-        ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'})
+        ajax_query_string = '&'.join('ability=' + urlquote(ability) for ability in self.required_abilities)
+        ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'}) + '?' + ajax_query_string
         result = """
         <input type="hidden" name="%(name)s" value="%(value)s" />
         <input class="ajax_choice_field" type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" autocomplete="off" />
@@ -114,7 +121,7 @@ class AjaxModelChoiceField(forms.ModelChoiceField):
         self.cur_agent = kwargs.pop('cur_agent')
         self.permission_cache = kwargs.pop('permission_cache')
         self.required_abilities = kwargs.pop('required_abilities')
-        self.widget = AjaxModelChoiceWidget
+        self.widget = AjaxModelChoiceWidget(required_abilities=self.required_abilities)
         super(AjaxModelChoiceField, self).__init__(*args, **kwargs)
 
     def clean(self, value):

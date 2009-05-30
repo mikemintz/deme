@@ -94,6 +94,8 @@ class ItemViewer(Viewer):
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=collection.all_contained_collection_members(recursive_filter).values('pk').query)
         listable_items = self.permission_cache.filter_items(self.cur_agent, 'view name', items)
+        for ability in self.request.GET.getlist('ability'):
+            listable_items = self.permission_cache.filter_items(self.cur_agent, ability, listable_items)
         n_opposite_active_items = listable_items.filter(active=(not active)).count()
         listable_items = listable_items.filter(active=active)
         listable_items = listable_items.order_by('id')
