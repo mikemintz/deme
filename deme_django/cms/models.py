@@ -14,7 +14,7 @@ from django.db.models import signals
 from django import forms
 from email.utils import formataddr
 import datetime
-import settings
+from django.conf import settings
 import copy
 import random
 import hashlib

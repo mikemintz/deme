@@ -42,16 +42,6 @@ def item_view(request, *args, **kwargs):
         return viewer.render_error("Viewer Not Found", "We could not find any viewer matching your URL.", HttpResponseNotFound)
 
 
-def invalid_url_view(request, *args, **kwargs):
-    """
-    This is the view that takes care of all URLs that don't match any expected
-    pattern.
-    """
-    viewer = ItemViewer()
-    viewer.init_for_http(request, 'error', None, 'html')
-    return viewer.render_error("Invalid URL", "The URL you typed in is invalid.", HttpResponseNotFound)
-
-
 def alias_view(request, *args, **kwargs):
     """
     This is the view that takes care of all URLs other than those beginning
