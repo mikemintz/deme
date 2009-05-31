@@ -278,7 +278,7 @@ class Viewer(object):
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = self.request.get_full_path()
-        self.context['query_string'] = self.request.META['QUERY_STRING']
+        self.context['query_string'] = ''
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
         self.context['_viewer'] = self
