@@ -11,47 +11,52 @@ setup_environ(settings)
 
 import subprocess
 import itertools
-from deme_django.cms import models
+from deme_django.cms.models import *
+from django.db import models
 
 DOT_PATH = 'dot'
 
 field_name_map = {
-    'ForeignKey': '',
-    'BooleanField': 'Y\\/N',
-    'DateTimeField': 'Date\\/Time',
-    'AutoField': 'Unique Id',
-    'IntegerField': '\\#',
-    'PositiveIntegerField': '\\#',
-    'CharField': 'String',
-    'TextField': 'Long String',
-    'IsDefaultField': 'Default Selector',
-    'EmailField': 'Email Address',
+    models.ForeignKey: '',
+    models.BooleanField: 'Y\\/N',
+    models.DateTimeField: 'Date\\/Time',
+    models.AutoField: 'Unique Id',
+    models.IntegerField: '\\#',
+    models.PositiveIntegerField: '\\#',
+    models.CharField: 'String',
+    models.TextField: 'Long String',
+    models.EmailField: 'Email Address',
 }
 
 def gen_dotcode(show_fields):
     dotcode = []
     dotcode.append('digraph structs {')
-    dotcode.append('  ranksep=0.5; nodesep=0.5;')
-    all_item_types = models.all_item_types()
-    if show_fields:
-        all_item_types = all_item_types + [models.Item.Version]
-    for item_type in all_item_types:
+    dotcode.append('  ranksep=0.5; nodesep=0.5; rankdir=TB')
+    item_types = all_item_types()
+    for item_type in item_types:
+        #if item_type not in [Item, Agent, ContactMethod, Transclusion, Document, TextDocument, HtmlDocument, Comment, TextComment, Excerpt, TextDocumentExcerpt]:
+        #    continue
+        #if item_type.__module__ == 'deme_django.modules.symsys.models' or item_type.__module__ == 'deme_django.modules.webauth.models':
+        #    continue
+        #if issubclass(item_type, ContactMethod) and item_type not in [ContactMethod, EmailContactMethod, PhoneContactMethod]:
+        #    continue
+        #if item_type in [DemeSetting, GroupAgent]:
+        #    continue
         field_names = []
         field_types = []
         if show_fields:
             for field_name in item_type._meta.get_all_field_names():
                 field, model_defined, direct, m2m = item_type._meta.get_field_by_name(field_name)
-                field_type = type(field).__name__
                 if model_defined is None: # defined locally
-                    if field_type in ['OneToOneField', 'RelatedObject']:
+                    if isinstance(field, models.OneToOneField) or isinstance(field, models.related.RelatedObject):
                         continue
-                    if field_type == 'ForeignKey':
+                    if isinstance(field, models.ForeignKey):
                         dotcode.append('  %s:%sTYPE:e -> %s [weight=1,color=red,style=dotted,constraint=false,headport=w,arrowhead=normal,arrowtail=dot];' % (item_type.__name__, field_name, field.rel.to.__name__))
                     field_names.append(field_name)
-                    if field_type == 'ForeignKey':
+                    if isinstance(field, models.ForeignKey):
                         field_types.append("[%s]" % field.rel.to.__name__)
                     else:
-                        field_types.append(field_name_map.get(field_type, field_type))
+                        field_types.append(field_name_map.get(type(field), type(field).__name__))
             fieldcols = '{{' + '|'.join(['<%s> %s\\l' % (x,x) for x in field_names]) + '}|{' + '|'.join(['<%sTYPE> %s\\l' % (field_name,field_type) for (field_name,field_type) in zip(field_names, field_types)]) + '}}'
             if field_names:
                 label = "{<TOP>%s\\n|%s}" % (item_type.__name__, fieldcols)
@@ -60,8 +65,8 @@ def gen_dotcode(show_fields):
             dotcode.append('  %s [shape=record,style=rounded,label="%s"];' % (item_type.__name__, label))
         else:
             label = item_type.__name__
-            dotcode.append('  %s [shape=box,style=rounded,label="%s",margin=0.05];' % (item_type.__name__, label))
-        bases = [x for x in item_type.__bases__ if (issubclass(x, models.Item) or issubclass(x, models.Item.Version))]
+            dotcode.append('  %s [shape=box,style=rounded,label="%s",margin="0.05,0.00"];' % (item_type.__name__, label))
+        bases = [x for x in item_type.__bases__ if (issubclass(x, Item) or issubclass(x, Item.Version))]
         for base in bases:
             if show_fields:
                 dotcode.append('  %s -> %s [color=blue,style=solid,weight=1,constraint=true,tailport=s,headport=n,arrowtail=inv,arrowhead=none];' % (base.__name__, item_type.__name__))
