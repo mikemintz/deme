@@ -93,6 +93,40 @@ class ItemViewer(Viewer):
                 visible_memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=collection.all_contained_collection_members(recursive_filter).values('pk').query)
+        for filter_string in self.request.GET.getlist('filter'):
+            filter_string = str(filter_string) # Unicode doesn't work here
+            parts = filter_string.split('.')
+            target_pk = parts.pop()
+            fields = []
+            cur_item_type = self.accepted_item_type
+            for part in parts:
+                field = cur_item_type._meta.get_field_by_name(part)[0]
+                fields.append(field)
+                if isinstance(field, models.ForeignKey):
+                    cur_item_type = field.rel.to
+                elif isinstance(field, models.related.RelatedObject):
+                    cur_item_type = field.model
+                else:
+                    assert False
+            def filter_by_filter(queryset, fields):
+                if not fields:
+                    return queryset.filter(pk=target_pk)
+                field = fields[0]
+                if isinstance(field, models.ForeignKey):
+                    next_item_type = field.rel.to
+                elif isinstance(field, models.related.RelatedObject):
+                    next_item_type = field.model
+                next_queryset = filter_by_filter(next_item_type.objects, fields[1:])
+                if isinstance(field, models.ForeignKey):
+                    query_dict = {field.name + '__in': next_queryset}
+                    result = queryset.filter(**query_dict)
+                    result = self.permission_cache.filter_items(self.cur_agent, 'view ' + field.name, result)
+                elif isinstance(field, models.related.RelatedObject):
+                    next_queryset = self.permission_cache.filter_items(self.cur_agent, 'view ' + field.field.name, next_queryset)
+                    query_dict = {'pk__in': next_queryset.values(field.field.name).query}
+                    result = queryset.filter(**query_dict)
+                return result
+            items = filter_by_filter(items, fields)
         listable_items = self.permission_cache.filter_items(self.cur_agent, 'view name', items)
         for ability in self.request.GET.getlist('ability'):
             listable_items = self.permission_cache.filter_items(self.cur_agent, ability, listable_items)
