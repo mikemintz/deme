@@ -109,6 +109,7 @@ class ItemViewer(Viewer):
                 else:
                     assert False
             def filter_by_filter(queryset, fields):
+                #TODO make sure everything is active
                 if not fields:
                     return queryset.filter(pk=target_pk)
                 field = fields[0]
@@ -122,9 +123,12 @@ class ItemViewer(Viewer):
                     result = queryset.filter(**query_dict)
                     result = self.permission_cache.filter_items(self.cur_agent, 'view ' + field.name, result)
                 elif isinstance(field, models.related.RelatedObject):
-                    next_queryset = self.permission_cache.filter_items(self.cur_agent, 'view ' + field.field.name, next_queryset)
+                    if not isinstance(field.field, models.OneToOneField):
+                        next_queryset = self.permission_cache.filter_items(self.cur_agent, 'view ' + field.field.name, next_queryset)
                     query_dict = {'pk__in': next_queryset.values(field.field.name).query}
                     result = queryset.filter(**query_dict)
+                else:
+                    assert False
                 return result
             items = filter_by_filter(items, fields)
         listable_items = self.permission_cache.filter_items(self.cur_agent, 'view name', items)
