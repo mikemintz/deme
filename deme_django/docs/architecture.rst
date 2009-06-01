@@ -219,11 +219,11 @@ ActionNotices keep records of every action that occurs in Deme. ActionNotices ar
 
 Every ActionNotice keeps the following fields
 
-* Item (the item that was acted upon)
-* Item version number (the version of the item after the action took place)
-* Creator (the agent who acted upon the item)
-* Created at (the date/time that the action took place)
-* Description (the optional user-entered description of the action -- for edits, this is like an "Edit Summary", but it applies to any action)
+* Action item (the item that was acted upon)
+* Action item version number (the version of the item after the action took place)
+* Action agent (the agent who acted upon the item)
+* Action time (the date/time that the action took place)
+* Action summary (the optional user-entered description of the action -- for edits, this is like an "Edit Summary", but it applies to any action)
 
 There are currently 6 types of ActionNotices: DeactivateActionNotices, ReactivateActionNotices, DestroyActionNotices, CreateActionNotices, EditActionNotices, and RelationActionNotices. The first 5 are self-explanatory: when an agent deactivates, reactivates, destroys, creates, or edits an item, this automatically generates an ActionNotice. None of these 5 ActionNotices define new fields. Although it seems like the CreateActionNotices and EditActionNotices should define fields to specify what changed, this information can be inferred from the item itself (and its revisions).
 
@@ -231,11 +231,11 @@ RelationActionNotices are more interesting: when an agent modifies an item (the 
 
 A good example of a RelationActionNotice is a membership that points to a collection. If I'm viewing the ActionNotices for the collection, I will see a RelationActionNotice saying that at some date, some user set the membership to point to this collection. Or in other words, an item was added to this collection.
 
-In order to view ActionNotices, an agent must have the ``view action_notices`` permission with respect to the item. For RelationActionNotices, an agent must also have permission to view the pointing field in the *from* item.
+In order to view ActionNotices, an agent must have the ``view action_notices`` permission with respect to the action item. For RelationActionNotices, an agent must also have permission to view the pointing field in the *from* item.
 
 If you are subscribed to an item (via the Subscription item type), and you have permission to view ActionNotices on that item, you will receive notifications by email every time an ActionNotice is generated.
 
-The ActionNotices about an agent include ActionNotices whose ``creator`` field points to the agent, in addition to ActionNotices whose ``item`` field points to the agent. Thus, if you subscribe to an agent, you will get emails about things they do, in addition to things done to them. For this reason, RelationActionNotices are not generated for the ``creator`` field of an item, or else there would be redundant ActionNotices on the same item.
+The ActionNotices about an agent include ActionNotices whose ``action_agent`` field points to the agent, in addition to ActionNotices whose ``action_item`` field points to the agent. Thus, if you subscribe to an agent, you will get emails about things they do, in addition to things done to them. For this reason, RelationActionNotices are not generated for the ``action_agent`` field of an item, or else there would be redundant ActionNotices on the same item.
 
 Permissions
 ^^^^^^^^^^^
