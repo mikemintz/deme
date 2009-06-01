@@ -273,17 +273,29 @@ The agent has an ability if one of the following holds:
 
 Below is a list of all possible global abilities:
 
+* ``create AIMContactMethod``
+* ``create AddressContactMethod``
 * ``create Agent``
 * ``create Collection``
+* ``create CustomUrl``
+* ``create DemeAccount``
 * ``create DjangoTemplateDocument``
+* ``create EmailContactMethod``
+* ``create FaxContactMethod``
 * ``create FileDocument``
 * ``create Group``
 * ``create HtmlDocument``
 * ``create ImageDocument``
+* ``create Membership``
 * ``create Person``
+* ``create PhoneContactMethod``
 * ``create Site``
+* ``create Subscription``
+* ``create TextComment``
 * ``create TextDocument``
 * ``create TextDocumentExcerpt``
+* ``create Transclusion``
+* ``create WebsiteContactMethod``
 * ``do_anything`` (Agents with this ability automatically have every single global ability and every item ability with respect to every item. If an agent has this global ability in the final calculation, this overrides any item abilities at any level. As a specific unusual example, if an agent has the global ``do_anything`` ability from an EveryonePermission, then giving him any item ability with is_allowed=False will have no effect.)
 
 Below is a list of item types and the item abilities they introduce:
