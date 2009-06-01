@@ -466,7 +466,7 @@ class ItemViewer(Viewer):
 
     @require_POST
     def type_updateglobalpermissions_html(self):
-        self.require_ability('do_anything', self.item)
+        self.require_global_ability('do_anything')
         new_permissions = self._get_permissions_from_post_data(None, True)
         AgentGlobalPermission.objects.filter().delete()
         CollectionGlobalPermission.objects.filter().delete()
