@@ -107,7 +107,10 @@ class ItemViewer(Viewer):
                 elif isinstance(field, models.related.RelatedObject):
                     cur_item_type = field.model
                 else:
-                    assert False
+                    raise Exception("Cannot filter on field %s.%s (not a related field)" % (cur_item_type.__name__, field.name))
+                if not issubclass(cur_item_type, Item):
+                    raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
+
             def filter_by_filter(queryset, fields):
                 #TODO make sure everything is active
                 if not fields:
