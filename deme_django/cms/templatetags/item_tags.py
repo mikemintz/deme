@@ -1211,3 +1211,86 @@ def global_permission_editor(parser, token):
     item = None
     return PermissionEditor(item, is_global_permissions=True, privacy_only=False)
 
+class Crumbs(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<Crumbs>"
+
+    def render(self, context):
+        #TODO we should not be raising exceptions, including database queries that could fail
+        viewer = context['_viewer']
+        if not viewer.item:
+            #TODO maybe a better default?
+            return ''
+        crumb_item_type_parameter = viewer.request.GET.get('crumb_item_type')
+        crumb_filter_parameter = viewer.request.GET.get('crumb_filter')
+        if crumb_item_type_parameter and crumb_filter_parameter:
+            item_type = get_item_type_with_name(crumb_item_type_parameter, case_sensitive=False)
+            if item_type is not None:
+                filter_string = str(crumb_filter_parameter) # Unicode doesn't work here
+                parts = filter_string.split('.')
+                target_pk = parts.pop()
+                fields = []
+                field_models = [item_type]
+                cur_item_type = item_type
+                for part in parts:
+                    field = cur_item_type._meta.get_field_by_name(part)[0]
+                    fields.append(field)
+                    if isinstance(field, models.ForeignKey):
+                        cur_item_type = field.rel.to
+                    elif isinstance(field, models.related.RelatedObject):
+                        cur_item_type = field.model
+                    else:
+                        raise Exception("Cannot filter on field %s.%s (not a related field)" % (cur_item_type.__name__, field.name))
+                    if not issubclass(cur_item_type, Item):
+                        raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
+                    field_models.append(cur_item_type)
+                target = field_models[-1].objects.get(pk=target_pk)
+                reverse_fields = []
+                for field in reversed(fields):
+                    if isinstance(field, models.ForeignKey):
+                        reverse_field = field.rel
+                    else:
+                        reverse_field = field.field
+                    reverse_fields.append(reverse_field)
+
+                result = []
+                result.append('<a href="%s">%s</a>' % (target.get_absolute_url(), get_viewable_name(context, target)))
+                for i, field in enumerate(reverse_fields):
+                    if isinstance(field, models.ForeignKey):
+                        result.append(' -----')
+                        result.append(field.name)
+                        result.append('----&gt; ')
+                    else:
+                        result.append(' &lt;----')
+                        result.append(field.related_name)
+                        result.append('----- ')
+                    subfilter = []
+                    subfilter_fields = fields[len(fields)-i-1:]
+                    subfilter_field_models = field_models[len(fields)-i-1:]
+                    for subfilter_field in subfilter_fields:
+                        if isinstance(subfilter_field, models.ForeignKey):
+                            name = subfilter_field.name
+                        else:
+                            name = subfilter_field.field.rel.related_name
+                        subfilter.append(name)
+                    subfilter.append(target_pk)
+                    subfilter = '.'.join(subfilter)
+                    subfilter_item_type = subfilter_field_models[0]
+                    subfilter_url = '%s?filter=%s' % (reverse('item_type_url', kwargs={'viewer': subfilter_item_type.__name__.lower()}), subfilter)
+                    result.append(u' <a href="%s">%s</a> ' % (subfilter_url, subfilter_item_type._meta.verbose_name_plural))
+                result.append('(<a href="%s">%s</a>)' % (viewer.item.get_absolute_url(), get_viewable_name(context, viewer.item)))
+                return ''.join(result)
+        #TODO maybe a better default?
+        return ''
+
+@register.tag
+def crumbs(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return Crumbs()
+
+

@@ -59,6 +59,12 @@ div.site_inner {
 div.content_box {
 }
 
+div.crumbs {
+    text-align: left;
+    font-size: 85%;
+    margin-bottom: 5px;
+}
+
 div.title {
     text-align: left;
     font-weight: bold;
@@ -155,13 +161,6 @@ button:hover, button:active, input[type=submit]:hover, input[type=submit]:active
 
 
 
-
-div.crumbs {
-    font-size: smaller;
-    border-bottom: 1px solid #888;
-    padding-bottom: 3px;
-    margin-bottom: 10px;
-}
 
 table.list {
     border-collapse: collapse;
