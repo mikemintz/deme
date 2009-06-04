@@ -75,6 +75,12 @@ def get_or_create_group(key, name, group_creator):
     return group
 
 
+def symsys_bot():
+    try:
+        return Agent.objects.get(pk=DemeSetting.get("symsys.symsys_bot"))
+    except ObjectDoesNotExist:
+        raise Exception("Symsys module not properly installed (there is no symsys_bot)")
+
 class SymsysCareer(Item):
     # Setup
     introduced_immutable_fields = frozenset(['symsys_affiliate'])
@@ -123,7 +129,7 @@ class SymsysCareer(Item):
         #TODO get the final hierarchy of symsys groups in here
         #TODO figure out "%s Concentration Faculty"
 
-        group_creator = Agent.objects.get(pk=DemeSetting.get("symsys.symsys_bot"))
+        group_creator = symsys_bot()
 
         agent = self.symsys_affiliate
         all_possible_group_ids = DemeSetting.objects.filter(active=True, key__startswith="symsys.groups.").values_list('value', flat=True)
@@ -372,7 +378,7 @@ class SymsysAffiliate(Person):
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(SymsysAffiliate, self)._after_create(action_agent, action_summary, action_time)
-        group_creator = Agent.objects.get(pk=DemeSetting.get("symsys.symsys_bot"))
+        group_creator = symsys_bot()
         all_ssp_users = get_or_create_group('all_ssp_users', 'All SSP Users', group_creator)
         membership = Membership(item=self, collection=all_ssp_users)
         # There are no permissions we need to set on this membership
