@@ -140,47 +140,71 @@ def media_url(path):
         else:
             return '' # Fail silently for invalid paths.
 
-@register.simple_tag
-def list_results_navigator(viewer_name, collection, search_query, active, offset, limit, n_results, max_pages):
-    """
-    Make an HTML pagination navigator (page number links with prev and next
-    links on both sides).
-    
-    The prev link will have class="list_results_prev". The next link will have
-    class="list_results_next". Each page number link will have
-    class="list_results_step". The current page number will be in a span with
-    class="list_results_highlighted".
-    """
-    if n_results <= limit:
-        return ''
-    url_prefix = reverse('item_type_url', kwargs={'viewer': viewer_name}) + '?limit=%s&amp;' % limit
-    if search_query:
-        url_prefix += 'q=%s&amp;' % search_query
-    if not active:
-        url_prefix += 'active=0&amp;'
-    if collection:
-        url_prefix += 'collection=%s&amp;' % collection.pk
-    result = []
-    # Add a prev link
-    if offset > 0:
-        new_offset = max(0, offset - limit)
-        prev_text = _('Prev')
-        link = u'<a class="list_results_prev" href="%soffset=%d">&laquo; %s</a>' % (url_prefix, new_offset, prev_text)
-        result.append(link)
-    # Add the page links
-    for new_offset in xrange(max(0, offset - limit * max_pages), min(n_results - 1, offset + limit * max_pages), limit):
-        if new_offset == offset:
-            link = '<span class="list_results_highlighted">%d</span>' % (1 + new_offset / limit,)
-        else:
-            link = '<a class="list_results_step" href="%soffset=%d">%d</a>' % (url_prefix, new_offset, 1 + new_offset / limit)
-        result.append(link)
-    # Add a next link
-    if offset + limit < n_results:
-        new_offset = offset + limit
-        next_text = _('Next')
-        link = u'<a class="list_results_next" href="%soffset=%d">%s &raquo;</a>' % (url_prefix, new_offset, next_text)
-        result.append(link)
-    return ''.join(result)
+
+class ListResultsNavigator(template.Node):
+    def __init__(self, max_pages):
+        self.max_pages = template.Variable(max_pages)
+
+    def __repr__(self):
+        return "<ListResultsNavigator>"
+
+    def render(self, context):
+        """
+        Make an HTML pagination navigator (page number links with prev and next
+        links on both sides).
+        
+        The prev link will have class="list_results_prev". The next link will have
+        class="list_results_next". Each page number link will have
+        class="list_results_step". The current page number will be in a span with
+        class="list_results_highlighted".
+        """
+        try:
+            max_pages = self.max_pages.resolve(context)
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve max_pages variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+        viewer = context['_viewer']
+        n_results = context['n_listable_items']
+        limit = context['limit']
+        offset = context['offset']
+        def url_with_offset(offset):
+            querydict = viewer.request.GET.copy()
+            querydict['offset'] = str(offset)
+            return '%s?%s' % (viewer.context['full_path'], querydict.urlencode())
+        if n_results <= limit:
+            return ''
+        result = []
+        # Add a prev link
+        if offset > 0:
+            new_offset = max(0, offset - limit)
+            prev_text = _('Prev')
+            link = u'<a class="list_results_prev" href="%s">&laquo; %s</a>' % (url_with_offset(new_offset), prev_text)
+            result.append(link)
+        # Add the page links
+        for new_offset in xrange(max(0, offset - limit * max_pages), min(n_results - 1, offset + limit * max_pages), limit):
+            if new_offset == offset:
+                link = '<span class="list_results_highlighted">%d</span>' % (1 + new_offset / limit,)
+            else:
+                link = '<a class="list_results_step" href="%s">%d</a>' % (url_with_offset(new_offset), 1 + new_offset / limit)
+            result.append(link)
+        # Add a next link
+        if offset + limit < n_results:
+            new_offset = offset + limit
+            next_text = _('Next')
+            link = u'<a class="list_results_next" href="%s">%s &raquo;</a>' % (url_with_offset(new_offset), next_text)
+            result.append(link)
+        return ''.join(result)
+
+
+@register.tag
+def list_results_navigator(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError, "%r takes one arguments" % bits[0]
+    return ListResultsNavigator(bits[1])
+
 
 class UniversalEditButton(template.Node):
     def __init__(self):

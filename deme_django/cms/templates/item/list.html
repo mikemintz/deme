@@ -61,7 +61,7 @@
 </div>
 
 <div style="margin-top: 10px; margin-bottom: 10px; text-align: center;">
-    {% list_results_navigator viewer_name collection search_query active offset limit n_listable_items 10 %}
+    {% list_results_navigator 10 %}
 </div>
 
 <table cellspacing="0" class="list" width="100%">
@@ -79,7 +79,7 @@
 {% endif %}
 
 <div style="margin-top: 10px; text-align: center;">
-    {% list_results_navigator viewer_name collection search_query active offset limit n_listable_items 10 %}
+    {% list_results_navigator 10 %}
 </div>
 
 {% endblock content %}
