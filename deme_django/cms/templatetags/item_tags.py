@@ -718,6 +718,7 @@ class CalculateRelationships(template.Node):
             manager = getattr(item, name)
             relationship_set = {}
             relationship_set['name'] = name
+            relationship_set['field'] = field.field
             viewable_items = manager.filter(active=True)
             viewable_items = permission_cache.filter_items(cur_agent, 'view %s' % field.field.name, viewable_items)
             if viewable_items.count() == 0:
@@ -730,7 +731,9 @@ class CalculateRelationships(template.Node):
         result = []
         for relationship_set in relationship_sets:
             friendly_name = capfirst(relationship_set['name']).replace('_', ' ')
-            result.append("""<div><b>%s</b></div>""" % friendly_name)
+            field = relationship_set['field']
+            list_url = '%s?filter=%s.%d' % (reverse('item_type_url', kwargs={'viewer': field.rel.to.__name__.lower()}), field.name, item.pk)
+            result.append("""<div><a href="%s"><b>%s</b></a></div>""" % (list_url, friendly_name))
             for related_item in relationship_set['items']:
                 related_item_url = related_item.get_absolute_url()
                 related_item_name = get_viewable_name(context, related_item)
@@ -1250,8 +1253,15 @@ class Crumbs(template.Node):
             return ''
         crumb_item_type_parameter = viewer.request.GET.get('crumb_item_type')
         crumb_filter_parameter = viewer.request.GET.get('crumb_filter')
-        if crumb_item_type_parameter and crumb_filter_parameter:
+        if crumb_item_type_parameter:
             item_type = get_item_type_with_name(crumb_item_type_parameter, case_sensitive=False)
+            if not crumb_filter_parameter:
+                result = []
+                item_type_url = reverse('item_type_url', kwargs={'viewer': item_type.__name__.lower()})
+                result.append(u'<a href="%s">All %s</a>' % (item_type_url, item_type._meta.verbose_name_plural))
+                result.append(' &raquo; ')
+                result.append('<a href="%s">%s</a>' % (viewer.item.get_absolute_url(), get_viewable_name(context, viewer.item)))
+                return ''.join(result)
             if item_type is not None:
                 filter_string = str(crumb_filter_parameter) # Unicode doesn't work here
                 parts = filter_string.split('.')

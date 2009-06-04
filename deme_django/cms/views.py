@@ -73,6 +73,7 @@ class ItemViewer(Viewer):
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
         item_types.sort(key=lambda x:x['name'].lower())
         self.context['search_query'] = self.request.GET.get('q', '')
+        self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         items = self.accepted_item_type.objects
         if self.context['search_query']:
             q = self.context['search_query']
@@ -95,6 +96,7 @@ class ItemViewer(Viewer):
             items = items.filter(pk__in=collection.all_contained_collection_members(recursive_filter).values('pk').query)
         for filter_string in self.request.GET.getlist('filter'):
             filter_string = str(filter_string) # Unicode doesn't work here
+            self.context['filter_string'] = filter_string
             parts = filter_string.split('.')
             target_pk = parts.pop()
             fields = []
