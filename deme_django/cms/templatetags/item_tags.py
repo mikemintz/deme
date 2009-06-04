@@ -718,7 +718,7 @@ class CalculateRelationships(template.Node):
             manager = getattr(item, name)
             relationship_set = {}
             relationship_set['name'] = name
-            relationship_set['field'] = field.field
+            relationship_set['field'] = field
             viewable_items = manager.filter(active=True)
             viewable_items = permission_cache.filter_items(cur_agent, 'view %s' % field.field.name, viewable_items)
             if viewable_items.count() == 0:
@@ -732,7 +732,7 @@ class CalculateRelationships(template.Node):
         for relationship_set in relationship_sets:
             friendly_name = capfirst(relationship_set['name']).replace('_', ' ')
             field = relationship_set['field']
-            list_url = '%s?filter=%s.%d' % (reverse('item_type_url', kwargs={'viewer': field.rel.to.__name__.lower()}), field.name, item.pk)
+            list_url = '%s?filter=%s.%d' % (reverse('item_type_url', kwargs={'viewer': field.model.__name__.lower()}), field.field.name, item.pk)
             result.append("""<div><a href="%s"><b>%s</b></a></div>""" % (list_url, friendly_name))
             for related_item in relationship_set['items']:
                 related_item_url = related_item.get_absolute_url()
