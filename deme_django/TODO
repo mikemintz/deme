@@ -69,6 +69,7 @@ Unusual things to remember
 * If someone has permission to edit the body of an item, we allow them to add transclusions in some situations (TextDocumentViewer.edit)
 * We do not [knowingly] support OneToOneFields and ManyToManyFields in item types
 * Whenever you do anything to modify an item (like save, trash, untrash, destroy) you better be in the downcasted version.
+  ****************************************** we should actually just write an assert!
 
 
 

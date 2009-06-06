@@ -1249,6 +1249,7 @@ class Crumbs(template.Node):
         #TODO we should not be raising exceptions, including database queries that could fail
         viewer = context['_viewer']
         if not viewer.item:
+            #TODO display the filter on a list page
             #TODO maybe a better default?
             return ''
         crumb_item_type_parameter = viewer.request.GET.get('crumb_item_type')
@@ -1293,14 +1294,6 @@ class Crumbs(template.Node):
                 result = []
                 result.append('<a href="%s">%s</a>' % (target.get_absolute_url(), get_viewable_name(context, target)))
                 for i, field in enumerate(reverse_fields):
-                    if isinstance(field, models.ForeignKey):
-                        result.append(' -----')
-                        result.append(field.name)
-                        result.append('----&gt; ')
-                    else:
-                        result.append(' &lt;----')
-                        result.append(field.related_name)
-                        result.append('----- ')
                     subfilter = []
                     subfilter_fields = fields[len(fields)-i-1:]
                     subfilter_field_models = field_models[len(fields)-i-1:]
@@ -1314,8 +1307,14 @@ class Crumbs(template.Node):
                     subfilter = '.'.join(subfilter)
                     subfilter_item_type = subfilter_field_models[0]
                     subfilter_url = '%s?filter=%s' % (reverse('item_type_url', kwargs={'viewer': subfilter_item_type.__name__.lower()}), subfilter)
-                    result.append(u' <a href="%s">%s</a> ' % (subfilter_url, subfilter_item_type._meta.verbose_name_plural))
-                result.append('(<a href="%s">%s</a>)' % (viewer.item.get_absolute_url(), get_viewable_name(context, viewer.item)))
+                    if isinstance(field, models.ForeignKey):
+                        field_name = field.name
+                    else:
+                        field_name = field.related_name
+                    result.append(u' &raquo; <a href="%s">' % subfilter_url)
+                    result.append(capfirst(field_name.replace('_', ' ')))
+                    result.append('</a>')
+                result.append(' &raquo; <a href="%s">%s</a>' % (viewer.item.get_absolute_url(), get_viewable_name(context, viewer.item)))
                 return ''.join(result)
         #TODO maybe a better default?
         return ''
