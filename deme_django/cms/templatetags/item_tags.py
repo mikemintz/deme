@@ -103,7 +103,6 @@ def icon_url(item_type, size=32):
         FileDocument:           'mimetypes/misc',
         Folio:                  'apps/kfm',
         Group:                  'apps/Login%20Manager',
-        ImageDocument:          'mimetypes/images',
         Item:                   'apps/kblackbox',
         Collection:             'filesystems/folder_blue',
         Membership:             'filesystems/folder_documents',

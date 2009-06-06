@@ -703,16 +703,6 @@ class CollectionViewer(ItemViewer):
         return HttpResponseRedirect(redirect)
 
 
-class ImageDocumentViewer(ItemViewer):
-    accepted_item_type = ImageDocument
-    viewer_name = 'imagedocument'
-
-    def item_show_html(self):
-        self.context['action_title'] = ''
-        template = loader.get_template('imagedocument/show.html')
-        return HttpResponse(template.render(self.context))
-
-
 class TextDocumentViewer(ItemViewer):
     accepted_item_type = TextDocument
     viewer_name = 'textdocument'
