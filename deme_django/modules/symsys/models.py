@@ -75,6 +75,12 @@ def get_or_create_group(key, name, group_creator):
     return group
 
 
+def symsys_bot():
+    try:
+        return Agent.objects.get(pk=DemeSetting.get("symsys.symsys_bot"))
+    except ObjectDoesNotExist:
+        raise Exception("Symsys module not properly installed (there is no symsys_bot)")
+
 class SymsysCareer(Item):
     # Setup
     introduced_immutable_fields = frozenset(['symsys_affiliate'])
@@ -119,60 +125,67 @@ class SymsysCareer(Item):
         #TODO perhaps this should be called after modifying permissions, although it doesn't seem necessary.
         # although it would be necessary to ensure AFs can always edit stuff, but that's kind of a hack
 
-        #TODO cleanup this function, and get the final hierarchy of symsys groups in here
+        #TODO cleanup this function
+        #TODO get the final hierarchy of symsys groups in here
+        #TODO figure out "%s Concentration Faculty"
 
-        group_creator = Agent.objects.get(pk=DemeSetting.get("symsys.symsys_bot"))
+        group_creator = symsys_bot()
 
         agent = self.symsys_affiliate
         all_possible_group_ids = DemeSetting.objects.filter(active=True, key__startswith="symsys.groups.").values_list('value', flat=True)
         all_possible_groups = Group.objects.filter(pk__in=map(int, all_possible_group_ids))
         groups = []
 
-        groups.append(get_or_create_group('all_ssp_users', 'All SSP Users', group_creator))
+        groups.append(get_or_create_group('all_ssp_affiliates', 'Affiliates', group_creator))
 
         my_careers = SymsysCareer.objects.filter(symsys_affiliate=agent, active=True)
 
         if any(x.actual_item_type() == MinorSymsysCareer and x.finished == True for x in my_careers):
-            groups.append(get_or_create_group('conferred_minors', 'Conferred Minors', group_creator))
+            groups.append(get_or_create_group('conferred_minors', 'Minors Alumni', group_creator))
         if any(x.actual_item_type() == MinorSymsysCareer and x.finished == False for x in my_careers):
-            groups.append(get_or_create_group('active_minors', 'Active Minors', group_creator))
+            groups.append(get_or_create_group('active_minors', 'Minors Students', group_creator))
 
         if any(x.actual_item_type() == BachelorsSymsysCareer and x.finished == True for x in my_careers):
-            groups.append(get_or_create_group('conferred_bs', 'Conferred Bachelors', group_creator))
+            groups.append(get_or_create_group('conferred_bs', 'Bachelors Alumni', group_creator))
         if any(x.actual_item_type() == BachelorsSymsysCareer and x.finished == False for x in my_careers):
-            groups.append(get_or_create_group('active_bs', 'Active Bachelors', group_creator))
+            groups.append(get_or_create_group('active_bs', 'Bachelors Students', group_creator))
 
         if any(x.actual_item_type() == MastersSymsysCareer and x.finished == True for x in my_careers):
-            groups.append(get_or_create_group('conferred_ms', 'Conferred Masters', group_creator))
+            groups.append(get_or_create_group('conferred_ms', 'Masters Alumni', group_creator))
         if any(x.actual_item_type() == MastersSymsysCareer and x.finished == False for x in my_careers):
-            groups.append(get_or_create_group('active_ms', 'Active Masters', group_creator))
+            groups.append(get_or_create_group('active_ms', 'Masters Students', group_creator))
 
         if any(x.actual_item_type() == HonorsSymsysCareer and x.finished == True for x in my_careers):
-            groups.append(get_or_create_group('conferred_honors', 'Conferred Honors', group_creator))
+            groups.append(get_or_create_group('conferred_honors', 'Honors Alumni', group_creator))
         if any(x.actual_item_type() == HonorsSymsysCareer and x.finished == False for x in my_careers):
-            groups.append(get_or_create_group('active_honors', 'Active Honors', group_creator))
+            groups.append(get_or_create_group('active_honors', 'Honors Students', group_creator))
 
         if any(x.actual_item_type() == ResearcherSymsysCareer and x.finished == True for x in my_careers):
             groups.append(get_or_create_group('past_researchers', 'Past Researchers', group_creator))
         if any(x.actual_item_type() == ResearcherSymsysCareer and x.finished == False for x in my_careers):
-            groups.append(get_or_create_group('present_researchers', 'Present Researchers', group_creator))
+            groups.append(get_or_create_group('present_researchers', 'Researchers', group_creator))
 
         if any(x.actual_item_type() == FacultySymsysCareer and x.finished == True for x in my_careers):
             groups.append(get_or_create_group('past_faculty', 'Past Faculty', group_creator))
         if any(x.actual_item_type() == FacultySymsysCareer and x.finished == False for x in my_careers):
-            groups.append(get_or_create_group('present_faculty', 'Present Faculty', group_creator))
+            groups.append(get_or_create_group('present_faculty', 'Faculty', group_creator))
 
-        if any(x.actual_item_type() == ProgramStaffSymsysCareer and x.finished == True for x in my_careers):
-            groups.append(get_or_create_group('past_staff', 'Past Staff', group_creator))
-        if any(x.actual_item_type() == ProgramStaffSymsysCareer and x.finished == False for x in my_careers):
-            groups.append(get_or_create_group('present_staff', 'Present Staff', group_creator))
+        if any(x.actual_item_type() == ProgramStaffSymsysCareer and x.finished == True and x.programstaffsymsyscareer.admin_title == 'Advising Fellow' for x in my_careers):
+            groups.append(get_or_create_group('past_af', 'Past Advising Fellows', group_creator))
+        if any(x.actual_item_type() == ProgramStaffSymsysCareer and x.finished == False and x.programstaffsymsyscareer.admin_title == 'Advising Fellow' for x in my_careers):
+            groups.append(get_or_create_group('present_af', 'Present Advising Fellows', group_creator))
 
-        concentrations = set(BachelorsSymsysCareer.objects.filter(symsys_affiliate=agent, active=True).values_list('concentration', flat=True))
-        tracks = set(MastersSymsysCareer.objects.filter(symsys_affiliate=agent, active=True).values_list('track', flat=True))
-        for concentration in concentrations:
-            groups.append(get_or_create_group('bs_concentration.%s' % concentration, '%s B.S. Concentration' % concentration, group_creator))
-        for track in tracks:
-            groups.append(get_or_create_group('ms_track.%s' % track, '%s M.S. Track' % track, group_creator))
+        if any(x.actual_item_type() == ProgramStaffSymsysCareer and x.finished == True and x.programstaffsymsyscareer.admin_title != 'Advising Fellow' for x in my_careers):
+            groups.append(get_or_create_group('past_administrators', 'Past Administrators', group_creator))
+        if any(x.actual_item_type() == ProgramStaffSymsysCareer and x.finished == False and x.programstaffsymsyscareer.admin_title != 'Advising Fellow' for x in my_careers):
+            groups.append(get_or_create_group('present_administrators', 'Administrators', group_creator))
+
+        conferred_concentrations = set(BachelorsSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=True).values_list('concentration', flat=True))
+        active_concentrations = set(BachelorsSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=False).values_list('concentration', flat=True))
+        for concentration in conferred_concentrations:
+            groups.append(get_or_create_group('conferred_concentration.%s' % concentration, '%s Concentration Alumni' % concentration, group_creator))
+        for concentration in active_concentrations:
+            groups.append(get_or_create_group('active_concentration.%s' % concentration, '%s Concentration Students' % concentration, group_creator))
 
         for career in StudentSymsysCareer.objects.filter(symsys_affiliate=agent, active=True):
             if career.class_year:
@@ -365,7 +378,7 @@ class SymsysAffiliate(Person):
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(SymsysAffiliate, self)._after_create(action_agent, action_summary, action_time)
-        group_creator = Agent.objects.get(pk=DemeSetting.get("symsys.symsys_bot"))
+        group_creator = symsys_bot()
         all_ssp_users = get_or_create_group('all_ssp_users', 'All SSP Users', group_creator)
         membership = Membership(item=self, collection=all_ssp_users)
         # There are no permissions we need to set on this membership

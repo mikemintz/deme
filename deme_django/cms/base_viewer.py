@@ -147,11 +147,11 @@ class Viewer(object):
       up in the URL as the action), and format is the output format (which shows
       up in the URL as the format). For example, the method item_edit_html(self)
       in an agent viewer represents the item-specific view with action="edit" and
-      format="html", and would respond to the URL `/item/agent/123/edit.html`.
+      format="html", and would respond to the URL `/viewing/agent/123/edit.html`.
     2. To define a type-wide view, define a method with the name
       `type_method_format`. For example, the method type_new_html(self) in an
       agent viewer represents the type-wide view with action="new" and
-      format="html", and would respond to the URL `/item/agent/new.html`.
+      format="html", and would respond to the URL `/viewing/agent/new.html`.
     
     View methods take no parameters (except self), since all of the details of
     the request are defined as instance variables in the viewer before
@@ -251,6 +251,7 @@ class Viewer(object):
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = self.request.get_full_path()
+        self.context['query_string'] = self.request.META['QUERY_STRING']
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
         self.context['_viewer'] = self
@@ -277,6 +278,7 @@ class Viewer(object):
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = self.request.get_full_path()
+        self.context['query_string'] = ''
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
         self.context['_viewer'] = self
@@ -301,6 +303,7 @@ class Viewer(object):
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = '/'
+        self.context['query_string'] = ''
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
         self.context['_viewer'] = self
@@ -344,11 +347,6 @@ class Viewer(object):
         return self.render_error(title, body, HttpResponseNotFound)
 
     def get_form_class_for_item_type(self, update_or_create, item_type, fields=None):
-        if issubclass(item_type, DemeAccount):
-            if update_or_create == 'update':
-                return EditDemeAccountForm
-            else:
-                return NewDemeAccountForm
         # For now, this is how we prevent manual creation of TextDocumentExcerpts
         if issubclass(item_type, TextDocumentExcerpt):
             return forms.models.modelform_factory(item_type, fields=['name'])
@@ -359,19 +357,62 @@ class Viewer(object):
                 exclude.append(field.name)
         def formfield_callback(f):
             if isinstance(f, models.ForeignKey):
-                return super(models.ForeignKey, f).formfield(queryset=f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=f.rel.field_name)
+                options = {}
+                options['queryset'] = f.rel.to._default_manager.complex_filter(f.rel.limit_choices_to)
+                options['form_class'] = AjaxModelChoiceField
+                options['to_field_name'] = f.rel.field_name
+                options['required_abilities'] = getattr(f, 'required_abilities', [])
+                options['permission_cache'] = self.permission_cache
+                options['cur_agent'] = self.cur_agent
+                return super(models.ForeignKey, f).formfield(**options)
             else:
                 return f.formfield()
 
         #TODO check modelform_factory to see if there are updates to this
+        attrs = {}
+
+        if issubclass(item_type, DemeAccount):
+            exclude.append('password')
+            attrs['password1'] = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
+            attrs['password2'] = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
+            def clean_password2(self):
+                password1 = self.cleaned_data.get("password1", "")
+                password2 = self.cleaned_data["password2"]
+                if password1 != password2:
+                    raise forms.ValidationError(_("The two password fields didn't match."))
+                return password2
+            def save(self, commit=True):
+                item = super(forms.models.ModelForm, self).save(commit=False)
+                item.set_password(self.cleaned_data["password1"])
+                if commit:
+                    item.save()
+                return item
+            attrs['clean_password2'] = clean_password2
+            attrs['save'] = save
+
+        if issubclass(item_type, TextComment):
+            if update_or_create == 'create':
+                attrs['item_version_number'] = forms.IntegerField(widget=forms.HiddenInput())
+                attrs['item_index'] = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+                attrs['name'] = forms.CharField(label=_("Comment title"), help_text=_("A brief description of the comment"), widget=forms.TextInput, required=False)
+                fields = ['name', 'body', 'item', 'item_version_number']
+                exclude.append('action_summary')
+        
+        if issubclass(item_type, Membership):
+            if update_or_create == 'create':
+                exclude.append('name')
+                exclude.append('description')
+        
         class Meta:
             pass
         setattr(Meta, 'model', item_type)
         setattr(Meta, 'fields', fields)
         setattr(Meta, 'exclude', exclude)
         class_name = item_type.__name__ + 'Form'
-        attrs = {'Meta': Meta, 'formfield_callback': formfield_callback}
-        attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("Reason for %s this item" % ('editing' if update_or_create == 'update' else 'creating')), widget=forms.TextInput, required=False)
+        attrs['Meta'] = Meta
+        attrs['formfield_callback'] = formfield_callback
+        if 'action_summary' not in exclude:
+            attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("Reason for %s this item" % ('editing' if update_or_create == 'update' else 'creating')), widget=forms.TextInput, required=False)
         if settings.USE_ANONYMOUS_JAVASCRIPT_SPAM_DETECTOR and self.cur_agent.is_anonymous():
             self.request.session.modified = True # We want to guarantee a cookie is given
             attrs['nospam'] = JavaScriptSpamDetectionField(self.request.session.session_key)
@@ -379,29 +420,53 @@ class Viewer(object):
         return form_class
 
     def _set_default_layout(self):
-        cur_node = self.cur_site.default_layout
-        while cur_node is not None:
-            next_node = cur_node.layout
-            if next_node is None:
-                if cur_node.override_default_layout:
-                    extends_string = ''
-                else:
-                    extends_string = "{% extends 'default_layout.html' %}\n"
-            else:
-                extends_string = "{%% extends layout%s %%}\n" % next_node.pk
-            if self.permission_cache.agent_can(self.cur_agent, 'view body', cur_node):
-                template_string = extends_string + cur_node.body
-            else:
-                template_string = "{% extends 'default_layout.html' %}\n"
-                self.context['layout_permissions_problem'] = True
-                next_node = None
-            t = loader.get_template_from_string(template_string)
-            self.context['layout%d' % cur_node.pk] = t
-            cur_node = next_node
-        if self.cur_site.default_layout:
-            self.context['layout'] = self.context['layout%s' % self.cur_site.default_layout.pk]
+        self.context['layout'] = 'default_layout.html'
+        if self.cur_agent_can('view default_layout', self.cur_site):
+            if self.cur_site.default_layout:
+                self.context['layout'] = self.construct_template(self.cur_site.default_layout)
         else:
-            self.context['layout'] = 'default_layout.html'
+            self.context['layout_permissions_problem'] = True
+
+    def construct_template(self, django_template_document):
+        cur_node = django_template_document
+        while cur_node is not None:
+            context_key = 'layout%d' % cur_node.pk
+            if context_key in self.context:
+                break
+
+            # Set next_node
+            if self.cur_agent_can('view layout', cur_node):
+                next_node = cur_node.layout
+            else:
+                next_node = None
+                self.context['layout_permissions_problem'] = True
+
+            # Set extends_string
+            if cur_node.override_default_layout:
+                extends_string = ''
+            elif not next_node:
+                if 'layout' in self.context:
+                    extends_string = "{% extends layout %}\n"
+                else:
+                    raise Exception("The default layout for this site cycles with itself")
+            else:
+                extends_string = '{%% extends layout%s %%}\n' % next_node.pk
+
+            # Set body_string
+            if self.cur_agent_can('view body', cur_node):
+                body_string = cur_node.body
+            else:
+                body_string = ''
+                if cur_node.override_default_layout:
+                    extends_string = "{% extends 'default_layout.html' %}"
+                self.context['layout_permissions_problem'] = True
+
+            # Create the template
+            t = loader.get_template_from_string(extends_string + body_string)
+            self.context[context_key] = t
+
+            cur_node = next_node
+        return self.context['layout%s' % django_template_document.pk]
 
 
 def get_viewer_class_by_name(viewer_name):

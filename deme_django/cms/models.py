@@ -14,7 +14,7 @@ from django.db.models import signals
 from django import forms
 from email.utils import formataddr
 import datetime
-import settings
+from django.conf import settings
 import copy
 import random
 import hashlib
@@ -36,7 +36,7 @@ __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
         'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice',
         'DeactivateActionNotice', 'ReactivateActionNotice',
         'DestroyActionNotice', 'CreateActionNotice', 'EditActionNotice',
-        'FixedBooleanField']
+        'FixedBooleanField', 'FixedForeignKey']
 
 ###############################################################################
 # Field types
@@ -61,6 +61,18 @@ class FixedBooleanField(models.NullBooleanField):
         }
         defaults.update(kwargs)
         return super(FixedBooleanField, self).formfield(**defaults)
+
+
+class FixedForeignKey(models.ForeignKey):
+    """
+    This is a modified ForeignKey that specifies the abilities required to
+    modify the field. The abilities must be had by the action agent on the
+    pointee.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.required_abilities = kwargs.pop('required_abilities', [])
+        super(FixedForeignKey, self).__init__(*args, **kwargs)
         
 
 ###############################################################################
@@ -202,7 +214,7 @@ class Item(models.Model):
     item_type_string = models.CharField(_('item type'), max_length=255, editable=False)
     active           = models.BooleanField(_('active'), default=True, editable=False, db_index=True)
     destroyed        = models.BooleanField(_('destroyed'), default=False, editable=False)
-    creator          = models.ForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
+    creator          = FixedForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
     created_at       = models.DateTimeField(_('created at'), editable=False)
     name             = models.CharField(_('item name'), max_length=255, blank=True, help_text=_('The name used to refer to this item'))
     description      = models.CharField(_('preface'), max_length=255, blank=True, help_text=_('Description of the purpose of this item'))
@@ -253,6 +265,16 @@ class Item(models.Model):
             return item_type.objects.get(pk=self.pk)
         else:
             return self
+
+    def is_downcast(self):
+        """
+        Return true if this item is instantiated at the actual item type.
+
+        For example, if item 123 is an agent, then:
+        Agent.get(pk=123).is_downcast() == true
+        Item.get(pk=123).is_downcast() == false
+        """
+        return self.actual_item_type() == type(self)
 
     def ancestor_collections(self, recursive_filter=None):
         """
@@ -369,6 +391,7 @@ class Item(models.Model):
         the given summary at the given time). This will call _after_deactivate
         if the item was previously active.
         """
+        assert self.is_downcast()
         action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
         if not self.active:
@@ -378,10 +401,10 @@ class Item(models.Model):
         # Execute callbacks
         self._after_deactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        DeactivateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
+        DeactivateActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
         old_item = self
         new_item = None
-        RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=False)
+        RelationActionNotice.create_notices(action_agent, action_summary, action_time, action_item=self, existed_before=True, existed_after=False)
     deactivate.alters_data = True
 
     @transaction.commit_on_success
@@ -391,6 +414,7 @@ class Item(models.Model):
         the given summary at the given time). This will call _after_reactivate
         if the item was previously inactive.
         """
+        assert self.is_downcast()
         action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
         if self.active:
@@ -400,10 +424,10 @@ class Item(models.Model):
         # Execute callbacks
         self._after_reactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        ReactivateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
+        ReactivateActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
         old_item = None
         new_item = self
-        RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
+        RelationActionNotice.create_notices(action_agent, action_summary, action_time, action_item=self, existed_before=False, existed_after=True)
     reactivate.alters_data = True
 
     @transaction.commit_on_success
@@ -414,6 +438,7 @@ class Item(models.Model):
         The item must already be inactive and cannot have already been
         destroyed. This will call _after_destroy.
         """
+        assert self.is_downcast()
         action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
         if self.destroyed or self.active:
@@ -445,7 +470,7 @@ class Item(models.Model):
         # Execute callbacks
         self._after_destroy(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
-        DestroyActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
+        DestroyActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
     destroy.alters_data = True
 
     @transaction.commit_on_success
@@ -472,9 +497,11 @@ class Item(models.Model):
         This will call _after_create or _after_edit, depending on whether the
         item already existed.
         """
+        is_new = not self.pk
+        if not is_new:
+            assert self.is_downcast()
         action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
-        is_new = not self.pk
 
         # Save the old item version
         if not is_new:
@@ -511,13 +538,13 @@ class Item(models.Model):
 
         # Create relevant ActionNotices
         if is_new:
-            CreateActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
+            CreateActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
             if self.active:
-                RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=False, existed_after=True)
+                RelationActionNotice.create_notices(action_agent, action_summary, action_time, action_item=self, existed_before=False, existed_after=True)
         else:
-            EditActionNotice(item=self, item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
+            EditActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
             if self.active:
-                RelationActionNotice.create_notices(action_agent, action_summary, action_time, item=self, existed_before=True, existed_after=True)
+                RelationActionNotice.create_notices(action_agent, action_summary, action_time, action_item=self, existed_before=True, existed_after=True)
     save_versioned.alters_data = True
 
     def can_be_deleted(self):
@@ -687,7 +714,7 @@ class GroupAgent(Agent):
         verbose_name_plural = _('group agents')
 
     # Fields
-    group = models.ForeignKey('Group', related_name='group_agents', unique=True, editable=False, verbose_name=_('group'))
+    group = FixedForeignKey('Group', related_name='group_agents', unique=True, editable=False, verbose_name=_('group'))
 
 
 class AuthenticationMethod(Item):
@@ -713,7 +740,7 @@ class AuthenticationMethod(Item):
         verbose_name_plural = _('authentication methods')
 
     # Fields
-    agent = models.ForeignKey(Agent, related_name='authentication_methods', verbose_name=_('agent'))
+    agent = FixedForeignKey(Agent, related_name='authentication_methods', verbose_name=_('agent'), required_abilities=['add_authentication_method'])
 
 
 class DemeAccount(AuthenticationMethod):
@@ -730,10 +757,10 @@ class DemeAccount(AuthenticationMethod):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view username', 'view password', 'view password_question', 'view password_answer',
                                       'edit username', 'edit password', 'edit password_question', 'edit password_answer'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create DemeAccount'])
     class Meta:
-        verbose_name = _('password account')
-        verbose_name_plural = _('password accounts')
+        verbose_name = _('Deme account')
+        verbose_name_plural = _('Deme accounts')
 
     # Fields
     username          = models.CharField(_('username'), max_length=255, unique=True)
@@ -855,7 +882,7 @@ class ContactMethod(Item):
         verbose_name_plural = _('contact methods')
 
     # Fields
-    agent = models.ForeignKey(Agent, related_name='contact_methods', verbose_name=_('agent'))
+    agent = FixedForeignKey(Agent, related_name='contact_methods', verbose_name=_('agent'), required_abilities=['add_contact_method'])
 
 
 class EmailContactMethod(ContactMethod):
@@ -866,7 +893,7 @@ class EmailContactMethod(ContactMethod):
     # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view email', 'edit email'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create EmailContactMethod'])
     class Meta:
         verbose_name = _('email contact method')
         verbose_name_plural = _('email contact methods')
@@ -883,7 +910,7 @@ class PhoneContactMethod(ContactMethod):
     # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view phone', 'edit phone'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create PhoneContactMethod'])
     class Meta:
         verbose_name = _('phone contact method')
         verbose_name_plural = _('phone contact methods')
@@ -900,7 +927,7 @@ class FaxContactMethod(ContactMethod):
     # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view fax', 'edit fax'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create FaxContactMethod'])
     class Meta:
         verbose_name = _('fax contact method')
         verbose_name_plural = _('fax contact methods')
@@ -917,7 +944,7 @@ class WebsiteContactMethod(ContactMethod):
     # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view url', 'edit url'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create WebsiteContactMethod'])
     class Meta:
         verbose_name = _('website contact method')
         verbose_name_plural = _('website contact methods')
@@ -934,7 +961,7 @@ class AIMContactMethod(ContactMethod):
     # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view screen_name', 'edit screen_name'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create AIMContactMethod'])
     class Meta:
         verbose_name = _('AIM contact method')
         verbose_name_plural = _('AIM contact methods')
@@ -954,7 +981,7 @@ class AddressContactMethod(ContactMethod):
     introduced_abilities = frozenset(['view street1', 'view street2', 'view city', 'view state',
                                       'view country', 'view zip', 'edit street1', 'edit street2',
                                       'edit city', 'edit state', 'edit country', 'edit zip'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create AddressContactMethod'])
     class Meta:
         verbose_name = _('address contact method')
         verbose_name_plural = _('address contact methods')
@@ -982,15 +1009,15 @@ class Subscription(Item):
     # Setup
     introduced_immutable_fields = frozenset(['contact_method', 'item'])
     introduced_abilities = frozenset(['view contact_method', 'view item', 'view deep', 'edit deep'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create Subscription'])
     class Meta:
         verbose_name = _('subscription')
         verbose_name_plural = _('subscriptions')
         unique_together = (('contact_method', 'item'),)
 
     # Fields
-    contact_method = models.ForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'))
-    item           = models.ForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'))
+    contact_method = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'])
+    item           = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view action_notices'])
     deep           = FixedBooleanField(_('deep subscription'), default=False)
 
 
@@ -1095,7 +1122,7 @@ class Folio(Collection):
         verbose_name_plural = _('folios')
 
     # Fields
-    group = models.ForeignKey(Group, related_name='folios', unique=True, editable=False, verbose_name=_('group'))
+    group = FixedForeignKey(Group, related_name='folios', unique=True, editable=False, verbose_name=_('group'))
 
 
 class Membership(Item):
@@ -1106,15 +1133,15 @@ class Membership(Item):
     # Setup
     introduced_immutable_fields = frozenset(['item', 'collection'])
     introduced_abilities = frozenset(['view item', 'view collection'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create Membership'])
     class Meta:
         verbose_name = _('membership')
         verbose_name_plural = _('memberships')
         unique_together = (('item', 'collection'),)
 
     # Fields
-    item       = models.ForeignKey(Item, related_name='memberships', verbose_name=_('item'))
-    collection = models.ForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'))
+    item       = FixedForeignKey(Item, related_name='memberships', verbose_name=_('item'))
+    collection = FixedForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'), required_abilities=['modify_membership'])
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(Membership, self)._after_create(action_agent, action_summary, action_time)
@@ -1193,7 +1220,7 @@ class DjangoTemplateDocument(TextDocument):
         verbose_name_plural = _('Django template documents')
 
     # Fields
-    layout = models.ForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout'))
+    layout = FixedForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout'))
     override_default_layout = FixedBooleanField(_('override default layout'), default=False)
 
 
@@ -1266,16 +1293,16 @@ class Transclusion(Item):
     introduced_immutable_fields = frozenset(['from_item', 'from_item_version_number', 'to_item'])
     introduced_abilities = frozenset(['view from_item', 'view from_item_version_number',
                                       'view from_item_index', 'view to_item', 'edit from_item_index'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create Transclusion'])
     class Meta:
         verbose_name = _('transclusion')
         verbose_name_plural = _('transclusions')
 
     # Fields
-    from_item                = models.ForeignKey(TextDocument, related_name='transclusions_from', verbose_name=_('from item'))
+    from_item                = FixedForeignKey(TextDocument, related_name='transclusions_from', verbose_name=_('from item'), required_abilities=['add_transclusion'])
     from_item_version_number = models.PositiveIntegerField(_('from item version number'))
     from_item_index          = models.PositiveIntegerField(_('from item index'))
-    to_item                  = models.ForeignKey(Item, related_name='transclusions_to', verbose_name=_('to item'))
+    to_item                  = FixedForeignKey(Item, related_name='transclusions_to', verbose_name=_('to item'))
 
 
 class Comment(Item):
@@ -1298,9 +1325,9 @@ class Comment(Item):
         verbose_name_plural = _('comments')
 
     # Fields
-    item                = models.ForeignKey(Item, related_name='comments', verbose_name=_('item'))
+    item                = FixedForeignKey(Item, related_name='comments', verbose_name=_('item'), required_abilities=['comment_on'])
     item_version_number = models.PositiveIntegerField(_('item version number'))
-    from_contact_method = models.ForeignKey(ContactMethod, related_name='comments_from_contactmethod', null=True, blank=True, default=None, editable=False, verbose_name=_('from contact method'))
+    from_contact_method = FixedForeignKey(ContactMethod, related_name='comments_from_contactmethod', null=True, blank=True, default=None, editable=False, verbose_name=_('from contact method'))
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(Comment, self)._after_create(action_agent, action_summary, action_time)
@@ -1325,7 +1352,7 @@ class TextComment(TextDocument, Comment):
     # Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create TextComment'])
     class Meta:
         verbose_name = _('text comment')
         verbose_name_plural = _('text comments')
@@ -1369,7 +1396,7 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
         verbose_name_plural = _('text document excerpts')
 
     # Fields
-    text_document                = models.ForeignKey(TextDocument, related_name='text_document_excerpts', verbose_name=_('text document'))
+    text_document                = FixedForeignKey(TextDocument, related_name='text_document_excerpts', verbose_name=_('text document'))
     text_document_version_number = models.PositiveIntegerField(_('text document version number'))
     start_index                  = models.PositiveIntegerField(_('start index'))
     length                       = models.PositiveIntegerField(_('length'))
@@ -1407,7 +1434,7 @@ class ViewerRequest(Item):
     viewer       = models.CharField(_('viewer'), max_length=255)
     action       = models.CharField(_('action'), max_length=255)
     # If aliased_item is null, it is a collection action
-    aliased_item = models.ForeignKey(Item, related_name='viewer_requests', null=True, blank=True, default=None, verbose_name=_('aliased item'))
+    aliased_item = FixedForeignKey(Item, related_name='viewer_requests', null=True, blank=True, default=None, verbose_name=_('aliased item'))
     query_string = models.CharField(_('query string'), max_length=1024, blank=True)
     format       = models.CharField(_('format'), max_length=255, default='html')
 
@@ -1442,7 +1469,7 @@ class Site(ViewerRequest):
 
     # Fields
     hostname = models.CharField(_('hostname'), max_length=255, unique=True)
-    default_layout = models.ForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout'))
+    default_layout = FixedForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout'))
 
     def can_be_deleted(self):
         # Don't delete the default site
@@ -1465,14 +1492,14 @@ class CustomUrl(ViewerRequest):
     # Setup
     introduced_immutable_fields = frozenset(['parent_url', 'path'])
     introduced_abilities = frozenset(['view parent_url', 'view path'])
-    introduced_global_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create CustomUrl'])
     class Meta:
         verbose_name = _('custom URL')
         verbose_name_plural = _('custom URLs')
         unique_together = (('parent_url', 'path'),)
 
     # Fields
-    parent_url = models.ForeignKey(ViewerRequest, related_name='child_urls', verbose_name=_('parent URL'))
+    parent_url = FixedForeignKey(ViewerRequest, related_name='child_urls', verbose_name=_('parent URL'), required_abilities=['add_sub_path'])
     path       = models.CharField(_('path'), max_length=255)
 
 
@@ -1551,18 +1578,18 @@ class ActionNotice(models.Model):
     happening in Deme. ActionNotice is meant to be abstract, so only subclasses
     should ever be created.
     """
-    item                = models.ForeignKey(Item, related_name='action_notices', verbose_name=_('item'))
-    item_version_number = models.PositiveIntegerField(_('item version number'))
-    action_agent        = models.ForeignKey(Agent, related_name='action_notices_created', verbose_name=_('action agent'))
-    action_time         = models.DateTimeField(_('action time'))
-    action_summary      = models.CharField(_('action summary'), max_length=255, blank=True)
+    action_item                = models.ForeignKey(Item, related_name='action_notices', verbose_name=_('action item'))
+    action_item_version_number = models.PositiveIntegerField(_('action item version number'))
+    action_agent               = models.ForeignKey(Agent, related_name='action_notices_created', verbose_name=_('action agent'))
+    action_time                = models.DateTimeField(_('action time'))
+    action_summary             = models.CharField(_('action summary'), max_length=255, blank=True)
 
     def notification_reply_item(self):
         """
         Return the item that comments created about this notice (via replying
         to a notification email for this notice) are replies to.
         """
-        return self.item
+        return self.action_item
 
     def notification_email(self, email_contact_method):
         """
@@ -1580,7 +1607,7 @@ class ActionNotice(models.Model):
 
         # Decide if we're allowed to get this notification at all
         def direct_subscriptions():
-            item_parent_pks_query = self.item.all_parents_in_thread().values('pk').query
+            item_parent_pks_query = self.action_item.all_parents_in_thread().values('pk').query
             action_agent_parent_pks_query = self.action_agent.all_parents_in_thread().values('pk').query
             return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
                                                active=True, contact_method=email_contact_method)
@@ -1590,26 +1617,26 @@ class ActionNotice(models.Model):
             else:
                 visible_memberships = permission_cache.filter_items(agent, 'view item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-            item_parent_pks_query = self.item.all_parents_in_thread(True, recursive_filter).values('pk').query
+            item_parent_pks_query = self.action_item.all_parents_in_thread(True, recursive_filter).values('pk').query
             action_agent_parent_pks_query = self.action_agent.all_parents_in_thread(True, recursive_filter).values('pk').query
             return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
                                                active=True, contact_method=email_contact_method, deep=True)
-        if not (permission_cache.agent_can(agent, 'view action_notices', self.item) or permission_cache.agent_can(agent, 'view action_notices', self.action_agent)):
+        if not (permission_cache.agent_can(agent, 'view action_notices', self.action_item) or permission_cache.agent_can(agent, 'view action_notices', self.action_agent)):
             return None
         if isinstance(self, RelationActionNotice):
             if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
                 return None
         try:
-            arbitrary_subscription = direct_subscriptions()[0]
+            arbitrary_subscription = direct_subscriptions().get()
         except ObjectDoesNotExist:
             try:
-                arbitrary_subscription = deep_subscriptions()[0]
+                arbitrary_subscription = deep_subscriptions().get()
             except ObjectDoesNotExist:
                 return None
 
         # Get the fields we are allowed to view
         subscribed_item = arbitrary_subscription.item
-        item = self.item
+        item = self.action_item
         reply_item = self.notification_reply_item()
         topmost_item = item.original_item_in_thread()
         def get_url(x):
@@ -1628,8 +1655,8 @@ class ActionNotice(models.Model):
         recipient_email_address = email_contact_method.email
 
         # Generate the subject and body
-        viewer.context['item'] = self.item
-        viewer.context['item_version_number'] = self.item_version_number
+        viewer.context['action_item'] = self.action_item
+        viewer.context['action_item_version_number'] = self.action_item_version_number
         viewer.context['action_agent'] = self.action_agent
         viewer.context['action_time'] = self.action_time
         viewer.context['action_summary'] = self.action_summary
@@ -1726,10 +1753,10 @@ def _action_notice_post_save_handler(sender, **kwargs):
     """
     action_notice = kwargs['instance']
     # Email everyone subscribed to items this notice is relevant for
-    direct_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.item.all_parents_in_thread().values('pk').query) |
+    direct_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.action_item.all_parents_in_thread().values('pk').query) |
                                                        Q(item__in=action_notice.action_agent.all_parents_in_thread().values('pk').query),
                                                        active=True)
-    deep_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.item.all_parents_in_thread(True).values('pk').query) |
+    deep_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.action_item.all_parents_in_thread(True).values('pk').query) |
                                                      Q(item__in=action_notice.action_agent.all_parents_in_thread(True).values('pk').query),
                                                      deep=True,
                                                      active=True)
@@ -1758,7 +1785,7 @@ class RelationActionNotice(ActionNotice):
     from_item_version_number = models.PositiveIntegerField(_('from item version number'))
     from_field_name          = models.CharField(_('from field name'), max_length=255)
     from_field_model         = models.CharField(_('from field model'), max_length=255)
-    relation_added           = FixedBooleanField(_('relation added'))
+    relation_added           = models.BooleanField(_('relation added'))
 
     def notification_reply_item(self):
         """
@@ -1771,7 +1798,7 @@ class RelationActionNotice(ActionNotice):
         return self.from_item
 
     @staticmethod
-    def create_notices(action_agent, action_summary, action_time, item, existed_before, existed_after):
+    def create_notices(action_agent, action_summary, action_time, action_item, existed_before, existed_after):
         """
         This method should be called whenever an item is created, edited,
         deactivated, or reactivated. It generates all relevant
@@ -1784,18 +1811,18 @@ class RelationActionNotice(ActionNotice):
         true.
         """
         if existed_before and existed_after:
-            old_item = type(item).objects.get(pk=item.pk)
-            old_item.copy_fields_from_version(item.version_number - 1)
-            new_item = item
+            old_item = type(action_item).objects.get(pk=action_item.pk)
+            old_item.copy_fields_from_version(action_item.version_number - 1)
+            new_item = action_item
         elif existed_before:
-            old_item = item
+            old_item = action_item
             new_item = None
         elif existed_after:
             old_item = None
-            new_item = item
+            new_item = action_item
         # Because of multiple inheritance, we need to put the field/model pairs
         # into a set to eliminate duplicates
-        fields_and_models = set(item._meta.get_fields_with_model())
+        fields_and_models = set(action_item._meta.get_fields_with_model())
         for field, model in fields_and_models:
             if isinstance(field, (models.OneToOneField, models.ManyToManyField)):
                 continue
@@ -1803,7 +1830,7 @@ class RelationActionNotice(ActionNotice):
                 continue # we do creator stuff separately
             if isinstance(field, models.ForeignKey):
                 if model is None:
-                    model = type(item)
+                    model = type(action_item)
                 if old_item is None:
                     old_value = None
                 else:
@@ -1816,19 +1843,20 @@ class RelationActionNotice(ActionNotice):
                     for value, relation_added in [(old_value, False), (new_value, True)]:
                         if value is not None:
                             action_notice = RelationActionNotice()
-                            action_notice.item = value
-                            action_notice.item_version_number = value.version_number
+                            action_notice.action_item = value
+                            action_notice.action_item_version_number = value.version_number
                             action_notice.action_agent = action_agent
                             action_notice.action_time = action_time
                             action_notice.action_summary = action_summary
-                            action_notice.from_item = item
-                            action_notice.from_item_version_number = item.version_number
+                            action_notice.from_item = action_item
+                            action_notice.from_item_version_number = action_item.version_number
                             action_notice.from_field_name = field.name
                             action_notice.from_field_model = model.__name__
                             action_notice.relation_added = relation_added
                             action_notice.save()
+
 signals.post_save.connect(_action_notice_post_save_handler, sender=RelationActionNotice, dispatch_uid='RelationActionNotice post_save')
-    
+
 
 class DeactivateActionNotice(ActionNotice):
     """

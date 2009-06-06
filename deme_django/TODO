@@ -14,12 +14,12 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* If you login/logout after you're at a page with POST or at a login page, the "back to page" is weird.
 * Put the form/link code for each authentication method in its own module, and the default layout will somehow combine them
 * Methods that have to do with sending emails (about action notices) should go in EmailContactMethod, not ActionNotice
 * Move AuthenticationMethod stuff to their own viewers (and own modules at some point)
 * Fix the multiple inheritance bug
   - http://code.djangoproject.com/ticket/10808
-* Rename /static/ to /file/
 * The viewer should probably define a list of actions for each item type to be displayed in a menu
 * Probably don't need auto-load modules: INSTALLED_APPS is more explicit and familiar
 * Figure out correct way to manage assets (maybe like in rails)
@@ -68,7 +68,6 @@ Unusual things to remember
 * Don't forget to update crystal icons for new models
 * If someone has permission to edit the body of an item, we allow them to add transclusions in some situations (TextDocumentViewer.edit)
 * We do not [knowingly] support OneToOneFields and ManyToManyFields in item types
-* Whenever you do anything to modify an item (like save, trash, untrash, destroy) you better be in the downcasted version.
 
 
 

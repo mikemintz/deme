@@ -10,11 +10,15 @@
             Item Type Filter:
         </th>
         <td>
-            <select onchange="window.location = this.value;">
-                {% for item_type in item_types %}
-                <option style="background-repeat:no-repeat; background-position:bottom left; padding-left:18px; background-image:url({{ item_type.item_type|icon_url:16 }});" value="{% url item_type_url viewer=item_type.viewer %}"{% ifequal item_type.item_type accepted_item_type %} selected="selected"{% endifequal %}>{{ item_type.name_plural|capfirst }}</option>
-                {% endfor %}
-            </select>
+            {% for item_type in item_types %}
+            <span>[
+            {% ifequal item_type.item_type accepted_item_type %}
+            <b>{{ item_type.name_plural|capfirst }}</b>
+            {% else %}
+            <a href="{% url item_type_url viewer=item_type.viewer %}">{{ item_type.name_plural|capfirst }}</a>
+            {% endifequal %}
+            ]</span>
+            {% endfor %}
         </td>
     </tr>
     <tr>
@@ -57,7 +61,7 @@
 </div>
 
 <div style="margin-top: 10px; margin-bottom: 10px; text-align: center;">
-    {% list_results_navigator viewer_name collection search_query active offset limit n_listable_items 10 %}
+    {% list_results_navigator 10 %}
 </div>
 
 <table cellspacing="0" class="list" width="100%">
@@ -66,7 +70,7 @@
     </tr>
     {% for item in items %}
     <tr class="{% cycle 'even' 'odd' %}">
-        <td><a class="img_link" href="{% url item_url viewer=item.item_type_string|lower,noun=item.pk %}"><img src="{{ item|icon_url:16 }}" /><span>{% viewable_name item %}</span></a></td>
+        <td><a class="img_link" href="{% url item_url viewer=item.item_type_string|lower,noun=item.pk %}?crumb_item_type={{ item_type_lower }}&crumb_filter={{ filter_string }}"><img src="{{ item|icon_url:16 }}" /><span>{% viewable_name item %}</span></a></td>
     </tr>
     {% endfor %}
 </table>
@@ -75,7 +79,7 @@
 {% endif %}
 
 <div style="margin-top: 10px; text-align: center;">
-    {% list_results_navigator viewer_name collection search_query active offset limit n_listable_items 10 %}
+    {% list_results_navigator 10 %}
 </div>
 
 {% endblock content %}

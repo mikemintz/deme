@@ -10,6 +10,7 @@ from deme_django import settings
 setup_environ(settings)
 
 from cms.models import *
+from cms.permissions import PermissionCache
 from modules.webauth.models import *
 from django import db
 import subprocess
@@ -22,6 +23,8 @@ if Item.objects.count() != 0:
 ###############################################################################
 # Necessary items
 ###############################################################################
+
+permission_cache = PermissionCache()
 
 admin = Agent(name="Admin")
 admin.save_versioned(action_agent=None, first_agent=True)
@@ -147,8 +150,13 @@ Subscription(contact_method=todd_email_contact_method, item=discuss_group.folios
 Subscription(contact_method=joe_email_contact_method, item=discuss_group.folios.get(), deep=True).save_versioned(action_agent=joe, initial_permissions=[AgentItemPermission(agent=joe, ability='do_anything', is_allowed=True)])
 
 #AgentGlobalPermission(agent=anonymous_agent, ability='do_anything', is_allowed=False).save()
-EveryoneGlobalPermission(ability='create HtmlDocument', is_allowed=True).save()
-EveryoneGlobalPermission(ability='create TextDocumentExcerpt', is_allowed=True).save()
-EveryoneGlobalPermission(ability='create Collection', is_allowed=True).save()
+
+# Give everyone permission to create any item type, except DemeSetting and Site
+for item_type in all_item_types():
+    if item_type in [DemeSetting, Site]:
+        continue
+    ability = 'create %s' % item_type.__name__
+    if ability in permission_cache.all_possible_global_abilities():
+        EveryoneGlobalPermission(ability=ability, is_allowed=True).save()
 
 EveryoneItemPermission(item=admin, ability='login_as', is_allowed=True).save()

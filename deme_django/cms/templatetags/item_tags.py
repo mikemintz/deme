@@ -140,47 +140,71 @@ def media_url(path):
         else:
             return '' # Fail silently for invalid paths.
 
-@register.simple_tag
-def list_results_navigator(viewer_name, collection, search_query, active, offset, limit, n_results, max_pages):
-    """
-    Make an HTML pagination navigator (page number links with prev and next
-    links on both sides).
-    
-    The prev link will have class="list_results_prev". The next link will have
-    class="list_results_next". Each page number link will have
-    class="list_results_step". The current page number will be in a span with
-    class="list_results_highlighted".
-    """
-    if n_results <= limit:
-        return ''
-    url_prefix = reverse('item_type_url', kwargs={'viewer': viewer_name}) + '?limit=%s&amp;' % limit
-    if search_query:
-        url_prefix += 'q=%s&amp;' % search_query
-    if not active:
-        url_prefix += 'active=0&amp;'
-    if collection:
-        url_prefix += 'collection=%s&amp;' % collection.pk
-    result = []
-    # Add a prev link
-    if offset > 0:
-        new_offset = max(0, offset - limit)
-        prev_text = _('Prev')
-        link = u'<a class="list_results_prev" href="%soffset=%d">&laquo; %s</a>' % (url_prefix, new_offset, prev_text)
-        result.append(link)
-    # Add the page links
-    for new_offset in xrange(max(0, offset - limit * max_pages), min(n_results - 1, offset + limit * max_pages), limit):
-        if new_offset == offset:
-            link = '<span class="list_results_highlighted">%d</span>' % (1 + new_offset / limit,)
-        else:
-            link = '<a class="list_results_step" href="%soffset=%d">%d</a>' % (url_prefix, new_offset, 1 + new_offset / limit)
-        result.append(link)
-    # Add a next link
-    if offset + limit < n_results:
-        new_offset = offset + limit
-        next_text = _('Next')
-        link = u'<a class="list_results_next" href="%soffset=%d">%s &raquo;</a>' % (url_prefix, new_offset, next_text)
-        result.append(link)
-    return ''.join(result)
+
+class ListResultsNavigator(template.Node):
+    def __init__(self, max_pages):
+        self.max_pages = template.Variable(max_pages)
+
+    def __repr__(self):
+        return "<ListResultsNavigator>"
+
+    def render(self, context):
+        """
+        Make an HTML pagination navigator (page number links with prev and next
+        links on both sides).
+        
+        The prev link will have class="list_results_prev". The next link will have
+        class="list_results_next". Each page number link will have
+        class="list_results_step". The current page number will be in a span with
+        class="list_results_highlighted".
+        """
+        try:
+            max_pages = self.max_pages.resolve(context)
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve max_pages variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+        viewer = context['_viewer']
+        n_results = context['n_listable_items']
+        limit = context['limit']
+        offset = context['offset']
+        def url_with_offset(offset):
+            querydict = viewer.request.GET.copy()
+            querydict['offset'] = str(offset)
+            return '%s?%s' % (viewer.context['full_path'], querydict.urlencode())
+        if n_results <= limit:
+            return ''
+        result = []
+        # Add a prev link
+        if offset > 0:
+            new_offset = max(0, offset - limit)
+            prev_text = _('Prev')
+            link = u'<a class="list_results_prev" href="%s">&laquo; %s</a>' % (url_with_offset(new_offset), prev_text)
+            result.append(link)
+        # Add the page links
+        for new_offset in xrange(max(0, offset - limit * max_pages), min(n_results - 1, offset + limit * max_pages), limit):
+            if new_offset == offset:
+                link = '<span class="list_results_highlighted">%d</span>' % (1 + new_offset / limit,)
+            else:
+                link = '<a class="list_results_step" href="%s">%d</a>' % (url_with_offset(new_offset), 1 + new_offset / limit)
+            result.append(link)
+        # Add a next link
+        if offset + limit < n_results:
+            new_offset = offset + limit
+            next_text = _('Next')
+            link = u'<a class="list_results_next" href="%s">%s &raquo;</a>' % (url_with_offset(new_offset), next_text)
+            result.append(link)
+        return ''.join(result)
+
+
+@register.tag
+def list_results_navigator(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError, "%r takes one arguments" % bits[0]
+    return ListResultsNavigator(bits[1])
+
 
 class UniversalEditButton(template.Node):
     def __init__(self):
@@ -483,29 +507,60 @@ class ItemDetails(template.Node):
         item = context['item']
         result = []
 
+        result.append('<table class="twocol" cellspacing="0" style="font-size: 85%;">')
+
+        if agentcan_helper(context, 'view name', item) and item.name:
+            result.append('<tr>')
+            result.append('<th>Name:</th>')
+            result.append('<td>')
+            result.append(escape(item.name))
+            result.append('</td>')
+            result.append('</tr>')
+
+        if agentcan_helper(context, 'view description', item) and item.description:
+            result.append('<tr>')
+            result.append('<th>Preface:</th>')
+            result.append('<td>')
+            result.append(escape(item.description))
+            result.append('</td>')
+            result.append('</tr>')
+
+        result.append('<tr>')
+        result.append('<th>Item type:</th>')
+        result.append('<td>')
+        result.append(u'%s' % capfirst(item.actual_item_type()._meta.verbose_name))
+        result.append('</td>')
+        result.append('</tr>')
+
+        result.append('<tr>')
+        result.append('<th>Status:</th>')
+        result.append('<td>')
         if item.destroyed:
-            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is destroyed</div>')
+            result.append('<span style="color: #c00;">Destroyed</span>')
         elif not item.active:
-            result.append('<div style="color: #c00; font-weight: bold; font-size: larger;">This item is inactive</div>')
+            result.append('<span style="color: #c00;">Inactive</span>')
+        else:
+            result.append('<span style="color: #070;">Active</span>')
+        result.append('</td>')
+        result.append('</tr>')
 
         if agentcan_helper(context, 'view created_at', item):
-            created_at_text = '<span title="%s">%s ago</span>' % (item.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(item.created_at))
-        else:
-            created_at_text = ''
-        if agentcan_helper(context, 'view creator', item):
-            creator_text = 'by <a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(get_viewable_name(context, item.creator)))
-        else:
-            creator_text = ''
-        result.append('<div style="font-size: 8pt;">')
-        result.append(u'%s' % capfirst(item.actual_item_type()._meta.verbose_name))
-        if creator_text or created_at_text:
-            result.append('originally created %s %s' % (creator_text, created_at_text))
-        result.append('</div>')
+            result.append('<tr>')
+            result.append('<th>Created:</th>')
+            result.append('<td>')
+            result.append('<span title="%s">%s ago</span>' % (item.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(item.created_at)))
+            result.append('</td>')
+            result.append('</tr>')
 
-        result.append('<div style="font-size: 8pt; color: #aaa; margin-bottom: 10px;">')
-        if agentcan_helper(context, 'view description', item) and item.description.strip():
-            result.append('Preface: %s' % escape(item.description))
-        result.append('</div>')
+        if agentcan_helper(context, 'view creator', item):
+            result.append('<tr>')
+            result.append('<th>Creator:</th>')
+            result.append('<td>')
+            result.append('<a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(get_viewable_name(context, item.creator))))
+            result.append('</td>')
+            result.append('</tr>')
+
+        result.append('</table>')
 
         return '\n'.join(result)
 
@@ -652,29 +707,33 @@ class CalculateRelationships(template.Node):
         relationship_sets = []
         for name in sorted(item._meta.get_all_field_names()):
             field, model, direct, m2m = item._meta.get_field_by_name(name)
-            if type(field).__name__ != 'RelatedObject':
+            if not isinstance(field, models.related.RelatedObject):
                 continue
-            if type(field.field).__name__ != 'ForeignKey':
+            if not isinstance(field.field, models.ForeignKey):
                 continue
-            if issubclass(field.model, (ItemPermission, GlobalPermission)):
+            if isinstance(field.field, models.OneToOneField):
                 continue
             if not issubclass(field.model, Item):
                 continue
             manager = getattr(item, name)
             relationship_set = {}
             relationship_set['name'] = name
+            relationship_set['field'] = field
             viewable_items = manager.filter(active=True)
+            viewable_items = permission_cache.filter_items(cur_agent, 'view %s' % field.field.name, viewable_items)
             if viewable_items.count() == 0:
                 continue
             relationship_item_type = manager.model
             permission_cache.filter_items(cur_agent, 'view name', viewable_items)
-            viewable_items = permission_cache.filter_items(cur_agent, 'view %s' % field.field.name, viewable_items)
             relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)
 
         result = []
         for relationship_set in relationship_sets:
-            result.append("""<div><b>%s</b></div>""" % relationship_set['name'])
+            friendly_name = capfirst(relationship_set['name']).replace('_', ' ')
+            field = relationship_set['field']
+            list_url = '%s?filter=%s.%d' % (reverse('item_type_url', kwargs={'viewer': field.model.__name__.lower()}), field.field.name, item.pk)
+            result.append("""<div><a href="%s"><b>%s</b></a></div>""" % (list_url, friendly_name))
             for related_item in relationship_set['items']:
                 related_item_url = related_item.get_absolute_url()
                 related_item_name = get_viewable_name(context, related_item)
@@ -733,12 +792,10 @@ class CalculateActionNotices(template.Node):
         result = []
         if agentcan_helper(context, 'view action_notices', item):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
-            result.append(u'<table class="list">')
-            result.append(u'<tr><th>Date/Time</th><th>Agent</th><th>Action</th><th>Item</th><th>Reason</th></tr>')
-            action_notices = ActionNotice.objects.filter(Q(item=item) | Q(action_agent=item)).order_by('action_time')
+            action_notices = ActionNotice.objects.filter(Q(action_item=item) | Q(action_agent=item)).order_by('action_time')
             action_notice_pk_to_object_map = {}
             for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
-                select_related_fields = ['action_agent__name', 'item__name']
+                select_related_fields = ['action_agent__name', 'action_item__name']
                 if action_notice_subclass == RelationActionNotice:
                     select_related_fields.append('from_item__name')
                 specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query).select_related(*select_related_fields)
@@ -746,37 +803,42 @@ class CalculateActionNotices(template.Node):
                     context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
                 for action_notice in specific_action_notices:
                     action_notice_pk_to_object_map[action_notice.pk] = action_notice
-            context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=action_notices.values('item').query) | Q(pk__in=action_notices.values('action_agent').query)))
+            context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
             for action_notice in action_notices:
                 action_notice = action_notice_pk_to_object_map[action_notice.pk]
                 if isinstance(action_notice, RelationActionNotice):
                     if not agentcan_helper(context, 'view %s' % action_notice.from_field_name, action_notice.from_item):
                         continue
-                time_text = '<span title="%s">%s ago</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
+                action_time_text = '<span title="%s">%s ago</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
                 action_agent_name = get_viewable_name(context, action_notice.action_agent)
-                agent_text = u'<a href="%s">%s</a>' % (escape(action_notice.action_agent.get_absolute_url()), escape(action_agent_name))
-                item_name = get_viewable_name(context, action_notice.item)
-                item_text = u'<a href="%s">%s</a>' % (escape(action_notice.item.get_absolute_url() + '?version=%d' % action_notice.item_version_number), escape(item_name))
-                action_summary_text = action_notice.action_summary
+                action_agent_text = u'<a href="%s">%s</a>' % (escape(action_notice.action_agent.get_absolute_url()), escape(action_agent_name))
+                if action_notice.action_item.pk == item.pk:
+                    action_item_name = 'this'
+                else:
+                    action_item_name = get_viewable_name(context, action_notice.action_item)
+                action_item_text = u'<a href="%s">%s</a>' % (escape(action_notice.action_item.get_absolute_url() + '?version=%d' % action_notice.action_item_version_number), escape(action_item_name))
+                if action_notice.action_summary:
+                    action_summary_text = u'(%s)' % escape(action_notice.action_summary)
+                else:
+                    action_summary_text = ''
                 if isinstance(action_notice, RelationActionNotice):
                     from_item_name = get_viewable_name(context, action_notice.from_item)
                     from_item_text = u'<a href="%s">%s</a>' % (escape(action_notice.from_item.get_absolute_url() + '?version=%d' % action_notice.from_item_version_number), escape(from_item_name))
                     if action_notice.relation_added:
-                        action_text = u"Set the %s of %s to" % (action_notice.from_field_name, from_item_text)
+                        action_text = u"set the %s of %s to" % (action_notice.from_field_name, from_item_text)
                     else:
-                        action_text = u"Unset the %s of %s from" % (action_notice.from_field_name, from_item_text)
+                        action_text = u"unset the %s of %s from" % (action_notice.from_field_name, from_item_text)
                 if isinstance(action_notice, DeactivateActionNotice):
-                    action_text = 'Deactivated'
+                    action_text = 'deactivated'
                 if isinstance(action_notice, ReactivateActionNotice):
-                    action_text = 'Reactivated'
+                    action_text = 'reactivated'
                 if isinstance(action_notice, DestroyActionNotice):
-                    action_text = 'Destroyed'
+                    action_text = 'destroyed'
                 if isinstance(action_notice, CreateActionNotice):
-                    action_text = 'Created'
+                    action_text = 'created'
                 if isinstance(action_notice, EditActionNotice):
-                    action_text = 'Edited'
-                result.append(u"<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (time_text, agent_text, action_text, item_text, action_summary_text))
-            result.append(u"</table>")
+                    action_text = 'edited'
+                result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">[%s]<br />%s %s %s %s</div>' % (action_time_text, action_agent_text, action_text, action_item_text, action_summary_text))
         else:
             action_notices = []
 
@@ -1008,8 +1070,8 @@ class PermissionEditor(template.Node):
         existing_permission_data.append(datum)
 
         from cms.views import AjaxModelChoiceField
-        new_agent_select_widget = AjaxModelChoiceField(Agent.objects).widget.render('new_agent', None)
-        new_collection_select_widget = AjaxModelChoiceField(Collection.objects).widget.render('new_collection', None)
+        new_agent_select_widget = AjaxModelChoiceField(Agent.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None)
+        new_collection_select_widget = AjaxModelChoiceField(Collection.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None)
         #TODO the widgets get centered-alignment in the dialog, which looks bad
 
         result = """
@@ -1147,8 +1209,8 @@ class PermissionEditor(template.Node):
         'new_img_url': icon_url('new', 16),
         'agent_img_url': icon_url('Agent', 16),
         'collection_img_url': icon_url('Collection', 16),
-        'new_agent_select_widget': AjaxModelChoiceField(Agent.objects).widget.render('new_agent', None),
-        'new_collection_select_widget': AjaxModelChoiceField(Collection.objects).widget.render('new_collection', None),
+        'new_agent_select_widget': AjaxModelChoiceField(Agent.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None),
+        'new_collection_select_widget': AjaxModelChoiceField(Collection.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None),
         }
         return result
 
@@ -1175,4 +1237,92 @@ def global_permission_editor(parser, token):
         raise template.TemplateSyntaxError, "%r takes zero arguments" % bits[0]
     item = None
     return PermissionEditor(item, is_global_permissions=True, privacy_only=False)
+
+class Crumbs(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<Crumbs>"
+
+    def render(self, context):
+        #TODO we should not be raising exceptions, including database queries that could fail
+        viewer = context['_viewer']
+        item_type_parameter = viewer.request.GET.get('crumb_item_type')
+        filter_parameter = viewer.request.GET.get('crumb_filter') or viewer.request.GET.get('filter')
+        if item_type_parameter:
+            item_type = get_item_type_with_name(item_type_parameter, case_sensitive=False)
+        else:
+            item_type = viewer.accepted_item_type
+        result = []
+        if not filter_parameter:
+            top_level_item_type_url = reverse('item_type_url', kwargs={'viewer': 'item'})
+            item_type_url = reverse('item_type_url', kwargs={'viewer': item_type.__name__.lower()})
+            result.append(u'<a href="%s">%s</a>' % (top_level_item_type_url, capfirst(Item._meta.verbose_name_plural)))
+            if item_type != Item:
+                result.append(u' &raquo; <a href="%s">%s</a>' % (item_type_url, capfirst(item_type._meta.verbose_name_plural)))
+        else:
+            filter_string = str(filter_parameter) # Unicode doesn't work here
+            parts = filter_string.split('.')
+            target_pk = parts.pop()
+            fields = []
+            field_models = [item_type]
+            cur_item_type = item_type
+            for part in parts:
+                field = cur_item_type._meta.get_field_by_name(part)[0]
+                fields.append(field)
+                if isinstance(field, models.ForeignKey):
+                    cur_item_type = field.rel.to
+                elif isinstance(field, models.related.RelatedObject):
+                    cur_item_type = field.model
+                else:
+                    raise Exception("Cannot filter on field %s.%s (not a related field)" % (cur_item_type.__name__, field.name))
+                if not issubclass(cur_item_type, Item):
+                    raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
+                field_models.append(cur_item_type)
+            target = field_models[-1].objects.get(pk=target_pk)
+            reverse_fields = []
+            for field in reversed(fields):
+                if isinstance(field, models.ForeignKey):
+                    reverse_field = field.rel
+                else:
+                    reverse_field = field.field
+                reverse_fields.append(reverse_field)
+
+            result = []
+            result.append('<a href="%s">%s</a>' % (target.get_absolute_url(), get_viewable_name(context, target)))
+            for i, field in enumerate(reverse_fields):
+                subfilter = []
+                subfilter_fields = fields[len(fields)-i-1:]
+                subfilter_field_models = field_models[len(fields)-i-1:]
+                for subfilter_field in subfilter_fields:
+                    if isinstance(subfilter_field, models.ForeignKey):
+                        name = subfilter_field.name
+                    else:
+                        name = subfilter_field.field.rel.related_name
+                    subfilter.append(name)
+                subfilter.append(target_pk)
+                subfilter = '.'.join(subfilter)
+                subfilter_item_type = subfilter_field_models[0]
+                subfilter_url = '%s?filter=%s' % (reverse('item_type_url', kwargs={'viewer': subfilter_item_type.__name__.lower()}), subfilter)
+                if isinstance(field, models.ForeignKey):
+                    field_name = field.name
+                else:
+                    field_name = field.related_name
+                result.append(u' &raquo; <a href="%s">' % subfilter_url)
+                result.append(capfirst(field_name.replace('_', ' ')))
+                result.append('</a>')
+        if viewer.item:
+            result.append(' &raquo; %s' % get_viewable_name(context, viewer.item))
+        else:
+            result.append(' &raquo; %s' % capfirst(viewer.action))
+        return ''.join(result)
+
+@register.tag
+def crumbs(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return Crumbs()
+
 

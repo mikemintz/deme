@@ -4,6 +4,7 @@ from django.core.urlresolvers import reverse
 from django import forms
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.utils.http import urlquote
 from cms.models import *
 
 class JustTextNoInputWidget(forms.Widget):
@@ -16,6 +17,11 @@ class JustTextNoInputWidget(forms.Widget):
 
 class AjaxModelChoiceWidget(forms.Widget):
     """Ajax auto-complete widget for ForeignKey fields."""
+
+    def __init__(self, *args, **kwargs):
+        self.required_abilities = kwargs.pop('required_abilities')
+        super(AjaxModelChoiceWidget, self).__init__(*args, **kwargs)
+
     def render(self, name, value, attrs=None):
         model = self.choices.queryset.model
         #field = self.choices.field
@@ -33,7 +39,8 @@ class AjaxModelChoiceWidget(forms.Widget):
         initial_search = value_item.display_name() if value_item else ''
         if value is None: value = ''
         if attrs is None: attrs = {}
-        ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'})
+        ajax_query_string = '&'.join('ability=' + urlquote(ability) for ability in self.required_abilities)
+        ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'}) + '?' + ajax_query_string
         result = """
         <input type="hidden" name="%(name)s" value="%(value)s" />
         <input class="ajax_choice_field" type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" autocomplete="off" />
@@ -105,11 +112,24 @@ class JavaScriptSpamDetectionWidget(forms.Widget):
 
 class AjaxModelChoiceField(forms.ModelChoiceField):
     """Ajax auto-complete field for ForeignKey fields."""
-    widget = AjaxModelChoiceWidget
 
-class HiddenModelChoiceField(forms.ModelChoiceField):
-    """Hidden field for ForeignKey fields."""
-    widget = forms.HiddenInput
+    default_error_messages = {
+        'permission_denied': _(u'You do not have permission to set this field to this value.'),
+    }
+    
+    def __init__(self, *args, **kwargs):
+        self.cur_agent = kwargs.pop('cur_agent')
+        self.permission_cache = kwargs.pop('permission_cache')
+        self.required_abilities = kwargs.pop('required_abilities')
+        self.widget = AjaxModelChoiceWidget(required_abilities=self.required_abilities)
+        super(AjaxModelChoiceField, self).__init__(*args, **kwargs)
+
+    def clean(self, value):
+        value = super(AjaxModelChoiceField, self).clean(value)
+        for ability in self.required_abilities:
+            if not self.permission_cache.agent_can(self.cur_agent, ability, value):
+                raise forms.util.ValidationError(self.error_messages['permission_denied'])
+        return value
 
 class JavaScriptSpamDetectionField(forms.Field):
     """Hidden field that uses JavaScript to detect spam."""
@@ -126,69 +146,3 @@ class JavaScriptSpamDetectionField(forms.Field):
     def clean(self, value):
         if value != self.required_value:
             raise forms.util.ValidationError(self.error_messages['wrong_value'])
-
-class AddSubPathForm(forms.ModelForm):
-    aliased_item = super(models.ForeignKey, CustomUrl._meta.get_field_by_name('aliased_item')[0]).formfield(queryset=CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.to._default_manager.complex_filter(CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.limit_choices_to), form_class=AjaxModelChoiceField, to_field_name=CustomUrl._meta.get_field_by_name('aliased_item')[0].rel.field_name)
-    parent_url = super(models.ForeignKey, CustomUrl._meta.get_field_by_name('parent_url')[0]).formfield(queryset=CustomUrl._meta.get_field_by_name('parent_url')[0].rel.to._default_manager.complex_filter(CustomUrl._meta.get_field_by_name('parent_url')[0].rel.limit_choices_to), form_class=HiddenModelChoiceField, to_field_name=CustomUrl._meta.get_field_by_name('parent_url')[0].rel.field_name)
-    action_summary = forms.CharField(label=_("Action summary"), help_text=_("Reason for adding this subpath"), widget=forms.TextInput, required=False)
-    class Meta:
-        model = CustomUrl
-        fields = ['aliased_item', 'viewer', 'action', 'query_string', 'format', 'parent_url', 'path']
-
-class NewMembershipForm(forms.ModelForm):
-    item = AjaxModelChoiceField(Item.objects)
-    action_summary = forms.CharField(label=_("Action summary"), help_text=_("Reason for adding this item"), widget=forms.TextInput, required=False)
-    class Meta:
-        model = Membership
-        fields = ['item']
-
-class NewTextCommentForm(forms.ModelForm):
-    item = HiddenModelChoiceField(Item.objects)
-    item_version_number = forms.IntegerField(widget=forms.HiddenInput())
-    item_index = forms.IntegerField(widget=forms.HiddenInput(), required=False)
-    name = forms.CharField(label=_("Comment title"), help_text=_("A brief description of the comment"), widget=forms.TextInput, required=False)
-    class Meta:
-        model = TextComment
-        fields = ['name', 'body', 'item', 'item_version_number']
-
-class NewDemeAccountForm(forms.ModelForm):
-    agent = AjaxModelChoiceField(Agent.objects)
-    password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
-    password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
-    action_summary = forms.CharField(label=_("Action summary"), help_text=_("Reason for creating this item"), widget=forms.TextInput, required=False)
-    class Meta:
-        model = DemeAccount
-        exclude = ['password']
-    def clean_password2(self):
-        password1 = self.cleaned_data.get("password1", "")
-        password2 = self.cleaned_data["password2"]
-        if password1 != password2:
-            raise forms.ValidationError(_("The two password fields didn't match."))
-        return password2
-    def save(self, commit=True):
-        item = super(NewDemeAccountForm, self).save(commit=False)
-        item.set_password(self.cleaned_data["password1"])
-        if commit:
-            item.save()
-        return item
-
-class EditDemeAccountForm(forms.ModelForm):
-    password1 = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
-    password2 = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
-    action_summary = forms.CharField(label=_("Action summary"), help_text=_("Reason for editing this item"), widget=forms.TextInput, required=False)
-    class Meta:
-        model = DemeAccount
-        exclude = ['password', 'agent']
-    def clean_password2(self):
-        password1 = self.cleaned_data.get("password1", "")
-        password2 = self.cleaned_data["password2"]
-        if password1 != password2:
-            raise forms.ValidationError(_("The two password fields didn't match."))
-        return password2
-    def save(self, commit=True):
-        item = super(EditDemeAccountForm, self).save(commit=False)
-        item.set_password(self.cleaned_data["password1"])
-        if commit:
-            item.save()
-        return item
-

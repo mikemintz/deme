@@ -21,14 +21,8 @@
 {% endif %}
 
 {% ifagentcan 'modify_membership' '' item %}
-<div style="margin-bottom: 10px;">
-    Add an item:
-    <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="addmember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
-        <table cellspacing="0">
-            {{ addmember_form.as_table }}
-        </table>
-        <button type="submit"><img src="{{ "new"|icon_url:16 }}" /> <span>Add to collection</span></button>
-    </form>
+<div>
+<a href="{% url item_type_url viewer="membership",action="new" %}?collection={{ item.pk }}&redirect={{ full_path|urlencode }}">Add a member</a>
 </div>
 {% endifagentcan %}
 

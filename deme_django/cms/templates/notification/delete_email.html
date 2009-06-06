@@ -16,9 +16,9 @@ reactivated
 destroyed
 {% endifequal %}
 
-<a href="{{ url_prefix }}{{ item.get_absolute_url }}">{% viewable_name item %}</a>
+<a href="{{ url_prefix }}{{ action_item.get_absolute_url }}">{% viewable_name action_item %}</a>
 
-{% ifequal item topmost_item %}
+{% ifequal action_item topmost_item %}
 {% else %}
 -
 a comment about
