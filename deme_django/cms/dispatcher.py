@@ -20,7 +20,7 @@ for module_name in settings.MODULE_NAMES:
 def item_view(request, *args, **kwargs):
     """
     This is the view that takes care of all valid URLs starting with
-    "/item/". It finds the appropriate viewer and dispatches the request
+    "/viewing/". It finds the appropriate viewer and dispatches the request
     to it.
     """
     viewer_name = kwargs['viewer']
@@ -45,7 +45,7 @@ def item_view(request, *args, **kwargs):
 def alias_view(request, *args, **kwargs):
     """
     This is the view that takes care of all URLs other than those beginning
-    with "/static/", "/item/", and those URLs taken by modules.
+    with "/static/", "/viewing/", and those URLs taken by modules.
     
     It checks all of the ViewerRequests to see if any match the current URL,
     and if so, simulates a request to the given viewer.

@@ -147,11 +147,11 @@ class Viewer(object):
       up in the URL as the action), and format is the output format (which shows
       up in the URL as the format). For example, the method item_edit_html(self)
       in an agent viewer represents the item-specific view with action="edit" and
-      format="html", and would respond to the URL `/item/agent/123/edit.html`.
+      format="html", and would respond to the URL `/viewing/agent/123/edit.html`.
     2. To define a type-wide view, define a method with the name
       `type_method_format`. For example, the method type_new_html(self) in an
       agent viewer represents the type-wide view with action="new" and
-      format="html", and would respond to the URL `/item/agent/new.html`.
+      format="html", and would respond to the URL `/viewing/agent/new.html`.
     
     View methods take no parameters (except self), since all of the details of
     the request are defined as instance variables in the viewer before

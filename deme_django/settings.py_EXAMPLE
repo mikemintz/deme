@@ -49,7 +49,7 @@ MEDIA_URL = '/static/'
 # URL prefix that handles requests routed to viewers. Make sure to use a
 # trailing slash. Leave completely blank if you want no prefix (but beware
 # potential clashes with CustomUrls).
-VIEWER_URL_PREFIX = 'item/'
+VIEWER_URL_PREFIX = 'viewing/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'CHANGEME'
