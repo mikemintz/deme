@@ -266,6 +266,16 @@ class Item(models.Model):
         else:
             return self
 
+    def is_downcast(self):
+        """
+        Return true if this item is instantiated at the actual item type.
+
+        For example, if item 123 is an agent, then:
+        Agent.get(pk=123).is_downcast() == true
+        Item.get(pk=123).is_downcast() == false
+        """
+        return self.actual_item_type() == type(self)
+
     def ancestor_collections(self, recursive_filter=None):
         """
         Return all active Collections containing self directly or indirectly.
@@ -381,6 +391,7 @@ class Item(models.Model):
         the given summary at the given time). This will call _after_deactivate
         if the item was previously active.
         """
+        assert self.is_downcast()
         action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
         if not self.active:
@@ -403,6 +414,7 @@ class Item(models.Model):
         the given summary at the given time). This will call _after_reactivate
         if the item was previously inactive.
         """
+        assert self.is_downcast()
         action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
         if self.active:
@@ -426,6 +438,7 @@ class Item(models.Model):
         The item must already be inactive and cannot have already been
         destroyed. This will call _after_destroy.
         """
+        assert self.is_downcast()
         action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
         if self.destroyed or self.active:
@@ -484,9 +497,11 @@ class Item(models.Model):
         This will call _after_create or _after_edit, depending on whether the
         item already existed.
         """
+        is_new = not self.pk
+        if not is_new:
+            assert self.is_downcast()
         action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
-        is_new = not self.pk
 
         # Save the old item version
         if not is_new:
@@ -1839,8 +1854,9 @@ class RelationActionNotice(ActionNotice):
                             action_notice.from_field_model = model.__name__
                             action_notice.relation_added = relation_added
                             action_notice.save()
+
 signals.post_save.connect(_action_notice_post_save_handler, sender=RelationActionNotice, dispatch_uid='RelationActionNotice post_save')
-    
+
 
 class DeactivateActionNotice(ActionNotice):
     """
