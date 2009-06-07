@@ -19,7 +19,7 @@ class CodeGraphViewer(Viewer):
         self.context['action_title'] = 'Code graph'
         # If cms/models.py was modified after codegraph.png was,
         # re-render the graph before displaying this page.
-        models_filename = os.path.join(os.path.dirname(__file__), 'models.py')
+        models_filename = os.path.join(settings.ROOT_DIR, 'cms', 'models.py')
         codegraph_filename = os.path.join(settings.MEDIA_ROOT, 'codegraph.png')
         models_mtime = os.stat(models_filename)[8]
         try:
@@ -27,7 +27,7 @@ class CodeGraphViewer(Viewer):
         except OSError, e:
             codegraph_mtime = 0
         if models_mtime > codegraph_mtime:
-            subprocess.call(os.path.join(os.path.dirname(__file__), '..', 'script', 'gen_graph.py'), shell=True)
+            subprocess.call(os.path.join(settings.ROOT_DIR, 'script', 'gen_graph.py'), shell=True)
         code_graph_url = urljoin(settings.MEDIA_URL, 'codegraph.png?%d' % models_mtime)
         code_graph_basic_url = urljoin(settings.MEDIA_URL, 'codegraph_basic.png?%d' % models_mtime)
         template = loader.get_template_from_string("""
