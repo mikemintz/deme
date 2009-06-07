@@ -6,7 +6,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
     {% if item %}
-    <title>Deme &raquo; {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}{% if specific_version %} &raquo; v{{ item.version_number }}{% endif %}</title>
+    <title>Deme &raquo; {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}</title>
     {% else %}
     <title>Deme{% if action_title %} &raquo; {{ action_title }}{% endif %}</title>
     {% endif %}
@@ -257,9 +257,9 @@
                 <div class="title">
                 {% block title %}
                 {% if item %}
-                <a href="{% url item_url viewer=viewer_name,action="show",noun=item.pk %}" class="img_link"><img src="{{ item.actual_item_type|icon_url:24 }}" /> <span>{% viewable_name item %}</span></a>{% if action_title %} &raquo; {{ action_title }}{% endif %}{% if specific_version %} &raquo; v{{ item.version_number }}{% endif %}
+                <img src="{{ item.actual_item_type|icon_url:24 }}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
                 {% else %}
-                <img src="{{ accepted_item_type|icon_url:24 }}" />{% if action_title %} {{ action_title }}{% endif %}
+                <img src="{{ accepted_item_type|icon_url:24 }}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
                 {% endif %}
                 {% endblock title %}
                 </div>

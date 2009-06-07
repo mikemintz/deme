@@ -1315,10 +1315,15 @@ class Crumbs(template.Node):
                 result.append(u' &raquo; <a href="%s">' % subfilter_url)
                 result.append(capfirst(field_name.replace('_', ' ')))
                 result.append('</a>')
+        action_title = context['action_title']
         if viewer.item:
-            result.append(' &raquo; %s' % get_viewable_name(context, viewer.item))
-        else:
-            result.append(' &raquo; %s' % capfirst(viewer.action))
+            item_url = reverse('item_url', kwargs={'viewer': viewer.viewer_name, 'noun': viewer.noun})
+            result.append(u' &raquo; <a href="%s">%s</a>' % (item_url, get_viewable_name(context, viewer.item)))
+            if context['specific_version']:
+                version_url = '%s?version=%d' % (item_url, viewer.item.version_number)
+                result.append(u' &raquo; <a href="%s">v%d</a>' % (version_url, viewer.item.version_number))
+        if action_title:
+            result.append(u' &raquo; %s' % action_title)
         return ''.join(result)
 
 @register.tag

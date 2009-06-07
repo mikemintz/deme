@@ -124,7 +124,7 @@ class ItemViewer(Viewer):
         self.context['all_collections'] = self.permission_cache.filter_items(self.cur_agent, 'view name', Collection.objects.filter(active=True)).order_by('name')
 
     def type_list_html(self):
-        self.context['action_title'] = capfirst(self.accepted_item_type._meta.verbose_name_plural)
+        self.context['action_title'] = ''
         self._type_list_helper()
         template = loader.get_template('item/list.html')
         return HttpResponse(template.render(self.context))
