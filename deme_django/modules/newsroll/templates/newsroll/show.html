@@ -6,6 +6,30 @@
 {% block content %}
 
 {% subclassfields %}
-You are viewing a newsroll
+
+{% for details in members %}
+
+    <div style="margin-bottom: 2px; border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px;">
+        <div>
+            {{ details.name }} 
+        </div>
+        
+        {% if details.display_body %}
+            <div>
+                {{ details.body }} 
+            </div>
+        {% endif %}
+        
+        <div>
+            Posted by {{ details.creator }} 
+            <span title="{{ details.created_at|date:"Y-m-d H:m:s" }}" style="width: 13em; display: inline-block;">
+                {{ details.created_at|timesince }} ago
+            </span>
+        </div>
+
+    </div>
+
+{% endfor %}
+
 {% endblock content %}
 
