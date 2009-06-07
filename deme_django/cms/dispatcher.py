@@ -9,12 +9,32 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.utils import datastructures, simplejson
 from cms.views import ItemViewer
-from cms.base_viewer import get_viewer_class_by_name, get_current_site
+from cms.base_viewer import get_viewer_class_by_name, get_current_site, all_viewer_classes
 from django.conf import settings
 
 # Import viewers from modules so they get registered with ViewerMetaClass
 for module_name in settings.MODULE_NAMES:
     __import__('modules.%s.views' % module_name)
+
+# Check that all default viewers have been defined properly
+for item_type in all_item_types():
+    viewer_name = item_type.__name__.lower()
+    viewer_class = get_viewer_class_by_name(viewer_name)
+    if viewer_class is None:
+        raise Exception("No default viewer defined for %s" % item_type)
+    if viewer_class.accepted_item_type != item_type:
+        raise Exception("Viewer with name `%s` has accepted_item_type=%s, should be %s"
+                        % (viewer_name, viewer_class.accepted_item_type, item_type))
+
+# Check that all viewers inherit from the correct superclasses
+for viewer_class in all_viewer_classes():
+    item_type = viewer_class.accepted_item_type
+    if item_type != Item:
+        desired_bases = item_type.__bases__
+        actual_bases = tuple(base.accepted_item_type for base in viewer_class.__bases__)
+        if desired_bases != actual_bases:
+            raise Exception("Viewer with name `%s` has bases=%s, should be %s"
+                            % (viewer_class.viewer_name, actual_bases, desired_bases))
 
 
 def item_view(request, *args, **kwargs):

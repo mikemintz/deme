@@ -103,7 +103,6 @@ def icon_url(item_type, size=32):
         FileDocument:           'mimetypes/misc',
         Folio:                  'apps/kfm',
         Group:                  'apps/Login%20Manager',
-        ImageDocument:          'mimetypes/images',
         Item:                   'apps/kblackbox',
         Collection:             'filesystems/folder_blue',
         Membership:             'filesystems/folder_documents',
@@ -1299,14 +1298,18 @@ class Crumbs(template.Node):
                     if isinstance(subfilter_field, models.ForeignKey):
                         name = subfilter_field.name
                     else:
-                        name = subfilter_field.field.rel.related_name
+                        name = subfilter_field.field.related_query_name()
                     subfilter.append(name)
                 subfilter.append(target_pk)
                 subfilter = '.'.join(subfilter)
                 subfilter_item_type = subfilter_field_models[0]
                 subfilter_url = '%s?filter=%s' % (reverse('item_type_url', kwargs={'viewer': subfilter_item_type.__name__.lower()}), subfilter)
+                if isinstance(field, models.OneToOneField):
+                    # We don't display crumbs for OneToOneFields like item_ptr
+                    continue
                 if isinstance(field, models.ForeignKey):
-                    field_name = field.name
+                    # Make it plural
+                    field_name = field.verbose_name + u's'
                 else:
                     field_name = field.related_name
                 result.append(u' &raquo; <a href="%s">' % subfilter_url)

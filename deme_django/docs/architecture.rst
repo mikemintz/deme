@@ -156,8 +156,6 @@ Documents
 
 * **FileDocument:** A FileDocument is a Document that stores a file on the filesystem (could be an MP3 or a Microsoft Word Document). It is intended for all binary data, which does not belong in a TextDocument (even though it is technically possible). Subclasses of FileDocument may be able to understand various file formats and add metadata and extra functionality. This item type defines one new field, ``datafile``, which represents the path on the server's filesystem to the actual file.
 
-* **ImageDocument:** An ImageDocument is a FileDocument that stores an image. Right now, the only difference is that viewers know the file can be displayed as an image. Currently it does not define any new fields, but in the future, it may add metadata like EXIF data and thumbnails.
-
 Annotations (Transclusions, Comments, and Excerpts)
 
 * **Transclusion:** A Transclusion is an embedded reference from a location in a specific version of a TextDocument to another Item. This item type defines the following fields:
@@ -285,7 +283,6 @@ Below is a list of all possible global abilities:
 * ``create FileDocument``
 * ``create Group``
 * ``create HtmlDocument``
-* ``create ImageDocument``
 * ``create Membership``
 * ``create Person``
 * ``create PhoneContactMethod``

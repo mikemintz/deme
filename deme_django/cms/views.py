@@ -523,6 +523,21 @@ class ItemViewer(Viewer):
         return HttpResponse(template.render(self.context))
 
 
+class AgentViewer(ItemViewer):
+    accepted_item_type = Agent
+    viewer_name = 'agent'
+
+
+class AnonymousAgentViewer(AgentViewer):
+    accepted_item_type = AnonymousAgent
+    viewer_name = 'anonymousagent'
+
+
+class GroupAgentViewer(AgentViewer):
+    accepted_item_type = GroupAgent
+    viewer_name = 'groupagent'
+
+
 class AuthenticationMethodViewer(ItemViewer):
     accepted_item_type = AuthenticationMethod
     viewer_name = 'authenticationmethod'
@@ -616,35 +631,49 @@ class DemeAccountViewer(AuthenticationMethodViewer):
         return HttpResponse(json_data, mimetype='application/json')
         
 
-class GroupViewer(ItemViewer):
-    accepted_item_type = Group
-    viewer_name = 'group'
-
-    def item_show_html(self):
-        self.context['action_title'] = ''
-        try:
-            folio = self.item.folios.get()
-            if not self.permission_cache.agent_can(self.cur_agent, 'view group', folio):
-                folio = None
-        except:
-            folio = None
-        self.context['folio'] = folio
-        template = loader.get_template('group/show.html')
-        return HttpResponse(template.render(self.context))
+class PersonViewer(AgentViewer):
+    accepted_item_type = Person
+    viewer_name = 'person'
 
 
-class ViewerRequestViewer(ItemViewer):
-    accepted_item_type = ViewerRequest
-    viewer_name = 'viewerrequest'
+class ContactMethodViewer(ItemViewer):
+    accepted_item_type = ContactMethod
+    viewer_name = 'contactmethod'
 
-    def item_show_html(self, form=None):
-        self.context['action_title'] = ''
-        site, custom_urls = self.item.calculate_full_path()
-        self.context['site'] = site
-        self.context['custom_urls'] = custom_urls
-        self.context['child_urls'] = self.item.child_urls.filter(active=True)
-        template = loader.get_template('viewerrequest/show.html')
-        return HttpResponse(template.render(self.context))
+
+class EmailContactMethodViewer(ContactMethodViewer):
+    accepted_item_type = EmailContactMethod
+    viewer_name = 'emailcontactmethod'
+
+
+class PhoneContactMethodViewer(ContactMethodViewer):
+    accepted_item_type = PhoneContactMethod
+    viewer_name = 'phonecontactmethod'
+
+
+class FaxContactMethodViewer(ContactMethodViewer):
+    accepted_item_type = FaxContactMethod
+    viewer_name = 'faxcontactmethod'
+
+
+class WebsiteContactMethodViewer(ContactMethodViewer):
+    accepted_item_type = WebsiteContactMethod
+    viewer_name = 'websitecontactmethod'
+
+
+class AIMContactMethodViewer(ContactMethodViewer):
+    accepted_item_type = AIMContactMethod
+    viewer_name = 'aimcontactmethod'
+
+
+class AddressContactMethodViewer(ContactMethodViewer):
+    accepted_item_type = AddressContactMethod
+    viewer_name = 'addresscontactmethod'
+
+
+class SubscriptionViewer(ItemViewer):
+    accepted_item_type = Subscription
+    viewer_name = 'subscription'
 
 
 class CollectionViewer(ItemViewer):
@@ -703,17 +732,39 @@ class CollectionViewer(ItemViewer):
         return HttpResponseRedirect(redirect)
 
 
-class ImageDocumentViewer(ItemViewer):
-    accepted_item_type = ImageDocument
-    viewer_name = 'imagedocument'
+class GroupViewer(CollectionViewer):
+    accepted_item_type = Group
+    viewer_name = 'group'
 
     def item_show_html(self):
         self.context['action_title'] = ''
-        template = loader.get_template('imagedocument/show.html')
+        try:
+            folio = self.item.folios.get()
+            if not self.permission_cache.agent_can(self.cur_agent, 'view group', folio):
+                folio = None
+        except:
+            folio = None
+        self.context['folio'] = folio
+        template = loader.get_template('group/show.html')
         return HttpResponse(template.render(self.context))
 
 
-class TextDocumentViewer(ItemViewer):
+class FolioViewer(CollectionViewer):
+    accepted_item_type = Folio
+    viewer_name = 'folio'
+
+
+class MembershipViewer(ItemViewer):
+    accepted_item_type = Membership
+    viewer_name = 'membership'
+
+
+class DocumentViewer(ItemViewer):
+    accepted_item_type = Document
+    viewer_name = 'document'
+
+
+class TextDocumentViewer(DocumentViewer):
     accepted_item_type = TextDocument
     viewer_name = 'textdocument'
 
@@ -809,7 +860,27 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
         return HttpResponse(template.render(self.context))
 
 
-class TextCommentViewer(TextDocumentViewer):
+class HtmlDocumentViewer(TextDocumentViewer):
+    accepted_item_type = HtmlDocument
+    viewer_name = 'htmldocument'
+
+
+class FileDocumentViewer(DocumentViewer):
+    accepted_item_type = FileDocument
+    viewer_name = 'filedocument'
+
+
+class TransclusionViewer(ItemViewer):
+    accepted_item_type = Transclusion
+    viewer_name = 'transclusion'
+
+
+class CommentViewer(ItemViewer):
+    accepted_item_type = Comment
+    viewer_name = 'comment'
+
+
+class TextCommentViewer(TextDocumentViewer, CommentViewer):
     accepted_item_type = TextComment
     viewer_name = 'textcomment'
 
@@ -880,7 +951,12 @@ class TextCommentViewer(TextDocumentViewer):
             return self.type_new_html(form)
 
 
-class TextDocumentExcerptViewer(TextDocumentViewer):
+class ExcerptViewer(ItemViewer):
+    accepted_item_type = Excerpt
+    viewer_name = 'excerpt'
+
+
+class TextDocumentExcerptViewer(ExcerptViewer, TextDocumentViewer):
     accepted_item_type = TextDocumentExcerpt
     viewer_name = 'textdocumentexcerpt'
 
@@ -918,6 +994,30 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
             Membership(item=excerpt, collection=collection).save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'collection', 'noun': collection.pk}))
         return HttpResponseRedirect(redirect)
+
+
+class ViewerRequestViewer(ItemViewer):
+    accepted_item_type = ViewerRequest
+    viewer_name = 'viewerrequest'
+
+    def item_show_html(self, form=None):
+        self.context['action_title'] = ''
+        site, custom_urls = self.item.calculate_full_path()
+        self.context['site'] = site
+        self.context['custom_urls'] = custom_urls
+        self.context['child_urls'] = self.item.child_urls.filter(active=True)
+        template = loader.get_template('viewerrequest/show.html')
+        return HttpResponse(template.render(self.context))
+
+
+class SiteViewer(ViewerRequestViewer):
+    accepted_item_type = Site
+    viewer_name = 'site'
+
+
+class CustomUrlViewer(ViewerRequestViewer):
+    accepted_item_type = CustomUrl
+    viewer_name = 'customurl'
 
 
 class DemeSettingViewer(ItemViewer):
