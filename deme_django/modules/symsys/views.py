@@ -1,11 +1,61 @@
 from django.template import Context, loader
 from django.http import HttpResponse
-from cms.views import ItemViewer
+from cms.views import ItemViewer, PersonViewer, DocumentViewer, TextDocumentViewer, HtmlDocumentViewer
 from cms.models import *
 from modules.symsys.models import *
 from django.db.models import Q
 
-class SymsysAffiliateViewer(ItemViewer):
+class SymsysCareerViewer(ItemViewer):
+    accepted_item_type = SymsysCareer
+    viewer_name = 'symsyscareer'
+
+
+class ThesisSymsysCareerViewer(SymsysCareerViewer):
+    accepted_item_type = ThesisSymsysCareer
+    viewer_name = 'thesissymsyscareer'
+
+
+class StudentSymsysCareerViewer(SymsysCareerViewer):
+    accepted_item_type = StudentSymsysCareer
+    viewer_name = 'studentsymsyscareer'
+
+
+class MinorSymsysCareerViewer(StudentSymsysCareerViewer):
+    accepted_item_type = MinorSymsysCareer
+    viewer_name = 'minorsymsyscareer'
+
+
+class BachelorsSymsysCareerViewer(StudentSymsysCareerViewer):
+    accepted_item_type = BachelorsSymsysCareer
+    viewer_name = 'bachelorssymsyscareer'
+
+
+class MastersSymsysCareerViewer(StudentSymsysCareerViewer, ThesisSymsysCareerViewer):
+    accepted_item_type = MastersSymsysCareer
+    viewer_name = 'masterssymsyscareer'
+
+
+class HonorsSymsysCareerViewer(ThesisSymsysCareerViewer):
+    accepted_item_type = HonorsSymsysCareer
+    viewer_name = 'honorssymsyscareer'
+
+
+class ResearcherSymsysCareerViewer(SymsysCareerViewer):
+    accepted_item_type = ResearcherSymsysCareer
+    viewer_name = 'researchersymsyscareer'
+
+
+class FacultySymsysCareerViewer(SymsysCareerViewer):
+    accepted_item_type = FacultySymsysCareer
+    viewer_name = 'facultysymsyscareer'
+
+
+class ProgramStaffSymsysCareerViewer(SymsysCareerViewer):
+    accepted_item_type = ProgramStaffSymsysCareer
+    viewer_name = 'programstaffsymsyscareer'
+
+
+class SymsysAffiliateViewer(PersonViewer):
     accepted_item_type = SymsysAffiliate
     viewer_name = 'symsysaffiliate'
 
@@ -21,3 +71,22 @@ class SymsysAffiliateViewer(ItemViewer):
         self.context['contact_methods'] = self.permission_cache.filter_items(self.cur_agent, 'view agent', self.item.contact_methods).filter(active=True)
         return HttpResponse(template.render(self.context))
 
+
+class EventViewer(HtmlDocumentViewer):
+    accepted_item_type = Event
+    viewer_name = 'event'
+
+
+class AdvertisementViewer(DocumentViewer):
+    accepted_item_type = Advertisement
+    viewer_name = 'advertisement'
+
+
+class TextAdvertisementViewer(TextDocumentViewer, AdvertisementViewer):
+    accepted_item_type = TextAdvertisement
+    viewer_name = 'textadvertisement'
+
+
+class HtmlAdvertisementViewer(HtmlDocumentViewer, AdvertisementViewer):
+    accepted_item_type = HtmlAdvertisement
+    viewer_name = 'htmladvertisement'

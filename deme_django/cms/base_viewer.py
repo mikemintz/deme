@@ -112,7 +112,10 @@ class ViewerMetaClass(type):
     def __new__(cls, name, bases, attrs):
         result = super(ViewerMetaClass, cls).__new__(cls, name, bases, attrs)
         if name != 'Viewer':
-            ViewerMetaClass.viewer_name_dict[attrs['viewer_name']] = result
+            viewer_name = attrs['viewer_name']
+            if viewer_name in ViewerMetaClass.viewer_name_dict:
+                raise Exception("Viewer with name `%s` is defined multiple times" % viewer_name)
+            ViewerMetaClass.viewer_name_dict[viewer_name] = result
         return result
 
 
@@ -471,31 +474,14 @@ class Viewer(object):
 
 def get_viewer_class_by_name(viewer_name):
     """
-    Return the viewer class with the given name. If no such class exists, see
-    if an item type exists with that same name (case insensitive), and if so,
-    dynamically define a viewer for that item type. Otherwise, return None.
+    Return the viewer class with the given name. If no such class exists,
+    return None.
     """
     # Check the defined viewers in ViewerMetaClass.viewer_name_dict
     result = ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
-    if result is not None:
-        return result
-    # If the viewer isn't defined, see if there is an item type with the same name
-    item_type = get_item_type_with_name(viewer_name, case_sensitive=False)
-    if item_type is None:
-        return None
-    # Define an empty viewer dynamically (inheriting from a defined viewer)
-    parent_item_type_with_viewer = item_type
-    while issubclass(parent_item_type_with_viewer, Item):
-        parent_viewer_class = ViewerMetaClass.viewer_name_dict.get(parent_item_type_with_viewer.__name__.lower(), None)
-        if parent_viewer_class:
-            break
-        parent_item_type_with_viewer = parent_item_type_with_viewer.__base__
-    if parent_viewer_class:
-        class_name = '%sViewer' % item_type.__name__
-        bases = (parent_viewer_class,)
-        attrs = {'accepted_item_type': item_type, 'viewer_name': viewer_name}
-        result = ViewerMetaClass.__new__(ViewerMetaClass, class_name, bases, attrs)
-        return result
-    else:
-        return None
+    return result
 
+
+def all_viewer_classes():
+    "Return a list of all viewer classes defined."
+    return ViewerMetaClass.viewer_name_dict.values()

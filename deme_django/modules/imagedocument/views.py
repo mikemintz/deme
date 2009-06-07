@@ -1,9 +1,9 @@
 from django.http import HttpResponse
 from django.template import loader
-from cms.views import ItemViewer
+from cms.views import FileDocumentViewer
 from modules.imagedocument.models import ImageDocument
 
-class ImageDocumentViewer(ItemViewer):
+class ImageDocumentViewer(FileDocumentViewer):
     accepted_item_type = ImageDocument
     viewer_name = 'imagedocument'
 

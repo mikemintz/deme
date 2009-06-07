@@ -164,7 +164,7 @@ Here's what I have in my apache ``/etc/apache2/sites-available/deme`` config fil
             PythonAutoReload Off
         </Location>
     
-        <Location "/item/webauth/login">
+        <Location "/viewing/webauthaccount/login">
             AuthType WebAuth
             Require valid-user
         </Location>
