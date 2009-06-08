@@ -171,7 +171,7 @@ class ListResultsNavigator(template.Node):
         def url_with_offset(offset):
             querydict = viewer.request.GET.copy()
             querydict['offset'] = str(offset)
-            return '%s?%s' % (viewer.context['full_path'], querydict.urlencode())
+            return '%s?%s' % (viewer.request.path, querydict.urlencode())
         if n_results <= limit:
             return ''
         result = []
