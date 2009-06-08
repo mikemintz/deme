@@ -223,9 +223,9 @@ class SymsysCareer(Item):
             agents_own_abilities.append('edit academic_title')
         if isinstance(self, FacultySymsysCareer):
             agents_own_abilities.append('edit academic_title')
-        AgentItemPermission.objects.filter(agent=agent, item=self, ability__startswith='edit ').delete()
+        OneToOnePermission.objects.filter(source=agent, target=self, ability__startswith='edit ').delete()
         for ability in agents_own_abilities:
-            AgentItemPermission(agent=agent, item=self, is_allowed=True, ability=ability).save()
+            OneToOnePermission(source=agent, target=self, is_allowed=True, ability=ability).save()
 
     _guarantee_consistency_after_changes.alters_data = True
 

@@ -21,22 +21,25 @@ import hashlib
 import html2text
 
 __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
-        'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent',
-        'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission',
-        'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl',
-        'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting',
+        'AnonymousAgent', 'AuthenticationMethod',
+        'Collection', 'Comment', 'ContactMethod',
+        'CustomUrl', 'DemeSetting',
         'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt',
-        'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission',
-        'Group', 'GroupAgent', 'HtmlDocument', 'Item',
-        'Membership', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES',
-        'DemeAccount', 'ItemPermission', 'Person', 'PhoneContactMethod',
-        'RecursiveComment', 'RecursiveMembership', 'Site', 'Subscription',
-        'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion',
-        'ViewerRequest', 'WebsiteContactMethod', 'all_item_types',
-        'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice',
-        'DeactivateActionNotice', 'ReactivateActionNotice',
-        'DestroyActionNotice', 'CreateActionNotice', 'EditActionNotice',
-        'FixedBooleanField', 'FixedForeignKey']
+        'FaxContactMethod', 'FileDocument', 'Folio',
+        'Group', 'GroupAgent', 'HtmlDocument', 'Item', 'Membership',
+        'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES',
+        'POSSIBLE_ITEM_AND_GLOBAL_ABILITIES', 'DemeAccount', 'Person',
+        'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership',
+        'Site', 'Subscription', 'TextComment', 'TextDocument',
+        'TextDocumentExcerpt', 'Transclusion', 'ViewerRequest',
+        'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name',
+        'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice',
+        'ReactivateActionNotice', 'DestroyActionNotice', 'CreateActionNotice',
+        'EditActionNotice', 'FixedBooleanField', 'FixedForeignKey',
+        'Permission', 'OneToOnePermission', 'OneToSomePermission',
+        'OneToAllPermission', 'SomeToOnePermission', 'SomeToSomePermission',
+        'SomeToAllPermission', 'AllToOnePermission', 'AllToSomePermission',
+        'AllToAllPermission',]
 
 ###############################################################################
 # Field types
@@ -460,13 +463,20 @@ class Item(models.Model):
         # Remove all existing action notices
         self.action_notices.all().delete()
         # Remove all permissions on this item
-        self.agent_item_permissions_as_item.all().delete()
-        self.collection_item_permissions_as_item.all().delete()
-        self.everyone_item_permissions_as_item.all().delete()
-        AgentItemPermission.objects.filter(agent=self).delete()
-        CollectionItemPermission.objects.filter(collection=self).delete()
-        AgentGlobalPermission.objects.filter(agent=self).delete()
-        CollectionGlobalPermission.objects.filter(collection=self).delete()
+        self.one_to_one_permissions_as_target.all().delete()
+        self.some_to_one_permissions_as_target.all().delete()
+        self.all_to_one_permissions_as_target.all().delete()
+        if isinstance(self, Agent):
+            self.one_to_one_permissions_as_source.all().delete()
+            self.one_to_some_permissions_as_source.all().delete()
+            self.one_to_all_permissions_as_source.all().delete()
+        if isinstance(self, Collection):
+            self.some_to_one_permissions_as_source.all().delete()
+            self.some_to_some_permissions_as_source.all().delete()
+            self.some_to_all_permissions_as_source.all().delete()
+            self.one_to_some_permissions_as_target.all().delete()
+            self.some_to_some_permissions_as_target.all().delete()
+            self.all_to_some_permissions_as_target.all().delete()
         # Execute callbacks
         self._after_destroy(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
@@ -490,8 +500,8 @@ class Item(models.Model):
         creator pointer.
         
         If the initial_permissions parameter is given, it should be a list of
-        unsaved ItemPermissions. After successfully saving self, this method
-        will save these permissions (setting permission.item = self) before
+        unsaved Permissions. After successfully saving self, this method
+        will save these permissions (setting permission.target = self) before
         calling any callbacks.
         
         This will call _after_create or _after_edit, depending on whether the
@@ -527,7 +537,7 @@ class Item(models.Model):
         # Create the permissions
         if initial_permissions:
             for permission in initial_permissions:
-                permission.item = self
+                permission.target = self
                 permission.save()
 
         # Execute callbacks
@@ -1099,11 +1109,11 @@ class Group(Collection):
         super(Group, self)._after_create(action_agent, action_summary, action_time)
         # Create a folio for this group
         folio = Folio(group=self, name='%s folio' % self.display_name())
-        permissions = [AgentItemPermission(agent=action_agent, ability='do_anything', is_allowed=True)]
+        permissions = [OneToOnePermission(source=action_agent, ability='do_anything', is_allowed=True)]
         folio.save_versioned(action_agent, action_summary, action_time, initial_permissions=permissions)
         # Create a group agent for this group
         group_agent = GroupAgent(group=self, name='%s agent' % self.display_name())
-        permissions = [AgentItemPermission(agent=action_agent, ability='do_anything', is_allowed=True)]
+        permissions = [OneToOnePermission(source=action_agent, ability='do_anything', is_allowed=True)]
         group_agent.save_versioned(action_agent, action_summary, action_time, initial_permissions=permissions)
     _after_create.alters_data = True
 
@@ -1904,7 +1914,8 @@ class PossibleGlobalAbilitiesIterable(object):
     """
     Instantiated objects from this class are dynamic iterables, in that each
     time you iterate through them, you get the latest set of global abilities
-    (according to the current state of introduced_abilities in the item types).
+    (according to the current state of introduced_global_abilities in the item
+    types).
     
     Each ability is of the form (ability_name, friendly_name).
     """
@@ -1917,70 +1928,104 @@ class PossibleGlobalAbilitiesIterable(object):
         for x in choices:
             yield x
 
+class PossibleItemAndGlobalAbilitiesIterable(object):
+    """
+    Instantiated objects from this class are dynamic iterables, in that each
+    time you iterate through them, you get the latest set of item abilities and
+    global abilities (according to the current state of introduced_abilities
+    and introduced_global_abilities in the item types).
+    
+    Each ability is of the form (ability_name, friendly_name).
+    """
+    def __iter__(self):
+        choices = set(PossibleItemAbilitiesIterable()) | set(PossibleGlobalAbilitiesIterable())
+        choices = list(choices)
+        choices.sort(key=lambda x: x[1])
+        for x in choices:
+            yield x
+
 # Iterable of all (ability, friendly_name) item abilities
 POSSIBLE_ITEM_ABILITIES = PossibleItemAbilitiesIterable()
 
 # Iterable of all (ability, friendly_name) global abilities
 POSSIBLE_GLOBAL_ABILITIES = PossibleGlobalAbilitiesIterable()
 
+# Iterable of all (ability, friendly_name) item and global abilities
+POSSIBLE_ITEM_AND_GLOBAL_ABILITIES = PossibleItemAndGlobalAbilitiesIterable()
 
-class ItemPermission(models.Model):
-    """Abstract superclass of all item permissions."""
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ITEM_ABILITIES, db_index=True)
+
+class Permission(models.Model):
+    """Abstract superclass of all permissions."""
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ITEM_AND_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         abstract = True
 
 
-class GlobalPermission(models.Model):
-    """Abstract superclass of all global permissions."""
-    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
+class OneToOnePermission(Permission):
+    """Permissions from individual agents to individual items."""
+    source = models.ForeignKey(Agent, related_name='one_to_one_permissions_as_source')
+    target = models.ForeignKey(Item, related_name='one_to_one_permissions_as_target')
     class Meta:
-        abstract = True
+        unique_together = ('ability', 'source', 'target')
 
 
-class AgentGlobalPermission(GlobalPermission):
-    """Global permissions assigned directly to agents."""
-    agent = models.ForeignKey(Agent, related_name='agent_global_permissions_as_agent')
+class OneToSomePermission(Permission):
+    """Permissions from individual agents to collections of items."""
+    source = models.ForeignKey(Agent, related_name='one_to_some_permissions_as_source')
+    target = models.ForeignKey(Collection, related_name='one_to_some_permissions_as_target')
     class Meta:
-        unique_together = (('agent', 'ability'),)
+        unique_together = ('ability', 'source', 'target')
 
 
-class CollectionGlobalPermission(GlobalPermission):
-    """Global permissions assigned to all agents in a given collection."""
-    collection = models.ForeignKey(Collection, related_name='collection_global_permissions_as_collection')
+class OneToAllPermission(Permission):
+    """Permissions from individual agents to all items."""
+    source = models.ForeignKey(Agent, related_name='one_to_all_permissions_as_source')
     class Meta:
-        unique_together = (('collection', 'ability'),)
+        unique_together = ('ability', 'source')
 
 
-class EveryoneGlobalPermission(GlobalPermission):
-    """Global permissions assigned to all agents in this installation."""
+class SomeToOnePermission(Permission):
+    """Permissions from collections of agents to individual items."""
+    source = models.ForeignKey(Collection, related_name='some_to_one_permissions_as_source')
+    target = models.ForeignKey(Item, related_name='some_to_one_permissions_as_target')
     class Meta:
-        unique_together = (('ability',),)
+        unique_together = ('ability', 'source', 'target')
 
 
-class AgentItemPermission(ItemPermission):
-    """Item permissions assigned directly to agents."""
-    agent = models.ForeignKey(Agent, related_name='agent_item_permissions_as_agent')
-    item = models.ForeignKey(Item, related_name='agent_item_permissions_as_item')
+class SomeToSomePermission(Permission):
+    """Permissions from collections of agents to collections of items."""
+    source = models.ForeignKey(Collection, related_name='some_to_some_permissions_as_source')
+    target = models.ForeignKey(Collection, related_name='some_to_some_permissions_as_target')
     class Meta:
-        unique_together = (('agent', 'item', 'ability'),)
+        unique_together = ('ability', 'source', 'target')
 
 
-class CollectionItemPermission(ItemPermission):
-    """Collection permissions assigned to all agents in a given collection."""
-    collection = models.ForeignKey(Collection, related_name='collection_item_permissions_as_collection')
-    item = models.ForeignKey(Item, related_name='collection_item_permissions_as_item')
+class SomeToAllPermission(Permission):
+    """Permissions from collections of agents to all items."""
+    source = models.ForeignKey(Collection, related_name='some_to_all_permissions_as_source')
     class Meta:
-        unique_together = (('collection', 'item', 'ability'),)
+        unique_together = ('ability', 'source')
 
 
-class EveryoneItemPermission(ItemPermission):
-    """Item permissions assigned to all agents in this installation."""
-    item = models.ForeignKey(Item, related_name='everyone_item_permissions_as_item')
+class AllToOnePermission(Permission):
+    """Permissions from all agents to individual items."""
+    target = models.ForeignKey(Item, related_name='all_to_one_permissions_as_target')
     class Meta:
-        unique_together = (('item', 'ability'),)
+        unique_together = ('ability', 'target')
+
+
+class AllToSomePermission(Permission):
+    """Permissions from all agents to collections of items."""
+    target = models.ForeignKey(Collection, related_name='all_to_some_permissions_as_target')
+    class Meta:
+        unique_together = ('ability', 'target')
+
+
+class AllToAllPermission(Permission):
+    """Permissions from all agents to all items."""
+    class Meta:
+        unique_together = ('ability',)
 
 
 ###############################################################################

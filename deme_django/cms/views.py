@@ -176,7 +176,7 @@ class ItemViewer(Viewer):
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
             item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
@@ -363,11 +363,11 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
-    def _get_permissions_from_post_data(self, item_type, global_permissions):
-        if global_permissions:
-            possible_abilities = self.permission_cache.all_possible_global_abilities()
-        else:
+    def _get_permissions_from_post_data(self, item_type, target_level):
+        if target_level == 'one':
             possible_abilities = self.permission_cache.all_possible_item_abilities(item_type)
+        else:
+            possible_abilities = self.permission_cache.all_possible_item_and_global_abilities()
         permission_data = {}
         for key, value in self.request.POST.iteritems():
             if key.startswith('newpermission'):
@@ -375,9 +375,9 @@ class ItemViewer(Viewer):
                 permission_datum = permission_data.setdefault(permission_counter, {})
                 permission_datum[name] = value
         result = []
-        if global_permissions:
+        if target_level == 'all':
             # Make sure admin keeps do_anything ability
-            result.append(AgentGlobalPermission(agent_id=1, ability='do_anything', is_allowed=True))
+            result.append(OneToAllPermission(source_id=1, ability='do_anything', is_allowed=True))
         for permission_datum in permission_data.itervalues():
             ability = permission_datum['ability']
             if ability not in possible_abilities:
@@ -387,26 +387,39 @@ class ItemViewer(Viewer):
             agent_or_collection_id = permission_datum['agent_or_collection_id']
             if permission_type == 'agent':
                 agent = Agent.objects.get(pk=agent_or_collection_id)
-                if global_permissions:
-                    permission = AgentGlobalPermission(agent=agent)
+                if target_level == 'one':
+                    permission = OneToOnePermission(source=agent)
+                elif target_level == 'some':
+                    permission = OneToSomePermission(source=agent)
+                elif target_level == 'all':
+                    permission = OneToAllPermission(source=agent)
                 else:
-                    permission = AgentItemPermission(agent=agent)
+                    assert False
             elif permission_type == 'collection':
                 collection = Collection.objects.get(pk=agent_or_collection_id)
-                if global_permissions:
-                    permission = CollectionGlobalPermission(collection=collection)
+                if target_level == 'one':
+                    permission = SomeToOnePermission(source=collection)
+                elif target_level == 'some':
+                    permission = SomeToSomePermission(source=collection)
+                elif target_level == 'all':
+                    permission = SomeToAllPermission(source=collection)
                 else:
-                    permission = CollectionItemPermission(collection=collection)
+                    assert False
             elif permission_type == 'everyone':
-                if global_permissions:
-                    permission = EveryoneGlobalPermission()
+                if target_level == 'one':
+                    permission = AllToOnePermission()
+                elif target_level == 'some':
+                    permission = AllToSomePermission()
+                elif target_level == 'all':
+                    permission = AllToAllPermission()
                 else:
-                    permission = EveryoneItemPermission()
+                    assert False
             else:
                 return self.render_error('Form Error', "Invalid permission_type")
             permission.ability = ability
             permission.is_allowed = is_allowed
-            permission_key_fn = lambda x: (x.ability, getattr(x, 'agent', None), getattr(x, 'collection', None))
+            # Make sure we don't add duplicates
+            permission_key_fn = lambda x: (type(x), x.ability, getattr(x, 'source', None))
             if not any(permission_key_fn(x) == permission_key_fn(permission) for x in result):
                 result.append(permission)
         return result
@@ -414,12 +427,11 @@ class ItemViewer(Viewer):
     @require_POST
     def item_updateprivacy_html(self):
         self.require_ability('modify_privacy_settings', self.item)
-        new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
-        AgentItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
-        CollectionItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
-        EveryoneItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
+        new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), 'one')
+        for permission_class in [OneToOnePermission, SomeToOnePermission, AllToOnePermission]:
+            permission_class.objects.filter(target=self.item, ability__startswith="view ").delete()
         for permission in new_permissions:
-            permission.item = self.item
+            permission.target = self.item
             permission.save()
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'privacy'}))
         return HttpResponseRedirect(redirect)
@@ -427,23 +439,33 @@ class ItemViewer(Viewer):
     @require_POST
     def item_updateitempermissions_html(self):
         self.require_ability('do_anything', self.item)
-        new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
-        AgentItemPermission.objects.filter(item=self.item).delete()
-        CollectionItemPermission.objects.filter(item=self.item).delete()
-        EveryoneItemPermission.objects.filter(item=self.item).delete()
+        new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), 'one')
+        for permission_class in [OneToOnePermission, SomeToOnePermission, AllToOnePermission]:
+            permission_class.objects.filter(target=self.item).delete()
         for permission in new_permissions:
-            permission.item = self.item
+            permission.target = self.item
             permission.save()
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'itempermissions'}))
         return HttpResponseRedirect(redirect)
 
     @require_POST
+    def item_updatecollectionpermissions_html(self):
+        self.require_ability('do_anything', self.item)
+        new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), 'some')
+        for permission_class in [OneToSomePermission, SomeToSomePermission, AllToSomePermission]:
+            permission_class.objects.filter(target=self.item).delete()
+        for permission in new_permissions:
+            permission.target = self.item
+            permission.save()
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'collectionpermissions'}))
+        return HttpResponseRedirect(redirect)
+
+    @require_POST
     def type_updateglobalpermissions_html(self):
         self.require_global_ability('do_anything')
-        new_permissions = self._get_permissions_from_post_data(None, True)
-        AgentGlobalPermission.objects.filter().delete()
-        CollectionGlobalPermission.objects.filter().delete()
-        EveryoneGlobalPermission.objects.filter().delete()
+        new_permissions = self._get_permissions_from_post_data(None, 'all')
+        for permission_class in [OneToAllPermission, SomeToAllPermission, AllToAllPermission]:
+            permission_class.objects.filter().delete()
         for permission in new_permissions:
             permission.save()
         redirect = self.request.GET.get('redirect', reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'globalpermissions'}))
@@ -452,26 +474,19 @@ class ItemViewer(Viewer):
     def item_privacy_html(self):
         self.context['action_title'] = 'Privacy settings'
         self.require_ability('modify_privacy_settings', self.item)
-        possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
-        default_permissions = []
-        for ability in possible_abilities:
-            if ability.startswith('view '):
-                default_allowed = self.permission_cache.default_ability_is_allowed(ability, self.item.actual_item_type())
-                default_permissions.append({'ability': ability, 'is_allowed': default_allowed})
         template = loader.get_template('item/privacy.html')
-        self.context['default_permissions'] = default_permissions
         return HttpResponse(template.render(self.context))
 
     def item_itempermissions_html(self):
-        self.context['action_title'] = 'Permissions'
+        self.context['action_title'] = 'Item permissions'
         self.require_ability('do_anything', self.item)
-        possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
-        default_permissions = []
-        for ability in possible_abilities:
-            default_allowed = self.permission_cache.default_ability_is_allowed(ability, self.item.actual_item_type())
-            default_permissions.append({'ability': ability, 'is_allowed': default_allowed})
         template = loader.get_template('item/itempermissions.html')
-        self.context['default_permissions'] = default_permissions
+        return HttpResponse(template.render(self.context))
+
+    def item_collectionpermissions_html(self):
+        self.context['action_title'] = 'Collection permissions'
+        self.require_ability('do_anything', self.item)
+        template = loader.get_template('item/collectionpermissions.html')
         return HttpResponse(template.render(self.context))
 
     def type_globalpermissions_html(self):
@@ -672,7 +687,7 @@ class CollectionViewer(ItemViewer):
                 membership.reactivate(action_agent=self.cur_agent)
         except ObjectDoesNotExist:
             membership = Membership(collection=self.item, item=member)
-            permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+            permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
             membership.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
@@ -902,12 +917,12 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
                 comment.name = item.display_name()
                 if not comment.name.lower().startswith('re: '):
                     comment.name = 'Re: %s' % comment.name
-            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
             comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
             if isinstance(item, TextDocument) and item_index is not None and self.permission_cache.agent_can(self.cur_agent, 'add_transclusion', item):
                 transclusion = Transclusion(from_item=item, from_item_version_number=comment.item_version_number, from_item_index=item_index, to_item=comment)
                 #TODO seems like there should be a way to set custom permissions on the transclusions
-                permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+                permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
                 transclusion.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
@@ -949,12 +964,12 @@ class TextDocumentExcerptViewer(ExcerptViewer, TextDocumentViewer):
         if not excerpts:
             return self.render_error('Invalid Form Data', "You must submit at least one excerpt")
         collection = Collection()
-        permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+        permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
         collection.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
         for excerpt in excerpts:
-            permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+            permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
             excerpt.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
-            permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+            permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
             Membership(item=excerpt, collection=collection).save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'collection', 'noun': collection.pk}))
         return HttpResponseRedirect(redirect)

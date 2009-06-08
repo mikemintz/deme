@@ -79,6 +79,7 @@ Unusual things to remember
 Distant Future (sorted by approximate order of planned implementation)
 ----------------------------------------------------------------------
 * Migrations (let's use http://south.aeracode.org/)
+* Write PermissionCache.filter_agents_by_permission so we can display which agents have a particular ability w.r.t. an item.
 * Comments that are generated from the website, when sent by email, should come from an EmailContactMethod if the user has a default contact method (we'll need a way to select a default contact method)
 * Specific-version destroying
 * Edit locks (merging, or even synchro editing)
