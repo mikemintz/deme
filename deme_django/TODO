@@ -14,6 +14,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* If you try to add a Membership that used to exist but is now trashed, it fails. The code used to handle this. Probably same with CustomUrls.
 * If you login/logout after you're at a page with POST or at a login page, the "back to page" is weird.
 * Put the form/link code for each authentication method in its own module, and the default layout will somehow combine them
 * Methods that have to do with sending emails (about action notices) should go in EmailContactMethod, not ActionNotice

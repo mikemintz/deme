@@ -399,9 +399,12 @@ class Item(models.Model):
         action_time = action_time or datetime.datetime.now()
         if not self.active:
             return
+        # Execute after-callbacks
+        self._before_deactivate(action_agent, action_summary, action_time)
+        # Deactivate the item
         self.active = False
         self.save()
-        # Execute callbacks
+        # Execute after-callbacks
         self._after_deactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
         DeactivateActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
@@ -422,9 +425,12 @@ class Item(models.Model):
         action_time = action_time or datetime.datetime.now()
         if self.active:
             return
+        # Execute before-callbacks
+        self._before_reactivate(action_agent, action_summary, action_time)
+        # Reactivate the item
         self.active = True
         self.save()
-        # Execute callbacks
+        # Execute after-callbacks
         self._after_reactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
         ReactivateActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
@@ -446,6 +452,8 @@ class Item(models.Model):
         action_time = action_time or datetime.datetime.now()
         if self.destroyed or self.active:
             return
+        # Execute before-callbacks
+        self._before_destroy(action_agent, action_summary, action_time)
         # Set all non-special fields to null
         self.destroyed = True
         for field in self._meta.fields:
@@ -477,7 +485,7 @@ class Item(models.Model):
             self.one_to_some_permissions_as_target.all().delete()
             self.some_to_some_permissions_as_target.all().delete()
             self.all_to_some_permissions_as_target.all().delete()
-        # Execute callbacks
+        # Execute after-callbacks
         self._after_destroy(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
         DestroyActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
@@ -513,14 +521,7 @@ class Item(models.Model):
         action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
 
-        # Save the old item version
-        if not is_new:
-            old_version = type(self).Version()
-            old_self = type(self).objects.get(pk=self.pk)
-            old_self.copy_fields_to_itemversion(old_version)
-            old_version.save()
-
-        # Update the item
+        # Set the special fields
         self.item_type_string = type(self).__name__
         if first_agent:
             action_agent = self
@@ -532,6 +533,21 @@ class Item(models.Model):
             self.version_number = latest_version_number + 1
         if first_agent:
             self.creator_id = 1
+
+        # Execute before-callbacks
+        if is_new:
+            self._before_create(action_agent, action_summary, action_time)
+        else:
+            self._before_edit(action_agent, action_summary, action_time)
+
+        # Save the old item version
+        if not is_new:
+            old_version = type(self).Version()
+            old_self = type(self).objects.get(pk=self.pk)
+            old_self.copy_fields_to_itemversion(old_version)
+            old_version.save()
+
+        # Update the item
         self.save()
 
         # Create the permissions
@@ -540,7 +556,7 @@ class Item(models.Model):
                 permission.target = self
                 permission.save()
 
-        # Execute callbacks
+        # Execute after-callbacks
         if is_new:
             self._after_create(action_agent, action_summary, action_time)
         else:
@@ -580,6 +596,18 @@ class Item(models.Model):
                 result = result | base.all_immutable_fields()
         return result
 
+    def _before_create(self, action_agent, action_summary, action_time):
+        """
+        This method gets called before the first version of an item is
+        created via save_versioned().
+        
+        Item types that want to trigger an action before creation should
+        override this method, making sure to put a call to super at the top,
+        like super(Group, self)._before_create(action_agent, action_summary, action_time)
+        """
+        pass
+    _before_create.alters_data = True
+
     def _after_create(self, action_agent, action_summary, action_time):
         """
         This method gets called after the first version of an item is
@@ -591,6 +619,18 @@ class Item(models.Model):
         """
         pass
     _after_create.alters_data = True
+
+    def _before_edit(self, action_agent, action_summary, action_time):
+        """
+        This method gets called before an existing item is edited via
+        save_versioned().
+        
+        Item types that want to trigger an action before creation should
+        override this method, making sure to put a call to super at the top,
+        like super(Group, self)._before_edit(action_agent, action_summary, action_time)
+        """
+        pass
+    _before_edit.alters_data = True
 
     def _after_edit(self, action_agent, action_summary, action_time):
         """
@@ -604,6 +644,17 @@ class Item(models.Model):
         pass
     _after_edit.alters_data = True
 
+    def _before_deactivate(self, action_agent, action_summary, action_time):
+        """
+        This method gets called before an item is deactivated.
+        
+        Item types that want to trigger an action before deactivation should
+        override this method, making sure to put a call to super at the top,
+        like super(Group, self)._before_deactivate(action_agent, action_summary, action_time)
+        """
+        pass
+    _before_deactivate.alters_data = True
+
     def _after_deactivate(self, action_agent, action_summary, action_time):
         """
         This method gets called after an item is deactivated.
@@ -615,6 +666,17 @@ class Item(models.Model):
         pass
     _after_deactivate.alters_data = True
 
+    def _before_reactivate(self, action_agent, action_summary, action_time):
+        """
+        This method gets called before an item is reactivated.
+        
+        Item types that want to trigger an action before reactivation should
+        override this method, making sure to put a call to super at the top,
+        like super(Group, self)._before_reactivate(action_agent, action_summary, action_time)
+        """
+        pass
+    _before_reactivate.alters_data = True
+
     def _after_reactivate(self, action_agent, action_summary, action_time):
         """
         This method gets called after an item is reactivated.
@@ -625,6 +687,17 @@ class Item(models.Model):
         """
         pass
     _after_reactivate.alters_data = True
+
+    def _before_destroy(self, action_agent, action_summary, action_time):
+        """
+        This method gets called before an item is destroyed.
+        
+        Item types that want to trigger an action before destroy should
+        override this method, making sure to put a call to super at the top,
+        like super(Group, self)._before_destroy(action_agent, action_summary, action_time)
+        """
+        pass
+    _before_destroy.alters_data = True
 
     def _after_destroy(self, action_agent, action_summary, action_time):
         """
@@ -1152,7 +1225,27 @@ class Membership(Item):
     # Fields
     item               = FixedForeignKey(Item, related_name='memberships', verbose_name=_('item'))
     collection         = FixedForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'), required_abilities=['modify_membership'])
-    permission_enabled = FixedBooleanField(_('permission enabled'), help_text=_('enable this if you want collection-wide permissions to apply to this child item'))
+    permission_enabled = FixedBooleanField(_('permission enabled'), help_text=_('Enable this if you want collection-wide permissions to apply to this child item'))
+
+    def _before_create(self, action_agent, action_summary, action_time):
+        super(Membership, self)._before_create(action_agent, action_summary, action_time)
+        if self.permission_enabled:
+            #TODO it would be better if we could take the existing permission_cache
+            from cms.permissions import PermissionCache
+            permission_cache = PermissionCache()
+            if not permission_cache.agent_can(action_agent, 'do_anything', self.item):
+                self.permission_enabled = False
+    _before_create.alters_data = True
+
+    def _before_edit(self, action_agent, action_summary, action_time):
+        super(Membership, self)._before_edit(action_agent, action_summary, action_time)
+        if self.permission_enabled:
+            #TODO it would be better if we could take the existing permission_cache
+            from cms.permissions import PermissionCache
+            permission_cache = PermissionCache()
+            if not permission_cache.agent_can(action_agent, 'do_anything', self.item):
+                self.permission_enabled = False
+    _before_edit.alters_data = True
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(Membership, self)._after_create(action_agent, action_summary, action_time)
