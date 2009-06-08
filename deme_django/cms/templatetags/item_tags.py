@@ -228,9 +228,8 @@ def universal_edit_button(parser, token):
     return UniversalEditButton()
 
 class IfAgentCan(template.Node):
-    def __init__(self, ability, ability_parameter, item, nodelist_true, nodelist_false):
+    def __init__(self, ability, item, nodelist_true, nodelist_false):
         self.ability = template.Variable(ability)
-        self.ability_parameter = template.Variable(ability_parameter)
         self.item = template.Variable(item)
         self.nodelist_true, self.nodelist_false = nodelist_true, nodelist_false
 
@@ -253,14 +252,6 @@ class IfAgentCan(template.Node):
                 return "[Couldn't resolve ability variable]"
             else:
                 return '' # Fail silently for invalid variables.
-        try:
-            ability_parameter = self.ability_parameter.resolve(context)
-        except template.VariableDoesNotExist:
-            if settings.DEBUG:
-                return "[Couldn't resolve ability_parameter variable]"
-            else:
-                return '' # Fail silently for invalid variables.
-        ability = '%s %s' % (ability, ability_parameter) if ability_parameter else ability
         if agentcan_helper(context, ability, item):
             return self.nodelist_true.render(context)
         else:
@@ -269,8 +260,8 @@ class IfAgentCan(template.Node):
 @register.tag
 def ifagentcan(parser, token):
     bits = list(token.split_contents())
-    if len(bits) != 4:
-        raise template.TemplateSyntaxError, "%r takes three arguments" % bits[0]
+    if len(bits) != 3:
+        raise template.TemplateSyntaxError, "%r takes two arguments" % bits[0]
     end_tag = 'end' + bits[0]
     nodelist_true = parser.parse(('else', end_tag))
     token = parser.next_token()
@@ -279,12 +270,11 @@ def ifagentcan(parser, token):
         parser.delete_first_token()
     else:
         nodelist_false = template.NodeList()
-    return IfAgentCan(bits[1], bits[2], bits[3], nodelist_true, nodelist_false)
+    return IfAgentCan(bits[1], bits[2], nodelist_true, nodelist_false)
 
 class IfAgentCanGlobal(template.Node):
-    def __init__(self, ability, ability_parameter, nodelist_true, nodelist_false):
+    def __init__(self, ability, nodelist_true, nodelist_false):
         self.ability = template.Variable(ability)
-        self.ability_parameter = template.Variable(ability_parameter)
         self.nodelist_true, self.nodelist_false = nodelist_true, nodelist_false
 
     def __repr__(self):
@@ -299,14 +289,6 @@ class IfAgentCanGlobal(template.Node):
                 return "[Couldn't resolve ability variable]"
             else:
                 return '' # Fail silently for invalid variables.
-        try:
-            ability_parameter = self.ability_parameter.resolve(context)
-        except template.VariableDoesNotExist:
-            if settings.DEBUG:
-                return "[Couldn't resolve ability_parameter variable]"
-            else:
-                return '' # Fail silently for invalid variables.
-        ability = '%s %s' % (ability, ability_parameter) if ability_parameter else ability
         if agentcan_global_helper(context, ability):
             return self.nodelist_true.render(context)
         else:
@@ -315,7 +297,7 @@ class IfAgentCanGlobal(template.Node):
 @register.tag
 def ifagentcanglobal(parser, token):
     bits = list(token.split_contents())
-    if len(bits) != 3:
+    if len(bits) != 2:
         raise template.TemplateSyntaxError, "%r takes two arguments" % bits[0]
     end_tag = 'end' + bits[0]
     nodelist_true = parser.parse(('else', end_tag))
@@ -325,7 +307,7 @@ def ifagentcanglobal(parser, token):
         parser.delete_first_token()
     else:
         nodelist_false = template.NodeList()
-    return IfAgentCanGlobal(bits[1], bits[2], nodelist_true, nodelist_false)
+    return IfAgentCanGlobal(bits[1], nodelist_true, nodelist_false)
 
 # remember this includes inactive comments, which should be displayed differently after calling this
 def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments):
