@@ -1142,7 +1142,7 @@ class Membership(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['item', 'collection'])
-    introduced_abilities = frozenset(['view item', 'view collection'])
+    introduced_abilities = frozenset(['view item', 'view collection', 'view permission_enabled', 'edit permission_enabled'])
     introduced_global_abilities = frozenset(['create Membership'])
     class Meta:
         verbose_name = _('membership')
@@ -1150,8 +1150,9 @@ class Membership(Item):
         unique_together = (('item', 'collection'),)
 
     # Fields
-    item       = FixedForeignKey(Item, related_name='memberships', verbose_name=_('item'))
-    collection = FixedForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'), required_abilities=['modify_membership'])
+    item               = FixedForeignKey(Item, related_name='memberships', verbose_name=_('item'))
+    collection         = FixedForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'), required_abilities=['modify_membership'])
+    permission_enabled = FixedBooleanField(_('permission enabled'), help_text=_('enable this if you want collection-wide permissions to apply to this child item'))
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(Membership, self)._after_create(action_agent, action_summary, action_time)
@@ -1159,6 +1160,15 @@ class Membership(Item):
             # Update the RecursiveMembership to indicate this Membership exists
             RecursiveMembership.recursive_add_membership(self)
     _after_create.alters_data = True
+
+    def _after_edit(self, action_agent, action_summary, action_time):
+        super(Membership, self)._after_edit(action_agent, action_summary, action_time)
+        if self.collection.active:
+            # Update the RecursiveMembership in case permission_enabled changed
+            #TODO figure out how to do this only when permission_enabled actually changes, rather than for every edit
+            RecursiveMembership.recursive_remove_edge(self.collection, self.item)
+            RecursiveMembership.recursive_add_membership(self)
+    _after_edit.alters_data = True
 
     def _after_deactivate(self, action_agent, action_summary, action_time):
         super(Membership, self)._after_deactivate(action_agent, action_summary, action_time)
@@ -2091,10 +2101,15 @@ class RecursiveMembership(models.Model):
     (A,C) child_memberships={(B,C)}
     (A,D) child_memberships={(A,D),(B,D))}
     (B,D) child_memberships={(B,D)}
+    
+    The permission_enabled field is set to True if there exists at least one
+    path of Memberships from parent to child, such that each membership in the
+    path has permission_enabled=True.
     """
-    parent            = models.ForeignKey(Collection, related_name='recursive_memberships_as_parent', verbose_name=_('parent'))
-    child             = models.ForeignKey(Item, related_name='recursive_memberships_as_child', verbose_name=_('child'))
-    child_memberships = models.ManyToManyField(Membership, verbose_name=_('child memberships'))
+    parent             = models.ForeignKey(Collection, related_name='recursive_memberships_as_parent', verbose_name=_('parent'))
+    child              = models.ForeignKey(Item, related_name='recursive_memberships_as_child', verbose_name=_('child'))
+    permission_enabled = models.BooleanField(_('permission enabled'), default=False)
+    child_memberships  = models.ManyToManyField(Membership, verbose_name=_('child memberships'))
     class Meta:
         unique_together = (('parent', 'child'),)
 
@@ -2107,12 +2122,30 @@ class RecursiveMembership(models.Model):
         parent = membership.collection
         child = membership.item
         # Connect parent to child
-        recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=parent, child=child)
+        try:
+            recursive_membership = RecursiveMembership.objects.get(parent=parent, child=child)
+            if recursive_membership.permission_enabled != membership.permission_enabled:
+                RecursiveMembership.recursive_remove_edge(parent, child)
+                recursive_membership = None
+        except ObjectDoesNotExist:
+            recursive_membership = None
+        if recursive_membership is None:
+            recursive_membership = RecursiveMembership(parent=parent, child=child, permission_enabled=membership.permission_enabled)
+            recursive_membership.save()
         recursive_membership.child_memberships.add(membership)
         # Connect ancestors to child, via parent
         ancestor_recursive_memberships = RecursiveMembership.objects.filter(child=parent)
         for ancestor_recursive_membership in ancestor_recursive_memberships:
-            recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent, child=child)
+            try:
+                recursive_membership = RecursiveMembership.objects.get(parent=ancestor_recursive_membership.parent, child=child)
+                if not recursive_membership.permission_enabled:
+                    if membership.permission_enabled and ancestor_recursive_membership.permission_enabled:
+                        recursive_membership.permission_enabled = True
+                        recursive_membership.save()
+            except ObjectDoesNotExist:
+                recursive_membership = RecursiveMembership(parent=ancestor_recursive_membership.parent, child=child)
+                recursive_membership.permission_enabled = ancestor_recursive_membership.permission_enabled and membership.permission_enabled
+                recursive_membership.save()
             recursive_membership.child_memberships.add(membership)
         # Connect parent and ancestors to all descendants
         descendant_recursive_memberships = RecursiveMembership.objects.filter(parent=child)
@@ -2120,12 +2153,32 @@ class RecursiveMembership(models.Model):
             child_memberships = descendant_recursive_membership.child_memberships.all()
             # Indirect ancestors
             for ancestor_recursive_membership in ancestor_recursive_memberships:
-                recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent,
-                                                                                          child=descendant_recursive_membership.child)
+                try:
+                    recursive_membership = RecursiveMembership.objects.get(parent=ancestor_recursive_membership.parent,
+                                                                           child=descendant_recursive_membership.child)
+                    if not recursive_membership.permission_enabled:
+                        if membership.permission_enabled and ancestor_recursive_membership.permission_enabled and descendant_recursive_membership.permission_enabled:
+                            recursive_membership.permission_enabled = True
+                            recursive_membership.save()
+                except ObjectDoesNotExist:
+                    recursive_membership = RecursiveMembership(parent=ancestor_recursive_membership.parent,
+                                                               child=descendant_recursive_membership.child)
+                    recursive_membership.permission_enabled = ancestor_recursive_membership.permission_enabled and membership.permission_enabled and descendant_recursive_membership.permission_enabled
+                    recursive_membership.save()
                 for child_membership in child_memberships:
                     recursive_membership.child_memberships.add(child_membership)
             # Parent
-            recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=parent, child=descendant_recursive_membership.child)
+            try:
+                recursive_membership = RecursiveMembership.objects.get(parent=parent, child=descendant_recursive_membership.child)
+                if not recursive_membership.permission_enabled:
+                    if membership.permission_enabled and descendant_recursive_membership.permission_enabled:
+                        recursive_membership.permission_enabled = True
+                        recursive_membership.save()
+            except ObjectDoesNotExist:
+                recursive_membership = RecursiveMembership(parent=parent, child=descendant_recursive_membership.child)
+                recursive_membership.permission_enabled = membership.permission_enabled and descendant_recursive_membership.permission_enabled
+                recursive_membership.save()
+        
             for child_membership in child_memberships:
                 recursive_membership.child_memberships.add(child_membership)
 

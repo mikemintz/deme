@@ -167,7 +167,7 @@ class PermissionCache(object):
         """
         agent_collection_ids = RecursiveMembership.objects.filter(child=agent).values('parent_id').query
         if item is not None:
-            item_collection_ids = item.ancestor_collections().values('pk').query
+            item_collection_ids = RecursiveMembership.objects.filter(child=item, permission_enabled=True).values('parent_id').query
 
         permission_querysets = []
         for permission_class in [OneToOnePermission, OneToSomePermission, OneToAllPermission,
@@ -276,7 +276,7 @@ class PermissionCache(object):
                     if target_field.rel.to == Item:
                         q_filter = Q(pk__in=permission_queryset.values('target_id').query)
                     elif target_field.rel.to == Collection:
-                        recursive_memberships = RecursiveMembership.objects.filter(pk__in=permission_queryset.values('target_id').query)
+                        recursive_memberships = RecursiveMembership.objects.filter(parent__in=permission_queryset.values('target_id').query, permission_enabled=True)
                         q_filter = Q(pk__in=recursive_memberships.values('child_id').query)
                     else:
                         assert False
