@@ -1015,7 +1015,6 @@ class PermissionEditor(template.Node):
                     return '' # Fail silently for invalid variables.
         viewer = context['_viewer']
 
-        #TODO think about how this works.... doesn't make sense now, and definitely doesn't make sense when target is a collection
         if self.target_level == 'one':
             if target is None:
                 possible_abilities = viewer.permission_cache.all_possible_item_abilities(viewer.accepted_item_type)
@@ -1078,7 +1077,7 @@ class PermissionEditor(template.Node):
         datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in everyone_permissions]
         existing_permission_data.append(datum)
 
-        from cms.views import AjaxModelChoiceField
+        from cms.forms import AjaxModelChoiceField
         new_agent_select_widget = AjaxModelChoiceField(Agent.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None)
         new_collection_select_widget = AjaxModelChoiceField(Collection.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None)
         #TODO the widgets get centered-alignment in the dialog, which looks bad
