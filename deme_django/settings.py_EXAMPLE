@@ -2,6 +2,8 @@ import os
 
 # Django settings for deme_django project.
 
+ROOT_DIR = os.path.dirname(__file__)
+
 DJANGO_SERVES_STATIC_FILES = True
 
 DEBUG = True
@@ -39,7 +41,7 @@ USE_I18N = True
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'static')
+MEDIA_ROOT = os.path.join(ROOT_DIR, 'static')
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
@@ -89,7 +91,7 @@ INSTALLED_APPS = (
     'deme_django.cms',
 )
 
-MODULES_DIR = os.path.join(os.path.dirname(__file__), 'modules')
+MODULES_DIR = os.path.join(ROOT_DIR, 'modules')
 MODULE_NAMES = []
 for module_name in os.listdir(MODULES_DIR):
     if module_name.startswith('.'):
