@@ -87,8 +87,8 @@ class PermissionCache(object):
 
     def filter_items(self, agent, ability, queryset):
         """
-        Return a Q object that can be used as a QuerySet filter, specifying only
-        those items that the agent has the ability for.
+        Returns a QuerySet that filters the given QuerySet, into only the items
+        that the specified agent has the specified ability to do.
         
         Unlike filter_items_by_permission, this takes into account the fact that
         agents with the global ability "do_anything" virtually have all item
