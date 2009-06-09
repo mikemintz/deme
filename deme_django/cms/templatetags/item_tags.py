@@ -1077,21 +1077,31 @@ class PermissionEditor(template.Node):
             var permission_counter = 1;
             var possible_abilities = %(possible_ability_javascript_array)s;
             function add_permission_fields(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
-                var is_allowed_checkbox = $('<input type="checkbox" name="newpermission' + permission_counter + '_is_allowed" value="on">');
+                var remove_button = $('<a href="#" class="img_link"><img src="%(delete_img_url)s" /></a>');
+                remove_button.bind('click', function(e){wrapper.remove(); return false;});
+                wrapper.append(remove_button);
+                var is_allowed_checkbox = $('<input type="checkbox" id="newpermission' + permission_counter + '_is_allowed" name="newpermission' + permission_counter + '_is_allowed" value="on">');
                 is_allowed_checkbox.attr('checked', is_allowed);
                 is_allowed_checkbox.attr('defaultChecked', is_allowed);
-                var ability_select = $('<select name="newpermission' + permission_counter + '_ability">');
-                for (var i in possible_abilities) {
-                    var is_selected = (possible_abilities[i][0] == ability);
-                    ability_select[0].options[i] = new Option(possible_abilities[i][1], possible_abilities[i][0], is_selected, is_selected);
-                }
-                var remove_button = $('<a href="#" class="img_link">');
-                remove_button.addClass('img_link');
-                remove_button.append('<img src="%(delete_img_url)s" />');
-                remove_button.bind('click', function(e){wrapper.remove(); return false;});
                 wrapper.append(is_allowed_checkbox);
-                wrapper.append(ability_select);
-                wrapper.append(remove_button);
+                if (ability == '') {
+                    var ability_select = $('<select name="newpermission' + permission_counter + '_ability">');
+                    for (var i in possible_abilities) {
+                        var is_selected = (possible_abilities[i][0] == ability);
+                        ability_select[0].options[i] = new Option(possible_abilities[i][1], possible_abilities[i][0], is_selected, is_selected);
+                    }
+                    wrapper.append(ability_select);
+                } else {
+                    var friendly_name = ability;
+                    for (var i in possible_abilities) {
+                        if (possible_abilities[i][0] == ability) {
+                            friendly_name = possible_abilities[i][1];
+                            break;
+                        }
+                    }
+                    wrapper.append('<label for="newpermission' + permission_counter + '_is_allowed">' + friendly_name + '</label>');
+                    wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_ability" value="' + ability + '" />');
+                }
                 wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_permission_type" value="' + permission_type + '" />');
                 wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_agent_or_collection_id" value="' + agent_or_collection_id + '" />');
                 permission_counter += 1;
@@ -1126,12 +1136,12 @@ class PermissionEditor(template.Node):
                 });
                 permissions_cell.append(add_button);
                 row.append(permissions_cell);
-                $('#permission_table tbody').append(row);
                 return row;
             }
 
-            $(document).ready(function(){
+            function setup_permission_editor() {
                 var existing_permission_data = %(existing_permission_data_javascript_array)s;
+                rows = [];
                 for (var i in existing_permission_data) {
                     var datum = existing_permission_data[i];
                     var row = add_agent_or_collection_row(datum.permission_type, datum.agent_or_collection_id, datum.name);
@@ -1140,7 +1150,10 @@ class PermissionEditor(template.Node):
                         var permission = datum.permissions[j];
                         add_permission_div(permissions_cell, datum.permission_type, datum.agent_or_collection_id, permission.is_allowed, permission.ability);
                     }
-                    $('#permission_table tbody').append(row);
+                    rows.push(row);
+                }
+                for (var i in rows) {
+                    $('#permission_table tbody').append(rows[i]);
                 }
 
                 $('#new_agent_dialog').dialog({
@@ -1176,6 +1189,10 @@ class PermissionEditor(template.Node):
                         }
                     },
                 });
+            }
+
+            $(document).ready(function(){
+                setup_permission_editor();
             });
         </script>
 
