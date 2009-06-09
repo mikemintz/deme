@@ -543,6 +543,20 @@ class Item(models.Model):
         """
         return True
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        """
+        Return a natural language representation of a RelationActionNotice with
+        the given parameters, such that the from_item is self. The result will
+        be in the form of a list of strings and items. The string representation
+        can later be formed by concatenating the elements of the list, using the strings
+        and relevant fields of the items. Remember to include spaces in the strings
+        so that there is space around the item name. If field_name does not match
+        any of the foreign keys for the item type, return None.
+        """
+        # We don't generate RelationActionNotices on creator, and there are no
+        # other ForeignKeys defined in Item
+        return None
+
     @classmethod
     def all_immutable_fields(cls):
         """
@@ -701,6 +715,16 @@ class GroupAgent(Agent):
     # Fields
     group = FixedForeignKey('Group', related_name='group_agents', unique=True, editable=False, verbose_name=_('group'))
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        if field_name == 'group':
+            if relation_added:
+                status = " is now the agent of "
+            else:
+                status = " is no longer the agent of "
+            return [self, status, action_item]
+        else:
+            return super(GroupAgent, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
+
 
 class AuthenticationMethod(Item):
     """
@@ -727,6 +751,15 @@ class AuthenticationMethod(Item):
     # Fields
     agent = FixedForeignKey(Agent, related_name='authentication_methods', verbose_name=_('agent'), required_abilities=['add_authentication_method'])
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        if field_name == 'agent':
+            if relation_added:
+                status = " is now the authentication method of "
+            else:
+                status = " is no longer the authentication method of "
+            return [self, status, action_item]
+        else:
+            return super(AuthenticationMethod, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
 
 class DemeAccount(AuthenticationMethod):
     """
@@ -869,6 +902,19 @@ class ContactMethod(Item):
     # Fields
     agent = FixedForeignKey(Agent, related_name='contact_methods', verbose_name=_('agent'), required_abilities=['add_contact_method'])
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        # We don't generate RelationActionNotices on creator, and there are no
+        # other ForeignKeys defined in Item
+
+        if field_name == 'agent':
+            if relation_added:
+                status = " can now be contacted by "
+            else:
+                status = " can no longer be contacted by "
+            return [action_item, status, self]
+        else:
+            return super(ContactMethod, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
+
 
 class EmailContactMethod(ContactMethod):
     """
@@ -1005,6 +1051,21 @@ class Subscription(Item):
     item           = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view action_notices'])
     deep           = FixedBooleanField(_('deep subscription'), default=False)
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        if field_name == 'contact_method':
+            if relation_added:
+                status = " will send notifications via "
+            else:
+                status = " will no longer send notifications via "
+            return [self, status, action_item]
+        elif field_name == 'item':
+            if relation_added:
+                status = " subscription is now bound to "
+            else:
+                status = " subscription is no longer bound to "
+            return [self, status, action_item]
+        else:
+            return super(Subscription, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
 
 ###############################################################################
 # Collections and related item types
@@ -1109,6 +1170,15 @@ class Folio(Collection):
     # Fields
     group = FixedForeignKey(Group, related_name='folios', unique=True, editable=False, verbose_name=_('group'))
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        if field_name == 'group':
+            if relation_added:
+                status = " now belongs to "
+            else:
+                status = " no longer belongs to "
+            return [self, status, action_item]
+        else:
+            return super(Folio, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
 
 class Membership(Item):
     """
@@ -1148,6 +1218,21 @@ class Membership(Item):
             RecursiveMembership.recursive_add_membership(self)
     _after_reactivate.alters_data = True
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        if field_name == 'item':
+            if relation_added:
+                status = " now belongs to "
+            else:
+                status = " no longer belongs to "
+            return [action_item, status, collection]
+        elif field_name == 'collection':
+            if relation_added:
+                status = " now owns "
+            else:
+                status = " no longer owns "
+            return [action_item, status, item]
+        else:
+            return super(Membership, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
 
 ###############################################################################
 # Documents
@@ -1208,6 +1293,15 @@ class DjangoTemplateDocument(TextDocument):
     layout = FixedForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout'))
     override_default_layout = FixedBooleanField(_('override default layout'), default=False)
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        if field_name == 'layout':
+            if relation_added:
+                status = " now stores the layout "
+            else:
+                status = " no longer stores the layout "
+            return [self, status, action_item]
+        else:
+            return super(DjangoTemplateDocument, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
 
 class HtmlDocument(TextDocument):
     """
@@ -1289,6 +1383,21 @@ class Transclusion(Item):
     from_item_index          = models.PositiveIntegerField(_('from item index'))
     to_item                  = FixedForeignKey(Item, related_name='transclusions_to', verbose_name=_('to item'))
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        if field_name == 'from_item':
+            if relation_added:
+                status = " now points from "
+            else:
+                status = " no longer points from "
+            return [self, status, action_item]
+        elif field_name == 'to_item':
+            if relation_added:
+                status = " now points to "
+            else:
+                status = " no longer points to "
+            return [self, status, action_item]
+        else:
+            return super(Translusion, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
 
 class Comment(Item):
     """
@@ -1326,6 +1435,21 @@ class Comment(Item):
         RecursiveComment.recursive_remove_comment(self)
     _after_destroy.alters_data = True
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        if field_name == 'item':
+            if relation_added:
+                status = " is now a comment on "
+            else:
+                status = " is no longer a comment on "
+            return [self, status, action_item]
+        elif field_name == 'from_contact_method':
+            if relation_added:
+                status = " now has the from_contact_method "
+            else:
+                status = " no longer has the from_contact_method "
+            return [self, status, action_item]
+        else:
+            return super(Comment, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
 
 
 class TextComment(TextDocument, Comment):
@@ -1386,6 +1510,15 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
     start_index                  = models.PositiveIntegerField(_('start index'))
     length                       = models.PositiveIntegerField(_('length'))
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        if field_name == 'text_document':
+            if relation_added:
+                status = " is now an excerpt of "
+            else:
+                status = " is no longer an excerpt of "
+            return [self, status, action_item]
+        else:
+            return super(TextDocumentExcerpt, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
 
 ###############################################################################
 # Viewer aliases
@@ -1432,6 +1565,15 @@ class ViewerRequest(Item):
             parent_path = req.parent_url.calculate_full_path()
             return (parent_path[0], parent_path[1] + [req])
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        if field_name == 'aliased_item':
+            if relation_added:
+                status = " is now an alias of "
+            else:
+                status = " is no longer an alias of "
+            return [self, status, action_item]
+        else:
+            return super(ViewerRequest, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
 
 class Site(ViewerRequest):
     """
@@ -1462,6 +1604,15 @@ class Site(ViewerRequest):
             return False
         return super(Site, self).can_be_deleted()
 
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        if field_name == 'default_layout':
+            if relation_added:
+                status = " now has the default layout "
+            else:
+                status = " no longer has the default layout "
+            return [self, status, action_item]
+        else:
+            return super(Site, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
 
 class CustomUrl(ViewerRequest):
     """
@@ -1486,6 +1637,16 @@ class CustomUrl(ViewerRequest):
     # Fields
     parent_url = FixedForeignKey(ViewerRequest, related_name='child_urls', verbose_name=_('parent URL'), required_abilities=['add_sub_path'])
     path       = models.CharField(_('path'), max_length=255)
+
+    def relation_action_notice_natural_language_representation(self, field_name, relation_added, action_item):
+        if field_name == 'parent_url':
+            if relation_added:
+                status = " has the parent_url "
+            else:
+                status = " no longer has the parent_url "
+            return [self, status, action_item]
+        else:
+            return super(CustomUrl, self).relation_action_notice_natural_language_representation(field_name, relation_added, action_item)
 
 
 ###############################################################################
