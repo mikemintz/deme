@@ -45,13 +45,10 @@ for item_type in all_item_types():
             is_allowed = False
         elif ability.startswith('view '):
             is_allowed = True
-        elif ability in ['comment_on', 'view action_notices']:
+        elif ability in ['comment_on', 'view Item.action_notices']:
             is_allowed = True
         else:
             is_allowed = False
-        if AllToAllPermission.objects.filter(ability=ability):
-            #TODO get rid of this if/else clause when we change permissions to include the item_type, so they are always unique
-            continue
         AllToAllPermission(ability=ability, is_allowed=is_allowed).save()
 
 # Give everyone permission to create any item type, except DemeSetting and Site

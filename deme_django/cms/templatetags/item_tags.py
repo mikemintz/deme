@@ -58,7 +58,7 @@ def get_viewable_name(context, item):
     If the logged in agent can view the item's name, return the item's name.
     Otherwise, return a string like "GroupAgent 51".
     """
-    can_view_name_field = agentcan_helper(context, 'view name', item)
+    can_view_name_field = agentcan_helper(context, 'view Item.name', item)
     return item.display_name(can_view_name_field)
 
 
@@ -214,7 +214,7 @@ class UniversalEditButton(template.Node):
 
     def render(self, context):
         item = context['item']
-        if item and agentcan_helper(context, 'edit', item, wildcard_suffix=True):
+        if item and agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
             edit_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % item.version_number
             return '<link rel="alternate" type="application/wiki" title="Edit" href="%s" />' % escape(edit_url)
         else:
@@ -318,16 +318,16 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
         if agentcan_global_helper(context, 'do_anything'):
             recursive_filter = None
         else:
-            visible_memberships = permission_cache.filter_items(context['cur_agent'], 'view item', Membership.objects)
+            visible_memberships = permission_cache.filter_items(context['cur_agent'], 'view Membership.item', Membership.objects)
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         members_and_me_pks_query = Item.objects.filter(active=True).filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_collection_members(recursive_filter).values('pk').query)).values('pk').query
         comment_pks = RecursiveComment.objects.filter(parent__in=members_and_me_pks_query).values_list('child', flat=True)
     else:
         comment_pks = RecursiveComment.objects.filter(parent=item).values_list('child', flat=True)
     if comment_pks:
-        permission_cache.filter_items(context['cur_agent'], 'view created_at', Comment.objects.filter(pk__in=comment_pks))
-        permission_cache.filter_items(context['cur_agent'], 'view creator', Comment.objects.filter(pk__in=comment_pks))
-        permission_cache.filter_items(context['cur_agent'], 'view name', Agent.objects.filter(pk__in=Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
+        permission_cache.filter_items(context['cur_agent'], 'view Item.created_at', Comment.objects.filter(pk__in=comment_pks))
+        permission_cache.filter_items(context['cur_agent'], 'view Item.creator', Comment.objects.filter(pk__in=comment_pks))
+        permission_cache.filter_items(context['cur_agent'], 'view Item.name', Agent.objects.filter(pk__in=Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
         for comment_subclass in comment_subclasses:
             new_comments = comment_subclass.objects.filter(pk__in=comment_pks)
             related_fields = ['creator']
@@ -387,7 +387,7 @@ class ItemToolbar(template.Node):
             if agentcan_helper(context, 'add_contact_method', item):
                 result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a>' % add_contact_method_url)
         result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscribe</a>' % subscribe_url)
-        if agentcan_helper(context, 'edit', item, wildcard_suffix=True):
+        if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
             result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-pencil"></span>Edit</a>' % edit_url)
         if agentcan_global_helper(context, 'create %s' % item.item_type_string):
             result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-copy"></span>Copy</a>' % copy_url)
@@ -490,7 +490,7 @@ class ItemDetails(template.Node):
 
         result.append('<table class="twocol" cellspacing="0" style="font-size: 85%;">')
 
-        if agentcan_helper(context, 'view name', item) and item.name:
+        if agentcan_helper(context, 'view Item.name', item) and item.name:
             result.append('<tr>')
             result.append('<th>Name:</th>')
             result.append('<td>')
@@ -498,7 +498,7 @@ class ItemDetails(template.Node):
             result.append('</td>')
             result.append('</tr>')
 
-        if agentcan_helper(context, 'view description', item) and item.description:
+        if agentcan_helper(context, 'view Item.description', item) and item.description:
             result.append('<tr>')
             result.append('<th>Preface:</th>')
             result.append('<td>')
@@ -525,7 +525,7 @@ class ItemDetails(template.Node):
         result.append('</td>')
         result.append('</tr>')
 
-        if agentcan_helper(context, 'view created_at', item):
+        if agentcan_helper(context, 'view Item.created_at', item):
             result.append('<tr>')
             result.append('<th>Created:</th>')
             result.append('<td>')
@@ -533,7 +533,7 @@ class ItemDetails(template.Node):
             result.append('</td>')
             result.append('</tr>')
 
-        if agentcan_helper(context, 'view creator', item):
+        if agentcan_helper(context, 'view Item.creator', item):
             result.append('<tr>')
             result.append('<th>Creator:</th>')
             result.append('<td>')
@@ -599,23 +599,23 @@ class CalculateComments(template.Node):
                 result.append("""<div class="comment_header">""")
                 result.append("""<div style="float: right;"><a href="%s?item=%s&amp;item_version_number=%s&amp;redirect=%s">[+] Reply</a></div>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
                 if issubclass(comment.item.actual_item_type(), Comment):
-                    if agentcan_helper(context, 'view body', comment):
+                    if agentcan_helper(context, 'view TextDocument.body', comment):
                         comment_name = escape(truncate_words(comment.body, 4))
                     else:
                         comment_name = comment.display_name(can_view_name_field=False)
                 else:
                     comment_name = escape(get_viewable_name(context, comment))
                 result.append("""<a href="%s">%s</a>""" % (comment.get_absolute_url(), comment_name))
-                if agentcan_helper(context, 'view creator', comment):
+                if agentcan_helper(context, 'view Item.creator', comment):
                     result.append('by <a href="%s">%s</a>' % (comment.creator.get_absolute_url(), escape(get_viewable_name(context, comment.creator))))
                 if item.pk != comment.item_id and nesting_level == 0:
                     result.append('for <a href="%s">%s</a>' % (comment.item.get_absolute_url(), escape(get_viewable_name(context, comment.item))))
-                if agentcan_helper(context, 'view created_at', comment):
+                if agentcan_helper(context, 'view Item.created_at', comment):
                     result.append('<span title="%s">%s ago</span>' % (comment.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(comment.created_at)))
                 result.append("</div>")
                 if comment.active:
                     if isinstance(comment, TextComment):
-                        if agentcan_helper(context, 'view body', comment):
+                        if agentcan_helper(context, 'view TextDocument.body', comment):
                             comment_body = escape(comment.body).replace('\n', '<br />')
                         else:
                             comment_body = ''
@@ -652,7 +652,7 @@ class PermissionsBox(template.Node):
         permission_cache = context['_viewer'].permission_cache
         item = context['item']
         cur_agent = context['cur_agent']
-        abilities = sorted(permission_cache.item_abilities(cur_agent, item))
+        abilities = permission_cache.item_abilities(cur_agent, item)
 
         result = []
         if agentcan_helper(context, 'do_anything', item):
@@ -664,8 +664,9 @@ class PermissionsBox(template.Node):
         elif agentcan_helper(context, 'modify_privacy_settings', item):
             modify_privacy_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'privacy'})
             result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify privacy</a></div>""" % modify_privacy_url)
-        for ability in abilities:
-            result.append("""<div>%s</div>""" % escape(ability))
+        friendly_names = [x[1] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if x[0] in abilities]
+        for friendly_name in friendly_names:
+            result.append("""<div>%s</div>""" % escape(friendly_name))
         return '\n'.join(result)
 
 @register.tag
@@ -704,11 +705,13 @@ class CalculateRelationships(template.Node):
             relationship_set['name'] = name
             relationship_set['field'] = field
             viewable_items = manager.filter(active=True)
-            viewable_items = permission_cache.filter_items(cur_agent, 'view %s' % field.field.name, viewable_items)
+            if viewable_items.count() == 0:
+                continue
+            viewable_items = permission_cache.filter_items(cur_agent, 'view %s.%s' % (field.model.__name__, field.field.name), viewable_items)
             if viewable_items.count() == 0:
                 continue
             relationship_item_type = manager.model
-            permission_cache.filter_items(cur_agent, 'view name', viewable_items)
+            permission_cache.filter_items(cur_agent, 'view Item.name', viewable_items)
             relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)
 
@@ -773,8 +776,9 @@ class CalculateActionNotices(template.Node):
     def render(self, context):
         item = context['item']
 
+        context['n_action_notices'] = 0
         result = []
-        if agentcan_helper(context, 'view action_notices', item):
+        if agentcan_helper(context, 'view Item.action_notices', item):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
             action_notices = ActionNotice.objects.filter(Q(action_item=item) | Q(action_agent=item)).order_by('action_time')
             action_notice_pk_to_object_map = {}
@@ -784,14 +788,14 @@ class CalculateActionNotices(template.Node):
                     select_related_fields.append('from_item__name')
                 specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query).select_related(*select_related_fields)
                 if action_notice_subclass == RelationActionNotice:
-                    context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
+                    context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view Item.name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
                 for action_notice in specific_action_notices:
                     action_notice_pk_to_object_map[action_notice.pk] = action_notice
-            context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
+            context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view Item.name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
             for action_notice in action_notices:
                 action_notice = action_notice_pk_to_object_map[action_notice.pk]
                 if isinstance(action_notice, RelationActionNotice):
-                    if not agentcan_helper(context, 'view %s' % action_notice.from_field_name, action_notice.from_item):
+                    if not agentcan_helper(context, 'view %s.%s' % (action_notice.from_field_model, action_notice.from_field_name), action_notice.from_item):
                         continue
                 action_time_text = '<span title="%s">%s ago</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
                 action_agent_name = get_viewable_name(context, action_notice.action_agent)
@@ -823,10 +827,10 @@ class CalculateActionNotices(template.Node):
                 if isinstance(action_notice, EditActionNotice):
                     action_text = 'edited'
                 result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">[%s]<br />%s %s %s %s</div>' % (action_time_text, action_agent_text, action_text, action_item_text, action_summary_text))
+                context['n_action_notices'] += 1
         else:
             action_notices = []
 
-        context['n_action_notices'] = len(action_notices)
         context['action_notice_box'] = mark_safe('\n'.join(result))
         return ''
 
@@ -878,7 +882,10 @@ class SubclassFieldsBox(template.Node):
         result = []
         result.append('<table cellspacing="0" class="twocol">')
         for field in fields:
-            if agentcan_helper(context, 'view %s' % field.name, item):
+            model = item._meta.get_field_by_name(field.name)[1]
+            if model is None:
+                model = type(item)
+            if agentcan_helper(context, 'view %s.%s' % (model.__name__, field.name), item):
                 result.append('<tr>')
                 result.append(u'<th style="white-space: nowrap;">%s</th>' % capfirst(field.verbose_name))
                 result.append('<td>')
@@ -1006,6 +1013,7 @@ class PermissionEditor(template.Node):
             possible_abilities = viewer.permission_cache.all_possible_item_and_global_abilities()
         if self.privacy_only:
             possible_abilities = set([x for x in possible_abilities if x.startswith('view ')])
+        possible_abilities = list((ability, friendly_name) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
 
         if target is None and self.target_level == 'one' and not self.privacy_only:
             # Default permissions when creating a new item
@@ -1074,8 +1082,8 @@ class PermissionEditor(template.Node):
                 is_allowed_checkbox.attr('defaultChecked', is_allowed);
                 var ability_select = $('<select name="newpermission' + permission_counter + '_ability">');
                 for (var i in possible_abilities) {
-                    var is_selected = (possible_abilities[i] == ability);
-                    ability_select[0].options[i] = new Option(possible_abilities[i], possible_abilities[i], is_selected, is_selected);
+                    var is_selected = (possible_abilities[i][0] == ability);
+                    ability_select[0].options[i] = new Option(possible_abilities[i][1], possible_abilities[i][0], is_selected, is_selected);
                 }
                 var remove_button = $('<a href="#" class="img_link">');
                 remove_button.addClass('img_link');
@@ -1191,7 +1199,7 @@ class PermissionEditor(template.Node):
         <a href="#" class="img_link" onclick="$('#new_agent_dialog').dialog('open'); return false;"><img src="%(agent_img_url)s" /> <span>Select Agent</span></a>
         <a href="#" class="img_link" onclick="$('#new_collection_dialog').dialog('open'); return false;"><img src="%(collection_img_url)s" /> <span>Select Collection</span></a>
 """ % {
-        'possible_ability_javascript_array': simplejson.dumps(sorted(possible_abilities), separators=(',',':')),
+        'possible_ability_javascript_array': simplejson.dumps(possible_abilities, separators=(',',':')),
         'existing_permission_data_javascript_array': simplejson.dumps(existing_permission_data, separators=(',',':')),
         'sample_agent_url': reverse('item_url', kwargs={'viewer': 'agent', 'noun': '1'}),
         'sample_collection_url': reverse('item_url', kwargs={'viewer': 'collection', 'noun': '1'}),

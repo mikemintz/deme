@@ -205,8 +205,9 @@ class Item(models.Model):
     # Setup
     __metaclass__ = ItemMetaClass
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'comment_on', 'view action_notices', 'delete', 'view name',
-                                      'view description', 'view creator', 'view created_at', 'edit name', 'edit description'])
+    introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'comment_on', 'delete', 'view Item.action_notices',
+                                      'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at',
+                                      'edit Item.name', 'edit Item.description'])
     introduced_global_abilities = frozenset(['do_anything'])
     class Meta:
         verbose_name = _('item')
@@ -732,7 +733,7 @@ class Agent(Item):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['add_contact_method', 'add_authentication_method', 'login_as', 'view last_online_at'])
+    introduced_abilities = frozenset(['add_contact_method', 'add_authentication_method', 'login_as', 'view Agent.last_online_at'])
     introduced_global_abilities = frozenset(['create Agent'])
     class Meta:
         verbose_name = _('agent')
@@ -790,7 +791,7 @@ class GroupAgent(Agent):
 
     # Setup
     introduced_immutable_fields = frozenset(['group'])
-    introduced_abilities = frozenset(['view group'])
+    introduced_abilities = frozenset(['view GroupAgent.group'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('group agent')
@@ -816,7 +817,7 @@ class AuthenticationMethod(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['agent'])
-    introduced_abilities = frozenset(['view agent'])
+    introduced_abilities = frozenset(['view AuthenticationMethod.agent'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('authentication method')
@@ -838,8 +839,10 @@ class DemeAccount(AuthenticationMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view username', 'view password', 'view password_question', 'view password_answer',
-                                      'edit username', 'edit password', 'edit password_question', 'edit password_answer'])
+    introduced_abilities = frozenset(['view DemeAccount.username', 'view DemeAccount.password',
+                                      'view DemeAccount.password_question', 'view DemeAccount.password_answer',
+                                      'edit DemeAccount.username', 'edit DemeAccount.password',
+                                      'edit DemeAccount.password_question', 'edit DemeAccount.password_answer'])
     introduced_global_abilities = frozenset(['create DemeAccount'])
     class Meta:
         verbose_name = _('Deme account')
@@ -935,8 +938,8 @@ class Person(Agent):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view first_name', 'view middle_names', 'view last_name', 'view suffix',
-                                      'edit first_name', 'edit middle_names', 'edit last_name', 'edit suffix'])
+    introduced_abilities = frozenset(['view Person.first_name', 'view Person.middle_names', 'view Person.last_name', 'view Person.suffix',
+                                      'edit Person.first_name', 'edit Person.middle_names', 'edit Person.last_name', 'edit Person.suffix'])
     introduced_global_abilities = frozenset(['create Person'])
     class Meta:
         verbose_name = _('person')
@@ -958,7 +961,7 @@ class ContactMethod(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['agent'])
-    introduced_abilities = frozenset(['add_subscription', 'view agent'])
+    introduced_abilities = frozenset(['add_subscription', 'view ContactMethod.agent'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('contact method')
@@ -975,7 +978,7 @@ class EmailContactMethod(ContactMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view email', 'edit email'])
+    introduced_abilities = frozenset(['view EmailContactMethod.email', 'edit EmailContactMethod.email'])
     introduced_global_abilities = frozenset(['create EmailContactMethod'])
     class Meta:
         verbose_name = _('email contact method')
@@ -992,7 +995,7 @@ class PhoneContactMethod(ContactMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view phone', 'edit phone'])
+    introduced_abilities = frozenset(['view PhoneContactMethod.phone', 'edit PhoneContactMethod.phone'])
     introduced_global_abilities = frozenset(['create PhoneContactMethod'])
     class Meta:
         verbose_name = _('phone contact method')
@@ -1009,7 +1012,7 @@ class FaxContactMethod(ContactMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view fax', 'edit fax'])
+    introduced_abilities = frozenset(['view FaxContactMethod.fax', 'edit FaxContactMethod.fax'])
     introduced_global_abilities = frozenset(['create FaxContactMethod'])
     class Meta:
         verbose_name = _('fax contact method')
@@ -1026,7 +1029,7 @@ class WebsiteContactMethod(ContactMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view url', 'edit url'])
+    introduced_abilities = frozenset(['view WebsiteContactMethod.url', 'edit WebsiteContactMethod.url'])
     introduced_global_abilities = frozenset(['create WebsiteContactMethod'])
     class Meta:
         verbose_name = _('website contact method')
@@ -1043,7 +1046,7 @@ class AIMContactMethod(ContactMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view screen_name', 'edit screen_name'])
+    introduced_abilities = frozenset(['view AIMContactMethod.screen_name', 'edit AIMContactMethod.screen_name'])
     introduced_global_abilities = frozenset(['create AIMContactMethod'])
     class Meta:
         verbose_name = _('AIM contact method')
@@ -1061,9 +1064,10 @@ class AddressContactMethod(ContactMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view street1', 'view street2', 'view city', 'view state',
-                                      'view country', 'view zip', 'edit street1', 'edit street2',
-                                      'edit city', 'edit state', 'edit country', 'edit zip'])
+    introduced_abilities = frozenset(['view AddressContactMethod.street1', 'view AddressContactMethod.street2', 'view AddressContactMethod.city',
+                                      'view AddressContactMethod.state', 'view AddressContactMethod.country', 'view AddressContactMethod.zip',
+                                      'edit AddressContactMethod.street1', 'edit AddressContactMethod.street2', 'edit AddressContactMethod.city',
+                                      'edit AddressContactMethod.state', 'edit AddressContactMethod.country', 'edit AddressContactMethod.zip'])
     introduced_global_abilities = frozenset(['create AddressContactMethod'])
     class Meta:
         verbose_name = _('address contact method')
@@ -1091,7 +1095,8 @@ class Subscription(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['contact_method', 'item'])
-    introduced_abilities = frozenset(['view contact_method', 'view item', 'view deep', 'edit deep'])
+    introduced_abilities = frozenset(['view Subscription.contact_method', 'view Subscription.item',
+                                      'view Subscription.deep', 'edit Subscription.deep'])
     introduced_global_abilities = frozenset(['create Subscription'])
     class Meta:
         verbose_name = _('subscription')
@@ -1100,7 +1105,7 @@ class Subscription(Item):
 
     # Fields
     contact_method = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'])
-    item           = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view action_notices'])
+    item           = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view Item.action_notices'])
     deep           = FixedBooleanField(_('deep subscription'), default=False)
 
 
@@ -1198,7 +1203,7 @@ class Folio(Collection):
 
     # Setup
     introduced_immutable_fields = frozenset(['group'])
-    introduced_abilities = frozenset(['view group'])
+    introduced_abilities = frozenset(['view Folio.group'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('folio')
@@ -1215,7 +1220,7 @@ class Membership(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['item', 'collection'])
-    introduced_abilities = frozenset(['view item', 'view collection', 'view permission_enabled', 'edit permission_enabled'])
+    introduced_abilities = frozenset(['view Membership.item', 'view Membership.collection', 'view Membership.permission_enabled', 'edit Membership.permission_enabled'])
     introduced_global_abilities = frozenset(['create Membership'])
     class Meta:
         verbose_name = _('membership')
@@ -1305,7 +1310,7 @@ class TextDocument(Document):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view body', 'edit body', 'add_transclusion'])
+    introduced_abilities = frozenset(['view TextDocument.body', 'edit TextDocument.body', 'add_transclusion'])
     introduced_global_abilities = frozenset(['create TextDocument'])
     class Meta:
         verbose_name = _('text document')
@@ -1325,8 +1330,8 @@ class DjangoTemplateDocument(TextDocument):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view layout', 'view override_default_layout',
-                                    'edit layout', 'edit override_default_layout'])
+    introduced_abilities = frozenset(['view DjangoTemplateDocument.layout', 'view DjangoTemplateDocument.override_default_layout',
+                                    'edit DjangoTemplateDocument.layout', 'edit DjangoTemplateDocument.override_default_layout'])
     introduced_global_abilities = frozenset(['create DjangoTemplateDocument'])
     class Meta:
         verbose_name = _('Django template document')
@@ -1364,7 +1369,7 @@ class FileDocument(Document):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view datafile', 'edit datafile'])
+    introduced_abilities = frozenset(['view FileDocument.datafile', 'edit FileDocument.datafile'])
     introduced_global_abilities = frozenset(['create FileDocument'])
     class Meta:
         verbose_name = _('file document')
@@ -1386,8 +1391,8 @@ class Transclusion(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['from_item', 'from_item_version_number', 'to_item'])
-    introduced_abilities = frozenset(['view from_item', 'view from_item_version_number',
-                                      'view from_item_index', 'view to_item', 'edit from_item_index'])
+    introduced_abilities = frozenset(['view Transclusion.from_item', 'view Transclusion.from_item_version_number',
+                                      'view Transclusion.from_item_index', 'view Transclusion.to_item', 'edit Transclusion.from_item_index'])
     introduced_global_abilities = frozenset(['create Transclusion'])
     class Meta:
         verbose_name = _('transclusion')
@@ -1413,7 +1418,7 @@ class Comment(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['item', 'item_version_number'])
-    introduced_abilities = frozenset(['view item', 'view item_version_number', 'view from_contact_method'])
+    introduced_abilities = frozenset(['view Comment.item', 'view Comment.item_version_number', 'view Comment.from_contact_method'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('comment')
@@ -1483,8 +1488,10 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
 
     # Setup
     introduced_immutable_fields = frozenset(['text_document'])
-    introduced_abilities = frozenset(['view text_document', 'view text_document_version_number', 'view start_index', 'view length',
-                                      'edit text_document_version_number', 'edit start_index', 'edit length']) 
+    introduced_abilities = frozenset(['view TextDocumentExcerpt.text_document', 'view TextDocumentExcerpt.text_document_version_number',
+                                      'view TextDocumentExcerpt.start_index', 'view TextDocumentExcerpt.length',
+                                      'edit TextDocumentExcerpt.text_document_version_number', 'edit TextDocumentExcerpt.start_index',
+                                      'edit TextDocumentExcerpt.length']) 
     introduced_global_abilities = frozenset(['create TextDocumentExcerpt'])
     class Meta:
         verbose_name = _('text document excerpt')
@@ -1517,9 +1524,10 @@ class ViewerRequest(Item):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['add_sub_path', 'view aliased_item', 'view viewer', 'view action',
-                                      'view query_string', 'view format', 'edit aliased_item', 'edit viewer',
-                                      'edit action', 'edit query_string', 'edit format'])
+    introduced_abilities = frozenset(['add_sub_path', 'view ViewerRequest.aliased_item', 'view ViewerRequest.viewer',
+                                      'view ViewerRequest.action', 'view ViewerRequest.query_string', 'view ViewerRequest.format',
+                                      'edit ViewerRequest.aliased_item', 'edit ViewerRequest.viewer', 'edit ViewerRequest.action',
+                                      'edit ViewerRequest.query_string', 'edit ViewerRequest.format'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('viewer request')
@@ -1556,7 +1564,7 @@ class Site(ViewerRequest):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view hostname', 'edit hostname', 'view default_layout', 'edit default_layout'])
+    introduced_abilities = frozenset(['view Site.hostname', 'edit Site.hostname', 'view Site.default_layout', 'edit Site.default_layout'])
     introduced_global_abilities = frozenset(['create Site'])
     class Meta:
         verbose_name = _('site')
@@ -1586,7 +1594,7 @@ class CustomUrl(ViewerRequest):
 
     # Setup
     introduced_immutable_fields = frozenset(['parent_url', 'path'])
-    introduced_abilities = frozenset(['view parent_url', 'view path'])
+    introduced_abilities = frozenset(['view CustomUrl.parent_url', 'view CustomUrl.path'])
     introduced_global_abilities = frozenset(['create CustomUrl'])
     class Meta:
         verbose_name = _('custom URL')
@@ -1614,7 +1622,7 @@ class DemeSetting(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['key'])
-    introduced_abilities = frozenset(['view key', 'view value', 'edit value'])
+    introduced_abilities = frozenset(['view DemeSetting.key', 'view DemeSetting.value', 'edit DemeSetting.value'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('Deme setting')
@@ -1710,16 +1718,16 @@ class ActionNotice(models.Model):
             if permission_cache.agent_can_global(agent, 'do_anything'):
                 recursive_filter = None
             else:
-                visible_memberships = permission_cache.filter_items(agent, 'view item', Membership.objects)
+                visible_memberships = permission_cache.filter_items(agent, 'view Membership.item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             item_parent_pks_query = self.action_item.all_parents_in_thread(True, recursive_filter).values('pk').query
             action_agent_parent_pks_query = self.action_agent.all_parents_in_thread(True, recursive_filter).values('pk').query
             return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
                                                active=True, contact_method=email_contact_method, deep=True)
-        if not (permission_cache.agent_can(agent, 'view action_notices', self.action_item) or permission_cache.agent_can(agent, 'view action_notices', self.action_agent)):
+        if not (permission_cache.agent_can(agent, 'view Item.action_notices', self.action_item) or permission_cache.agent_can(agent, 'view Item.action_notices', self.action_agent)):
             return None
         if isinstance(self, RelationActionNotice):
-            if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
+            if not permission_cache.agent_can(agent, 'view %s.%s' % (self.from_field_model, self.from_field_name), self.from_item):
                 return None
         try:
             arbitrary_subscription = direct_subscriptions().get()
@@ -1790,9 +1798,9 @@ class ActionNotice(models.Model):
                 comment_name = get_viewable_name(viewer.context, comment)
                 comment_creator_email_address = None
                 if comment.from_contact_method and issubclass(comment.from_contact_method.actual_item_type(), EmailContactMethod):
-                    if permission_cache.agent_can(agent, 'view from_contact_method', comment):
+                    if permission_cache.agent_can(agent, 'view Comment.from_contact_method', comment):
                         from_email_contact_method = comment.from_contact_method.downcast()
-                        if permission_cache.agent_can(agent, 'view email', from_email_contact_method):
+                        if permission_cache.agent_can(agent, 'view EmailContactMethod.email', from_email_contact_method):
                             comment_creator_email_address = from_email_contact_method.email
                 if comment_creator_email_address:
                     from_email_name = action_agent_name
@@ -2007,9 +2015,23 @@ class PossibleItemAbilitiesIterable(object):
     def __iter__(self):
         choices = set()
         for item_type in all_item_types():
-            choices |= set([(x,x) for x in item_type.introduced_abilities])
+            for ability in item_type.introduced_abilities:
+                if ability.startswith('view ') or ability.startswith('edit '):
+                    action_str, parameter_str = ability.split(' ', 1)
+                    item_type_str, field_str = parameter_str.split('.', 1)
+                    assert item_type.__name__ == item_type_str
+                    field = item_type._meta.get_field_by_name(field_str)[0]
+                    if isinstance(field, models.related.RelatedObject):
+                        field_name = field.field.rel.related_name.replace('_', ' ')
+                    else:
+                        field_name = field.verbose_name
+                    friendly_name = u'%s %s (%s)' % (capfirst(action_str), field_name, item_type._meta.verbose_name)
+                else:
+                    friendly_name = capfirst(ability.replace('_', ' '))
+                choice = (ability, friendly_name)
+                choices.add(choice)
         choices = list(choices)
-        choices.sort(key=lambda x: x[1])
+        choices.sort(key=lambda x: x[1].lower())
         for x in choices:
             yield x
 
@@ -2025,9 +2047,18 @@ class PossibleGlobalAbilitiesIterable(object):
     def __iter__(self):
         choices = set()
         for item_type in all_item_types():
-            choices |= set([(x,x) for x in item_type.introduced_global_abilities])
+            for ability in item_type.introduced_global_abilities:
+                if ability.startswith('create '):
+                    action_str, item_type_str = ability.split(' ', 1)
+                    assert item_type.__name__ == item_type_str
+                    friendly_name = u'%s %s' % (capfirst(action_str), item_type._meta.verbose_name_plural)
+                else:
+                    friendly_name = capfirst(ability.replace('_', ' '))
+
+                choice = (ability, friendly_name)
+                choices.add(choice)
         choices = list(choices)
-        choices.sort(key=lambda x: x[1])
+        choices.sort(key=lambda x: x[1].lower())
         for x in choices:
             yield x
 
@@ -2043,7 +2074,7 @@ class PossibleItemAndGlobalAbilitiesIterable(object):
     def __iter__(self):
         choices = set(PossibleItemAbilitiesIterable()) | set(PossibleGlobalAbilitiesIterable())
         choices = list(choices)
-        choices.sort(key=lambda x: x[1])
+        choices.sort(key=lambda x: x[1].lower())
         for x in choices:
             yield x
 

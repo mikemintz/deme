@@ -425,7 +425,7 @@ class Viewer(object):
 
     def _set_default_layout(self):
         self.context['layout'] = 'default_layout.html'
-        if self.cur_agent_can('view default_layout', self.cur_site):
+        if self.cur_agent_can('view Site.default_layout', self.cur_site):
             if self.cur_site.default_layout:
                 self.context['layout'] = self.construct_template(self.cur_site.default_layout)
         else:
@@ -439,7 +439,7 @@ class Viewer(object):
                 break
 
             # Set next_node
-            if self.cur_agent_can('view layout', cur_node):
+            if self.cur_agent_can('view DjangoTemplateDocument.layout', cur_node):
                 next_node = cur_node.layout
             else:
                 next_node = None
@@ -457,7 +457,7 @@ class Viewer(object):
                 extends_string = '{%% extends layout%s %%}\n' % next_node.pk
 
             # Set body_string
-            if self.cur_agent_can('view body', cur_node):
+            if self.cur_agent_can('view TextDocument.body', cur_node):
                 body_string = cur_node.body
             else:
                 body_string = ''

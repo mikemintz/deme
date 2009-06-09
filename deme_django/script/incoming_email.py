@@ -50,7 +50,7 @@ def handle_email(msg, item_id):
 
     agent = email_contact_method.agent
 
-    #TODO permissions to view name: technically you could figure out the name of an item by commenting on it here (same issue in cms/views.py)
+    #TODO permissions to view Item.name: technically you could figure out the name of an item by commenting on it here (same issue in cms/views.py)
     if issubclass(item.actual_item_type(), Comment):
         comment_name = item.display_name()
         if not comment_name.lower().startswith('re: '):

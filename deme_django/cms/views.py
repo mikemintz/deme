@@ -13,6 +13,7 @@ from django.conf import settings
 from django.utils import simplejson
 from django.utils.text import capfirst
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.fields import FieldDoesNotExist
 import django.contrib.syndication.feeds
 import django.contrib.syndication.views
 from django.views.decorators.http import require_POST
@@ -34,8 +35,6 @@ class ItemViewer(Viewer):
         offset = int(self.request.GET.get('offset', 0))
         limit = int(self.request.GET.get('limit', 100))
         active = self.request.GET.get('active', '1') == '1'
-        item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
-        item_types.sort(key=lambda x:x['name'].lower())
         self.context['search_query'] = self.request.GET.get('q', '')
         self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         items = self.accepted_item_type.objects
@@ -55,7 +54,7 @@ class ItemViewer(Viewer):
             if self.cur_agent_can_global('do_anything'):
                 recursive_filter = None
             else:
-                visible_memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', Membership.objects)
+                visible_memberships = self.permission_cache.filter_items(self.cur_agent, 'view Membership.item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=collection.all_contained_collection_members(recursive_filter).values('pk').query)
         for filter_string in self.request.GET.getlist('filter'):
@@ -64,10 +63,14 @@ class ItemViewer(Viewer):
             parts = filter_string.split('.')
             target_pk = parts.pop()
             fields = []
+            item_types = []
             cur_item_type = self.accepted_item_type
             for part in parts:
-                field = cur_item_type._meta.get_field_by_name(part)[0]
+                field, model, direct, m2m = cur_item_type._meta.get_field_by_name(part)
+                if model is None:
+                    model = cur_item_type
                 fields.append(field)
+                item_types.append(model)
                 if isinstance(field, models.ForeignKey):
                     cur_item_type = field.rel.to
                 elif isinstance(field, models.related.RelatedObject):
@@ -77,51 +80,51 @@ class ItemViewer(Viewer):
                 if not issubclass(cur_item_type, Item):
                     raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
 
-            def filter_by_filter(queryset, fields):
+            def filter_by_filter(queryset, fields, item_types):
                 #TODO make sure everything is active
                 if not fields:
                     return queryset.filter(pk=target_pk)
                 field = fields[0]
+                item_type = item_types[0]
                 if isinstance(field, models.ForeignKey):
                     next_item_type = field.rel.to
                 elif isinstance(field, models.related.RelatedObject):
                     next_item_type = field.model
-                next_queryset = filter_by_filter(next_item_type.objects, fields[1:])
+                next_queryset = filter_by_filter(next_item_type.objects, fields[1:], item_types[1:])
                 if isinstance(field, models.ForeignKey):
                     query_dict = {field.name + '__in': next_queryset}
                     result = queryset.filter(**query_dict)
-                    result = self.permission_cache.filter_items(self.cur_agent, 'view ' + field.name, result)
+                    ability = 'view %s.%s' % (item_type.__name__, field.name)
+                    result = self.permission_cache.filter_items(self.cur_agent, ability, result)
                 elif isinstance(field, models.related.RelatedObject):
                     if not isinstance(field.field, models.OneToOneField):
-                        next_queryset = self.permission_cache.filter_items(self.cur_agent, 'view ' + field.field.name, next_queryset)
+                        ability = 'view %s.%s' % (next_item_type.__name__, field.field.name)
+                        next_queryset = self.permission_cache.filter_items(self.cur_agent, ability, next_queryset)
                     query_dict = {'pk__in': next_queryset.values(field.field.name).query}
                     result = queryset.filter(**query_dict)
                 else:
                     assert False
                 return result
-            items = filter_by_filter(items, fields)
-        listable_items = self.permission_cache.filter_items(self.cur_agent, 'view name', items)
+            items = filter_by_filter(items, fields, item_types)
+        listable_items = self.permission_cache.filter_items(self.cur_agent, 'view Item.name', items)
         for ability in self.request.GET.getlist('ability'):
             listable_items = self.permission_cache.filter_items(self.cur_agent, ability, listable_items)
-        n_opposite_active_items = listable_items.filter(active=(not active)).count()
         listable_items = listable_items.filter(active=active)
         listable_items = listable_items.order_by('id')
-        n_items = items.count()
         n_listable_items = listable_items.count()
         items = [item for item in listable_items.all()[offset:offset+limit]]
+        item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
+        item_types.sort(key=lambda x:x['name'].lower())
         self.context['item_types'] = item_types
         self.context['items'] = items
-        self.context['n_items'] = n_items
         self.context['n_listable_items'] = n_listable_items
-        self.context['n_unlistable_items'] = n_items - n_listable_items - n_opposite_active_items
-        self.context['n_opposite_active_items'] = n_opposite_active_items
         self.context['offset'] = offset
         self.context['limit'] = limit
         self.context['list_start_i'] = offset + 1
         self.context['list_end_i'] = min(offset + limit, n_listable_items)
         self.context['active'] = active
         self.context['collection'] = collection
-        self.context['all_collections'] = self.permission_cache.filter_items(self.cur_agent, 'view name', Collection.objects.filter(active=True)).order_by('name')
+        self.context['all_collections'] = self.permission_cache.filter_items(self.cur_agent, 'view Item.name', Collection.objects.filter(active=True)).order_by('name')
 
     def type_list_html(self):
         self.context['action_title'] = ''
@@ -138,7 +141,7 @@ class ItemViewer(Viewer):
     def type_list_rss(self):
         self._type_list_helper()
         item_list = self.context['items'] #TODO probably not useful to get this ordering
-        #TODO permissions to view name/description
+        #TODO permissions to view Item.name/Item.description
         class ItemListFeed(django.contrib.syndication.feeds.Feed):
             title = "Items"
             description = "Items"
@@ -186,7 +189,7 @@ class ItemViewer(Viewer):
     def type_recentchanges_html(self):
         self.context['action_title'] = 'Recent Changes'
         template = loader.get_template('item/recentchanges.html')    
-        viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view action_notices', Item.objects)
+        viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view Item.action_notices', Item.objects)
         viewable_action_notices = ActionNotice.objects.filter(action_item__in=viewable_items.values("pk").query).order_by('-action_time')
         
         action_notice_pk_to_object_map = {}
@@ -237,26 +240,26 @@ class ItemViewer(Viewer):
     def item_show_rss(self):
         from cms.templatetags.item_tags import get_viewable_name
         viewer = self
-        self.require_ability('view action_notices', self.item)
+        self.require_ability('view Item.action_notices', self.item)
         action_notices = ActionNotice.objects.filter(Q(action_item=self.item) | Q(action_agent=self.item)).order_by('action_time') #TODO limit
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
             if action_notice_subclass == RelationActionNotice:
-                self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
+                self.permission_cache.filter_items(self.cur_agent, 'view Item.name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
             for action_notice in specific_action_notices:
                 action_notice_pk_to_object_map[action_notice.pk] = action_notice
-        self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
+        self.permission_cache.filter_items(self.cur_agent, 'view Item.name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
         class ItemShowFeed(django.contrib.syndication.feeds.Feed):
             title = get_viewable_name(viewer.context, viewer.item)
-            description = viewer.item.description if viewer.cur_agent_can('view description', viewer.item) else ''
+            description = viewer.item.description if viewer.cur_agent_can('view Item.description', viewer.item) else ''
             link = reverse('item_url', kwargs={'viewer': viewer.viewer_name, 'action': 'show', 'noun': viewer.item.pk, 'format': 'rss'})
             def items(self):
                 result = []
                 for action_notice in action_notices:
                     action_notice = action_notice_pk_to_object_map[action_notice.pk]
                     if isinstance(action_notice, RelationActionNotice):
-                        if not viewer.cur_agent_can('view %s' % action_notice.from_field_name, action_notice.from_item):
+                        if not viewer.cur_agent_can('view %s.%s' % (action_notice.from_field_model, action_notice.from_field_name), action_notice.from_item):
                             continue
                     item = {}
                     item['action_time'] = action_notice.action_time
@@ -284,7 +287,17 @@ class ItemViewer(Viewer):
         self.context['action_title'] = 'Copy'
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
-        fields_to_copy = [field_name for field_name in form_class.base_fields if self.cur_agent_can('view %s' % field_name, self.item)]
+        fields_to_copy = []
+        for field_name in form_class.base_fields:
+            try:
+                model = self.item._meta.get_field_by_name(field_name)[1]
+            except FieldDoesNotExist:
+                # For things like action_summary
+                continue
+            if model is None:
+                model = type(self.item)
+            if self.cur_agent_can('view %s.%s' % (model.__name__, field_name), self.item):
+                fields_to_copy.append(field_name)
         form_initial = {}
         for field_name in fields_to_copy:
             try:
@@ -308,10 +321,10 @@ class ItemViewer(Viewer):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         if form is None:
-            fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
+            fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
             form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
             form = form_class(instance=self.item)
-            fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
+            fields_can_view = set([x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('view ')])
             initial_fields_set = set(form.initial.iterkeys())
             fields_must_blank = initial_fields_set - fields_can_view
             for field_name in fields_must_blank:
@@ -326,7 +339,7 @@ class ItemViewer(Viewer):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         new_item = self.item
-        fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x[0] == 'edit']
+        fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
         form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
@@ -526,7 +539,7 @@ class AuthenticationMethodViewer(ItemViewer):
         if self.request.method == 'GET':
             login_as_agents = Agent.objects.filter(active=True).order_by('name')
             login_as_agents = self.permission_cache.filter_items(self.cur_agent, 'login_as', login_as_agents)
-            self.permission_cache.filter_items(self.cur_agent, 'view name', login_as_agents)
+            self.permission_cache.filter_items(self.cur_agent, 'view Item.name', login_as_agents)
             template = loader.get_template('authenticationmethod/login.html')
             self.context['redirect'] = self.request.GET['redirect']
             self.context['login_as_agents'] = login_as_agents
@@ -664,11 +677,11 @@ class CollectionViewer(ItemViewer):
         memberships = self.item.child_memberships
         memberships = memberships.filter(active=True)
         memberships = memberships.filter(item__active=True)
-        memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', memberships)
+        memberships = self.permission_cache.filter_items(self.cur_agent, 'view Membership.item', memberships)
         memberships = memberships.select_related('item')
         if memberships:
-            self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
-        self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can(self.cur_agent, 'view name', x.item), x.item.name))
+            self.permission_cache.filter_items(self.cur_agent, 'view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+        self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can(self.cur_agent, 'view Item.name', x.item), x.item.name))
         self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
         template = loader.get_template('collection/show.html')
         return HttpResponse(template.render(self.context))
@@ -719,7 +732,7 @@ class GroupViewer(CollectionViewer):
         self.context['action_title'] = ''
         try:
             folio = self.item.folios.get()
-            if not self.permission_cache.agent_can(self.cur_agent, 'view group', folio):
+            if not self.permission_cache.agent_can(self.cur_agent, 'view Folio.group', folio):
                 folio = None
         except:
             folio = None
@@ -770,10 +783,10 @@ class TextDocumentViewer(DocumentViewer):
         self.item.body = ''.join(body_as_list)
 
         if form is None:
-            fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
+            fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
             form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
             form = form_class(instance=self.item)
-            fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
+            fields_can_view = set([x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('view ')])
             initial_fields_set = set(form.initial.iterkeys())
             fields_must_blank = initial_fields_set - fields_can_view
             for field_name in fields_must_blank:
@@ -788,7 +801,7 @@ class TextDocumentViewer(DocumentViewer):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         new_item = self.item
-        fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
+        fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
         form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
@@ -913,7 +926,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
             comment = form.save(commit=False)
             item = comment.item.downcast()
             if not comment.name:
-                #TODO permissions to view name: technically you could figure out the name of an item by commenting on it here
+                #TODO permissions to view Item.name: technically you could figure out the name of an item by commenting on it here
                 comment.name = item.display_name()
                 if not comment.name.lower().startswith('re: '):
                     comment.name = 'Re: %s' % comment.name
@@ -957,7 +970,7 @@ class TextDocumentExcerptViewer(ExcerptViewer, TextDocumentViewer):
                 text_document.copy_fields_from_version(text_document_version_number)
             except:
                 return self.render_error('Invalid Form Data', "Could not find the specified TextDocument")
-            self.require_ability('view body', text_document)
+            self.require_ability('view TextDocument.body', text_document)
             body = text_document.body[start_index:start_index+length]
             excerpt = TextDocumentExcerpt(body=body, text_document=text_document, text_document_version_number=text_document_version_number, start_index=start_index, length=length)
             excerpts.append(excerpt)

@@ -1,0 +1,13 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+<form method="post" action="{% url item_url viewer=viewer_name,action="updatecollectionpermissions",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+<div>
+{% collection_permission_editor item %}
+</div>
+<button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Save Permissions</span></button>
+</form>
+
+{% endblock content %}
+

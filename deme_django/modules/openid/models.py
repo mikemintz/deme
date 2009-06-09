@@ -14,7 +14,7 @@ class OpenidAccount(AuthenticationMethod):
 
     # Setup
     introduced_immutable_fields = frozenset(['openid_url'])
-    introduced_abilities = frozenset(['view openid_url'])
+    introduced_abilities = frozenset(['view OpenidAccount.openid_url'])
     introduced_global_abilities = frozenset(['create OpenidAccount'])
     class Meta:
         verbose_name = _('OpenID account')

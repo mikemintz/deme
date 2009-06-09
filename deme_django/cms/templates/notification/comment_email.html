@@ -15,7 +15,7 @@ commented on
 
 <hr />
 
-{% ifagentcan 'view body' comment %}
+{% ifagentcan 'view TextDocument.body' comment %}
 {{ comment.body|linebreaks }}
 {% else %}
 <p>
