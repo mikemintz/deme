@@ -58,7 +58,7 @@ def get_viewable_name(context, item):
     If the logged in agent can view the item's name, return the item's name.
     Otherwise, return a string like "GroupAgent 51".
     """
-    can_view_name_field = agentcan_helper(context, 'view name', item)
+    can_view_name_field = agentcan_helper(context, 'view Item.name', item)
     return item.display_name(can_view_name_field)
 
 
@@ -103,7 +103,6 @@ def icon_url(item_type, size=32):
         FileDocument:           'mimetypes/misc',
         Folio:                  'apps/kfm',
         Group:                  'apps/Login%20Manager',
-        ImageDocument:          'mimetypes/images',
         Item:                   'apps/kblackbox',
         Collection:             'filesystems/folder_blue',
         Membership:             'filesystems/folder_documents',
@@ -140,47 +139,71 @@ def media_url(path):
         else:
             return '' # Fail silently for invalid paths.
 
-@register.simple_tag
-def list_results_navigator(viewer_name, collection, search_query, active, offset, limit, n_results, max_pages):
-    """
-    Make an HTML pagination navigator (page number links with prev and next
-    links on both sides).
-    
-    The prev link will have class="list_results_prev". The next link will have
-    class="list_results_next". Each page number link will have
-    class="list_results_step". The current page number will be in a span with
-    class="list_results_highlighted".
-    """
-    if n_results <= limit:
-        return ''
-    url_prefix = reverse('item_type_url', kwargs={'viewer': viewer_name}) + '?limit=%s&amp;' % limit
-    if search_query:
-        url_prefix += 'q=%s&amp;' % search_query
-    if not active:
-        url_prefix += 'active=0&amp;'
-    if collection:
-        url_prefix += 'collection=%s&amp;' % collection.pk
-    result = []
-    # Add a prev link
-    if offset > 0:
-        new_offset = max(0, offset - limit)
-        prev_text = _('Prev')
-        link = u'<a class="list_results_prev" href="%soffset=%d">&laquo; %s</a>' % (url_prefix, new_offset, prev_text)
-        result.append(link)
-    # Add the page links
-    for new_offset in xrange(max(0, offset - limit * max_pages), min(n_results - 1, offset + limit * max_pages), limit):
-        if new_offset == offset:
-            link = '<span class="list_results_highlighted">%d</span>' % (1 + new_offset / limit,)
-        else:
-            link = '<a class="list_results_step" href="%soffset=%d">%d</a>' % (url_prefix, new_offset, 1 + new_offset / limit)
-        result.append(link)
-    # Add a next link
-    if offset + limit < n_results:
-        new_offset = offset + limit
-        next_text = _('Next')
-        link = u'<a class="list_results_next" href="%soffset=%d">%s &raquo;</a>' % (url_prefix, new_offset, next_text)
-        result.append(link)
-    return ''.join(result)
+
+class ListResultsNavigator(template.Node):
+    def __init__(self, max_pages):
+        self.max_pages = template.Variable(max_pages)
+
+    def __repr__(self):
+        return "<ListResultsNavigator>"
+
+    def render(self, context):
+        """
+        Make an HTML pagination navigator (page number links with prev and next
+        links on both sides).
+        
+        The prev link will have class="list_results_prev". The next link will have
+        class="list_results_next". Each page number link will have
+        class="list_results_step". The current page number will be in a span with
+        class="list_results_highlighted".
+        """
+        try:
+            max_pages = self.max_pages.resolve(context)
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve max_pages variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+        viewer = context['_viewer']
+        n_results = context['n_listable_items']
+        limit = context['limit']
+        offset = context['offset']
+        def url_with_offset(offset):
+            querydict = viewer.request.GET.copy()
+            querydict['offset'] = str(offset)
+            return '%s?%s' % (viewer.request.path, querydict.urlencode())
+        if n_results <= limit:
+            return ''
+        result = []
+        # Add a prev link
+        if offset > 0:
+            new_offset = max(0, offset - limit)
+            prev_text = _('Prev')
+            link = u'<a class="list_results_prev" href="%s">&laquo; %s</a>' % (url_with_offset(new_offset), prev_text)
+            result.append(link)
+        # Add the page links
+        for new_offset in xrange(max(0, offset - limit * max_pages), min(n_results - 1, offset + limit * max_pages), limit):
+            if new_offset == offset:
+                link = '<span class="list_results_highlighted">%d</span>' % (1 + new_offset / limit,)
+            else:
+                link = '<a class="list_results_step" href="%s">%d</a>' % (url_with_offset(new_offset), 1 + new_offset / limit)
+            result.append(link)
+        # Add a next link
+        if offset + limit < n_results:
+            new_offset = offset + limit
+            next_text = _('Next')
+            link = u'<a class="list_results_next" href="%s">%s &raquo;</a>' % (url_with_offset(new_offset), next_text)
+            result.append(link)
+        return ''.join(result)
+
+
+@register.tag
+def list_results_navigator(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError, "%r takes one arguments" % bits[0]
+    return ListResultsNavigator(bits[1])
+
 
 class UniversalEditButton(template.Node):
     def __init__(self):
@@ -191,7 +214,7 @@ class UniversalEditButton(template.Node):
 
     def render(self, context):
         item = context['item']
-        if item and agentcan_helper(context, 'edit', item, wildcard_suffix=True):
+        if item and agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
             edit_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % item.version_number
             return '<link rel="alternate" type="application/wiki" title="Edit" href="%s" />' % escape(edit_url)
         else:
@@ -205,9 +228,8 @@ def universal_edit_button(parser, token):
     return UniversalEditButton()
 
 class IfAgentCan(template.Node):
-    def __init__(self, ability, ability_parameter, item, nodelist_true, nodelist_false):
+    def __init__(self, ability, item, nodelist_true, nodelist_false):
         self.ability = template.Variable(ability)
-        self.ability_parameter = template.Variable(ability_parameter)
         self.item = template.Variable(item)
         self.nodelist_true, self.nodelist_false = nodelist_true, nodelist_false
 
@@ -230,14 +252,6 @@ class IfAgentCan(template.Node):
                 return "[Couldn't resolve ability variable]"
             else:
                 return '' # Fail silently for invalid variables.
-        try:
-            ability_parameter = self.ability_parameter.resolve(context)
-        except template.VariableDoesNotExist:
-            if settings.DEBUG:
-                return "[Couldn't resolve ability_parameter variable]"
-            else:
-                return '' # Fail silently for invalid variables.
-        ability = '%s %s' % (ability, ability_parameter) if ability_parameter else ability
         if agentcan_helper(context, ability, item):
             return self.nodelist_true.render(context)
         else:
@@ -246,8 +260,8 @@ class IfAgentCan(template.Node):
 @register.tag
 def ifagentcan(parser, token):
     bits = list(token.split_contents())
-    if len(bits) != 4:
-        raise template.TemplateSyntaxError, "%r takes three arguments" % bits[0]
+    if len(bits) != 3:
+        raise template.TemplateSyntaxError, "%r takes two arguments" % bits[0]
     end_tag = 'end' + bits[0]
     nodelist_true = parser.parse(('else', end_tag))
     token = parser.next_token()
@@ -256,12 +270,11 @@ def ifagentcan(parser, token):
         parser.delete_first_token()
     else:
         nodelist_false = template.NodeList()
-    return IfAgentCan(bits[1], bits[2], bits[3], nodelist_true, nodelist_false)
+    return IfAgentCan(bits[1], bits[2], nodelist_true, nodelist_false)
 
 class IfAgentCanGlobal(template.Node):
-    def __init__(self, ability, ability_parameter, nodelist_true, nodelist_false):
+    def __init__(self, ability, nodelist_true, nodelist_false):
         self.ability = template.Variable(ability)
-        self.ability_parameter = template.Variable(ability_parameter)
         self.nodelist_true, self.nodelist_false = nodelist_true, nodelist_false
 
     def __repr__(self):
@@ -276,14 +289,6 @@ class IfAgentCanGlobal(template.Node):
                 return "[Couldn't resolve ability variable]"
             else:
                 return '' # Fail silently for invalid variables.
-        try:
-            ability_parameter = self.ability_parameter.resolve(context)
-        except template.VariableDoesNotExist:
-            if settings.DEBUG:
-                return "[Couldn't resolve ability_parameter variable]"
-            else:
-                return '' # Fail silently for invalid variables.
-        ability = '%s %s' % (ability, ability_parameter) if ability_parameter else ability
         if agentcan_global_helper(context, ability):
             return self.nodelist_true.render(context)
         else:
@@ -292,7 +297,7 @@ class IfAgentCanGlobal(template.Node):
 @register.tag
 def ifagentcanglobal(parser, token):
     bits = list(token.split_contents())
-    if len(bits) != 3:
+    if len(bits) != 2:
         raise template.TemplateSyntaxError, "%r takes two arguments" % bits[0]
     end_tag = 'end' + bits[0]
     nodelist_true = parser.parse(('else', end_tag))
@@ -302,7 +307,7 @@ def ifagentcanglobal(parser, token):
         parser.delete_first_token()
     else:
         nodelist_false = template.NodeList()
-    return IfAgentCanGlobal(bits[1], bits[2], nodelist_true, nodelist_false)
+    return IfAgentCanGlobal(bits[1], nodelist_true, nodelist_false)
 
 # remember this includes inactive comments, which should be displayed differently after calling this
 def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments):
@@ -313,16 +318,16 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
         if agentcan_global_helper(context, 'do_anything'):
             recursive_filter = None
         else:
-            visible_memberships = permission_cache.filter_items(context['cur_agent'], 'view item', Membership.objects)
+            visible_memberships = permission_cache.filter_items(context['cur_agent'], 'view Membership.item', Membership.objects)
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         members_and_me_pks_query = Item.objects.filter(active=True).filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_collection_members(recursive_filter).values('pk').query)).values('pk').query
         comment_pks = RecursiveComment.objects.filter(parent__in=members_and_me_pks_query).values_list('child', flat=True)
     else:
         comment_pks = RecursiveComment.objects.filter(parent=item).values_list('child', flat=True)
     if comment_pks:
-        permission_cache.filter_items(context['cur_agent'], 'view created_at', Comment.objects.filter(pk__in=comment_pks))
-        permission_cache.filter_items(context['cur_agent'], 'view creator', Comment.objects.filter(pk__in=comment_pks))
-        permission_cache.filter_items(context['cur_agent'], 'view name', Agent.objects.filter(pk__in=Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
+        permission_cache.filter_items(context['cur_agent'], 'view Item.created_at', Comment.objects.filter(pk__in=comment_pks))
+        permission_cache.filter_items(context['cur_agent'], 'view Item.creator', Comment.objects.filter(pk__in=comment_pks))
+        permission_cache.filter_items(context['cur_agent'], 'view Item.name', Agent.objects.filter(pk__in=Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
         for comment_subclass in comment_subclasses:
             new_comments = comment_subclass.objects.filter(pk__in=comment_pks)
             related_fields = ['creator']
@@ -382,7 +387,7 @@ class ItemToolbar(template.Node):
             if agentcan_helper(context, 'add_contact_method', item):
                 result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a>' % add_contact_method_url)
         result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscribe</a>' % subscribe_url)
-        if agentcan_helper(context, 'edit', item, wildcard_suffix=True):
+        if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
             result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-pencil"></span>Edit</a>' % edit_url)
         if agentcan_global_helper(context, 'create %s' % item.item_type_string):
             result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-copy"></span>Copy</a>' % copy_url)
@@ -485,7 +490,7 @@ class ItemDetails(template.Node):
 
         result.append('<table class="twocol" cellspacing="0" style="font-size: 85%;">')
 
-        if agentcan_helper(context, 'view name', item) and item.name:
+        if agentcan_helper(context, 'view Item.name', item) and item.name:
             result.append('<tr>')
             result.append('<th>Name:</th>')
             result.append('<td>')
@@ -493,7 +498,7 @@ class ItemDetails(template.Node):
             result.append('</td>')
             result.append('</tr>')
 
-        if agentcan_helper(context, 'view description', item) and item.description:
+        if agentcan_helper(context, 'view Item.description', item) and item.description:
             result.append('<tr>')
             result.append('<th>Preface:</th>')
             result.append('<td>')
@@ -520,7 +525,7 @@ class ItemDetails(template.Node):
         result.append('</td>')
         result.append('</tr>')
 
-        if agentcan_helper(context, 'view created_at', item):
+        if agentcan_helper(context, 'view Item.created_at', item):
             result.append('<tr>')
             result.append('<th>Created:</th>')
             result.append('<td>')
@@ -528,7 +533,7 @@ class ItemDetails(template.Node):
             result.append('</td>')
             result.append('</tr>')
 
-        if agentcan_helper(context, 'view creator', item):
+        if agentcan_helper(context, 'view Item.creator', item):
             result.append('<tr>')
             result.append('<th>Creator:</th>')
             result.append('<td>')
@@ -594,23 +599,23 @@ class CalculateComments(template.Node):
                 result.append("""<div class="comment_header">""")
                 result.append("""<div style="float: right;"><a href="%s?item=%s&amp;item_version_number=%s&amp;redirect=%s">[+] Reply</a></div>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
                 if issubclass(comment.item.actual_item_type(), Comment):
-                    if agentcan_helper(context, 'view body', comment):
+                    if agentcan_helper(context, 'view TextDocument.body', comment):
                         comment_name = escape(truncate_words(comment.body, 4))
                     else:
                         comment_name = comment.display_name(can_view_name_field=False)
                 else:
                     comment_name = escape(get_viewable_name(context, comment))
                 result.append("""<a href="%s">%s</a>""" % (comment.get_absolute_url(), comment_name))
-                if agentcan_helper(context, 'view creator', comment):
+                if agentcan_helper(context, 'view Item.creator', comment):
                     result.append('by <a href="%s">%s</a>' % (comment.creator.get_absolute_url(), escape(get_viewable_name(context, comment.creator))))
                 if item.pk != comment.item_id and nesting_level == 0:
                     result.append('for <a href="%s">%s</a>' % (comment.item.get_absolute_url(), escape(get_viewable_name(context, comment.item))))
-                if agentcan_helper(context, 'view created_at', comment):
+                if agentcan_helper(context, 'view Item.created_at', comment):
                     result.append('<span title="%s">%s ago</span>' % (comment.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(comment.created_at)))
                 result.append("</div>")
                 if comment.active:
                     if isinstance(comment, TextComment):
-                        if agentcan_helper(context, 'view body', comment):
+                        if agentcan_helper(context, 'view TextDocument.body', comment):
                             comment_body = escape(comment.body).replace('\n', '<br />')
                         else:
                             comment_body = ''
@@ -647,17 +652,21 @@ class PermissionsBox(template.Node):
         permission_cache = context['_viewer'].permission_cache
         item = context['item']
         cur_agent = context['cur_agent']
-        abilities = sorted(permission_cache.item_abilities(cur_agent, item))
+        abilities = permission_cache.item_abilities(cur_agent, item)
 
         result = []
         if agentcan_helper(context, 'do_anything', item):
             modify_permissions_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'itempermissions'})
-            result.append("""<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify permissions</a>""" % modify_permissions_url)
+            result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify permissions</a></div>""" % modify_permissions_url)
+            if issubclass(item.actual_item_type(), Collection):
+                modify_collection_permissions_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'collectionpermissions'})
+                result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify collection permissions</a></div>""" % modify_collection_permissions_url)
         elif agentcan_helper(context, 'modify_privacy_settings', item):
             modify_privacy_url = reverse('item_url', kwargs={'viewer': item.item_type_string.lower(), 'noun': item.pk, 'action': 'privacy'})
-            result.append("""<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify privacy</a>""" % modify_privacy_url)
-        for ability in abilities:
-            result.append("""<div>%s</div>""" % escape(ability))
+            result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify privacy</a></div>""" % modify_privacy_url)
+        friendly_names = [x[1] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if x[0] in abilities]
+        for friendly_name in friendly_names:
+            result.append("""<div>%s</div>""" % escape(friendly_name))
         return '\n'.join(result)
 
 @register.tag
@@ -694,19 +703,24 @@ class CalculateRelationships(template.Node):
             manager = getattr(item, name)
             relationship_set = {}
             relationship_set['name'] = name
+            relationship_set['field'] = field
             viewable_items = manager.filter(active=True)
-            viewable_items = permission_cache.filter_items(cur_agent, 'view %s' % field.field.name, viewable_items)
+            if viewable_items.count() == 0:
+                continue
+            viewable_items = permission_cache.filter_items(cur_agent, 'view %s.%s' % (field.model.__name__, field.field.name), viewable_items)
             if viewable_items.count() == 0:
                 continue
             relationship_item_type = manager.model
-            permission_cache.filter_items(cur_agent, 'view name', viewable_items)
+            permission_cache.filter_items(cur_agent, 'view Item.name', viewable_items)
             relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)
 
         result = []
         for relationship_set in relationship_sets:
             friendly_name = capfirst(relationship_set['name']).replace('_', ' ')
-            result.append("""<div><b>%s</b></div>""" % friendly_name)
+            field = relationship_set['field']
+            list_url = '%s?filter=%s.%d' % (reverse('item_type_url', kwargs={'viewer': field.model.__name__.lower()}), field.field.name, item.pk)
+            result.append("""<div><a href="%s"><b>%s</b></a></div>""" % (list_url, friendly_name))
             for related_item in relationship_set['items']:
                 related_item_url = related_item.get_absolute_url()
                 related_item_name = get_viewable_name(context, related_item)
@@ -762,8 +776,9 @@ class CalculateActionNotices(template.Node):
     def render(self, context):
         item = context['item']
 
+        context['n_action_notices'] = 0
         result = []
-        if agentcan_helper(context, 'view action_notices', item):
+        if agentcan_helper(context, 'view Item.action_notices', item):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
             action_notices = ActionNotice.objects.filter(Q(action_item=item) | Q(action_agent=item)).order_by('action_time')
             action_notice_pk_to_object_map = {}
@@ -773,14 +788,14 @@ class CalculateActionNotices(template.Node):
                     select_related_fields.append('from_item__name')
                 specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query).select_related(*select_related_fields)
                 if action_notice_subclass == RelationActionNotice:
-                    context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
+                    context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view Item.name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
                 for action_notice in specific_action_notices:
                     action_notice_pk_to_object_map[action_notice.pk] = action_notice
-            context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
+            context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view Item.name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
             for action_notice in action_notices:
                 action_notice = action_notice_pk_to_object_map[action_notice.pk]
                 if isinstance(action_notice, RelationActionNotice):
-                    if not agentcan_helper(context, 'view %s' % action_notice.from_field_name, action_notice.from_item):
+                    if not agentcan_helper(context, 'view %s.%s' % (action_notice.from_field_model, action_notice.from_field_name), action_notice.from_item):
                         continue
                 action_time_text = '<span title="%s">%s ago</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
                 action_agent_name = get_viewable_name(context, action_notice.action_agent)
@@ -812,10 +827,10 @@ class CalculateActionNotices(template.Node):
                 if isinstance(action_notice, EditActionNotice):
                     action_text = 'edited'
                 result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">[%s]<br />%s %s %s %s</div>' % (action_time_text, action_agent_text, action_text, action_item_text, action_summary_text))
+                context['n_action_notices'] += 1
         else:
             action_notices = []
 
-        context['n_action_notices'] = len(action_notices)
         context['action_notice_box'] = mark_safe('\n'.join(result))
         return ''
 
@@ -867,7 +882,10 @@ class SubclassFieldsBox(template.Node):
         result = []
         result.append('<table cellspacing="0" class="twocol">')
         for field in fields:
-            if agentcan_helper(context, 'view %s' % field.name, item):
+            model = item._meta.get_field_by_name(field.name)[1]
+            if model is None:
+                model = type(item)
+            if agentcan_helper(context, 'view %s.%s' % (model.__name__, field.name), item):
                 result.append('<tr>')
                 result.append(u'<th style="white-space: nowrap;">%s</th>' % capfirst(field.verbose_name))
                 result.append('<td>')
@@ -962,23 +980,23 @@ def viewable_name(parser, token):
 
 
 class PermissionEditor(template.Node):
-    def __init__(self, item, is_global_permissions, privacy_only):
-        if item is None:
-            self.item = None
+    def __init__(self, target, target_level, privacy_only):
+        if target is None:
+            self.target = None
         else:
-            self.item = template.Variable(item)
-        self.is_global_permissions = is_global_permissions
+            self.target = template.Variable(target)
+        self.target_level = target_level
         self.privacy_only = privacy_only
 
     def __repr__(self):
         return "<PermissionEditor>"
 
     def render(self, context):
-        if self.item is None:
-            item = None
+        if self.target is None:
+            target = None
         else:
             try:
-                item = self.item.resolve(context)
+                target = self.target.resolve(context)
             except template.VariableDoesNotExist:
                 if settings.DEBUG:
                     return "[Couldn't resolve item variable]"
@@ -986,38 +1004,45 @@ class PermissionEditor(template.Node):
                     return '' # Fail silently for invalid variables.
         viewer = context['_viewer']
 
-        if self.is_global_permissions:
-            possible_abilities = viewer.permission_cache.all_possible_global_abilities()
-        else:
-            if item is None:
+        if self.target_level == 'one':
+            if target is None:
                 possible_abilities = viewer.permission_cache.all_possible_item_abilities(viewer.accepted_item_type)
             else:
-                possible_abilities = viewer.permission_cache.all_possible_item_abilities(viewer.item.actual_item_type())
+                possible_abilities = viewer.permission_cache.all_possible_item_abilities(target.actual_item_type())
+        else:
+            possible_abilities = viewer.permission_cache.all_possible_item_and_global_abilities()
         if self.privacy_only:
-            possible_abilities = [x for x in possible_abilities if x.startswith('view ')]
+            possible_abilities = set([x for x in possible_abilities if x.startswith('view ')])
+        possible_abilities = list((ability, friendly_name) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
 
-        if item is None and not self.is_global_permissions and not self.privacy_only:
+        if target is None and self.target_level == 'one' and not self.privacy_only:
             # Default permissions when creating a new item
-            agent_permissions = [AgentItemPermission(agent=context['cur_agent'], ability='do_anything', is_allowed=True)]
+            agent_permissions = [OneToOnePermission(source=context['cur_agent'], ability='do_anything', is_allowed=True)]
             collection_permissions = []
             everyone_permissions = []
-            agents = sorted(set(x.agent for x in agent_permissions), key=lambda x: x.name)
+            agents = sorted(set(x.source for x in agent_permissions), key=lambda x: x.name)
             collections = sorted(set(x.collection for x in collection_permissions), key=lambda x: x.name)
         else:
-            if self.is_global_permissions:
-                agent_permissions = AgentGlobalPermission.objects.order_by('ability')
-                collection_permissions = CollectionGlobalPermission.objects.order_by('ability')
-                everyone_permissions = EveryoneGlobalPermission.objects.order_by('ability')
+            if self.target_level == 'one':
+                agent_permissions = target.one_to_one_permissions_as_target
+                collection_permissions = target.some_to_one_permissions_as_target
+                everyone_permissions = target.all_to_one_permissions_as_target
+            elif self.target_level == 'some':
+                agent_permissions = target.one_to_some_permissions_as_target
+                collection_permissions = target.some_to_some_permissions_as_target
+                everyone_permissions = target.all_to_some_permissions_as_target
+            elif self.target_level == 'all':
+                agent_permissions = OneToAllPermission.objects
+                collection_permissions = SomeToAllPermission.objects
+                everyone_permissions = AllToAllPermission.objects
             else:
-                agent_permissions = item.agent_item_permissions_as_item.order_by('ability')
-                collection_permissions = item.collection_item_permissions_as_item.order_by('ability')
-                everyone_permissions = item.everyone_item_permissions_as_item.order_by('ability')
-                if self.privacy_only:
-                    agent_permissions = agent_permissions.filter(ability__startswith='view ')
-                    collection_permissions = collection_permissions.filter(ability__startswith='view ')
-                    everyone_permissions = everyone_permissions.filter(ability__startswith='view ')
-            agents = Agent.objects.filter(pk__in=agent_permissions.values('agent__pk').query).order_by('name')
-            collections = Collection.objects.filter(pk__in=collection_permissions.values('collection__pk').query).order_by('name')
+                assert False
+            agent_permissions = agent_permissions.order_by('ability')
+            collection_permissions = collection_permissions.order_by('ability')
+            everyone_permissions = everyone_permissions.order_by('ability')
+
+            agents = Agent.objects.filter(pk__in=agent_permissions.values('source__pk').query).order_by('name')
+            collections = Collection.objects.filter(pk__in=collection_permissions.values('source__pk').query).order_by('name')
         
         existing_permission_data = []
         for agent in agents:
@@ -1025,7 +1050,7 @@ class PermissionEditor(template.Node):
             datum['permission_type'] = 'agent'
             datum['name'] = get_viewable_name(context, agent)
             datum['agent_or_collection_id'] = str(agent.pk)
-            datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in agent_permissions if x.agent == agent]
+            datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in agent_permissions if x.source == agent]
             existing_permission_data.append(datum)
         collection_data = []
         for collection in collections:
@@ -1033,7 +1058,7 @@ class PermissionEditor(template.Node):
             datum['permission_type'] = 'collection'
             datum['name'] = get_viewable_name(context, collection)
             datum['agent_or_collection_id'] = str(collection.pk)
-            datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in collection_permissions if x.collection == collection]
+            datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in collection_permissions if x.source == collection]
             existing_permission_data.append(datum)
         datum = {}
         datum['permission_type'] = 'everyone'
@@ -1042,7 +1067,7 @@ class PermissionEditor(template.Node):
         datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in everyone_permissions]
         existing_permission_data.append(datum)
 
-        from cms.views import AjaxModelChoiceField
+        from cms.forms import AjaxModelChoiceField
         new_agent_select_widget = AjaxModelChoiceField(Agent.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None)
         new_collection_select_widget = AjaxModelChoiceField(Collection.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None)
         #TODO the widgets get centered-alignment in the dialog, which looks bad
@@ -1052,21 +1077,31 @@ class PermissionEditor(template.Node):
             var permission_counter = 1;
             var possible_abilities = %(possible_ability_javascript_array)s;
             function add_permission_fields(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
-                var is_allowed_checkbox = $('<input type="checkbox" name="newpermission' + permission_counter + '_is_allowed" value="on">');
+                var remove_button = $('<a href="#" class="img_link"><img src="%(delete_img_url)s" /></a>');
+                remove_button.bind('click', function(e){wrapper.remove(); return false;});
+                wrapper.append(remove_button);
+                var is_allowed_checkbox = $('<input type="checkbox" id="newpermission' + permission_counter + '_is_allowed" name="newpermission' + permission_counter + '_is_allowed" value="on">');
                 is_allowed_checkbox.attr('checked', is_allowed);
                 is_allowed_checkbox.attr('defaultChecked', is_allowed);
-                var ability_select = $('<select name="newpermission' + permission_counter + '_ability">');
-                for (var i in possible_abilities) {
-                    var is_selected = (possible_abilities[i] == ability);
-                    ability_select[0].options[i] = new Option(possible_abilities[i], possible_abilities[i], is_selected, is_selected);
-                }
-                var remove_button = $('<a href="#" class="img_link">');
-                remove_button.addClass('img_link');
-                remove_button.append('<img src="%(delete_img_url)s" />');
-                remove_button.bind('click', function(e){wrapper.remove(); return false;});
                 wrapper.append(is_allowed_checkbox);
-                wrapper.append(ability_select);
-                wrapper.append(remove_button);
+                if (ability == '') {
+                    var ability_select = $('<select name="newpermission' + permission_counter + '_ability">');
+                    for (var i in possible_abilities) {
+                        var is_selected = (possible_abilities[i][0] == ability);
+                        ability_select[0].options[i] = new Option(possible_abilities[i][1], possible_abilities[i][0], is_selected, is_selected);
+                    }
+                    wrapper.append(ability_select);
+                } else {
+                    var friendly_name = ability;
+                    for (var i in possible_abilities) {
+                        if (possible_abilities[i][0] == ability) {
+                            friendly_name = possible_abilities[i][1];
+                            break;
+                        }
+                    }
+                    wrapper.append('<label for="newpermission' + permission_counter + '_is_allowed">' + friendly_name + '</label>');
+                    wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_ability" value="' + ability + '" />');
+                }
                 wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_permission_type" value="' + permission_type + '" />');
                 wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_agent_or_collection_id" value="' + agent_or_collection_id + '" />');
                 permission_counter += 1;
@@ -1101,12 +1136,12 @@ class PermissionEditor(template.Node):
                 });
                 permissions_cell.append(add_button);
                 row.append(permissions_cell);
-                $('#permission_table tbody').append(row);
                 return row;
             }
 
-            $(document).ready(function(){
+            function setup_permission_editor() {
                 var existing_permission_data = %(existing_permission_data_javascript_array)s;
+                rows = [];
                 for (var i in existing_permission_data) {
                     var datum = existing_permission_data[i];
                     var row = add_agent_or_collection_row(datum.permission_type, datum.agent_or_collection_id, datum.name);
@@ -1115,7 +1150,10 @@ class PermissionEditor(template.Node):
                         var permission = datum.permissions[j];
                         add_permission_div(permissions_cell, datum.permission_type, datum.agent_or_collection_id, permission.is_allowed, permission.ability);
                     }
-                    $('#permission_table tbody').append(row);
+                    rows.push(row);
+                }
+                for (var i in rows) {
+                    $('#permission_table tbody').append(rows[i]);
                 }
 
                 $('#new_agent_dialog').dialog({
@@ -1151,6 +1189,10 @@ class PermissionEditor(template.Node):
                         }
                     },
                 });
+            }
+
+            $(document).ready(function(){
+                setup_permission_editor();
             });
         </script>
 
@@ -1174,7 +1216,7 @@ class PermissionEditor(template.Node):
         <a href="#" class="img_link" onclick="$('#new_agent_dialog').dialog('open'); return false;"><img src="%(agent_img_url)s" /> <span>Select Agent</span></a>
         <a href="#" class="img_link" onclick="$('#new_collection_dialog').dialog('open'); return false;"><img src="%(collection_img_url)s" /> <span>Select Collection</span></a>
 """ % {
-        'possible_ability_javascript_array': simplejson.dumps(sorted(possible_abilities), separators=(',',':')),
+        'possible_ability_javascript_array': simplejson.dumps(possible_abilities, separators=(',',':')),
         'existing_permission_data_javascript_array': simplejson.dumps(existing_permission_data, separators=(',',':')),
         'sample_agent_url': reverse('item_url', kwargs={'viewer': 'agent', 'noun': '1'}),
         'sample_collection_url': reverse('item_url', kwargs={'viewer': 'collection', 'noun': '1'}),
@@ -1190,10 +1232,10 @@ class PermissionEditor(template.Node):
 @register.tag
 def privacy_editor(parser, token):
     bits = list(token.split_contents())
-    if len(bits) != 2 and len(bits) != 1:
-        raise template.TemplateSyntaxError, "%r takes zero or one argument" % bits[0]
-    item = bits[1] if len(bits) == 2 else None
-    return PermissionEditor(item, is_global_permissions=False, privacy_only=True)
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
+    item = bits[1]
+    return PermissionEditor(item, target_level='one', privacy_only=True)
 
 @register.tag
 def item_permission_editor(parser, token):
@@ -1201,7 +1243,15 @@ def item_permission_editor(parser, token):
     if len(bits) != 2 and len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes zero or one argument" % bits[0]
     item = bits[1] if len(bits) == 2 else None
-    return PermissionEditor(item, is_global_permissions=False, privacy_only=False)
+    return PermissionEditor(item, target_level='one', privacy_only=False)
+
+@register.tag
+def collection_permission_editor(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
+    item = bits[1]
+    return PermissionEditor(item, target_level='some', privacy_only=False)
 
 @register.tag
 def global_permission_editor(parser, token):
@@ -1209,5 +1259,102 @@ def global_permission_editor(parser, token):
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes zero arguments" % bits[0]
     item = None
-    return PermissionEditor(item, is_global_permissions=True, privacy_only=False)
+    return PermissionEditor(item, target_level='all', privacy_only=False)
+
+class Crumbs(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<Crumbs>"
+
+    def render(self, context):
+        #TODO we should not be raising exceptions, including database queries that could fail
+        viewer = context['_viewer']
+        item_type_parameter = viewer.request.GET.get('crumb_item_type')
+        filter_parameter = viewer.request.GET.get('crumb_filter') or viewer.request.GET.get('filter')
+        if item_type_parameter:
+            item_type = get_item_type_with_name(item_type_parameter, case_sensitive=False)
+        else:
+            item_type = viewer.accepted_item_type
+        result = []
+        if not filter_parameter:
+            top_level_item_type_url = reverse('item_type_url', kwargs={'viewer': 'item'})
+            item_type_url = reverse('item_type_url', kwargs={'viewer': item_type.__name__.lower()})
+            result.append(u'<a href="%s">%s</a>' % (top_level_item_type_url, capfirst(Item._meta.verbose_name_plural)))
+            if item_type != Item:
+                result.append(u' &raquo; <a href="%s">%s</a>' % (item_type_url, capfirst(item_type._meta.verbose_name_plural)))
+        else:
+            filter_string = str(filter_parameter) # Unicode doesn't work here
+            parts = filter_string.split('.')
+            target_pk = parts.pop()
+            fields = []
+            field_models = [item_type]
+            cur_item_type = item_type
+            for part in parts:
+                field = cur_item_type._meta.get_field_by_name(part)[0]
+                fields.append(field)
+                if isinstance(field, models.ForeignKey):
+                    cur_item_type = field.rel.to
+                elif isinstance(field, models.related.RelatedObject):
+                    cur_item_type = field.model
+                else:
+                    raise Exception("Cannot filter on field %s.%s (not a related field)" % (cur_item_type.__name__, field.name))
+                if not issubclass(cur_item_type, Item):
+                    raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
+                field_models.append(cur_item_type)
+            target = field_models[-1].objects.get(pk=target_pk)
+            reverse_fields = []
+            for field in reversed(fields):
+                if isinstance(field, models.ForeignKey):
+                    reverse_field = field.rel
+                else:
+                    reverse_field = field.field
+                reverse_fields.append(reverse_field)
+
+            result = []
+            result.append('<a href="%s">%s</a>' % (target.get_absolute_url(), get_viewable_name(context, target)))
+            for i, field in enumerate(reverse_fields):
+                subfilter = []
+                subfilter_fields = fields[len(fields)-i-1:]
+                subfilter_field_models = field_models[len(fields)-i-1:]
+                for subfilter_field in subfilter_fields:
+                    if isinstance(subfilter_field, models.ForeignKey):
+                        name = subfilter_field.name
+                    else:
+                        name = subfilter_field.field.related_query_name()
+                    subfilter.append(name)
+                subfilter.append(target_pk)
+                subfilter = '.'.join(subfilter)
+                subfilter_item_type = subfilter_field_models[0]
+                subfilter_url = '%s?filter=%s' % (reverse('item_type_url', kwargs={'viewer': subfilter_item_type.__name__.lower()}), subfilter)
+                if isinstance(field, models.OneToOneField):
+                    # We don't display crumbs for OneToOneFields like item_ptr
+                    continue
+                if isinstance(field, models.ForeignKey):
+                    # Make it plural
+                    field_name = field.verbose_name + u's'
+                else:
+                    field_name = field.related_name
+                result.append(u' &raquo; <a href="%s">' % subfilter_url)
+                result.append(capfirst(field_name.replace('_', ' ')))
+                result.append('</a>')
+        action_title = context['action_title']
+        if viewer.item:
+            item_url = reverse('item_url', kwargs={'viewer': viewer.viewer_name, 'noun': viewer.noun})
+            result.append(u' &raquo; <a href="%s">%s</a>' % (item_url, get_viewable_name(context, viewer.item)))
+            if context['specific_version']:
+                version_url = '%s?version=%d' % (item_url, viewer.item.version_number)
+                result.append(u' &raquo; <a href="%s">v%d</a>' % (version_url, viewer.item.version_number))
+        if action_title:
+            result.append(u' &raquo; %s' % action_title)
+        return ''.join(result)
+
+@register.tag
+def crumbs(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return Crumbs()
+
 

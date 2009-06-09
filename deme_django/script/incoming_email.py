@@ -50,7 +50,7 @@ def handle_email(msg, item_id):
 
     agent = email_contact_method.agent
 
-    #TODO permissions to view name: technically you could figure out the name of an item by commenting on it here (same issue in cms/views.py)
+    #TODO permissions to view Item.name: technically you could figure out the name of an item by commenting on it here (same issue in cms/views.py)
     if issubclass(item.actual_item_type(), Comment):
         comment_name = item.display_name()
         if not comment_name.lower().startswith('re: '):
@@ -60,7 +60,7 @@ def handle_email(msg, item_id):
     
     comment = TextComment(item=item, item_version_number=item.version_number, name=comment_name, body=body, from_contact_method=email_contact_method)
     comment.name = comment_name #TODO this is a hack due to multiple inheritance bug in Django. remove it when bug is fixed
-    permissions = [AgentItemPermission(agent=agent, ability='do_anything', is_allowed=True)]
+    permissions = [OneToOnePermission(source=agent, ability='do_anything', is_allowed=True)]
     comment.save_versioned(action_agent=agent, initial_permissions=permissions)
 
 def main():

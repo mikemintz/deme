@@ -64,7 +64,7 @@ Not every bit of persistent data is stored in the database in item fields. Here 
 
 Core item types
 ^^^^^^^^^^^^^^^
-Below are the core item types and the role they play (see the full ontology at http://deme.stanford.edu/item/codegraph).
+Below are the core item types and the role they play (see the full ontology at http://deme.stanford.edu/viewing/codegraph).
 
 * **Item:** Item is item type that everything inherits from. It gives us a completely unique id across all items. It defines two user-editable fields (``name`` and ``description``) and six automatically generated fields (``id``, ``version_number``, ``item_type``, ``creator``, ``created_at``, ``active``, and ``destroyed``).
 
@@ -156,8 +156,6 @@ Documents
 
 * **FileDocument:** A FileDocument is a Document that stores a file on the filesystem (could be an MP3 or a Microsoft Word Document). It is intended for all binary data, which does not belong in a TextDocument (even though it is technically possible). Subclasses of FileDocument may be able to understand various file formats and add metadata and extra functionality. This item type defines one new field, ``datafile``, which represents the path on the server's filesystem to the actual file.
 
-* **ImageDocument:** An ImageDocument is a FileDocument that stores an image. Right now, the only difference is that viewers know the file can be displayed as an image. Currently it does not define any new fields, but in the future, it may add metadata like EXIF data and thumbnails.
-
 Annotations (Transclusions, Comments, and Excerpts)
 
 * **Transclusion:** A Transclusion is an embedded reference from a location in a specific version of a TextDocument to another Item. This item type defines the following fields:
@@ -186,7 +184,7 @@ Annotations (Transclusions, Comments, and Excerpts)
 
 Viewer aliases
 
-In order to allow vanity URLs (i.e., things other than ``/item/item/5``), we have a system of hierarchical URLs. In the future, we'll need to make sure URL aliases cannot start with /item/ (our base URL for viewers), /static/ (our base URL for static content like stylesheets), or /meta/ (our base URL for Deme framework things like authentication). Right now, if someone makes a vanity URL with one of those prefixes, you just cannot reach it (it does not shadow the important URLs).
+In order to allow vanity URLs (i.e., things other than ``/viewing/item/5``), we have a system of hierarchical URLs. In the future, we'll need to make sure URL aliases cannot start with /viewing/ (our base URL for viewers), /static/ (our base URL for static content like stylesheets), or /meta/ (our base URL for Deme framework things like authentication). Right now, if someone makes a vanity URL with one of those prefixes, you just cannot reach it (it does not shadow the important URLs).
 
 * **ViewerRequest:** A ViewerRequest represents a particular action at a particular viewer (basically a URL, although its stored more explicitly). A ViewerRequest is supposed to be abstract, so users can only create Sites and CustomUrls. It specifies the following fields
   
@@ -285,7 +283,6 @@ Below is a list of all possible global abilities:
 * ``create FileDocument``
 * ``create Group``
 * ``create HtmlDocument``
-* ``create ImageDocument``
 * ``create Membership``
 * ``create Person``
 * ``create PhoneContactMethod``
@@ -503,23 +500,23 @@ Front-end (viewers)
 
 Overview
 ^^^^^^^^
-A viewer is a Python class that processes browser or API requests. Any URL that starts with ``/item/`` is routed to a viewer (vanity URLs are also routed to viewers via ViewerRequests, but ``/static/`` URLs and invalid URLs are not). Each viewer defines the item type it can accept, and multiple viewers can accept the same item type (you could have ItemViewer and SuperItemViewer which both handle items). There should be a default viewer for every item type with the same name as the item type (in lowercase), and if there is none, then the default viewer of the superclass should be used. Viewers that handle item type X always handle items that are in subclasses of X.
+A viewer is a Python class that processes browser or API requests. Any URL that starts with ``/viewing/`` is routed to a viewer (vanity URLs are also routed to viewers via ViewerRequests, but ``/static/`` URLs and invalid URLs are not). Each viewer defines the item type it can accept, and multiple viewers can accept the same item type (you could have ItemViewer and SuperItemViewer which both handle items). There should be a default viewer for every item type with the same name as the item type (in lowercase), and if there is none, then the default viewer of the superclass should be used. Viewers that handle item type X always handle items that are in subclasses of X.
 
 URLs
 ^^^^
 Our URLs are restful. Every URL defines a viewer, an action, a noun (or none for actions on the entire item type), a format, an optional parameters in the query string. Here are some example URLs:
 
 
-* /item/item (item viewer, default "list" action, default "html" format)
-* /item/person/new.xml (person viewer, new action, xml format)
-* /item/person/1 (person viewer, default "show" action, person with id=1 is the noun, default "html" format)
-* /item/person/1/edit.json?version=5 (same as above, but json format, edit action, and version 5)
+* /viewing/item (item viewer, default "list" action, default "html" format)
+* /viewing/person/new.xml (person viewer, new action, xml format)
+* /viewing/person/1 (person viewer, default "show" action, person with id=1 is the noun, default "html" format)
+* /viewing/person/1/edit.json?version=5 (same as above, but json format, edit action, and version 5)
 
 Actions
 ^^^^^^^
 Every viewer defines a set of actions it responds to. Actions are divided into two groups: those that take nouns (which are always item ids) called item actions, and those that do not take nouns called item type actions. In order to make URLs unambiguous, item ids must be numbers, and action names can only be letters (although we may later decide to allow other characters, such as underscores and dashes, or even numbers that do not appear at the beginning).
 
-An action corresponds to a single Python function. If you visit /item/item/list, Deme will call the type_list method of the ItemViewer class. If you visit /item/person/5/show, Deme will call the item_show method of the PersonViewer class. Actions return the HTTP response to go back to the browser. Actions can call other actions from other viewers to embed views in other views (for example, the DocumentViewer could embed a view from the PersonViewer to show a little profile of the author at the top).
+An action corresponds to a single Python function. If you visit /viewing/item/list, Deme will call the type_list method of the ItemViewer class. If you visit /viewing/person/5/show, Deme will call the item_show method of the PersonViewer class. Actions return the HTTP response to go back to the browser. Actions can call other actions from other viewers to embed views in other views (for example, the DocumentViewer could embed a view from the PersonViewer to show a little profile of the author at the top).
 
 Nouns
 ^^^^^
@@ -535,7 +532,7 @@ Whenever a visitor (or another web service or bot) is at an action of a viewer, 
 
 DjangoTemplateDocuments
 ^^^^^^^^^^^^^^^^^^^^^^^
-There is a DjangoTemplateDocument viewer right now, which accepts DjangoTemplateDocuments, and when viewed with the "render" action, it renders the DjangoTemplateDocument as HTML (or whatever format) straight back to the browser. This allows users to add web content that is not really tied to a viewer, so they can fully customize the user experience. By using DjangoTemplateDocuments and vanity URLs, a webmaster can use Deme to create a completely customized site that has no sign of Deme (unless a visitor specifically types in a /item/ or /static/ URL).
+There is a DjangoTemplateDocument viewer right now, which accepts DjangoTemplateDocuments, and when viewed with the "render" action, it renders the DjangoTemplateDocument as HTML (or whatever format) straight back to the browser. This allows users to add web content that is not really tied to a viewer, so they can fully customize the user experience. By using DjangoTemplateDocuments and vanity URLs, a webmaster can use Deme to create a completely customized site that has no sign of Deme (unless a visitor specifically types in a /viewing/ or /static/ URL).
 
 However, DjangoTemplateDocuments only allow the content to be customized, and not the things that a view does. For example, one cannot write a DjangoTemplateDocument to create a new record in the database, or to send out an email when visited, or more importantly, to do unauthorized things like execute UNIX commands.
 

@@ -13,50 +13,15 @@ from django.conf import settings
 from django.utils import simplejson
 from django.utils.text import capfirst
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.fields import FieldDoesNotExist
 import django.contrib.syndication.feeds
 import django.contrib.syndication.views
 from django.views.decorators.http import require_POST
 import re
-import os
-import subprocess
 from urlparse import urljoin
 from cms.models import *
 from cms.forms import *
 from cms.base_viewer import DemePermissionDenied, Viewer
-
-class CodeGraphViewer(Viewer):
-    accepted_item_type = Item
-    viewer_name = 'codegraph'
-
-    def type_list_html(self):
-        """
-        Generate images for the graph of the Deme item type ontology, and
-        display a page with links to them.
-        """
-        self.context['action_title'] = 'Code graph'
-        # If cms/models.py was modified after codegraph.png was,
-        # re-render the graph before displaying this page.
-        models_filename = os.path.join(os.path.dirname(__file__), 'models.py')
-        codegraph_filename = os.path.join(settings.MEDIA_ROOT, 'codegraph.png')
-        models_mtime = os.stat(models_filename)[8]
-        try:
-            codegraph_mtime = os.stat(codegraph_filename)[8]
-        except OSError, e:
-            codegraph_mtime = 0
-        if models_mtime > codegraph_mtime:
-            subprocess.call(os.path.join(os.path.dirname(__file__), '..', 'script', 'gen_graph.py'), shell=True)
-        code_graph_url = urljoin(settings.MEDIA_URL, 'codegraph.png?%d' % models_mtime)
-        code_graph_basic_url = urljoin(settings.MEDIA_URL, 'codegraph_basic.png?%d' % models_mtime)
-        template = loader.get_template_from_string("""
-        {%% extends layout %%}
-        {%% block title %%}Deme Code Graph{%% endblock %%}
-        {%% block content %%}
-        <div><a href="%s">Code graph</a></div>
-        <div><a href="%s">Code graph (basic)</a></div>
-        {%% endblock %%}
-        """ % (code_graph_url, code_graph_basic_url))
-        return HttpResponse(template.render(self.context))
-
 
 class ItemViewer(Viewer):
     accepted_item_type = Item
@@ -70,9 +35,8 @@ class ItemViewer(Viewer):
         offset = int(self.request.GET.get('offset', 0))
         limit = int(self.request.GET.get('limit', 100))
         active = self.request.GET.get('active', '1') == '1'
-        item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
-        item_types.sort(key=lambda x:x['name'].lower())
         self.context['search_query'] = self.request.GET.get('q', '')
+        self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         items = self.accepted_item_type.objects
         if self.context['search_query']:
             q = self.context['search_query']
@@ -90,18 +54,23 @@ class ItemViewer(Viewer):
             if self.cur_agent_can_global('do_anything'):
                 recursive_filter = None
             else:
-                visible_memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', Membership.objects)
+                visible_memberships = self.permission_cache.filter_items(self.cur_agent, 'view Membership.item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             items = items.filter(pk__in=collection.all_contained_collection_members(recursive_filter).values('pk').query)
         for filter_string in self.request.GET.getlist('filter'):
             filter_string = str(filter_string) # Unicode doesn't work here
+            self.context['filter_string'] = filter_string
             parts = filter_string.split('.')
             target_pk = parts.pop()
             fields = []
+            item_types = []
             cur_item_type = self.accepted_item_type
             for part in parts:
-                field = cur_item_type._meta.get_field_by_name(part)[0]
+                field, model, direct, m2m = cur_item_type._meta.get_field_by_name(part)
+                if model is None:
+                    model = cur_item_type
                 fields.append(field)
+                item_types.append(model)
                 if isinstance(field, models.ForeignKey):
                     cur_item_type = field.rel.to
                 elif isinstance(field, models.related.RelatedObject):
@@ -111,54 +80,54 @@ class ItemViewer(Viewer):
                 if not issubclass(cur_item_type, Item):
                     raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
 
-            def filter_by_filter(queryset, fields):
+            def filter_by_filter(queryset, fields, item_types):
                 #TODO make sure everything is active
                 if not fields:
                     return queryset.filter(pk=target_pk)
                 field = fields[0]
+                item_type = item_types[0]
                 if isinstance(field, models.ForeignKey):
                     next_item_type = field.rel.to
                 elif isinstance(field, models.related.RelatedObject):
                     next_item_type = field.model
-                next_queryset = filter_by_filter(next_item_type.objects, fields[1:])
+                next_queryset = filter_by_filter(next_item_type.objects, fields[1:], item_types[1:])
                 if isinstance(field, models.ForeignKey):
                     query_dict = {field.name + '__in': next_queryset}
                     result = queryset.filter(**query_dict)
-                    result = self.permission_cache.filter_items(self.cur_agent, 'view ' + field.name, result)
+                    ability = 'view %s.%s' % (item_type.__name__, field.name)
+                    result = self.permission_cache.filter_items(self.cur_agent, ability, result)
                 elif isinstance(field, models.related.RelatedObject):
                     if not isinstance(field.field, models.OneToOneField):
-                        next_queryset = self.permission_cache.filter_items(self.cur_agent, 'view ' + field.field.name, next_queryset)
+                        ability = 'view %s.%s' % (next_item_type.__name__, field.field.name)
+                        next_queryset = self.permission_cache.filter_items(self.cur_agent, ability, next_queryset)
                     query_dict = {'pk__in': next_queryset.values(field.field.name).query}
                     result = queryset.filter(**query_dict)
                 else:
                     assert False
                 return result
-            items = filter_by_filter(items, fields)
-        listable_items = self.permission_cache.filter_items(self.cur_agent, 'view name', items)
+            items = filter_by_filter(items, fields, item_types)
+        listable_items = self.permission_cache.filter_items(self.cur_agent, 'view Item.name', items)
         for ability in self.request.GET.getlist('ability'):
             listable_items = self.permission_cache.filter_items(self.cur_agent, ability, listable_items)
-        n_opposite_active_items = listable_items.filter(active=(not active)).count()
         listable_items = listable_items.filter(active=active)
         listable_items = listable_items.order_by('id')
-        n_items = items.count()
         n_listable_items = listable_items.count()
         items = [item for item in listable_items.all()[offset:offset+limit]]
+        item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
+        item_types.sort(key=lambda x:x['name'].lower())
         self.context['item_types'] = item_types
         self.context['items'] = items
-        self.context['n_items'] = n_items
         self.context['n_listable_items'] = n_listable_items
-        self.context['n_unlistable_items'] = n_items - n_listable_items - n_opposite_active_items
-        self.context['n_opposite_active_items'] = n_opposite_active_items
         self.context['offset'] = offset
         self.context['limit'] = limit
         self.context['list_start_i'] = offset + 1
         self.context['list_end_i'] = min(offset + limit, n_listable_items)
         self.context['active'] = active
         self.context['collection'] = collection
-        self.context['all_collections'] = self.permission_cache.filter_items(self.cur_agent, 'view name', Collection.objects.filter(active=True)).order_by('name')
+        self.context['all_collections'] = self.permission_cache.filter_items(self.cur_agent, 'view Item.name', Collection.objects.filter(active=True)).order_by('name')
 
     def type_list_html(self):
-        self.context['action_title'] = capfirst(self.accepted_item_type._meta.verbose_name_plural)
+        self.context['action_title'] = ''
         self._type_list_helper()
         template = loader.get_template('item/list.html')
         return HttpResponse(template.render(self.context))
@@ -172,7 +141,7 @@ class ItemViewer(Viewer):
     def type_list_rss(self):
         self._type_list_helper()
         item_list = self.context['items'] #TODO probably not useful to get this ordering
-        #TODO permissions to view name/description
+        #TODO permissions to view Item.name/Item.description
         class ItemListFeed(django.contrib.syndication.feeds.Feed):
             title = "Items"
             description = "Items"
@@ -210,7 +179,7 @@ class ItemViewer(Viewer):
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
             item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
             return HttpResponseRedirect(redirect)
@@ -220,7 +189,7 @@ class ItemViewer(Viewer):
     def type_recentchanges_html(self):
         self.context['action_title'] = 'Recent Changes'
         template = loader.get_template('item/recentchanges.html')    
-        viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view action_notices', Item.objects)
+        viewable_items = self.permission_cache.filter_items(self.cur_agent, 'view Item.action_notices', Item.objects)
         viewable_action_notices = ActionNotice.objects.filter(action_item__in=viewable_items.values("pk").query).order_by('-action_time')
         
         action_notice_pk_to_object_map = {}
@@ -271,26 +240,26 @@ class ItemViewer(Viewer):
     def item_show_rss(self):
         from cms.templatetags.item_tags import get_viewable_name
         viewer = self
-        self.require_ability('view action_notices', self.item)
+        self.require_ability('view Item.action_notices', self.item)
         action_notices = ActionNotice.objects.filter(Q(action_item=self.item) | Q(action_agent=self.item)).order_by('action_time') #TODO limit
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
             if action_notice_subclass == RelationActionNotice:
-                self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
+                self.permission_cache.filter_items(self.cur_agent, 'view Item.name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
             for action_notice in specific_action_notices:
                 action_notice_pk_to_object_map[action_notice.pk] = action_notice
-        self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
+        self.permission_cache.filter_items(self.cur_agent, 'view Item.name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
         class ItemShowFeed(django.contrib.syndication.feeds.Feed):
             title = get_viewable_name(viewer.context, viewer.item)
-            description = viewer.item.description if viewer.cur_agent_can('view description', viewer.item) else ''
+            description = viewer.item.description if viewer.cur_agent_can('view Item.description', viewer.item) else ''
             link = reverse('item_url', kwargs={'viewer': viewer.viewer_name, 'action': 'show', 'noun': viewer.item.pk, 'format': 'rss'})
             def items(self):
                 result = []
                 for action_notice in action_notices:
                     action_notice = action_notice_pk_to_object_map[action_notice.pk]
                     if isinstance(action_notice, RelationActionNotice):
-                        if not viewer.cur_agent_can('view %s' % action_notice.from_field_name, action_notice.from_item):
+                        if not viewer.cur_agent_can('view %s.%s' % (action_notice.from_field_model, action_notice.from_field_name), action_notice.from_item):
                             continue
                     item = {}
                     item['action_time'] = action_notice.action_time
@@ -318,7 +287,17 @@ class ItemViewer(Viewer):
         self.context['action_title'] = 'Copy'
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
-        fields_to_copy = [field_name for field_name in form_class.base_fields if self.cur_agent_can('view %s' % field_name, self.item)]
+        fields_to_copy = []
+        for field_name in form_class.base_fields:
+            try:
+                model = self.item._meta.get_field_by_name(field_name)[1]
+            except FieldDoesNotExist:
+                # For things like action_summary
+                continue
+            if model is None:
+                model = type(self.item)
+            if self.cur_agent_can('view %s.%s' % (model.__name__, field_name), self.item):
+                fields_to_copy.append(field_name)
         form_initial = {}
         for field_name in fields_to_copy:
             try:
@@ -342,10 +321,10 @@ class ItemViewer(Viewer):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         if form is None:
-            fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
+            fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
             form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
             form = form_class(instance=self.item)
-            fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
+            fields_can_view = set([x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('view ')])
             initial_fields_set = set(form.initial.iterkeys())
             fields_must_blank = initial_fields_set - fields_can_view
             for field_name in fields_must_blank:
@@ -360,7 +339,7 @@ class ItemViewer(Viewer):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         new_item = self.item
-        fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x[0] == 'edit']
+        fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
         form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
@@ -397,11 +376,11 @@ class ItemViewer(Viewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
-    def _get_permissions_from_post_data(self, item_type, global_permissions):
-        if global_permissions:
-            possible_abilities = self.permission_cache.all_possible_global_abilities()
-        else:
+    def _get_permissions_from_post_data(self, item_type, target_level):
+        if target_level == 'one':
             possible_abilities = self.permission_cache.all_possible_item_abilities(item_type)
+        else:
+            possible_abilities = self.permission_cache.all_possible_item_and_global_abilities()
         permission_data = {}
         for key, value in self.request.POST.iteritems():
             if key.startswith('newpermission'):
@@ -409,9 +388,9 @@ class ItemViewer(Viewer):
                 permission_datum = permission_data.setdefault(permission_counter, {})
                 permission_datum[name] = value
         result = []
-        if global_permissions:
+        if target_level == 'all':
             # Make sure admin keeps do_anything ability
-            result.append(AgentGlobalPermission(agent_id=1, ability='do_anything', is_allowed=True))
+            result.append(OneToAllPermission(source_id=1, ability='do_anything', is_allowed=True))
         for permission_datum in permission_data.itervalues():
             ability = permission_datum['ability']
             if ability not in possible_abilities:
@@ -421,26 +400,39 @@ class ItemViewer(Viewer):
             agent_or_collection_id = permission_datum['agent_or_collection_id']
             if permission_type == 'agent':
                 agent = Agent.objects.get(pk=agent_or_collection_id)
-                if global_permissions:
-                    permission = AgentGlobalPermission(agent=agent)
+                if target_level == 'one':
+                    permission = OneToOnePermission(source=agent)
+                elif target_level == 'some':
+                    permission = OneToSomePermission(source=agent)
+                elif target_level == 'all':
+                    permission = OneToAllPermission(source=agent)
                 else:
-                    permission = AgentItemPermission(agent=agent)
+                    assert False
             elif permission_type == 'collection':
                 collection = Collection.objects.get(pk=agent_or_collection_id)
-                if global_permissions:
-                    permission = CollectionGlobalPermission(collection=collection)
+                if target_level == 'one':
+                    permission = SomeToOnePermission(source=collection)
+                elif target_level == 'some':
+                    permission = SomeToSomePermission(source=collection)
+                elif target_level == 'all':
+                    permission = SomeToAllPermission(source=collection)
                 else:
-                    permission = CollectionItemPermission(collection=collection)
+                    assert False
             elif permission_type == 'everyone':
-                if global_permissions:
-                    permission = EveryoneGlobalPermission()
+                if target_level == 'one':
+                    permission = AllToOnePermission()
+                elif target_level == 'some':
+                    permission = AllToSomePermission()
+                elif target_level == 'all':
+                    permission = AllToAllPermission()
                 else:
-                    permission = EveryoneItemPermission()
+                    assert False
             else:
                 return self.render_error('Form Error', "Invalid permission_type")
             permission.ability = ability
             permission.is_allowed = is_allowed
-            permission_key_fn = lambda x: (x.ability, getattr(x, 'agent', None), getattr(x, 'collection', None))
+            # Make sure we don't add duplicates
+            permission_key_fn = lambda x: (type(x), x.ability, getattr(x, 'source', None))
             if not any(permission_key_fn(x) == permission_key_fn(permission) for x in result):
                 result.append(permission)
         return result
@@ -448,12 +440,11 @@ class ItemViewer(Viewer):
     @require_POST
     def item_updateprivacy_html(self):
         self.require_ability('modify_privacy_settings', self.item)
-        new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
-        AgentItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
-        CollectionItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
-        EveryoneItemPermission.objects.filter(item=self.item, ability__startswith="view ").delete()
+        new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), 'one')
+        for permission_class in [OneToOnePermission, SomeToOnePermission, AllToOnePermission]:
+            permission_class.objects.filter(target=self.item, ability__startswith="view ").delete()
         for permission in new_permissions:
-            permission.item = self.item
+            permission.target = self.item
             permission.save()
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'privacy'}))
         return HttpResponseRedirect(redirect)
@@ -461,23 +452,33 @@ class ItemViewer(Viewer):
     @require_POST
     def item_updateitempermissions_html(self):
         self.require_ability('do_anything', self.item)
-        new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), False)
-        AgentItemPermission.objects.filter(item=self.item).delete()
-        CollectionItemPermission.objects.filter(item=self.item).delete()
-        EveryoneItemPermission.objects.filter(item=self.item).delete()
+        new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), 'one')
+        for permission_class in [OneToOnePermission, SomeToOnePermission, AllToOnePermission]:
+            permission_class.objects.filter(target=self.item).delete()
         for permission in new_permissions:
-            permission.item = self.item
+            permission.target = self.item
             permission.save()
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'itempermissions'}))
         return HttpResponseRedirect(redirect)
 
     @require_POST
+    def item_updatecollectionpermissions_html(self):
+        self.require_ability('do_anything', self.item)
+        new_permissions = self._get_permissions_from_post_data(self.item.actual_item_type(), 'some')
+        for permission_class in [OneToSomePermission, SomeToSomePermission, AllToSomePermission]:
+            permission_class.objects.filter(target=self.item).delete()
+        for permission in new_permissions:
+            permission.target = self.item
+            permission.save()
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'collectionpermissions'}))
+        return HttpResponseRedirect(redirect)
+
+    @require_POST
     def type_updateglobalpermissions_html(self):
         self.require_global_ability('do_anything')
-        new_permissions = self._get_permissions_from_post_data(None, True)
-        AgentGlobalPermission.objects.filter().delete()
-        CollectionGlobalPermission.objects.filter().delete()
-        EveryoneGlobalPermission.objects.filter().delete()
+        new_permissions = self._get_permissions_from_post_data(None, 'all')
+        for permission_class in [OneToAllPermission, SomeToAllPermission, AllToAllPermission]:
+            permission_class.objects.filter().delete()
         for permission in new_permissions:
             permission.save()
         redirect = self.request.GET.get('redirect', reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'globalpermissions'}))
@@ -486,26 +487,19 @@ class ItemViewer(Viewer):
     def item_privacy_html(self):
         self.context['action_title'] = 'Privacy settings'
         self.require_ability('modify_privacy_settings', self.item)
-        possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
-        default_permissions = []
-        for ability in possible_abilities:
-            if ability.startswith('view '):
-                default_allowed = self.permission_cache.default_ability_is_allowed(ability, self.item.actual_item_type())
-                default_permissions.append({'ability': ability, 'is_allowed': default_allowed})
         template = loader.get_template('item/privacy.html')
-        self.context['default_permissions'] = default_permissions
         return HttpResponse(template.render(self.context))
 
     def item_itempermissions_html(self):
-        self.context['action_title'] = 'Permissions'
+        self.context['action_title'] = 'Item permissions'
         self.require_ability('do_anything', self.item)
-        possible_abilities = sorted(self.permission_cache.all_possible_item_abilities(self.item.actual_item_type()))
-        default_permissions = []
-        for ability in possible_abilities:
-            default_allowed = self.permission_cache.default_ability_is_allowed(ability, self.item.actual_item_type())
-            default_permissions.append({'ability': ability, 'is_allowed': default_allowed})
         template = loader.get_template('item/itempermissions.html')
-        self.context['default_permissions'] = default_permissions
+        return HttpResponse(template.render(self.context))
+
+    def item_collectionpermissions_html(self):
+        self.context['action_title'] = 'Collection permissions'
+        self.require_ability('do_anything', self.item)
+        template = loader.get_template('item/collectionpermissions.html')
         return HttpResponse(template.render(self.context))
 
     def type_globalpermissions_html(self):
@@ -521,6 +515,21 @@ class ItemViewer(Viewer):
         return HttpResponse(template.render(self.context))
 
 
+class AgentViewer(ItemViewer):
+    accepted_item_type = Agent
+    viewer_name = 'agent'
+
+
+class AnonymousAgentViewer(AgentViewer):
+    accepted_item_type = AnonymousAgent
+    viewer_name = 'anonymousagent'
+
+
+class GroupAgentViewer(AgentViewer):
+    accepted_item_type = GroupAgent
+    viewer_name = 'groupagent'
+
+
 class AuthenticationMethodViewer(ItemViewer):
     accepted_item_type = AuthenticationMethod
     viewer_name = 'authenticationmethod'
@@ -530,7 +539,7 @@ class AuthenticationMethodViewer(ItemViewer):
         if self.request.method == 'GET':
             login_as_agents = Agent.objects.filter(active=True).order_by('name')
             login_as_agents = self.permission_cache.filter_items(self.cur_agent, 'login_as', login_as_agents)
-            self.permission_cache.filter_items(self.cur_agent, 'view name', login_as_agents)
+            self.permission_cache.filter_items(self.cur_agent, 'view Item.name', login_as_agents)
             template = loader.get_template('authenticationmethod/login.html')
             self.context['redirect'] = self.request.GET['redirect']
             self.context['login_as_agents'] = login_as_agents
@@ -614,35 +623,49 @@ class DemeAccountViewer(AuthenticationMethodViewer):
         return HttpResponse(json_data, mimetype='application/json')
         
 
-class GroupViewer(ItemViewer):
-    accepted_item_type = Group
-    viewer_name = 'group'
-
-    def item_show_html(self):
-        self.context['action_title'] = ''
-        try:
-            folio = self.item.folios.get()
-            if not self.permission_cache.agent_can(self.cur_agent, 'view group', folio):
-                folio = None
-        except:
-            folio = None
-        self.context['folio'] = folio
-        template = loader.get_template('group/show.html')
-        return HttpResponse(template.render(self.context))
+class PersonViewer(AgentViewer):
+    accepted_item_type = Person
+    viewer_name = 'person'
 
 
-class ViewerRequestViewer(ItemViewer):
-    accepted_item_type = ViewerRequest
-    viewer_name = 'viewerrequest'
+class ContactMethodViewer(ItemViewer):
+    accepted_item_type = ContactMethod
+    viewer_name = 'contactmethod'
 
-    def item_show_html(self, form=None):
-        self.context['action_title'] = ''
-        site, custom_urls = self.item.calculate_full_path()
-        self.context['site'] = site
-        self.context['custom_urls'] = custom_urls
-        self.context['child_urls'] = self.item.child_urls.filter(active=True)
-        template = loader.get_template('viewerrequest/show.html')
-        return HttpResponse(template.render(self.context))
+
+class EmailContactMethodViewer(ContactMethodViewer):
+    accepted_item_type = EmailContactMethod
+    viewer_name = 'emailcontactmethod'
+
+
+class PhoneContactMethodViewer(ContactMethodViewer):
+    accepted_item_type = PhoneContactMethod
+    viewer_name = 'phonecontactmethod'
+
+
+class FaxContactMethodViewer(ContactMethodViewer):
+    accepted_item_type = FaxContactMethod
+    viewer_name = 'faxcontactmethod'
+
+
+class WebsiteContactMethodViewer(ContactMethodViewer):
+    accepted_item_type = WebsiteContactMethod
+    viewer_name = 'websitecontactmethod'
+
+
+class AIMContactMethodViewer(ContactMethodViewer):
+    accepted_item_type = AIMContactMethod
+    viewer_name = 'aimcontactmethod'
+
+
+class AddressContactMethodViewer(ContactMethodViewer):
+    accepted_item_type = AddressContactMethod
+    viewer_name = 'addresscontactmethod'
+
+
+class SubscriptionViewer(ItemViewer):
+    accepted_item_type = Subscription
+    viewer_name = 'subscription'
 
 
 class CollectionViewer(ItemViewer):
@@ -654,11 +677,11 @@ class CollectionViewer(ItemViewer):
         memberships = self.item.child_memberships
         memberships = memberships.filter(active=True)
         memberships = memberships.filter(item__active=True)
-        memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', memberships)
+        memberships = self.permission_cache.filter_items(self.cur_agent, 'view Membership.item', memberships)
         memberships = memberships.select_related('item')
         if memberships:
-            self.permission_cache.filter_items(self.cur_agent, 'view name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
-        self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can(self.cur_agent, 'view name', x.item), x.item.name))
+            self.permission_cache.filter_items(self.cur_agent, 'view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+        self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can(self.cur_agent, 'view Item.name', x.item), x.item.name))
         self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
         template = loader.get_template('collection/show.html')
         return HttpResponse(template.render(self.context))
@@ -677,7 +700,7 @@ class CollectionViewer(ItemViewer):
                 membership.reactivate(action_agent=self.cur_agent)
         except ObjectDoesNotExist:
             membership = Membership(collection=self.item, item=member)
-            permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+            permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
             membership.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'), initial_permissions=permissions)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
@@ -701,17 +724,39 @@ class CollectionViewer(ItemViewer):
         return HttpResponseRedirect(redirect)
 
 
-class ImageDocumentViewer(ItemViewer):
-    accepted_item_type = ImageDocument
-    viewer_name = 'imagedocument'
+class GroupViewer(CollectionViewer):
+    accepted_item_type = Group
+    viewer_name = 'group'
 
     def item_show_html(self):
         self.context['action_title'] = ''
-        template = loader.get_template('imagedocument/show.html')
+        try:
+            folio = self.item.folios.get()
+            if not self.permission_cache.agent_can(self.cur_agent, 'view Folio.group', folio):
+                folio = None
+        except:
+            folio = None
+        self.context['folio'] = folio
+        template = loader.get_template('group/show.html')
         return HttpResponse(template.render(self.context))
 
 
-class TextDocumentViewer(ItemViewer):
+class FolioViewer(CollectionViewer):
+    accepted_item_type = Folio
+    viewer_name = 'folio'
+
+
+class MembershipViewer(ItemViewer):
+    accepted_item_type = Membership
+    viewer_name = 'membership'
+
+
+class DocumentViewer(ItemViewer):
+    accepted_item_type = Document
+    viewer_name = 'document'
+
+
+class TextDocumentViewer(DocumentViewer):
     accepted_item_type = TextDocument
     viewer_name = 'textdocument'
 
@@ -738,10 +783,10 @@ class TextDocumentViewer(ItemViewer):
         self.item.body = ''.join(body_as_list)
 
         if form is None:
-            fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
+            fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
             form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
             form = form_class(instance=self.item)
-            fields_can_view = set([x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'view'])
+            fields_can_view = set([x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('view ')])
             initial_fields_set = set(form.initial.iterkeys())
             fields_must_blank = initial_fields_set - fields_can_view
             for field_name in fields_must_blank:
@@ -756,7 +801,7 @@ class TextDocumentViewer(ItemViewer):
         abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         new_item = self.item
-        fields_can_edit = [x.split(' ')[1] for x in abilities_for_item if x.split(' ')[0] == 'edit']
+        fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
         form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
@@ -807,7 +852,27 @@ class DjangoTemplateDocumentViewer(TextDocumentViewer):
         return HttpResponse(template.render(self.context))
 
 
-class TextCommentViewer(TextDocumentViewer):
+class HtmlDocumentViewer(TextDocumentViewer):
+    accepted_item_type = HtmlDocument
+    viewer_name = 'htmldocument'
+
+
+class FileDocumentViewer(DocumentViewer):
+    accepted_item_type = FileDocument
+    viewer_name = 'filedocument'
+
+
+class TransclusionViewer(ItemViewer):
+    accepted_item_type = Transclusion
+    viewer_name = 'transclusion'
+
+
+class CommentViewer(ItemViewer):
+    accepted_item_type = Comment
+    viewer_name = 'comment'
+
+
+class TextCommentViewer(TextDocumentViewer, CommentViewer):
     accepted_item_type = TextComment
     viewer_name = 'textcomment'
 
@@ -861,16 +926,16 @@ class TextCommentViewer(TextDocumentViewer):
             comment = form.save(commit=False)
             item = comment.item.downcast()
             if not comment.name:
-                #TODO permissions to view name: technically you could figure out the name of an item by commenting on it here
+                #TODO permissions to view Item.name: technically you could figure out the name of an item by commenting on it here
                 comment.name = item.display_name()
                 if not comment.name.lower().startswith('re: '):
                     comment.name = 'Re: %s' % comment.name
-            permissions = self._get_permissions_from_post_data(self.accepted_item_type, False)
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
             comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
             if isinstance(item, TextDocument) and item_index is not None and self.permission_cache.agent_can(self.cur_agent, 'add_transclusion', item):
                 transclusion = Transclusion(from_item=item, from_item_version_number=comment.item_version_number, from_item_index=item_index, to_item=comment)
                 #TODO seems like there should be a way to set custom permissions on the transclusions
-                permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+                permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
                 transclusion.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
@@ -878,7 +943,12 @@ class TextCommentViewer(TextDocumentViewer):
             return self.type_new_html(form)
 
 
-class TextDocumentExcerptViewer(TextDocumentViewer):
+class ExcerptViewer(ItemViewer):
+    accepted_item_type = Excerpt
+    viewer_name = 'excerpt'
+
+
+class TextDocumentExcerptViewer(ExcerptViewer, TextDocumentViewer):
     accepted_item_type = TextDocumentExcerpt
     viewer_name = 'textdocumentexcerpt'
 
@@ -900,22 +970,46 @@ class TextDocumentExcerptViewer(TextDocumentViewer):
                 text_document.copy_fields_from_version(text_document_version_number)
             except:
                 return self.render_error('Invalid Form Data', "Could not find the specified TextDocument")
-            self.require_ability('view body', text_document)
+            self.require_ability('view TextDocument.body', text_document)
             body = text_document.body[start_index:start_index+length]
             excerpt = TextDocumentExcerpt(body=body, text_document=text_document, text_document_version_number=text_document_version_number, start_index=start_index, length=length)
             excerpts.append(excerpt)
         if not excerpts:
             return self.render_error('Invalid Form Data', "You must submit at least one excerpt")
         collection = Collection()
-        permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+        permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
         collection.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
         for excerpt in excerpts:
-            permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+            permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
             excerpt.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
-            permissions = [AgentItemPermission(agent=self.cur_agent, ability='do_anything', is_allowed=True)]
+            permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
             Membership(item=excerpt, collection=collection).save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'collection', 'noun': collection.pk}))
         return HttpResponseRedirect(redirect)
+
+
+class ViewerRequestViewer(ItemViewer):
+    accepted_item_type = ViewerRequest
+    viewer_name = 'viewerrequest'
+
+    def item_show_html(self, form=None):
+        self.context['action_title'] = ''
+        site, custom_urls = self.item.calculate_full_path()
+        self.context['site'] = site
+        self.context['custom_urls'] = custom_urls
+        self.context['child_urls'] = self.item.child_urls.filter(active=True)
+        template = loader.get_template('viewerrequest/show.html')
+        return HttpResponse(template.render(self.context))
+
+
+class SiteViewer(ViewerRequestViewer):
+    accepted_item_type = Site
+    viewer_name = 'site'
+
+
+class CustomUrlViewer(ViewerRequestViewer):
+    accepted_item_type = CustomUrl
+    viewer_name = 'customurl'
 
 
 class DemeSettingViewer(ItemViewer):

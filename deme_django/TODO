@@ -14,6 +14,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* If you try to add a Membership that used to exist but is now trashed, it fails. The code used to handle this. Probably same with CustomUrls.
 * If you login/logout after you're at a page with POST or at a login page, the "back to page" is weird.
 * Put the form/link code for each authentication method in its own module, and the default layout will somehow combine them
 * Methods that have to do with sending emails (about action notices) should go in EmailContactMethod, not ActionNotice
@@ -61,14 +62,13 @@ Unusual things to remember
 --------------------------
 * In order to know that X is a member of Y, you only need to have permission to "view item" for the Membership
 * The Meta class of a model does not get propagated to the ItemVersion
-* remember to fully respect trashed=1 everywhere, like in groups, comments, etc.
+* remember to fully respect active=0 everywhere, like in groups, comments, etc.
 * There are cases when there is a cur_agent but no associated account (anonymous, login_as other)
 * Some code (especially recursive comments and memberships) assumes that immutable fields actually cannot change
-  - This also assumes that `trashed` can only change in trash() and untrash(), and items are always created untrashed
+  - This also assumes that `active` can only change in deactivate() and reactivate(), and items are always created active
 * Don't forget to update crystal icons for new models
 * If someone has permission to edit the body of an item, we allow them to add transclusions in some situations (TextDocumentViewer.edit)
 * We do not [knowingly] support OneToOneFields and ManyToManyFields in item types
-* Whenever you do anything to modify an item (like save, trash, untrash, destroy) you better be in the downcasted version.
 
 
 
@@ -80,6 +80,7 @@ Unusual things to remember
 Distant Future (sorted by approximate order of planned implementation)
 ----------------------------------------------------------------------
 * Migrations (let's use http://south.aeracode.org/)
+* Write PermissionCache.filter_agents_by_permission so we can display which agents have a particular ability w.r.t. an item.
 * Comments that are generated from the website, when sent by email, should come from an EmailContactMethod if the user has a default contact method (we'll need a way to select a default contact method)
 * Specific-version destroying
 * Edit locks (merging, or even synchro editing)
@@ -87,6 +88,7 @@ Distant Future (sorted by approximate order of planned implementation)
 * Internationalize using ugettext_lazy
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
 * Customizable email template per site that gets sent out for each notification
+* When HtmlDocuments are uploaded, the server should do checks to make sure there is nothing malicious.
 * Facebook API
 * Installation-to-installation API
   - Allow, as an option, an alias to refer to the hostname of the installation, such as i-numbers (to allow a consistent identifier when people change hostnames for their installation).

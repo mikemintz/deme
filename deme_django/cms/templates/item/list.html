@@ -23,7 +23,7 @@
     </tr>
     <tr>
         <th>
-            Item Set Filter:
+            Collection Filter:
         </th>
         <td>
             <select name="collection">
@@ -57,11 +57,11 @@
 {% if items %}
 
 <div style="text-align: right; font-size: smaller;">
-    Displaying {{ list_start_i }} - {{ list_end_i }} of {{ n_listable_items }} listable {{ accepted_item_type_name_plural }} <!--(plus {{ n_opposite_active_items }} opposite-active items and {{ n_unlistable_items }} unlistable items)-->
+    Displaying {{ list_start_i }} - {{ list_end_i }} of {{ n_listable_items }} listable {{ accepted_item_type_name_plural }}
 </div>
 
 <div style="margin-top: 10px; margin-bottom: 10px; text-align: center;">
-    {% list_results_navigator viewer_name collection search_query active offset limit n_listable_items 10 %}
+    {% list_results_navigator 10 %}
 </div>
 
 <table cellspacing="0" class="list" width="100%">
@@ -70,7 +70,7 @@
     </tr>
     {% for item in items %}
     <tr class="{% cycle 'even' 'odd' %}">
-        <td><a class="img_link" href="{% url item_url viewer=item.item_type_string|lower,noun=item.pk %}"><img src="{{ item|icon_url:16 }}" /><span>{% viewable_name item %}</span></a></td>
+        <td><a class="img_link" href="{% url item_url viewer=item.item_type_string|lower,noun=item.pk %}?crumb_item_type={{ item_type_lower }}&crumb_filter={{ filter_string }}"><img src="{{ item|icon_url:16 }}" /><span>{% viewable_name item %}</span></a></td>
     </tr>
     {% endfor %}
 </table>
@@ -79,7 +79,7 @@
 {% endif %}
 
 <div style="margin-top: 10px; text-align: center;">
-    {% list_results_navigator viewer_name collection search_query active offset limit n_listable_items 10 %}
+    {% list_results_navigator 10 %}
 </div>
 
 {% endblock content %}

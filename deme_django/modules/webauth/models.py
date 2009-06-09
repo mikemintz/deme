@@ -14,7 +14,7 @@ class WebauthAccount(AuthenticationMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view username', 'edit username'])
+    introduced_abilities = frozenset(['view WebauthAccount.username', 'edit WebauthAccount.username'])
     introduced_global_abilities = frozenset(['create WebauthAccount'])
     class Meta:
         verbose_name = _('WebAuth account')

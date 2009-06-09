@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 class WebauthAccountViewer(AuthenticationMethodViewer):
     accepted_item_type = WebauthAccount
-    viewer_name = 'webauth'
+    viewer_name = 'webauthaccount'
 
     def type_login_html(self):
         # We must be using SSL for WebAuth to work

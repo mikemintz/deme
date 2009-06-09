@@ -29,34 +29,39 @@ permission_cache = PermissionCache()
 admin = Agent(name="Admin")
 admin.save_versioned(action_agent=None, first_agent=True)
 
-print 'Creating defaults for the permission framework'
-for item_type in all_item_types():
-    for ability in item_type.introduced_abilities:
-        setting_name = 'cms.default_permission.%s.%s' % (item_type.__name__, ability)
-        if issubclass(item_type, (DemeSetting, AuthenticationMethod)):
-            is_allowed = False
-        elif ability.startswith('view '):
-            is_allowed = True
-        elif ability in ['comment_on', 'view action_notices']:
-            is_allowed = True
-        else:
-            is_allowed = False
-        setting_value = 'true' if is_allowed else 'false'
-        if ability == 'do_anything':
-            setting_value = 'none'
-        DemeSetting.set(setting_name, setting_value, admin)
-        EveryoneItemPermission(item=DemeSetting.objects.get(key=setting_name), ability='view name', is_allowed=False).save() #TODO is this necessary?
-
-print 'Other stuff...'
-
-AgentGlobalPermission(ability='do_anything', is_allowed=True, agent=admin).save()
-
 anonymous_agent = AnonymousAgent(name='Anonymous')
 anonymous_agent.save_versioned(action_agent=admin)
 
 default_site = Site(name="Default Site", viewer='item', action='list', aliased_item=None, query_string='', hostname="localhost")
 default_site.save_versioned(action_agent=admin)
 DemeSetting.set('cms.default_site', default_site.pk, admin)
+
+print 'Creating defaults for the permission framework'
+for item_type in all_item_types():
+    for ability in item_type.introduced_abilities:
+        if ability == 'do_anything':
+            continue
+        elif issubclass(item_type, (DemeSetting, AuthenticationMethod)):
+            is_allowed = False
+        elif ability.startswith('view '):
+            is_allowed = True
+        elif ability in ['comment_on', 'view Item.action_notices']:
+            is_allowed = True
+        else:
+            is_allowed = False
+        AllToAllPermission(ability=ability, is_allowed=is_allowed).save()
+
+# Give everyone permission to create any item type, except DemeSetting and Site
+for item_type in all_item_types():
+    if item_type in [DemeSetting, Site]:
+        continue
+    ability = 'create %s' % item_type.__name__
+    if ability in permission_cache.all_possible_global_abilities():
+        AllToAllPermission(ability=ability, is_allowed=True).save()
+
+print 'Other stuff...'
+
+OneToAllPermission(ability='do_anything', is_allowed=True, source=admin).save()
 
 if len(sys.argv) < 2 or sys.argv[1] != 'test':
     sys.exit(0)
@@ -98,33 +103,33 @@ default_site.save_versioned(action_agent=admin)
 
 mike = Person(first_name="Mike", last_name="Mintz", name="Mike Mintz")
 mike.save_versioned(action_agent=admin)
-AgentItemPermission(agent=mike, item=mike, ability='do_anything', is_allowed=True).save()
+OneToOnePermission(source=mike, target=mike, ability='do_anything', is_allowed=True).save()
 mike_authentication_method = DemeAccount(username="mike", agent=mike)
 mike_authentication_method.set_password('')
-mike_authentication_method.save_versioned(action_agent=mike, initial_permissions=[AgentItemPermission(agent=mike, ability='do_anything', is_allowed=True)])
-WebauthAccount(username="mintz", agent=mike).save_versioned(action_agent=mike, initial_permissions=[AgentItemPermission(agent=mike, ability='do_anything', is_allowed=True)])
+mike_authentication_method.save_versioned(action_agent=mike, initial_permissions=[OneToOnePermission(source=mike, ability='do_anything', is_allowed=True)])
+WebauthAccount(username="mintz", agent=mike).save_versioned(action_agent=mike, initial_permissions=[OneToOnePermission(source=mike, ability='do_anything', is_allowed=True)])
 mike_email_contact_method = EmailContactMethod(name="Mike's Email Contact Method", email="mintz@stanford.edu", agent=mike)
-mike_email_contact_method.save_versioned(action_agent=mike, initial_permissions=[AgentItemPermission(agent=mike, ability='do_anything', is_allowed=True)])
+mike_email_contact_method.save_versioned(action_agent=mike, initial_permissions=[OneToOnePermission(source=mike, ability='do_anything', is_allowed=True)])
 
 todd = Person(first_name="Todd", last_name="Davies", name="Todd Davies")
 todd.save_versioned(action_agent=admin)
-AgentItemPermission(agent=todd, item=todd, ability='do_anything', is_allowed=True).save()
+OneToOnePermission(source=todd, target=todd, ability='do_anything', is_allowed=True).save()
 todd_authentication_method = DemeAccount(username="todd", agent=todd)
 todd_authentication_method.set_password('')
-todd_authentication_method.save_versioned(action_agent=todd, initial_permissions=[AgentItemPermission(agent=todd, ability='do_anything', is_allowed=True)])
-WebauthAccount(username="davies", agent=todd).save_versioned(action_agent=todd, initial_permissions=[AgentItemPermission(agent=todd, ability='do_anything', is_allowed=True)])
+todd_authentication_method.save_versioned(action_agent=todd, initial_permissions=[OneToOnePermission(source=todd, ability='do_anything', is_allowed=True)])
+WebauthAccount(username="davies", agent=todd).save_versioned(action_agent=todd, initial_permissions=[OneToOnePermission(source=todd, ability='do_anything', is_allowed=True)])
 todd_email_contact_method = EmailContactMethod(name="Todd's Email Contact Method", email="todd@example.com", agent=todd)
-todd_email_contact_method.save_versioned(action_agent=todd, initial_permissions=[AgentItemPermission(agent=todd, ability='do_anything', is_allowed=True)])
+todd_email_contact_method.save_versioned(action_agent=todd, initial_permissions=[OneToOnePermission(source=todd, ability='do_anything', is_allowed=True)])
 
 joe = Person(first_name="Joe", last_name="Marrama", name="Joe Marrama")
 joe.save_versioned(action_agent=admin)
-AgentItemPermission(agent=joe, item=joe, ability='do_anything', is_allowed=True).save()
+OneToOnePermission(source=joe, target=joe, ability='do_anything', is_allowed=True).save()
 joe_authentication_method = DemeAccount(username="joe", agent=joe)
 joe_authentication_method.set_password('')
-joe_authentication_method.save_versioned(action_agent=joe, initial_permissions=[AgentItemPermission(agent=joe, ability='do_anything', is_allowed=True)])
-WebauthAccount(username="jmarrama", agent=joe).save_versioned(action_agent=joe, initial_permissions=[AgentItemPermission(agent=joe, ability='do_anything', is_allowed=True)])
+joe_authentication_method.save_versioned(action_agent=joe, initial_permissions=[OneToOnePermission(source=joe, ability='do_anything', is_allowed=True)])
+WebauthAccount(username="jmarrama", agent=joe).save_versioned(action_agent=joe, initial_permissions=[OneToOnePermission(source=joe, ability='do_anything', is_allowed=True)])
 joe_email_contact_method = EmailContactMethod(name="Joe's Email Contact Method", email="joe@example.com", agent=joe)
-joe_email_contact_method.save_versioned(action_agent=joe, initial_permissions=[AgentItemPermission(agent=joe, ability='do_anything', is_allowed=True)])
+joe_email_contact_method.save_versioned(action_agent=joe, initial_permissions=[OneToOnePermission(source=joe, ability='do_anything', is_allowed=True)])
 
 github_agent = Agent(name="Github")
 github_agent.save_versioned(action_agent=admin)
@@ -142,21 +147,15 @@ hello_url.save_versioned(action_agent=admin)
 
 discuss_group = Group(name="Deme Dev Discussion")
 discuss_group.save_versioned(action_agent=admin)
-Membership(item=mike, collection=discuss_group).save_versioned(action_agent=mike, initial_permissions=[AgentItemPermission(agent=mike, ability='do_anything', is_allowed=True)])
-Membership(item=todd, collection=discuss_group).save_versioned(action_agent=todd, initial_permissions=[AgentItemPermission(agent=todd, ability='do_anything', is_allowed=True)])
-Membership(item=joe, collection=discuss_group).save_versioned(action_agent=joe, initial_permissions=[AgentItemPermission(agent=joe, ability='do_anything', is_allowed=True)])
-Subscription(contact_method=mike_email_contact_method, item=discuss_group.folios.get(), deep=True).save_versioned(action_agent=mike, initial_permissions=[AgentItemPermission(agent=mike, ability='do_anything', is_allowed=True)])
-Subscription(contact_method=todd_email_contact_method, item=discuss_group.folios.get(), deep=True).save_versioned(action_agent=todd, initial_permissions=[AgentItemPermission(agent=todd, ability='do_anything', is_allowed=True)])
-Subscription(contact_method=joe_email_contact_method, item=discuss_group.folios.get(), deep=True).save_versioned(action_agent=joe, initial_permissions=[AgentItemPermission(agent=joe, ability='do_anything', is_allowed=True)])
+Membership(item=mike, collection=discuss_group).save_versioned(action_agent=mike, initial_permissions=[OneToOnePermission(source=mike, ability='do_anything', is_allowed=True)])
+Membership(item=todd, collection=discuss_group).save_versioned(action_agent=todd, initial_permissions=[OneToOnePermission(source=todd, ability='do_anything', is_allowed=True)])
+Membership(item=joe, collection=discuss_group).save_versioned(action_agent=joe, initial_permissions=[OneToOnePermission(source=joe, ability='do_anything', is_allowed=True)])
+Subscription(contact_method=mike_email_contact_method, item=discuss_group.folios.get(), deep=True).save_versioned(action_agent=mike, initial_permissions=[OneToOnePermission(source=mike, ability='do_anything', is_allowed=True)])
+Subscription(contact_method=todd_email_contact_method, item=discuss_group.folios.get(), deep=True).save_versioned(action_agent=todd, initial_permissions=[OneToOnePermission(source=todd, ability='do_anything', is_allowed=True)])
+Subscription(contact_method=joe_email_contact_method, item=discuss_group.folios.get(), deep=True).save_versioned(action_agent=joe, initial_permissions=[OneToOnePermission(source=joe, ability='do_anything', is_allowed=True)])
 
-#AgentGlobalPermission(agent=anonymous_agent, ability='do_anything', is_allowed=False).save()
+#OneToAllPermission(source=anonymous_agent, ability='do_anything', is_allowed=False).save()
 
-# Give everyone permission to create any item type, except DemeSetting and Site
-for item_type in all_item_types():
-    if item_type in [DemeSetting, Site]:
-        continue
-    ability = 'create %s' % item_type.__name__
-    if ability in permission_cache.all_possible_global_abilities():
-        EveryoneGlobalPermission(ability=ability, is_allowed=True).save()
+AllToOnePermission(target=admin, ability='login_as', is_allowed=True).save()
 
-EveryoneItemPermission(item=admin, ability='login_as', is_allowed=True).save()
+print 'Done'

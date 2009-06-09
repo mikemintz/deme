@@ -1,0 +1,35 @@
+{% extends layout %}
+{% load newsroll_extras %}
+{% load item_tags %}
+{% block favicon %}{{ item|icon_url:16 }}{% endblock %}
+{% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
+{% block content %}
+
+{% subclassfields %}
+
+{% for details in members %}
+
+    <div style="margin-bottom: 2px; border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px;">
+        <div>
+            {{ details.name }} 
+        </div>
+        
+        {% if details.display_body %}
+            <div>
+                {{ details.body }} 
+            </div>
+        {% endif %}
+        
+        <div>
+            Posted by {{ details.creator }} 
+            <span title="{{ details.created_at|date:"Y-m-d H:m:s" }}" style="width: 13em; display: inline-block;">
+                {{ details.created_at|timesince }} ago
+            </span>
+        </div>
+
+    </div>
+
+{% endfor %}
+
+{% endblock content %}
+

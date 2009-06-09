@@ -112,7 +112,10 @@ class ViewerMetaClass(type):
     def __new__(cls, name, bases, attrs):
         result = super(ViewerMetaClass, cls).__new__(cls, name, bases, attrs)
         if name != 'Viewer':
-            ViewerMetaClass.viewer_name_dict[attrs['viewer_name']] = result
+            viewer_name = attrs['viewer_name']
+            if viewer_name in ViewerMetaClass.viewer_name_dict:
+                raise Exception("Viewer with name `%s` is defined multiple times" % viewer_name)
+            ViewerMetaClass.viewer_name_dict[viewer_name] = result
         return result
 
 
@@ -147,11 +150,11 @@ class Viewer(object):
       up in the URL as the action), and format is the output format (which shows
       up in the URL as the format). For example, the method item_edit_html(self)
       in an agent viewer represents the item-specific view with action="edit" and
-      format="html", and would respond to the URL `/item/agent/123/edit.html`.
+      format="html", and would respond to the URL `/viewing/agent/123/edit.html`.
     2. To define a type-wide view, define a method with the name
       `type_method_format`. For example, the method type_new_html(self) in an
       agent viewer represents the type-wide view with action="new" and
-      format="html", and would respond to the URL `/item/agent/new.html`.
+      format="html", and would respond to the URL `/viewing/agent/new.html`.
     
     View methods take no parameters (except self), since all of the details of
     the request are defined as instance variables in the viewer before
@@ -213,6 +216,7 @@ class Viewer(object):
         Return an HttpResponse (of type request_class) that displays a simple
         error page with the specified title and body.
         """
+        self.context['action_title'] = 'Error'
         template = loader.get_template_from_string("""
         {%% extends layout %%}
         {%% load item_tags %%}
@@ -421,7 +425,7 @@ class Viewer(object):
 
     def _set_default_layout(self):
         self.context['layout'] = 'default_layout.html'
-        if self.cur_agent_can('view default_layout', self.cur_site):
+        if self.cur_agent_can('view Site.default_layout', self.cur_site):
             if self.cur_site.default_layout:
                 self.context['layout'] = self.construct_template(self.cur_site.default_layout)
         else:
@@ -435,7 +439,7 @@ class Viewer(object):
                 break
 
             # Set next_node
-            if self.cur_agent_can('view layout', cur_node):
+            if self.cur_agent_can('view DjangoTemplateDocument.layout', cur_node):
                 next_node = cur_node.layout
             else:
                 next_node = None
@@ -453,7 +457,7 @@ class Viewer(object):
                 extends_string = '{%% extends layout%s %%}\n' % next_node.pk
 
             # Set body_string
-            if self.cur_agent_can('view body', cur_node):
+            if self.cur_agent_can('view TextDocument.body', cur_node):
                 body_string = cur_node.body
             else:
                 body_string = ''
@@ -471,31 +475,14 @@ class Viewer(object):
 
 def get_viewer_class_by_name(viewer_name):
     """
-    Return the viewer class with the given name. If no such class exists, see
-    if an item type exists with that same name (case insensitive), and if so,
-    dynamically define a viewer for that item type. Otherwise, return None.
+    Return the viewer class with the given name. If no such class exists,
+    return None.
     """
     # Check the defined viewers in ViewerMetaClass.viewer_name_dict
     result = ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
-    if result is not None:
-        return result
-    # If the viewer isn't defined, see if there is an item type with the same name
-    item_type = get_item_type_with_name(viewer_name, case_sensitive=False)
-    if item_type is None:
-        return None
-    # Define an empty viewer dynamically (inheriting from a defined viewer)
-    parent_item_type_with_viewer = item_type
-    while issubclass(parent_item_type_with_viewer, Item):
-        parent_viewer_class = ViewerMetaClass.viewer_name_dict.get(parent_item_type_with_viewer.__name__.lower(), None)
-        if parent_viewer_class:
-            break
-        parent_item_type_with_viewer = parent_item_type_with_viewer.__base__
-    if parent_viewer_class:
-        class_name = '%sViewer' % item_type.__name__
-        bases = (parent_viewer_class,)
-        attrs = {'accepted_item_type': item_type, 'viewer_name': viewer_name}
-        result = ViewerMetaClass.__new__(ViewerMetaClass, class_name, bases, attrs)
-        return result
-    else:
-        return None
+    return result
 
+
+def all_viewer_classes():
+    "Return a list of all viewer classes defined."
+    return ViewerMetaClass.viewer_name_dict.values()

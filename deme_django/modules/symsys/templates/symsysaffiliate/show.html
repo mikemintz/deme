@@ -9,43 +9,7 @@
 
 <table cellspacing="0" class="twocol">
 
-    {% ifagentcan 'view' 'original_first_name' item %}
-    {% if item.original_first_name %}
-    <tr>
-        <th>Original first name:</th>
-        <td>{{ item.original_first_name }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'original_middle_names' item %}
-    {% if item.original_middle_names %}
-    <tr>
-        <th>Original middle names:</th>
-        <td>{{ item.original_middle_names }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'original_last_name' item %}
-    {% if item.original_last_name %}
-    <tr>
-        <th>Original last name:</th>
-        <td>{{ item.original_last_name }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'original_suffix' item %}
-    {% if item.original_suffix %}
-    <tr>
-        <th>Original suffix:</th>
-        <td>{{ item.original_suffix }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'first_name' item %}
+    {% ifagentcan 'view Person.first_name' item %}
     {% if item.first_name %}
     <tr>
         <th>First name:</th>
@@ -54,7 +18,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan 'view' 'middle_names' item %}
+    {% ifagentcan 'view Person.middle_names' item %}
     {% if item.middle_names %}
     <tr>
         <th>Middle names:</th>
@@ -63,7 +27,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan 'view' 'last_name' item %}
+    {% ifagentcan 'view Person.last_name' item %}
     {% if item.last_name %}
     <tr>
         <th>Last name:</th>
@@ -72,7 +36,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan 'view' 'suffix' item %}
+    {% ifagentcan 'view Person.suffix' item %}
     {% if item.suffix %}
     <tr>
         <th>Suffix:</th>
@@ -81,106 +45,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan 'view' 'suid' item %}
-    {% if item.suid %}
-    <tr>
-        <th>SUID:</th>
-        <td>{{ item.suid }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'first_affiliation_year' item %}
-    {% if item.first_affiliation_year %}
-    <tr>
-        <th>First affiliation year:</th>
-        <td>{{ item.first_affiliation_year }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'bs_graduation_year' item %}
-    {% if item.bs_graduation_year %}
-    <tr>
-        <th>BS Graduation year:</th>
-        <td>{{ item.bs_graduation_year }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'ms_graduation_year' item %}
-    {% if item.ms_graduation_year %}
-    <tr>
-        <th>MS graduation year:</th>
-        <td>{{ item.ms_graduation_year }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'academic_title' item %}
-    {% if item.academic_title %}
-    <tr>
-        <th>Academic title:</th>
-        <td>{{ item.academic_title }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'admin_title' item %}
-    {% if item.admin_title %}
-    <tr>
-        <th>Admin title:</th>
-        <td>{{ item.admin_title }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'bs_advisor' item %}
-    {% if item.bs_advisor %}
-    <tr>
-        <th>BS Advisor:</th>
-        <td>{{ item.bs_advisor }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'ms_advisor' item %}
-    {% if item.ms_advisor %}
-    <tr>
-        <th>MS Advisor:</th>
-        <td>{{ item.ms_advisor }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'honors_advisor' item %}
-    {% if item.honors_advisor %}
-    <tr>
-        <th>Honors advisor:</th>
-        <td>{{ item.honors_advisor }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'ms_second_reader' item %}
-    {% if item.ms_second_reader %}
-    <tr>
-        <th>MS second reader:</th>
-        <td>{{ item.ms_second_reader }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'honors_second_reader' item %}
-    {% if item.honors_second_reader %}
-    <tr>
-        <th>Honors second reader:</th>
-        <td>{{ item.honors_second_reader }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'w_organization' item %}
+    {% ifagentcan 'view SymsysAffiliate.w_organization' item %}
     {% if item.w_organization %}
     <tr>
         <th>Work organization:</th>
@@ -189,7 +54,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan 'view' 'w_position' item %}
+    {% ifagentcan 'view SymsysAffiliate.w_position' item %}
     {% if item.w_position %}
     <tr>
         <th>Work position:</th>
@@ -198,7 +63,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan 'view' 'background' item %}
+    {% ifagentcan 'view SymsysAffiliate.background' item %}
     {% if item.background %}
     <tr>
         <th>Background:</th>
@@ -207,7 +72,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan 'view' 'doing_now' item %}
+    {% ifagentcan 'view SymsysAffiliate.doing_now' item %}
     {% if item.doing_now %}
     <tr>
         <th>Doing Now:</th>
@@ -216,7 +81,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan 'view' 'interests' item %}
+    {% ifagentcan 'view SymsysAffiliate.interests' item %}
     {% if item.interests %}
     <tr>
         <th>Interests:</th>
@@ -225,7 +90,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan 'view' 'publications' item %}
+    {% ifagentcan 'view SymsysAffiliate.publications' item %}
     {% if item.publications %}
     <tr>
         <th>Publications:</th>
@@ -234,7 +99,7 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan 'view' 'office_hours' item %}
+    {% ifagentcan 'view SymsysAffiliate.office_hours' item %}
     {% if item.office_hours %}
     <tr>
         <th>Office hours:</th>
@@ -243,92 +108,11 @@
     {% endif %}
     {% endifagentcan %}
 
-    {% ifagentcan 'view' 'about' item %}
+    {% ifagentcan 'view SymsysAffiliate.about' item %}
     {% if item.about %}
     <tr>
         <th>About:</th>
         <td>{{ item.about|linebreaksbr|urlize }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'other_degrees' item %}
-    {% if item.other_degrees %}
-    <tr>
-        <th>Other degrees:</th>
-        <td>{{ item.other_degrees }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'indivdesignedconc' item %}
-    {% if item.indivdesignedconc %}
-    <tr>
-        <th>Individually designed concentration:</th>
-        <td>{{ item.indivdesignedconc }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'honors_thesis_title' item %}
-    {% if item.honors_thesis_title %}
-    <tr>
-        <th>Honors thesis title:</th>
-        <td>{{ item.honors_thesis_title }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'honors_thesis_filename' item %}
-    {% if item.honors_thesis_filename %}
-    <tr>
-        <th>Honors thesis filename:</th>
-        <td>{{ item.honors_thesis_filename }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'honors_thesis_url' item %}
-    {% if item.honors_thesis_url %}
-    <tr>
-        <th>Honors thesis URL:</th>
-        <td>{{ item.honors_thesis_url }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'ms_thesis_title' item %}
-    {% if item.ms_thesis_title %}
-    <tr>
-        <th>MS thesis title:</th>
-        <td>{{ item.ms_thesis_title }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'ms_thesis_filename' item %}
-    {% if item.ms_thesis_filename %}
-    <tr>
-        <th>MS thesis filename:</th>
-        <td>{{ item.ms_thesis_filename }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'ms_thesis_url' item %}
-    {% if item.ms_thesis_url %}
-    <tr>
-        <th>MS thesis URL:</th>
-        <td>{{ item.ms_thesis_url }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
-    {% ifagentcan 'view' 'ms_idt' item %}
-    {% if item.ms_idt %}
-    <tr>
-        <th>MS IDT:</th>
-        <td>{{ item.ms_idt }}</td>
     </tr>
     {% endif %}
     {% endifagentcan %}
@@ -349,39 +133,24 @@
     </tr>
     {% endfor %}
 
-    {% if item.then_image %}
-    {% if item.then_image.active %}
-    {% ifagentcan 'view' 'then_image' item %}
-    {% ifagentcan 'view' 'datafile' item.then_image %}
+    {# TODO display them more nicely, rather than simply embedded #}
+    {% for symsys_career in symsys_careers %}
     <tr>
-        <th>Then image:</th>
-        <td><a href="{{ item.then_image.get_absolute_url }}"><img src="{{ item.then_image.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a></td>
+        <th>Symsys Career:</th>
+        <td>{% embed symsys_career.item_type_string.lower symsys_career %}</td>
     </tr>
-    {% endifagentcan %}
-    {% endifagentcan %}
-    {% else %}
-    <tr>
-        <th>Then image:</th>
-        <td>Inactive</td>
-    </tr>
-    {% endif %}
-    {% endif %}
+    {% endfor %}
 
-    {% if item.now_image %}
-    {% if item.now_image.active %}
-    {% ifagentcan 'view' 'now_image' item %}
-    {% ifagentcan 'view' 'datafile' item.now_image %}
+    {% if item.photo %}
+    {% if item.photo.active %}
+    {% ifagentcan 'view SymsysAffiliate.photo' item %}
+    {% ifagentcan 'view FileDocument.datafile' item.photo %}
     <tr>
-        <th>Now image:</th>
-        <td><a href="{{ item.now_image.get_absolute_url }}"><img src="{{ item.now_image.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a></td>
+        <th>Photo:</th>
+        <td><a href="{{ item.photo.get_absolute_url }}"><img src="{{ item.photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a></td>
     </tr>
     {% endifagentcan %}
     {% endifagentcan %}
-    {% else %}
-    <tr>
-        <th>Now image:</th>
-        <td>Inactive</td>
-    </tr>
     {% endif %}
     {% endif %}
 

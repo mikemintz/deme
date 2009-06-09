@@ -5,6 +5,7 @@ This module defines wrapper functions around the permission framework.
 from cms.models import *
 from django.db import models
 from django.db.models import Q
+from django.db.models.sql.where import NothingNode, EverythingNode
 
 ###############################################################################
 # PermissionCache class
@@ -26,7 +27,6 @@ class PermissionCache(object):
         self._item_ability_cache = {}    # (agent_id, item_id) --> set(abilities)
         self._ability_yes_cache = {}     # (agent_id, ability) --> set(item_ids)
         self._ability_no_cache = {}      # (agent_id, ability) --> set(item_ids)
-        self._deme_setting_cache = None  # deme_setting_key --> True|False|None
 
     def agent_can_global(self, agent, ability):
         """
@@ -55,7 +55,7 @@ class PermissionCache(object):
         """
         result = self._global_ability_cache.get(agent.pk)
         if result is None:
-            abilities_yes, abilities_no = self.calculate_global_abilities_for_agent(agent)
+            abilities_yes, abilities_no = self.calculate_abilities(agent, None, None)
             self._global_ability_cache[agent.pk] = (abilities_yes, abilities_no)
         else:
             abilities_yes, abilities_no = result
@@ -79,7 +79,7 @@ class PermissionCache(object):
                 abilities_yes = set()
                 abilities_no = self.all_possible_item_abilities(item_type)
             else:
-                abilities_yes, abilities_no = self.calculate_item_abilities_for_agent_and_item(agent, item, item_type)
+                abilities_yes, abilities_no = self.calculate_abilities(agent, item, item_type)
             self._item_ability_cache[(agent.pk, item.pk)] = (abilities_yes, abilities_no)
         else:
             abilities_yes, abilities_no = result
@@ -87,8 +87,8 @@ class PermissionCache(object):
 
     def filter_items(self, agent, ability, queryset):
         """
-        Return a Q object that can be used as a QuerySet filter, specifying only
-        those items that the agent has the ability for.
+        Returns a QuerySet that filters the given QuerySet, into only the items
+        that the specified agent has the specified ability to do.
         
         Unlike filter_items_by_permission, this takes into account the fact that
         agents with the global ability "do_anything" virtually have all item
@@ -112,7 +112,7 @@ class PermissionCache(object):
             # Nothing to update, since no more database calls need to be made
             return queryset.none()
         else:
-            authorized_queryset = queryset.filter(self.filter_items_by_permission(agent, ability, item_type), destroyed=False)
+            authorized_queryset = queryset.filter(self.filter_items_by_permission(agent, ability), destroyed=False)
             yes_ids = set(authorized_queryset.values_list('pk', flat=True))
             no_ids = set(queryset.values_list('pk', flat=True)) - yes_ids
             self._ability_yes_cache.setdefault((agent.pk, ability), set()).update(yes_ids)
@@ -134,118 +134,79 @@ class PermissionCache(object):
                 result.update(self.all_possible_item_abilities(parent_item_type))
         return result
 
-    def default_ability_is_allowed(self, ability, item_type):
-        """
-        Return true if this item type's ability is allowed by default (from
-        DemeSettings).
-        """
-        if not issubclass(item_type, Item):
-            raise Exception("You must call all_possible_item_abilities with a subclass of Item")
-        if self._deme_setting_cache is None:
-            self._deme_setting_cache = {}
-            all_default_permissions = DemeSetting.objects.filter(key__startswith="cms.default_permission.", active=True)
-            for key, value in all_default_permissions.values_list('key', 'value'):
-                if value == 'true':
-                    self._deme_setting_cache[key] = True
-                elif value == 'false':
-                    self._deme_setting_cache[key] = False
-        if ability in item_type.introduced_abilities:
-            deme_setting_key = "cms.default_permission.%s.%s" % (item_type.__name__, ability)
-            return self._deme_setting_cache.get(deme_setting_key, None)
-        if item_type != Item:
-            for parent_item_type in item_type.__bases__:
-                result = self.default_ability_is_allowed(ability, parent_item_type)
-                if result is not None:
-                    return result
-        return None
+    def all_possible_item_and_global_abilities(self):
+        """Return a set of item and global abilities that are possible."""
+        return set(x[0] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES)
 
     ###############################################################################
     # Methods to calculate ability sets
     ###############################################################################
 
-    def calculate_global_abilities_for_agent(self, agent):
-        """
-        Return a pair (yes_abilities, no_abilities) where yes_abilities is the set
-        of global abilities that the agent is granted and no_abilities is a set of
-        global abilities that the agent is denied. The two sets should be disjoint.
-        
-        We calculate yes_abilities and no_abilities iteratively from the highest
-        permission level down to the lowest permission level (first we check
-        AgentGlobalPermissions, then CollectionGlobalPermissions, and finally
-        EveryoneGlobalPermissions). At each level, any permissions that were not
-        granted or denied at a higher level are added to the abilities_yes or
-        abilities_no set.
-        """
-        my_collection_ids = agent.ancestor_collections().values('pk').query
-
-        agent_perms = AgentGlobalPermission.objects.filter(agent=agent)
-        collection_perms = CollectionGlobalPermission.objects.filter(collection__in=my_collection_ids)
-        everyone_perms = EveryoneGlobalPermission.objects.all()
-
-        abilities_yes = set()
-        abilities_no = set()
-        # Iterate once for each level: agent, collection, everyone
-        for permissions in (agent_perms, collection_perms, everyone_perms):
-            # Populate cur_abilities_yes and cur_abilities_no with the specified
-            # abilities at this level.
-            cur_abilities_yes = set()
-            cur_abilities_no = set()
-            for ability, is_allowed in permissions.values_list('ability', 'is_allowed'):
-                if is_allowed:
-                    cur_abilities_yes.add(ability)
-                else:
-                    cur_abilities_no.add(ability)
-            # If "do_anything" is in the yes abilities at this level, grant all
-            # other global abilities.
-            if 'do_anything' in cur_abilities_yes:
-                cur_abilities_yes = self.all_possible_global_abilities()
-            # If "do_anything" is in the no abilities at this level, deny all other
-            # global abilities.
-            if 'do_anything' in cur_abilities_no:
-                cur_abilities_no = self.all_possible_global_abilities()
-            # For each ability specified at this level, add it to the all-level
-            # ability sets if it's not already there. "Yes" takes precedence over
-            # "no".
-            for x in cur_abilities_yes:
-                if x not in abilities_yes and x not in abilities_no:
-                    abilities_yes.add(x)
-            for x in cur_abilities_no:
-                if x not in abilities_yes and x not in abilities_no:
-                    abilities_no.add(x)
-        abilities_yes &= self.all_possible_global_abilities()
-        abilities_no &= self.all_possible_global_abilities()
-        return (abilities_yes, abilities_no)
-
-    def calculate_item_abilities_for_agent_and_item(self, agent, item, item_type):
+    def calculate_abilities(self, agent, item, item_type):
         """
         Return a pair (yes_abilities, no_abilities) where yes_abilities is the set
         of item abilities that the agent is granted and no_abilities is a set of
         item abilities that the agent is denied. The two sets should be disjoint.
         
+        If item is None, then we calculate the global abilities for the agent,
+        in the same exact way (using only the *ToAllPermission classes).
+        
         We calculate yes_abilities and no_abilities iteratively from the highest
-        permission level down to the lowest permission level (first we check
-        AgentItemPermissions, then CollectionItemPermissions, then 
-        EveryoneItemPermissions, and finally default permissions defined in
-        DemeSettings). At each level, any permissions that were not granted or
-        denied at a higher level are added to the abilities_yes or
-        abilities_no set.
+        permission level down to the lowest permission level:
+            1. OneToOnePermission
+            2. OneToSomePermission
+            3. OneToAllPermission
+            4. SomeToOnePermission
+            5. SomeToSomePermission
+            6. SomeToAllPermission
+            7. AllToOnePermission
+            8. AllToSomePermission
+            9. AllToAllPermission
+        At each level, any permissions that were not granted or denied at a
+        higher level are added to the abilities_yes or abilities_no set.
         """
-        my_collection_ids = agent.ancestor_collections().values('pk').query
+        agent_collection_ids = RecursiveMembership.objects.filter(child=agent).values('parent_id').query
+        if item is not None:
+            item_collection_ids = RecursiveMembership.objects.filter(child=item, permission_enabled=True).values('parent_id').query
 
-        agent_perms = AgentItemPermission.objects.filter(item=item, agent=agent)
-        collection_perms = CollectionItemPermission.objects.filter(item=item, collection__in=my_collection_ids)
-        everyone_perms = EveryoneItemPermission.objects.filter(item=item)
+        permission_querysets = []
+        for permission_class in [OneToOnePermission, OneToSomePermission, OneToAllPermission,
+                                SomeToOnePermission, SomeToSomePermission, SomeToAllPermission,
+                                AllToOnePermission, AllToSomePermission, AllToAllPermission]:
+            filter = {}
+            if hasattr(permission_class, 'source'):
+                source_field = permission_class.source.field
+                if source_field.rel.to == Agent:
+                    filter['source'] = agent
+                elif source_field.rel.to == Collection:
+                    filter['source__in'] = agent_collection_ids
+                else:
+                    assert False
+            if hasattr(permission_class, 'target'):
+                if item is None:
+                    continue
+                target_field = permission_class.target.field
+                if target_field.rel.to == Item:
+                    filter['target'] = item
+                elif target_field.rel.to == Collection:
+                    filter['target__in'] = item_collection_ids
+                else:
+                    assert False
+            permission_querysets.append(permission_class.objects.filter(**filter))
 
-        possible_abilities = self.all_possible_item_abilities(item_type)
+        if item is None:
+            possible_abilities = self.all_possible_global_abilities()
+        else:
+            possible_abilities = self.all_possible_item_abilities(item_type)
         abilities_yes = set()
         abilities_no = set()
         # Iterate once for each level: agent, collection, everyone
-        for permissions in (agent_perms, collection_perms, everyone_perms):
+        for permission_queryset in permission_querysets:
             # Populate cur_abilities_yes and cur_abilities_no with the specified
             # abilities at this level.
             cur_abilities_yes = set()
             cur_abilities_no = set()
-            for ability, is_allowed in permissions.values_list('ability', 'is_allowed'):
+            for ability, is_allowed in permission_queryset.values_list('ability', 'is_allowed'):
                 if is_allowed:
                     cur_abilities_yes.add(ability)
                 else:
@@ -262,28 +223,20 @@ class PermissionCache(object):
             # ability sets if it's not already there. "Yes" takes precedence over
             # "no".
             for x in cur_abilities_yes:
-                if x not in abilities_yes and x not in abilities_no:
+                if x not in abilities_yes and x not in abilities_no and x in possible_abilities:
                     abilities_yes.add(x)
             for x in cur_abilities_no:
-                if x not in abilities_yes and x not in abilities_no:
+                if x not in abilities_yes and x not in abilities_no and x in possible_abilities:
                     abilities_no.add(x)
-        unspecified_abilities = possible_abilities - abilities_yes - abilities_no
-        for ability in unspecified_abilities:
-            if self.default_ability_is_allowed(ability, item_type) == True:
-                abilities_yes.add(ability)
-            elif self.default_ability_is_allowed(ability, item_type) == False:
-                abilities_no.add(ability)
-            else:
-                pass # unspecified
-        abilities_yes &= possible_abilities
-        abilities_no &= possible_abilities
+            if abilities_yes | abilities_no == possible_abilities:
+                break
         return (abilities_yes, abilities_no)
 
     ###############################################################################
     # Methods to calculate QuerySet filters
     ###############################################################################
 
-    def filter_items_by_permission(self, agent, ability, item_type):
+    def filter_items_by_permission(self, agent, ability):
         """
         Return a Q object that can be used as a QuerySet filter, specifying only
         those items that the agent has the ability for.
@@ -295,85 +248,56 @@ class PermissionCache(object):
         
         This can result in the database query becoming expensive.
         """
-        my_collection_ids = agent.ancestor_collections().values('pk').query
+        agent_collection_ids = RecursiveMembership.objects.filter(child=agent).values('parent_id').query
 
-        default_is_allowed = self.default_ability_is_allowed(ability, item_type)
-
-        # p contains all Q objects for all 6 combinations of level, is_allowed
-        p = {}
-        for permission_class in [AgentItemPermission, CollectionItemPermission, EveryoneItemPermission]:
+        # yes_q_filters and no_q_filters have all Q filters in order of
+        # permission level
+        yes_q_filters = []
+        no_q_filters = []
+        for permission_class in [OneToOnePermission, OneToSomePermission, OneToAllPermission,
+                                SomeToOnePermission, SomeToSomePermission, SomeToAllPermission,
+                                AllToOnePermission, AllToSomePermission, AllToAllPermission]:
             for is_allowed in [True, False]:
-                # Figure out what kind of permission this is
-                if 'agent' in permission_class._meta.get_all_field_names():
-                    level = 'agent'
-                elif 'collection' in permission_class._meta.get_all_field_names():
-                    level = 'collection'
-                else:
-                    level = 'everyone'
                 # Generate a Q object for this particular permission and is_allowed
                 args = {}
                 args['ability__in'] = [ability, 'do_anything']
                 args['is_allowed'] = is_allowed
-                if level == 'agent':
-                    args['agent'] = agent
-                elif level == 'collection':
-                    args['collection__in'] = my_collection_ids
-                query = permission_class.objects.filter(**args).values('item_id').query
-                q_name = "%s%s" % (level, 'yes' if is_allowed else 'no')
-                p[q_name] = Q(pk__in=query)
+                if hasattr(permission_class, 'source'):
+                    source_field = permission_class.source.field
+                    if source_field.rel.to == Agent:
+                        args['source'] = agent
+                    elif source_field.rel.to == Collection:
+                        args['source__in'] = agent_collection_ids
+                    else:
+                        assert False
+                permission_queryset = permission_class.objects.filter(**args)
+                if hasattr(permission_class, 'target'):
+                    target_field = permission_class.target.field
+                    if target_field.rel.to == Item:
+                        q_filter = Q(pk__in=permission_queryset.values('target_id').query)
+                    elif target_field.rel.to == Collection:
+                        recursive_memberships = RecursiveMembership.objects.filter(parent__in=permission_queryset.values('target_id').query, permission_enabled=True)
+                        q_filter = Q(pk__in=recursive_memberships.values('child_id').query)
+                    else:
+                        assert False
+                else:
+                    #TODO come up with a more elegant way to set q_filter, hopefully that doesn't involve doing separate queries
+                    if permission_queryset:
+                        q_filter = Q(pk__isnull=False)
+                    else:
+                        q_filter = Q(pk__isnull=True)
+                if is_allowed:
+                    yes_q_filters.append(q_filter)
+                else:
+                    no_q_filters.append(q_filter)
 
         # Combine all of the Q objects by the rules specified in
-        # calculate_item_abilities_for_agent_and_item
-        result = p['agentyes'] | (~p['agentno'] & p['collectionyes']) | (~p['agentno'] & ~p['collectionno'] & p['everyoneyes'])
-        if default_is_allowed:
-            result = result | (~p['agentno'] & ~p['collectionno'] & ~p['everyoneno'])
+        # calculate_abilities
+        result = yes_q_filters[0]
+        for i in xrange(1, len(yes_q_filters)):
+            cur_filter = yes_q_filters[i]
+            for j in xrange(0, i):
+                cur_filter = cur_filter & ~no_q_filters[j]
+            result = result | cur_filter
         return result
-
-    def filter_agents_by_permission(self, item, ability):
-        """
-        Return a Q object that can be used as a QuerySet filter, specifying only
-        those agents that have the ability for the item.
-        
-        This does not take into account the fact that agents with the global
-        ability "do_anything" virtually have all item abilities, but it does take
-        into account the item ability "do_anything".
-        
-        This can result in the database query becoming expensive.
-        """
-
-        default_is_allowed = self.default_ability_is_allowed(ability, type(item))
-
-        # p contains all Q objects for all 6 combinations of level, is_allowed
-        p = {}
-        for permission_class in [AgentItemPermission, CollectionItemPermission, EveryoneItemPermission]:
-            for is_allowed in [True, False]:
-                # Figure out what kind of permission this is
-                if 'agent' in permission_class._meta.get_all_field_names():
-                    level = 'agent'
-                elif 'collection' in permission_class._meta.get_all_field_names():
-                    level = 'collection'
-                else:
-                    level = 'everyone'
-                # Generate a Q object for this particular permission and is_allowed
-                args = {'item': item}
-                args['ability__in'] = [ability, 'do_anything']
-                args['is_allowed'] = is_allowed
-                if level == 'agent':
-                    query = permission_class.objects.filter(**args).values('agent_id').query
-                elif level == 'collection':
-                    collection_query = permission_class.objects.filter(**args).values('collection_id').query
-                    query = RecursiveMembership.objects.filter(parent__in=collection_query).values('child_id').query
-                else:
-                    everyone_perm_exists = (len(permission_class.objects.filter(**args)[:1]) > 0)
-                    query = (Agent.objects if everyone_perm_exists else Agent.objects.filter(pk__isnull=True)).values('pk').query
-                q_name = "%s%s" % (level, 'yes' if is_allowed else 'no')
-                p[q_name] = Q(pk__in=query)
-
-        # Combine all of the Q objects by the rules specified in
-        # calculate_item_abilities_for_agent_and_item
-        result = p['agentyes'] | (~p['agentno'] & p['collectionyes']) | (~p['agentno'] & ~p['collectionno'] & p['everyoneyes'])
-        if default_is_allowed:
-            result = result | (~p['agentno'] & ~p['collectionno'] & ~p['everyoneno'])
-        return result
-
 
