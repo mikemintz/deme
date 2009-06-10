@@ -1164,7 +1164,8 @@ class PermissionEditor(template.Node):
                     },
                     buttons: {
                         'Add Agent': function(){
-                            add_agent_or_collection_row('agent', $('input[name="new_agent"]').val(), $('input[name="new_agent_search"]').val());
+                            var row = add_agent_or_collection_row('agent', $('input[name="new_agent"]').val(), $('input[name="new_agent_search"]').val());
+                            $('#permission_table tbody').append(row);
                             $(this).dialog("close");
                         },
                         'Cancel': function(){
@@ -1181,7 +1182,8 @@ class PermissionEditor(template.Node):
                     },
                     buttons: {
                         'Add Collection': function(){
-                            add_agent_or_collection_row('collection', $('input[name="new_collection"]').val(), $('input[name="new_collection_search"]').val());
+                            var row = add_agent_or_collection_row('collection', $('input[name="new_collection"]').val(), $('input[name="new_collection_search"]').val());
+                            $('#permission_table tbody').append(row);
                             $(this).dialog("close");
                         },
                         'Cancel': function(){
