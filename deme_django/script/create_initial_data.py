@@ -10,7 +10,7 @@ from deme_django import settings
 setup_environ(settings)
 
 from cms.models import *
-from cms.permissions import PermissionCache
+from cms.permissions import all_possible_global_abilities
 from modules.webauth.models import *
 from django import db
 import subprocess
@@ -23,8 +23,6 @@ if Item.objects.count() != 0:
 ###############################################################################
 # Necessary items
 ###############################################################################
-
-permission_cache = PermissionCache()
 
 admin = Agent(name="Admin")
 admin.save_versioned(action_agent=None, first_agent=True)
@@ -56,7 +54,7 @@ for item_type in all_item_types():
     if item_type in [DemeSetting, Site]:
         continue
     ability = 'create %s' % item_type.__name__
-    if ability in permission_cache.all_possible_global_abilities():
+    if ability in all_possible_global_abilities():
         AllToAllPermission(ability=ability, is_allowed=True).save()
 
 print 'Other stuff...'

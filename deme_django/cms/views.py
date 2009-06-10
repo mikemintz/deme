@@ -22,6 +22,7 @@ from urlparse import urljoin
 from cms.models import *
 from cms.forms import *
 from cms.base_viewer import DemePermissionDenied, Viewer
+from cms.permissions import all_possible_item_abilities, all_possible_item_and_global_abilities
 
 class ItemViewer(Viewer):
     accepted_item_type = Item
@@ -378,9 +379,9 @@ class ItemViewer(Viewer):
 
     def _get_permissions_from_post_data(self, item_type, target_level):
         if target_level == 'one':
-            possible_abilities = self.permission_cache.all_possible_item_abilities(item_type)
+            possible_abilities = all_possible_item_abilities(item_type)
         else:
-            possible_abilities = self.permission_cache.all_possible_item_and_global_abilities()
+            possible_abilities = all_possible_item_and_global_abilities()
         permission_data = {}
         for key, value in self.request.POST.iteritems():
             if key.startswith('newpermission'):

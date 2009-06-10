@@ -5,7 +5,29 @@ This module defines wrapper functions around the permission framework.
 from cms.models import *
 from django.db import models
 from django.db.models import Q
-from django.db.models.sql.where import NothingNode, EverythingNode
+
+###############################################################################
+# Helper functions
+###############################################################################
+
+def all_possible_global_abilities():
+    """Return a set of global abilities that are possible."""
+    return set(x[0] for x in POSSIBLE_GLOBAL_ABILITIES)
+
+def all_possible_item_abilities(item_type):
+    """Return a set of item abilities that are possible for this item type."""
+    if not issubclass(item_type, Item):
+        raise Exception("You must call all_possible_item_abilities with a subclass of Item")
+    result = set()
+    result.update(item_type.introduced_abilities)
+    if item_type != Item:
+        for parent_item_type in item_type.__bases__:
+            result.update(all_possible_item_abilities(parent_item_type))
+    return result
+
+def all_possible_item_and_global_abilities():
+    """Return a set of item and global abilities that are possible."""
+    return set(x[0] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES)
 
 ###############################################################################
 # PermissionCache class
@@ -73,11 +95,11 @@ class PermissionCache(object):
             self.global_abilities(agent) # cache the global abilities
             global_abilities_yes, global_abilities_no = self._global_ability_cache[agent.pk]
             if 'do_anything' in global_abilities_yes:
-                abilities_yes = self.all_possible_item_abilities(item_type)
+                abilities_yes = all_possible_item_abilities(item_type)
                 abilities_no = set()
             elif 'do_anything' in global_abilities_no:
                 abilities_yes = set()
-                abilities_no = self.all_possible_item_abilities(item_type)
+                abilities_no = all_possible_item_abilities(item_type)
             else:
                 abilities_yes, abilities_no = self.calculate_abilities(agent, item, item_type)
             self._item_ability_cache[(agent.pk, item.pk)] = (abilities_yes, abilities_no)
@@ -102,9 +124,8 @@ class PermissionCache(object):
         item_type = queryset.model
         self.global_abilities(agent) # cache the global abilities
         global_abilities_yes, global_abilities_no = self._global_ability_cache[agent.pk]
-        if ability not in self.all_possible_item_abilities(item_type):
-            # Nothing to update, since no more database calls need to be made
-            return queryset.none()
+        if ability not in all_possible_item_abilities(item_type):
+            raise Exception("Item type %s does not support ability %s" % (item_type.__name__, ability))
         if 'do_anything' in global_abilities_yes:
             # Nothing to update, since no more database calls need to be made
             return queryset.filter(destroyed=False)
@@ -118,25 +139,6 @@ class PermissionCache(object):
             self._ability_yes_cache.setdefault((agent.pk, ability), set()).update(yes_ids)
             self._ability_no_cache.setdefault((agent.pk, ability), set()).update(no_ids)
             return authorized_queryset
-
-    def all_possible_global_abilities(self):
-        """Return a set of global abilities that are possible."""
-        return set(x[0] for x in POSSIBLE_GLOBAL_ABILITIES)
-
-    def all_possible_item_abilities(self, item_type):
-        """Return a set of item abilities that are possible for this item type."""
-        if not issubclass(item_type, Item):
-            raise Exception("You must call all_possible_item_abilities with a subclass of Item")
-        result = set()
-        result.update(item_type.introduced_abilities)
-        if item_type != Item:
-            for parent_item_type in item_type.__bases__:
-                result.update(self.all_possible_item_abilities(parent_item_type))
-        return result
-
-    def all_possible_item_and_global_abilities(self):
-        """Return a set of item and global abilities that are possible."""
-        return set(x[0] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES)
 
     ###############################################################################
     # Methods to calculate ability sets
@@ -195,9 +197,9 @@ class PermissionCache(object):
             permission_querysets.append(permission_class.objects.filter(**filter))
 
         if item is None:
-            possible_abilities = self.all_possible_global_abilities()
+            possible_abilities = all_possible_global_abilities()
         else:
-            possible_abilities = self.all_possible_item_abilities(item_type)
+            possible_abilities = all_possible_item_abilities(item_type)
         abilities_yes = set()
         abilities_no = set()
         # Iterate once for each level: agent, collection, everyone

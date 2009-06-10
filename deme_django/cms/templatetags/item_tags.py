@@ -5,6 +5,7 @@ from django import template
 from django.db.models import Q
 from django.db import models
 from cms.models import *
+from cms.permissions import all_possible_item_abilities, all_possible_item_and_global_abilities
 from django.utils.http import urlquote
 from django.utils.html import escape, urlize
 from django.core.exceptions import ObjectDoesNotExist
@@ -1006,11 +1007,11 @@ class PermissionEditor(template.Node):
 
         if self.target_level == 'one':
             if target is None:
-                possible_abilities = viewer.permission_cache.all_possible_item_abilities(viewer.accepted_item_type)
+                possible_abilities = all_possible_item_abilities(viewer.accepted_item_type)
             else:
-                possible_abilities = viewer.permission_cache.all_possible_item_abilities(target.actual_item_type())
+                possible_abilities = all_possible_item_abilities(target.actual_item_type())
         else:
-            possible_abilities = viewer.permission_cache.all_possible_item_and_global_abilities()
+            possible_abilities = all_possible_item_and_global_abilities()
         if self.privacy_only:
             possible_abilities = set([x for x in possible_abilities if x.startswith('view ')])
         possible_abilities = list((ability, friendly_name) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
