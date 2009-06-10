@@ -33,10 +33,10 @@ def agentcan_global_helper(context, ability, wildcard_suffix=False):
     agent = context['cur_agent']
     permission_cache = context['_viewer'].permission_cache
     if wildcard_suffix:
-        global_abilities = permission_cache.global_abilities(agent)
+        global_abilities = permission_cache.global_abilities()
         return any(x.startswith(ability) for x in global_abilities)
     else:
-        return permission_cache.agent_can_global(agent, ability)
+        return permission_cache.agent_can_global(ability)
 
 
 def agentcan_helper(context, ability, item, wildcard_suffix=False):
@@ -48,10 +48,10 @@ def agentcan_helper(context, ability, item, wildcard_suffix=False):
     agent = context['cur_agent']
     permission_cache = context['_viewer'].permission_cache
     if wildcard_suffix:
-        abilities_for_item = permission_cache.item_abilities(agent, item)
+        abilities_for_item = permission_cache.item_abilities(item)
         return any(x.startswith(ability) for x in abilities_for_item)
     else:
-        return permission_cache.agent_can(agent, ability, item)
+        return permission_cache.agent_can(ability, item)
 
 
 def get_viewable_name(context, item):
@@ -319,16 +319,16 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
         if agentcan_global_helper(context, 'do_anything'):
             recursive_filter = None
         else:
-            visible_memberships = permission_cache.filter_items(context['cur_agent'], 'view Membership.item', Membership.objects)
+            visible_memberships = permission_cache.filter_items('view Membership.item', Membership.objects)
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         members_and_me_pks_query = Item.objects.filter(active=True).filter(Q(pk=item.pk) | Q(pk__in=item.all_contained_collection_members(recursive_filter).values('pk').query)).values('pk').query
         comment_pks = RecursiveComment.objects.filter(parent__in=members_and_me_pks_query).values_list('child', flat=True)
     else:
         comment_pks = RecursiveComment.objects.filter(parent=item).values_list('child', flat=True)
     if comment_pks:
-        permission_cache.filter_items(context['cur_agent'], 'view Item.created_at', Comment.objects.filter(pk__in=comment_pks))
-        permission_cache.filter_items(context['cur_agent'], 'view Item.creator', Comment.objects.filter(pk__in=comment_pks))
-        permission_cache.filter_items(context['cur_agent'], 'view Item.name', Agent.objects.filter(pk__in=Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
+        permission_cache.filter_items('view Item.created_at', Comment.objects.filter(pk__in=comment_pks))
+        permission_cache.filter_items('view Item.creator', Comment.objects.filter(pk__in=comment_pks))
+        permission_cache.filter_items('view Item.name', Agent.objects.filter(pk__in=Comment.objects.filter(pk__in=comment_pks).values('creator_id').query))
         for comment_subclass in comment_subclasses:
             new_comments = comment_subclass.objects.filter(pk__in=comment_pks)
             related_fields = ['creator']
@@ -653,7 +653,7 @@ class PermissionsBox(template.Node):
         permission_cache = context['_viewer'].permission_cache
         item = context['item']
         cur_agent = context['cur_agent']
-        abilities = permission_cache.item_abilities(cur_agent, item)
+        abilities = permission_cache.item_abilities(item)
 
         result = []
         if agentcan_helper(context, 'do_anything', item):
@@ -708,11 +708,11 @@ class CalculateRelationships(template.Node):
             viewable_items = manager.filter(active=True)
             if viewable_items.count() == 0:
                 continue
-            viewable_items = permission_cache.filter_items(cur_agent, 'view %s.%s' % (field.model.__name__, field.field.name), viewable_items)
+            viewable_items = permission_cache.filter_items('view %s.%s' % (field.model.__name__, field.field.name), viewable_items)
             if viewable_items.count() == 0:
                 continue
             relationship_item_type = manager.model
-            permission_cache.filter_items(cur_agent, 'view Item.name', viewable_items)
+            permission_cache.filter_items('view Item.name', viewable_items)
             relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)
 
@@ -789,10 +789,10 @@ class CalculateActionNotices(template.Node):
                     select_related_fields.append('from_item__name')
                 specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query).select_related(*select_related_fields)
                 if action_notice_subclass == RelationActionNotice:
-                    context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view Item.name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
+                    context['_viewer'].permission_cache.filter_items('view Item.name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
                 for action_notice in specific_action_notices:
                     action_notice_pk_to_object_map[action_notice.pk] = action_notice
-            context['_viewer'].permission_cache.filter_items(context['cur_agent'], 'view Item.name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
+            context['_viewer'].permission_cache.filter_items('view Item.name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
             for action_notice in action_notices:
                 action_notice = action_notice_pk_to_object_map[action_notice.pk]
                 if isinstance(action_notice, RelationActionNotice):
@@ -1069,8 +1069,8 @@ class PermissionEditor(template.Node):
         existing_permission_data.append(datum)
 
         from cms.forms import AjaxModelChoiceField
-        new_agent_select_widget = AjaxModelChoiceField(Agent.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None)
-        new_collection_select_widget = AjaxModelChoiceField(Collection.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None)
+        new_agent_select_widget = AjaxModelChoiceField(Agent.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None)
+        new_collection_select_widget = AjaxModelChoiceField(Collection.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None)
         #TODO the widgets get centered-alignment in the dialog, which looks bad
 
         result = """
@@ -1227,8 +1227,8 @@ class PermissionEditor(template.Node):
         'new_img_url': icon_url('new', 16),
         'agent_img_url': icon_url('Agent', 16),
         'collection_img_url': icon_url('Collection', 16),
-        'new_agent_select_widget': AjaxModelChoiceField(Agent.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None),
-        'new_collection_select_widget': AjaxModelChoiceField(Collection.objects, cur_agent=viewer.cur_agent, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None),
+        'new_agent_select_widget': AjaxModelChoiceField(Agent.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None),
+        'new_collection_select_widget': AjaxModelChoiceField(Collection.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None),
         }
         return result
 

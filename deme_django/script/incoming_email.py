@@ -10,7 +10,7 @@ from deme_django import settings
 setup_environ(settings)
 
 from cms.models import *
-from cms.permissions import PermissionCache
+from cms.permissions import MultiAgentPermissionCache
 import email
 from django.core.mail import send_mail
 from django.core.exceptions import ObjectDoesNotExist
@@ -29,7 +29,7 @@ def get_from_email(msg):
     return email.utils.parseaddr(msg['From'])[1]
 
 def handle_email(msg, item_id):
-    permission_cache = PermissionCache()
+    multi_agent_permission_cache = MultiAgentPermissionCache()
     subject = get_subject(msg)
     if msg.is_multipart():
         body = msg.get_payload(0).get_payload()
@@ -45,7 +45,8 @@ def handle_email(msg, item_id):
         item = Item.objects.get(pk=item_id)
     except ObjectDoesNotExist:
         raise UserException('Error: Your comment could not be created because there does is no item %s' % item_id)
-    if not permission_cache.agent_can(email_contact_method.agent, 'comment_on', item):
+    permission_cache = multi_agent_permission_cache.get(email_contact_method.agent)
+    if not permission_cache.agent_can('comment_on', item):
         raise UserException('Error: Your comment could not be created because you do not have permission to comment on the item %s' % item_id)
 
     agent = email_contact_method.agent

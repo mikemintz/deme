@@ -118,7 +118,6 @@ class AjaxModelChoiceField(forms.ModelChoiceField):
     }
     
     def __init__(self, *args, **kwargs):
-        self.cur_agent = kwargs.pop('cur_agent')
         self.permission_cache = kwargs.pop('permission_cache')
         self.required_abilities = kwargs.pop('required_abilities')
         self.widget = AjaxModelChoiceWidget(required_abilities=self.required_abilities)
@@ -127,7 +126,7 @@ class AjaxModelChoiceField(forms.ModelChoiceField):
     def clean(self, value):
         value = super(AjaxModelChoiceField, self).clean(value)
         for ability in self.required_abilities:
-            if not self.permission_cache.agent_can(self.cur_agent, ability, value):
+            if not self.permission_cache.agent_can(ability, value):
                 raise forms.util.ValidationError(self.error_messages['permission_denied'])
         return value
 

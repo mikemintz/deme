@@ -33,30 +33,55 @@ def all_possible_item_and_global_abilities():
 # PermissionCache class
 ###############################################################################
 
-class PermissionCache(object):
+class MultiAgentPermissionCache(object):
     """
-    In-memory cache of global and item abilities.
-    
-    All methods are lazy, so if you ask about an ability, it will fetch it from
-    the database only if it's not already cached.
+    Keep track of multiple PermissionCaches, one for each agent used.
     """
 
     def __init__(self):
         """
+        Initialize an empty MultiAgentPermissionCache.
+        """
+        self._agent_to_permission_cache = {} # agent_id --> PermissionCache
+
+    def get(self, agent):
+        """
+        Return a PermissionCache for the specified agent. If this is the first
+        time a PermissionCache has been requested for the agent, initialize the
+        PermissionCache and map it to the agent.
+        """
+        result = self._agent_to_permission_cache.get(agent.pk)
+        if result is None:
+            result = PermissionCache(agent.pk)
+            self._agent_to_permission_cache[agent.pk] = result
+        return result
+
+
+class PermissionCache(object):
+    """
+    In-memory cache of global and item abilities.
+    
+    All methods use an in-memory cache, so if you ask about an ability, it will
+    fetch it from the database only if it's not already cached.
+    """
+
+    def __init__(self, agent_id):
+        """
         Initialize an empty PermissionCache.
         """
-        self._global_ability_cache = {}  # agent_id --> set(abilities)
-        self._item_ability_cache = {}    # (agent_id, item_id) --> set(abilities)
-        self._ability_yes_cache = {}     # (agent_id, ability) --> set(item_ids)
-        self._ability_no_cache = {}      # (agent_id, ability) --> set(item_ids)
+        self.agent_id = agent_id
+        self._global_ability_cache = None # (set(abilities_yes), set(abilities_no))
+        self._item_ability_cache = {}     # item_id --> (set(abilities_yes), set(abilities_no))
+        self._ability_yes_cache = {}      # ability --> set(item_ids)
+        self._ability_no_cache = {}       # ability --> set(item_ids)
 
-    def agent_can_global(self, agent, ability):
+    def agent_can_global(self, ability):
         """
         Return True if agent has the global ability.
         """
-        return ability in self.global_abilities(agent)
+        return ability in self.global_abilities()
 
-    def agent_can(self, agent, ability, item):
+    def agent_can(self, ability, item):
         """
         Return True if agent has the ability with respect to the item.
         
@@ -65,35 +90,34 @@ class PermissionCache(object):
         """
         if item.destroyed:
             return False
-        if item.pk in self._ability_yes_cache.get((agent.pk, ability), set()):
+        if item.pk in self._ability_yes_cache.get(ability, set()):
             return True
-        if item.pk in self._ability_no_cache.get((agent.pk, ability), set()):
+        if item.pk in self._ability_no_cache.get(ability, set()):
             return False
-        return ability in self.item_abilities(agent, item)
+        return ability in self.item_abilities(item)
 
-    def global_abilities(self, agent):
+    def global_abilities(self):
         """
         Return a set of global abilities the agent has.
         """
-        result = self._global_ability_cache.get(agent.pk)
-        if result is None:
-            abilities_yes, abilities_no = self.calculate_abilities(agent, None, None)
-            self._global_ability_cache[agent.pk] = (abilities_yes, abilities_no)
+        if self._global_ability_cache is None:
+            abilities_yes, abilities_no = self.calculate_abilities(None, None)
+            self._global_ability_cache = (abilities_yes, abilities_no)
         else:
-            abilities_yes, abilities_no = result
+            abilities_yes, abilities_no = self._global_ability_cache
         return abilities_yes
 
-    def item_abilities(self, agent, item):
+    def item_abilities(self, item):
         """
         Return a set of abilities the agent has with respect to the item.
         """
         if item.destroyed:
             return set()
-        result = self._item_ability_cache.get((agent.pk, item.pk))
+        result = self._item_ability_cache.get(item.pk)
         if result is None:
             item_type = item.actual_item_type()
-            self.global_abilities(agent) # cache the global abilities
-            global_abilities_yes, global_abilities_no = self._global_ability_cache[agent.pk]
+            self.global_abilities() # cache the global abilities
+            global_abilities_yes, global_abilities_no = self._global_ability_cache
             if 'do_anything' in global_abilities_yes:
                 abilities_yes = all_possible_item_abilities(item_type)
                 abilities_no = set()
@@ -101,13 +125,13 @@ class PermissionCache(object):
                 abilities_yes = set()
                 abilities_no = all_possible_item_abilities(item_type)
             else:
-                abilities_yes, abilities_no = self.calculate_abilities(agent, item, item_type)
-            self._item_ability_cache[(agent.pk, item.pk)] = (abilities_yes, abilities_no)
+                abilities_yes, abilities_no = self.calculate_abilities(item, item_type)
+            self._item_ability_cache[item.pk] = (abilities_yes, abilities_no)
         else:
             abilities_yes, abilities_no = result
         return abilities_yes
 
-    def filter_items(self, agent, ability, queryset):
+    def filter_items(self, ability, queryset):
         """
         Returns a QuerySet that filters the given QuerySet, into only the items
         that the specified agent has the specified ability to do.
@@ -122,8 +146,8 @@ class PermissionCache(object):
         without having to do a new database query each time.
         """
         item_type = queryset.model
-        self.global_abilities(agent) # cache the global abilities
-        global_abilities_yes, global_abilities_no = self._global_ability_cache[agent.pk]
+        self.global_abilities() # cache the global abilities
+        global_abilities_yes, global_abilities_no = self._global_ability_cache
         if ability not in all_possible_item_abilities(item_type):
             raise Exception("Item type %s does not support ability %s" % (item_type.__name__, ability))
         if 'do_anything' in global_abilities_yes:
@@ -133,18 +157,18 @@ class PermissionCache(object):
             # Nothing to update, since no more database calls need to be made
             return queryset.none()
         else:
-            authorized_queryset = queryset.filter(self.filter_items_by_permission(agent, ability), destroyed=False)
+            authorized_queryset = queryset.filter(self.filter_items_by_permission(ability), destroyed=False)
             yes_ids = set(authorized_queryset.values_list('pk', flat=True))
             no_ids = set(queryset.values_list('pk', flat=True)) - yes_ids
-            self._ability_yes_cache.setdefault((agent.pk, ability), set()).update(yes_ids)
-            self._ability_no_cache.setdefault((agent.pk, ability), set()).update(no_ids)
+            self._ability_yes_cache.setdefault(ability, set()).update(yes_ids)
+            self._ability_no_cache.setdefault(ability, set()).update(no_ids)
             return authorized_queryset
 
     ###############################################################################
     # Methods to calculate ability sets
     ###############################################################################
 
-    def calculate_abilities(self, agent, item, item_type):
+    def calculate_abilities(self, item, item_type):
         """
         Return a pair (yes_abilities, no_abilities) where yes_abilities is the set
         of item abilities that the agent is granted and no_abilities is a set of
@@ -167,7 +191,7 @@ class PermissionCache(object):
         At each level, any permissions that were not granted or denied at a
         higher level are added to the abilities_yes or abilities_no set.
         """
-        agent_collection_ids = RecursiveMembership.objects.filter(child=agent).values('parent_id').query
+        agent_collection_ids = RecursiveMembership.objects.filter(child__pk=self.agent_id).values('parent_id').query
         if item is not None:
             item_collection_ids = RecursiveMembership.objects.filter(child=item, permission_enabled=True).values('parent_id').query
 
@@ -179,7 +203,7 @@ class PermissionCache(object):
             if hasattr(permission_class, 'source'):
                 source_field = permission_class.source.field
                 if source_field.rel.to == Agent:
-                    filter['source'] = agent
+                    filter['source__pk'] = self.agent_id
                 elif source_field.rel.to == Collection:
                     filter['source__in'] = agent_collection_ids
                 else:
@@ -202,7 +226,7 @@ class PermissionCache(object):
             possible_abilities = all_possible_item_abilities(item_type)
         abilities_yes = set()
         abilities_no = set()
-        # Iterate once for each level: agent, collection, everyone
+        # Iterate once for each permission level
         for permission_queryset in permission_querysets:
             # Populate cur_abilities_yes and cur_abilities_no with the specified
             # abilities at this level.
@@ -238,7 +262,7 @@ class PermissionCache(object):
     # Methods to calculate QuerySet filters
     ###############################################################################
 
-    def filter_items_by_permission(self, agent, ability):
+    def filter_items_by_permission(self, ability):
         """
         Return a Q object that can be used as a QuerySet filter, specifying only
         those items that the agent has the ability for.
@@ -250,7 +274,7 @@ class PermissionCache(object):
         
         This can result in the database query becoming expensive.
         """
-        agent_collection_ids = RecursiveMembership.objects.filter(child=agent).values('parent_id').query
+        agent_collection_ids = RecursiveMembership.objects.filter(child__pk=self.agent_id).values('parent_id').query
 
         # yes_q_filters and no_q_filters have all Q filters in order of
         # permission level
@@ -267,7 +291,7 @@ class PermissionCache(object):
                 if hasattr(permission_class, 'source'):
                     source_field = permission_class.source.field
                     if source_field.rel.to == Agent:
-                        args['source'] = agent
+                        args['source__pk'] = self.agent_id
                     elif source_field.rel.to == Collection:
                         args['source__in'] = agent_collection_ids
                     else:
@@ -293,8 +317,7 @@ class PermissionCache(object):
                 else:
                     no_q_filters.append(q_filter)
 
-        # Combine all of the Q objects by the rules specified in
-        # calculate_abilities
+        # Combine all of the Q objects by the rules specified in calculate_abilities
 
         # 9 disjuncts with 1-9 conjunct terms each: y1 | (~n1 & y2) | (~n1 & ~n2 & y3) | ...
         #result = yes_q_filters[0]

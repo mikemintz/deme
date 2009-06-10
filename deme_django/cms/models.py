@@ -1304,9 +1304,9 @@ class Membership(Item):
         super(Membership, self)._before_create(action_agent, action_summary, action_time)
         if self.permission_enabled:
             #TODO it would be better if we could take the existing permission_cache
-            from cms.permissions import PermissionCache
-            permission_cache = PermissionCache()
-            if not permission_cache.agent_can(action_agent, 'do_anything', self.item):
+            from cms.permissions import MultiAgentPermissionCache
+            permission_cache = MultiAgentPermissionCache().get(action_agent)
+            if not permission_cache.agent_can('do_anything', self.item):
                 self.permission_enabled = False
     _before_create.alters_data = True
 
@@ -1314,9 +1314,9 @@ class Membership(Item):
         super(Membership, self)._before_edit(action_agent, action_summary, action_time)
         if self.permission_enabled:
             #TODO it would be better if we could take the existing permission_cache
-            from cms.permissions import PermissionCache
-            permission_cache = PermissionCache()
-            if not permission_cache.agent_can(action_agent, 'do_anything', self.item):
+            from cms.permissions import MultiAgentPermissionCache
+            permission_cache = MultiAgentPermissionCache().get(action_agent)
+            if not permission_cache.agent_can('do_anything', self.item):
                 self.permission_enabled = False
     _before_edit.alters_data = True
 
@@ -1876,19 +1876,21 @@ class ActionNotice(models.Model):
             return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
                                                active=True, contact_method=email_contact_method)
         def deep_subscriptions():
-            if permission_cache.agent_can_global(agent, 'do_anything'):
+            if permission_cache.agent_can_global('do_anything'):
                 recursive_filter = None
             else:
-                visible_memberships = permission_cache.filter_items(agent, 'view Membership.item', Membership.objects)
+                visible_memberships = permission_cache.filter_items('view Membership.item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             item_parent_pks_query = self.action_item.all_parents_in_thread(True, recursive_filter).values('pk').query
             action_agent_parent_pks_query = self.action_agent.all_parents_in_thread(True, recursive_filter).values('pk').query
             return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
                                                active=True, contact_method=email_contact_method, deep=True)
-        if not (permission_cache.agent_can(agent, 'view Item.action_notices', self.action_item) or permission_cache.agent_can(agent, 'view Item.action_notices', self.action_agent)):
+        #TODO what happens if i'm subscribed to the item, but not allowed to view its action notices, but i AM allowed to view action
+        #notices for the action_agent? or vice versa?
+        if not (permission_cache.agent_can('view Item.action_notices', self.action_item) or permission_cache.agent_can('view Item.action_notices', self.action_agent)):
             return None
         if isinstance(self, RelationActionNotice):
-            if not permission_cache.agent_can(agent, 'view %s.%s' % (self.from_field_model, self.from_field_name), self.from_item):
+            if not permission_cache.agent_can('view %s.%s' % (self.from_field_model, self.from_field_name), self.from_item):
                 return None
         try:
             arbitrary_subscription = direct_subscriptions().get()
@@ -1959,9 +1961,9 @@ class ActionNotice(models.Model):
                 comment_name = get_viewable_name(viewer.context, comment)
                 comment_creator_email_address = None
                 if comment.from_contact_method and issubclass(comment.from_contact_method.actual_item_type(), EmailContactMethod):
-                    if permission_cache.agent_can(agent, 'view Comment.from_contact_method', comment):
+                    if permission_cache.agent_can('view Comment.from_contact_method', comment):
                         from_email_contact_method = comment.from_contact_method.downcast()
-                        if permission_cache.agent_can(agent, 'view EmailContactMethod.email', from_email_contact_method):
+                        if permission_cache.agent_can('view EmailContactMethod.email', from_email_contact_method):
                             comment_creator_email_address = from_email_contact_method.email
                 if comment_creator_email_address:
                     from_email_name = action_agent_name
