@@ -293,11 +293,19 @@ class PermissionCache(object):
 
         # Combine all of the Q objects by the rules specified in
         # calculate_abilities
-        result = yes_q_filters[0]
-        for i in xrange(1, len(yes_q_filters)):
-            cur_filter = yes_q_filters[i]
-            for j in xrange(0, i):
-                cur_filter = cur_filter & ~no_q_filters[j]
-            result = result | cur_filter
+
+        # 9 disjuncts with 1-9 conjunct terms each: y1 | (~n1 & y2) | (~n1 & ~n2 & y3) | ...
+        #result = yes_q_filters[0]
+        #for i in xrange(1, len(yes_q_filters)):
+        #    cur_filter = yes_q_filters[i]
+        #    for j in xrange(0, i):
+        #        cur_filter = cur_filter & ~no_q_filters[j]
+        #    result = result | cur_filter
+
+        # Nested conjuncts: y1 | (~n1 & (y2 | (~n2 & (y3 | ...
+        result = yes_q_filters[-1]
+        for i in xrange(len(yes_q_filters) - 2, -1, -1):
+            result = yes_q_filters[i] | (~no_q_filters[i] & result)
+
         return result
 
