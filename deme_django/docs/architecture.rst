@@ -239,35 +239,27 @@ Permissions
 ^^^^^^^^^^^
 Permissions define what actions Agents can and cannot do. Similar to ActionNotices, permissions are not items themselves, but they exist in the database and point to items (it used to be that permissions were items, but for simplicity and efficiency, we now keep them separate).
 
-There are two major types of permissions: item permissions and global permissions. Item permissions specify an ability and an item (such as "can edit the name of document 123") and global permissions just specify a global ability (such as "can create new documents"). Each item type defines a abilities that are relevant to it. For simplicity in the explanation below, pretend that item permissions and global permissions are just a unified permission, where the ``item`` pointer of a global permission is a special "global" value, since almost everything but the ``item`` field is identical between the two. (In the actual implementation, they are separated into different tables for code simplicity and efficiency.)
+There are 9 types of permissions, divided among 2 axis: the ``source`` axis and the ``to`` axis. Along the ``source`` axis, permissions can be given at 3 levels: to a single Agent, to the members of a Collection of Agents, or to all Agents. Along the ``to`` axis, permissions can be applied to 3 levels: to a single Item, to the members of a Collection of Items, or to all Items. For both axes, we refer to these three levels as "one", "some", and "all". The 9 possible permissions are shown in the table below::
 
-For both global and item permissions, there are three levels: AgentPermissions, CollectionPermissions, and EveryonePermissions. Earlier levels override later levels, so if an EveryonePermission specifies that nobody can create documents, but an AgentPermission specifies that I can create documents, then the AgentPermission overrides the EveryonePermission and I am allowed to create documents.
+  .
+                                                 To
+           |-------------------------|--------------------------|-------------------------|
+           |           One           |          Some            |           All           |
+    |------|-------------------------|--------------------------|-------------------------|
+  F |  One | OneToOnePermission (1)  | OneToSomePermission (2)  | OneToAllPermission (3)  |
+  r |------|-------------------------|--------------------------|-------------------------|
+  o | Some | SomeToOnePermission (4) | SomeToSomePermission (5) | SomeToAllPermission (6) |
+  m |------|-------------------------|--------------------------|-------------------------|
+    |  All | AllToOnePermission (7)  | AllToSomePermission (8)  | AllToAllPermission (9)  |
+    |------|-------------------------|--------------------------|-------------------------|
 
-* **AgentPermission:** An AgentPermission has an ``agent`` pointer, and ``item`` pointer (except in AgentGlobalPermissions), an ``ability`` string, and an ``is_allowed`` boolean. An AgentPermission specifies that the agent does (or does not) have the ability with respect to the item.
-* **CollectionPermission:** A CollectionPermission has a ``collection`` pointer, and ``item`` pointer (except in CollectionGlobalPermissions), an ``ability`` string, and an ``is_allowed`` boolean. A CollectionPermission specifies that all agents in the collection do (or do not) have the ability with respect to the item.
-* **EveryonePermission:** An EveryonePermission has an ``item`` pointer (except in EveryoneGlobalPermissions), an ``ability`` string, and an ``is_allowed`` boolean. An EveryonePermission specifies that all agents have (or don't have) the ability with respect to the item.
+Although we could accomplish anything using only OneToOnePermissions, the other permission types allow us to more concisely express permissions. For example, if our site was a wiki and we wanted any user to be able to edit any document, we would create a single AllToAllPermission, rather than a new OneToOnePermission for every Agent/Item pair.
 
-The agent has an ability if one of the following holds:
+Each permission, in addition to specifying the ``source`` and the ``to`` axes, specifies an ``ability`` string and an ``is_allowed`` boolean. When there are multiple permissions with the same ``ability``, the permissions at a level with a lower number (shown in parentheses after each permission type in the table above) take precedence. When there are multiple permissions at the same level, the positive (``is_allowed=True``) permissions take precedence over the negative permissions.
 
-#. The agent was directly assigned a permission that contains this ability with is_allowed=True.
+There are two types of abilities: item abilities and global abilities. Item abilities can apply to a particular item (or collection of items), such as "can edit the name of the item"; while global cannot apply to any particular item, such as "can create new documents". Each item type defines the item abilities that are relevant to it, and the global abilities it introduces.
 
-#. All of the following holds:
-
-  #. A Collection that the agent is in (directly or indirectly) was assigned a permission that contains this ability with is_allowed=True.
-  #. The agent was NOT directly assigned a permission that contains this ability with is_allowed=False.
-
-#. All of the following holds:
-
-  #. There is an everyone permission that contains this ability with is_allowed=True.
-  #. NO Collection that the agent is in (directly or indirectly) was assigned a permission that contains this ability with is_allowed=False.
-  #. The agent was NOT directly assigned a permission that contains this ability with is_allowed=False.
-
-#. All of the following holds (this step is not used for GlobalPermissions since there is no item type):
-
-  #. There is a DemeSetting set to "true" with the key "cms.default_permission.<ITEM_TYPE_NAME>.<ABILITY>" (without angle brackets around the item type name and ability).
-  #. There is NO everyone permission that contains this ability with is_allowed=False.
-  #. NO Collection that the agent is in (directly or indirectly) was assigned a permission that contains this ability with is_allowed=False.
-  #. The agent was NOT directly assigned a permission that contains this ability with is_allowed=False.
+An agent has an ability if there exists a relevant permission with ``is_allowed=True`` at some level without any relevant permissions with ``is_allowed=False`` at any levels with a lower number.
 
 Below is a list of all possible global abilities:
 
@@ -279,20 +271,22 @@ Below is a list of all possible global abilities:
 * ``create DemeAccount``
 * ``create DjangoTemplateDocument``
 * ``create EmailContactMethod``
+* ``create Event``
 * ``create FaxContactMethod``
 * ``create FileDocument``
 * ``create Group``
+* ``create HtmlAdvertisement``
 * ``create HtmlDocument``
+* ``create ImageDocument``
 * ``create Membership``
 * ``create Person``
 * ``create PhoneContactMethod``
-* ``create Site``
 * ``create Subscription``
+* ``create TextAdvertisement``
 * ``create TextComment``
 * ``create TextDocument``
 * ``create TextDocumentExcerpt``
 * ``create Transclusion``
-* ``create WebsiteContactMethod``
 * ``do_anything`` (Agents with this ability automatically have every single global ability and every item ability with respect to every item. If an agent has this global ability in the final calculation, this overrides any item abilities at any level. As a specific unusual example, if an agent has the global ``do_anything`` ability from an EveryonePermission, then giving him any item ability with is_allowed=False will have no effect.)
 
 Below is a list of item types and the item abilities they introduce:
@@ -303,105 +297,105 @@ Below is a list of item types and the item abilities they introduce:
   * ``do_anything`` (Agents this ability with respect to an item automatically have every item ability for that item.)
   * ``comment_on`` (With this ability you can create comments *directly* on the item. There is no way to restrict agents from leaving *indirect* comments on an item, apart from ensuring that they don't have the ability to comment on any of the item's existing comments.)
   * ``delete`` (With this ability you can deactivate, reativate, or destroy the item.)
-  * ``view name``
-  * ``view description``
-  * ``view creator``
-  * ``view created_at``
-  * ``edit name``
-  * ``edit description``
+  * ``view Item.name``
+  * ``view Item.description``
+  * ``view Item.creator``
+  * ``view Item.created_at``
+  * ``edit Item.name``
+  * ``edit Item.description``
 
 * Agent
 
   * ``add_contact_method`` (With this ability you can create ContactMethods belonging to this Agent.)
   * ``add_authentication_method`` (With this ability you can create AuthenticationMethods belonging to this Agent.)
   * ``login_as`` (With this ability you can authenticate as this Agent.)
-  * ``view last_online_at``
+  * ``view Agent.last_online_at``
 
 * GroupAgent
 
-  * ``view group``
+  * ``view GroupAgent.group``
 
 * AuthenticationMethod
 
-  * ``view agent``
+  * ``view AuthenticationMethod.agent``
 
 * DemeAccount
 
-  * ``view username``
-  * ``view password``
-  * ``view password_question``
-  * ``view password_answer``
-  * ``edit username``
-  * ``edit password``
-  * ``edit password_question``
-  * ``edit password_answer``
+  * ``view DemeAccount.username``
+  * ``view DemeAccount.password``
+  * ``view DemeAccount.password_question``
+  * ``view DemeAccount.password_answer``
+  * ``edit DemeAccount.username``
+  * ``edit DemeAccount.password``
+  * ``edit DemeAccount.password_question``
+  * ``edit DemeAccount.password_answer``
 
 * Person
 
-  * ``view first_name``
-  * ``view middle_names``
-  * ``view last_name``
-  * ``view suffix``
-  * ``edit first_name``
-  * ``edit middle_names``
-  * ``edit last_name``
-  * ``edit suffix``
+  * ``view Person.first_name``
+  * ``view Person.middle_names``
+  * ``view Person.last_name``
+  * ``view Person.suffix``
+  * ``edit Person.first_name``
+  * ``edit Person.middle_names``
+  * ``edit Person.last_name``
+  * ``edit Person.suffix``
 
 * ContactMethod
 
   * ``add_subscription`` (With this ability you can create Subscriptions belonging to this ContactMethod.)
-  * ``view agent``
+  * ``view ContactMethod.agent``
 
 * EmailContactMethod
 
-  * ``view email``
-  * ``edit email``
+  * ``view EmailContactMethod.email``
+  * ``edit EmailContactMethod.email``
 
 * PhoneContactMethod
 
-  * ``view phone``
-  * ``edit phone``
+  * ``view PhoneContactMethod.phone``
+  * ``edit PhoneContactMethod.phone``
 
 * FaxContactMethod
 
-  * ``view fax``
-  * ``edit fax``
+  * ``view FaxContactMethod.fax``
+  * ``edit FaxContactMethod.fax``
 
 * WebsiteContactMethod
 
-  * ``view url``
-  * ``edit url``
+  * ``view WebsiteContactMethod.url``
+  * ``edit WebsiteContactMethod.url``
 
 * AIMContactMethod
 
-  * ``view screen_name``
-  * ``edit screen_name``
+  * ``view AIMContactMethod.screen_name``
+  * ``edit AIMContactMethod.screen_name``
 
 * AddressContactMethod
 
-  * ``view street1``
-  * ``view street2``
-  * ``view city``
-  * ``view state``
-  * ``view country``
-  * ``view zip``
-  * ``edit street1``
-  * ``edit street2``
-  * ``edit city``
-  * ``edit state``
-  * ``edit country``
-  * ``edit zip``
+  * ``view AddressContactMethod.street1``
+  * ``view AddressContactMethod.street2``
+  * ``view AddressContactMethod.city``
+  * ``view AddressContactMethod.state``
+  * ``view AddressContactMethod.country``
+  * ``view AddressContactMethod.zip``
+  * ``edit AddressContactMethod.street1``
+  * ``edit AddressContactMethod.street2``
+  * ``edit AddressContactMethod.city``
+  * ``edit AddressContactMethod.state``
+  * ``edit AddressContactMethod.country``
+  * ``edit AddressContactMethod.zip``
 
 * Subscription
 
-  * ``view contact_method``
-  * ``view item``
-  * ``view deep``
-  * ``view notify_text``
-  * ``view notify_edit``
-  * ``edit deep``
-  * ``edit notify_text``
-  * ``edit notify_edit``
+  * ``view Subscription.contact_method``
+  * ``view Subscription.item``
+  * ``view Subscription.deep``
+  * ``view Subscription.notify_text``
+  * ``view Subscription.notify_edit``
+  * ``edit Subscription.deep``
+  * ``edit Subscription.notify_text``
+  * ``edit Subscription.notify_edit``
 
 * Collection
 
@@ -411,86 +405,86 @@ Below is a list of item types and the item abilities they introduce:
 
 * Folio
 
-  * ``view group``
+  * ``view Folio.group``
 
 * Membership
 
-  * ``view item``
-  * ``view collection``
+  * ``view Membership.item``
+  * ``view Membership.collection``
 
 * TextDocument
 
-  * ``view body``
-  * ``edit body``
+  * ``view TextDocument.body``
+  * ``edit TextDocument.body``
   * ``add_transclusion`` (With this ability, you can add a transclusion with this TextDocument as the from_item.)
 
 * DjangoTemplateDocument
 
-  * ``view layout``
-  * ``view override_default_layout``
-  * ``edit layout``
-  * ``edit override_default_layout``
+  * ``view DjangoTemplateDocument.layout``
+  * ``view DjangoTemplateDocument.override_default_layout``
+  * ``edit DjangoTemplateDocument.layout``
+  * ``edit DjangoTemplateDocument.override_default_layout``
 
 * FileDocument
 
-  * ``view datafile``
-  * ``edit datafile``
+  * ``view FileDocument.datafile``
+  * ``edit FileDocument.datafile``
 
 * Transclusion
 
-  * ``view from_item``
-  * ``view from_item_version_number``
-  * ``view from_item_index``
-  * ``view to_item``
-  * ``edit from_item_index``
+  * ``view Transclusion.from_item``
+  * ``view Transclusion.from_item_version_number``
+  * ``view Transclusion.from_item_index``
+  * ``view Transclusion.to_item``
+  * ``edit Transclusion.from_item_index``
 
 * Comment
 
-  * ``view item``
-  * ``view item_version_number``
-  * ``view from_contact_method``
+  * ``view Comment.item``
+  * ``view Comment.item_version_number``
+  * ``view Comment.from_contact_method``
 
 * TextDocumentExcerpt
 
-  * ``view text_document``
-  * ``view text_document_version_number``
-  * ``view start_index``
-  * ``view length``
-  * ``edit text_document_version_number``
-  * ``edit start_index``
-  * ``edit length``
+  * ``view TextDocumentExcerpt.text_document``
+  * ``view TextDocumentExcerpt.text_document_version_number``
+  * ``view TextDocumentExcerpt.start_index``
+  * ``view TextDocumentExcerpt.length``
+  * ``edit TextDocumentExcerpt.text_document_version_number``
+  * ``edit TextDocumentExcerpt.start_index``
+  * ``edit TextDocumentExcerpt.length``
 
 * ViewerRequest
 
   * ``add_sub_path`` (With this ability you can create ViewerRequests with this ViewerRequest as the parent_url.)
-  * ``view aliased_item``
-  * ``view viewer``
-  * ``view action``
-  * ``view query_string``
-  * ``view format``
-  * ``edit aliased_item``
-  * ``edit viewer``
-  * ``edit action``
-  * ``edit query_string``
-  * ``edit format``
+  * ``view ViewerRequest.aliased_item``
+  * ``view ViewerRequest.viewer``
+  * ``view ViewerRequest.action``
+  * ``view ViewerRequest.query_string``
+  * ``view ViewerRequest.format``
+  * ``edit ViewerRequest.aliased_item``
+  * ``edit ViewerRequest.viewer``
+  * ``edit ViewerRequest.action``
+  * ``edit ViewerRequest.query_string``
+  * ``edit ViewerRequest.format``
 
 * Site
 
-  * ``view hostname``
-  * ``edit hostname``
-  * ``view default_layout``
-  * ``edit default_layout``
+  * ``view Site.hostname``
+  * ``edit Site.hostname``
+  * ``view Site.default_layout``
+  * ``edit Site.default_layout``
 
 * CustomUrl
 
-  * ``view parent_url``
-  * ``view path``
+  * ``view CustomUrl.parent_url``
+  * ``view CustomUrl.path``
 
 * DemeSetting
 
-  * ``view key``
-  * ``view value``
-  * ``edit value``
+  * ``view DemeSetting.key``
+  * ``view DemeSetting.value``
+  * ``edit DemeSetting.value``
 
 In order to implement permissions, Deme takes the currently authenticated Agent (anonymous or not), and decides whether it has the required ability to complete the requested action (or display some part of the view). Abilities are not just checked before doing actions, but they can also be used to filter out items on database lookups. For example, if my viewer is supposed to display a list of items I am allowed to see (because I have the ``view name`` ability), it will need to use permissions to filter out inappropriate results.
 
