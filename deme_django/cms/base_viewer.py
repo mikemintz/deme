@@ -14,7 +14,7 @@ from django.conf import settings
 from django.db import models
 from django import forms
 import datetime
-from cms.permissions import PermissionCache
+from cms.permissions import MultiAgentPermissionCache
 from cms.models import *
 from cms.forms import JavaScriptSpamDetectionField, AjaxModelChoiceField
 
@@ -175,10 +175,10 @@ class Viewer(object):
         **any** global ability whose first word is the specified ability.
         """
         if wildcard_suffix:
-            global_abilities = self.permission_cache.global_abilities(self.cur_agent)
+            global_abilities = self.permission_cache.global_abilities()
             return any(x.startswith(ability) for x in global_abilities)
         else:
-            return self.permission_cache.agent_can_global(self.cur_agent, ability)
+            return self.permission_cache.agent_can_global(ability)
 
     def cur_agent_can(self, ability, item, wildcard_suffix=False):
         """
@@ -188,10 +188,10 @@ class Viewer(object):
         ability.
         """
         if wildcard_suffix:
-            abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, item)
+            abilities_for_item = self.permission_cache.item_abilities(item)
             return any(x.startswith(ability) for x in abilities_for_item)
         else:
-            return self.permission_cache.agent_can(self.cur_agent, ability, item)
+            return self.permission_cache.agent_can(ability, item)
 
     def require_global_ability(self, ability, wildcard_suffix=False):
         """
@@ -228,7 +228,6 @@ class Viewer(object):
 
     def init_for_http(self, request, action, noun, format):
         self.context = Context()
-        self.permission_cache = PermissionCache()
         self.action = action or ('show' if noun else 'list')
         self.noun = noun
         self.format = format or 'html'
@@ -236,6 +235,8 @@ class Viewer(object):
         self.request = request
         self.cur_agent = get_logged_in_agent(request)
         self.cur_site = get_current_site(request)
+        self.multi_agent_permission_cache = MultiAgentPermissionCache()
+        self.permission_cache = self.multi_agent_permission_cache.get(self.cur_agent)
         if self.noun is None:
             self.item = None
         else:
@@ -264,10 +265,11 @@ class Viewer(object):
     def init_for_div(self, original_viewer, action, item):
         path = reverse('item_url', kwargs={'viewer': self.viewer_name, 'action': action, 'noun': item.pk})
         query_string = ''
-        self.permission_cache = original_viewer.permission_cache
         self.request = VirtualRequest(original_viewer.request, path, query_string)
         self.cur_agent = original_viewer.cur_agent
         self.cur_site = original_viewer.cur_site
+        self.multi_agent_permission_cache = original_viewer.multi_agent_permission_cache
+        self.permission_cache = original_viewer.permission_cache
         self.format = 'html'
         self.method = 'GET'
         self.noun = item.pk
@@ -289,10 +291,11 @@ class Viewer(object):
         self.context['layout'] = 'blank.html'
 
     def init_for_outgoing_email(self, agent):
-        self.permission_cache = PermissionCache()
         self.request = None
         self.cur_agent = agent
         self.cur_site = get_default_site()
+        self.multi_agent_permission_cache = MultiAgentPermissionCache()
+        self.permission_cache = self.multi_agent_permission_cache.get(self.cur_agent)
         self.format = 'html'
         self.method = 'GET'
         self.noun = None
@@ -367,7 +370,6 @@ class Viewer(object):
                 options['to_field_name'] = f.rel.field_name
                 options['required_abilities'] = getattr(f, 'required_abilities', [])
                 options['permission_cache'] = self.permission_cache
-                options['cur_agent'] = self.cur_agent
                 return super(models.ForeignKey, f).formfield(**options)
             else:
                 return f.formfield()
