@@ -1025,13 +1025,13 @@ class PermissionEditor(template.Node):
             collections = sorted(set(x.collection for x in collection_permissions), key=lambda x: x.name)
         else:
             if self.target_level == 'one':
-                agent_permissions = target.one_to_one_permissions_as_target
-                collection_permissions = target.some_to_one_permissions_as_target
-                everyone_permissions = target.all_to_one_permissions_as_target
+                agent_permissions = target.one_to_one_permissions_as_target.all()
+                collection_permissions = target.some_to_one_permissions_as_target.all()
+                everyone_permissions = target.all_to_one_permissions_as_target.all()
             elif self.target_level == 'some':
-                agent_permissions = target.one_to_some_permissions_as_target
-                collection_permissions = target.some_to_some_permissions_as_target
-                everyone_permissions = target.all_to_some_permissions_as_target
+                agent_permissions = target.one_to_some_permissions_as_target.all()
+                collection_permissions = target.some_to_some_permissions_as_target.all()
+                everyone_permissions = target.all_to_some_permissions_as_target.all()
             elif self.target_level == 'all':
                 agent_permissions = OneToAllPermission.objects.all()
                 collection_permissions = SomeToAllPermission.objects.all()
