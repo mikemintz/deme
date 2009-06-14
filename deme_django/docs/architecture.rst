@@ -139,7 +139,7 @@ Collections and related item types
 
 * **Folio:** A folio is a special collection that belongs to a group. It has one field, the ``group`` pointer, which must be unique (no two folios can share a group).
 
-* **Membership:** A Membership is a relationship between a collection and one of its items. It defines two fields, an ``item`` pointer and a ``collection`` pointer.
+* **Membership:** A Membership is a relationship between a collection and one of its items. It defines two basic fields, an ``item`` pointer and a ``collection`` pointer. It also defines a ``permission_enabled`` boolean, which allows permissions to propagate through the containing collection to the member item (explained more in the Permissions section).
 
 Documents
 
@@ -256,6 +256,8 @@ There are 9 types of permissions, divided among 2 axis: the ``source`` axis and 
 Although we could accomplish anything using only OneToOnePermissions, the other permission types allow us to more concisely express permissions. For example, if our site was a wiki and we wanted any user to be able to edit any document, we would create a single AllToAllPermission, rather than a new OneToOnePermission for every Agent/Item pair.
 
 Each permission, in addition to specifying the ``source`` and the ``to`` axes, specifies an ``ability`` string and an ``is_allowed`` boolean. When there are multiple permissions with the same ``ability``, the permissions at a level with a lower number (shown in parentheses after each permission type in the table above) take precedence. When there are multiple permissions at the same level, the positive (``is_allowed=True``) permissions take precedence over the negative permissions.
+
+On both axes, when we refer to all agents or items in a collection (i.e., [X]ToSome or SomeTo[X]), we refer to both direct and indirect members. Thus, the permission code checks the RecursiveMembership table to determine whether an agent or an item is affected by the permission.
 
 There are two types of abilities: item abilities and global abilities. Item abilities can apply to a particular item (or collection of items), such as "can edit the name of the item"; while global cannot apply to any particular item, such as "can create new documents". Each item type defines the item abilities that are relevant to it, and the global abilities it introduces.
 
@@ -488,6 +490,9 @@ Below is a list of item types and the item abilities they introduce:
 
 In order to implement permissions, Deme takes the currently authenticated Agent (anonymous or not), and decides whether it has the required ability to complete the requested action (or display some part of the view). Abilities are not just checked before doing actions, but they can also be used to filter out items on database lookups. For example, if my viewer is supposed to display a list of items I am allowed to see (because I have the ``view name`` ability), it will need to use permissions to filter out inappropriate results.
 
+To modify a [X]ToOne permission, one must have the ``do_anything`` ability with respect to the target item. Similarly, to modify a [X]ToSome permission, one must have the ``do_anything`` ability with respect to the target collection. Finally, to modify a [X]ToAll permission, one must have the global ``do_anything`` permission.
+
+However, there is a loophole in the setup described above. A user could simply create a collection, add a private item to that collection (because they have ``do_anything`` with respect to that collection), create a [X]ToSome permission for that collection (because they have ``do_anything`` with respect to that collection), and thus gain full access to the private item. In order to resolve this, we use the ``permission_enabled`` field in Membership. [X]ToSome permissions only propagate to members of the collection through memberships with ``permission_enabled=True``, and agents can only modify the ``permission_enabled`` field of an membership if they have the ``do_anything`` ability with respect to the member item. By enforcing this, we guarantee that when a user modifies a [X]ToSome permission, it only affects items in the collection that were added to that collection with ``permission_enabled=True`` by a user that has power over that item. Since [X]ToSome permissions recursively traverse Memberships, we have a ``permission_enabled`` field in RecursiveMembership, that is set to true if and only if there exists a path of memberships from the parent collection to the child item all with ``permission_enabled=True``.
 
 Front-end (viewers)
 -------------------
