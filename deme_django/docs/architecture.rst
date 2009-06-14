@@ -255,13 +255,13 @@ There are 9 types of permissions, divided among 2 axis: the ``source`` axis and 
 
 Although we could accomplish anything using only OneToOnePermissions, the other permission types allow us to more concisely express permissions. For example, if our site was a wiki and we wanted any user to be able to edit any document, we would create a single AllToAllPermission, rather than a new OneToOnePermission for every Agent/Item pair.
 
-Each permission, in addition to specifying the ``source`` and the ``to`` axes, specifies an ``ability`` string and an ``is_allowed`` boolean. When there are multiple permissions with the same ``ability``, the permissions at a level with a lower number (shown in parentheses after each permission type in the table above) take precedence. When there are multiple permissions at the same level, the positive (``is_allowed=True``) permissions take precedence over the negative permissions.
+Each permission, in addition to specifying the ``source`` and the ``to`` axes, specifies an ``ability`` string and an ``is_allowed`` boolean. When there are multiple permissions with the same ``ability``, the permissions at a level with a lower number (shown in parentheses after each permission type in the table above) take precedence. When there are multiple permissions at the same level, the negative (``is_allowed=False``) permissions take precedence over the positive permissions.
 
 On both axes, when we refer to all agents or items in a collection (i.e., [X]ToSome or SomeTo[X]), we refer to both direct and indirect members. Thus, the permission code checks the RecursiveMembership table to determine whether an agent or an item is affected by the permission.
 
 There are two types of abilities: item abilities and global abilities. Item abilities can apply to a particular item (or collection of items), such as "can edit the name of the item"; while global cannot apply to any particular item, such as "can create new documents". Each item type defines the item abilities that are relevant to it, and the global abilities it introduces.
 
-An agent has an ability if there exists a relevant permission with ``is_allowed=True`` at some level without any relevant permissions with ``is_allowed=False`` at any levels with a lower number.
+An agent has an ability if there exists a relevant permission with ``is_allowed=True`` at some level without any relevant permissions with ``is_allowed=False`` at any levels with the same or lower number.
 
 Below is a list of all possible global abilities:
 

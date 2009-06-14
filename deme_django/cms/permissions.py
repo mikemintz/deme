@@ -190,6 +190,9 @@ class PermissionCache(object):
             9. AllToAllPermission
         At each level, any permissions that were not granted or denied at a
         higher level are added to the abilities_yes or abilities_no set.
+        
+        When the same ability is referred to multiple times at the same
+        permission level, the "no" permission takes precedence over "yes".
         """
         agent_collection_ids = RecursiveMembership.objects.filter(child__pk=self.agent_id).values('parent_id').query
         if item is not None:
@@ -246,14 +249,14 @@ class PermissionCache(object):
             if 'do_anything' in cur_abilities_no:
                 cur_abilities_no = possible_abilities
             # For each ability specified at this level, add it to the all-level
-            # ability sets if it's not already there. "Yes" takes precedence over
-            # "no".
-            for x in cur_abilities_yes:
-                if x not in abilities_yes and x not in abilities_no and x in possible_abilities:
-                    abilities_yes.add(x)
+            # ability sets if it's not already there. "No" takes precedence over
+            # "yes".
             for x in cur_abilities_no:
                 if x not in abilities_yes and x not in abilities_no and x in possible_abilities:
                     abilities_no.add(x)
+            for x in cur_abilities_yes:
+                if x not in abilities_yes and x not in abilities_no and x in possible_abilities:
+                    abilities_yes.add(x)
             if abilities_yes | abilities_no == possible_abilities:
                 break
         return (abilities_yes, abilities_no)
@@ -318,19 +321,10 @@ class PermissionCache(object):
                     no_q_filters.append(q_filter)
 
         # Combine all of the Q objects by the rules specified in calculate_abilities
-
-        # 9 disjuncts with 1-9 conjunct terms each: y1 | (~n1 & y2) | (~n1 & ~n2 & y3) | ...
-        #result = yes_q_filters[0]
-        #for i in xrange(1, len(yes_q_filters)):
-        #    cur_filter = yes_q_filters[i]
-        #    for j in xrange(0, i):
-        #        cur_filter = cur_filter & ~no_q_filters[j]
-        #    result = result | cur_filter
-
-        # Nested conjuncts: y1 | (~n1 & (y2 | (~n2 & (y3 | ...
-        result = yes_q_filters[-1]
-        for i in xrange(len(yes_q_filters) - 2, -1, -1):
-            result = yes_q_filters[i] | (~no_q_filters[i] & result)
-
+        # Nested conjuncts: ~n1 & (y1 | (~n2 & (y2 | (~n3 & (y3 | (~n4 & (y4 | (~n5 & (y5 | ... )))))))))
+        #TODO if we keep using the inelegant Q(pk__isnull=False) stuff, we could check for that and break early as an optimization
+        result = Q()
+        for yes_filter, no_filter in reversed(zip(yes_q_filters, no_q_filters)):
+            result = ~no_filter & (yes_filter | result)
         return result
 
