@@ -253,6 +253,7 @@ class Viewer(object):
         self.context['item'] = self.item
         self.context['viewer_name'] = self.viewer_name
         self.context['accepted_item_type'] = self.accepted_item_type
+        self.context['accepted_item_type_class_name'] = self.accepted_item_type.__name__
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = self.request.get_full_path()
@@ -281,6 +282,7 @@ class Viewer(object):
         self.context['specific_version'] = False
         self.context['viewer_name'] = self.viewer_name
         self.context['accepted_item_type'] = self.accepted_item_type
+        self.context['accepted_item_type_class_name'] = self.accepted_item_type.__name__
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = self.request.get_full_path()
@@ -307,6 +309,7 @@ class Viewer(object):
         self.context['specific_version'] = False
         self.context['viewer_name'] = self.viewer_name
         self.context['accepted_item_type'] = self.accepted_item_type
+        self.context['accepted_item_type_class_name'] = self.accepted_item_type.__name__
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = '/'
