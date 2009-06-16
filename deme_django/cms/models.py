@@ -611,6 +611,26 @@ class Item(models.Model):
                 result = result | base.all_immutable_fields()
         return result
 
+    @classmethod
+    def do_specialized_form_configuration(cls, is_new, attrs):
+        """
+        Perform any specialized configuration for a Django form. The
+        is_new parameter is True if the form is creating a new item, and is
+        False if the form is updating an existing item. The attrs parameter is
+        the list of class attrs that are about to be passed into the
+        forms.models.ModelFormMetaclass constructor.
+        
+        This function should modify the attrs dictionary in order to configure
+        the form.
+        
+        Item types that want to configure the default Django form in a special
+        way should override this method, making sure to put a call superclasses
+        at the top, like:
+        >>    for base in cls.__bases__:
+        >>        base.do_specialized_form_configuration(is_new, attrs)
+        """
+        pass
+
     def _before_create(self, action_agent, action_summary, action_time):
         """
         This method gets called before the first version of an item is
@@ -962,6 +982,28 @@ class DemeAccount(AuthenticationMethod):
     def get_random_hash():
         """Return a random 40-digit hexadecimal string. """
         return DemeAccount.get_hexdigest('sha1', str(random.random()), str(random.random()))
+
+    @classmethod
+    def do_specialized_form_configuration(cls, is_new, attrs):
+        for base in cls.__bases__:
+            base.do_specialized_form_configuration(is_new, attrs)
+        attrs['Meta'].exclude.append('password')
+        attrs['password1'] = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
+        attrs['password2'] = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
+        def clean_password2(self):
+            password1 = self.cleaned_data.get("password1", "")
+            password2 = self.cleaned_data["password2"]
+            if password1 != password2:
+                raise forms.ValidationError(_("The two password fields didn't match."))
+            return password2
+        def save(self, commit=True):
+            item = super(forms.models.ModelForm, self).save(commit=False)
+            item.set_password(self.cleaned_data["password1"])
+            if commit:
+                item.save()
+            return item
+        attrs['clean_password2'] = clean_password2
+        attrs['save'] = save
 
 
 class Person(Agent):
@@ -1367,6 +1409,15 @@ class Membership(Item):
         else:
             return super(Membership, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
 
+    @classmethod
+    def do_specialized_form_configuration(cls, is_new, attrs):
+        for base in cls.__bases__:
+            base.do_specialized_form_configuration(is_new, attrs)
+        if is_new:
+            attrs['Meta'].exclude.append('name')
+            attrs['Meta'].exclude.append('description')
+
+
 ###############################################################################
 # Documents
 ###############################################################################
@@ -1581,6 +1632,17 @@ class TextComment(TextDocument, Comment):
         verbose_name = _('text comment')
         verbose_name_plural = _('text comments')
 
+    @classmethod
+    def do_specialized_form_configuration(cls, is_new, attrs):
+        for base in cls.__bases__:
+            base.do_specialized_form_configuration(is_new, attrs)
+        if is_new:
+            attrs['item_version_number'] = forms.IntegerField(widget=forms.HiddenInput())
+            attrs['item_index'] = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+            attrs['name'] = forms.CharField(label=_("Comment title"), help_text=_("A brief description of the comment"), widget=forms.TextInput, required=False)
+            attrs['Meta'].fields = ['name', 'body', 'item', 'item_version_number']
+            attrs['Meta'].exclude.append('action_summary')
+
 
 class Excerpt(Item):
     """
@@ -1636,6 +1698,14 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
             return [self, _(status), action_item]
         else:
             return super(TextDocumentExcerpt, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
+
+    @classmethod
+    def do_specialized_form_configuration(cls, is_new, attrs):
+        for base in cls.__bases__:
+            base.do_specialized_form_configuration(is_new, attrs)
+        # For now, this is how we prevent manual creation of TextDocumentExcerpts
+        attrs['Meta'].fields = ['name']
+
 
 ###############################################################################
 # Viewer aliases

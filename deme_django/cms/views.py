@@ -162,7 +162,7 @@ class ItemViewer(Viewer):
         else:
             if form is None:
                 form_initial = dict(self.request.GET.items())
-                form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
+                form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
         self.context['form'] = form
@@ -176,7 +176,7 @@ class ItemViewer(Viewer):
     @require_POST
     def type_create_html(self):
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
-        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
+        form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
@@ -287,7 +287,7 @@ class ItemViewer(Viewer):
     def item_copy_html(self):
         self.context['action_title'] = 'Copy'
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
-        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
+        form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
         fields_to_copy = []
         for field_name in form_class.base_fields:
             try:
@@ -323,7 +323,7 @@ class ItemViewer(Viewer):
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         if form is None:
             fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
-            form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
+            form_class = self.get_form_class_for_item_type(self.accepted_item_type, False, fields_can_edit)
             form = form_class(instance=self.item)
             fields_can_view = set([x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('view ')])
             initial_fields_set = set(form.initial.iterkeys())
@@ -341,7 +341,7 @@ class ItemViewer(Viewer):
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         new_item = self.item
         fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
-        form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
+        form_class = self.get_form_class_for_item_type(self.accepted_item_type, False, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
             new_item = form.save(commit=False)
@@ -785,7 +785,7 @@ class TextDocumentViewer(DocumentViewer):
 
         if form is None:
             fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
-            form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
+            form_class = self.get_form_class_for_item_type(self.accepted_item_type, False, fields_can_edit)
             form = form_class(instance=self.item)
             fields_can_view = set([x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('view ')])
             initial_fields_set = set(form.initial.iterkeys())
@@ -803,7 +803,7 @@ class TextDocumentViewer(DocumentViewer):
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         new_item = self.item
         fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
-        form_class = self.get_form_class_for_item_type('update', self.accepted_item_type, fields_can_edit)
+        form_class = self.get_form_class_for_item_type(self.accepted_item_type, False, fields_can_edit)
         form = form_class(self.request.POST, self.request.FILES, instance=new_item)
         if form.is_valid():
             new_item = form.save(commit=False)
@@ -884,7 +884,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
         else:
             if form is None:
                 form_initial = dict(self.request.GET.items())
-                form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
+                form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
         try:
             item = Item.objects.get(pk=self.request.REQUEST.get('item'))
@@ -892,7 +892,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
             return self.render_error('Invalid URL', "You must specify the item you are commenting on")
         if form is None:
             form_initial = dict(self.request.GET.items())
-            form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
+            form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
             form = form_class(initial=form_initial)
             if issubclass(item.actual_item_type(), Comment):
                 comment_name = item.display_name()
@@ -919,7 +919,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
         except:
             return self.render_error('Invalid URL', "You must specify the item you are commenting on")
         self.require_ability('comment_on', item)
-        form_class = self.get_form_class_for_item_type('create', self.accepted_item_type)
+        form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
             #TODO use transactions to make the Transclusion save at the same time as the Comment
