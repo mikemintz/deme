@@ -4,7 +4,7 @@
 
 {% subclassfields %}
 
-{% ifagentcan 'view' 'datafile' item %}
+{% ifagentcan 'view FileDocument.datafile' item %}
 <img src="{{ item.datafile.url }}" />
 {% endifagentcan %}
 

@@ -140,11 +140,11 @@
 <div id="parse_errors" style="display: none;">
 </div>
 
-{% ifagentcan 'view' 'body' item %}
+{% ifagentcan 'view TextDocument.body' item %}
 
-{% ifagentcan 'add_transclusion' '' item %}
+{% ifagentcan 'add_transclusion' item %}
 
-{% ifagentcan 'comment_on' '' item %}
+{% ifagentcan 'comment_on' item %}
 <div id="add_located_comment_div">
 <a href="#" onclick="add_located_comment(); return false;">[+] Located Comment</a>
 </div>
@@ -164,8 +164,8 @@ Now just select text where you want to add a Transclusion or
 
 {% endifagentcan %}
 
-{% ifagentcanglobal 'create' 'TextDocumentExcerpt' %}
-{% ifagentcanglobal 'create' 'Collection' %}
+{% ifagentcanglobal 'create TextDocumentExcerpt' %}
+{% ifagentcanglobal 'create Collection' %}
 <div id="add_highlight_div">
 <a href="#" onclick="start_highlighting(); return false;">[+] Highlight</a>
 </div>

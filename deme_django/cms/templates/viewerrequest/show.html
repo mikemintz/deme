@@ -4,7 +4,7 @@
 
 {% subclassfields %}
 
-{% ifagentcan 'add_sub_path' '' item %}
+{% ifagentcan 'add_sub_path' item %}
 <a href="{% url item_type_url viewer="customurl",action="new"%}?parent_url={{ item.pk }}">Add sub path</a>
 {% endifagentcan %}
 

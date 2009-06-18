@@ -14,7 +14,7 @@ from django.conf import settings
 from django.db import models
 from django import forms
 import datetime
-from cms.permissions import PermissionCache
+from cms.permissions import MultiAgentPermissionCache
 from cms.models import *
 from cms.forms import JavaScriptSpamDetectionField, AjaxModelChoiceField
 
@@ -175,10 +175,10 @@ class Viewer(object):
         **any** global ability whose first word is the specified ability.
         """
         if wildcard_suffix:
-            global_abilities = self.permission_cache.global_abilities(self.cur_agent)
+            global_abilities = self.permission_cache.global_abilities()
             return any(x.startswith(ability) for x in global_abilities)
         else:
-            return self.permission_cache.agent_can_global(self.cur_agent, ability)
+            return self.permission_cache.agent_can_global(ability)
 
     def cur_agent_can(self, ability, item, wildcard_suffix=False):
         """
@@ -188,10 +188,10 @@ class Viewer(object):
         ability.
         """
         if wildcard_suffix:
-            abilities_for_item = self.permission_cache.item_abilities(self.cur_agent, item)
+            abilities_for_item = self.permission_cache.item_abilities(item)
             return any(x.startswith(ability) for x in abilities_for_item)
         else:
-            return self.permission_cache.agent_can(self.cur_agent, ability, item)
+            return self.permission_cache.agent_can(ability, item)
 
     def require_global_ability(self, ability, wildcard_suffix=False):
         """
@@ -216,6 +216,7 @@ class Viewer(object):
         Return an HttpResponse (of type request_class) that displays a simple
         error page with the specified title and body.
         """
+        self.context['action_title'] = 'Error'
         template = loader.get_template_from_string("""
         {%% extends layout %%}
         {%% load item_tags %%}
@@ -227,7 +228,6 @@ class Viewer(object):
 
     def init_for_http(self, request, action, noun, format):
         self.context = Context()
-        self.permission_cache = PermissionCache()
         self.action = action or ('show' if noun else 'list')
         self.noun = noun
         self.format = format or 'html'
@@ -235,6 +235,8 @@ class Viewer(object):
         self.request = request
         self.cur_agent = get_logged_in_agent(request)
         self.cur_site = get_current_site(request)
+        self.multi_agent_permission_cache = MultiAgentPermissionCache()
+        self.permission_cache = self.multi_agent_permission_cache.get(self.cur_agent)
         if self.noun is None:
             self.item = None
         else:
@@ -251,6 +253,7 @@ class Viewer(object):
         self.context['item'] = self.item
         self.context['viewer_name'] = self.viewer_name
         self.context['accepted_item_type'] = self.accepted_item_type
+        self.context['accepted_item_type_class_name'] = self.accepted_item_type.__name__
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = self.request.get_full_path()
@@ -263,10 +266,11 @@ class Viewer(object):
     def init_for_div(self, original_viewer, action, item):
         path = reverse('item_url', kwargs={'viewer': self.viewer_name, 'action': action, 'noun': item.pk})
         query_string = ''
-        self.permission_cache = original_viewer.permission_cache
         self.request = VirtualRequest(original_viewer.request, path, query_string)
         self.cur_agent = original_viewer.cur_agent
         self.cur_site = original_viewer.cur_site
+        self.multi_agent_permission_cache = original_viewer.multi_agent_permission_cache
+        self.permission_cache = original_viewer.permission_cache
         self.format = 'html'
         self.method = 'GET'
         self.noun = item.pk
@@ -278,6 +282,7 @@ class Viewer(object):
         self.context['specific_version'] = False
         self.context['viewer_name'] = self.viewer_name
         self.context['accepted_item_type'] = self.accepted_item_type
+        self.context['accepted_item_type_class_name'] = self.accepted_item_type.__name__
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = self.request.get_full_path()
@@ -288,10 +293,11 @@ class Viewer(object):
         self.context['layout'] = 'blank.html'
 
     def init_for_outgoing_email(self, agent):
-        self.permission_cache = PermissionCache()
         self.request = None
         self.cur_agent = agent
         self.cur_site = get_default_site()
+        self.multi_agent_permission_cache = MultiAgentPermissionCache()
+        self.permission_cache = self.multi_agent_permission_cache.get(self.cur_agent)
         self.format = 'html'
         self.method = 'GET'
         self.noun = None
@@ -303,6 +309,7 @@ class Viewer(object):
         self.context['specific_version'] = False
         self.context['viewer_name'] = self.viewer_name
         self.context['accepted_item_type'] = self.accepted_item_type
+        self.context['accepted_item_type_class_name'] = self.accepted_item_type.__name__
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = '/'
@@ -349,14 +356,10 @@ class Viewer(object):
                 body = 'There is no item %s version %s.' % (self.noun, version)
         return self.render_error(title, body, HttpResponseNotFound)
 
-    def get_form_class_for_item_type(self, update_or_create, item_type, fields=None):
-        # For now, this is how we prevent manual creation of TextDocumentExcerpts
-        if issubclass(item_type, TextDocumentExcerpt):
-            return forms.models.modelform_factory(item_type, fields=['name'])
-
+    def get_form_class_for_item_type(self, item_type, is_new, fields=None):
         exclude = []
         for field in item_type._meta.fields:
-            if (field.rel and field.rel.parent_link) or (update_or_create == 'update' and field.name in item_type.all_immutable_fields()):
+            if (field.rel and field.rel.parent_link) or ((not is_new) and field.name in item_type.all_immutable_fields()):
                 exclude.append(field.name)
         def formfield_callback(f):
             if isinstance(f, models.ForeignKey):
@@ -366,46 +369,12 @@ class Viewer(object):
                 options['to_field_name'] = f.rel.field_name
                 options['required_abilities'] = getattr(f, 'required_abilities', [])
                 options['permission_cache'] = self.permission_cache
-                options['cur_agent'] = self.cur_agent
                 return super(models.ForeignKey, f).formfield(**options)
             else:
                 return f.formfield()
 
         #TODO check modelform_factory to see if there are updates to this
         attrs = {}
-
-        if issubclass(item_type, DemeAccount):
-            exclude.append('password')
-            attrs['password1'] = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
-            attrs['password2'] = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
-            def clean_password2(self):
-                password1 = self.cleaned_data.get("password1", "")
-                password2 = self.cleaned_data["password2"]
-                if password1 != password2:
-                    raise forms.ValidationError(_("The two password fields didn't match."))
-                return password2
-            def save(self, commit=True):
-                item = super(forms.models.ModelForm, self).save(commit=False)
-                item.set_password(self.cleaned_data["password1"])
-                if commit:
-                    item.save()
-                return item
-            attrs['clean_password2'] = clean_password2
-            attrs['save'] = save
-
-        if issubclass(item_type, TextComment):
-            if update_or_create == 'create':
-                attrs['item_version_number'] = forms.IntegerField(widget=forms.HiddenInput())
-                attrs['item_index'] = forms.IntegerField(widget=forms.HiddenInput(), required=False)
-                attrs['name'] = forms.CharField(label=_("Comment title"), help_text=_("A brief description of the comment"), widget=forms.TextInput, required=False)
-                fields = ['name', 'body', 'item', 'item_version_number']
-                exclude.append('action_summary')
-        
-        if issubclass(item_type, Membership):
-            if update_or_create == 'create':
-                exclude.append('name')
-                exclude.append('description')
-        
         class Meta:
             pass
         setattr(Meta, 'model', item_type)
@@ -415,16 +384,17 @@ class Viewer(object):
         attrs['Meta'] = Meta
         attrs['formfield_callback'] = formfield_callback
         if 'action_summary' not in exclude:
-            attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("Reason for %s this item" % ('editing' if update_or_create == 'update' else 'creating')), widget=forms.TextInput, required=False)
+            attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("Reason for %s this item" % ('creating' if is_new else 'editing')), widget=forms.TextInput, required=False)
         if settings.USE_ANONYMOUS_JAVASCRIPT_SPAM_DETECTOR and self.cur_agent.is_anonymous():
             self.request.session.modified = True # We want to guarantee a cookie is given
             attrs['nospam'] = JavaScriptSpamDetectionField(self.request.session.session_key)
+        item_type.do_specialized_form_configuration(is_new, attrs)
         form_class = forms.models.ModelFormMetaclass(class_name, (forms.models.ModelForm,), attrs)
         return form_class
 
     def _set_default_layout(self):
         self.context['layout'] = 'default_layout.html'
-        if self.cur_agent_can('view default_layout', self.cur_site):
+        if self.cur_agent_can('view Site.default_layout', self.cur_site):
             if self.cur_site.default_layout:
                 self.context['layout'] = self.construct_template(self.cur_site.default_layout)
         else:
@@ -438,7 +408,7 @@ class Viewer(object):
                 break
 
             # Set next_node
-            if self.cur_agent_can('view layout', cur_node):
+            if self.cur_agent_can('view DjangoTemplateDocument.layout', cur_node):
                 next_node = cur_node.layout
             else:
                 next_node = None
@@ -456,7 +426,7 @@ class Viewer(object):
                 extends_string = '{%% extends layout%s %%}\n' % next_node.pk
 
             # Set body_string
-            if self.cur_agent_can('view body', cur_node):
+            if self.cur_agent_can('view TextDocument.body', cur_node):
                 body_string = cur_node.body
             else:
                 body_string = ''

@@ -14,6 +14,10 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* the destroy action notice will never be read by anyone (since all permissions are effectively denied)
+* When you edit an item, the fields are ordered funnily. How did they get ordered so correctly when you create? Obviously, the difference is that we pass in `fields` to the modelform, but how can we give them a better order?
+* When you copy an item, it preserves the old permissions. That's fine, but it should also default to give the creator a do_anything permission in addition.
+* If you try to add a Membership that used to exist but is now trashed, it fails. The code used to handle this. Probably same with CustomUrls.
 * If you login/logout after you're at a page with POST or at a login page, the "back to page" is weird.
 * Put the form/link code for each authentication method in its own module, and the default layout will somehow combine them
 * Methods that have to do with sending emails (about action notices) should go in EmailContactMethod, not ActionNotice
@@ -79,6 +83,7 @@ Unusual things to remember
 Distant Future (sorted by approximate order of planned implementation)
 ----------------------------------------------------------------------
 * Migrations (let's use http://south.aeracode.org/)
+* Write PermissionCache.filter_agents_by_permission so we can display which agents have a particular ability w.r.t. an item.
 * Comments that are generated from the website, when sent by email, should come from an EmailContactMethod if the user has a default contact method (we'll need a way to select a default contact method)
 * Specific-version destroying
 * Edit locks (merging, or even synchro editing)

@@ -65,10 +65,11 @@ class SymsysAffiliateViewer(PersonViewer):
         if self.cur_agent_can_global('do_anything'):
             recursive_filter = None
         else:
-            visible_memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', Membership.objects)
+            visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         self.context['containing_collections'] = self.item.ancestor_collections(recursive_filter)
-        self.context['contact_methods'] = self.permission_cache.filter_items(self.cur_agent, 'view agent', self.item.contact_methods).filter(active=True)
+        self.context['contact_methods'] = self.permission_cache.filter_items('view ContactMethod.agent', self.item.contact_methods).filter(active=True)
+        self.context['symsys_careers'] = self.permission_cache.filter_items('view SymsysCareer.symsys_affiliate', self.item.symsys_careers).filter(active=True)
         return HttpResponse(template.render(self.context))
 
 

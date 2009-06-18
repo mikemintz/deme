@@ -21,22 +21,25 @@ import hashlib
 import html2text
 
 __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
-        'AgentGlobalPermission', 'AgentItemPermission', 'AnonymousAgent',
-        'AuthenticationMethod', 'Collection', 'CollectionGlobalPermission',
-        'CollectionItemPermission', 'Comment', 'ContactMethod', 'CustomUrl',
-        'EveryoneGlobalPermission', 'EveryoneItemPermission', 'DemeSetting',
+        'AnonymousAgent', 'AuthenticationMethod',
+        'Collection', 'Comment', 'ContactMethod',
+        'CustomUrl', 'DemeSetting',
         'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt',
-        'FaxContactMethod', 'FileDocument', 'Folio', 'GlobalPermission',
-        'Group', 'GroupAgent', 'HtmlDocument', 'Item',
-        'Membership', 'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES',
-        'DemeAccount', 'ItemPermission', 'Person', 'PhoneContactMethod',
-        'RecursiveComment', 'RecursiveMembership', 'Site', 'Subscription',
-        'TextComment', 'TextDocument', 'TextDocumentExcerpt', 'Transclusion',
-        'ViewerRequest', 'WebsiteContactMethod', 'all_item_types',
-        'get_item_type_with_name', 'ActionNotice', 'RelationActionNotice',
-        'DeactivateActionNotice', 'ReactivateActionNotice',
-        'DestroyActionNotice', 'CreateActionNotice', 'EditActionNotice',
-        'FixedBooleanField', 'FixedForeignKey']
+        'FaxContactMethod', 'FileDocument', 'Folio',
+        'Group', 'GroupAgent', 'HtmlDocument', 'Item', 'Membership',
+        'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES',
+        'POSSIBLE_ITEM_AND_GLOBAL_ABILITIES', 'DemeAccount', 'Person',
+        'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership',
+        'Site', 'Subscription', 'TextComment', 'TextDocument',
+        'TextDocumentExcerpt', 'Transclusion', 'ViewerRequest',
+        'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name',
+        'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice',
+        'ReactivateActionNotice', 'DestroyActionNotice', 'CreateActionNotice',
+        'EditActionNotice', 'FixedBooleanField', 'FixedForeignKey',
+        'Permission', 'OneToOnePermission', 'OneToSomePermission',
+        'OneToAllPermission', 'SomeToOnePermission', 'SomeToSomePermission',
+        'SomeToAllPermission', 'AllToOnePermission', 'AllToSomePermission',
+        'AllToAllPermission',]
 
 ###############################################################################
 # Field types
@@ -202,8 +205,9 @@ class Item(models.Model):
     # Setup
     __metaclass__ = ItemMetaClass
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'comment_on', 'view action_notices', 'delete', 'view name',
-                                      'view description', 'view creator', 'view created_at', 'edit name', 'edit description'])
+    introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'comment_on', 'delete', 'view Item.action_notices',
+                                      'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at',
+                                      'edit Item.name', 'edit Item.description'])
     introduced_global_abilities = frozenset(['do_anything'])
     class Meta:
         verbose_name = _('item')
@@ -396,9 +400,12 @@ class Item(models.Model):
         action_time = action_time or datetime.datetime.now()
         if not self.active:
             return
+        # Execute after-callbacks
+        self._before_deactivate(action_agent, action_summary, action_time)
+        # Deactivate the item
         self.active = False
         self.save()
-        # Execute callbacks
+        # Execute after-callbacks
         self._after_deactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
         DeactivateActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
@@ -419,9 +426,12 @@ class Item(models.Model):
         action_time = action_time or datetime.datetime.now()
         if self.active:
             return
+        # Execute before-callbacks
+        self._before_reactivate(action_agent, action_summary, action_time)
+        # Reactivate the item
         self.active = True
         self.save()
-        # Execute callbacks
+        # Execute after-callbacks
         self._after_reactivate(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
         ReactivateActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
@@ -443,6 +453,8 @@ class Item(models.Model):
         action_time = action_time or datetime.datetime.now()
         if self.destroyed or self.active:
             return
+        # Execute before-callbacks
+        self._before_destroy(action_agent, action_summary, action_time)
         # Set all non-special fields to null
         self.destroyed = True
         for field in self._meta.fields:
@@ -460,14 +472,21 @@ class Item(models.Model):
         # Remove all existing action notices
         self.action_notices.all().delete()
         # Remove all permissions on this item
-        self.agent_item_permissions_as_item.all().delete()
-        self.collection_item_permissions_as_item.all().delete()
-        self.everyone_item_permissions_as_item.all().delete()
-        AgentItemPermission.objects.filter(agent=self).delete()
-        CollectionItemPermission.objects.filter(collection=self).delete()
-        AgentGlobalPermission.objects.filter(agent=self).delete()
-        CollectionGlobalPermission.objects.filter(collection=self).delete()
-        # Execute callbacks
+        self.one_to_one_permissions_as_target.all().delete()
+        self.some_to_one_permissions_as_target.all().delete()
+        self.all_to_one_permissions_as_target.all().delete()
+        if isinstance(self, Agent):
+            self.one_to_one_permissions_as_source.all().delete()
+            self.one_to_some_permissions_as_source.all().delete()
+            self.one_to_all_permissions_as_source.all().delete()
+        if isinstance(self, Collection):
+            self.some_to_one_permissions_as_source.all().delete()
+            self.some_to_some_permissions_as_source.all().delete()
+            self.some_to_all_permissions_as_source.all().delete()
+            self.one_to_some_permissions_as_target.all().delete()
+            self.some_to_some_permissions_as_target.all().delete()
+            self.all_to_some_permissions_as_target.all().delete()
+        # Execute after-callbacks
         self._after_destroy(action_agent, action_summary, action_time)
         # Create relevant ActionNotices
         DestroyActionNotice(action_item=self, action_item_version_number=self.version_number, action_agent=action_agent, action_time=action_time, action_summary=action_summary).save()
@@ -490,8 +509,8 @@ class Item(models.Model):
         creator pointer.
         
         If the initial_permissions parameter is given, it should be a list of
-        unsaved ItemPermissions. After successfully saving self, this method
-        will save these permissions (setting permission.item = self) before
+        unsaved Permissions. After successfully saving self, this method
+        will save these permissions (setting permission.target = self) before
         calling any callbacks.
         
         This will call _after_create or _after_edit, depending on whether the
@@ -503,14 +522,7 @@ class Item(models.Model):
         action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
 
-        # Save the old item version
-        if not is_new:
-            old_version = type(self).Version()
-            old_self = type(self).objects.get(pk=self.pk)
-            old_self.copy_fields_to_itemversion(old_version)
-            old_version.save()
-
-        # Update the item
+        # Set the special fields
         self.item_type_string = type(self).__name__
         if first_agent:
             action_agent = self
@@ -522,15 +534,30 @@ class Item(models.Model):
             self.version_number = latest_version_number + 1
         if first_agent:
             self.creator_id = 1
+
+        # Execute before-callbacks
+        if is_new:
+            self._before_create(action_agent, action_summary, action_time)
+        else:
+            self._before_edit(action_agent, action_summary, action_time)
+
+        # Save the old item version
+        if not is_new:
+            old_version = type(self).Version()
+            old_self = type(self).objects.get(pk=self.pk)
+            old_self.copy_fields_to_itemversion(old_version)
+            old_version.save()
+
+        # Update the item
         self.save()
 
         # Create the permissions
         if initial_permissions:
             for permission in initial_permissions:
-                permission.item = self
+                permission.target = self
                 permission.save()
 
-        # Execute callbacks
+        # Execute after-callbacks
         if is_new:
             self._after_create(action_agent, action_summary, action_time)
         else:
@@ -558,6 +585,20 @@ class Item(models.Model):
         """
         return True
 
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        """
+        Return a natural language representation of a RelationActionNotice with
+        the given parameters, such that the from_item is self. The result will
+        be in the form of a list of strings and items. The string representation
+        can later be formed by concatenating the elements of the list, using the strings
+        and relevant fields of the items. Remember to include spaces in the strings
+        so that there is space around the item name. If field_name does not match
+        any of the foreign keys for the item type, return None.
+        """
+        # We don't generate RelationActionNotices on creator, and there are no
+        # other ForeignKeys defined in Item
+        return None
+
     @classmethod
     def all_immutable_fields(cls):
         """
@@ -569,6 +610,38 @@ class Item(models.Model):
             if issubclass(base, Item):
                 result = result | base.all_immutable_fields()
         return result
+
+    @classmethod
+    def do_specialized_form_configuration(cls, is_new, attrs):
+        """
+        Perform any specialized configuration for a Django form. The
+        is_new parameter is True if the form is creating a new item, and is
+        False if the form is updating an existing item. The attrs parameter is
+        the list of class attrs that are about to be passed into the
+        forms.models.ModelFormMetaclass constructor.
+        
+        This function should modify the attrs dictionary in order to configure
+        the form.
+        
+        Item types that want to configure the default Django form in a special
+        way should override this method, making sure to put a call superclasses
+        at the top, like:
+        >>    for base in cls.__bases__:
+        >>        base.do_specialized_form_configuration(is_new, attrs)
+        """
+        pass
+
+    def _before_create(self, action_agent, action_summary, action_time):
+        """
+        This method gets called before the first version of an item is
+        created via save_versioned().
+        
+        Item types that want to trigger an action before creation should
+        override this method, making sure to put a call to super at the top,
+        like super(Group, self)._before_create(action_agent, action_summary, action_time)
+        """
+        pass
+    _before_create.alters_data = True
 
     def _after_create(self, action_agent, action_summary, action_time):
         """
@@ -582,6 +655,18 @@ class Item(models.Model):
         pass
     _after_create.alters_data = True
 
+    def _before_edit(self, action_agent, action_summary, action_time):
+        """
+        This method gets called before an existing item is edited via
+        save_versioned().
+        
+        Item types that want to trigger an action before creation should
+        override this method, making sure to put a call to super at the top,
+        like super(Group, self)._before_edit(action_agent, action_summary, action_time)
+        """
+        pass
+    _before_edit.alters_data = True
+
     def _after_edit(self, action_agent, action_summary, action_time):
         """
         This method gets called after an existing item is edited via
@@ -594,6 +679,17 @@ class Item(models.Model):
         pass
     _after_edit.alters_data = True
 
+    def _before_deactivate(self, action_agent, action_summary, action_time):
+        """
+        This method gets called before an item is deactivated.
+        
+        Item types that want to trigger an action before deactivation should
+        override this method, making sure to put a call to super at the top,
+        like super(Group, self)._before_deactivate(action_agent, action_summary, action_time)
+        """
+        pass
+    _before_deactivate.alters_data = True
+
     def _after_deactivate(self, action_agent, action_summary, action_time):
         """
         This method gets called after an item is deactivated.
@@ -605,6 +701,17 @@ class Item(models.Model):
         pass
     _after_deactivate.alters_data = True
 
+    def _before_reactivate(self, action_agent, action_summary, action_time):
+        """
+        This method gets called before an item is reactivated.
+        
+        Item types that want to trigger an action before reactivation should
+        override this method, making sure to put a call to super at the top,
+        like super(Group, self)._before_reactivate(action_agent, action_summary, action_time)
+        """
+        pass
+    _before_reactivate.alters_data = True
+
     def _after_reactivate(self, action_agent, action_summary, action_time):
         """
         This method gets called after an item is reactivated.
@@ -615,6 +722,17 @@ class Item(models.Model):
         """
         pass
     _after_reactivate.alters_data = True
+
+    def _before_destroy(self, action_agent, action_summary, action_time):
+        """
+        This method gets called before an item is destroyed.
+        
+        Item types that want to trigger an action before destroy should
+        override this method, making sure to put a call to super at the top,
+        like super(Group, self)._before_destroy(action_agent, action_summary, action_time)
+        """
+        pass
+    _before_destroy.alters_data = True
 
     def _after_destroy(self, action_agent, action_summary, action_time):
         """
@@ -649,7 +767,7 @@ class Agent(Item):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['add_contact_method', 'add_authentication_method', 'login_as', 'view last_online_at'])
+    introduced_abilities = frozenset(['add_contact_method', 'add_authentication_method', 'login_as', 'view Agent.last_online_at'])
     introduced_global_abilities = frozenset(['create Agent'])
     class Meta:
         verbose_name = _('agent')
@@ -707,7 +825,7 @@ class GroupAgent(Agent):
 
     # Setup
     introduced_immutable_fields = frozenset(['group'])
-    introduced_abilities = frozenset(['view group'])
+    introduced_abilities = frozenset(['view GroupAgent.group'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('group agent')
@@ -715,6 +833,16 @@ class GroupAgent(Agent):
 
     # Fields
     group = FixedForeignKey('Group', related_name='group_agents', unique=True, editable=False, verbose_name=_('group'))
+
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        if field_name == 'group':
+            if relation_added:
+                status = " is now a group agent for "
+            else:
+                status = " is no longer the agent of "
+            return [self, _(status), action_item]
+        else:
+            return super(GroupAgent, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name, relation_added, action_item)
 
 
 class AuthenticationMethod(Item):
@@ -733,7 +861,7 @@ class AuthenticationMethod(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['agent'])
-    introduced_abilities = frozenset(['view agent'])
+    introduced_abilities = frozenset(['view AuthenticationMethod.agent'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('authentication method')
@@ -742,6 +870,15 @@ class AuthenticationMethod(Item):
     # Fields
     agent = FixedForeignKey(Agent, related_name='authentication_methods', verbose_name=_('agent'), required_abilities=['add_authentication_method'])
 
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        if field_name == 'agent':
+            if relation_added:
+                status = " is now an authentication method for "
+            else:
+                status = " is no longer the authentication method of "
+            return [self, _(status), action_item]
+        else:
+            return super(AuthenticationMethod, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
 
 class DemeAccount(AuthenticationMethod):
     """
@@ -755,8 +892,10 @@ class DemeAccount(AuthenticationMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view username', 'view password', 'view password_question', 'view password_answer',
-                                      'edit username', 'edit password', 'edit password_question', 'edit password_answer'])
+    introduced_abilities = frozenset(['view DemeAccount.username', 'view DemeAccount.password',
+                                      'view DemeAccount.password_question', 'view DemeAccount.password_answer',
+                                      'edit DemeAccount.username', 'edit DemeAccount.password',
+                                      'edit DemeAccount.password_question', 'edit DemeAccount.password_answer'])
     introduced_global_abilities = frozenset(['create DemeAccount'])
     class Meta:
         verbose_name = _('Deme account')
@@ -844,6 +983,28 @@ class DemeAccount(AuthenticationMethod):
         """Return a random 40-digit hexadecimal string. """
         return DemeAccount.get_hexdigest('sha1', str(random.random()), str(random.random()))
 
+    @classmethod
+    def do_specialized_form_configuration(cls, is_new, attrs):
+        for base in cls.__bases__:
+            base.do_specialized_form_configuration(is_new, attrs)
+        attrs['Meta'].exclude.append('password')
+        attrs['password1'] = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
+        attrs['password2'] = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
+        def clean_password2(self):
+            password1 = self.cleaned_data.get("password1", "")
+            password2 = self.cleaned_data["password2"]
+            if password1 != password2:
+                raise forms.ValidationError(_("The two password fields didn't match."))
+            return password2
+        def save(self, commit=True):
+            item = super(forms.models.ModelForm, self).save(commit=False)
+            item.set_password(self.cleaned_data["password1"])
+            if commit:
+                item.save()
+            return item
+        attrs['clean_password2'] = clean_password2
+        attrs['save'] = save
+
 
 class Person(Agent):
     """
@@ -852,8 +1013,8 @@ class Person(Agent):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view first_name', 'view middle_names', 'view last_name', 'view suffix',
-                                      'edit first_name', 'edit middle_names', 'edit last_name', 'edit suffix'])
+    introduced_abilities = frozenset(['view Person.first_name', 'view Person.middle_names', 'view Person.last_name', 'view Person.suffix',
+                                      'edit Person.first_name', 'edit Person.middle_names', 'edit Person.last_name', 'edit Person.suffix'])
     introduced_global_abilities = frozenset(['create Person'])
     class Meta:
         verbose_name = _('person')
@@ -875,7 +1036,7 @@ class ContactMethod(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['agent'])
-    introduced_abilities = frozenset(['add_subscription', 'view agent'])
+    introduced_abilities = frozenset(['add_subscription', 'view ContactMethod.agent'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('contact method')
@@ -883,6 +1044,19 @@ class ContactMethod(Item):
 
     # Fields
     agent = FixedForeignKey(Agent, related_name='contact_methods', verbose_name=_('agent'), required_abilities=['add_contact_method'])
+
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        # We don't generate RelationActionNotices on creator, and there are no
+        # other ForeignKeys defined in Item
+
+        if field_name == 'agent':
+            if relation_added:
+                status = " can now be contacted by "
+            else:
+                status = " can no longer be contacted by "
+            return [action_item, _(status), self]
+        else:
+            return super(ContactMethod, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
 
 
 class EmailContactMethod(ContactMethod):
@@ -892,7 +1066,7 @@ class EmailContactMethod(ContactMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view email', 'edit email'])
+    introduced_abilities = frozenset(['view EmailContactMethod.email', 'edit EmailContactMethod.email'])
     introduced_global_abilities = frozenset(['create EmailContactMethod'])
     class Meta:
         verbose_name = _('email contact method')
@@ -909,7 +1083,7 @@ class PhoneContactMethod(ContactMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view phone', 'edit phone'])
+    introduced_abilities = frozenset(['view PhoneContactMethod.phone', 'edit PhoneContactMethod.phone'])
     introduced_global_abilities = frozenset(['create PhoneContactMethod'])
     class Meta:
         verbose_name = _('phone contact method')
@@ -926,7 +1100,7 @@ class FaxContactMethod(ContactMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view fax', 'edit fax'])
+    introduced_abilities = frozenset(['view FaxContactMethod.fax', 'edit FaxContactMethod.fax'])
     introduced_global_abilities = frozenset(['create FaxContactMethod'])
     class Meta:
         verbose_name = _('fax contact method')
@@ -943,7 +1117,7 @@ class WebsiteContactMethod(ContactMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view url', 'edit url'])
+    introduced_abilities = frozenset(['view WebsiteContactMethod.url', 'edit WebsiteContactMethod.url'])
     introduced_global_abilities = frozenset(['create WebsiteContactMethod'])
     class Meta:
         verbose_name = _('website contact method')
@@ -960,7 +1134,7 @@ class AIMContactMethod(ContactMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view screen_name', 'edit screen_name'])
+    introduced_abilities = frozenset(['view AIMContactMethod.screen_name', 'edit AIMContactMethod.screen_name'])
     introduced_global_abilities = frozenset(['create AIMContactMethod'])
     class Meta:
         verbose_name = _('AIM contact method')
@@ -978,9 +1152,10 @@ class AddressContactMethod(ContactMethod):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view street1', 'view street2', 'view city', 'view state',
-                                      'view country', 'view zip', 'edit street1', 'edit street2',
-                                      'edit city', 'edit state', 'edit country', 'edit zip'])
+    introduced_abilities = frozenset(['view AddressContactMethod.street1', 'view AddressContactMethod.street2', 'view AddressContactMethod.city',
+                                      'view AddressContactMethod.state', 'view AddressContactMethod.country', 'view AddressContactMethod.zip',
+                                      'edit AddressContactMethod.street1', 'edit AddressContactMethod.street2', 'edit AddressContactMethod.city',
+                                      'edit AddressContactMethod.state', 'edit AddressContactMethod.country', 'edit AddressContactMethod.zip'])
     introduced_global_abilities = frozenset(['create AddressContactMethod'])
     class Meta:
         verbose_name = _('address contact method')
@@ -1008,7 +1183,8 @@ class Subscription(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['contact_method', 'item'])
-    introduced_abilities = frozenset(['view contact_method', 'view item', 'view deep', 'edit deep'])
+    introduced_abilities = frozenset(['view Subscription.contact_method', 'view Subscription.item',
+                                      'view Subscription.deep', 'edit Subscription.deep'])
     introduced_global_abilities = frozenset(['create Subscription'])
     class Meta:
         verbose_name = _('subscription')
@@ -1017,9 +1193,24 @@ class Subscription(Item):
 
     # Fields
     contact_method = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'])
-    item           = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view action_notices'])
+    item           = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view Item.action_notices'])
     deep           = FixedBooleanField(_('deep subscription'), default=False)
 
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        if field_name == 'contact_method':
+            if relation_added:
+                status = " will send notifications via "
+            else:
+                status = " will no longer send notifications via "
+            return [self, status, action_item]
+        elif field_name == 'item':
+            if relation_added:
+                status = " subscription is now bound to "
+            else:
+                status = " subscription is no longer bound to "
+            return [self, _(status), action_item]
+        else:
+            return super(Subscription, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
 
 ###############################################################################
 # Collections and related item types
@@ -1099,11 +1290,11 @@ class Group(Collection):
         super(Group, self)._after_create(action_agent, action_summary, action_time)
         # Create a folio for this group
         folio = Folio(group=self, name='%s folio' % self.display_name())
-        permissions = [AgentItemPermission(agent=action_agent, ability='do_anything', is_allowed=True)]
+        permissions = [OneToOnePermission(source=action_agent, ability='do_anything', is_allowed=True)]
         folio.save_versioned(action_agent, action_summary, action_time, initial_permissions=permissions)
         # Create a group agent for this group
         group_agent = GroupAgent(group=self, name='%s agent' % self.display_name())
-        permissions = [AgentItemPermission(agent=action_agent, ability='do_anything', is_allowed=True)]
+        permissions = [OneToOnePermission(source=action_agent, ability='do_anything', is_allowed=True)]
         group_agent.save_versioned(action_agent, action_summary, action_time, initial_permissions=permissions)
     _after_create.alters_data = True
 
@@ -1115,7 +1306,7 @@ class Folio(Collection):
 
     # Setup
     introduced_immutable_fields = frozenset(['group'])
-    introduced_abilities = frozenset(['view group'])
+    introduced_abilities = frozenset(['view Folio.group'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('folio')
@@ -1124,6 +1315,15 @@ class Folio(Collection):
     # Fields
     group = FixedForeignKey(Group, related_name='folios', unique=True, editable=False, verbose_name=_('group'))
 
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        if field_name == 'group':
+            if relation_added:
+                status = " is now a folio for "
+            else:
+                status = " no longer belongs to "
+            return [self, _(status), action_item]
+        else:
+            return super(Folio, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
 
 class Membership(Item):
     """
@@ -1132,7 +1332,7 @@ class Membership(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['item', 'collection'])
-    introduced_abilities = frozenset(['view item', 'view collection'])
+    introduced_abilities = frozenset(['view Membership.item', 'view Membership.collection', 'view Membership.permission_enabled', 'edit Membership.permission_enabled'])
     introduced_global_abilities = frozenset(['create Membership'])
     class Meta:
         verbose_name = _('membership')
@@ -1140,8 +1340,29 @@ class Membership(Item):
         unique_together = (('item', 'collection'),)
 
     # Fields
-    item       = FixedForeignKey(Item, related_name='memberships', verbose_name=_('item'))
-    collection = FixedForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'), required_abilities=['modify_membership'])
+    item               = FixedForeignKey(Item, related_name='memberships', verbose_name=_('item'))
+    collection         = FixedForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'), required_abilities=['modify_membership'])
+    permission_enabled = FixedBooleanField(_('permission enabled'), help_text=_('Enable this if you want collection-wide permissions to apply to this child item'))
+
+    def _before_create(self, action_agent, action_summary, action_time):
+        super(Membership, self)._before_create(action_agent, action_summary, action_time)
+        if self.permission_enabled:
+            #TODO it would be better if we could take the existing permission_cache
+            from cms.permissions import MultiAgentPermissionCache
+            permission_cache = MultiAgentPermissionCache().get(action_agent)
+            if not permission_cache.agent_can('do_anything', self.item):
+                self.permission_enabled = False
+    _before_create.alters_data = True
+
+    def _before_edit(self, action_agent, action_summary, action_time):
+        super(Membership, self)._before_edit(action_agent, action_summary, action_time)
+        if self.permission_enabled:
+            #TODO it would be better if we could take the existing permission_cache
+            from cms.permissions import MultiAgentPermissionCache
+            permission_cache = MultiAgentPermissionCache().get(action_agent)
+            if not permission_cache.agent_can('do_anything', self.item):
+                self.permission_enabled = False
+    _before_edit.alters_data = True
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(Membership, self)._after_create(action_agent, action_summary, action_time)
@@ -1149,6 +1370,15 @@ class Membership(Item):
             # Update the RecursiveMembership to indicate this Membership exists
             RecursiveMembership.recursive_add_membership(self)
     _after_create.alters_data = True
+
+    def _after_edit(self, action_agent, action_summary, action_time):
+        super(Membership, self)._after_edit(action_agent, action_summary, action_time)
+        if self.collection.active:
+            # Update the RecursiveMembership in case permission_enabled changed
+            #TODO figure out how to do this only when permission_enabled actually changes, rather than for every edit
+            RecursiveMembership.recursive_remove_edge(self.collection, self.item)
+            RecursiveMembership.recursive_add_membership(self)
+    _after_edit.alters_data = True
 
     def _after_deactivate(self, action_agent, action_summary, action_time):
         super(Membership, self)._after_deactivate(action_agent, action_summary, action_time)
@@ -1162,6 +1392,30 @@ class Membership(Item):
             # Update the RecursiveMembership to indicate this Membership exists
             RecursiveMembership.recursive_add_membership(self)
     _after_reactivate.alters_data = True
+
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        if field_name == 'item':
+            if relation_added:
+                status = " now belongs to "
+            else:
+                status = " no longer belongs to "
+            return [action_item, status, collection]
+        elif field_name == 'collection':
+            if relation_added:
+                status = " now owns "
+            else:
+                status = " no longer owns "
+            return [action_item, _(status), item]
+        else:
+            return super(Membership, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
+
+    @classmethod
+    def do_specialized_form_configuration(cls, is_new, attrs):
+        for base in cls.__bases__:
+            base.do_specialized_form_configuration(is_new, attrs)
+        if is_new:
+            attrs['Meta'].exclude.append('name')
+            attrs['Meta'].exclude.append('description')
 
 
 ###############################################################################
@@ -1192,7 +1446,7 @@ class TextDocument(Document):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view body', 'edit body', 'add_transclusion'])
+    introduced_abilities = frozenset(['view TextDocument.body', 'edit TextDocument.body', 'add_transclusion'])
     introduced_global_abilities = frozenset(['create TextDocument'])
     class Meta:
         verbose_name = _('text document')
@@ -1212,8 +1466,8 @@ class DjangoTemplateDocument(TextDocument):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view layout', 'view override_default_layout',
-                                    'edit layout', 'edit override_default_layout'])
+    introduced_abilities = frozenset(['view DjangoTemplateDocument.layout', 'view DjangoTemplateDocument.override_default_layout',
+                                    'edit DjangoTemplateDocument.layout', 'edit DjangoTemplateDocument.override_default_layout'])
     introduced_global_abilities = frozenset(['create DjangoTemplateDocument'])
     class Meta:
         verbose_name = _('Django template document')
@@ -1223,6 +1477,15 @@ class DjangoTemplateDocument(TextDocument):
     layout = FixedForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout'))
     override_default_layout = FixedBooleanField(_('override default layout'), default=False)
 
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        if field_name == 'layout':
+            if relation_added:
+                status = " now has layout "
+            else:
+                status = " no longer stores the layout "
+            return [self, _(status), action_item]
+        else:
+            return super(DjangoTemplateDocument, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
 
 class HtmlDocument(TextDocument):
     """
@@ -1251,7 +1514,7 @@ class FileDocument(Document):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view datafile', 'edit datafile'])
+    introduced_abilities = frozenset(['view FileDocument.datafile', 'edit FileDocument.datafile'])
     introduced_global_abilities = frozenset(['create FileDocument'])
     class Meta:
         verbose_name = _('file document')
@@ -1273,8 +1536,8 @@ class Transclusion(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['from_item', 'from_item_version_number', 'to_item'])
-    introduced_abilities = frozenset(['view from_item', 'view from_item_version_number',
-                                      'view from_item_index', 'view to_item', 'edit from_item_index'])
+    introduced_abilities = frozenset(['view Transclusion.from_item', 'view Transclusion.from_item_version_number',
+                                      'view Transclusion.from_item_index', 'view Transclusion.to_item', 'edit Transclusion.from_item_index'])
     introduced_global_abilities = frozenset(['create Transclusion'])
     class Meta:
         verbose_name = _('transclusion')
@@ -1286,6 +1549,21 @@ class Transclusion(Item):
     from_item_index          = models.PositiveIntegerField(_('from item index'))
     to_item                  = FixedForeignKey(Item, related_name='transclusions_to', verbose_name=_('to item'))
 
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        if field_name == 'from_item':
+            if relation_added:
+                status = " now points from "
+            else:
+                status = " no longer points from "
+            return [self, status, action_item]
+        elif field_name == 'to_item':
+            if relation_added:
+                status = " now points to "
+            else:
+                status = " no longer points to "
+            return [self, _(status), action_item]
+        else:
+            return super(Translusion, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
 
 class Comment(Item):
     """
@@ -1300,7 +1578,7 @@ class Comment(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['item', 'item_version_number'])
-    introduced_abilities = frozenset(['view item', 'view item_version_number', 'view from_contact_method'])
+    introduced_abilities = frozenset(['view Comment.item', 'view Comment.item_version_number', 'view Comment.from_contact_method'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('comment')
@@ -1323,6 +1601,21 @@ class Comment(Item):
         RecursiveComment.recursive_remove_comment(self)
     _after_destroy.alters_data = True
 
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        if field_name == 'item':
+            if relation_added:
+                status = " is a comment on "
+            else:
+                status = " is no longer a comment on "
+            return [self, status, action_item]
+        elif field_name == 'from_contact_method':
+            if relation_added:
+                status = " is a comment submitted by "
+            else:
+                status = " no longer has the from_contact_method "
+            return [self, _(status), action_item]
+        else:
+            return super(Comment, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
 
 
 class TextComment(TextDocument, Comment):
@@ -1338,6 +1631,17 @@ class TextComment(TextDocument, Comment):
     class Meta:
         verbose_name = _('text comment')
         verbose_name_plural = _('text comments')
+
+    @classmethod
+    def do_specialized_form_configuration(cls, is_new, attrs):
+        for base in cls.__bases__:
+            base.do_specialized_form_configuration(is_new, attrs)
+        if is_new:
+            attrs['item_version_number'] = forms.IntegerField(widget=forms.HiddenInput())
+            attrs['item_index'] = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+            attrs['name'] = forms.CharField(label=_("Comment title"), help_text=_("A brief description of the comment"), widget=forms.TextInput, required=False)
+            attrs['Meta'].fields = ['name', 'body', 'item', 'item_version_number']
+            attrs['Meta'].exclude.append('action_summary')
 
 
 class Excerpt(Item):
@@ -1370,8 +1674,10 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
 
     # Setup
     introduced_immutable_fields = frozenset(['text_document'])
-    introduced_abilities = frozenset(['view text_document', 'view text_document_version_number', 'view start_index', 'view length',
-                                      'edit text_document_version_number', 'edit start_index', 'edit length']) 
+    introduced_abilities = frozenset(['view TextDocumentExcerpt.text_document', 'view TextDocumentExcerpt.text_document_version_number',
+                                      'view TextDocumentExcerpt.start_index', 'view TextDocumentExcerpt.length',
+                                      'edit TextDocumentExcerpt.text_document_version_number', 'edit TextDocumentExcerpt.start_index',
+                                      'edit TextDocumentExcerpt.length']) 
     introduced_global_abilities = frozenset(['create TextDocumentExcerpt'])
     class Meta:
         verbose_name = _('text document excerpt')
@@ -1382,6 +1688,23 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
     text_document_version_number = models.PositiveIntegerField(_('text document version number'))
     start_index                  = models.PositiveIntegerField(_('start index'))
     length                       = models.PositiveIntegerField(_('length'))
+
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        if field_name == 'text_document':
+            if relation_added:
+                status = " is now an excerpt of "
+            else:
+                status = " is no longer an excerpt of "
+            return [self, _(status), action_item]
+        else:
+            return super(TextDocumentExcerpt, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
+
+    @classmethod
+    def do_specialized_form_configuration(cls, is_new, attrs):
+        for base in cls.__bases__:
+            base.do_specialized_form_configuration(is_new, attrs)
+        # For now, this is how we prevent manual creation of TextDocumentExcerpts
+        attrs['Meta'].fields = ['name']
 
 
 ###############################################################################
@@ -1404,9 +1727,10 @@ class ViewerRequest(Item):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['add_sub_path', 'view aliased_item', 'view viewer', 'view action',
-                                      'view query_string', 'view format', 'edit aliased_item', 'edit viewer',
-                                      'edit action', 'edit query_string', 'edit format'])
+    introduced_abilities = frozenset(['add_sub_path', 'view ViewerRequest.aliased_item', 'view ViewerRequest.viewer',
+                                      'view ViewerRequest.action', 'view ViewerRequest.query_string', 'view ViewerRequest.format',
+                                      'edit ViewerRequest.aliased_item', 'edit ViewerRequest.viewer', 'edit ViewerRequest.action',
+                                      'edit ViewerRequest.query_string', 'edit ViewerRequest.format'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('viewer request')
@@ -1429,6 +1753,15 @@ class ViewerRequest(Item):
             parent_path = req.parent_url.calculate_full_path()
             return (parent_path[0], parent_path[1] + [req])
 
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        if field_name == 'aliased_item':
+            if relation_added:
+                status = " is now a viewer request for "
+            else:
+                status = " is no longer an alias of "
+            return [self, _(status), action_item]
+        else:
+            return super(ViewerRequest, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
 
 class Site(ViewerRequest):
     """
@@ -1443,7 +1776,7 @@ class Site(ViewerRequest):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view hostname', 'edit hostname', 'view default_layout', 'edit default_layout'])
+    introduced_abilities = frozenset(['view Site.hostname', 'edit Site.hostname', 'view Site.default_layout', 'edit Site.default_layout'])
     introduced_global_abilities = frozenset(['create Site'])
     class Meta:
         verbose_name = _('site')
@@ -1459,6 +1792,15 @@ class Site(ViewerRequest):
             return False
         return super(Site, self).can_be_deleted()
 
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        if field_name == 'default_layout':
+            if relation_added:
+                status = " now has the default layout "
+            else:
+                status = " no longer has the default layout "
+            return [self, _(status), action_item]
+        else:
+            return super(Site, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
 
 class CustomUrl(ViewerRequest):
     """
@@ -1473,7 +1815,7 @@ class CustomUrl(ViewerRequest):
 
     # Setup
     introduced_immutable_fields = frozenset(['parent_url', 'path'])
-    introduced_abilities = frozenset(['view parent_url', 'view path'])
+    introduced_abilities = frozenset(['view CustomUrl.parent_url', 'view CustomUrl.path'])
     introduced_global_abilities = frozenset(['create CustomUrl'])
     class Meta:
         verbose_name = _('custom URL')
@@ -1483,6 +1825,16 @@ class CustomUrl(ViewerRequest):
     # Fields
     parent_url = FixedForeignKey(ViewerRequest, related_name='child_urls', verbose_name=_('parent URL'), required_abilities=['add_sub_path'])
     path       = models.CharField(_('path'), max_length=255)
+
+    def relation_action_notice_natural_language_representation(self, permission_cache, cur_agent, field_name, relation_added, action_item):
+        if field_name == 'parent_url':
+            if relation_added:
+                status = " has a child path "
+            else:
+                status = " no longer has the parent_url "
+            return [self, _(status), action_item]
+        else:
+            return super(CustomUrl, self).relation_action_notice_natural_language_representation(permission_cache, cur_agent, field_name,  relation_added, action_item)
 
 
 ###############################################################################
@@ -1501,7 +1853,7 @@ class DemeSetting(Item):
 
     # Setup
     introduced_immutable_fields = frozenset(['key'])
-    introduced_abilities = frozenset(['view key', 'view value', 'edit value'])
+    introduced_abilities = frozenset(['view DemeSetting.key', 'view DemeSetting.value', 'edit DemeSetting.value'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('Deme setting')
@@ -1594,19 +1946,21 @@ class ActionNotice(models.Model):
             return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
                                                active=True, contact_method=email_contact_method)
         def deep_subscriptions():
-            if permission_cache.agent_can_global(agent, 'do_anything'):
+            if permission_cache.agent_can_global('do_anything'):
                 recursive_filter = None
             else:
-                visible_memberships = permission_cache.filter_items(agent, 'view item', Membership.objects)
+                visible_memberships = permission_cache.filter_items('view Membership.item', Membership.objects)
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             item_parent_pks_query = self.action_item.all_parents_in_thread(True, recursive_filter).values('pk').query
             action_agent_parent_pks_query = self.action_agent.all_parents_in_thread(True, recursive_filter).values('pk').query
             return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
                                                active=True, contact_method=email_contact_method, deep=True)
-        if not (permission_cache.agent_can(agent, 'view action_notices', self.action_item) or permission_cache.agent_can(agent, 'view action_notices', self.action_agent)):
+        #TODO what happens if i'm subscribed to the item, but not allowed to view its action notices, but i AM allowed to view action
+        #notices for the action_agent? or vice versa?
+        if not (permission_cache.agent_can('view Item.action_notices', self.action_item) or permission_cache.agent_can('view Item.action_notices', self.action_agent)):
             return None
         if isinstance(self, RelationActionNotice):
-            if not permission_cache.agent_can(agent, 'view %s' % self.from_field_name, self.from_item):
+            if not permission_cache.agent_can('view %s.%s' % (self.from_field_model, self.from_field_name), self.from_item):
                 return None
         try:
             arbitrary_subscription = direct_subscriptions().get()
@@ -1677,9 +2031,9 @@ class ActionNotice(models.Model):
                 comment_name = get_viewable_name(viewer.context, comment)
                 comment_creator_email_address = None
                 if comment.from_contact_method and issubclass(comment.from_contact_method.actual_item_type(), EmailContactMethod):
-                    if permission_cache.agent_can(agent, 'view from_contact_method', comment):
+                    if permission_cache.agent_can('view Comment.from_contact_method', comment):
                         from_email_contact_method = comment.from_contact_method.downcast()
-                        if permission_cache.agent_can(agent, 'view email', from_email_contact_method):
+                        if permission_cache.agent_can('view EmailContactMethod.email', from_email_contact_method):
                             comment_creator_email_address = from_email_contact_method.email
                 if comment_creator_email_address:
                     from_email_name = action_agent_name
@@ -1894,9 +2248,23 @@ class PossibleItemAbilitiesIterable(object):
     def __iter__(self):
         choices = set()
         for item_type in all_item_types():
-            choices |= set([(x,x) for x in item_type.introduced_abilities])
+            for ability in item_type.introduced_abilities:
+                if ability.startswith('view ') or ability.startswith('edit '):
+                    action_str, parameter_str = ability.split(' ', 1)
+                    item_type_str, field_str = parameter_str.split('.', 1)
+                    assert item_type.__name__ == item_type_str
+                    field = item_type._meta.get_field_by_name(field_str)[0]
+                    if isinstance(field, models.related.RelatedObject):
+                        field_name = field.field.rel.related_name.replace('_', ' ')
+                    else:
+                        field_name = field.verbose_name
+                    friendly_name = u'%s %s (%s)' % (capfirst(action_str), field_name, item_type._meta.verbose_name)
+                else:
+                    friendly_name = capfirst(ability.replace('_', ' '))
+                choice = (ability, friendly_name)
+                choices.add(choice)
         choices = list(choices)
-        choices.sort(key=lambda x: x[1])
+        choices.sort(key=lambda x: x[1].lower())
         for x in choices:
             yield x
 
@@ -1904,16 +2272,42 @@ class PossibleGlobalAbilitiesIterable(object):
     """
     Instantiated objects from this class are dynamic iterables, in that each
     time you iterate through them, you get the latest set of global abilities
-    (according to the current state of introduced_abilities in the item types).
+    (according to the current state of introduced_global_abilities in the item
+    types).
     
     Each ability is of the form (ability_name, friendly_name).
     """
     def __iter__(self):
         choices = set()
         for item_type in all_item_types():
-            choices |= set([(x,x) for x in item_type.introduced_global_abilities])
+            for ability in item_type.introduced_global_abilities:
+                if ability.startswith('create '):
+                    action_str, item_type_str = ability.split(' ', 1)
+                    assert item_type.__name__ == item_type_str
+                    friendly_name = u'%s %s' % (capfirst(action_str), item_type._meta.verbose_name_plural)
+                else:
+                    friendly_name = capfirst(ability.replace('_', ' '))
+
+                choice = (ability, friendly_name)
+                choices.add(choice)
         choices = list(choices)
-        choices.sort(key=lambda x: x[1])
+        choices.sort(key=lambda x: x[1].lower())
+        for x in choices:
+            yield x
+
+class PossibleItemAndGlobalAbilitiesIterable(object):
+    """
+    Instantiated objects from this class are dynamic iterables, in that each
+    time you iterate through them, you get the latest set of item abilities and
+    global abilities (according to the current state of introduced_abilities
+    and introduced_global_abilities in the item types).
+    
+    Each ability is of the form (ability_name, friendly_name).
+    """
+    def __iter__(self):
+        choices = set(PossibleItemAbilitiesIterable()) | set(PossibleGlobalAbilitiesIterable())
+        choices = list(choices)
+        choices.sort(key=lambda x: x[1].lower())
         for x in choices:
             yield x
 
@@ -1923,64 +2317,82 @@ POSSIBLE_ITEM_ABILITIES = PossibleItemAbilitiesIterable()
 # Iterable of all (ability, friendly_name) global abilities
 POSSIBLE_GLOBAL_ABILITIES = PossibleGlobalAbilitiesIterable()
 
+# Iterable of all (ability, friendly_name) item and global abilities
+POSSIBLE_ITEM_AND_GLOBAL_ABILITIES = PossibleItemAndGlobalAbilitiesIterable()
 
-class ItemPermission(models.Model):
-    """Abstract superclass of all item permissions."""
-    ability = models.CharField(max_length=255, choices=POSSIBLE_ITEM_ABILITIES, db_index=True)
+
+class Permission(models.Model):
+    """Abstract superclass of all permissions."""
+    ability = models.CharField(max_length=255, choices=POSSIBLE_ITEM_AND_GLOBAL_ABILITIES, db_index=True)
     is_allowed = models.BooleanField(default=True, db_index=True)
     class Meta:
         abstract = True
 
 
-class GlobalPermission(models.Model):
-    """Abstract superclass of all global permissions."""
-    ability = models.CharField(max_length=255, choices=POSSIBLE_GLOBAL_ABILITIES, db_index=True)
-    is_allowed = models.BooleanField(default=True, db_index=True)
+class OneToOnePermission(Permission):
+    """Permissions from individual agents to individual items."""
+    source = models.ForeignKey(Agent, related_name='one_to_one_permissions_as_source')
+    target = models.ForeignKey(Item, related_name='one_to_one_permissions_as_target')
     class Meta:
-        abstract = True
+        unique_together = ('ability', 'source', 'target')
 
 
-class AgentGlobalPermission(GlobalPermission):
-    """Global permissions assigned directly to agents."""
-    agent = models.ForeignKey(Agent, related_name='agent_global_permissions_as_agent')
+class OneToSomePermission(Permission):
+    """Permissions from individual agents to collections of items."""
+    source = models.ForeignKey(Agent, related_name='one_to_some_permissions_as_source')
+    target = models.ForeignKey(Collection, related_name='one_to_some_permissions_as_target')
     class Meta:
-        unique_together = (('agent', 'ability'),)
+        unique_together = ('ability', 'source', 'target')
 
 
-class CollectionGlobalPermission(GlobalPermission):
-    """Global permissions assigned to all agents in a given collection."""
-    collection = models.ForeignKey(Collection, related_name='collection_global_permissions_as_collection')
+class OneToAllPermission(Permission):
+    """Permissions from individual agents to all items."""
+    source = models.ForeignKey(Agent, related_name='one_to_all_permissions_as_source')
     class Meta:
-        unique_together = (('collection', 'ability'),)
+        unique_together = ('ability', 'source')
 
 
-class EveryoneGlobalPermission(GlobalPermission):
-    """Global permissions assigned to all agents in this installation."""
+class SomeToOnePermission(Permission):
+    """Permissions from collections of agents to individual items."""
+    source = models.ForeignKey(Collection, related_name='some_to_one_permissions_as_source')
+    target = models.ForeignKey(Item, related_name='some_to_one_permissions_as_target')
     class Meta:
-        unique_together = (('ability',),)
+        unique_together = ('ability', 'source', 'target')
 
 
-class AgentItemPermission(ItemPermission):
-    """Item permissions assigned directly to agents."""
-    agent = models.ForeignKey(Agent, related_name='agent_item_permissions_as_agent')
-    item = models.ForeignKey(Item, related_name='agent_item_permissions_as_item')
+class SomeToSomePermission(Permission):
+    """Permissions from collections of agents to collections of items."""
+    source = models.ForeignKey(Collection, related_name='some_to_some_permissions_as_source')
+    target = models.ForeignKey(Collection, related_name='some_to_some_permissions_as_target')
     class Meta:
-        unique_together = (('agent', 'item', 'ability'),)
+        unique_together = ('ability', 'source', 'target')
 
 
-class CollectionItemPermission(ItemPermission):
-    """Collection permissions assigned to all agents in a given collection."""
-    collection = models.ForeignKey(Collection, related_name='collection_item_permissions_as_collection')
-    item = models.ForeignKey(Item, related_name='collection_item_permissions_as_item')
+class SomeToAllPermission(Permission):
+    """Permissions from collections of agents to all items."""
+    source = models.ForeignKey(Collection, related_name='some_to_all_permissions_as_source')
     class Meta:
-        unique_together = (('collection', 'item', 'ability'),)
+        unique_together = ('ability', 'source')
 
 
-class EveryoneItemPermission(ItemPermission):
-    """Item permissions assigned to all agents in this installation."""
-    item = models.ForeignKey(Item, related_name='everyone_item_permissions_as_item')
+class AllToOnePermission(Permission):
+    """Permissions from all agents to individual items."""
+    target = models.ForeignKey(Item, related_name='all_to_one_permissions_as_target')
     class Meta:
-        unique_together = (('item', 'ability'),)
+        unique_together = ('ability', 'target')
+
+
+class AllToSomePermission(Permission):
+    """Permissions from all agents to collections of items."""
+    target = models.ForeignKey(Collection, related_name='all_to_some_permissions_as_target')
+    class Meta:
+        unique_together = ('ability', 'target')
+
+
+class AllToAllPermission(Permission):
+    """Permissions from all agents to all items."""
+    class Meta:
+        unique_together = ('ability',)
 
 
 ###############################################################################
@@ -2046,10 +2458,15 @@ class RecursiveMembership(models.Model):
     (A,C) child_memberships={(B,C)}
     (A,D) child_memberships={(A,D),(B,D))}
     (B,D) child_memberships={(B,D)}
+    
+    The permission_enabled field is set to True if there exists at least one
+    path of Memberships from parent to child, such that each membership in the
+    path has permission_enabled=True.
     """
-    parent            = models.ForeignKey(Collection, related_name='recursive_memberships_as_parent', verbose_name=_('parent'))
-    child             = models.ForeignKey(Item, related_name='recursive_memberships_as_child', verbose_name=_('child'))
-    child_memberships = models.ManyToManyField(Membership, verbose_name=_('child memberships'))
+    parent             = models.ForeignKey(Collection, related_name='recursive_memberships_as_parent', verbose_name=_('parent'))
+    child              = models.ForeignKey(Item, related_name='recursive_memberships_as_child', verbose_name=_('child'))
+    permission_enabled = models.BooleanField(_('permission enabled'), default=False)
+    child_memberships  = models.ManyToManyField(Membership, verbose_name=_('child memberships'))
     class Meta:
         unique_together = (('parent', 'child'),)
 
@@ -2062,12 +2479,30 @@ class RecursiveMembership(models.Model):
         parent = membership.collection
         child = membership.item
         # Connect parent to child
-        recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=parent, child=child)
+        try:
+            recursive_membership = RecursiveMembership.objects.get(parent=parent, child=child)
+            if recursive_membership.permission_enabled != membership.permission_enabled:
+                RecursiveMembership.recursive_remove_edge(parent, child)
+                recursive_membership = None
+        except ObjectDoesNotExist:
+            recursive_membership = None
+        if recursive_membership is None:
+            recursive_membership = RecursiveMembership(parent=parent, child=child, permission_enabled=membership.permission_enabled)
+            recursive_membership.save()
         recursive_membership.child_memberships.add(membership)
         # Connect ancestors to child, via parent
         ancestor_recursive_memberships = RecursiveMembership.objects.filter(child=parent)
         for ancestor_recursive_membership in ancestor_recursive_memberships:
-            recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent, child=child)
+            try:
+                recursive_membership = RecursiveMembership.objects.get(parent=ancestor_recursive_membership.parent, child=child)
+                if not recursive_membership.permission_enabled:
+                    if membership.permission_enabled and ancestor_recursive_membership.permission_enabled:
+                        recursive_membership.permission_enabled = True
+                        recursive_membership.save()
+            except ObjectDoesNotExist:
+                recursive_membership = RecursiveMembership(parent=ancestor_recursive_membership.parent, child=child)
+                recursive_membership.permission_enabled = ancestor_recursive_membership.permission_enabled and membership.permission_enabled
+                recursive_membership.save()
             recursive_membership.child_memberships.add(membership)
         # Connect parent and ancestors to all descendants
         descendant_recursive_memberships = RecursiveMembership.objects.filter(parent=child)
@@ -2075,12 +2510,32 @@ class RecursiveMembership(models.Model):
             child_memberships = descendant_recursive_membership.child_memberships.all()
             # Indirect ancestors
             for ancestor_recursive_membership in ancestor_recursive_memberships:
-                recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=ancestor_recursive_membership.parent,
-                                                                                          child=descendant_recursive_membership.child)
+                try:
+                    recursive_membership = RecursiveMembership.objects.get(parent=ancestor_recursive_membership.parent,
+                                                                           child=descendant_recursive_membership.child)
+                    if not recursive_membership.permission_enabled:
+                        if membership.permission_enabled and ancestor_recursive_membership.permission_enabled and descendant_recursive_membership.permission_enabled:
+                            recursive_membership.permission_enabled = True
+                            recursive_membership.save()
+                except ObjectDoesNotExist:
+                    recursive_membership = RecursiveMembership(parent=ancestor_recursive_membership.parent,
+                                                               child=descendant_recursive_membership.child)
+                    recursive_membership.permission_enabled = ancestor_recursive_membership.permission_enabled and membership.permission_enabled and descendant_recursive_membership.permission_enabled
+                    recursive_membership.save()
                 for child_membership in child_memberships:
                     recursive_membership.child_memberships.add(child_membership)
             # Parent
-            recursive_membership, created = RecursiveMembership.objects.get_or_create(parent=parent, child=descendant_recursive_membership.child)
+            try:
+                recursive_membership = RecursiveMembership.objects.get(parent=parent, child=descendant_recursive_membership.child)
+                if not recursive_membership.permission_enabled:
+                    if membership.permission_enabled and descendant_recursive_membership.permission_enabled:
+                        recursive_membership.permission_enabled = True
+                        recursive_membership.save()
+            except ObjectDoesNotExist:
+                recursive_membership = RecursiveMembership(parent=parent, child=descendant_recursive_membership.child)
+                recursive_membership.permission_enabled = membership.permission_enabled and descendant_recursive_membership.permission_enabled
+                recursive_membership.save()
+        
             for child_membership in child_memberships:
                 recursive_membership.child_memberships.add(child_membership)
 

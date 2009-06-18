@@ -85,10 +85,15 @@ def symsys_bot():
 class SymsysCareer(Item):
     # Setup
     introduced_immutable_fields = frozenset(['symsys_affiliate'])
-    introduced_abilities = frozenset(['view symsys_affiliate', 'view suid', 'view original_first_name', 'view original_middle_names',
-                                      'view original_last_name', 'view original_suffix', 'view original_photo', 'view start_date', 'view end_date', 'view finished',
-                                      'edit suid', 'edit original_first_name', 'edit original_middle_names',
-                                      'edit original_last_name', 'edit original_suffix', 'edit original_photo', 'edit start_date', 'edit end_date', 'edit finished'])
+    introduced_abilities = frozenset(['view SymsysCareer.symsys_affiliate', 'view SymsysCareer.suid',
+                                      'view SymsysCareer.original_first_name', 'view SymsysCareer.original_middle_names',
+                                      'view SymsysCareer.original_last_name', 'view SymsysCareer.original_suffix',
+                                      'view SymsysCareer.original_photo', 'view SymsysCareer.start_date',
+                                      'view SymsysCareer.end_date', 'view SymsysCareer.finished', 'edit SymsysCareer.suid',
+                                      'edit SymsysCareer.original_first_name', 'edit SymsysCareer.original_middle_names',
+                                      'edit SymsysCareer.original_last_name', 'edit SymsysCareer.original_suffix',
+                                      'edit SymsysCareer.original_photo', 'edit SymsysCareer.start_date',
+                                      'edit SymsysCareer.end_date', 'edit SymsysCareer.finished'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('Symsys career')
@@ -208,24 +213,24 @@ class SymsysCareer(Item):
         agents_own_abilities = []
         if isinstance(self, ThesisSymsysCareer):
             if not self.finished:
-                agents_own_abilities.append('edit second_reader')
-                agents_own_abilities.append('edit thesis_title')
+                agents_own_abilities.append('edit ThesisSymsysCareer.second_reader')
+                agents_own_abilities.append('edit ThesisSymsysCareer.thesis_title')
         if isinstance(self, StudentSymsysCareer):
             if self.finished:
-                agents_own_abilities.append('edit class_year')
+                agents_own_abilities.append('edit StudentSymsysCareer.class_year')
             else:
-                agents_own_abilities.append('edit advisor')
-            agents_own_abilities.append('edit other_degrees')
+                agents_own_abilities.append('edit StudentSymsysCareer.advisor')
+            agents_own_abilities.append('edit StudentSymsysCareer.other_degrees')
         if isinstance(self, BachelorsSymsysCareer):
             if not self.finished:
-                agents_own_abilities.append('edit concentration')
+                agents_own_abilities.append('edit BachelorsSymsysCareer.concentration')
         if isinstance(self, ResearcherSymsysCareer):
-            agents_own_abilities.append('edit academic_title')
+            agents_own_abilities.append('edit ResearcherSymsysCareer.academic_title')
         if isinstance(self, FacultySymsysCareer):
-            agents_own_abilities.append('edit academic_title')
-        AgentItemPermission.objects.filter(agent=agent, item=self, ability__startswith='edit ').delete()
+            agents_own_abilities.append('edit FacultySymsysCareer.academic_title')
+        OneToOnePermission.objects.filter(source=agent, target=self, ability__startswith='edit ').delete()
         for ability in agents_own_abilities:
-            AgentItemPermission(agent=agent, item=self, is_allowed=True, ability=ability).save()
+            OneToOnePermission(source=agent, target=self, is_allowed=True, ability=ability).save()
 
     _guarantee_consistency_after_changes.alters_data = True
 
@@ -233,8 +238,9 @@ class SymsysCareer(Item):
 class ThesisSymsysCareer(SymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view second_reader', 'view thesis', 'view thesis_title',
-                                      'edit second_reader', 'edit thesis', 'edit thesis_title'])
+    introduced_abilities = frozenset(['view ThesisSymsysCareer.second_reader', 'view ThesisSymsysCareer.thesis',
+                                      'view ThesisSymsysCareer.thesis_title', 'edit ThesisSymsysCareer.second_reader',
+                                      'edit ThesisSymsysCareer.thesis', 'edit ThesisSymsysCareer.thesis_title'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('thesis Symsys career')
@@ -250,8 +256,9 @@ class ThesisSymsysCareer(SymsysCareer):
 class StudentSymsysCareer(SymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view class_year', 'view advisor', 'view other_degrees',
-                                      'edit class_year', 'edit advisor', 'edit other_degrees'])
+    introduced_abilities = frozenset(['view StudentSymsysCareer.class_year', 'view StudentSymsysCareer.advisor',
+                                      'view StudentSymsysCareer.other_degrees', 'edit StudentSymsysCareer.class_year',
+                                      'edit StudentSymsysCareer.advisor', 'edit StudentSymsysCareer.other_degrees'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('student Symsys career')
@@ -276,7 +283,8 @@ class MinorSymsysCareer(StudentSymsysCareer):
 class BachelorsSymsysCareer(StudentSymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view indivdesignedconc', 'view concentration', 'edit indivdesignedconc', 'edit concentration'])
+    introduced_abilities = frozenset(['view BachelorsSymsysCareer.indivdesignedconc', 'view BachelorsSymsysCareer.concentration',
+                                      'edit BachelorsSymsysCareer.indivdesignedconc', 'edit BachelorsSymsysCareer.concentration'])
     introduced_global_abilities = frozenset(['create BachelorsSymsysCareer'])
     class Meta:
         verbose_name = _('bachelors Symsys career')
@@ -290,7 +298,8 @@ class BachelorsSymsysCareer(StudentSymsysCareer):
 class MastersSymsysCareer(StudentSymsysCareer, ThesisSymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view indivdesignedconc', 'view concentration', 'edit indivdesignedconc', 'edit concentration'])
+    introduced_abilities = frozenset(['view MastersSymsysCareer.indivdesignedtrack', 'view MastersSymsysCareer.track',
+                                      'edit MastersSymsysCareer.indivdesignedtrack', 'edit MastersSymsysCareer.track'])
     introduced_global_abilities = frozenset(['create MastersSymsysCareer'])
     class Meta:
         verbose_name = _('masters Symsys career')
@@ -317,7 +326,7 @@ class HonorsSymsysCareer(ThesisSymsysCareer):
 class ResearcherSymsysCareer(SymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view academic_title', 'edit academic_title'])
+    introduced_abilities = frozenset(['view ResearcherSymsysCareer.academic_title', 'edit ResearcherSymsysCareer.academic_title'])
     introduced_global_abilities = frozenset(['create ResearcherSymsysCareer'])
     class Meta:
         verbose_name = _('researcher Symsys career')
@@ -330,7 +339,7 @@ class ResearcherSymsysCareer(SymsysCareer):
 class FacultySymsysCareer(SymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view academic_title', 'edit academic_title'])
+    introduced_abilities = frozenset(['view FacultySymsysCareer.academic_title', 'edit FacultySymsysCareer.academic_title'])
     introduced_global_abilities = frozenset(['create FacultySymsysCareer'])
     class Meta:
         verbose_name = _('faculty Symsys career')
@@ -343,8 +352,7 @@ class FacultySymsysCareer(SymsysCareer):
 class ProgramStaffSymsysCareer(SymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset(['admin_title'])
-    introduced_abilities = frozenset(['view admin_title', 'view start_date', 'view end_date',
-                                      'view admin_title', 'view start_date', 'view end_date'])
+    introduced_abilities = frozenset(['view ProgramStaffSymsysCareer.admin_title', 'view ProgramStaffSymsysCareer.admin_title'])
     introduced_global_abilities = frozenset(['create ProgramStaffSymsysCareer'])
     class Meta:
         verbose_name = _('program staff Symsys career')
@@ -357,10 +365,15 @@ class ProgramStaffSymsysCareer(SymsysCareer):
 class SymsysAffiliate(Person):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view w_organization', 'view w_position', 'view background', 'view doing_now',
-                                      'view interests', 'view publications', 'view office_hours', 'view about', 'view photo',
-                                      'edit w_organization', 'edit w_position', 'edit background', 'edit doing_now',
-                                      'edit interests', 'edit publications', 'edit office_hours', 'edit about', 'edit photo'])
+    introduced_abilities = frozenset(['view SymsysAffiliate.w_organization', 'view SymsysAffiliate.w_position',
+                                      'view SymsysAffiliate.background', 'view SymsysAffiliate.doing_now',
+                                      'view SymsysAffiliate.interests', 'view SymsysAffiliate.publications',
+                                      'view SymsysAffiliate.office_hours', 'view SymsysAffiliate.about',
+                                      'view SymsysAffiliate.photo', 'edit SymsysAffiliate.w_organization',
+                                      'edit SymsysAffiliate.w_position', 'edit SymsysAffiliate.background',
+                                      'edit SymsysAffiliate.doing_now', 'edit SymsysAffiliate.interests',
+                                      'edit SymsysAffiliate.publications', 'edit SymsysAffiliate.office_hours',
+                                      'edit SymsysAffiliate.about', 'edit SymsysAffiliate.photo'])
     introduced_global_abilities = frozenset(['create SymsysAffiliate'])
     class Meta:
         verbose_name = _('Symsys affiliate')
@@ -389,7 +402,8 @@ class SymsysAffiliate(Person):
 class Event(HtmlDocument):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view event_time', 'view location', 'view url', 'edit event_time', 'edit location', 'edit url'])
+    introduced_abilities = frozenset(['view Event.event_time', 'view Event.location', 'view Event.url',
+                                      'edit Event.event_time', 'edit Event.location', 'edit Event.url'])
     introduced_global_abilities = frozenset(['create Event'])
     class Meta:
         verbose_name = _('event')
@@ -404,7 +418,8 @@ class Event(HtmlDocument):
 class Advertisement(Document):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view contact_info', 'view expires_at', 'edit contact_info', 'edit expires_at'])
+    introduced_abilities = frozenset(['view Advertisement.contact_info', 'view Advertisement.expires_at',
+                                      'edit Advertisement.contact_info', 'edit Advertisement.expires_at'])
     introduced_global_abilities = frozenset()
     class Meta:
         verbose_name = _('advertisement')
