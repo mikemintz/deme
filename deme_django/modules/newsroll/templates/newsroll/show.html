@@ -10,21 +10,34 @@
 {% for details in members %}
 
     <div style="margin-bottom: 2px; border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px;">
-        <div>
-            {{ details.name }} 
+        <div style="font-weight: bold;">
+            <a href="{{ details.url }}">{% viewable_name details.member %}</a> 
         </div>
         
         {% if details.display_body %}
-            <div>
-                {{ details.body }} 
-            </div>
+            {% ifagentcan 'view body' '' details.member %}
+                {% if details.is_html %}
+                    {{ details.body|safe }}
+
+                {% else %}
+                    <div>
+                        {{ details.body }} 
+                    </div>
+                {% endif %}
+           {% endifagentcan %}    
         {% endif %}
         
         <div>
-            Posted by {{ details.creator }} 
-            <span title="{{ details.created_at|date:"Y-m-d H:m:s" }}" style="width: 13em; display: inline-block;">
-                {{ details.created_at|timesince }} ago
-            </span>
+            Posted
+            {% ifagentcan 'view creator' '' details.member %}
+                by <a href="{{ details.creator_url }}">{{ details.creator }}</a> 
+            {% endifagentcan %}
+
+            {% ifagentcan 'view created_at' '' details.member %}
+                <span title="{{ details.created_at|date:"Y-m-d H:m:s" }}" style="width: 13em; display: inline-block;">
+                    {{ details.created_at|timesince }} ago
+                </span>
+            {% endifagentcan %}
         </div>
 
     </div>

@@ -1,4 +1,5 @@
 from django.template import Context, loader
+from django.db.models import Q
 from django.http import HttpResponse
 from cms.views import ItemViewer
 from cms.models import *
@@ -12,21 +13,24 @@ class NewsRollViewer(ItemViewer):
         template = loader.get_template('newsroll/show.html')
         collection = self.item
         self.context['collection'] = collection
-        members = collection.all_contained_collection_members()
 
-        #TODO permissions to view all_contained_collection_members (with recurisve filter)
-        #TODO permission to view each field
-        #TODO html document rendered
-        #TODO order by date
+        if self.cur_agent_can_global('do_anything'):
+            recursive_filter = None
+        else:
+            visible_memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', Membership.objects)
+            recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
+        members = collection.all_contained_collection_members(recursive_filter).order_by('-created_at')
+
         #TODO pagination
         member_details = []
         for member in members:
             details = {}
+            details["member"] = member
             details["name"] = member.display_name()
             details["url"] = member.get_absolute_url() 
-            details["type"] = member.item_type_string
             details["creator"] = member.creator.display_name()
             details["created_at"] = member.created_at
+            details["creator_url"] = member.creator.get_absolute_url()
             if issubclass(member.actual_item_type(), TextDocument):
                 member = member.downcast()
                 details["display_body"] = True
