@@ -17,7 +17,7 @@ class NewsRollViewer(ItemViewer):
         if self.cur_agent_can_global('do_anything'):
             recursive_filter = None
         else:
-            visible_memberships = self.permission_cache.filter_items(self.cur_agent, 'view item', Membership.objects)
+            visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         members = collection.all_contained_collection_members(recursive_filter).order_by('-created_at')
 

@@ -15,7 +15,7 @@
         </div>
         
         {% if details.display_body %}
-            {% ifagentcan 'view body' '' details.member %}
+            {% ifagentcan 'view TextDocument.body' details.member %}
                 {% if details.is_html %}
                     {{ details.body|safe }}
 
@@ -29,11 +29,11 @@
         
         <div>
             Posted
-            {% ifagentcan 'view creator' '' details.member %}
+            {% ifagentcan 'view Item.creator' details.member %}
                 by <a href="{{ details.creator_url }}">{{ details.creator }}</a> 
             {% endifagentcan %}
 
-            {% ifagentcan 'view created_at' '' details.member %}
+            {% ifagentcan 'view Item.created_at' details.member %}
                 <span title="{{ details.created_at|date:"Y-m-d H:m:s" }}" style="width: 13em; display: inline-block;">
                     {{ details.created_at|timesince }} ago
                 </span>
