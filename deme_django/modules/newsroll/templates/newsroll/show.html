@@ -17,11 +17,11 @@
         {% if details.display_body %}
             {% ifagentcan 'view TextDocument.body' details.member %}
                 {% if details.is_html %}
-                    {{ details.body|safe }}
+                    {{ details.body|safe|truncatewords_html:50 }}
 
                 {% else %}
                     <div>
-                        {{ details.body }} 
+                        {{ details.body|truncatewords:50 }} 
                     </div>
                 {% endif %}
            {% endifagentcan %}    
