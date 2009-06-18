@@ -171,10 +171,10 @@ class ItemVersion(models.Model):
         get_latest_by = 'version_number'
 
     # Fields
-    current_item = models.ForeignKey('Item', related_name='versions')
+    current_item   = models.ForeignKey('Item', related_name='versions')
     version_number = models.PositiveIntegerField(db_index=True)
-    name = models.CharField(max_length=255, null=True)
-    description = models.CharField(max_length=255, blank=True, null=True)
+    name           = models.CharField(max_length=255, null=True)
+    description    = models.CharField(max_length=255, blank=True, null=True)
 
     def __unicode__(self):
         return u'%s[%s.%s] "%s"' % (self.current_item.item_type_string, self.current_item_id, self.version_number, self.name)
