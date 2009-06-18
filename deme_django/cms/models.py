@@ -100,6 +100,7 @@ class ItemMetaClass(models.base.ModelBase):
                     continue
                 # We must be able to nullify this field if we destroy the item
                 assert not isinstance(field, models.BooleanField), "Use cms.models.FixedBooleanField instead of models.BooleanField for %s.%s" % (name, key)
+                assert not (isinstance(field, models.ForeignKey) and type(field).__name__ != 'FixedForeignKey'), "Use cms.models.FixedForeignKey instead of models.ForeignKey for %s.%s" % (name, key)
                 field.allowed_to_be_null_before_destroyed = field.null
                 field.null = True
                 if not field.has_default():
@@ -114,16 +115,6 @@ class ItemMetaClass(models.base.ModelBase):
                     else:
                         field.default = ''
 
-        # Fix up the ItemVersion and Item classes
-        if name == 'ItemVersion':
-            result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
-            return result
-        if name == 'Item':
-            result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
-            result.Version = ItemVersion
-            ItemVersion.NotVersion = result
-            return result
-
         # Create the non-versioned class
         attrs_copy = copy.deepcopy(attrs)
         result = super(ItemMetaClass, cls).__new__(cls, name, bases, attrs)
@@ -131,7 +122,10 @@ class ItemMetaClass(models.base.ModelBase):
         # Create the versioned class
         version_name = name + "Version"
         # Versioned classes inherit from other versioned classes
-        version_bases = tuple([x.Version for x in bases])
+        if name == 'Item':
+            version_bases = tuple(bases)
+        else:
+            version_bases = tuple([x.Version for x in bases if issubclass(x, Item)])
         # Set the attrs for the versioned class
         version_attrs = {'__module__': attrs_copy['__module__']}
         # Copy over mutable fields
@@ -150,34 +144,23 @@ class ItemMetaClass(models.base.ModelBase):
                     # since there will be conflicts.
                     field._unique = False
                     version_attrs[key] = field
+        # Set up Item.Version specially
+        if name == 'Item':
+            version_attrs['current_item'] = models.ForeignKey('Item', related_name='versions')
+            version_attrs['version_number'] = models.PositiveIntegerField(db_index=True)
+            class Meta:
+                unique_together = ('current_item', 'version_number')
+                ordering = ['version_number']
+                get_latest_by = 'version_number'
+            version_attrs['Meta'] = Meta
+            version_attrs['__unicode__'] = lambda self: u'%s[%s.%s] "%s"' % (self.current_item.item_type_string, self.current_item_id, self.version_number, self.name)
+            version_attrs['__doc__'] = "Versioned class for Item, and superclass of all versioned classes."
         version_result = super(ItemMetaClass, cls).__new__(cls, version_name, version_bases, version_attrs)
 
         # Set the Version field of the class to point to the versioned class
         result.Version = version_result
         version_result.NotVersion = result
         return result
-
-
-class ItemVersion(models.Model):
-    """
-    Versioned class for Item, and superclass of all versioned classes.
-    """
-
-    # Setup
-    __metaclass__ = ItemMetaClass
-    class Meta:
-        unique_together = (('current_item', 'version_number'),)
-        ordering = ['version_number']
-        get_latest_by = 'version_number'
-
-    # Fields
-    current_item = models.ForeignKey('Item', related_name='versions')
-    version_number = models.PositiveIntegerField(db_index=True)
-    name = models.CharField(max_length=255, null=True)
-    description = models.CharField(max_length=255, blank=True, null=True)
-
-    def __unicode__(self):
-        return u'%s[%s.%s] "%s"' % (self.current_item.item_type_string, self.current_item_id, self.version_number, self.name)
 
 
 class Item(models.Model):
@@ -607,7 +590,7 @@ class Item(models.Model):
         """
         result = cls.introduced_immutable_fields
         for base in cls.__bases__:
-            if issubclass(base, Item):
+            if getattr(base, '__metaclass__', None) == ItemMetaClass:
                 result = result | base.all_immutable_fields()
         return result
 
@@ -1189,7 +1172,7 @@ class Subscription(Item):
     class Meta:
         verbose_name = _('subscription')
         verbose_name_plural = _('subscriptions')
-        unique_together = (('contact_method', 'item'),)
+        unique_together = ('contact_method', 'item')
 
     # Fields
     contact_method = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'])
@@ -1337,7 +1320,7 @@ class Membership(Item):
     class Meta:
         verbose_name = _('membership')
         verbose_name_plural = _('memberships')
-        unique_together = (('item', 'collection'),)
+        unique_together = ('item', 'collection')
 
     # Fields
     item               = FixedForeignKey(Item, related_name='memberships', verbose_name=_('item'))
@@ -1820,7 +1803,7 @@ class CustomUrl(ViewerRequest):
     class Meta:
         verbose_name = _('custom URL')
         verbose_name_plural = _('custom URLs')
-        unique_together = (('parent_url', 'path'),)
+        unique_together = ('parent_url', 'path')
 
     # Fields
     parent_url = FixedForeignKey(ViewerRequest, related_name='child_urls', verbose_name=_('parent URL'), required_abilities=['add_sub_path'])
@@ -2410,7 +2393,7 @@ class RecursiveComment(models.Model):
     parent = models.ForeignKey(Item, related_name='recursive_comments_as_parent', verbose_name=_('parent'))
     child  = models.ForeignKey(Comment, related_name='recursive_comments_as_child', verbose_name=_('child'))
     class Meta:
-        unique_together = (('parent', 'child'),)
+        unique_together = ('parent', 'child')
 
     @staticmethod
     def recursive_add_comment(comment):
@@ -2468,7 +2451,7 @@ class RecursiveMembership(models.Model):
     permission_enabled = models.BooleanField(_('permission enabled'), default=False)
     child_memberships  = models.ManyToManyField(Membership, verbose_name=_('child memberships'))
     class Meta:
-        unique_together = (('parent', 'child'),)
+        unique_together = ('parent', 'child')
 
     @staticmethod
     def recursive_add_membership(membership):
