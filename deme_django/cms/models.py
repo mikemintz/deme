@@ -100,6 +100,7 @@ class ItemMetaClass(models.base.ModelBase):
                     continue
                 # We must be able to nullify this field if we destroy the item
                 assert not isinstance(field, models.BooleanField), "Use cms.models.FixedBooleanField instead of models.BooleanField for %s.%s" % (name, key)
+                assert not (isinstance(field, models.ForeignKey) and type(field).__name__ != 'FixedForeignKey'), "Use cms.models.FixedForeignKey instead of models.ForeignKey for %s.%s" % (name, key)
                 field.allowed_to_be_null_before_destroyed = field.null
                 field.null = True
                 if not field.has_default():

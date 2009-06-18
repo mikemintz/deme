@@ -100,13 +100,13 @@ class SymsysCareer(Item):
         verbose_name_plural = _('Symsys careers')
 
     # Fields
-    symsys_affiliate      = models.ForeignKey('SymsysAffiliate', verbose_name=_('Symsys affiliate'), related_name='symsys_careers')
+    symsys_affiliate      = FixedForeignKey('SymsysAffiliate', verbose_name=_('Symsys affiliate'), related_name='symsys_careers')
     suid                  = models.PositiveIntegerField(_('SUID'), default=0)
     original_first_name   = models.CharField(_('original first name'), max_length=255)
     original_middle_names = models.CharField(_('original middle names'), max_length=255, blank=True)
     original_last_name    = models.CharField(_('original last name'), max_length=255)
     original_suffix       = models.CharField(_('original suffix'), max_length=255, blank=True)
-    original_photo        = models.ForeignKey(ImageDocument, related_name='symsyscareers_with_original_photo', verbose_name=_('original photo'), null=True, blank=True, default=None)
+    original_photo        = FixedForeignKey(ImageDocument, related_name='symsyscareers_with_original_photo', verbose_name=_('original photo'), null=True, blank=True, default=None)
     finished              = FixedBooleanField(_('finished'), default=False)
     start_date            = models.DateField(_('start date'))
     end_date              = models.DateField(_('end date'), blank=True, null=True, default=None)
@@ -247,8 +247,8 @@ class ThesisSymsysCareer(SymsysCareer):
         verbose_name_plural = _('thesis Symsys careers')
 
     # Fields
-    second_reader = models.ForeignKey('SymsysAffiliate', null=True, blank=True, related_name="second_reader_group", verbose_name=_('second reader'), default=None)
-    thesis        = models.ForeignKey(FileDocument, null=True, blank=True, related_name="careers_with_thesis", verbose_name=_('thesis'), default=None)
+    second_reader = FixedForeignKey('SymsysAffiliate', null=True, blank=True, related_name="second_reader_group", verbose_name=_('second reader'), default=None)
+    thesis        = FixedForeignKey(FileDocument, null=True, blank=True, related_name="careers_with_thesis", verbose_name=_('thesis'), default=None)
     thesis_title  = models.CharField(_('thesis title'), max_length=255, blank=True)
     #TODO: make a special viewer for the student to upload a file into a FileDocument have have this field point to it (only if blank right now?)
 
@@ -266,7 +266,7 @@ class StudentSymsysCareer(SymsysCareer):
 
     # Fields
     class_year      = models.PositiveIntegerField(_('class year'), null=True, blank=True, default=None)
-    advisor         = models.ForeignKey('SymsysAffiliate', null=True, blank=True, related_name="advisor_group", verbose_name=_('advisor'), default=None)
+    advisor         = FixedForeignKey('SymsysAffiliate', null=True, blank=True, related_name="advisor_group", verbose_name=_('advisor'), default=None)
     other_degrees   = models.CharField(_('other degrees'), max_length=255, blank=True)
 
 
@@ -320,7 +320,7 @@ class HonorsSymsysCareer(ThesisSymsysCareer):
         verbose_name_plural = _('honors Symsys careers')
 
     # Fields
-    advisor = models.ForeignKey('SymsysAffiliate', null=True, blank=True, related_name="honors_advisor_group", verbose_name=_('advisor'), default=None)
+    advisor = FixedForeignKey('SymsysAffiliate', null=True, blank=True, related_name="honors_advisor_group", verbose_name=_('advisor'), default=None)
 
 
 class ResearcherSymsysCareer(SymsysCareer):
@@ -388,7 +388,7 @@ class SymsysAffiliate(Person):
     publications   = models.TextField(_('publications'), blank=True)
     office_hours   = models.TextField(_('office hours'), blank=True)
     about          = models.TextField(_('about'), blank=True)
-    photo          = models.ForeignKey(ImageDocument, related_name='symsysaffiliates_with_photo', verbose_name=_('photo'), null=True, blank=True, default=None)
+    photo          = FixedForeignKey(ImageDocument, related_name='symsysaffiliates_with_photo', verbose_name=_('photo'), null=True, blank=True, default=None)
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(SymsysAffiliate, self)._after_create(action_agent, action_summary, action_time)
