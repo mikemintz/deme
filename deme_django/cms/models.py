@@ -148,7 +148,7 @@ class ItemMetaClass(models.base.ModelBase):
             version_attrs['current_item'] = models.ForeignKey('Item', related_name='versions')
             version_attrs['version_number'] = models.PositiveIntegerField(db_index=True)
             class Meta:
-                unique_together = (('current_item', 'version_number'),)
+                unique_together = ('current_item', 'version_number')
                 ordering = ['version_number']
                 get_latest_by = 'version_number'
             version_attrs['Meta'] = Meta
@@ -1171,7 +1171,7 @@ class Subscription(Item):
     class Meta:
         verbose_name = _('subscription')
         verbose_name_plural = _('subscriptions')
-        unique_together = (('contact_method', 'item'),)
+        unique_together = ('contact_method', 'item')
 
     # Fields
     contact_method = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'])
@@ -1319,7 +1319,7 @@ class Membership(Item):
     class Meta:
         verbose_name = _('membership')
         verbose_name_plural = _('memberships')
-        unique_together = (('item', 'collection'),)
+        unique_together = ('item', 'collection')
 
     # Fields
     item               = FixedForeignKey(Item, related_name='memberships', verbose_name=_('item'))
@@ -1802,7 +1802,7 @@ class CustomUrl(ViewerRequest):
     class Meta:
         verbose_name = _('custom URL')
         verbose_name_plural = _('custom URLs')
-        unique_together = (('parent_url', 'path'),)
+        unique_together = ('parent_url', 'path')
 
     # Fields
     parent_url = FixedForeignKey(ViewerRequest, related_name='child_urls', verbose_name=_('parent URL'), required_abilities=['add_sub_path'])
@@ -2392,7 +2392,7 @@ class RecursiveComment(models.Model):
     parent = models.ForeignKey(Item, related_name='recursive_comments_as_parent', verbose_name=_('parent'))
     child  = models.ForeignKey(Comment, related_name='recursive_comments_as_child', verbose_name=_('child'))
     class Meta:
-        unique_together = (('parent', 'child'),)
+        unique_together = ('parent', 'child')
 
     @staticmethod
     def recursive_add_comment(comment):
@@ -2450,7 +2450,7 @@ class RecursiveMembership(models.Model):
     permission_enabled = models.BooleanField(_('permission enabled'), default=False)
     child_memberships  = models.ManyToManyField(Membership, verbose_name=_('child memberships'))
     class Meta:
-        unique_together = (('parent', 'child'),)
+        unique_together = ('parent', 'child')
 
     @staticmethod
     def recursive_add_membership(membership):
