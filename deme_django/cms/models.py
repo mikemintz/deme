@@ -1560,7 +1560,7 @@ class Comment(Item):
     """
 
     # Setup
-    introduced_immutable_fields = frozenset(['item', 'item_version_number'])
+    introduced_immutable_fields = frozenset(['item', 'item_version_number', 'from_contact_method'])
     introduced_abilities = frozenset(['view Comment.item', 'view Comment.item_version_number', 'view Comment.from_contact_method'])
     introduced_global_abilities = frozenset()
     class Meta:
@@ -1570,7 +1570,7 @@ class Comment(Item):
     # Fields
     item                = FixedForeignKey(Item, related_name='comments', verbose_name=_('item'), required_abilities=['comment_on'])
     item_version_number = models.PositiveIntegerField(_('item version number'))
-    from_contact_method = FixedForeignKey(ContactMethod, related_name='comments_from_contactmethod', null=True, blank=True, default=None, editable=False, verbose_name=_('from contact method'))
+    from_contact_method = FixedForeignKey(ContactMethod, related_name='comments_from_contactmethod', null=True, blank=True, default=None, verbose_name=_('from contact method'), required_abilities=['do_anything'])
 
     def _after_create(self, action_agent, action_summary, action_time):
         super(Comment, self)._after_create(action_agent, action_summary, action_time)
@@ -1623,7 +1623,7 @@ class TextComment(TextDocument, Comment):
             attrs['item_version_number'] = forms.IntegerField(widget=forms.HiddenInput())
             attrs['item_index'] = forms.IntegerField(widget=forms.HiddenInput(), required=False)
             attrs['name'] = forms.CharField(label=_("Comment title"), help_text=_("A brief description of the comment"), widget=forms.TextInput, required=False)
-            attrs['Meta'].fields = ['name', 'body', 'item', 'item_version_number']
+            attrs['Meta'].fields = ['name', 'body', 'item', 'item_version_number', 'from_contact_method']
             attrs['Meta'].exclude.append('action_summary')
 
 

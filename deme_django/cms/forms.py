@@ -125,9 +125,10 @@ class AjaxModelChoiceField(forms.ModelChoiceField):
 
     def clean(self, value):
         value = super(AjaxModelChoiceField, self).clean(value)
-        for ability in self.required_abilities:
-            if not self.permission_cache.agent_can(ability, value):
-                raise forms.util.ValidationError(self.error_messages['permission_denied'])
+        if value is not None:
+            for ability in self.required_abilities:
+                if not self.permission_cache.agent_can(ability, value):
+                    raise forms.util.ValidationError(self.error_messages['permission_denied'])
         return value
 
 class JavaScriptSpamDetectionField(forms.Field):
