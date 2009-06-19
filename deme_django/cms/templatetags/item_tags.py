@@ -1492,7 +1492,7 @@ class LoginMenu(template.Node):
         if viewer.cur_agent.is_anonymous():
             result.append('<li><a href="#" onclick="$(\'#login_dialog_password\').dialog(\'open\'); return false;">Deme account</a></li>')
             result.append('<li><a href="#" onclick="$(\'#login_dialog_openid\').dialog(\'open\'); return false;">OpenID</a></li>')
-            result.append('<li><a href="%s?redirect=%s">Webauth</a></li>' % (reverse('item_type_url', kwargs={'viewer': 'webauth', 'action': 'login'}), urlquote(context['full_path'])))
+            result.append('<li><a href="%s?redirect=%s">Webauth</a></li>' % (reverse('item_type_url', kwargs={'viewer': 'webauthaccount', 'action': 'login'}), urlquote(context['full_path'])))
             result.append('<li><a href="%s?redirect=%s">Login as</a></li>' % (reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'login'}), urlquote(context['full_path'])))
         else:
             result.append('<li><a href="%s">My account</a></li>' % viewer.cur_agent.get_absolute_url())
