@@ -29,6 +29,16 @@
     <!--<script type="text/javascript" src="{% media_url "javascripts/jquery-ui-layout-1.2.0.min.js" %}"></script>-->
     <link href="{% media_url "stylesheets/smoothness/jquery-ui-1.7.1.custom.css" %}" media="all" rel="Stylesheet" type="text/css" />
 
+    <script type="text/javascript" src="{% media_url "javascripts/fg.menu.js" %}"></script>
+    <link href="{% media_url "stylesheets/fg.menu.css" %}" media="screen" rel="stylesheet" type="text/css" />
+	<!-- style exceptions for IE 6 -->
+	<!--[if IE 6]>
+	<style type="text/css">
+		.fg-menu-ipod .fg-menu li { width: 95%; }
+		.fg-menu-ipod .ui-widget-content { border:0; }
+	</style>
+	<![endif]-->	
+    
     {% ifequal action 'show' %}
     {% if item %}
     <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}" />
@@ -144,32 +154,7 @@
 
             <td style="vertical-align: top; text-align: center; padding: 0; padding-left: 5px; padding-right: 5px;">
 
-
-
-                <div style="z-index: 100000; position: relative;" id="items_dropdown_outer">
-                    <div>
-                        <div style="text-align: left; border: 1px solid #aaa; position: absolute; padding: 3px; background: #fff; display: none;" id="items_dropdown_links">
-                            <div><a href="{% url item_type_url viewer="item" %}">View all items</a></div>
-                            {% ifequal accepted_item_type_class_name "Item" %}
-                            {% else %}
-                            <div><a href="{% url item_type_url viewer=viewer_name %}">View all {{ accepted_item_type_name_plural }}</a></div>
-                            {% endifequal %}
-
-                            <div><a href="{% url item_type_url viewer="item",action="new" %}">New item</a></div>
-                            {% ifequal accepted_item_type_class_name "Item" %}
-                            {% else %}
-                            <div><a href="{% url item_type_url viewer=viewer_name,action="new" %}">New {{ accepted_item_type_name }}</a></div>
-                            {% endifequal %}
-                        </div>
-                    </div>
-                    <a id="items_dropdown_link" href="#" onclick="return false;" href="{% url item_type_url viewer="item" %}" class="fg-button ui-state-default fg-button-icon-right ui-corner-all">Items<span class="ui-icon ui-icon-triangle-1-s"></span></a>
-                    <script type="text/javascript">
-                        $(document).ready(function () {
-                            $('#items_dropdown_outer').hover(function(){$('#items_dropdown_links').css('margin-top', $('#items_dropdown_link').outerHeight()).css('min-width', $('#logout_dropdown_link').outerWidth()).show()}, function(){$('#items_dropdown_links').hide()});
-                        });
-                    </script>
-                </div>
-
+                {% items_menu %}
 
                 <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline;">
                     <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
@@ -179,71 +164,7 @@
 
             <td style="vertical-align: top; text-align: right; padding: 0;">
                 <div style="float: right;">
-                {% if cur_agent.is_anonymous %}
-                <div style="display: none;" id="login_dialog_password" title="Login">
-                    <form name="password_form" onsubmit="$('#login_dialog_password').dialog('hide'); encrypt_password(); return false;">
-                        <div>Username:</div>
-                        <div><input type="text" name="username" /></div>
-                        <div>Password:</div>
-                        <div><input type="password" name="password" /></div>
-                    </form>
-                    <form name="real_password_form" action="{% url item_type_url viewer="demeaccount",action="login" %}?redirect={{ full_path|urlencode }}" method="post">
-                        <input type="hidden" name="username" />
-                        <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
-                    </form>
-                </div>
-                <div style="display: none;" id="login_dialog_openid" title="Login">
-                    <form name="openid_form" action="{% url item_type_url viewer="openidaccount",action="login" %}?redirect={{ full_path|urlencode }}" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
-                        <label>OpenID URL: <input type="text" name="openid_url" /></label>
-                    </form>
-                </div>
-                <div style="z-index: 100000; position: relative;" id="login_dropdown_outer">
-                    <div>
-                        <div style="text-align: left; border: 1px solid #aaa; position: absolute; padding: 3px; background: #fff; display: none;" id="login_dropdown_links">
-                            <div><a href="#" onclick="$('#login_dialog_password').dialog('open'); return false;">Deme account</a></div>
-                            <div><a href="#" onclick="$('#login_dialog_openid').dialog('open'); return false;">OpenID</a></div>
-                            <div><a href="{% url item_type_url viewer="webauth",action="login" %}?redirect={{ full_path|urlencode }}">Webauth</a></div>
-                            <div><a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login as</a></div>
-                        </div>
-                    </div>
-                    <a id="login_dropdown_link" href="#" onclick="return false;" class="fg-button ui-state-default fg-button-icon-right ui-corner-all">Login<span class="ui-icon ui-icon-triangle-1-s"></span></a>
-                    <script type="text/javascript">
-                        $(document).ready(function () {
-                            $('#login_dropdown_outer').hover(function(){$('#login_dropdown_links').css('margin-top', $('#login_dropdown_link').outerHeight()).css('min-width', $('#login_dropdown_link').outerWidth()).show()}, function(){$('#login_dropdown_links').hide()});
-                            $('#login_dialog_password').dialog({
-                                autoOpen: false,
-                                buttons: {"Login": function(){$(this).dialog('close'); document.forms['password_form'].onsubmit()}, "Cancel": function(){$(this).dialog("close")} },
-                                modal: true,
-                                bgiframe: true,
-                            });
-                            $('#login_dialog_openid').dialog({
-                                autoOpen: false,
-                                buttons: {"Login": function(){$(this).dialog('close'); document.forms['openid_form'].submit()}, "Cancel": function(){$(this).dialog("close")} },
-                                modal: true,
-                                bgiframe: true,
-                            });
-                        });
-                    </script>
-                </div>
-                {% else %}
-                <form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="logout" %}?redirect={{ full_path|urlencode }}">
-                </form>
-                <div style="z-index: 100000; position: relative;" id="logout_dropdown_outer">
-                    <div>
-                        <div style="text-align: left; border: 1px solid #aaa; position: absolute; padding: 3px; background: #fff; display: none;" id="logout_dropdown_links">
-                            <div><a href="{{ cur_agent.get_absolute_url }}">My account</a></div>
-                            <div><a href="#" onclick="document.forms['logout_form'].submit(); return false;">Logout</a></div>
-                            <div><a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login as</a></div>
-                        </div>
-                    </div>
-                    <a id="logout_dropdown_link" href="#" onclick="return false;" class="fg-button ui-state-default fg-button-icon-right ui-corner-all">Logged in as {% viewable_name cur_agent %}<span class="ui-icon ui-icon-triangle-1-s"></span></a>
-                    <script type="text/javascript">
-                        $(document).ready(function () {
-                            $('#logout_dropdown_outer').hover(function(){$('#logout_dropdown_links').css('margin-top', $('#logout_dropdown_link').outerHeight()).css('min-width', $('#logout_dropdown_link').outerWidth()).show()}, function(){$('#logout_dropdown_links').hide()});
-                        });
-                    </script>
-                </div>
-                {% endif %}
+                {% login_menu %}
                 </div>
                 <div style="clear: both;">
                 </div>
@@ -294,6 +215,7 @@
 </script>
 
 <div class="content_box">
+
     {% if layout_permissions_problem %}
     <div style="color: #a00; padding: 15px; margin: 15px; border: thin dotted #a00; text-align: center;">
         Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.

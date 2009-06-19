@@ -1360,3 +1360,152 @@ def crumbs(parser, token):
     return Crumbs()
 
 
+class ItemsMenu(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<ItemsMenu>"
+
+    def render(self, context):
+        viewer = context['_viewer']
+        result = []
+        result.append("""
+        <script type="text/javascript">
+        $(function(){
+            $('#items_menu_link').menu({
+                content: $('#items_menu_link').next().html(),
+                width: 240,
+                maxHeight: 400,
+                showSpeed: 50,
+                backLink: true,
+                topLinkText: 'Items',
+                crumbDefaultText: ' ',
+                //flyOut: true,
+            });
+        });
+        </script>
+        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="items_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>Items</a>
+        <div style="display: none;">
+        <ul style="font-size: 85%;">
+        """)
+        sorted_item_types = sorted(all_item_types(), key=lambda x: x._meta.verbose_name_plural.lower())
+        def add_item_type_to_menu(item_type):
+            top_item_types = [item_type]
+            if item_type == Item and viewer.accepted_item_type != Item:
+                top_item_types.append(viewer.accepted_item_type)
+            for top_item_type in top_item_types:
+                result.append(u'<li><a href="%s" class="img_link"><img src="%s" /> View all %s</a></li>' % (reverse('item_type_url', kwargs={'viewer': top_item_type.__name__.lower()}), icon_url(top_item_type, 16), top_item_type._meta.verbose_name_plural))
+            for top_item_type in top_item_types:
+                if agentcan_global_helper(context, 'create %s' % top_item_type.__name__):
+                    result.append(u'<li><a href="%s" class="img_link"><img src="%s" /> New %s</a></li>' % (reverse('item_type_url', kwargs={'viewer': top_item_type.__name__.lower(), 'action': 'new'}), icon_url(top_item_type, 16), top_item_type._meta.verbose_name))
+            sub_item_types = [x for x in sorted_item_types if item_type in x.__bases__]
+            if sub_item_types:
+                result.append('<li style="border-top: thin solid #aaa; margin-top: 3px; margin-bottom: 3px;"></li>')
+            for sub_item_type in sub_item_types:
+                result.append('<li>')
+                result.append(u'<a href="#">%s</a>' % (escape(capfirst(sub_item_type._meta.verbose_name_plural))))
+                result.append('<ul>')
+                add_item_type_to_menu(sub_item_type)
+                result.append('</ul>')
+                result.append('</li>')
+        add_item_type_to_menu(Item)
+        result.append("</ul></div>")
+        return '\n'.join(result)
+
+@register.tag
+def items_menu(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return ItemsMenu()
+
+
+class LoginMenu(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<LoginMenu>"
+
+    def render(self, context):
+        viewer = context['_viewer']
+        result = []
+        #TODO we need to fire onsubmit and submit the form when enter is hit
+        if viewer.cur_agent.is_anonymous():
+            login_menu_text = 'Login'
+            result.append("""
+<div style="display: none;" id="login_dialog_password" title="Login">
+    <form name="password_form" onsubmit="$('#login_dialog_password').dialog('hide'); encrypt_password(); return false;">
+        <div>Username:</div>
+        <div><input type="text" name="username" /></div>
+        <div>Password:</div>
+        <div><input type="password" name="password" /></div>
+    </form>
+    <form name="real_password_form" action="%s?redirect=%s" method="post">
+        <input type="hidden" name="username" />
+        <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
+    </form>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#login_dialog_password').dialog({
+            autoOpen: false,
+            buttons: {"Login": function(){$(this).dialog('close'); document.forms['password_form'].onsubmit()}, "Cancel": function(){$(this).dialog("close")} },
+            modal: true,
+            bgiframe: true,
+        });
+    });
+</script>""" % (reverse('item_type_url', kwargs={'viewer': 'demeaccount', 'action': 'login'}), urlquote(context['full_path'])))
+            result.append("""
+<div style="display: none;" id="login_dialog_openid" title="Login">
+    <form name="openid_form" action="%s?redirect=%s" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
+        <label>OpenID URL: <input type="text" name="openid_url" /></label>
+    </form>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#login_dialog_openid').dialog({
+            autoOpen: false,
+            buttons: {"Login": function(){$(this).dialog('close'); document.forms['openid_form'].submit()}, "Cancel": function(){$(this).dialog("close")} },
+            modal: true,
+            bgiframe: true,
+        });
+    });
+</script>""" % (reverse('item_type_url', kwargs={'viewer': 'openidaccount', 'action': 'login'}), urlquote(context['full_path'])))
+        else:
+            login_menu_text = u'Logged in as %s' % get_viewable_name(context, viewer.cur_agent)
+            result.append('<form name="logout_form" style="display: inline;" method="post" action="%s?redirect=%s"></form>' % (reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'logout'}), urlquote(context['full_path'])))
+        result.append("""
+        <script type="text/javascript">
+        $(function(){
+            $('#login_menu_link').menu({
+                content: $('#login_menu_link').next().html(),
+                showSpeed: 50,
+            });
+        });
+        </script>
+        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="login_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>%s</a>
+        <div style="display: none;">
+        <ul style="font-size: 85%%;">
+        """ % login_menu_text)
+        if viewer.cur_agent.is_anonymous():
+            result.append('<li><a href="#" onclick="$(\'#login_dialog_password\').dialog(\'open\'); return false;">Deme account</a></li>')
+            result.append('<li><a href="#" onclick="$(\'#login_dialog_openid\').dialog(\'open\'); return false;">OpenID</a></li>')
+            result.append('<li><a href="%s?redirect=%s">Webauth</a></li>' % (reverse('item_type_url', kwargs={'viewer': 'webauth', 'action': 'login'}), urlquote(context['full_path'])))
+            result.append('<li><a href="%s?redirect=%s">Login as</a></li>' % (reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'login'}), urlquote(context['full_path'])))
+        else:
+            result.append('<li><a href="%s">My account</a></li>' % viewer.cur_agent.get_absolute_url())
+            result.append('<li><a href="#" onclick="document.forms[\'logout_form\'].submit(); return false;">Logout</a></li>')
+            result.append('<li><a href="%s?redirect=%s">Login as</a></li>' % (reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'login'}), urlquote(context['full_path'])))
+        result.append("</ul></div>")
+        return '\n'.join(result)
+
+@register.tag
+def login_menu(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return LoginMenu()
+
+
