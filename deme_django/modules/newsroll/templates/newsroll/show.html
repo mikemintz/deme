@@ -1,7 +1,6 @@
 {% extends layout %}
 {% load newsroll_extras %}
 {% load item_tags %}
-{% block favicon %}{{ item|icon_url:16 }}{% endblock %}
 {% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
