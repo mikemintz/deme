@@ -53,6 +53,8 @@ Interface
 * Include iCal export of calendar
 * Nicer autocompleter (jquery plugin?)
 
+* Make things more user friendly, i.e. making the accordion more easily understandable.
+
 Documentation
 -------------
 * Document more functions with docstrings more

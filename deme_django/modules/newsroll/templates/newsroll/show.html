@@ -6,7 +6,10 @@
 {% block content %}
 
 {% subclassfields %}
-
+<div>
+    <a href="{% url item_type_url viewer="htmldocument",action="new" %}?newsroll={{ collection.pk }}">Create A New Entry</a> 
+</div>
+    
 {% for details in members %}
 
     <div style="margin-bottom: 2px; border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px;">
