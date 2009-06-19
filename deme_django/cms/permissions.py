@@ -112,7 +112,7 @@ class PermissionCache(object):
         Return a set of abilities the agent has with respect to the item.
         """
         if item.destroyed:
-            return set()
+            return frozenset()
         result = self._item_ability_cache.get(item.pk)
         if result is None:
             item_type = item.actual_item_type()
@@ -120,9 +120,9 @@ class PermissionCache(object):
             global_abilities_yes, global_abilities_no = self._global_ability_cache
             if 'do_anything' in global_abilities_yes:
                 abilities_yes = all_possible_item_abilities(item_type)
-                abilities_no = set()
+                abilities_no = frozenset()
             elif 'do_anything' in global_abilities_no:
-                abilities_yes = set()
+                abilities_yes = frozenset()
                 abilities_no = all_possible_item_abilities(item_type)
             else:
                 abilities_yes, abilities_no = self.calculate_abilities(item, item_type)
@@ -259,7 +259,7 @@ class PermissionCache(object):
                     abilities_yes.add(x)
             if abilities_yes | abilities_no == possible_abilities:
                 break
-        return (abilities_yes, abilities_no)
+        return (frozenset(abilities_yes), frozenset(abilities_no))
 
     ###############################################################################
     # Methods to calculate QuerySet filters
