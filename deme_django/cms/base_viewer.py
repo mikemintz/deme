@@ -285,7 +285,7 @@ class Viewer(object):
         self.context['accepted_item_type_class_name'] = self.accepted_item_type.__name__
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
-        self.context['full_path'] = self.request.get_full_path()
+        self.context['full_path'] = original_viewer.context['full_path'] 
         self.context['query_string'] = ''
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
