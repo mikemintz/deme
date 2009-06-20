@@ -44,7 +44,6 @@ class NewsRollViewer(ItemViewer):
 
             member_details.append(details)
  
-
         self.context['members'] = member_details
         return HttpResponse(template.render(self.context))
 

@@ -5,10 +5,8 @@
 {% block content %}
 
 {% subclassfields %}
-<div>
-    <a href="{% url item_type_url viewer="htmldocument",action="new" %}?newsroll={{ collection.pk }}">Create A New Entry</a> 
-</div>
-    
+
+
 {% for details in members %}
 
     <div style="margin-bottom: 2px; border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px;">
@@ -45,6 +43,13 @@
     </div>
 
 {% endfor %}
+
+{% ifagentcan 'modify_membership' collection %}
+    <div>
+        <a href="{% url item_type_url viewer="htmldocument",action="new" %}?add_to_collection={{ collection.pk }}&redirect={% url item_type_url viewer="newsroll",action="" %}{{ collection.pk }}">Create A New Entry |</a> 
+        <a href="{% url item_type_url viewer="item",action="list.rss" %}?collection={{ collection.pk }}">| View this Blog's RSS Feed</a>
+    </div>
+{% endifagentcan %}
 
 {% endblock content %}
 
