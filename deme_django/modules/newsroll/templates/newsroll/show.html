@@ -46,7 +46,7 @@
 
 {% ifagentcan 'modify_membership' collection %}
     <div>
-        <a href="{% url item_type_url viewer="htmldocument",action="new" %}?add_to_collection={{ collection.pk }}&redirect={% url item_type_url viewer="newsroll",action="" %}{{ collection.pk }}">Create A New Entry |</a> 
+        <a href="{% url item_type_url viewer="htmldocument",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Create A New Entry |</a> 
         <a href="{% url item_type_url viewer="item",action="list.rss" %}?collection={{ collection.pk }}">| View this Blog's RSS Feed</a>
     </div>
 {% endifagentcan %}
