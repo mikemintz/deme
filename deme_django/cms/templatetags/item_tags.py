@@ -861,8 +861,7 @@ class SubclassFieldsBox(template.Node):
         viewer = context['_viewer']
         viewer_method_name = "%s_%s_%s" % ('item' if viewer.noun else 'type', viewer.action, viewer.format)
         viewer_where_action_defined = type(viewer)
-        #TODO we should probably check accepted_item_type != Item instead
-        while viewer_where_action_defined.__name__ != 'ItemViewer':
+        while viewer_where_action_defined.accepted_item_type != Item:
             if is_method_defined_and_not_inherited_in_class(viewer_method_name, viewer_where_action_defined):
                 break
             viewer_where_action_defined = viewer_where_action_defined.__base__
