@@ -52,7 +52,7 @@ tinyMCE.init({
             <button type="button" onclick="$('#permission_editor').toggle();"><img src="{{ "permissions"|icon_url:16 }}" /> <span>Permissions</span></button>
         </div>
         <div id="permission_editor" style="display: none;">
-            {% item_permission_editor item %}
+            {% new_item_permission_editor item %}
         </div>
         <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Create {{ accepted_item_type_name }}</span></button>
     </form>

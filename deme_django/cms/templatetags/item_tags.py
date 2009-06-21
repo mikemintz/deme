@@ -981,13 +981,14 @@ def viewable_name(parser, token):
 
 
 class PermissionEditor(template.Node):
-    def __init__(self, target, target_level, privacy_only):
+    def __init__(self, target, target_level, privacy_only, is_new_item):
         if target is None:
             self.target = None
         else:
             self.target = template.Variable(target)
         self.target_level = target_level
         self.privacy_only = privacy_only
+        self.is_new_item = is_new_item
 
     def __repr__(self):
         return "<PermissionEditor>"
@@ -1016,13 +1017,10 @@ class PermissionEditor(template.Node):
             possible_abilities = set([x for x in possible_abilities if x.startswith('view ')])
         possible_abilities = list((ability, friendly_name) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
 
-        if target is None and self.target_level == 'one' and not self.privacy_only:
-            # Default permissions when creating a new item
-            agent_permissions = [OneToOnePermission(source=context['cur_agent'], ability='do_anything', is_allowed=True)]
+        if target is None:
+            agent_permissions = []
             collection_permissions = []
             everyone_permissions = []
-            agents = sorted(set(x.source for x in agent_permissions), key=lambda x: x.name)
-            collections = sorted(set(x.collection for x in collection_permissions), key=lambda x: x.name)
         else:
             if self.target_level == 'one':
                 agent_permissions = target.one_to_one_permissions_as_target.all()
@@ -1038,9 +1036,17 @@ class PermissionEditor(template.Node):
                 everyone_permissions = AllToAllPermission.objects.all()
             else:
                 assert False
-            agents = Agent.objects.filter(pk__in=agent_permissions.values('source__pk').query).order_by('name')
-            collections = Collection.objects.filter(pk__in=collection_permissions.values('source__pk').query).order_by('name')
+
+        if self.is_new_item:
+            # Creator has do_anything ability when creating a new item
+            creator = context['cur_agent']
+            creator_permission = OneToOnePermission(source=creator, ability='do_anything', is_allowed=True)
+            agent_permissions = [x for x in agent_permissions if not (x.source == creator and x.ability == 'do_anything')]
+            agent_permissions.append(creator_permission)
         
+        agents = Agent.objects.filter(pk__in=set(x.source_id for x in agent_permissions))
+        collections = Collection.objects.filter(pk__in=set(x.source_id for x in collection_permissions))
+
         existing_permission_data = []
         for agent in agents:
             datum = {}
@@ -1066,6 +1072,7 @@ class PermissionEditor(template.Node):
         datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in everyone_permissions]
         datum['permissions'].sort(key=lambda x: [y[1] for y in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if y[0] == x['ability']])
         existing_permission_data.append(datum)
+        existing_permission_data.sort(key=lambda x: (x['permission_type'], x['name']))
 
         from cms.forms import AjaxModelChoiceField
         new_agent_select_widget = AjaxModelChoiceField(Agent.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None)
@@ -1237,15 +1244,23 @@ def privacy_editor(parser, token):
     if len(bits) != 2:
         raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
     item = bits[1]
-    return PermissionEditor(item, target_level='one', privacy_only=True)
+    return PermissionEditor(item, target_level='one', privacy_only=True, is_new_item=False)
 
 @register.tag
 def item_permission_editor(parser, token):
     bits = list(token.split_contents())
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
+    item = bits[1]
+    return PermissionEditor(item, target_level='one', privacy_only=False, is_new_item=False)
+
+@register.tag
+def new_item_permission_editor(parser, token):
+    bits = list(token.split_contents())
     if len(bits) != 2 and len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes zero or one argument" % bits[0]
     item = bits[1] if len(bits) == 2 else None
-    return PermissionEditor(item, target_level='one', privacy_only=False)
+    return PermissionEditor(item, target_level='one', privacy_only=False, is_new_item=True)
 
 @register.tag
 def collection_permission_editor(parser, token):
@@ -1253,7 +1268,7 @@ def collection_permission_editor(parser, token):
     if len(bits) != 2:
         raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
     item = bits[1]
-    return PermissionEditor(item, target_level='some', privacy_only=False)
+    return PermissionEditor(item, target_level='some', privacy_only=False, is_new_item=False)
 
 @register.tag
 def global_permission_editor(parser, token):
@@ -1261,7 +1276,7 @@ def global_permission_editor(parser, token):
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes zero arguments" % bits[0]
     item = None
-    return PermissionEditor(item, target_level='all', privacy_only=False)
+    return PermissionEditor(item, target_level='all', privacy_only=False, is_new_item=False)
 
 class Crumbs(template.Node):
     def __init__(self):

@@ -16,7 +16,7 @@ Code correctness/consistency/bugs
 ---------------------------------
 * the destroy action notice will never be read by anyone (since all permissions are effectively denied)
 * When you edit an item, the fields are ordered funnily. How did they get ordered so correctly when you create? Obviously, the difference is that we pass in `fields` to the modelform, but how can we give them a better order?
-* When you copy an item, it preserves the old permissions. That's fine, but it should also default to give the creator a do_anything permission in addition.
+* When you copy an item, you can discover the permissions of the original item. Not cool.
 * If you try to add a Membership that used to exist but is now trashed, it fails. The code used to handle this. Probably same with CustomUrls.
 * If you login/logout after you're at a page with POST or at a login page, the "back to page" is weird.
 * Put the form/link code for each authentication method in its own module, and the default layout will somehow combine them
