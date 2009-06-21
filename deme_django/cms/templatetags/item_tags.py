@@ -64,6 +64,12 @@ def get_viewable_name(context, item):
     return item.display_name(can_view_name_field)
 
 
+def is_method_defined_and_not_inherited_in_class(method_name, class_object):
+    my_fn = getattr(getattr(class_object, method_name, None), 'im_func', None)
+    parent_fn = getattr(getattr(class_object.__base__, method_name, None), 'im_func', None)
+    return my_fn is not None and my_fn is not parent_fn
+
+
 ###############################################################################
 # Filters and templates
 ###############################################################################
@@ -855,15 +861,11 @@ class SubclassFieldsBox(template.Node):
         viewer = context['_viewer']
         viewer_method_name = "%s_%s_%s" % ('item' if viewer.noun else 'type', viewer.action, viewer.format)
         viewer_where_action_defined = type(viewer)
+        #TODO we should probably check accepted_item_type != Item instead
         while viewer_where_action_defined.__name__ != 'ItemViewer':
-            parent_viewer = viewer_where_action_defined.__base__
-            my_fn = getattr(viewer_where_action_defined, viewer_method_name, None)
-            parent_fn = getattr(parent_viewer, viewer_method_name, None)
-            if my_fn is None or parent_fn is None:
+            if is_method_defined_and_not_inherited_in_class(viewer_method_name, viewer_where_action_defined):
                 break
-            if my_fn.im_func is not parent_fn.im_func:
-                break
-            viewer_where_action_defined = parent_viewer
+            viewer_where_action_defined = viewer_where_action_defined.__base__
         viewer_item_type = viewer_where_action_defined.accepted_item_type
         viewer_item_type_field_names = set([x.name for x in viewer_item_type._meta.fields])
         item = context['item']
@@ -1449,11 +1451,8 @@ class LoginMenu(template.Node):
         authentication_method_viewer_classes = list(x for x in all_viewer_classes() if issubclass(x.accepted_item_type, AuthenticationMethod))
         authentication_method_viewer_classes_with_loginmenuitem = []
         for viewer_class in authentication_method_viewer_classes:
-            my_fn = getattr(viewer_class, 'type_loginmenuitem_html', None)
-            parent_fn = getattr(viewer_class.__base__, 'type_loginmenuitem_html', None)
-            if my_fn is not None:
-                if parent_fn is None or parent_fn.im_func is None or parent_fn.im_func is not my_fn.im_func:
-                    authentication_method_viewer_classes_with_loginmenuitem.append(viewer_class)
+            if is_method_defined_and_not_inherited_in_class('type_loginmenuitem_html', viewer_class):
+                authentication_method_viewer_classes_with_loginmenuitem.append(viewer_class)
         result = []
 
         if viewer.cur_agent.is_anonymous():
