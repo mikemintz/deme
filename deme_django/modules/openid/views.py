@@ -1,9 +1,10 @@
 #TODO completely clean up code
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from cms.views import AuthenticationMethodViewer
 from cms.models import *
 from modules.openid.models import *
+from django.template import loader
 from django.db.models import Q
 from django.core.urlresolvers import reverse
 from django.utils.http import urlquote
@@ -67,4 +68,8 @@ class OpenidAccountViewer(AuthenticationMethodViewer):
             return self.render_error("OpenID Error", "OpenID setup needed")
         else:
             return self.render_error("OpenID Error", "Invalid OpenID status: %s" % escape(openid_response.status))
+
+    def type_loginmenuitem_html(self):
+        template = loader.get_template('openidaccount/loginmenuitem.html')
+        return HttpResponse(template.render(self.context))
 

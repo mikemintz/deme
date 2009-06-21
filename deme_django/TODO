@@ -14,6 +14,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* Maybe DemeAccount should go in its own module. It has a fair amount of code and is independent of everything else.
 * the destroy action notice will never be read by anyone (since all permissions are effectively denied)
 * When you edit an item, the fields are ordered funnily. How did they get ordered so correctly when you create? Obviously, the difference is that we pass in `fields` to the modelform, but how can we give them a better order?
 * When you copy an item, you can discover the permissions of the original item. Not cool.
@@ -21,7 +22,6 @@ Code correctness/consistency/bugs
 * If you login/logout after you're at a page with POST or at a login page, the "back to page" is weird.
 * Put the form/link code for each authentication method in its own module, and the default layout will somehow combine them
 * Methods that have to do with sending emails (about action notices) should go in EmailContactMethod, not ActionNotice
-* Move AuthenticationMethod stuff to their own viewers (and own modules at some point)
 * Fix the multiple inheritance bug
   - http://code.djangoproject.com/ticket/10808
 * The viewer should probably define a list of actions for each item type to be displayed in a menu

@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.db import models
 from cms.models import *
 from cms.permissions import all_possible_item_abilities, all_possible_item_and_global_abilities
+from cms.base_viewer import all_viewer_classes
 from django.utils.http import urlquote
 from django.utils.html import escape, urlize
 from django.core.exceptions import ObjectDoesNotExist
@@ -1445,75 +1446,44 @@ class LoginMenu(template.Node):
 
     def render(self, context):
         viewer = context['_viewer']
+        authentication_method_viewer_classes = list(x for x in all_viewer_classes() if issubclass(x.accepted_item_type, AuthenticationMethod))
+        authentication_method_viewer_classes_with_loginmenuitem = []
+        for viewer_class in authentication_method_viewer_classes:
+            my_fn = getattr(viewer_class, 'type_loginmenuitem_html', None)
+            parent_fn = getattr(viewer_class.__base__, 'type_loginmenuitem_html', None)
+            if my_fn is not None:
+                if parent_fn is None or parent_fn.im_func is None or parent_fn.im_func is not my_fn.im_func:
+                    authentication_method_viewer_classes_with_loginmenuitem.append(viewer_class)
         result = []
-        #TODO we need to fire onsubmit and submit the form when enter is hit
+
         if viewer.cur_agent.is_anonymous():
             login_menu_text = 'Login'
-            result.append("""
-<div style="display: none;" id="login_dialog_password" title="Login">
-    <form name="password_form" onsubmit="$('#login_dialog_password').dialog('hide'); encrypt_password(); return false;">
-        <div>Username:</div>
-        <div><input type="text" name="username" /></div>
-        <div>Password:</div>
-        <div><input type="password" name="password" /></div>
-    </form>
-    <form name="real_password_form" action="%s?redirect=%s" method="post">
-        <input type="hidden" name="username" />
-        <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
-    </form>
-</div>
-<script type="text/javascript">
-    $(document).ready(function () {
-        $('#login_dialog_password').dialog({
-            autoOpen: false,
-            buttons: {"Login": function(){$(this).dialog('close'); document.forms['password_form'].onsubmit()}, "Cancel": function(){$(this).dialog("close")} },
-            modal: true,
-            bgiframe: true,
-        });
-    });
-</script>""" % (reverse('item_type_url', kwargs={'viewer': 'demeaccount', 'action': 'login'}), urlquote(context['full_path'])))
-            result.append("""
-<div style="display: none;" id="login_dialog_openid" title="Login">
-    <form name="openid_form" action="%s?redirect=%s" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
-        <label>OpenID URL: <input type="text" name="openid_url" /></label>
-    </form>
-</div>
-<script type="text/javascript">
-    $(document).ready(function () {
-        $('#login_dialog_openid').dialog({
-            autoOpen: false,
-            buttons: {"Login": function(){$(this).dialog('close'); document.forms['openid_form'].submit()}, "Cancel": function(){$(this).dialog("close")} },
-            modal: true,
-            bgiframe: true,
-        });
-    });
-</script>""" % (reverse('item_type_url', kwargs={'viewer': 'openidaccount', 'action': 'login'}), urlquote(context['full_path'])))
         else:
             login_menu_text = u'Logged in as %s' % get_viewable_name(context, viewer.cur_agent)
-            result.append('<form name="logout_form" style="display: inline;" method="post" action="%s?redirect=%s"></form>' % (reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'logout'}), urlquote(context['full_path'])))
+
         result.append("""
         <script type="text/javascript">
         $(function(){
+            var menuContent = '<ul style="font-size: 85%%;">';
+            $.each($('#login_menu_link').next().children().filter('li.loginmenuitem'), function(i, val){
+                menuContent += '<li>' + $(val).html() + '</li>';
+            });
+            menuContent += '</ul>'
             $('#login_menu_link').menu({
-                content: $('#login_menu_link').next().html(),
+                content: menuContent,
                 showSpeed: 50,
             });
         });
         </script>
         <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="login_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>%s</a>
-        <div style="display: none;">
-        <ul style="font-size: 85%%;">
+        <ul style="display: none;">
         """ % login_menu_text)
-        if viewer.cur_agent.is_anonymous():
-            result.append('<li><a href="#" onclick="$(\'#login_dialog_password\').dialog(\'open\'); return false;">Deme account</a></li>')
-            result.append('<li><a href="#" onclick="$(\'#login_dialog_openid\').dialog(\'open\'); return false;">OpenID</a></li>')
-            result.append('<li><a href="%s?redirect=%s">Webauth</a></li>' % (reverse('item_type_url', kwargs={'viewer': 'webauthaccount', 'action': 'login'}), urlquote(context['full_path'])))
-            result.append('<li><a href="%s?redirect=%s">Login as</a></li>' % (reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'login'}), urlquote(context['full_path'])))
-        else:
-            result.append('<li><a href="%s">My account</a></li>' % viewer.cur_agent.get_absolute_url())
-            result.append('<li><a href="#" onclick="document.forms[\'logout_form\'].submit(); return false;">Logout</a></li>')
-            result.append('<li><a href="%s?redirect=%s">Login as</a></li>' % (reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'login'}), urlquote(context['full_path'])))
-        result.append("</ul></div>")
+        for viewer_class in authentication_method_viewer_classes_with_loginmenuitem:
+            viewer2 = viewer_class()
+            viewer2.init_for_div(viewer, 'loginmenuitem', None)
+            html = viewer2.dispatch().content
+            result.append(html)
+        result.append("</ul>")
         return '\n'.join(result)
 
 @register.tag
