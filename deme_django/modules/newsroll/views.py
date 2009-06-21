@@ -1,4 +1,5 @@
 from django.template import Context, loader
+from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponse
 from cms.views import ItemViewer
@@ -43,8 +44,7 @@ class NewsRollViewer(ItemViewer):
 
 
             member_details.append(details)
- 
-
+        self.context['redirect'] = reverse('item_url', kwargs={'viewer': 'newsroll', 'action': 'show', 'noun': collection.pk}) 
         self.context['members'] = member_details
         return HttpResponse(template.render(self.context))
 
