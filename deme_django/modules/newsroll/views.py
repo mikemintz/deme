@@ -42,8 +42,8 @@ class NewsRollViewer(ItemViewer):
                 details["body"] = "Empty"
                 details["is_html"] = False
 
-
             member_details.append(details)
+
         self.context['redirect'] = reverse('item_url', kwargs={'viewer': 'newsroll', 'action': 'show', 'noun': collection.pk}) 
         self.context['members'] = member_details
         return HttpResponse(template.render(self.context))
