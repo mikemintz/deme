@@ -185,7 +185,8 @@ class ItemViewer(Viewer):
             new_item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
 
             if 'add_to_collection' in self.request.GET:
-                Membership(item=new_item, collection=Collection.objects.get(pk=self.request.GET['add_to_collection'])).save_versioned(action_agent=self.cur_agent) 
+                new_membership = Membership(item=new_item, collection=Collection.objects.get(pk=self.request.GET['add_to_collection']))
+                new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions) 
 
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
             return HttpResponseRedirect(redirect)
