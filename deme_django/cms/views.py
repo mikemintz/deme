@@ -168,6 +168,7 @@ class ItemViewer(Viewer):
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
+        self.context['add_to_collection'] = self.request.GET.get('add_to_collection')
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name': x._meta.verbose_name, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
         item_types.sort(key=lambda x:x['name'].lower())
         self.context['item_types'] = item_types
@@ -179,10 +180,14 @@ class ItemViewer(Viewer):
         form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
-            item = form.save(commit=False)
+            new_item = form.save(commit=False)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
-            item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
-            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': item.pk}))
+            new_item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
+
+            if 'add_to_collection' in self.request.GET:
+                Membership(item=new_item, collection=Collection.objects.get(pk=self.request.GET['add_to_collection'])).save_versioned(action_agent=self.cur_agent) 
+
+            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
             return HttpResponseRedirect(redirect)
         else:
             return self.type_new_html(form)
