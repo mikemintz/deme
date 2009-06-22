@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.db import models
 from cms.models import *
 from cms.permissions import all_possible_item_abilities, all_possible_item_and_global_abilities
+from cms.base_viewer import all_viewer_classes
 from django.utils.http import urlquote
 from django.utils.html import escape, urlize
 from django.core.exceptions import ObjectDoesNotExist
@@ -61,6 +62,12 @@ def get_viewable_name(context, item):
     """
     can_view_name_field = agentcan_helper(context, 'view Item.name', item)
     return item.display_name(can_view_name_field)
+
+
+def is_method_defined_and_not_inherited_in_class(method_name, class_object):
+    my_fn = getattr(getattr(class_object, method_name, None), 'im_func', None)
+    parent_fn = getattr(getattr(class_object.__base__, method_name, None), 'im_func', None)
+    return my_fn is not None and my_fn is not parent_fn
 
 
 ###############################################################################
@@ -854,15 +861,10 @@ class SubclassFieldsBox(template.Node):
         viewer = context['_viewer']
         viewer_method_name = "%s_%s_%s" % ('item' if viewer.noun else 'type', viewer.action, viewer.format)
         viewer_where_action_defined = type(viewer)
-        while viewer_where_action_defined.__name__ != 'ItemViewer':
-            parent_viewer = viewer_where_action_defined.__base__
-            my_fn = getattr(viewer_where_action_defined, viewer_method_name, None)
-            parent_fn = getattr(parent_viewer, viewer_method_name, None)
-            if my_fn is None or parent_fn is None:
+        while viewer_where_action_defined.accepted_item_type != Item:
+            if is_method_defined_and_not_inherited_in_class(viewer_method_name, viewer_where_action_defined):
                 break
-            if my_fn.im_func is not parent_fn.im_func:
-                break
-            viewer_where_action_defined = parent_viewer
+            viewer_where_action_defined = viewer_where_action_defined.__base__
         viewer_item_type = viewer_where_action_defined.accepted_item_type
         viewer_item_type_field_names = set([x.name for x in viewer_item_type._meta.fields])
         item = context['item']
@@ -981,13 +983,14 @@ def viewable_name(parser, token):
 
 
 class PermissionEditor(template.Node):
-    def __init__(self, target, target_level, privacy_only):
+    def __init__(self, target, target_level, privacy_only, is_new_item):
         if target is None:
             self.target = None
         else:
             self.target = template.Variable(target)
         self.target_level = target_level
         self.privacy_only = privacy_only
+        self.is_new_item = is_new_item
 
     def __repr__(self):
         return "<PermissionEditor>"
@@ -1016,13 +1019,10 @@ class PermissionEditor(template.Node):
             possible_abilities = set([x for x in possible_abilities if x.startswith('view ')])
         possible_abilities = list((ability, friendly_name) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
 
-        if target is None and self.target_level == 'one' and not self.privacy_only:
-            # Default permissions when creating a new item
-            agent_permissions = [OneToOnePermission(source=context['cur_agent'], ability='do_anything', is_allowed=True)]
+        if target is None:
+            agent_permissions = []
             collection_permissions = []
             everyone_permissions = []
-            agents = sorted(set(x.source for x in agent_permissions), key=lambda x: x.name)
-            collections = sorted(set(x.collection for x in collection_permissions), key=lambda x: x.name)
         else:
             if self.target_level == 'one':
                 agent_permissions = target.one_to_one_permissions_as_target.all()
@@ -1038,9 +1038,17 @@ class PermissionEditor(template.Node):
                 everyone_permissions = AllToAllPermission.objects.all()
             else:
                 assert False
-            agents = Agent.objects.filter(pk__in=agent_permissions.values('source__pk').query).order_by('name')
-            collections = Collection.objects.filter(pk__in=collection_permissions.values('source__pk').query).order_by('name')
+
+        if self.is_new_item:
+            # Creator has do_anything ability when creating a new item
+            creator = context['cur_agent']
+            creator_permission = OneToOnePermission(source=creator, ability='do_anything', is_allowed=True)
+            agent_permissions = [x for x in agent_permissions if not (x.source == creator and x.ability == 'do_anything')]
+            agent_permissions.append(creator_permission)
         
+        agents = Agent.objects.filter(pk__in=set(x.source_id for x in agent_permissions))
+        collections = Collection.objects.filter(pk__in=set(x.source_id for x in collection_permissions))
+
         existing_permission_data = []
         for agent in agents:
             datum = {}
@@ -1066,6 +1074,7 @@ class PermissionEditor(template.Node):
         datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in everyone_permissions]
         datum['permissions'].sort(key=lambda x: [y[1] for y in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if y[0] == x['ability']])
         existing_permission_data.append(datum)
+        existing_permission_data.sort(key=lambda x: (x['permission_type'], x['name']))
 
         from cms.forms import AjaxModelChoiceField
         new_agent_select_widget = AjaxModelChoiceField(Agent.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None)
@@ -1237,15 +1246,23 @@ def privacy_editor(parser, token):
     if len(bits) != 2:
         raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
     item = bits[1]
-    return PermissionEditor(item, target_level='one', privacy_only=True)
+    return PermissionEditor(item, target_level='one', privacy_only=True, is_new_item=False)
 
 @register.tag
 def item_permission_editor(parser, token):
     bits = list(token.split_contents())
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
+    item = bits[1]
+    return PermissionEditor(item, target_level='one', privacy_only=False, is_new_item=False)
+
+@register.tag
+def new_item_permission_editor(parser, token):
+    bits = list(token.split_contents())
     if len(bits) != 2 and len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes zero or one argument" % bits[0]
     item = bits[1] if len(bits) == 2 else None
-    return PermissionEditor(item, target_level='one', privacy_only=False)
+    return PermissionEditor(item, target_level='one', privacy_only=False, is_new_item=True)
 
 @register.tag
 def collection_permission_editor(parser, token):
@@ -1253,7 +1270,7 @@ def collection_permission_editor(parser, token):
     if len(bits) != 2:
         raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
     item = bits[1]
-    return PermissionEditor(item, target_level='some', privacy_only=False)
+    return PermissionEditor(item, target_level='some', privacy_only=False, is_new_item=False)
 
 @register.tag
 def global_permission_editor(parser, token):
@@ -1261,7 +1278,7 @@ def global_permission_editor(parser, token):
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes zero arguments" % bits[0]
     item = None
-    return PermissionEditor(item, target_level='all', privacy_only=False)
+    return PermissionEditor(item, target_level='all', privacy_only=False, is_new_item=False)
 
 class Crumbs(template.Node):
     def __init__(self):
@@ -1430,75 +1447,41 @@ class LoginMenu(template.Node):
 
     def render(self, context):
         viewer = context['_viewer']
+        authentication_method_viewer_classes = list(x for x in all_viewer_classes() if issubclass(x.accepted_item_type, AuthenticationMethod))
+        authentication_method_viewer_classes_with_loginmenuitem = []
+        for viewer_class in authentication_method_viewer_classes:
+            if is_method_defined_and_not_inherited_in_class('type_loginmenuitem_html', viewer_class):
+                authentication_method_viewer_classes_with_loginmenuitem.append(viewer_class)
         result = []
-        #TODO we need to fire onsubmit and submit the form when enter is hit
+
         if viewer.cur_agent.is_anonymous():
             login_menu_text = 'Login'
-            result.append("""
-<div style="display: none;" id="login_dialog_password" title="Login">
-    <form name="password_form" onsubmit="$('#login_dialog_password').dialog('hide'); encrypt_password(); return false;">
-        <div>Username:</div>
-        <div><input type="text" name="username" /></div>
-        <div>Password:</div>
-        <div><input type="password" name="password" /></div>
-    </form>
-    <form name="real_password_form" action="%s?redirect=%s" method="post">
-        <input type="hidden" name="username" />
-        <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
-    </form>
-</div>
-<script type="text/javascript">
-    $(document).ready(function () {
-        $('#login_dialog_password').dialog({
-            autoOpen: false,
-            buttons: {"Login": function(){$(this).dialog('close'); document.forms['password_form'].onsubmit()}, "Cancel": function(){$(this).dialog("close")} },
-            modal: true,
-            bgiframe: true,
-        });
-    });
-</script>""" % (reverse('item_type_url', kwargs={'viewer': 'demeaccount', 'action': 'login'}), urlquote(context['full_path'])))
-            result.append("""
-<div style="display: none;" id="login_dialog_openid" title="Login">
-    <form name="openid_form" action="%s?redirect=%s" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
-        <label>OpenID URL: <input type="text" name="openid_url" /></label>
-    </form>
-</div>
-<script type="text/javascript">
-    $(document).ready(function () {
-        $('#login_dialog_openid').dialog({
-            autoOpen: false,
-            buttons: {"Login": function(){$(this).dialog('close'); document.forms['openid_form'].submit()}, "Cancel": function(){$(this).dialog("close")} },
-            modal: true,
-            bgiframe: true,
-        });
-    });
-</script>""" % (reverse('item_type_url', kwargs={'viewer': 'openidaccount', 'action': 'login'}), urlquote(context['full_path'])))
         else:
             login_menu_text = u'Logged in as %s' % get_viewable_name(context, viewer.cur_agent)
-            result.append('<form name="logout_form" style="display: inline;" method="post" action="%s?redirect=%s"></form>' % (reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'logout'}), urlquote(context['full_path'])))
+
         result.append("""
         <script type="text/javascript">
         $(function(){
+            var menuContent = '<ul style="font-size: 85%%;">';
+            $.each($('#login_menu_link').next().children().filter('li.loginmenuitem'), function(i, val){
+                menuContent += '<li>' + $(val).html() + '</li>';
+            });
+            menuContent += '</ul>'
             $('#login_menu_link').menu({
-                content: $('#login_menu_link').next().html(),
+                content: menuContent,
                 showSpeed: 50,
             });
         });
         </script>
         <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="login_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>%s</a>
-        <div style="display: none;">
-        <ul style="font-size: 85%%;">
+        <ul style="display: none;">
         """ % login_menu_text)
-        if viewer.cur_agent.is_anonymous():
-            result.append('<li><a href="#" onclick="$(\'#login_dialog_password\').dialog(\'open\'); return false;">Deme account</a></li>')
-            result.append('<li><a href="#" onclick="$(\'#login_dialog_openid\').dialog(\'open\'); return false;">OpenID</a></li>')
-            result.append('<li><a href="%s?redirect=%s">Webauth</a></li>' % (reverse('item_type_url', kwargs={'viewer': 'webauthaccount', 'action': 'login'}), urlquote(context['full_path'])))
-            result.append('<li><a href="%s?redirect=%s">Login as</a></li>' % (reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'login'}), urlquote(context['full_path'])))
-        else:
-            result.append('<li><a href="%s">My account</a></li>' % viewer.cur_agent.get_absolute_url())
-            result.append('<li><a href="#" onclick="document.forms[\'logout_form\'].submit(); return false;">Logout</a></li>')
-            result.append('<li><a href="%s?redirect=%s">Login as</a></li>' % (reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'login'}), urlquote(context['full_path'])))
-        result.append("</ul></div>")
+        for viewer_class in authentication_method_viewer_classes_with_loginmenuitem:
+            viewer2 = viewer_class()
+            viewer2.init_for_div(viewer, 'loginmenuitem', None)
+            html = viewer2.dispatch().content
+            result.append(html)
+        result.append("</ul>")
         return '\n'.join(result)
 
 @register.tag

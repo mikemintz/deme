@@ -112,25 +112,20 @@ If you want to generate and display the Deme item type "code graph", you will ne
 
 Apache
 ^^^^^^
-If you want to run Deme in the background all the time (instead of using ``./manage.py runserver`` to develop), you'll want to set up a server. I chose to use Apache with mod_python, but anything can work.
+If you want to run Deme in the background all the time (instead of using ``./manage.py runserver`` to develop), you'll want to set up a server. I chose to use Apache with mod_wsgi, but anything can work.
 
-First, install Apache and mod_python, and make sure mod_python is enabled. Make sure ``DJANGO_SERVES_STATIC_FILES`` is false in settings.py to let Apache serve static files.
+First, install Apache and mod_wsgi, and make sure mod_wsgi is enabled.
+
+Make sure ``DJANGO_SERVES_STATIC_FILES`` is false in settings.py to let Apache serve static files.
+
+I put the Django SVN checkout as a sibling directory to deme_django called ``django_src``. So I have ``/var/www/deme/deme_django`` and ``/var/www/deme/django_src``
 
 Here's what I have in my apache ``/etc/apache2/sites-available/deme`` config file::
 
     <VirtualHost *:80>
         ServerName deme.stanford.edu
         ServerAlias deme
-    
-        <Location "/">
-            SetHandler python-program
-            PythonHandler django.core.handlers.modpython
-            SetEnv DJANGO_SETTINGS_MODULE deme_django.settings
-            PythonDebug On
-            PythonPath "['/var/www/deme', '/var/www/deme/deme_django'] + sys.path"
-            PythonAutoReload Off
-        </Location>
-    
+        
         Alias /static /var/www/deme/deme_django
         <Location "/static">
             SetHandler None
@@ -140,6 +135,8 @@ Here's what I have in my apache ``/etc/apache2/sites-available/deme`` config fil
         RewriteEngine On
         RewriteRule   ^/static/modules/([^/]*)/(.*)  /static/modules/$1/static/$2  [QSA,L,PT]
         RewriteRule   ^/static/(.*)  /static/static/$1  [QSA,L,PT]
+        
+        WSGIScriptAlias / /var/www/deme/deme_django/apache/django.wsgi
         
         BrowserMatch ^Mozilla/4 gzip-only-text/html
         BrowserMatch ^Mozilla/4.0[678] no-gzip
@@ -150,25 +147,16 @@ Here's what I have in my apache ``/etc/apache2/sites-available/deme`` config fil
     <VirtualHost *:443>
         ServerName deme.stanford.edu
         ServerAlias deme
-    
+        
         SSLEngine On
         SSLCertificateFile /etc/apache2/ssl/server.crt
         SSLCertificateKeyFile /etc/apache2/ssl/server.key
-    
-        <Location "/">
-            SetHandler python-program
-            PythonHandler django.core.handlers.modpython
-            SetEnv DJANGO_SETTINGS_MODULE deme_django.settings
-            PythonDebug On
-            PythonPath "['/var/www/deme', '/var/www/deme/deme_django'] + sys.path"
-            PythonAutoReload Off
-        </Location>
-    
+        
         <Location "/viewing/webauthaccount/login">
             AuthType WebAuth
             Require valid-user
         </Location>
-    
+        
         Alias /static /var/www/deme/deme_django
         <Location "/static">
             SetHandler None
@@ -178,6 +166,8 @@ Here's what I have in my apache ``/etc/apache2/sites-available/deme`` config fil
         RewriteEngine On
         RewriteRule   ^/static/modules/([^/]*)/(.*)  /static/modules/$1/static/$2  [QSA,L,PT]
         RewriteRule   ^/static/(.*)  /static/static/$1  [QSA,L,PT]
+        
+        WSGIScriptAlias / /var/www/deme/deme_django/apache/django.wsgi
         
         BrowserMatch ^Mozilla/4 gzip-only-text/html
         BrowserMatch ^Mozilla/4.0[678] no-gzip

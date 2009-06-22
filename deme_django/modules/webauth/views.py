@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from cms.views import AuthenticationMethodViewer
 from cms.models import *
 from modules.webauth.models import *
@@ -33,4 +33,13 @@ class WebauthAccountViewer(AuthenticationMethodViewer):
         redirect = self.request.GET['redirect']
         full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
         return HttpResponseRedirect(full_redirect)
+
+    def type_loginmenuitem_html(self):
+        if self.cur_agent.is_anonymous():
+            login_url = reverse('item_type_url', kwargs={'viewer': 'webauthaccount', 'action': 'login'})
+            login_url_with_redirect = '%s?redirect=%s' % (login_url, urlquote(self.context['full_path']))
+            result = '<li class="loginmenuitem"><a href="%s">Webauth</a></li>' % login_url_with_redirect
+        else:
+            result = ''
+        return HttpResponse(result)
 

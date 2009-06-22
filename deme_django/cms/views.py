@@ -581,6 +581,10 @@ class AuthenticationMethodViewer(ItemViewer):
         self.context['redirect'] = redirect
         template = loader.get_template('authenticationmethod/loggedinorout.html')
         return HttpResponse(template.render(self.context))
+    
+    def type_loginmenuitem_html(self):
+        template = loader.get_template('authenticationmethod/loginmenuitem.html')
+        return HttpResponse(template.render(self.context))
  
 
 class DemeAccountViewer(AuthenticationMethodViewer):
@@ -623,6 +627,10 @@ class DemeAccountViewer(AuthenticationMethodViewer):
         json_data = simplejson.dumps(response_data, separators=(',',':'))
         return HttpResponse(json_data, mimetype='application/json')
         
+    def type_loginmenuitem_html(self):
+        template = loader.get_template('demeaccount/loginmenuitem.html')
+        return HttpResponse(template.render(self.context))
+
 
 class PersonViewer(AgentViewer):
     accepted_item_type = Person

@@ -100,38 +100,6 @@
         });
     </script>        
 
-    <script type="text/javascript" src="{% media_url "javascripts/sha1.js" %}"></script>
-    <script type="text/javascript" src="{% media_url "javascripts/mysql_pre41_password.js" %}"></script>
-
-    <script type="text/javascript">
-
-        function get_encrypted_password(raw_password, algo, salt, nonce) {
-            var original_hashed_password;
-            if (algo == 'sha1') {
-                original_hashed_password = SHA1(salt + raw_password);
-            } else if (algo == 'mysql_pre41_password') {
-                original_hashed_password = mysql_pre41_password(raw_password);
-            } else {
-                return 'unknown algo: ' + algo;
-            }
-            return SHA1(nonce + original_hashed_password);
-        }
-
-        function encrypt_password() {
-            var raw_password = document.forms['password_form']['password'].value;
-            var url = '{% url item_type_url viewer="demeaccount",action="getencryptionmethod" %}';
-            jQuery.getJSON(url, {username:document.forms['password_form']['username'].value}, function(json) {
-                var algo = json.algo;
-                var salt = json.salt;
-                var nonce = json.nonce;
-                var encrypted_password = get_encrypted_password(raw_password, algo, salt, nonce);
-                document.forms['real_password_form']['hashed_password'].value = encrypted_password;
-                document.forms['real_password_form']['username'].value = document.forms['password_form']['username'].value;
-                document.forms['real_password_form'].submit();
-            });
-        }
-    </script>
-    
 </head>
 
 <body>

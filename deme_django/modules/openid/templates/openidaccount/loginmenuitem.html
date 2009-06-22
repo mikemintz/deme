@@ -1,0 +1,21 @@
+{% if cur_agent.is_anonymous %}
+<li>
+    <div style="display: none;" id="login_dialog_openid" title="Login">
+        <form name="openid_form" action="{% url item_type_url viewer="openidaccount",action="login" %}?redirect={{ full_path|urlencode }}" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
+            <label>OpenID URL: <input type="text" name="openid_url" /></label>
+        </form>
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#login_dialog_openid').dialog({
+                autoOpen: false,
+                buttons: {"Login": function(){$(this).dialog('close'); document.forms['openid_form'].submit()}, "Cancel": function(){$(this).dialog("close")} },
+                modal: true,
+                bgiframe: true,
+            });
+        });
+    </script>
+</li>
+
+<li class="loginmenuitem"><a href="#" onclick="$('#login_dialog_openid').dialog('open'); return false;">OpenID</a></li>
+{% endif %}
