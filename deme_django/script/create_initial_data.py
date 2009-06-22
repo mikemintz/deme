@@ -82,13 +82,14 @@ formatted_git_date = time.strftime("%Y-%m-%d", time.strptime(git_date, "%a %b %d
 home_page = DjangoTemplateDocument(name='Deme Home Page', body="""
 {%% block content %%}
 Welcome to Deme!
-<br/><br/>
+<br /><br />
 Visit our GitHub page for the latest source code: <a href="http://github.com/mikemintz/deme">http://github.com/mikemintz/deme</a>.
-<br/><br/>
-
+<br /><br />
 This site is running a working copy of Deme <a href="http://github.com/mikemintz/deme/commit/%s">commit %s</a> from %s.
-<br/><br/>
-View the slides from our presentation at Code Camp at <a href="http://www.stanford.edu/~davies/tdavies-presentations.html">http://www.stanford.edu/~davies/tdavies-presentations.html</a>.
+<br /><br />
+View the slides from our presentation at Silicon Valley Code Camp 2008 at <a href="http://www.stanford.edu/~davies/tdavies-presentations.html">http://www.stanford.edu/~davies/tdavies-presentations.html</a> (scroll down).
+<br /><br />
+Read our paper on Deme's architecture for IWWOST 2009 at <a href="http://www.stanford.edu/~davies/IWWOST09-Davies-Mintz-websiteversion.pdf">http://www.stanford.edu/~davies/IWWOST09-Davies-Mintz-websiteversion.pdf</a>
 {%% endblock content %%} 
 """ % (git_commit, git_commit, formatted_git_date) )
 home_page.save_versioned(action_agent=admin)
