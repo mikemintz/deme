@@ -914,11 +914,17 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
                 form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
         try:
-            item = Item.objects.get(pk=self.request.REQUEST.get('item'))
+            item = Item.objects.get(pk=self.request.REQUEST.get('populate_item'))
         except:
             return self.render_error('Invalid URL', "You must specify the item you are commenting on")
         if form is None:
             form_initial = dict(self.request.GET.items())
+            keys = form_initial.keys()
+            for key in keys:
+                if key.find('populate_') == 0:
+                    form_initial[key.replace('populate_', '')] = form_initial[key]
+                del form_initial[key]
+
             form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
             form = form_class(initial=form_initial)
             if issubclass(item.actual_item_type(), Comment):
