@@ -75,6 +75,8 @@ Unusual things to remember
 * Don't forget to update crystal icons for new models
 * If someone has permission to edit the body of an item, we allow them to add transclusions in some situations (TextDocumentViewer.edit)
 * We do not [knowingly] support OneToOneFields and ManyToManyFields in item types
+* You can't name an item field "redirect" or "add_to_collection" because it would conflict with query string commands and auto-populating new items
+    (possible fix: make it so that all query strings that auto-populate item fields would have to start with "populate")
 
 
 
