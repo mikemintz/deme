@@ -252,6 +252,7 @@ class ItemViewer(Viewer):
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
+            print("about to be added, shiiiet")
             if action_notice_subclass == RelationActionNotice:
                 self.permission_cache.filter_items('view Item.name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
             for action_notice in specific_action_notices:
@@ -919,6 +920,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
+        self.context['add_to_collection'] = self.request.GET.get('add_to_collection')
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name': x._meta.verbose_name, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
         item_types.sort(key=lambda x:x['name'].lower())
         self.context['item_types'] = item_types
@@ -952,6 +954,11 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
                 #TODO seems like there should be a way to set custom permissions on the transclusions
                 permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
                 transclusion.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
+
+            if 'add_to_collection' in self.request.GET:
+                new_membership = Membership(item=comment, collection=Collection.objects.get(pk=self.request.GET['add_to_collection']))
+                new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions) 
+
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
         else:
