@@ -162,6 +162,12 @@ class ItemViewer(Viewer):
         else:
             if form is None:
                 form_initial = dict(self.request.GET.items())
+                keys = form_initial.keys()
+                for key in keys:
+                    if key.find('populate_') == 0:
+                        form_initial[key.replace('populate_', '')] = form_initial[key]
+                    del form_initial[key]
+            
                 form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
@@ -899,6 +905,12 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
         else:
             if form is None:
                 form_initial = dict(self.request.GET.items())
+                keys = form_initial.keys()
+                for key in keys:
+                    if key.find('populate_') == 0:
+                        form_initial[key.replace('populate_', '')] = form_initial[key]
+                    del form_initial[key]
+
                 form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
         try:
