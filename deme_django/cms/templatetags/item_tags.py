@@ -598,7 +598,7 @@ class CalculateComments(template.Node):
         result.append("""<div class="comment_box">""")
         result.append("""<div class="comment_box_header">""")
         if agentcan_helper(context, 'comment_on', item):
-            result.append("""<a href="%s?item=%s&amp;item_version_number=%s&amp;redirect=%s">[+] Add Comment</a>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), item.pk, version_number, urlquote(full_path)))
+            result.append("""<a href="%s?populate_item=%s&amp;populate_item_version_number=%s&amp;redirect=%s">[+] Add Comment</a>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), item.pk, version_number, urlquote(full_path)))
         result.append("""</div>""")
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:

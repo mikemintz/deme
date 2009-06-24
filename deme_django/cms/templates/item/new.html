@@ -40,11 +40,9 @@ tinyMCE.init({
 
 <div>
 {% if form %}
-    {% if redirect %}
-    <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=viewer_name,action="create" %}?redirect={{ redirect|urlencode }}" class="item_form">
-    {% else %}
-    <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=viewer_name,action="create" %}" class="item_form">
-    {% endif %}
+
+        <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=viewer_name,action="create" %}?{% if add_to_collection %}add_to_collection={{ add_to_collection|urlencode }}&{% endif %}{% if redirect %}redirect={{ redirect|urlencode }}{% endif %}" class="item_form">
+   
         <table cellspacing="0">
            {{ form.as_table }}
         </table>
