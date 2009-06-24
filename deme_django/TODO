@@ -22,19 +22,22 @@ Code correctness/consistency/bugs
 * If you try to add a Membership that used to exist but is now trashed, it fails. The code used to handle this. Probably same with CustomUrls.
 * If you login/logout after you're at a page with POST or at a login page, the "back to page" is weird.
 * Methods that have to do with sending emails (about action notices) should go in EmailContactMethod, not ActionNotice
-* Fix the multiple inheritance bug
-  - http://code.djangoproject.com/ticket/10808
 * The viewer should probably define a list of actions for each item type to be displayed in a menu
 * Probably don't need auto-load modules: INSTALLED_APPS is more explicit and familiar
 * Figure out correct way to manage assets (maybe like in rails)
 * figure out how we are determining the permission to view comment hierarchy (i.e., comment.commented_item)
 * Code cleanup: views, templatetags, and templates, and symsys everything
+* Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun)
+* Do a more thorough job ensuring fields are not null (unless allowed_to_be_null_before_destroyed == True). We might have to wait for real model-based validations (Django 1.2).
+
+Django bugs
+-----------
+* Fix the multiple inheritance bug
+  - http://code.djangoproject.com/ticket/10808
 * Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
   - http://code.djangoproject.com/ticket/2227
-* Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun)
 * HTML special chars are being escaped twice in RSS feeds
   - http://code.djangoproject.com/ticket/6533
-* Do a more thorough job ensuring fields are not null (unless allowed_to_be_null_before_destroyed == True). We might have to wait for real model-based validations (Django 1.2).
 
 Features
 --------
