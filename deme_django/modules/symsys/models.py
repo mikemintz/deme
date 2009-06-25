@@ -7,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 __all__ = ['SymsysCareer', 'ThesisSymsysCareer', 'StudentSymsysCareer',
         'MinorSymsysCareer', 'BachelorsSymsysCareer', 'MastersSymsysCareer',
         'HonorsSymsysCareer', 'ResearcherSymsysCareer', 'FacultySymsysCareer',
-        'ProgramStaffSymsysCareer', 'SymsysAffiliate', 'Event',
+        'ProgramStaffSymsysCareer', 'SymsysAffiliate',
         'Advertisement', 'TextAdvertisement', 'HtmlAdvertisement']
 
 BS_CONCENTRATIONS = [
@@ -397,22 +397,6 @@ class SymsysAffiliate(Person):
         membership = Membership(item=self, collection=all_ssp_users)
         # There are no permissions we need to set on this membership
         membership.save_versioned(action_agent=group_creator)
-
-
-class Event(HtmlDocument):
-    # Setup
-    introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view Event.event_time', 'view Event.location', 'view Event.url',
-                                      'edit Event.event_time', 'edit Event.location', 'edit Event.url'])
-    introduced_global_abilities = frozenset(['create Event'])
-    class Meta:
-        verbose_name = _('event')
-        verbose_name_plural = _('event')
-
-    # Fields
-    event_time = models.DateTimeField() #TODO why can this be blank?
-    location   = models.TextField(blank=True)
-    url        = models.TextField(blank=True)
 
 
 class Advertisement(Document):

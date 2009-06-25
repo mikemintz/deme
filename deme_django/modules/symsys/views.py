@@ -73,11 +73,6 @@ class SymsysAffiliateViewer(PersonViewer):
         return HttpResponse(template.render(self.context))
 
 
-class EventViewer(HtmlDocumentViewer):
-    accepted_item_type = Event
-    viewer_name = 'event'
-
-
 class AdvertisementViewer(DocumentViewer):
     accepted_item_type = Advertisement
     viewer_name = 'advertisement'
