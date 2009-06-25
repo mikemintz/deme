@@ -819,31 +819,22 @@ class CalculateActionNotices(template.Node):
                     action_summary_text = ''
                 if isinstance(action_notice, RelationActionNotice):
                     natural_language_representation = action_notice.natural_language_representation(context['_viewer'].permission_cache)
-                    if natural_language_representation is None:
-                        from_item_name = get_viewable_name(context, action_notice.from_item)
-                        from_item_text = u'<a href="%s">%s</a>' % (escape(action_notice.from_item.get_absolute_url() + '?version=%d' % action_notice.from_item_version_number), escape(from_item_name))
-                        if action_notice.relation_added:
-                            action_text = u"set the %s of %s to" % (action_notice.from_field_name, from_item_text)
-                        else:
-                            action_text = u"unset the %s of %s from" % (action_notice.from_field_name, from_item_text)
-                        action_sentence = '%s %s %s' % (action_agent_text, action_text, action_item_text)
-                    else:
-                        action_sentence_parts = []
-                        action_sentence_parts.append(action_agent_text)
-                        action_sentence_parts.append(u' made it so ')
-                        for part in natural_language_representation:
-                            if isinstance(part, Item):
-                                if part == action_notice.from_item:
-                                    action_sentence_parts.append(from_item_text)
-                                elif part == action_notice.action_item:
-                                    action_sentence_parts.append(action_item_text)
-                                else:
-                                    part_name = get_viewable_name(context, part)
-                                    part_text = u'<a href="%s">%s</a>' % (escape(part.get_absolute_url()), escape(part_name))
-                                    action_sentence_parts.append(part_text)
+                    action_sentence_parts = []
+                    action_sentence_parts.append(action_agent_text)
+                    action_sentence_parts.append(u' made it so ')
+                    for part in natural_language_representation:
+                        if isinstance(part, Item):
+                            if part == action_notice.from_item:
+                                action_sentence_parts.append(from_item_text)
+                            elif part == action_notice.action_item:
+                                action_sentence_parts.append(action_item_text)
                             else:
-                                action_sentence_parts.append(unicode(part))
-                        action_sentence = u''.join(action_sentence_parts)
+                                part_name = get_viewable_name(context, part)
+                                part_text = u'<a href="%s">%s</a>' % (escape(part.get_absolute_url()), escape(part_name))
+                                action_sentence_parts.append(part_text)
+                        else:
+                            action_sentence_parts.append(unicode(part))
+                    action_sentence = u''.join(action_sentence_parts)
                 else:
                     if isinstance(action_notice, DeactivateActionNotice):
                         action_text = 'deactivated'

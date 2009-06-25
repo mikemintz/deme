@@ -2138,7 +2138,17 @@ class RelationActionNotice(ActionNotice):
         field_name = self.from_field_name
         relation_added = self.relation_added
         action_item = self.action_item
-        return from_item.relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
+        result = from_item.relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
+        if result is None:
+            # Nobody wrote the code to define this natural language representation
+            item_type = get_item_type_with_name(self.from_field_model)
+            field = item_type._meta.get_field_by_name(field_name)[0]
+            if relation_added:
+                return [action_item, _(' is now the `'), field.verbose_name, _('` for '), from_item]
+            else:
+                return [action_item, _(' is no longer the `'), field.verbose_name, _('` for '), from_item]
+        else:
+            return result
 
     def notification_reply_item(self):
         """
