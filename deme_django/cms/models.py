@@ -2133,6 +2133,13 @@ class RelationActionNotice(ActionNotice):
     from_field_model         = models.CharField(_('from field model'), max_length=255)
     relation_added           = models.BooleanField(_('relation added'))
 
+    def natural_language_representation(self, permission_cache):
+        from_item = self.from_item.downcast() #TODO this may cause performance issues
+        field_name = self.from_field_name
+        relation_added = self.relation_added
+        action_item = self.action_item
+        return from_item.relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
+
     def notification_reply_item(self):
         """
         In RelationActionNotices, when someone replies to a notification, it

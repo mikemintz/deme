@@ -814,27 +814,49 @@ class CalculateActionNotices(template.Node):
                     action_item_name = get_viewable_name(context, action_notice.action_item)
                 action_item_text = u'<a href="%s">%s</a>' % (escape(action_notice.action_item.get_absolute_url() + '?version=%d' % action_notice.action_item_version_number), escape(action_item_name))
                 if action_notice.action_summary:
-                    action_summary_text = u'(%s)' % escape(action_notice.action_summary)
+                    action_summary_text = u' (%s)' % escape(action_notice.action_summary)
                 else:
                     action_summary_text = ''
                 if isinstance(action_notice, RelationActionNotice):
-                    from_item_name = get_viewable_name(context, action_notice.from_item)
-                    from_item_text = u'<a href="%s">%s</a>' % (escape(action_notice.from_item.get_absolute_url() + '?version=%d' % action_notice.from_item_version_number), escape(from_item_name))
-                    if action_notice.relation_added:
-                        action_text = u"set the %s of %s to" % (action_notice.from_field_name, from_item_text)
+                    natural_language_representation = action_notice.natural_language_representation(context['_viewer'].permission_cache)
+                    if natural_language_representation is None:
+                        from_item_name = get_viewable_name(context, action_notice.from_item)
+                        from_item_text = u'<a href="%s">%s</a>' % (escape(action_notice.from_item.get_absolute_url() + '?version=%d' % action_notice.from_item_version_number), escape(from_item_name))
+                        if action_notice.relation_added:
+                            action_text = u"set the %s of %s to" % (action_notice.from_field_name, from_item_text)
+                        else:
+                            action_text = u"unset the %s of %s from" % (action_notice.from_field_name, from_item_text)
+                        action_sentence = '%s %s %s' % (action_agent_text, action_text, action_item_text)
                     else:
-                        action_text = u"unset the %s of %s from" % (action_notice.from_field_name, from_item_text)
-                if isinstance(action_notice, DeactivateActionNotice):
-                    action_text = 'deactivated'
-                if isinstance(action_notice, ReactivateActionNotice):
-                    action_text = 'reactivated'
-                if isinstance(action_notice, DestroyActionNotice):
-                    action_text = 'destroyed'
-                if isinstance(action_notice, CreateActionNotice):
-                    action_text = 'created'
-                if isinstance(action_notice, EditActionNotice):
-                    action_text = 'edited'
-                result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">[%s]<br />%s %s %s %s</div>' % (action_time_text, action_agent_text, action_text, action_item_text, action_summary_text))
+                        action_sentence_parts = []
+                        action_sentence_parts.append(action_agent_text)
+                        action_sentence_parts.append(u' made it so ')
+                        for part in natural_language_representation:
+                            if isinstance(part, Item):
+                                if part == action_notice.from_item:
+                                    action_sentence_parts.append(from_item_text)
+                                elif part == action_notice.action_item:
+                                    action_sentence_parts.append(action_item_text)
+                                else:
+                                    part_name = get_viewable_name(context, part)
+                                    part_text = u'<a href="%s">%s</a>' % (escape(part.get_absolute_url()), escape(part_name))
+                                    action_sentence_parts.append(part_text)
+                            else:
+                                action_sentence_parts.append(unicode(part))
+                        action_sentence = u''.join(action_sentence_parts)
+                else:
+                    if isinstance(action_notice, DeactivateActionNotice):
+                        action_text = 'deactivated'
+                    if isinstance(action_notice, ReactivateActionNotice):
+                        action_text = 'reactivated'
+                    if isinstance(action_notice, DestroyActionNotice):
+                        action_text = 'destroyed'
+                    if isinstance(action_notice, CreateActionNotice):
+                        action_text = 'created'
+                    if isinstance(action_notice, EditActionNotice):
+                        action_text = 'edited'
+                    action_sentence = '%s %s %s' % (action_agent_text, action_text, action_item_text)
+                result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">[%s]<br />%s%s</div>' % (action_time_text, action_sentence, action_summary_text))
                 context['n_action_notices'] += 1
         else:
             action_notices = []
