@@ -113,6 +113,7 @@ Distant Future (sorted by approximate order of planned implementation)
   - I'd like to have a settings option where you either have apache with no permissions, django with no permissions, or django with full permissions (or maybe later a workaround with apache and permissions based on cookie)
 * More dynamic way of setting whether certain fields can be blank (or other constraints) within an installation.
 * Have XML output and stuff
+* User-friendly item type creator (like cck in drupal)
 * Maybe events can have multi-field dates, like you can specify the year and month but not the day and time.
 * When matching SiteDomain in alias, match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
 * Add to ImageDocument metadata like width, height, exif, and a pointer to a thumbfile or 2
