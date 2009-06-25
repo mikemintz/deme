@@ -20,9 +20,9 @@ class Event(HtmlDocument):
     #fields:
     start_date = models.DateField()
     start_time = models.TimeField()
-    end_date = models.DateField()
-    end_time = models.TimeField()
-    location = models.CharField(_('location'), max_length=255) 
+    end_date   = models.DateField()
+    end_time   = models.TimeField()
+    location   = models.CharField(_('location'), max_length=255) 
 
 
 
