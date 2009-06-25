@@ -6,20 +6,19 @@
 
 Courtesy of
 <a href="{{ url_prefix }}{{ action_agent.get_absolute_url }}">{% viewable_name action_agent %}</a>,
-the "{{ from_field_name }}" field of
-<a href="{{ url_prefix }}{{ from_item.get_absolute_url }}">{% viewable_name from_item %}</a>
-{% if relation_added %}
-now
+{% for part in natural_language_representation %}
+{% if part.pk %}
+<a href="{{ url_prefix }}{{ part.get_absolute_url }}">{% viewable_name part %}</a>
 {% else %}
-no longer
+{{ part }}
 {% endif %}
-points to
-<a href="{{ url_prefix }}{{ action_item.get_absolute_url }}">{% viewable_name action_item %}</a>
+{% endfor %}
 
 {% ifequal action_item topmost_item %}
 {% else %}
--
-a comment about
+<br /><br />
+<a href="{{ url_prefix }}{{ action_item.get_absolute_url }}">{% viewable_name action_item %}</a>
+is a comment about
 <a href="{{ url_prefix }}{{ topmost_item.get_absolute_url }}">{% viewable_name topmost_item %}</a>
 {% endifequal %}
 

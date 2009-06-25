@@ -2013,16 +2013,22 @@ class ActionNotice(models.Model):
             if self.from_field_name == 'item' and self.from_field_model == 'Comment':
                 return
             from_item_name = get_viewable_name(viewer.context, self.from_item)
-            if self.relation_added:
-                subject = '[%s] %s added relation to %s' % (subscribed_item_name, action_agent_name, item_name)
-            else:
-                subject = '[%s] %s removed relation from %s' % (subscribed_item_name, action_agent_name, item_name)
+            natural_language_representation = self.natural_language_representation(permission_cache)
+            action_sentence_parts = []
+            for part in natural_language_representation:
+                if isinstance(part, Item):
+                    action_sentence_parts.append(get_viewable_name(viewer.context, part))
+                else:
+                    action_sentence_parts.append(unicode(part))
+            action_sentence = u''.join(action_sentence_parts)
+            subject = '[%s] %s' % (subscribed_item_name, action_sentence)
             template_name = 'relation'
             viewer.context['relation_added'] = self.relation_added
             viewer.context['from_item'] = self.from_item
             viewer.context['from_item_version_number'] = self.from_item_version_number
             viewer.context['from_field_name'] = self.from_field_name
             viewer.context['from_field_model'] = self.from_field_model
+            viewer.context['natural_language_representation'] = natural_language_representation
         elif isinstance(self, DeactivateActionNotice):
             subject = '[%s] %s deactivated %s' % (subscribed_item_name, action_agent_name, item_name)
             template_name = 'delete'
