@@ -966,7 +966,7 @@ class EmbeddedItem(template.Node):
             return ''
         item = item.downcast()
         viewer = viewer_class()
-        viewer.init_for_div(context['_viewer'], 'show', item)
+        viewer.init_for_div(context['_viewer'], 'show', item, '')
         return """<div style="padding: 10px; border: thick solid #aaa;">%s</div>""" % viewer.dispatch().content
 
 
@@ -1498,7 +1498,11 @@ class LoginMenu(template.Node):
         """ % login_menu_text)
         for viewer_class in authentication_method_viewer_classes_with_loginmenuitem:
             viewer2 = viewer_class()
-            viewer2.init_for_div(viewer, 'loginmenuitem', None)
+            if viewer.request.method == 'GET':
+                query_string = 'redirect=%s' % urlquote(viewer.context['full_path'])
+            else:
+                query_string = ''
+            viewer2.init_for_div(viewer, 'loginmenuitem', None, query_string)
             html = viewer2.dispatch().content
             result.append(html)
         result.append("</ul>")

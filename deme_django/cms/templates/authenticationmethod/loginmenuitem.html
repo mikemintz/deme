@@ -1,7 +1,7 @@
-<li class="loginmenuitem"><a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login as</a></li>
+<li class="loginmenuitem"><a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ redirect|urlencode }}">Login as</a></li>
 {% if cur_agent.is_anonymous %}
 {% else %}
 <li class="loginmenuitem"><a href="{{ cur_agent.get_absolute_url }}">My account</a></li>
 <li class="loginmenuitem"><a href="#" onclick="document.forms['logout_form'].submit(); return false;">Logout</a></li>
-<li><form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="logout" %}?redirect={{ full_path|urlencode }}"></form></li>
+<li><form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="logout" %}?redirect={{ redirect|urlencode }}"></form></li>
 {% endif %}

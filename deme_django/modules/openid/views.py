@@ -72,6 +72,7 @@ class OpenidAccountViewer(AuthenticationMethodViewer):
             return self.render_error("OpenID Error", "Invalid OpenID status: %s" % escape(openid_response.status))
 
     def type_loginmenuitem_html(self):
+        self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('openidaccount/loginmenuitem.html')
         return HttpResponse(template.render(self.context))
 

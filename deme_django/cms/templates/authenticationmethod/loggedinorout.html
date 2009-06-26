@@ -11,9 +11,10 @@ You are now logged in as {% viewable_name cur_agent %}.
 </div>
 
 <div style="padding: 5px; margin-bottom: 5px; font-size: 125%;">
-<a href="{{ redirect }}">Go back to previous page</a>
-or 
-<a href="/">go back to home page</a>
+{% if redirect %}
+<a href="{{ redirect }}">[Return to previous page]</a>
+{% endif %}
+<a href="/">[Return to home page]</a>
 </div>
 
 

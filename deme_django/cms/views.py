@@ -555,12 +555,12 @@ class AuthenticationMethodViewer(ItemViewer):
             login_as_agents = self.permission_cache.filter_items('login_as', login_as_agents)
             self.permission_cache.filter_items('view Item.name', login_as_agents)
             template = loader.get_template('authenticationmethod/login.html')
-            self.context['redirect'] = self.request.GET['redirect']
+            self.context['redirect'] = self.request.GET.get('redirect', '')
             self.context['login_as_agents'] = login_as_agents
             return HttpResponse(template.render(self.context))
         else:
             # The user just submitted a login form, so we try to authenticate.
-            redirect = self.request.GET['redirect']
+            redirect = self.request.GET.get('redirect', '')
             for key in self.request.POST.iterkeys():
                 if key.startswith('login_as_'):
                     new_agent_id = key.split('login_as_')[1]
@@ -581,7 +581,7 @@ class AuthenticationMethodViewer(ItemViewer):
     def type_logout_html(self):
         if 'cur_agent_id' in self.request.session:
             del self.request.session['cur_agent_id']
-        redirect = self.request.GET['redirect']
+        redirect = self.request.GET.get('redirect', '')
         full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
         return HttpResponseRedirect(full_redirect)
 
@@ -590,12 +590,12 @@ class AuthenticationMethodViewer(ItemViewer):
             self.context['action_title'] = 'Logged out'
         else:
             self.context['action_title'] = 'Logged in'
-        redirect = self.request.GET['redirect']
-        self.context['redirect'] = redirect
+        self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('authenticationmethod/loggedinorout.html')
         return HttpResponse(template.render(self.context))
     
     def type_loginmenuitem_html(self):
+        self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('authenticationmethod/loginmenuitem.html')
         return HttpResponse(template.render(self.context))
  

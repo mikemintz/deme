@@ -271,12 +271,11 @@ class Viewer(object):
         self.context['_viewer'] = self
         self._set_default_layout()
 
-    def init_for_div(self, original_viewer, action, item):
+    def init_for_div(self, original_viewer, action, item, query_string):
         if item is None:
             path = reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': action})
         else:
             path = reverse('item_url', kwargs={'viewer': self.viewer_name, 'action': action, 'noun': item.pk})
-        query_string = ''
         self.request = VirtualRequest(original_viewer.request, path, query_string)
         self.cur_agent = original_viewer.cur_agent
         self.cur_site = original_viewer.cur_site

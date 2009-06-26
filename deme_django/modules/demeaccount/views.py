@@ -53,6 +53,7 @@ class DemeAccountViewer(AuthenticationMethodViewer):
         return HttpResponse(json_data, mimetype='application/json')
         
     def type_loginmenuitem_html(self):
+        self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('demeaccount/loginmenuitem.html')
         return HttpResponse(template.render(self.context))
 
