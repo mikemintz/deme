@@ -10,11 +10,13 @@ from django.core.urlresolvers import reverse
 from django.utils.http import urlquote
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.html import escape
+from django.views.decorators.http import require_POST
 
 class OpenidAccountViewer(AuthenticationMethodViewer):
     accepted_item_type = OpenidAccount
     viewer_name = 'openidaccount'
 
+    @require_POST
     def type_login_html(self):
         redirect = self.request.GET['redirect']
         try:
