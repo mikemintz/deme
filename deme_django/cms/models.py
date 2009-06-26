@@ -39,7 +39,7 @@ __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
         'Permission', 'OneToOnePermission', 'OneToSomePermission',
         'OneToAllPermission', 'SomeToOnePermission', 'SomeToSomePermission',
         'SomeToAllPermission', 'AllToOnePermission', 'AllToSomePermission',
-        'AllToAllPermission',]
+        'AllToAllPermission', 'friendly_name_for_ability']
 
 ###############################################################################
 # Field types
@@ -2353,6 +2353,12 @@ POSSIBLE_GLOBAL_ABILITIES = PossibleGlobalAbilitiesIterable()
 # Iterable of all (ability, friendly_name) item and global abilities
 POSSIBLE_ITEM_AND_GLOBAL_ABILITIES = PossibleItemAndGlobalAbilitiesIterable()
 
+def friendly_name_for_ability(ability):
+    "Return a friendly name string for the given ability, or None if not found."
+    for other_ability, friendly_name in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES:
+        if other_ability == ability:
+            return friendly_name
+    return None
 
 class Permission(models.Model):
     """Abstract superclass of all permissions."""

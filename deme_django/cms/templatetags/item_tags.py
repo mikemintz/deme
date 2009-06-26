@@ -1069,7 +1069,7 @@ class PermissionEditor(template.Node):
             datum['name'] = get_viewable_name(context, agent)
             datum['agent_or_collection_id'] = str(agent.pk)
             datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in agent_permissions if x.source == agent]
-            datum['permissions'].sort(key=lambda x: [y[1] for y in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if y[0] == x['ability']])
+            datum['permissions'].sort(key=lambda x: friendly_name_for_ability(x))
             existing_permission_data.append(datum)
         collection_data = []
         for collection in collections:
@@ -1078,14 +1078,14 @@ class PermissionEditor(template.Node):
             datum['name'] = get_viewable_name(context, collection)
             datum['agent_or_collection_id'] = str(collection.pk)
             datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in collection_permissions if x.source == collection]
-            datum['permissions'].sort(key=lambda x: [y[1] for y in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if y[0] == x['ability']])
+            datum['permissions'].sort(key=lambda x: friendly_name_for_ability(x))
             existing_permission_data.append(datum)
         datum = {}
         datum['permission_type'] = 'everyone'
         datum['name'] = 'Everyone'
         datum['agent_or_collection_id'] = '0'
         datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in everyone_permissions]
-        datum['permissions'].sort(key=lambda x: [y[1] for y in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if y[0] == x['ability']])
+        datum['permissions'].sort(key=lambda x: friendly_name_for_ability(x))
         existing_permission_data.append(datum)
         existing_permission_data.sort(key=lambda x: (x['permission_type'], x['name']))
 

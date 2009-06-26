@@ -356,10 +356,7 @@ class Viewer(object):
                 return response
             except DemePermissionDenied, e:
                 from cms.templatetags.item_tags import get_viewable_name
-                try:
-                    ability_friendly_name = [x[1] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if x[0] == e.ability][0]
-                except IndexError:
-                    ability_friendly_name = e.ability
+                ability_friendly_name = friendly_name_for_ability(e.ability) or e.ability
                 if self.context.get('action_title'):
                     msg = u'You do not have permission to perform the "%s" action' % self.context['action_title']
                 else:
