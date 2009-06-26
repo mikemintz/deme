@@ -715,7 +715,7 @@ class CollectionViewer(ItemViewer):
         except:
             return self.render_error('Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('add_self', self.item))):
-            raise DemePermissionDenied
+            raise DemePermissionDenied('modify_membership', None)
         try:
             membership = Membership.objects.get(collection=self.item, item=member)
             if not membership.active:
@@ -735,7 +735,7 @@ class CollectionViewer(ItemViewer):
         except:
             return self.render_error('Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('remove_self', self.item))):
-            raise DemePermissionDenied
+            raise DemePermissionDenied('modify_membership', None)
         try:
             membership = Membership.objects.get(collection=self.item, item=member)
             if membership.active:

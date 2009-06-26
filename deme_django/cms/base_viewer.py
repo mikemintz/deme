@@ -22,8 +22,10 @@ from cms.forms import JavaScriptSpamDetectionField, AjaxModelChoiceField
 #TODO obey self.format when rendering an error if possible
 
 class DemePermissionDenied(Exception):
-    "The agent does not have permission to perform the action"
-    pass
+    def __init__(self, ability, item):
+        self.ability = ability
+        self.item = item
+        super(DemePermissionDenied, self).__init__("The agent does not have permission to perform the action")
 
 def get_logged_in_agent(request):
     """
@@ -199,18 +201,22 @@ class Viewer(object):
         Raise a DemePermissionDenied exception if the current agent does not
         have the specified global ability.
         """
-        #TODO put the details in the exception so we can display them
         if not self.cur_agent_can_global(ability, wildcard_suffix):
-            raise DemePermissionDenied
+            if wildcard_suffix:
+                raise DemePermissionDenied(_(ability.strip()), None)
+            else:
+                raise DemePermissionDenied(ability, None)
 
     def require_ability(self, ability, item, wildcard_suffix=False):
         """
         Raise a DemePermissionDenied exception if the current agent does not
         have the specified ability with respect to the specified item.
         """
-        #TODO put the details in the exception so we can display them
         if not self.cur_agent_can(ability, item, wildcard_suffix):
-            raise DemePermissionDenied
+            if wildcard_suffix:
+                raise DemePermissionDenied(_(ability.strip()), item)
+            else:
+                raise DemePermissionDenied(ability, item)
 
     def render_error(self, title, body, request_class=HttpResponseBadRequest):
         """
@@ -345,8 +351,23 @@ class Viewer(object):
                         return self.render_item_not_found()
             try:
                 return action_method()
-            except DemePermissionDenied:
-                return self.render_error('Permission Denied', "You do not have permission to perform this action")
+            except DemePermissionDenied, e:
+                from cms.templatetags.item_tags import get_viewable_name
+                try:
+                    ability_friendly_name = [x[1] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if x[0] == e.ability][0]
+                except IndexError:
+                    ability_friendly_name = e.ability
+                if self.context['action_title']:
+                    msg = u'You do not have permission to perform the "%s" action' % self.context['action_title']
+                else:
+                    msg = u'You do not have permission to perform the action'
+                if self.item:
+                    msg += u' on <a href="%s">%s</a>' % (self.item.get_absolute_url(), get_viewable_name(self.context, self.item))
+                if e.item is None:
+                    msg += u' (you need the "%s" global ability)' % ability_friendly_name
+                else:
+                    msg += u' (you need the "%s" ability on <a href="%s">%s</a>)' % (ability_friendly_name, e.item.get_absolute_url(), get_viewable_name(self.context, e.item))
+                return self.render_error('Permission Denied', msg)
         else:
             return None
 
