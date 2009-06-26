@@ -223,7 +223,8 @@ class Viewer(object):
         Return an HttpResponse (of type request_class) that displays a simple
         error page with the specified title and body.
         """
-        self.context['action_title'] = 'Error'
+        if 'action_title' not in self.context:
+            self.context['action_title'] = 'Error'
         template = loader.get_template_from_string("""
         {%% extends layout %%}
         {%% load item_tags %%}
