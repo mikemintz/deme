@@ -12,6 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.db import models
+from django.db.models.fields import FieldDoesNotExist
 from django import forms
 import datetime
 from cms.permissions import MultiAgentPermissionCache
@@ -378,6 +379,16 @@ class Viewer(object):
                 return super(models.ForeignKey, f).formfield(**options)
             else:
                 return f.formfield()
+
+        if fields is not None:
+            # Sort the fields by their natural ordering
+            def field_sort_fn(field_name):
+                try:
+                    field = item_type._meta.get_field_by_name(field_name)[0]
+                    return (0, field)
+                except FieldDoesNotExist:
+                    return (1, None)
+            fields.sort(key=field_sort_fn)
 
         #TODO check modelform_factory to see if there are updates to this
         attrs = {}
