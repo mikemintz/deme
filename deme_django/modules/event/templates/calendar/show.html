@@ -1,0 +1,42 @@
+{% extends layout %}
+{% load event_extras %}
+{% load item_tags %}
+{% block title %}<img src="{{ collection|icon_url:24 }}" /> {% viewable_name collection %}{% endblock %}
+{% block content %}
+
+<br>
+<h3 align="center">{{ today_string }}</h3>
+
+<table class="monthlycalendar" border = "1" width="90%">
+    <tr>
+        <th>Sun</th>
+        <th>Mon</th>
+        <th>Tue</th>
+        <th>Wed</th>
+        <th>Thu</th>
+        <th>Fri</th>
+        <th>Sat</th>
+    </tr>
+    
+    <tbody>
+    {% for weeks_events in week_list %}
+        <tr>
+            {% for days_events in weeks_events %}
+                <td> 
+                    {{ days_events.day.day }}
+                    {% if days_events.has_events %}
+                    {% for event in days_events.cur_events %}
+                        <div>
+                            <a href="{{ event.url }}">{{ event.name }}</a>
+                        </div>
+                    {% endfor %}
+                    {% endif %}
+                </td>
+            {% endfor %}
+        </tr>
+    {% endfor %}    
+    </tbody>
+
+</table>
+
+{% endblock %}
