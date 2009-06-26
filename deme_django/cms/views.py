@@ -247,6 +247,7 @@ class ItemViewer(Viewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('item/show.html')
         return HttpResponse(template.render(self.context))
 
@@ -696,6 +697,7 @@ class CollectionViewer(ItemViewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
         memberships = self.item.child_memberships
         memberships = memberships.filter(active=True)
         memberships = memberships.filter(item__active=True)
@@ -752,6 +754,7 @@ class GroupViewer(CollectionViewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
         try:
             folio = self.item.folios.get()
             if not self.permission_cache.agent_can('view Folio.group', folio):
@@ -784,6 +787,7 @@ class TextDocumentViewer(DocumentViewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('textdocument/show.html')
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
@@ -1034,6 +1038,7 @@ class ViewerRequestViewer(ItemViewer):
 
     def item_show_html(self, form=None):
         self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
         site, custom_urls = self.item.calculate_full_path()
         self.context['site'] = site
         self.context['custom_urls'] = custom_urls

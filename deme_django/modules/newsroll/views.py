@@ -11,6 +11,7 @@ class NewsRollViewer(ItemViewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('newsroll/show.html')
         collection = self.item
         self.context['collection'] = collection

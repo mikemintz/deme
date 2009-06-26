@@ -9,6 +9,7 @@ class ImageDocumentViewer(FileDocumentViewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('imagedocument/show.html')
         return HttpResponse(template.render(self.context))
 
