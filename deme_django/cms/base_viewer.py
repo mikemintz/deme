@@ -338,9 +338,10 @@ class Viewer(object):
             if self.request.virtual_requests_too_deep(MAXIMUM_VIRTUAL_REQUEST_DEPTH):
                 return self.render_error("Exceeded maximum recursion depth", 'The depth of embedded pages is too high.', HttpResponseNotFound)
         if self.noun is None:
-            action_method = getattr(self, 'type_%s_%s' % (self.action, self.format), None)
+            action_method_name = 'type_%s_%s' % (self.action, self.format)
         else:
-            action_method = getattr(self, 'item_%s_%s' % (self.action, self.format), None)
+            action_method_name = 'item_%s_%s' % (self.action, self.format)
+        action_method = getattr(self, action_method_name, None)
         if action_method:
             if self.noun != None:
                 if self.item is None:
@@ -351,14 +352,15 @@ class Viewer(object):
                     if not isinstance(self.item, self.accepted_item_type):
                         return self.render_item_not_found()
             try:
-                return action_method()
+                response = action_method()
+                return response
             except DemePermissionDenied, e:
                 from cms.templatetags.item_tags import get_viewable_name
                 try:
                     ability_friendly_name = [x[1] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if x[0] == e.ability][0]
                 except IndexError:
                     ability_friendly_name = e.ability
-                if self.context['action_title']:
+                if self.context.get('action_title'):
                     msg = u'You do not have permission to perform the "%s" action' % self.context['action_title']
                 else:
                     msg = u'You do not have permission to perform the action'
