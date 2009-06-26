@@ -674,7 +674,7 @@ class PermissionsBox(template.Node):
             result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify privacy</a></div>""" % modify_privacy_url)
         friendly_names = [x[1] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if x[0] in abilities]
         for friendly_name in friendly_names:
-            result.append("""<div>%s</div>""" % escape(friendly_name))
+            result.append("""<div>%s</div>""" % escape(capfirst(friendly_name)))
         return '\n'.join(result)
 
 @register.tag
@@ -1030,7 +1030,7 @@ class PermissionEditor(template.Node):
             possible_abilities = all_possible_item_and_global_abilities()
         if self.privacy_only:
             possible_abilities = set([x for x in possible_abilities if x.startswith('view ')])
-        possible_abilities = list((ability, friendly_name) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
+        possible_abilities = list((ability, capfirst(friendly_name)) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
 
         if target is None:
             agent_permissions = []

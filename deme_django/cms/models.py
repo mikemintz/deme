@@ -2291,9 +2291,9 @@ class PossibleItemAbilitiesIterable(object):
                         field_name = field.field.rel.related_name.replace('_', ' ')
                     else:
                         field_name = field.verbose_name
-                    friendly_name = u'%s %s (%s)' % (capfirst(action_str), field_name, item_type._meta.verbose_name)
+                    friendly_name = u'%s %s (%s)' % (action_str, field_name, item_type._meta.verbose_name)
                 else:
-                    friendly_name = capfirst(ability.replace('_', ' '))
+                    friendly_name = ability.replace('_', ' ')
                 choice = (ability, friendly_name)
                 choices.add(choice)
         choices = list(choices)
@@ -2317,10 +2317,9 @@ class PossibleGlobalAbilitiesIterable(object):
                 if ability.startswith('create '):
                     action_str, item_type_str = ability.split(' ', 1)
                     assert item_type.__name__ == item_type_str
-                    friendly_name = u'%s %s' % (capfirst(action_str), item_type._meta.verbose_name_plural)
+                    friendly_name = u'%s %s' % (action_str, item_type._meta.verbose_name_plural)
                 else:
-                    friendly_name = capfirst(ability.replace('_', ' '))
-
+                    friendly_name = ability.replace('_', ' ')
                 choice = (ability, friendly_name)
                 choices.add(choice)
         choices = list(choices)
