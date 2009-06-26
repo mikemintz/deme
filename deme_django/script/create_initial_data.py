@@ -12,6 +12,7 @@ setup_environ(settings)
 from cms.models import *
 from cms.permissions import all_possible_global_abilities
 from modules.webauth.models import *
+from modules.demeaccount.models import *
 from django import db
 import subprocess
 import re
