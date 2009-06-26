@@ -355,18 +355,18 @@ class Viewer(object):
                 response = action_method()
                 return response
             except DemePermissionDenied, e:
-                from cms.templatetags.item_tags import get_viewable_name
+                from cms.templatetags.item_tags import get_item_link_tag
                 ability_friendly_name = friendly_name_for_ability(e.ability) or e.ability
                 if self.context.get('action_title'):
                     msg = u'You do not have permission to perform the "%s" action' % self.context['action_title']
                 else:
                     msg = u'You do not have permission to perform the action'
                 if self.item:
-                    msg += u' on <a href="%s">%s</a>' % (self.item.get_absolute_url(), get_viewable_name(self.context, self.item))
+                    msg += u' on %s' % get_item_link_tag(self.context, self.item)
                 if e.item is None:
                     msg += u' (you need the "%s" global ability)' % ability_friendly_name
                 else:
-                    msg += u' (you need the "%s" ability on <a href="%s">%s</a>)' % (ability_friendly_name, e.item.get_absolute_url(), get_viewable_name(self.context, e.item))
+                    msg += u' (you need the "%s" ability on %s)' % (ability_friendly_name, get_item_link_tag(self.context, e.item))
                 return self.render_error('Permission Denied', msg)
         else:
             return None
