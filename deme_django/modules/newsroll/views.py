@@ -10,7 +10,7 @@ class NewsRollViewer(ItemViewer):
     viewer_name = 'newsroll'
 
     def item_show_html(self):
-        self.context['action_title'] = 'Show'
+        self.context['action_title'] = ''
         template = loader.get_template('newsroll/show.html')
         collection = self.item
         self.context['collection'] = collection
