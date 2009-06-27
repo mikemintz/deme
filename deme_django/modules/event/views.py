@@ -39,19 +39,21 @@ class CalendarViewer(ItemViewer):
         for member in all_members:
             if issubclass(member.actual_item_type(), Event): 
                 member = member.downcast()
-                if member.start_date.month == today.month:
-                    day_event_list = []
-                    if member.start_date.day in events.keys():
-                        day_event_list = events[member.start_date.day]
+                if member.start_date.month == today.month: #delete to have events displayed not in current month?
+                    for i in range(member.start_date.day, member.end_date.day +1):
+                        this_day = date(member.start_date.year, member.start_date.month, i)
+                        day_event_list = []
+                        if this_day in events.keys():
+                            day_event_list = events[this_day]
 
-                    details = {}
-                    details["start_time"] = member.start_time
-                    details["start_date"] = member.start_date
-                    details["end_date"] = member.end_date
-                    details["name"] = member.display_name()
-                    details["url"] = member.get_absolute_url() 
-                    day_event_list.append(details)
-                    events[member.start_date.day] = day_event_list
+                        details = {}
+                        details["start_time"] = member.start_time
+                        details["start_date"] = member.start_date
+                        details["end_date"] = member.end_date
+                        details["name"] = member.display_name()
+                        details["url"] = member.get_absolute_url() 
+                        day_event_list.append(details)
+                        events[this_day] = day_event_list
 
         event_week_list = []
 
@@ -62,10 +64,9 @@ class CalendarViewer(ItemViewer):
                 days_events = {}
                 days_events["day"] = day
                 days_events["has_events"] = False
-                if day.month == today.month:
-                    if day.day in events.keys() :
-                        days_events["cur_events"] = events[day.day]
-                        days_events["has_events"] = True
+                if day in events.keys() :
+                    days_events["cur_events"] = events[day]
+                    days_events["has_events"] = True
                 event_week.append(days_events)
 
             event_week_list.append(event_week)
@@ -73,8 +74,6 @@ class CalendarViewer(ItemViewer):
         self.context['today'] = today
         self.context['today_string'] = today.strftime("%B %Y")
         self.context['week_list'] = event_week_list
-        self.context['events'] = events
-        self.context['event_keys'] = events.keys()
         return HttpResponse(template.render(self.context))
 
 
