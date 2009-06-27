@@ -1,13 +1,32 @@
 {% extends layout %}
 {% load event_extras %}
 {% load item_tags %}
-{% block title %}<img src="{{ collection|icon_url:24 }}" /> {% viewable_name collection %}{% endblock %}
+{% block title %}<img src="{{ collection|icon_url:24 }}" /> {% viewable_name collection %}
+<style type ="text/css">
+    .calendar, .calendar table {
+  border: 1px solid #556;
+  font-size: 11px;
+  color: #000;
+  cursor: default;
+  background: #eef;
+  font-family: tahoma,verdana,sans-serif;
+}
+
+.calendar tbody .day { /* Cells <TD> containing month days dates */
+  width: 2em;
+  color: #456;
+  text-align: right;
+  padding: 2px 4px 2px 2px;
+}
+
+</style>
+{% endblock %}
 {% block content %}
 
 <br>
 <h3 align="center">{{ today_string }}</h3>
 
-<table class="monthlycalendar" border = "1" width="90%">
+<table class="calendar">
     <tr>
         <th>Sun</th>
         <th>Mon</th>
@@ -20,9 +39,9 @@
     
     <tbody>
     {% for weeks_events in week_list %}
-        <tr>
+        <tr valign="top">
             {% for days_events in weeks_events %}
-                <td> 
+                <td class="day"> 
                     {{ days_events.day.day }}
                     {% if days_events.has_events %}
                     {% for event in days_events.cur_events %}
