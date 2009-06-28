@@ -22,7 +22,7 @@
 
 {% ifagentcan 'modify_membership' item %}
 <div>
-<a href="{% url item_type_url viewer="membership",action="new" %}?collection={{ item.pk }}&redirect={{ full_path|urlencode }}">Add a member</a>
+<a href="{% url item_type_url viewer="membership",action="new" %}?populate_collection={{ item.pk }}&redirect={{ full_path|urlencode }}">Add a member</a>
 </div>
 {% endifagentcan %}
 
