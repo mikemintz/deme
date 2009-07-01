@@ -31,16 +31,31 @@ class CalendarViewer(ItemViewer):
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         all_members = collection.all_contained_collection_members(recursive_filter).order_by('-created_at')
 
-        this_month = calendar.Calendar(6)
+        try:
+            month_offset = int(self.request.GET.get('month_offset', '0'))
+        except ValueError:
+            month_offset = 0
+
         today = date.today()
-        week_list = this_month.monthdatescalendar(today.year,today.month)
+        year = today.year
+        month = today.month
+        while month + month_offset > 12:
+            year = year + 1
+            month = month - 12
+        while month + month_offset < 1:
+            year = year - 1
+            month = month + 12
+
+        today = date(year, (month + month_offset), today.day)
+        this_month = calendar.Calendar(6)
+        week_list = this_month.monthdatescalendar(today.year, today.month)
         events = {}
 
         for member in all_members:
             if issubclass(member.actual_item_type(), Event): 
                 member = member.downcast()
                 if member.start_date.month == today.month: #delete to have events displayed not in current month?
-                    for i in range(member.start_date.day, member.end_date.day +1):
+                    for i in range(member.start_date.day, member.end_date.day + 1):
                         this_day = date(member.start_date.year, member.start_date.month, i)
                         day_event_list = []
                         if this_day in events.keys():
@@ -63,17 +78,15 @@ class CalendarViewer(ItemViewer):
             for day in week:
                 days_events = {}
                 days_events["day"] = day
-                days_events["has_events"] = False
-                if day in events.keys() :
-                    days_events["cur_events"] = events[day]
-                    days_events["has_events"] = True
+                days_events["cur_events"] = events.get(day, [])
                 event_week.append(days_events)
 
             event_week_list.append(event_week)
 
         self.context['today'] = today
-        self.context['today_string'] = today.strftime("%B %Y")
         self.context['week_list'] = event_week_list
+        self.context['next_month_offset'] = month_offset + 1
+        self.context['prev_month_offset'] = month_offset - 1
         return HttpResponse(template.render(self.context))
 
 

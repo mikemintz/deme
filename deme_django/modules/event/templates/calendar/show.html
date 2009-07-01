@@ -3,20 +3,25 @@
 {% load item_tags %}
 {% block title %}<img src="{{ collection|icon_url:24 }}" /> {% viewable_name collection %}
 <style type ="text/css">
-    .calendar, .calendar table {
+     .calendar {
   border: 1px solid #556;
   font-size: 11px;
   color: #000;
   cursor: default;
   background: #eef;
-  font-family: tahoma,verdana,sans-serif;
 }
 
-.calendar tbody .day { /* Cells <TD> containing month days dates */
-  width: 2em;
+.day { 
+  width: 14%;
   color: #456;
   text-align: right;
   padding: 2px 4px 2px 2px;
+}
+
+.header {
+    width: 14%
+    text-align: right;
+    
 }
 
 </style>
@@ -24,10 +29,19 @@
 {% block content %}
 
 <br>
-<h3 align="center">{{ today_string }}</h3>
+<h3 align="center">{{ today|date:"M Y" }}</h3>
+
+<div>
+    <span style="text-align: left;">
+        <a href="?month_offset={{ prev_month_offset }}">Previous Month</a>
+    </span>
+    <span style="text-align: right;">
+        <a href="?month_offset={{ next_month_offset }}">Next Month</a>
+    </span>
+</div>
 
 <table class="calendar">
-    <tr>
+    <tr class="header">
         <th>Sun</th>
         <th>Mon</th>
         <th>Tue</th>
@@ -43,13 +57,11 @@
             {% for days_events in weeks_events %}
                 <td class="day"> 
                     {{ days_events.day.day }}
-                    {% if days_events.has_events %}
                     {% for event in days_events.cur_events %}
                         <div>
                             <a href="{{ event.url }}">{{ event.name }}</a>
                         </div>
                     {% endfor %}
-                    {% endif %}
                 </td>
             {% endfor %}
         </tr>
