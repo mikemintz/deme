@@ -12,6 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.db import models
+from django.db.models.fields import FieldDoesNotExist
 from django import forms
 import datetime
 from cms.permissions import MultiAgentPermissionCache
@@ -21,8 +22,10 @@ from cms.forms import JavaScriptSpamDetectionField, AjaxModelChoiceField
 #TODO obey self.format when rendering an error if possible
 
 class DemePermissionDenied(Exception):
-    "The agent does not have permission to perform the action"
-    pass
+    def __init__(self, ability, item):
+        self.ability = ability
+        self.item = item
+        super(DemePermissionDenied, self).__init__("The agent does not have permission to perform the action")
 
 def get_logged_in_agent(request):
     """
@@ -198,25 +201,30 @@ class Viewer(object):
         Raise a DemePermissionDenied exception if the current agent does not
         have the specified global ability.
         """
-        #TODO put the details in the exception so we can display them
         if not self.cur_agent_can_global(ability, wildcard_suffix):
-            raise DemePermissionDenied
+            if wildcard_suffix:
+                raise DemePermissionDenied(_(ability.strip()), None)
+            else:
+                raise DemePermissionDenied(ability, None)
 
     def require_ability(self, ability, item, wildcard_suffix=False):
         """
         Raise a DemePermissionDenied exception if the current agent does not
         have the specified ability with respect to the specified item.
         """
-        #TODO put the details in the exception so we can display them
         if not self.cur_agent_can(ability, item, wildcard_suffix):
-            raise DemePermissionDenied
+            if wildcard_suffix:
+                raise DemePermissionDenied(_(ability.strip()), item)
+            else:
+                raise DemePermissionDenied(ability, item)
 
     def render_error(self, title, body, request_class=HttpResponseBadRequest):
         """
         Return an HttpResponse (of type request_class) that displays a simple
         error page with the specified title and body.
         """
-        self.context['action_title'] = 'Error'
+        if 'action_title' not in self.context:
+            self.context['action_title'] = 'Error'
         template = loader.get_template_from_string("""
         {%% extends layout %%}
         {%% load item_tags %%}
@@ -263,12 +271,11 @@ class Viewer(object):
         self.context['_viewer'] = self
         self._set_default_layout()
 
-    def init_for_div(self, original_viewer, action, item):
+    def init_for_div(self, original_viewer, action, item, query_string):
         if item is None:
             path = reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': action})
         else:
             path = reverse('item_url', kwargs={'viewer': self.viewer_name, 'action': action, 'noun': item.pk})
-        query_string = ''
         self.request = VirtualRequest(original_viewer.request, path, query_string)
         self.cur_agent = original_viewer.cur_agent
         self.cur_site = original_viewer.cur_site
@@ -330,9 +337,10 @@ class Viewer(object):
             if self.request.virtual_requests_too_deep(MAXIMUM_VIRTUAL_REQUEST_DEPTH):
                 return self.render_error("Exceeded maximum recursion depth", 'The depth of embedded pages is too high.', HttpResponseNotFound)
         if self.noun is None:
-            action_method = getattr(self, 'type_%s_%s' % (self.action, self.format), None)
+            action_method_name = 'type_%s_%s' % (self.action, self.format)
         else:
-            action_method = getattr(self, 'item_%s_%s' % (self.action, self.format), None)
+            action_method_name = 'item_%s_%s' % (self.action, self.format)
+        action_method = getattr(self, action_method_name, None)
         if action_method:
             if self.noun != None:
                 if self.item is None:
@@ -343,9 +351,22 @@ class Viewer(object):
                     if not isinstance(self.item, self.accepted_item_type):
                         return self.render_item_not_found()
             try:
-                return action_method()
-            except DemePermissionDenied:
-                return self.render_error('Permission Denied', "You do not have permission to perform this action")
+                response = action_method()
+                return response
+            except DemePermissionDenied, e:
+                from cms.templatetags.item_tags import get_item_link_tag
+                ability_friendly_name = friendly_name_for_ability(e.ability) or e.ability
+                if self.context.get('action_title'):
+                    msg = u'You do not have permission to perform the "%s" action' % self.context['action_title']
+                else:
+                    msg = u'You do not have permission to perform the action'
+                if self.item:
+                    msg += u' on %s' % get_item_link_tag(self.context, self.item)
+                if e.item is None:
+                    msg += u' (you need the "%s" global ability)' % ability_friendly_name
+                else:
+                    msg += u' (you need the "%s" ability on %s)' % (ability_friendly_name, get_item_link_tag(self.context, e.item))
+                return self.render_error('Permission Denied', msg)
         else:
             return None
 
@@ -378,6 +399,16 @@ class Viewer(object):
                 return super(models.ForeignKey, f).formfield(**options)
             else:
                 return f.formfield()
+
+        if fields is not None:
+            # Sort the fields by their natural ordering
+            def field_sort_fn(field_name):
+                try:
+                    field = item_type._meta.get_field_by_name(field_name)[0]
+                    return (0, field)
+                except FieldDoesNotExist:
+                    return (1, None)
+            fields.sort(key=field_sort_fn)
 
         #TODO check modelform_factory to see if there are updates to this
         attrs = {}

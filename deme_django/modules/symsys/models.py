@@ -111,6 +111,22 @@ class SymsysCareer(Item):
     start_date            = models.DateField(_('start date'))
     end_date              = models.DateField(_('end date'), blank=True, null=True, default=None)
 
+    def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
+        if field_name == 'symsys_affiliate':
+            if relation_added:
+                status = _(" now has Symsys career ")
+            else:
+                status = _(" no longer has Symsys career ")
+            return [action_item, status, self]
+        elif field_name == 'original_photo':
+            if relation_added:
+                status = _(" is the photo for ")
+            else:
+                status = _(" is no longer the photo for ")
+            return [action_item, status, self]
+        else:
+            return super(SymsysCareer, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
+
     def _after_create(self, action_agent, action_summary, action_time):
         super(SymsysCareer, self)._after_create(action_agent, action_summary, action_time)
         self._guarantee_consistency_after_changes()
@@ -252,6 +268,22 @@ class ThesisSymsysCareer(SymsysCareer):
     thesis_title  = models.CharField(_('thesis title'), max_length=255, blank=True)
     #TODO: make a special viewer for the student to upload a file into a FileDocument have have this field point to it (only if blank right now?)
 
+    def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
+        if field_name == 'second_reader':
+            if relation_added:
+                status = _(" is the second reader for ")
+            else:
+                status = _(" is no longer the second reader for ")
+            return [action_item, status, self]
+        elif field_name == 'thesis':
+            if relation_added:
+                status = _(" is the thesis for ")
+            else:
+                status = _(" is no longer the thesis for ")
+            return [action_item, status, self]
+        else:
+            return super(ThesisSymsysCareer, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
+
 
 class StudentSymsysCareer(SymsysCareer):
     # Setup
@@ -268,6 +300,16 @@ class StudentSymsysCareer(SymsysCareer):
     class_year      = models.PositiveIntegerField(_('class year'), null=True, blank=True, default=None)
     advisor         = FixedForeignKey('SymsysAffiliate', null=True, blank=True, related_name="advisor_group", verbose_name=_('advisor'), default=None)
     other_degrees   = models.CharField(_('other degrees'), max_length=255, blank=True)
+
+    def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
+        if field_name == 'advisor':
+            if relation_added:
+                status = _(" is the advisor for ")
+            else:
+                status = _(" is no longer the advisor for ")
+            return [action_item, status, self]
+        else:
+            return super(ThesisSymsysCareer, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
 
 
 class MinorSymsysCareer(StudentSymsysCareer):
@@ -321,6 +363,16 @@ class HonorsSymsysCareer(ThesisSymsysCareer):
 
     # Fields
     advisor = FixedForeignKey('SymsysAffiliate', null=True, blank=True, related_name="honors_advisor_group", verbose_name=_('advisor'), default=None)
+
+    def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
+        if field_name == 'advisor':
+            if relation_added:
+                status = _(" is the advisor for ")
+            else:
+                status = _(" is no longer the advisor for ")
+            return [action_item, status, self]
+        else:
+            return super(HonorsSymsysCareer, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
 
 
 class ResearcherSymsysCareer(SymsysCareer):
@@ -397,6 +449,16 @@ class SymsysAffiliate(Person):
         membership = Membership(item=self, collection=all_ssp_users)
         # There are no permissions we need to set on this membership
         membership.save_versioned(action_agent=group_creator)
+
+    def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
+        if field_name == 'photo':
+            if relation_added:
+                status = _(" is the photo for ")
+            else:
+                status = _(" is no longer the photo for ")
+            return [action_item, status, self]
+        else:
+            return super(ThesisSymsysCareer, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
 
 
 class Advertisement(Document):

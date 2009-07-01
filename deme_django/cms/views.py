@@ -4,7 +4,6 @@ from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.utils.http import urlquote
-from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
 from django.template import loader
 from django.db import models
@@ -247,6 +246,7 @@ class ItemViewer(Viewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('item/show.html')
         return HttpResponse(template.render(self.context))
 
@@ -555,12 +555,12 @@ class AuthenticationMethodViewer(ItemViewer):
             login_as_agents = self.permission_cache.filter_items('login_as', login_as_agents)
             self.permission_cache.filter_items('view Item.name', login_as_agents)
             template = loader.get_template('authenticationmethod/login.html')
-            self.context['redirect'] = self.request.GET['redirect']
+            self.context['redirect'] = self.request.GET.get('redirect', '')
             self.context['login_as_agents'] = login_as_agents
             return HttpResponse(template.render(self.context))
         else:
             # The user just submitted a login form, so we try to authenticate.
-            redirect = self.request.GET['redirect']
+            redirect = self.request.GET.get('redirect', '')
             for key in self.request.POST.iterkeys():
                 if key.startswith('login_as_'):
                     new_agent_id = key.split('login_as_')[1]
@@ -581,7 +581,7 @@ class AuthenticationMethodViewer(ItemViewer):
     def type_logout_html(self):
         if 'cur_agent_id' in self.request.session:
             del self.request.session['cur_agent_id']
-        redirect = self.request.GET['redirect']
+        redirect = self.request.GET.get('redirect', '')
         full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
         return HttpResponseRedirect(full_redirect)
 
@@ -590,60 +590,15 @@ class AuthenticationMethodViewer(ItemViewer):
             self.context['action_title'] = 'Logged out'
         else:
             self.context['action_title'] = 'Logged in'
-        redirect = self.request.GET['redirect']
-        self.context['redirect'] = redirect
+        self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('authenticationmethod/loggedinorout.html')
         return HttpResponse(template.render(self.context))
     
     def type_loginmenuitem_html(self):
+        self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('authenticationmethod/loginmenuitem.html')
         return HttpResponse(template.render(self.context))
  
-
-class DemeAccountViewer(AuthenticationMethodViewer):
-    accepted_item_type = DemeAccount
-    viewer_name = 'demeaccount'
-
-    def type_login_html(self):
-        redirect = self.request.GET['redirect']
-        nonce = self.request.session['login_nonce']
-        del self.request.session['login_nonce']
-        username = self.request.POST['username']
-        hashed_password = self.request.POST['hashed_password']
-        try:
-            password_authentication_method = DemeAccount.objects.get(username=username, active=True, agent__active=True)
-        except ObjectDoesNotExist:
-            # No active DemeAccount has this username.
-            return self.render_error("Authentication Failed", "Invalid username/password")
-        if password_authentication_method.check_nonced_password(hashed_password, nonce):
-            self.request.session['cur_agent_id'] = password_authentication_method.agent.pk
-            full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
-            return HttpResponseRedirect(full_redirect)
-        else:
-            # The password given does not correspond to the DemeAccount.
-            return self.render_error("Authentication Failed", "Invalid username/password")
-
-    def type_getencryptionmethod_html(self):
-        # Return a JSON response with the details about the DemeAccount
-        # necessary for JavaScript to encrypt the password.
-        username = self.request.GET['username']
-        nonce = DemeAccount.get_random_hash()[:5]
-        self.request.session['login_nonce'] = nonce
-        try:
-            password = DemeAccount.objects.get(username=username).password
-            algo, salt, hsh = password.split('$')
-            response_data = {'nonce':nonce, 'algo':algo, 'salt':salt}
-        except ObjectDoesNotExist:
-            # We need a fake salt so it looks like the account could exist
-            salt = DemeAccount.get_hexdigest('sha1', username, settings.SECRET_KEY)[:5]
-            response_data = {'nonce':nonce, 'algo':'sha1', 'salt':salt}
-        json_data = simplejson.dumps(response_data, separators=(',',':'))
-        return HttpResponse(json_data, mimetype='application/json')
-        
-    def type_loginmenuitem_html(self):
-        template = loader.get_template('demeaccount/loginmenuitem.html')
-        return HttpResponse(template.render(self.context))
-
 
 class PersonViewer(AgentViewer):
     accepted_item_type = Person
@@ -696,6 +651,7 @@ class CollectionViewer(ItemViewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
         memberships = self.item.child_memberships
         memberships = memberships.filter(active=True)
         memberships = memberships.filter(item__active=True)
@@ -715,7 +671,7 @@ class CollectionViewer(ItemViewer):
         except:
             return self.render_error('Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('add_self', self.item))):
-            raise DemePermissionDenied
+            raise DemePermissionDenied('modify_membership', None)
         try:
             membership = Membership.objects.get(collection=self.item, item=member)
             if not membership.active:
@@ -735,7 +691,7 @@ class CollectionViewer(ItemViewer):
         except:
             return self.render_error('Invalid URL', "You must specify the member you are adding")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('remove_self', self.item))):
-            raise DemePermissionDenied
+            raise DemePermissionDenied('modify_membership', None)
         try:
             membership = Membership.objects.get(collection=self.item, item=member)
             if membership.active:
@@ -752,6 +708,7 @@ class GroupViewer(CollectionViewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
         try:
             folio = self.item.folios.get()
             if not self.permission_cache.agent_can('view Folio.group', folio):
@@ -784,6 +741,7 @@ class TextDocumentViewer(DocumentViewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('textdocument/show.html')
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         return HttpResponse(template.render(self.context))
@@ -1034,6 +992,7 @@ class ViewerRequestViewer(ItemViewer):
 
     def item_show_html(self, form=None):
         self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
         site, custom_urls = self.item.calculate_full_path()
         self.context['site'] = site
         self.context['custom_urls'] = custom_urls

@@ -37,7 +37,7 @@
         <div>Password:</div>
         <div><input type="password" name="password" /></div>
     </form>
-    <form name="real_password_form" action="{% url item_type_url viewer="demeaccount",action="login" %}?redirect={{ full_path|urlencode }}" method="post">
+    <form name="real_password_form" action="{% url item_type_url viewer="demeaccount",action="login" %}?redirect={{ redirect|urlencode }}" method="post">
         <input type="hidden" name="username" />
         <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
     </form>

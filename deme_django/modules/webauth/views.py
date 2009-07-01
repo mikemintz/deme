@@ -37,8 +37,9 @@ class WebauthAccountViewer(AuthenticationMethodViewer):
     def type_loginmenuitem_html(self):
         if self.cur_agent.is_anonymous():
             login_url = reverse('item_type_url', kwargs={'viewer': 'webauthaccount', 'action': 'login'})
-            login_url_with_redirect = '%s?redirect=%s' % (login_url, urlquote(self.context['full_path']))
-            result = '<li class="loginmenuitem"><a href="%s">Webauth</a></li>' % login_url_with_redirect
+            if 'redirect' in self.request.GET:
+                login_url += '?redirect=%s' % urlquote(self.request.GET['redirect'])
+            result = '<li class="loginmenuitem"><a href="%s">Webauth</a></li>' % login_url
         else:
             result = ''
         return HttpResponse(result)

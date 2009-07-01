@@ -12,6 +12,7 @@ setup_environ(settings)
 from cms.models import *
 from cms.permissions import all_possible_global_abilities
 from modules.webauth.models import *
+from modules.demeaccount.models import *
 from django import db
 import subprocess
 import re
@@ -49,9 +50,9 @@ for item_type in all_item_types():
             is_allowed = False
         AllToAllPermission(ability=ability, is_allowed=is_allowed).save()
 
-# Give everyone permission to create any item type, except DemeSetting and Site
+# Give everyone permission to create any item type, except DemeSetting, Site, and DjangoTemplateDocument
 for item_type in all_item_types():
-    if item_type in [DemeSetting, Site]:
+    if item_type in [DemeSetting, Site, DjangoTemplateDocument]:
         continue
     ability = 'create %s' % item_type.__name__
     if ability in all_possible_global_abilities():

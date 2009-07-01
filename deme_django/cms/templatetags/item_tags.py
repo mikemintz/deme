@@ -64,6 +64,19 @@ def get_viewable_name(context, item):
     return item.display_name(can_view_name_field)
 
 
+def get_item_link_tag(context, item, version_number=None):
+    """
+    Return an <a> tag for the item with its name as the text, using
+    get_viewable_name to calculate the name.
+    """
+    url = escape(item.get_absolute_url())
+    name = escape(get_viewable_name(context, item))
+    if version_number is None:
+        return '<a href="%s">%s</a>' % (url, name)
+    else:
+        return '<a href="%s?version=%d">%s</a>' % (url, version_number, name)
+
+
 def is_method_defined_and_not_inherited_in_class(method_name, class_object):
     my_fn = getattr(getattr(class_object, method_name, None), 'im_func', None)
     parent_fn = getattr(getattr(class_object.__base__, method_name, None), 'im_func', None)
@@ -545,7 +558,7 @@ class ItemDetails(template.Node):
             result.append('<tr>')
             result.append('<th>Creator:</th>')
             result.append('<td>')
-            result.append('<a href="%s">%s</a>' % (item.creator.get_absolute_url(), escape(get_viewable_name(context, item.creator))))
+            result.append(get_item_link_tag(context, item.creator))
             result.append('</td>')
             result.append('</tr>')
 
@@ -615,9 +628,9 @@ class CalculateComments(template.Node):
                     comment_name = escape(get_viewable_name(context, comment))
                 result.append("""<a href="%s">%s</a>""" % (comment.get_absolute_url(), comment_name))
                 if agentcan_helper(context, 'view Item.creator', comment):
-                    result.append('by <a href="%s">%s</a>' % (comment.creator.get_absolute_url(), escape(get_viewable_name(context, comment.creator))))
+                    result.append('by %s' % get_item_link_tag(context, comment.creator))
                 if item.pk != comment.item_id and nesting_level == 0:
-                    result.append('for <a href="%s">%s</a>' % (comment.item.get_absolute_url(), escape(get_viewable_name(context, comment.item))))
+                    result.append('for %s' % get_item_link_tag(context, comment.item))
                 if agentcan_helper(context, 'view Item.created_at', comment):
                     result.append('<span title="%s">%s ago</span>' % (comment.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(comment.created_at)))
                 result.append("</div>")
@@ -674,7 +687,7 @@ class PermissionsBox(template.Node):
             result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify privacy</a></div>""" % modify_privacy_url)
         friendly_names = [x[1] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if x[0] in abilities]
         for friendly_name in friendly_names:
-            result.append("""<div>%s</div>""" % escape(friendly_name))
+            result.append("""<div>%s</div>""" % escape(capfirst(friendly_name)))
         return '\n'.join(result)
 
 @register.tag
@@ -730,9 +743,7 @@ class CalculateRelationships(template.Node):
             list_url = '%s?filter=%s.%d' % (reverse('item_type_url', kwargs={'viewer': field.model.__name__.lower()}), field.field.name, item.pk)
             result.append("""<div><a href="%s"><b>%s</b></a></div>""" % (list_url, friendly_name))
             for related_item in relationship_set['items']:
-                related_item_url = related_item.get_absolute_url()
-                related_item_name = get_viewable_name(context, related_item)
-                result.append("""<div><a href="%s">%s</a></div>""" % (related_item_url, escape(related_item_name)))
+                result.append("""<div>%s</div>""" % get_item_link_tag(context, related_item))
         context['relationships_box'] = mark_safe('\n'.join(result))
         context['n_relationships'] = sum(len(x['items']) for x in relationship_sets)
         return ''
@@ -806,13 +817,12 @@ class CalculateActionNotices(template.Node):
                     if not agentcan_helper(context, 'view %s.%s' % (action_notice.from_field_model, action_notice.from_field_name), action_notice.from_item):
                         continue
                 action_time_text = '<span title="%s">%s ago</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
-                action_agent_name = get_viewable_name(context, action_notice.action_agent)
-                action_agent_text = u'<a href="%s">%s</a>' % (escape(action_notice.action_agent.get_absolute_url()), escape(action_agent_name))
+                action_agent_text = get_item_link_tag(context, action_notice.action_agent)
                 if action_notice.action_item.pk == item.pk:
                     action_item_name = 'this'
                 else:
                     action_item_name = get_viewable_name(context, action_notice.action_item)
-                action_item_text = u'<a href="%s">%s</a>' % (escape(action_notice.action_item.get_absolute_url() + '?version=%d' % action_notice.action_item_version_number), escape(action_item_name))
+                action_item_text = get_item_link_tag(context, action_notice.action_item, action_notice.action_item_version_number)
                 if action_notice.action_summary:
                     action_summary_text = u' (%s)' % escape(action_notice.action_summary)
                 else:
@@ -829,9 +839,7 @@ class CalculateActionNotices(template.Node):
                             elif part == action_notice.action_item:
                                 action_sentence_parts.append(action_item_text)
                             else:
-                                part_name = get_viewable_name(context, part)
-                                part_text = u'<a href="%s">%s</a>' % (escape(part.get_absolute_url()), escape(part_name))
-                                action_sentence_parts.append(part_text)
+                                action_sentence_parts.append(get_item_link_tag(context, part))
                         else:
                             action_sentence_parts.append(unicode(part))
                     action_sentence = u''.join(action_sentence_parts)
@@ -908,7 +916,7 @@ class SubclassFieldsBox(template.Node):
                 if isinstance(field, models.ForeignKey):
                     foreign_item = getattr(item, field.name)
                     if foreign_item:
-                        result.append('<a href="%s">%s</a>' % (escape(foreign_item.get_absolute_url()), get_viewable_name(context, foreign_item)))
+                        result.append(get_item_link_tag(context, foreign_item))
                     else:
                         result.append('None')
                 else:
@@ -958,7 +966,7 @@ class EmbeddedItem(template.Node):
             return ''
         item = item.downcast()
         viewer = viewer_class()
-        viewer.init_for_div(context['_viewer'], 'show', item)
+        viewer.init_for_div(context['_viewer'], 'show', item, '')
         return """<div style="padding: 10px; border: thick solid #aaa;">%s</div>""" % viewer.dispatch().content
 
 
@@ -1030,7 +1038,7 @@ class PermissionEditor(template.Node):
             possible_abilities = all_possible_item_and_global_abilities()
         if self.privacy_only:
             possible_abilities = set([x for x in possible_abilities if x.startswith('view ')])
-        possible_abilities = list((ability, friendly_name) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
+        possible_abilities = list((ability, capfirst(friendly_name)) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
 
         if target is None:
             agent_permissions = []
@@ -1054,7 +1062,7 @@ class PermissionEditor(template.Node):
 
         if self.is_new_item:
             # Creator has do_anything ability when creating a new item
-            creator = context['cur_agent']
+            creator = Agent.objects.get(pk=context['cur_agent'].pk)
             creator_permission = OneToOnePermission(source=creator, ability='do_anything', is_allowed=True)
             agent_permissions = [x for x in agent_permissions if not (x.source == creator and x.ability == 'do_anything')]
             agent_permissions.append(creator_permission)
@@ -1069,7 +1077,7 @@ class PermissionEditor(template.Node):
             datum['name'] = get_viewable_name(context, agent)
             datum['agent_or_collection_id'] = str(agent.pk)
             datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in agent_permissions if x.source == agent]
-            datum['permissions'].sort(key=lambda x: [y[1] for y in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if y[0] == x['ability']])
+            datum['permissions'].sort(key=lambda x: friendly_name_for_ability(x))
             existing_permission_data.append(datum)
         collection_data = []
         for collection in collections:
@@ -1078,14 +1086,14 @@ class PermissionEditor(template.Node):
             datum['name'] = get_viewable_name(context, collection)
             datum['agent_or_collection_id'] = str(collection.pk)
             datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in collection_permissions if x.source == collection]
-            datum['permissions'].sort(key=lambda x: [y[1] for y in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if y[0] == x['ability']])
+            datum['permissions'].sort(key=lambda x: friendly_name_for_ability(x))
             existing_permission_data.append(datum)
         datum = {}
         datum['permission_type'] = 'everyone'
         datum['name'] = 'Everyone'
         datum['agent_or_collection_id'] = '0'
         datum['permissions'] = [{'ability': x.ability, 'is_allowed': x.is_allowed} for x in everyone_permissions]
-        datum['permissions'].sort(key=lambda x: [y[1] for y in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if y[0] == x['ability']])
+        datum['permissions'].sort(key=lambda x: friendly_name_for_ability(x))
         existing_permission_data.append(datum)
         existing_permission_data.sort(key=lambda x: (x['permission_type'], x['name']))
 
@@ -1345,7 +1353,7 @@ class Crumbs(template.Node):
                 reverse_fields.append(reverse_field)
 
             result = []
-            result.append('<a href="%s">%s</a>' % (target.get_absolute_url(), get_viewable_name(context, target)))
+            result.append(get_item_link_tag(context, target))
             for i, field in enumerate(reverse_fields):
                 subfilter = []
                 subfilter_fields = fields[len(fields)-i-1:]
@@ -1373,10 +1381,9 @@ class Crumbs(template.Node):
                 result.append('</a>')
         action_title = context['action_title']
         if viewer.item:
-            item_url = reverse('item_url', kwargs={'viewer': viewer.viewer_name, 'noun': viewer.noun})
-            result.append(u' &raquo; <a href="%s">%s</a>' % (item_url, get_viewable_name(context, viewer.item)))
+            result.append(u' &raquo; %s' % get_item_link_tag(context, viewer.item))
             if context['specific_version']:
-                version_url = '%s?version=%d' % (item_url, viewer.item.version_number)
+                version_url = '%s?version=%d' % (viewer.item.get_absolute_url(), viewer.item.version_number)
                 result.append(u' &raquo; <a href="%s">v%d</a>' % (version_url, viewer.item.version_number))
         if action_title:
             result.append(u' &raquo; %s' % action_title)
@@ -1491,7 +1498,11 @@ class LoginMenu(template.Node):
         """ % login_menu_text)
         for viewer_class in authentication_method_viewer_classes_with_loginmenuitem:
             viewer2 = viewer_class()
-            viewer2.init_for_div(viewer, 'loginmenuitem', None)
+            if viewer.request.method == 'GET':
+                query_string = 'redirect=%s' % urlquote(viewer.context['full_path'])
+            else:
+                query_string = ''
+            viewer2.init_for_div(viewer, 'loginmenuitem', None, query_string)
             html = viewer2.dispatch().content
             result.append(html)
         result.append("</ul>")

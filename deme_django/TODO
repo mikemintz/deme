@@ -14,14 +14,10 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
-* Add natural_language_representation stuff for RelationActionNotices in all of the modules
 * If you go to "new" and one of the initial model fields is permission denied (e.g., you're creating a membership on a collection you aren't allowed to modify_membership for, or creating a comment on an item you can't reply to), let the user know
-* Maybe DemeAccount should go in its own module. It has a fair amount of code and is independent of everything else.
 * the destroy action notice will never be read by anyone (since all permissions are effectively denied)
-* When you edit an item, the fields are ordered funnily. How did they get ordered so correctly when you create? Obviously, the difference is that we pass in `fields` to the modelform, but how can we give them a better order?
-* When you copy an item, you can discover the permissions of the original item. Not cool.
+* When you copy an item, you can discover the permissions of the original item. Not cool. Probably best solution involves making a view_permissions ability.
 * If you try to add a Membership that used to exist but is now trashed, it fails. The code used to handle this. Probably same with CustomUrls.
-* If you login/logout after you're at a page with POST or at a login page, the "back to page" is weird.
 * Methods that have to do with sending emails (about action notices) should go in EmailContactMethod, not ActionNotice
 * The viewer should probably define a list of actions for each item type to be displayed in a menu
 * Probably don't need auto-load modules: INSTALLED_APPS is more explicit and familiar
