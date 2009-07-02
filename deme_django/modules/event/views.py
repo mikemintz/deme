@@ -64,6 +64,7 @@ class CalendarViewer(ItemViewer):
                         details = {}
                         details["start_time"] = member.start_time
                         details["start_date"] = member.start_date
+                        details["is_starting_date"] = (member.start_date == this_day)
                         details["end_date"] = member.end_date
                         details["name"] = member.display_name()
                         details["url"] = member.get_absolute_url() 
@@ -79,6 +80,7 @@ class CalendarViewer(ItemViewer):
                 days_events = {}
                 days_events["day"] = day
                 days_events["cur_events"] = events.get(day, [])
+                days_events["in_cur_month"] = (day.month == today.month)
                 event_week.append(days_events)
 
             event_week_list.append(event_week)
