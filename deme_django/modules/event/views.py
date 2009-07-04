@@ -5,8 +5,8 @@ from cms.models import *
 from django.db.models import Q
 from modules.event.models import Event
 from datetime import date, datetime
-from icalendar import Calendar as iCal
-from icalendar import Event as iEvent
+#from icalendar import Calendar as iCal
+#from icalendar import Event as iEvent
 import calendar
 import time
 
@@ -95,30 +95,33 @@ class CalendarViewer(ItemViewer):
         self.context['prev_month_offset'] = month_offset - 1
         return HttpResponse(template.render(self.context))
 
-    def item_export_html(self):
-        cal = iCal()
-        collection = self.item
+#    def item_export_html(self):
+#        cal = iCal()
+#        collection = self.item
+#
+#        if self.cur_agent_can_global('do_anything'):
+#            recursive_filter = None
+ #       else:
+  #          visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
+#            recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
+#        all_members = collection.all_contained_collection_members(recursive_filter).order_by('-created_at')
+#
+ #       for member in all_members:
+  #          if issubclass(member.actual_item_type(), Event): 
+#                member = member.downcast()
+ #               newEvent = iEvent()
+  #              newEvent.add('summary', member.display_name())
+   #             newEvent.add('dtstart', datetime.combine(member.start_date, member.start_time))
+    #            newEvent.add('dtend', datetime.combine(member.start_date, member.start_time))
+     #           newEvent.add('location', member.location)
+      #          newEvent.add('description', member.body)
+       #         cal.add_component(newEvent)
 
-        if self.cur_agent_can_global('do_anything'):
-            recursive_filter = None
-        else:
-            visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
-            recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-        all_members = collection.all_contained_collection_members(recursive_filter).order_by('-created_at')
-
-        for member in all_members:
-            if issubclass(member.actual_item_type(), Event): 
-                member = member.downcast()
-                newEvent = iEvent()
-                newEvent.add('summary', member.display_name())
-                newEvent.add('dtstart', datetime.combine(member.start_date, member.start_time))
-                newEvent.add('dtend', datetime.combine(member.start_date, member.start_time))
-                newEvent.add('location', member.location)
-                newEvent.add('description', member.body)
-                cal.add_component(newEvent)
-
-        response = HttpResponse(cal.as_string(), mimetype='ics')
-        response['Content-Disposition'] = 'attachment; filename=demeCalendar.ics'
-        return response
+#        response = HttpResponse(cal.as_string(), mimetype='ics')
+#        response['Content-Disposition'] = 'attachment; filename=demeCalendar.ics'
+#        return response
+#<div>
+ #    <a href="{% url item_url viewer="calendar" action="export" noun=collection.pk %}">An Exportable Version of this Calendar</a> 
+#</div>
 
 
