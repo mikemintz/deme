@@ -16,7 +16,7 @@
 
 .day { 
   width: 14%;
-  height: 50px;
+  height: 58px;
   color: #456;
   text-align: right;
   vertical-align: top;
@@ -54,7 +54,7 @@
     {% for weeks_events in week_list %}
         <tr valign="top">
             {% for days_events in weeks_events %}
-                <td class="day"> 
+            <td class="day" {% if days_events.is_today %} style="background: lightblue;" {% endif %}> 
                     {% if days_events.in_cur_month %}
                         {{ days_events.day.day }}
                     {% else %}
@@ -64,7 +64,7 @@
                     {% endif %}
 
                     {% for event in days_events.cur_events %}
-                        <div>
+                        <div style="margin-bottom: 2px; border: thin #ccc solid; background: #fee; -moz-border-radius: 8px; padding: 1px; ">
                             {% if event.is_starting_date %}
                                 {{ event.start_time|time:"P" }}
                             {% endif %}
@@ -78,5 +78,8 @@
     </tbody>
 
 </table>
+<div>
+    <a href="{% url item_url viewer="calendar" action="export" noun=collection.pk %}">An Exportable Version of this Calendar</a> 
+</div>
 
 {% endblock %}
