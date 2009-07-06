@@ -5,8 +5,8 @@ from cms.models import *
 from django.db.models import Q
 from modules.event.models import Event
 from datetime import date, datetime
-#from icalendar import Calendar as iCal
-#from icalendar import Event as iEvent
+from icalendar import Calendar as iCal
+from icalendar import Event as iEvent
 import calendar
 import time
 
@@ -31,7 +31,8 @@ class CalendarViewer(ItemViewer):
         else:
             visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-        all_members = collection.all_contained_collection_members(recursive_filter).order_by('-created_at')
+        all_members = collection.all_contained_collection_members(recursive_filter)
+        all_events = Event.objects.filter(pk__in=all_members.values('pk').query)
 
         try:
             month_offset = int(self.request.GET.get('month_offset', '0'))
@@ -53,25 +54,23 @@ class CalendarViewer(ItemViewer):
         week_list = this_month.monthdatescalendar(today.year, today.month)
         events = {}
 
-        for member in all_members:
-            if issubclass(member.actual_item_type(), Event): 
-                member = member.downcast()
-                if member.start_date.month == today.month: #delete to have events displayed not in current month?
-                    for i in range(member.start_date.day, member.end_date.day + 1):
-                        this_day = date(member.start_date.year, member.start_date.month, i)
-                        day_event_list = []
-                        if this_day in events.keys():
-                            day_event_list = events[this_day]
+        for member in all_events:
+            if member.start_date.month == today.month: #delete to have events displayed not in current month?
+                for i in range(member.start_date.day, member.end_date.day + 1):
+                    this_day = date(member.start_date.year, member.start_date.month, i)
+                    day_event_list = []
+                    if this_day in events.keys():
+                        day_event_list = events[this_day]
 
-                        details = {}
-                        details["start_time"] = member.start_time
-                        details["start_date"] = member.start_date
-                        details["is_starting_date"] = (member.start_date == this_day)
-                        details["end_date"] = member.end_date
-                        details["name"] = member.display_name()
-                        details["url"] = member.get_absolute_url() 
-                        day_event_list.append(details)
-                        events[this_day] = day_event_list
+                    details = {}
+                    details["start_time"] = member.start_time
+                    details["start_date"] = member.start_date
+                    details["is_starting_date"] = (member.start_date == this_day)
+                    details["end_date"] = member.end_date
+                    details["name"] = member.display_name()
+                    details["url"] = member.get_absolute_url() 
+                    day_event_list.append(details)
+                    events[this_day] = day_event_list
 
         event_week_list = []
         actual_today = date.today()
@@ -95,33 +94,29 @@ class CalendarViewer(ItemViewer):
         self.context['prev_month_offset'] = month_offset - 1
         return HttpResponse(template.render(self.context))
 
-#    def item_export_html(self):
-#        cal = iCal()
-#        collection = self.item
-#
-#        if self.cur_agent_can_global('do_anything'):
-#            recursive_filter = None
- #       else:
-  #          visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
-#            recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-#        all_members = collection.all_contained_collection_members(recursive_filter).order_by('-created_at')
-#
- #       for member in all_members:
-  #          if issubclass(member.actual_item_type(), Event): 
-#                member = member.downcast()
- #               newEvent = iEvent()
-  #              newEvent.add('summary', member.display_name())
-   #             newEvent.add('dtstart', datetime.combine(member.start_date, member.start_time))
-    #            newEvent.add('dtend', datetime.combine(member.start_date, member.start_time))
-     #           newEvent.add('location', member.location)
-      #          newEvent.add('description', member.body)
-       #         cal.add_component(newEvent)
+    def item_export_html(self):
+        cal = iCal()
+        collection = self.item
 
-#        response = HttpResponse(cal.as_string(), mimetype='ics')
-#        response['Content-Disposition'] = 'attachment; filename=demeCalendar.ics'
-#        return response
-#<div>
- #    <a href="{% url item_url viewer="calendar" action="export" noun=collection.pk %}">An Exportable Version of this Calendar</a> 
-#</div>
+        if self.cur_agent_can_global('do_anything'):
+            recursive_filter = None
+        else:
+            visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
+            recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
+        all_members = collection.all_contained_collection_members(recursive_filter)
+        all_events = Event.objects.filter(pk__in=all_members.values('pk').query)
+
+        for member in all_events:
+            newEvent = iEvent()
+            newEvent.add('summary', member.display_name())
+            newEvent.add('dtstart', datetime.combine(member.start_date, member.start_time))
+            newEvent.add('dtend', datetime.combine(member.start_date, member.start_time))
+            newEvent.add('location', member.location)
+            newEvent.add('description', member.body)
+            cal.add_component(newEvent)
+
+        response = HttpResponse(cal.as_string(), mimetype='ics')
+        response['Content-Disposition'] = 'attachment; filename=demeCalendar.ics'
+        return response
 
 
