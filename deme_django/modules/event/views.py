@@ -34,28 +34,38 @@ class CalendarViewer(ItemViewer):
         all_members = collection.all_contained_collection_members(recursive_filter)
         all_events = Event.objects.filter(pk__in=all_members.values('pk').query)
 
-        try:
-            month_offset = int(self.request.GET.get('month_offset', '0'))
-        except ValueError:
-            month_offset = 0
-
         today = date.today()
-        year = today.year
-        month = today.month
-        while month + month_offset > 12:
-            year = year + 1
-            month = month - 12
-        while month + month_offset < 1:
-            year = year - 1
-            month = month + 12
 
-        today = date(year, (month + month_offset), today.day)
+        try:
+            year = int(self.request.GET.get('year', today.year))
+        except ValueError:
+            year = today.year
+
+        try:
+            month = int(self.request.GET.get('month', today.month))
+        except ValueError:
+            month = today.month
+            
+        if month < 1 or month > 12:
+            month = 1
+        
+        self.context['prev_month'] = month - 1
+        self.context['prev_year'] = year
+        self.context['next_month'] = month + 1
+        self.context['next_year'] = year
+        if month <= 1:
+            self.context['prev_month'] = 12
+            self.context['prev_year'] = year - 1
+        elif month >= 12:
+            self.context['next_month'] = 1
+            self.context['next_year'] = year + 1
+        
         this_month = calendar.Calendar(6)
-        week_list = this_month.monthdatescalendar(today.year, today.month)
+        week_list = this_month.monthdatescalendar(year, month)
         events = {}
 
         for member in all_events:
-            if member.start_date.month == today.month: #delete to have events displayed not in current month?
+            if member.start_date.month == month: #delete to have events displayed not in current month?
                 for i in range(member.start_date.day, member.end_date.day + 1):
                     this_day = date(member.start_date.year, member.start_date.month, i)
                     day_event_list = []
@@ -73,7 +83,6 @@ class CalendarViewer(ItemViewer):
                     events[this_day] = day_event_list
 
         event_week_list = []
-        actual_today = date.today()
 
         for week in week_list:
             event_week = []
@@ -82,16 +91,14 @@ class CalendarViewer(ItemViewer):
                 days_events = {}
                 days_events["day"] = day
                 days_events["cur_events"] = events.get(day, [])
-                days_events["in_cur_month"] = (day.month == today.month)
-                days_events["is_today"] = (day == actual_today)
+                days_events["in_cur_month"] = (day.month == month)
+                days_events["is_today"] = (day == today)
                 event_week.append(days_events)
 
             event_week_list.append(event_week)
 
-        self.context['today'] = today
+        self.context['this_month'] = date(year, month, today.day)
         self.context['week_list'] = event_week_list
-        self.context['next_month_offset'] = month_offset + 1
-        self.context['prev_month_offset'] = month_offset - 1
         return HttpResponse(template.render(self.context))
 
     def item_export_html(self):

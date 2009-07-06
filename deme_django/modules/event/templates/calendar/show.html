@@ -32,11 +32,11 @@
 </style>
 
 <br>
-<h3 align="center">{{ today|date:"M Y" }}</h3>
+<h3 align="center">{{ this_month|date:"M Y" }}</h3>
 
 <div align="center">
-        <a href="?month_offset={{ prev_month_offset }}">~ Previous Month |</a>
-        <a href="?month_offset={{ next_month_offset }}">| Next Month ~</a>
+    <a href="?year={{ prev_year }}&month={{ prev_month }}">~ Previous Month |</a>
+    <a href="?year={{ next_year }}&month={{ next_month }}">| Next Month ~</a>
 </div>
 
 <table class="calendar">
