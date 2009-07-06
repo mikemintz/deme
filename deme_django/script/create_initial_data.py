@@ -44,7 +44,7 @@ for item_type in all_item_types():
             is_allowed = False
         elif ability.startswith('view '):
             is_allowed = True
-        elif ability in ['comment_on', 'view Item.action_notices']:
+        elif ability in ['comment_on']:
             is_allowed = True
         else:
             is_allowed = False

@@ -218,8 +218,11 @@ class SymsysCareer(Item):
                 membership = Membership.objects.get(item=agent, collection=group)
                 if not membership.active:
                     membership.reactivate(action_agent=group_creator)
+                if not membership.permission_enabled:
+                    membership.permission_enabled = True
+                    membership.save_versioned(action_agent=group_creator)
             except ObjectDoesNotExist:
-                membership = Membership(item=agent, collection=group)
+                membership = Membership(item=agent, collection=group, permission_enabled=True)
                 # There are no permissions we need to set on these memberships
                 membership.save_versioned(action_agent=group_creator)
         for membership_to_remove in Membership.objects.filter(active=True, item=agent, collection__in=all_possible_groups.exclude(pk__in=[x.pk for x in groups])):
