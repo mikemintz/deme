@@ -1,10 +1,11 @@
 from django.template import Context, loader
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from cms.views import HtmlDocumentViewer, ItemViewer
 from cms.models import *
 from django.db.models import Q
 from modules.event.models import Event
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from icalendar import Calendar as iCal
 from icalendar import Event as iEvent
 import calendar
@@ -65,16 +66,21 @@ class CalendarViewer(ItemViewer):
         
         this_month = calendar.Calendar(6)
         week_list = this_month.monthdatescalendar(year, month)
+        begin_this_month = date(year, month, 1)
+        end_this_month = date(year, month, calendar.monthrange(year, month)[1])
         events = {}
 
         for member in all_events:
-            if member.start_date.month == month: #delete to have events displayed not in current month?
+            if end_this_month - member.start_date >= timedelta(days=0) and begin_this_month - member.end_date <= timedelta(days=0): 
                 end_date = member.end_date.day
+                start_date = member.start_date.day
                 if member.end_date.month != month:
-                    end_date = calendar.monthrange(year, month)[1]
+                    end_date = end_this_month.day
+                if member.start_date.month != month:
+                    start_date = 1
 
-                for i in range(member.start_date.day, end_date + 1):
-                    this_day = date(member.start_date.year, member.start_date.month, i)
+                for i in range(start_date, end_date + 1):
+                    this_day = date(year, month, i)
                     day_event_list = []
                     if this_day in events.keys():
                         day_event_list = events[this_day]
@@ -106,6 +112,7 @@ class CalendarViewer(ItemViewer):
 
         self.context['this_month'] = date(year, month, today.day)
         self.context['week_list'] = event_week_list
+        self.context['redirect'] = reverse('item_url', kwargs={'viewer': 'calendar', 'action': 'show', 'noun': collection.pk}) 
         return HttpResponse(template.render(self.context))
 
     def item_export_html(self):

@@ -78,7 +78,12 @@
     </tbody>
 
 </table>
+<div>
+    {% ifagentcan 'modify_membership' collection %}
+        <a href="{% url item_type_url viewer="event",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Create A New Event</a> 
+    {% endifagentcan %}
 
+</div>    
 <div>
      <a href="{% url item_url viewer="calendar" action="export" noun=collection.pk %}">An Exportable Version of this Calendar</a> 
 </div>
