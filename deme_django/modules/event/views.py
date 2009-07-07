@@ -33,6 +33,9 @@ class CalendarViewer(ItemViewer):
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         all_members = collection.all_contained_collection_members(recursive_filter)
         all_events = Event.objects.filter(pk__in=all_members.values('pk').query)
+        all_events = self.permission_cache.filter_items('view Event.start_date', all_events)
+        all_events = self.permission_cache.filter_items('view Event.start_time', all_events)
+        all_events = self.permission_cache.filter_items('view Event.end_date', all_events)
 
         today = date.today()
 
@@ -66,7 +69,11 @@ class CalendarViewer(ItemViewer):
 
         for member in all_events:
             if member.start_date.month == month: #delete to have events displayed not in current month?
-                for i in range(member.start_date.day, member.end_date.day + 1):
+                end_date = member.end_date.day
+                if member.end_date.month != month:
+                    end_date = calendar.monthrange(year, month)[1]
+
+                for i in range(member.start_date.day, end_date + 1):
                     this_day = date(member.start_date.year, member.start_date.month, i)
                     day_event_list = []
                     if this_day in events.keys():
@@ -112,6 +119,9 @@ class CalendarViewer(ItemViewer):
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         all_members = collection.all_contained_collection_members(recursive_filter)
         all_events = Event.objects.filter(pk__in=all_members.values('pk').query)
+        all_events = self.permission_cache.filter_items('view Event.start_date', all_events)
+        all_events = self.permission_cache.filter_items('view Event.start_time', all_events)
+        all_events = self.permission_cache.filter_items('view Event.end_date', all_events)
 
         for member in all_events:
             newEvent = iEvent()
