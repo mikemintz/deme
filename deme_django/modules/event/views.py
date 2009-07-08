@@ -5,7 +5,7 @@ from cms.views import HtmlDocumentViewer, ItemViewer
 from cms.models import *
 from django.db.models import Q
 from modules.event.models import Event
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, tzinfo
 from icalendar import Calendar as iCal
 from icalendar import Event as iEvent
 import calendar
@@ -130,16 +130,20 @@ class CalendarViewer(ItemViewer):
         all_events = self.permission_cache.filter_items('view Event.start_time', all_events)
         all_events = self.permission_cache.filter_items('view Event.end_date', all_events)
 
+        cal.add('prodid', '-//Deme//Deme Calendar Module//EN')
+        cal.add('version', '2.0')
+        cal.add('calscale', 'GREGORIAN')
+
         for member in all_events:
             newEvent = iEvent()
             newEvent.add('summary', member.display_name())
             newEvent.add('dtstart', datetime.combine(member.start_date, member.start_time))
-            newEvent.add('dtend', datetime.combine(member.start_date, member.start_time))
+            newEvent.add('dtend', datetime.combine(member.end_date, member.end_time))
             newEvent.add('location', member.location)
             newEvent.add('description', member.body)
             cal.add_component(newEvent)
 
-        response = HttpResponse(cal.as_string(), mimetype='ics')
+        response = HttpResponse(cal.as_string(), mimetype='text/calendar')
         response['Content-Disposition'] = 'attachment; filename=demeCalendar.ics'
         return response
 
