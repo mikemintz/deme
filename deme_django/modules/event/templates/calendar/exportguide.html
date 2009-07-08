@@ -1,0 +1,57 @@
+{% extends layout %}
+{% load event_extras %}
+{% load item_tags %}
+{% block title %}<img src="{{ collection|icon_url:24 }}" /> Export {% viewable_name collection %}
+{% endblock %}
+{% block content %}
+
+<div>
+  Instructions for: 
+  <a href="#gcal">Google Calendar</a>
+  |
+  <a href="#ical">iCal</a>
+  |
+  <a href="#webmail">Stanford Webmail</a>
+  |
+  <a href="#other">Other Apps</a>
+</div>
+<br>
+<a name="gcal"></a>
+<h3>Google Calendar</h3>
+
+<p>1. Log into <a href="http://calendar.google.com/">Google Calendar</a>, click the small "Add" link at the bottom left (circled below), and click "Add by URL" in the menu that pops up.</p>
+<div><img alt="Gcal1" src="{% media_url "exportguide/gcal1.png" %}" style="border: thin solid #000" /></div>
+<p>2. <a href="{{ export_url|urlencode }}">Copy the location of this link</a> into the Public Calendar Address text box.</p>
+<div><img alt="Gcal2" src="{% media_url "exportguide/gcal2.png" %}" style="border: thin solid #000" /></div>
+<p>3. Press Add and you're done!</p>
+
+<a name="ical"></a>
+<h3>iCal (for Mac)</h3>
+
+<p>1. Open iCal (you can find it in your Applications folder), click on the Calendar menu, and select "Subscribe".</p>
+<div><img alt="Ical1" src="{% media_url "exportguide/ical1.png" %}" style="border: thin solid #000" /></div>
+<p>2. <a href="{{ export_url|urlencode }}">Copy the location of this link</a> into the Calendar URL text box and press Subscribe.</p>
+<div><img alt="Ical2" src="{% media_url "exportguide/ical2.png" %}" style="border: thin solid #000" /></div>
+<p>3. In the Auto-refresh select box, select "Every hour" or something similar to allow the calendar to update when users add events.</p>
+<div><img alt="Ical3" src="{% media_url "exportguide/ical3.png" %}" style="border: thin solid #000" /></div>
+<p>4. Press OK and you're done!</p>
+
+<a name="webmail"></a>
+<h3>Stanford Webmail</h3>
+
+<p>1. Log into <a href="http://webmail.stanford.edu/">Webmail</a>, and click on the Calendar tab at the top.</p>
+<div><img alt="Webmail1" src="{% media_url "exportguide/webmail1.png" %}" style="border: thin solid #000" /></div>
+<p>2. <b>Right</b>-click on the gray "Calendars" box, and click "New Calendar" in the menu that pops up.</p>
+<div><img alt="Webmail2" src="{% media_url "exportguide/webmail2.png" %}" style="border: thin solid #000" /></div>
+<p>3. Name your calendar, check the "Synchronize appointments from remote calendar" checkbox, and <a href="{{ export_url|urlencode }}">copy the location of this link</a> into the URL text box.</p>
+<div><img alt="Webmail3" src="{% media_url "exportguide/webmail3.png" %}" style="border: thin solid #000" /></div>
+<p>4. Press OK and you're done!</p>
+
+<a name="other"></a>
+<h3>Other Applications</h3>
+
+<p>To export this calendar to other applications, you will have to find out how to import calendars. The calendar is stored at <a href="{{ export_url|urlencode }}">the location of this link</a>, and if you are asked, it uses the <tt>icalendar</tt> format.</p>
+
+</div>
+
+{% endblock %}

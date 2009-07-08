@@ -147,4 +147,13 @@ class CalendarViewer(ItemViewer):
         response['Content-Disposition'] = 'attachment; filename=demeCalendar.ics'
         return response
 
+    def item_exportguide_html(self):
+        self.context['action_title'] = 'Export Guide'
+        template = loader.get_template('calendar/exportguide.html')
+        collection = self.item
+        self.context['collection'] = collection
+        self.context['export_url'] = reverse('item_url', kwargs={'viewer': 'calendar', 'action': 'export', 'noun': collection.pk}) 
 
+
+
+        return HttpResponse(template.render(self.context))
