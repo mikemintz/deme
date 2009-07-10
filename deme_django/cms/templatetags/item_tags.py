@@ -160,6 +160,18 @@ def media_url(path):
         else:
             return '' # Fail silently for invalid paths.
 
+@register.simple_tag
+def module_media_url(module_name, path):
+    fs_path = os.path.join(settings.MEDIA_ROOT, 'modules', module_name, path)
+    if os.path.exists(fs_path):
+        path = os.path.join('modules', module_name, path)
+        return urljoin(settings.MEDIA_URL, path)
+    else:
+        if settings.DEBUG:
+            return "[Couldn't find path %s on filesystem]" % path
+        else:
+            return '' # Fail silently for invalid paths.
+
 
 class ListResultsNavigator(template.Node):
     def __init__(self, max_pages):
