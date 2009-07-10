@@ -164,7 +164,7 @@ def media_url(path):
 def module_media_url(module_name, path):
     fs_path = os.path.join('modules', module_name, 'static', path)
     if os.path.exists(fs_path):
-        path = os.path.join('modules', module_name, path)
+        path = 'modules/%s/%s' % (module_name, path)
         return urljoin(settings.MEDIA_URL, path)
     else:
         if settings.DEBUG:
