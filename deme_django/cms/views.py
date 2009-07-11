@@ -81,7 +81,6 @@ class ItemViewer(Viewer):
                     raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
 
             def filter_by_filter(queryset, fields, item_types):
-                #TODO make sure everything is active
                 if not fields:
                     return queryset.filter(pk=target_pk)
                 field = fields[0]
@@ -104,6 +103,7 @@ class ItemViewer(Viewer):
                     result = queryset.filter(**query_dict)
                 else:
                     assert False
+                result = result.filter(active=True)
                 return result
             items = filter_by_filter(items, fields, item_types)
         listable_items = self.permission_cache.filter_items('view Item.name', items)
