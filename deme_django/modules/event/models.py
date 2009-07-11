@@ -18,10 +18,10 @@ class Event(HtmlDocument):
         verbose_name_plural = _('events')
 
     #fields:
-    start_date = models.DateField()
-    start_time = models.TimeField()
-    end_date   = models.DateField()
-    end_time   = models.TimeField()
+    start_date = models.DateField(_('start date'))
+    start_time = models.TimeField(_('start time'))
+    end_date   = models.DateField(_('end date'))
+    end_time   = models.TimeField(_('end time'))
     location   = models.CharField(_('location'), max_length=255) 
 
 
