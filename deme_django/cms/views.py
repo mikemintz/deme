@@ -254,11 +254,12 @@ class ItemViewer(Viewer):
         from cms.templatetags.item_tags import get_viewable_name
         viewer = self
         self.require_ability('view Item.action_notices', self.item)
-        action_notices = ActionNotice.objects.filter(Q(action_item=self.item) | Q(action_agent=self.item)).order_by('action_time') #TODO limit
+        action_notices = ActionNotice.objects.filter(Q(action_item=self.item) | Q(action_agent=self.item))
+        action_notices = action_notices.order_by('-action_time')
+        action_notices = action_notices[:50]
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
-            print("about to be added, shiiiet")
             if action_notice_subclass == RelationActionNotice:
                 self.permission_cache.filter_items('view Item.name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
             for action_notice in specific_action_notices:
