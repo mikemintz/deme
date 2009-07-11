@@ -160,13 +160,11 @@ class ItemViewer(Viewer):
             form = None
         else:
             if form is None:
-                form_initial = dict(self.request.GET.items())
-                keys = form_initial.keys()
-                for key in keys:
-                    if key.find('populate_') == 0:
-                        form_initial[key.replace('populate_', '')] = form_initial[key]
-                    del form_initial[key]
-            
+                form_initial = {}
+                for key, value in self.request.GET.iteritems():
+                    if key.startswith('populate_'):
+                        field_name = key.split('populate_', 1)[1]
+                        form_initial[field_name] = value
                 form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
@@ -191,7 +189,8 @@ class ItemViewer(Viewer):
 
             if 'add_to_collection' in self.request.GET:
                 new_membership = Membership(item=new_item, collection=Collection.objects.get(pk=self.request.GET['add_to_collection']))
-                new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions) 
+                membership_permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
+                new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions) 
 
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
             return HttpResponseRedirect(redirect)
