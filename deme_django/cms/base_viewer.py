@@ -18,6 +18,10 @@ import datetime
 from cms.permissions import MultiAgentPermissionCache
 from cms.models import *
 from cms.forms import JavaScriptSpamDetectionField, AjaxModelChoiceField
+from django.utils.text import get_text_list, capfirst
+from django.utils.safestring import mark_safe
+from django.utils.html import escape
+from urllib import urlencode
 
 #TODO obey self.format when rendering an error if possible
 
@@ -384,6 +388,8 @@ class Viewer(object):
         return self.render_error(title, body, HttpResponseNotFound)
 
     def get_form_class_for_item_type(self, item_type, is_new, fields=None):
+        viewer = self
+
         exclude = []
         for field in item_type._meta.fields:
             if (field.rel and field.rel.parent_link) or ((not is_new) and field.name in item_type.all_immutable_fields()):
@@ -425,9 +431,52 @@ class Viewer(object):
         if settings.USE_ANONYMOUS_JAVASCRIPT_SPAM_DETECTOR and self.cur_agent.is_anonymous():
             self.request.session.modified = True # We want to guarantee a cookie is given
             attrs['nospam'] = JavaScriptSpamDetectionField(self.request.session.session_key)
+
+        def unique_error_message(self, unique_check):
+            unique_field_dict = {}
+            for field_name in unique_check:
+                unique_field_dict[field_name] = self.cleaned_data[field_name]
+            try:
+                existing_item = type(self.instance).objects.get(**unique_field_dict)
+            except ObjectDoesNotExist:
+                existing_item = None
+            if existing_item:
+                show_item_url = existing_item.get_absolute_url()
+                from cms.templatetags.item_tags import get_viewable_name
+                item_name = get_viewable_name(viewer.context, existing_item)
+                overwrite_url = reverse('item_url', kwargs={'viewer': existing_item.item_type_string.lower(), 'noun': existing_item.pk, 'action': 'edit'})
+                overwrite_query_params = []
+                for k, v in self.cleaned_data.iteritems():
+                    k = 'populate_' + k
+                    if isinstance(v, Item):
+                        v = str(v.pk)
+                    overwrite_query_params.append(urlencode({k: v}))
+                for k, list_ in viewer.request.GET.lists():
+                    overwrite_query_params.extend([urlencode({k: v}) for v in list_])
+                overwrite_query_string = '&'.join(overwrite_query_params)
+                existing_item_str = u' as <a href="%s">%s</a> (<a href="%s?%s">overwrite it</a>)' % (show_item_url, item_name, overwrite_url, escape(overwrite_query_string))
+            model_name = capfirst(self.instance._meta.verbose_name)
+            field_labels = [self.fields[field_name].label for field_name in unique_check]
+            field_labels = get_text_list(field_labels, _('and'))
+            result = _(u"%(model_name)s with this %(field_label)s already exists%(existing_item_str)s.") %  {
+                'model_name': unicode(model_name),
+                'field_label': unicode(field_labels),
+                'existing_item_str': existing_item_str,
+            }
+            return mark_safe(result)
+        attrs['unique_error_message'] = unique_error_message
+        
         item_type.do_specialized_form_configuration(is_new, attrs)
         form_class = forms.models.ModelFormMetaclass(class_name, (forms.models.ModelForm,), attrs)
         return form_class
+
+    def get_populated_field_dict(self):
+        result = {}
+        for key, value in self.request.GET.iteritems():
+            if key.startswith('populate_'):
+                field_name = key.split('populate_', 1)[1]
+                result[field_name] = value
+        return result
 
     def _set_default_layout(self):
         self.context['layout'] = 'default_layout.html'
