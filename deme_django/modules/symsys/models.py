@@ -73,6 +73,22 @@ def get_or_create_group(key, name, group_creator):
         group = Group(name=name)
         group.save_versioned(action_agent=group_creator)
         DemeSetting.set(deme_setting_key, group.pk, group_creator)
+        # Create the parent group if necessary
+        parent_group = None
+        if key in ['active_minors', 'active_bs']:
+            parent_group = get_or_create_group('undergraduates', 'Undergraduates', group_creator)
+        elif key in ['undergraduates', 'active_ms']:
+            parent_group = get_or_create_group('students', 'Students', group_creator)
+        elif key in ['conferred_minors', 'conferred_bs', 'conferred_ms']:
+            parent_group = get_or_create_group('alumni', 'Alumni', group_creator)
+        elif key in ['present_administrators', 'present_af']:
+            parent_group = get_or_create_group('staff', 'Staff', group_creator)
+        elif key.startswith('alumni_class_') or key.startswith('bs_class_') or key.startswith('ms_class_') or key.startswith('minor_class_'):
+            year = key.split('_class_')[1]
+            parent_group = get_or_create_group('class_of_%s' % year, 'Class of %s' % year, group_creator)
+        if parent_group:
+            membership = Membership(item=group, collection=parent_group, permission_enabled=True)
+            membership.save_versioned(action_agent=group_creator)
     return group
 
 
@@ -195,7 +211,7 @@ class SymsysCareer(Item):
         if any(x.actual_item_type() == ProgramStaffSymsysCareer and x.finished == True and x.programstaffsymsyscareer.admin_title == 'Advising Fellow' for x in my_careers):
             groups.append(get_or_create_group('past_af', 'Past Advising Fellows', group_creator))
         if any(x.actual_item_type() == ProgramStaffSymsysCareer and x.finished == False and x.programstaffsymsyscareer.admin_title == 'Advising Fellow' for x in my_careers):
-            groups.append(get_or_create_group('present_af', 'Present Advising Fellows', group_creator))
+            groups.append(get_or_create_group('present_af', 'Advising Fellows', group_creator))
 
         if any(x.actual_item_type() == ProgramStaffSymsysCareer and x.finished == True and x.programstaffsymsyscareer.admin_title != 'Advising Fellow' for x in my_careers):
             groups.append(get_or_create_group('past_administrators', 'Past Administrators', group_creator))
@@ -211,7 +227,15 @@ class SymsysCareer(Item):
 
         for career in StudentSymsysCareer.objects.filter(symsys_affiliate=agent, active=True):
             if career.class_year:
-                groups.append(get_or_create_group('class%d' % career.class_year, 'Class of %d' % career.class_year, group_creator))
+                if career.finished:
+                    groups.append(get_or_create_group('alumni_class_%d' % career.class_year, 'Alumni %d' % career.class_year, group_creator))
+                else:
+                    if career.actual_item_type() == BachelorsSymsysCareer:
+                        groups.append(get_or_create_group('bs_class_%d' % career.class_year, 'Bachelors %d' % career.class_year, group_creator))
+                    elif career.actual_item_type() == MastersSymsysCareer:
+                        groups.append(get_or_create_group('ms_class_%d' % career.class_year, 'Masters %d' % career.class_year, group_creator))
+                    elif career.actual_item_type() == MinorSymsysCareer:
+                        groups.append(get_or_create_group('minor_class_%d' % career.class_year, 'Minor %d' % career.class_year, group_creator))
 
         for group in groups:
             try:
