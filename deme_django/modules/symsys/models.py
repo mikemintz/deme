@@ -336,7 +336,7 @@ class StudentSymsysCareer(SymsysCareer):
                 status = _(" is no longer the advisor for ")
             return [action_item, status, self]
         else:
-            return super(ThesisSymsysCareer, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
+            return super(StudentSymsysCareer, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
 
 
 class MinorSymsysCareer(StudentSymsysCareer):
@@ -485,7 +485,7 @@ class SymsysAffiliate(Person):
                 status = _(" is no longer the photo for ")
             return [action_item, status, self]
         else:
-            return super(ThesisSymsysCareer, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
+            return super(SymsysAffiliate, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
 
 
 class Advertisement(Document):
