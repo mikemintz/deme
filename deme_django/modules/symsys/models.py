@@ -221,9 +221,11 @@ class SymsysCareer(Item):
         conferred_concentrations = set(BachelorsSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=True).values_list('concentration', flat=True))
         active_concentrations = set(BachelorsSymsysCareer.objects.filter(symsys_affiliate=agent, active=True, finished=False).values_list('concentration', flat=True))
         for concentration in conferred_concentrations:
-            groups.append(get_or_create_group('conferred_concentration.%s' % concentration, '%s Concentration Alumni' % concentration, group_creator))
+            if concentration:
+                groups.append(get_or_create_group('conferred_concentration.%s' % concentration, '%s Concentration Alumni' % concentration, group_creator))
         for concentration in active_concentrations:
-            groups.append(get_or_create_group('active_concentration.%s' % concentration, '%s Concentration Students' % concentration, group_creator))
+            if concentration:
+                groups.append(get_or_create_group('active_concentration.%s' % concentration, '%s Concentration Students' % concentration, group_creator))
 
         for career in StudentSymsysCareer.objects.filter(symsys_affiliate=agent, active=True):
             if career.class_year:
