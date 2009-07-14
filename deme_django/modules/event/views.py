@@ -1,6 +1,6 @@
 from django.template import Context, loader
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 from cms.views import HtmlDocumentViewer, ItemViewer
 from cms.models import *
 from django.db.models import Q
@@ -90,6 +90,9 @@ class CalendarViewer(ItemViewer):
                     details["start_date"] = member.start_date
                     details["is_starting_date"] = (member.start_date == this_day)
                     details["end_date"] = member.end_date
+                    details["end_time"] = member.end_time
+                    details["location"] = member.location
+                    details["body"] = member.body
                     details["name"] = member.display_name()
                     details["url"] = member.get_absolute_url() 
                     day_event_list.append(details)
@@ -153,7 +156,5 @@ class CalendarViewer(ItemViewer):
         collection = self.item
         self.context['collection'] = collection
         self.context['export_url'] = reverse('item_url', kwargs={'viewer': 'calendar', 'action': 'export', 'noun': collection.pk}) 
-
-
-
+        self.context['host'] = self.request.get_host()
         return HttpResponse(template.render(self.context))

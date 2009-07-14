@@ -5,6 +5,19 @@
 {% endblock %}
 {% block content %}
 
+<script type="text/javascript">
+    function openDialog(curNode)
+    {
+        var dialogBox = curNode.childNodes[1];
+        $("#dialog").dialog({
+            autoOpen: true,
+            bgiframe: true
+            });
+        dialogBox.dialog('open');
+    }   
+</script>
+
+
 <style type ="text/css">
      .calendar {
   border: 2px solid black;
@@ -64,12 +77,20 @@
                     {% endif %}
 
                     {% for event in days_events.cur_events %}
-                        <div style="margin-bottom: 2px; border: thin #ccc solid; background: #fee; -moz-border-radius: 8px; padding: 1px; ">
-                            {% if event.is_starting_date %}
+                    <div style="margin-bottom: 2px; border: thin #ccc solid; background: #fee; -moz-border-radius: 8px; padding: 1px; " id="{{ event.name }}">
+                        {% if event.is_starting_date %}
                                 {{ event.start_time|time:"P" }}
-                            {% endif %}
-                            <a href="{{ event.url }}">{{ event.name }}</a>
-                        </div>
+                        {% endif %}
+                        <a href="#" onclick="openDialog(this.parentNode); return false;">{{ event.name }}</a>
+                            <div id="dialog" title="{{ event.name }}" style="display: none;">
+                                Start Time: {{ event.start_time|time:"P" }}
+                                <p>Start Date: {{ event.start_date|date:"M d, Y" }}</p>
+                                End Time: {{ event.end_time|time:"P" }}
+                                <p>End Date: {{ event.end_date|date:"M d, Y" }}</p>
+                                Location: {{ event.location }}
+                                <p>Description: {{ event.body|safe }}</p>
+                            </div>
+                    </div>
                     {% endfor %}
                 </td>
             {% endfor %}
