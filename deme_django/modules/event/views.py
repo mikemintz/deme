@@ -6,8 +6,6 @@ from cms.models import *
 from django.db.models import Q
 from modules.event.models import Event
 from datetime import date, datetime, timedelta, tzinfo
-from icalendar import Calendar as iCal
-from icalendar import Event as iEvent
 import calendar
 import time
 
@@ -119,6 +117,11 @@ class CalendarViewer(ItemViewer):
         return HttpResponse(template.render(self.context))
 
     def item_export_html(self):
+        try:
+            from icalendar import Calendar as iCal
+            from icalendar import Event as iEvent
+        except ImportError:
+            return self.render_error("Event Error", "Event exporting is not supported in this installation")
         cal = iCal()
         collection = self.item
 

@@ -17,7 +17,6 @@ Code correctness/consistency/bugs
 * If you go to "new" and one of the initial model fields is permission denied (e.g., you're creating a membership on a collection you aren't allowed to modify_membership for, or creating a comment on an item you can't reply to), let the user know
 * the destroy action notice will never be read by anyone (since all permissions are effectively denied)
 * When you copy an item, you can discover the permissions of the original item. Not cool. Probably best solution involves making a view_permissions ability.
-* If you try to add a Membership that used to exist but is now trashed, it fails. The code used to handle this. Probably same with CustomUrls.
 * Methods that have to do with sending emails (about action notices) should go in EmailContactMethod, not ActionNotice
 * The viewer should probably define a list of actions for each item type to be displayed in a menu
 * Probably don't need auto-load modules: INSTALLED_APPS is more explicit and familiar

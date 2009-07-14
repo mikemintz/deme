@@ -81,7 +81,6 @@ class ItemViewer(Viewer):
                     raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
 
             def filter_by_filter(queryset, fields, item_types):
-                #TODO make sure everything is active
                 if not fields:
                     return queryset.filter(pk=target_pk)
                 field = fields[0]
@@ -104,6 +103,7 @@ class ItemViewer(Viewer):
                     result = queryset.filter(**query_dict)
                 else:
                     assert False
+                result = result.filter(active=True)
                 return result
             items = filter_by_filter(items, fields, item_types)
         listable_items = self.permission_cache.filter_items('view Item.name', items)
@@ -160,13 +160,7 @@ class ItemViewer(Viewer):
             form = None
         else:
             if form is None:
-                form_initial = dict(self.request.GET.items())
-                keys = form_initial.keys()
-                for key in keys:
-                    if key.find('populate_') == 0:
-                        form_initial[key.replace('populate_', '')] = form_initial[key]
-                    del form_initial[key]
-            
+                form_initial = self.get_populated_field_dict()
                 form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
@@ -188,11 +182,10 @@ class ItemViewer(Viewer):
             new_item = form.save(commit=False)
             permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
             new_item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'], initial_permissions=permissions)
-
             if 'add_to_collection' in self.request.GET:
                 new_membership = Membership(item=new_item, collection=Collection.objects.get(pk=self.request.GET['add_to_collection']))
-                new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions) 
-
+                membership_permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
+                new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions) 
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
             return HttpResponseRedirect(redirect)
         else:
@@ -254,11 +247,12 @@ class ItemViewer(Viewer):
         from cms.templatetags.item_tags import get_viewable_name
         viewer = self
         self.require_ability('view Item.action_notices', self.item)
-        action_notices = ActionNotice.objects.filter(Q(action_item=self.item) | Q(action_agent=self.item)).order_by('action_time') #TODO limit
+        action_notices = ActionNotice.objects.filter(Q(action_item=self.item) | Q(action_agent=self.item))
+        action_notices = action_notices.order_by('-action_time')
+        action_notices = action_notices[:50]
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=action_notices.values('pk').query)
-            print("about to be added, shiiiet")
             if action_notice_subclass == RelationActionNotice:
                 self.permission_cache.filter_items('view Item.name', Item.objects.filter(Q(pk__in=specific_action_notices.values('from_item').query)))
             for action_notice in specific_action_notices:
@@ -335,10 +329,12 @@ class ItemViewer(Viewer):
         abilities_for_item = self.permission_cache.item_abilities(self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         if form is None:
+            form_initial = self.get_populated_field_dict()
             fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
             form_class = self.get_form_class_for_item_type(self.accepted_item_type, False, fields_can_edit)
-            form = form_class(instance=self.item)
+            form = form_class(instance=self.item, initial=form_initial)
             fields_can_view = set([x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('view ')])
+            fields_can_view.add('action_summary')
             initial_fields_set = set(form.initial.iterkeys())
             fields_must_blank = initial_fields_set - fields_can_view
             for field_name in fields_must_blank:
@@ -763,10 +759,12 @@ class TextDocumentViewer(DocumentViewer):
         self.item.body = ''.join(body_as_list)
 
         if form is None:
+            form_initial = self.get_populated_field_dict()
             fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
             form_class = self.get_form_class_for_item_type(self.accepted_item_type, False, fields_can_edit)
-            form = form_class(instance=self.item)
+            form = form_class(instance=self.item, initial=form_initial)
             fields_can_view = set([x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('view ')])
+            fields_can_view.add('action_summary')
             initial_fields_set = set(form.initial.iterkeys())
             fields_must_blank = initial_fields_set - fields_can_view
             for field_name in fields_must_blank:
@@ -862,13 +860,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
             form = None
         else:
             if form is None:
-                form_initial = dict(self.request.GET.items())
-                keys = form_initial.keys()
-                for key in keys:
-                    if key.find('populate_') == 0:
-                        form_initial[key.replace('populate_', '')] = form_initial[key]
-                    del form_initial[key]
-
+                form_initial = self.get_populated_field_dict()
                 form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
         try:
@@ -876,13 +868,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
         except:
             return self.render_error('Invalid URL', "You must specify the item you are commenting on")
         if form is None:
-            form_initial = dict(self.request.GET.items())
-            keys = form_initial.keys()
-            for key in keys:
-                if key.find('populate_') == 0:
-                    form_initial[key.replace('populate_', '')] = form_initial[key]
-                del form_initial[key]
-
+            form_initial = self.get_populated_field_dict()
             form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
             form = form_class(initial=form_initial)
             if issubclass(item.actual_item_type(), Comment):
