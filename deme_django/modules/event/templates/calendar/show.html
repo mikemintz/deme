@@ -6,13 +6,28 @@
 {% block content %}
 
 <script type="text/javascript">
-    function openDialog(curNode)
+    $(document).ready(function(){
+        {% for weeks_events in week_list %}
+            {% for days_events in weeks_events %}
+                {% for event in days_events.cur_events %}
+                    $("#{{ event.pk }}-{{ days_events.day.day }}").dialog({
+                        autoOpen: false,
+                        bgiframe: true,
+                        modal: true,
+                        buttons: {
+                            'Close': function(){$(this).dialog('close')}
+                        }
+                    });
+                {% endfor %}
+            {% endfor %}
+        {% endfor %}
+    });
+</script>    
+
+<script type="text/javascript">
+    function openDialog(name)
     {
-        var dialogBox = curNode.childNodes[1];
-        $("#dialog").dialog({
-            autoOpen: true,
-            bgiframe: true
-            });
+        var dialogBox = $("#" + name);
         dialogBox.dialog('open');
     }   
 </script>
@@ -77,12 +92,12 @@
                     {% endif %}
 
                     {% for event in days_events.cur_events %}
-                    <div style="margin-bottom: 2px; border: thin #ccc solid; background: #fee; -moz-border-radius: 8px; padding: 1px; " id="{{ event.name }}">
+                    <div style="margin-bottom: 2px; border: thin #ccc solid; background: #fee; -moz-border-radius: 8px; padding: 1px; " id="fuck">
                         {% if event.is_starting_date %}
                                 {{ event.start_time|time:"P" }}
                         {% endif %}
-                        <a href="#" onclick="openDialog(this.parentNode); return false;">{{ event.name }}</a>
-                            <div id="dialog" title="{{ event.name }}" style="display: none;">
+                        <a href="#" onclick="openDialog('{{ event.pk }}-{{ days_events.day.day }}'); return false;">{{ event.name }}</a>
+                        <div id="{{ event.pk }}-{{ days_events.day.day }}" title="{{ event.name }}" style="display: none;">
                                 Start Time: {{ event.start_time|time:"P" }}
                                 <p>Start Date: {{ event.start_date|date:"M d, Y" }}</p>
                                 End Time: {{ event.end_time|time:"P" }}

@@ -93,6 +93,7 @@ class CalendarViewer(ItemViewer):
                     details["body"] = member.body
                     details["name"] = member.display_name()
                     details["url"] = member.get_absolute_url() 
+                    details["pk"] = member.pk
                     day_event_list.append(details)
                     events[this_day] = day_event_list
 
