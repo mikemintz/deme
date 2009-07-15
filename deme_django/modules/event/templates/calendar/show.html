@@ -5,29 +5,21 @@
 {% endblock %}
 {% block content %}
 
-<script type="text/javascript">
-    $(document).ready(function(){
-        {% for weeks_events in week_list %}
-            {% for days_events in weeks_events %}
-                {% for event in days_events.cur_events %}
-                    $("#{{ event.pk }}-{{ days_events.day.day }}").dialog({
-                        autoOpen: false,
-                        bgiframe: true,
-                        modal: true,
-                        buttons: {
-                            'Close': function(){$(this).dialog('close')}
-                        }
-                    });
-                {% endfor %}
-            {% endfor %}
-        {% endfor %}
-    });
-</script>    
 
 <script type="text/javascript">
     function openDialog(name)
     {
         var dialogBox = $("#" + name);
+        dialogBox.dialog({
+            autoOpen: false,
+            bgiframe: true,
+            modal: true,
+            buttons: {
+               'Close': function(){$(this).dialog('close')}
+            },
+            close: function(event, ui) {dialogBox.dialog('destroy')}
+               
+        });
         dialogBox.dialog('open');
     }   
 </script>
