@@ -89,7 +89,7 @@
                                 {{ event.start_time|time:"P" }}
                         {% endif %}
                         <a href="#" onclick="openDialog('{{ event.pk }}-{{ days_events.day.day }}'); return false;">{{ event.name }}</a>
-                        <div id="{{ event.pk }}-{{ days_events.day.day }}" title="{{ event.name }}" style="display: none;">
+                        <div id="{{ event.pk }}-{{ days_events.day.day }}" title="<a href='{{ event.url }}'>{{ event.name }}</a>" style="display: none;">
                                 Start Time: {{ event.start_time|time:"P" }}
                                 <p>Start Date: {{ event.start_date|date:"M d, Y" }}</p>
                                 End Time: {{ event.end_time|time:"P" }}
@@ -108,12 +108,12 @@
 </table>
 <div>
     {% ifagentcan 'modify_membership' collection %}
-        <a href="{% url item_type_url viewer="event",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Create A New Event</a> 
+        <a href="{% url item_type_url viewer="event",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Add A New Event to this Calendar</a> 
     {% endifagentcan %}
 
 </div>    
 <div>
-     <a href="{% url item_url viewer="calendar" action="exportguide" noun=collection.pk %}">An Exportable Version of this Calendar</a> 
+     <a href="{% url item_url viewer="calendar" action="exportguide" noun=collection.pk %}">Export this Calendar</a> 
 </div>
 
 {% endblock %}

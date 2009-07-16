@@ -1,10 +1,10 @@
 from django.template import Context, loader
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpRequest
-from cms.views import HtmlDocumentViewer, ItemViewer
+from cms.views import HtmlDocumentViewer, CollectionViewer
 from cms.models import *
 from django.db.models import Q
-from modules.event.models import Event
+from modules.event.models import Event, Calendar
 from datetime import date, datetime, timedelta, tzinfo
 import calendar
 import time
@@ -15,8 +15,8 @@ class EventViewer(HtmlDocumentViewer):
     viewer_name = 'event' 
     
 
-class CalendarViewer(ItemViewer):
-    accepted_item_type = Collection
+class CalendarViewer(CollectionViewer):
+    accepted_item_type = Calendar
     viewer_name = 'calendar'
 
     def item_show_html(self):
