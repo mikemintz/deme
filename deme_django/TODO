@@ -38,6 +38,7 @@ Django bugs
 Features
 --------
 * Advanced search
+* CustomURL layouts should inherit from parent CustomURL layouts
 
 Layout
 ------

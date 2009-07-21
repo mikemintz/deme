@@ -377,7 +377,7 @@ class Viewer(object):
     def render_item_not_found(self):
         if self.item:
             title = "%s Not Found" % self.accepted_item_type.__name__
-            body = 'You cannot view item %s in this viewer. Try viewing it in the <a href="%s">%s viewer</a>.' % (self.noun, reverse('item_url', kwargs={'viewer': self.item.item_type_string.lower(), 'noun': self.item.pk}), self.item.item_type_string)
+            body = 'You cannot view item %s in this viewer. Try viewing it in the <a href="%s">%s viewer</a>.' % (self.noun, self.item.get_absolute_url(), self.item.get_default_viewer())
         else:
             title = "Item Not Found"
             version = self.request.GET.get('version')
@@ -444,7 +444,7 @@ class Viewer(object):
                 show_item_url = existing_item.get_absolute_url()
                 from cms.templatetags.item_tags import get_viewable_name
                 item_name = get_viewable_name(viewer.context, existing_item)
-                overwrite_url = reverse('item_url', kwargs={'viewer': existing_item.item_type_string.lower(), 'noun': existing_item.pk, 'action': 'edit'})
+                overwrite_url = reverse('item_url', kwargs={'viewer': existing_item.get_default_viewer(), 'noun': existing_item.pk, 'action': 'edit'})
                 overwrite_query_params = []
                 for k, v in self.cleaned_data.iteritems():
                     k = 'populate_' + k
@@ -466,7 +466,7 @@ class Viewer(object):
             return mark_safe(result)
         attrs['unique_error_message'] = unique_error_message
         
-        item_type.do_specialized_form_configuration(is_new, attrs)
+        item_type.do_specialized_form_configuration(item_type, is_new, attrs)
         form_class = forms.models.ModelFormMetaclass(class_name, (forms.models.ModelForm,), attrs)
         return form_class
 

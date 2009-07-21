@@ -39,6 +39,7 @@ __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
         'SomeToAllPermission', 'AllToOnePermission', 'AllToSomePermission',
         'AllToAllPermission', 'friendly_name_for_ability']
 
+
 ###############################################################################
 # Field types
 ###############################################################################
@@ -81,6 +82,18 @@ class FixedForeignKey(models.ForeignKey):
 ###############################################################################
 
 UN_NULLABLE_FIELDS = ['version_number', 'item_type_string', 'active', 'destroyed']
+
+class PossibleViewerNamesIterable(object):
+    """
+    Instantiated objects from this class are dynamic iterables, in that each
+    time you iterate through them, you get the latest set of viewer names.
+    """
+    def __iter__(self):
+        from cms.base_viewer import all_viewer_classes
+        choices = [(x.viewer_name, capfirst(x.viewer_name)) for x in all_viewer_classes()]
+        choices.sort(key=lambda x: x[0])
+        for x in choices:
+            yield x
 
 class ItemMetaClass(models.base.ModelBase):
     """
@@ -187,8 +200,8 @@ class Item(models.Model):
     __metaclass__ = ItemMetaClass
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'comment_on', 'delete', 'view Item.action_notices',
-                                      'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at',
-                                      'edit Item.name', 'edit Item.description'])
+                                      'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at', 'view Item.default_viewer',
+                                      'edit Item.name', 'edit Item.description', 'edit Item.default_viewer'])
     introduced_global_abilities = frozenset(['do_anything'])
     class Meta:
         verbose_name = _('item')
@@ -203,6 +216,7 @@ class Item(models.Model):
     created_at       = models.DateTimeField(_('created at'), editable=False)
     name             = models.CharField(_('item name'), max_length=255, blank=True, help_text=_('The name used to refer to this item'))
     description      = models.CharField(_('preface'), max_length=255, blank=True, help_text=_('Description of the purpose of this item'))
+    default_viewer   = models.CharField(_('default viewer'), max_length=255, choices=PossibleViewerNamesIterable(), help_text=_('The default viewer to display this item'))
 
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type_string, self.pk, self.name)
@@ -230,9 +244,21 @@ class Item(models.Model):
         """
         return get_item_type_with_name(self.item_type_string)
 
+    def get_default_viewer(self):
+        """
+        Return the name of the default viewer. If the default_viewer field is
+        invalid, returns the item type's default viewer.
+        """
+        from cms.base_viewer import get_viewer_class_by_name
+        viewer_name = self.default_viewer
+        viewer = get_viewer_class_by_name(viewer_name)
+        if not (viewer and isinstance(self, viewer.accepted_item_type)):
+            viewer_name = self.item_type_string.lower()
+        return viewer_name
+
     @models.permalink
     def get_absolute_url(self):
-        return ('item_url', (), {'viewer': self.item_type_string.lower(), 'noun': self.pk})
+        return ('item_url', (), {'viewer': self.get_default_viewer(), 'noun': self.pk})
 
     def downcast(self):
         """
@@ -516,6 +542,10 @@ class Item(models.Model):
         if first_agent:
             self.creator_id = 1
 
+        # Set default_viewer if it wasn't already set (for non-form item creations)
+        if not self.default_viewer:
+            self.default_viewer = type(self).__name__.lower()
+
         # Execute before-callbacks
         if is_new:
             self._before_create(action_agent, action_summary, action_time)
@@ -593,7 +623,7 @@ class Item(models.Model):
         return result
 
     @classmethod
-    def do_specialized_form_configuration(cls, is_new, attrs):
+    def do_specialized_form_configuration(cls, item_type, is_new, attrs):
         """
         Perform any specialized configuration for a Django form. The
         is_new parameter is True if the form is creating a new item, and is
@@ -607,10 +637,18 @@ class Item(models.Model):
         Item types that want to configure the default Django form in a special
         way should override this method, making sure to put a call superclasses
         at the top, like:
-        >>    for base in cls.__bases__:
-        >>        base.do_specialized_form_configuration(is_new, attrs)
+        >> super(Membership, cls).do_specialized_form_configuration(item_type, is_new, attrs)
         """
-        pass
+        use_default_viewer_field = True
+        if attrs['Meta'].fields is not None and 'default_viewer' not in attrs['Meta'].fields:
+            use_default_viewer_field = False
+        if attrs['Meta'].exclude is not None and 'default_viewer' in attrs['Meta'].exclude:
+            use_default_viewer_field = False
+        if use_default_viewer_field:
+            default_viewer_field = item_type._meta.get_field_by_name('default_viewer')[0]
+            from cms.base_viewer import get_viewer_class_by_name
+            choices = [x for x in default_viewer_field.choices if issubclass(item_type, get_viewer_class_by_name(x[0]).accepted_item_type)]
+            attrs['default_viewer'] = default_viewer_field.formfield(initial=item_type.__name__.lower(), choices=choices)
 
     def _before_create(self, action_agent, action_summary, action_time):
         """
@@ -1283,9 +1321,8 @@ class Membership(Item):
             return super(Membership, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
 
     @classmethod
-    def do_specialized_form_configuration(cls, is_new, attrs):
-        for base in cls.__bases__:
-            base.do_specialized_form_configuration(is_new, attrs)
+    def do_specialized_form_configuration(cls, item_type, is_new, attrs):
+        super(Membership, cls).do_specialized_form_configuration(item_type, is_new, attrs)
         if is_new:
             attrs['Meta'].exclude.append('name')
             attrs['Meta'].exclude.append('description')
@@ -1516,9 +1553,8 @@ class TextComment(TextDocument, Comment):
         verbose_name_plural = _('text comments')
 
     @classmethod
-    def do_specialized_form_configuration(cls, is_new, attrs):
-        for base in cls.__bases__:
-            base.do_specialized_form_configuration(is_new, attrs)
+    def do_specialized_form_configuration(cls, item_type, is_new, attrs):
+        super(TextComment, cls).do_specialized_form_configuration(item_type, is_new, attrs)
         if is_new:
             attrs['item_version_number'] = forms.IntegerField(widget=forms.HiddenInput())
             attrs['item_index'] = forms.IntegerField(widget=forms.HiddenInput(), required=False)
@@ -1583,9 +1619,8 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
             return super(TextDocumentExcerpt, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
 
     @classmethod
-    def do_specialized_form_configuration(cls, is_new, attrs):
-        for base in cls.__bases__:
-            base.do_specialized_form_configuration(is_new, attrs)
+    def do_specialized_form_configuration(cls, item_type, is_new, attrs):
+        super(TextDocumentExcerpt, cls).do_specialized_form_configuration(item_type, is_new, attrs)
         # For now, this is how we prevent manual creation of TextDocumentExcerpts
         attrs['Meta'].fields = ['name']
 
@@ -1859,7 +1894,7 @@ class ActionNotice(models.Model):
         reply_item = self.notification_reply_item()
         topmost_item = item.original_item_in_thread()
         def get_url(x):
-            return 'http://%s%s' % (settings.DEFAULT_HOSTNAME, reverse('item_url', kwargs={'viewer': x.item_type_string.lower(), 'noun': x.pk}))
+            return 'http://%s%s' % (settings.DEFAULT_HOSTNAME, x.get_absolute_url())
         subscribed_item_name = get_viewable_name(viewer.context, subscribed_item)
         item_name = get_viewable_name(viewer.context, item)
         reply_item_name = "Readers of item %d" % reply_item.pk

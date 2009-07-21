@@ -111,9 +111,8 @@ class DemeAccount(AuthenticationMethod):
         return DemeAccount.get_hexdigest('sha1', str(random.random()), str(random.random()))
 
     @classmethod
-    def do_specialized_form_configuration(cls, is_new, attrs):
-        for base in cls.__bases__:
-            base.do_specialized_form_configuration(is_new, attrs)
+    def do_specialized_form_configuration(cls, item_type, is_new, attrs):
+        super(DemeAccount, cls).do_specialized_form_configuration(item_type, is_new, attrs)
         attrs['Meta'].exclude.append('password')
         attrs['password1'] = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
         attrs['password2'] = forms.CharField(label=_("Password confirmation"), widget=forms.PasswordInput)
