@@ -1,0 +1,12 @@
+{% extends layout %}
+{% load item_tags %}
+{% block title %} {% viewable_name webpage %}
+{% endblock %}
+{% block content %}
+<iframe src="{{ url }}" width="100%" height="400" scrolling="yes">
+    <p> Your browser doesn't support iframes</p>
+</iframe>
+
+{% endblock %}
+
+

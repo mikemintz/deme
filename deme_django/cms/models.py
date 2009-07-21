@@ -746,7 +746,7 @@ class Webpage(Item):
         verbose_name_plural = _('webpages')
 
     # Fields
-    url = models.CharField(_('URL'), max_length=255)
+    url = models.CharField(_('URL'), max_length=255, default='http://')
 
 ###############################################################################
 # Agents and related item types

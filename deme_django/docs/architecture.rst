@@ -202,7 +202,6 @@ In order to allow vanity URLs (i.e., things other than ``/viewing/item/5``), we 
   * The ``hostname`` field specifies the hostname of this site, so that the viewer can determine which site a visitor is currently at from the URL.
   * The ``default_layout`` field is a pointer to a DjangoTemplateDocument. Whenever a visitor is at a URL designated for this site, the template will be rendered under this layout. If this field is null, the Deme default layout (in ``cms/templates/default_layout.html``) will be used.
 
-
 * **CustomUrl:** A CustomUrl is a ViewerRequest that represents a specific path.
     
   Each CustomUrl has a ``parent_url`` field pointing to the parent ViewerRequest (it will be the Site if this CustomUrl is the first path component) and a ``path`` field. So when a user visits http://example.com/abc/def, Deme looks for a CustomUrl with name "def" with a parent with name "abc" with a parent Site with hostname "example.com". In other words, we need to find something that looks like this::
