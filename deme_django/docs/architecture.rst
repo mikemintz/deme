@@ -78,6 +78,8 @@ Below are the core item types and the role they play (see the full ontology at h
   * The ``active`` field is true or false, depending on whether the item is active or not.
   * The ``destroyed`` field is true or false, depending on whether the item is destroyed or not.
 
+* **Webpage:** A Webpage is an item with one extra field, ``URL``, used to represent external webpages.
+
 Agents and related item types
 
 * **Agent:** This item type represents an agent that can "do" things. Often this will be a person (see the Person subclass), but actions can also be performed by other agents, such as bots and anonymous agents. Agents are unique in the following ways:
@@ -107,7 +109,8 @@ Agents and related item types
   This item type defines four fields: ``username``, ``password``, ``password_question``, and ``password_answer`` (the last two can be used to reset the password and send it to the Agent via one of its ContactMethods).
 
 * **Person:** A Person is an Agent that represents a person in real life. It defines four user-editable fields about the person's name: ``first_name``, ``middle_names``, ``last_name``, and ``suffix``.
- 
+
+
 * **ContactMethod:** A ContactMethod belongs to an Agent and contains details on how to contact them. ContactMethod is meant to be abstract, so developers should always create subclasses rather than creating raw ContactMethods.
 
   This item type defines one field, an ``agent`` pointer that points to the agent that is holds this contact method.
