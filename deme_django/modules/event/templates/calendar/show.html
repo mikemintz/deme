@@ -5,6 +5,27 @@
 {% endblock %}
 {% block content %}
 
+
+<script type="text/javascript">
+    function openDialog(name, edit_url)
+    {
+        var dialogBox = $("#" + name);
+        dialogBox.dialog({
+            autoOpen: false,
+            bgiframe: true,
+            modal: true,
+            buttons: {
+               'Close': function(){$(this).dialog('close')},
+               'Edit This Item': function(){ window.location = edit_url }
+            },
+            close: function(event, ui) {dialogBox.dialog('destroy')}
+               
+        });
+        dialogBox.dialog('open');
+    }   
+</script>
+
+
 <style type ="text/css">
      .calendar {
   border: 2px solid black;
@@ -64,12 +85,20 @@
                     {% endif %}
 
                     {% for event in days_events.cur_events %}
-                        <div style="margin-bottom: 2px; border: thin #ccc solid; background: #fee; -moz-border-radius: 8px; padding: 1px; ">
-                            {% if event.is_starting_date %}
+                    <div style="margin-bottom: 2px; border: thin #ccc solid; background: #fee; -moz-border-radius: 8px; padding: 1px; ">
+                        {% if event.is_starting_date %}
                                 {{ event.start_time|time:"P" }}
-                            {% endif %}
-                            <a href="{{ event.url }}">{{ event.name }}</a>
-                        </div>
+                        {% endif %}
+                        <a href="#" onclick="openDialog('{{ event.pk }}-{{ days_events.day.day }}', '{{ event.edit_url }}'); return false;">{{ event.name }}</a>
+                        <div id="{{ event.pk }}-{{ days_events.day.day }}" title="<a href='{{ event.url }}'>{{ event.name }}</a>" style="display: none;">
+                                Start Time: {{ event.start_time|time:"P" }}
+                                <p>Start Date: {{ event.start_date|date:"M d, Y" }}</p>
+                                End Time: {{ event.end_time|time:"P" }}
+                                <p>End Date: {{ event.end_date|date:"M d, Y" }}</p>
+                                Location: {{ event.location }}
+                                <p>Description: {{ event.body|safe }}</p>
+                            </div>
+                    </div>
                     {% endfor %}
                 </td>
             {% endfor %}
@@ -80,12 +109,12 @@
 </table>
 <div>
     {% ifagentcan 'modify_membership' collection %}
-        <a href="{% url item_type_url viewer="event",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Create A New Event</a> 
+        <a href="{% url item_type_url viewer="event",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Add A New Event to this Calendar</a> 
     {% endifagentcan %}
 
 </div>    
 <div>
-     <a href="{% url item_url viewer="calendar" action="exportguide" noun=collection.pk %}">An Exportable Version of this Calendar</a> 
+     <a href="{% url item_url viewer="calendar" action="exportguide" noun=collection.pk %}">Export this Calendar</a> 
 </div>
 
 {% endblock %}

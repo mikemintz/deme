@@ -1,10 +1,10 @@
 from django.template import Context, loader
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
-from cms.views import HtmlDocumentViewer, ItemViewer
+from django.http import HttpResponse, HttpRequest
+from cms.views import HtmlDocumentViewer, CollectionViewer
 from cms.models import *
 from django.db.models import Q
-from modules.event.models import Event
+from modules.event.models import Event, Calendar
 from datetime import date, datetime, timedelta, tzinfo
 import calendar
 import time
@@ -15,8 +15,8 @@ class EventViewer(HtmlDocumentViewer):
     viewer_name = 'event' 
     
 
-class CalendarViewer(ItemViewer):
-    accepted_item_type = Collection
+class CalendarViewer(CollectionViewer):
+    accepted_item_type = Calendar
     viewer_name = 'calendar'
 
     def item_show_html(self):
@@ -88,8 +88,13 @@ class CalendarViewer(ItemViewer):
                     details["start_date"] = member.start_date
                     details["is_starting_date"] = (member.start_date == this_day)
                     details["end_date"] = member.end_date
+                    details["end_time"] = member.end_time
+                    details["location"] = member.location
+                    details["body"] = member.body
                     details["name"] = member.display_name()
                     details["url"] = member.get_absolute_url() 
+                    details["pk"] = member.pk
+                    details["edit_url"] = reverse('item_url', kwargs={'viewer': 'event', 'noun': member.pk, 'action': 'edit'}) + '?version=%s' % member.version_number
                     day_event_list.append(details)
                     events[this_day] = day_event_list
 
@@ -156,7 +161,5 @@ class CalendarViewer(ItemViewer):
         collection = self.item
         self.context['collection'] = collection
         self.context['export_url'] = reverse('item_url', kwargs={'viewer': 'calendar', 'action': 'export', 'noun': collection.pk}) 
-
-
-
+        self.context['host'] = self.request.get_host()
         return HttpResponse(template.render(self.context))

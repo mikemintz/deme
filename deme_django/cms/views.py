@@ -524,6 +524,9 @@ class ItemViewer(Viewer):
         template = loader.get_template('item/admin.html')
         return HttpResponse(template.render(self.context))
 
+class WebpageViewer(ItemViewer):
+    accepted_item_type = Webpage
+    viewer_name = 'webpage'
 
 class AgentViewer(ItemViewer):
     accepted_item_type = Agent

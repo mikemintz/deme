@@ -37,7 +37,7 @@ __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
         'Permission', 'OneToOnePermission', 'OneToSomePermission',
         'OneToAllPermission', 'SomeToOnePermission', 'SomeToSomePermission',
         'SomeToAllPermission', 'AllToOnePermission', 'AllToSomePermission',
-        'AllToAllPermission', 'friendly_name_for_ability']
+        'AllToAllPermission', 'friendly_name_for_ability', 'Webpage']
 
 
 ###############################################################################
@@ -764,6 +764,27 @@ class Item(models.Model):
         pass
     _after_destroy.alters_data = True
 
+
+###############################################################################
+# Webpage
+###############################################################################
+
+class Webpage(Item):
+    """
+    This item type represents a webpage. The only new field that isn't inherited
+    from Item is the webpage's url
+    """
+
+    # Setup
+    introduced_immutable_fields = frozenset()
+    introduced_abilities = frozenset(['view Webpage.url', 'edit Webpage.url'])
+    introduced_global_abilities = frozenset(['create Webpage'])
+    class Meta:
+        verbose_name = _('webpage')
+        verbose_name_plural = _('webpages')
+
+    # Fields
+    url = models.CharField(_('URL'), max_length=255)
 
 ###############################################################################
 # Agents and related item types
