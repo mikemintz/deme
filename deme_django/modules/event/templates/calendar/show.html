@@ -7,7 +7,7 @@
 
 
 <script type="text/javascript">
-    function openDialog(name)
+    function openDialog(name, edit_url)
     {
         var dialogBox = $("#" + name);
         dialogBox.dialog({
@@ -15,7 +15,8 @@
             bgiframe: true,
             modal: true,
             buttons: {
-               'Close': function(){$(this).dialog('close')}
+               'Close': function(){$(this).dialog('close')},
+               'Edit This Item': function(){ window.location = edit_url }
             },
             close: function(event, ui) {dialogBox.dialog('destroy')}
                
@@ -84,11 +85,11 @@
                     {% endif %}
 
                     {% for event in days_events.cur_events %}
-                    <div style="margin-bottom: 2px; border: thin #ccc solid; background: #fee; -moz-border-radius: 8px; padding: 1px; " id="fuck">
+                    <div style="margin-bottom: 2px; border: thin #ccc solid; background: #fee; -moz-border-radius: 8px; padding: 1px; ">
                         {% if event.is_starting_date %}
                                 {{ event.start_time|time:"P" }}
                         {% endif %}
-                        <a href="#" onclick="openDialog('{{ event.pk }}-{{ days_events.day.day }}'); return false;">{{ event.name }}</a>
+                        <a href="#" onclick="openDialog('{{ event.pk }}-{{ days_events.day.day }}', '{{ event.edit_url }}'); return false;">{{ event.name }}</a>
                         <div id="{{ event.pk }}-{{ days_events.day.day }}" title="<a href='{{ event.url }}'>{{ event.name }}</a>" style="display: none;">
                                 Start Time: {{ event.start_time|time:"P" }}
                                 <p>Start Date: {{ event.start_date|date:"M d, Y" }}</p>

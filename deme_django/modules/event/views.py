@@ -94,6 +94,7 @@ class CalendarViewer(CollectionViewer):
                     details["name"] = member.display_name()
                     details["url"] = member.get_absolute_url() 
                     details["pk"] = member.pk
+                    details["edit_url"] = reverse('item_url', kwargs={'viewer': 'event', 'noun': member.pk, 'action': 'edit'}) + '?version=%s' % member.version_number
                     day_event_list.append(details)
                     events[this_day] = day_event_list
 
