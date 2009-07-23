@@ -50,7 +50,7 @@
             targ = targ.parentNode;
         var tokenWrapper = targ;
         var index = tokenWrapper.deme_text_offset;
-        var url = '{% url item_type_url viewer="transclusion",action="new" %}?from_item={{ item.pk }}&from_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&from_item_index=' + index;
+        var url = '{% url item_type_url viewer="transclusion",action="new" %}?populate_from_item={{ item.pk }}&populate_from_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&populate_from_item_index=' + index;
         window.location = url;
         return false;
     }
