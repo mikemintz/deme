@@ -979,7 +979,7 @@ class EmbeddedItem(template.Node):
         item = item.downcast()
         viewer = viewer_class()
         viewer.init_for_div(context['_viewer'], 'show', item, '')
-        return """<div style="padding: 10px; border: thick solid #aaa;">%s</div>""" % viewer.dispatch().content
+        return """<div style="padding: 10px; border: 2px solid #aaa;">%s</div>""" % viewer.dispatch().content
 
 
 @register.tag

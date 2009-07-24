@@ -4,12 +4,9 @@
 {% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
-{% subclassfields %}
-
-
 {% for details in members %}
 
-    <div style="margin-bottom: 2px; border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px;">
+    <div style="border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px">
         <div style="font-weight: bold;">
             <a href="{{ details.url }}">{% viewable_name details.member %}</a> 
         </div>
@@ -24,6 +21,7 @@
                         {{ details.body|truncatewords:50 }} 
                     </div>
                 {% endif %}
+                
                 <a href="{{ details.url }}"> Full Article </a>
            {% endifagentcan %}    
         {% endif %}
@@ -42,6 +40,8 @@
         </div>
 
     </div>
+
+    <div style="border: 1px solid #aaa; margin-bottom: 8px; margin-top: 8px;"></div>
 
 {% endfor %}
 
