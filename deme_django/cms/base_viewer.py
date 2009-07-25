@@ -1,4 +1,5 @@
 #TODO completely clean up code
+#TODO clean up the init_for_* methods and get_form_class_for_item_type
 
 """
 This module defines the abstract Viewer superclass of all item viewers.
@@ -128,7 +129,6 @@ class VirtualRequest(HttpRequest):
             if not hasattr(cur_node.original_request, 'has_virtual_request_cycle'):
                 break
             cur_node = cur_node.original_request
-            print len(visited_nodes)
         return False
 
 
@@ -190,19 +190,34 @@ class Viewer(object):
     the request are defined as instance variables in the viewer before
     dispatch. They must return an HttpResponse. They should take advantage of
     self.context, which is defined before the view is called.
+        
+    The following instance variables are defined on the viewer:
+    * self.context (the Context object used to render templates)
+    * self.action (the action part of the URL)
+    * self.noun (the noun part of the URL)
+    * self.format (the format part of the URL)
+    * self.cur_agent (the currently authenticated Agent or AnonymousAgent)
+    * self.cur_site (the Site that is being used for this request)
+    * self.multi_agent_permission_cache (a MultiAgentPermissionCache for
+      permission queries)
+    * self.permission_cache (a PermissionCache for permission queries on cur_agent)
+    * self.item (the downcasted requested item if there's a noun in the request)
+      - If there is a `version` parameter in the query string, the item's fields
+        will be populated with data from the requested version
     """
+    #TODO document the self.context variables
     __metaclass__ = ViewerMetaClass
 
     def __init__(self):
         # Nothing happens in the constructor. All of the initialization happens
-        # in the init_from_* methods, based on how the viewer was loaded.
+        # in the init_for_* methods, based on how the viewer was loaded.
         pass
 
     def cur_agent_can_global(self, ability, wildcard_suffix=False):
         """
         Return whether the currently logged in agent has the given global
         ability. If wildcard_suffix=True, then return True if the agent has
-        **any** global ability whose first word is the specified ability.
+        **any** global ability whose prefix is the specified ability.
         """
         if wildcard_suffix:
             global_abilities = self.permission_cache.global_abilities()
@@ -214,7 +229,7 @@ class Viewer(object):
         """
         Return whether the currently logged in agent has the given item ability
         with respect to the given item. If wildcard_suffix=True, then return
-        True if the agent has **any** ability whose first word is the specified
+        True if the agent has **any** ability whose prefix is the specified
         ability.
         """
         if wildcard_suffix:
@@ -226,7 +241,8 @@ class Viewer(object):
     def require_global_ability(self, ability, wildcard_suffix=False):
         """
         Raise a DemePermissionDenied exception if the current agent does not
-        have the specified global ability.
+        have the specified global ability. The wildcard_suffix parameter is
+        defined same as in cur_agent_can_global.
         """
         if not self.cur_agent_can_global(ability, wildcard_suffix):
             if wildcard_suffix:
@@ -237,7 +253,8 @@ class Viewer(object):
     def require_ability(self, ability, item, wildcard_suffix=False):
         """
         Raise a DemePermissionDenied exception if the current agent does not
-        have the specified ability with respect to the specified item.
+        have the specified ability with respect to the specified item. The
+        wildcard_suffix parameter is defined same as in cur_agent_can.
         """
         if not self.cur_agent_can(ability, item, wildcard_suffix):
             if wildcard_suffix:
@@ -262,11 +279,16 @@ class Viewer(object):
         return request_class(template.render(self.context))
 
     def init_for_http(self, request, action, noun, format):
+        """
+        This method sets up the Viewer from an incoming HttpRequest. The
+        `action`, `noun`, and `format` parameters are extracted from the URL
+        (or the ViewerRequest). This method should only be called from
+        cms/dispatcher.py.
+        """
         self.context = Context()
         self.action = action or ('show' if noun else 'list')
         self.noun = noun
         self.format = format or 'html'
-        self.method = (request.GET.get('_method', None) or request.method).upper()
         self.request = request
         self.cur_agent = get_logged_in_agent(request)
         self.cur_site = get_current_site(request)
@@ -298,6 +320,11 @@ class Viewer(object):
         self._set_default_layout()
 
     def init_for_div(self, original_viewer, action, item, query_string):
+        """
+        This method sets up the Viewer to be embedded (probably in a <div>) in
+        the specified original_viewer. The action, item, and query_string
+        specify the details of what will be embedded in this viewer.
+        """
         if item is None:
             path = reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': action})
         else:
@@ -308,7 +335,6 @@ class Viewer(object):
         self.multi_agent_permission_cache = original_viewer.multi_agent_permission_cache
         self.permission_cache = original_viewer.permission_cache
         self.format = 'html'
-        self.method = 'GET'
         if item is None:
             self.noun = None
         else:
@@ -331,13 +357,20 @@ class Viewer(object):
         self.context['layout'] = 'blank.html'
 
     def init_for_outgoing_email(self, agent):
+        """
+        This method sets up the Viewer to render the body of an outgoing email
+        to the specified `agent`. There is no request associated with this
+        viewer. Viewers initialized with this function should not be used to
+        render ordinary actions (like item_show_html). Instead, they can be
+        used to render emails that want to take advantage of the item_tags
+        and existing infrastructure that requires a viewer.
+        """
         self.request = None
         self.cur_agent = agent
         self.cur_site = get_default_site()
         self.multi_agent_permission_cache = MultiAgentPermissionCache()
         self.permission_cache = self.multi_agent_permission_cache.get(self.cur_agent)
         self.format = 'html'
-        self.method = 'GET'
         self.noun = None
         self.item = None
         self.action = 'list'
@@ -357,49 +390,75 @@ class Viewer(object):
         self.context['layout'] = 'blank.html'
 
     def dispatch(self):
+        """
+        Perform the requested action and return an HttpResponse. In general,
+        this should just be called from cms/dispatcher.py. Return None if there
+        is no Python method that corresponds with the requested action.
+        """
+        # Make sure there isn't a cycle in the virtual request graph.
         if hasattr(self.request, 'has_virtual_request_cycle'):
             if self.request.has_virtual_request_cycle():
-                return self.render_error("Cycle detected in embedded viewers", 'There is a cycle in the embedded viewers, and it cannot be rendered without an infinite loop.', HttpResponseNotFound)
+                return self.render_error(
+                    'Cycle detected in embedded viewers',
+                    'The embedded viewers cannot be rendered without an infinite loop.',
+                    HttpResponseNotFound)
+
+        # Get the Python method that corresponds to the requested action
         if self.noun is None:
             action_method_name = 'type_%s_%s' % (self.action, self.format)
         else:
             action_method_name = 'item_%s_%s' % (self.action, self.format)
         action_method = getattr(self, action_method_name, None)
-        if action_method:
-            if self.noun != None:
-                if self.item is None:
-                    return self.render_item_not_found()
-                elif self.action == 'copy':
-                    pass
-                else:
-                    if not isinstance(self.item, self.accepted_item_type):
-                        return self.render_item_not_found()
-            try:
-                response = action_method()
-                return response
-            except DemePermissionDenied, e:
-                from cms.templatetags.item_tags import get_item_link_tag
-                ability_friendly_name = friendly_name_for_ability(e.ability) or e.ability
-                if self.context.get('action_title'):
-                    msg = u'You do not have permission to perform the "%s" action' % self.context['action_title']
-                else:
-                    msg = u'You do not have permission to perform the action'
-                if self.item:
-                    msg += u' on %s' % get_item_link_tag(self.context, self.item)
-                if e.item is None:
-                    msg += u' (you need the "%s" global ability)' % ability_friendly_name
-                elif e.item.destroyed:
-                    msg += u' (%s is destroyed)' % ('it' if e.item == self.item else get_item_link_tag(self.context, e.item))
-                else:
-                    msg += u' (you need the "%s" ability on %s)' % (ability_friendly_name, 'it' if e.item == self.item else get_item_link_tag(self.context, e.item))
-                return self.render_error('Permission Denied', msg)
-        else:
+        if not action_method:
             return None
 
+        # Return an error if there was a noun in the request but we weren't
+        # able to find the corresponding item, or if the corresponding item
+        # is not an instance of accepted_item_type (with the exception of
+        # the 'copy' action, which will allow any viewer to copy any item).
+        if self.noun != None:
+            if self.item is None:
+                return self.render_item_not_found()
+            if not isinstance(self.item, self.accepted_item_type) and self.action != 'copy':
+                return self.render_item_not_found()
+
+        # Perform the action
+        try:
+            response = action_method()
+            return response
+        except DemePermissionDenied, e:
+            # If a DemePermissionDenied exception was raised while trying to
+            # perform the action, render a friendly error page.
+            from cms.templatetags.item_tags import get_item_link_tag
+            ability_friendly_name = friendly_name_for_ability(e.ability) or e.ability
+            # Explain what the user is trying to do
+            if self.context.get('action_title'):
+                msg = u'You do not have permission to perform the "%s" action' % self.context['action_title']
+            else:
+                msg = u'You do not have permission to perform the action'
+            if self.item:
+                msg += u' on %s' % get_item_link_tag(self.context, self.item)
+            # Explain why the user cannot do it
+            if e.item is None:
+                msg += u' (you need the "%s" global ability)' % ability_friendly_name
+            else:
+                permission_item_text = 'it' if e.item == self.item else get_item_link_tag(self.context, e.item)
+                if e.item.destroyed:
+                    msg += u' (%s is destroyed)' % permission_item_text
+                else:
+                    msg += u' (you need the "%s" ability on %s)' % (ability_friendly_name, permission_item_text)
+            return self.render_error('Permission Denied', msg)
+
     def render_item_not_found(self):
+        """
+        Render an error response since the requested item could not be displayed.
+        """
         if self.item:
             title = "%s Not Found" % self.accepted_item_type.__name__
-            body = 'You cannot view item %s in this viewer. Try viewing it in the <a href="%s">%s viewer</a>.' % (self.noun, self.item.get_absolute_url(), self.item.get_default_viewer())
+            body = """
+            You cannot view item %s in this viewer.
+            Try viewing it in the <a href="%s">%s viewer</a>.
+            """ % (self.noun, self.item.get_absolute_url(), self.item.get_default_viewer())
         else:
             title = "Item Not Found"
             version = self.request.GET.get('version')
@@ -493,10 +552,18 @@ class Viewer(object):
         return form_class
 
     def get_populated_field_dict(self):
+        """
+        Return a dict of populated fields from the query string. For example,
+        say the query string is ?populate_name=Mike&populate_description=hi --
+        then this method should return {'name': 'Mike', 'description': 'hi'}.
+        This method will ignore any parameters in the query string that do not
+        start with `populate_`, and it a non-destructive method.
+        """
+        key_prefix = 'populate_'
         result = {}
         for key, value in self.request.GET.iteritems():
-            if key.startswith('populate_'):
-                field_name = key.split('populate_', 1)[1]
+            if key.startswith(key_prefix):
+                field_name = key.split(key_prefix, 1)[1]
                 result[field_name] = value
         return result
 
