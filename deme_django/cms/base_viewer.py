@@ -113,18 +113,24 @@ class VirtualRequest(HttpRequest):
     def is_secure(self):
         return self.original_request.is_secure()
 
-    def virtual_requests_too_deep(self, n):
+    def has_virtual_request_cycle(self):
         """
-        Return whether the chain of virtual requests (going backwards through
-        original_requests) is longer than n. This is used as a simple hack to
-        prevent infinite loops when we have cycles of requests.
+        Return whether the chain of virtual requests is cyclical, and will thus
+        cause an infinite loop if we try to render.
         """
-        if n <= 1:
-            return True
-        elif not hasattr(self.original_request, 'virtual_requests_too_deep'):
-            return False
-        else:
-            return self.original_request.virtual_requests_too_deep(n - 1)
+        visited_nodes = set()
+        cur_node = self
+        request_hash_fn = lambda r: (r.path, r.method, r.query_string, r.raw_post_data)
+        while True:
+            cur_node_hash = request_hash_fn(cur_node)
+            if cur_node_hash in visited_nodes:
+                return True
+            visited_nodes.add(cur_node_hash)
+            if not hasattr(cur_node.original_request, 'has_virtual_request_cycle'):
+                break
+            cur_node = cur_node.original_request
+            print len(visited_nodes)
+        return False
 
 
 class ViewerMetaClass(type):
@@ -358,9 +364,9 @@ class Viewer(object):
         self.context['layout'] = 'blank.html'
 
     def dispatch(self):
-        if hasattr(self.request, 'virtual_requests_too_deep'):
-            if self.request.virtual_requests_too_deep(MAXIMUM_VIRTUAL_REQUEST_DEPTH):
-                return self.render_error("Exceeded maximum recursion depth", 'The depth of embedded pages is too high.', HttpResponseNotFound)
+        if hasattr(self.request, 'has_virtual_request_cycle'):
+            if self.request.has_virtual_request_cycle():
+                return self.render_error("Cycle detected in embedded viewers", 'There is a cycle in the embedded viewers, and it cannot be rendered without an infinite loop.', HttpResponseNotFound)
         if self.noun is None:
             action_method_name = 'type_%s_%s' % (self.action, self.format)
         else:

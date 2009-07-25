@@ -977,7 +977,7 @@ class EmbeddedItem(template.Node):
         if viewer_class is None:
             return ''
         item = self.item.resolve(context)
-        if isinstance(item, basestring):
+        if isinstance(item, (basestring, int)):
             try:
                 item = Item.objects.get(pk=item)
             except ObjectDoesNotExist:
