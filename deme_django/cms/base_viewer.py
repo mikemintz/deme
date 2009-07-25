@@ -24,14 +24,10 @@ from django.utils.html import escape
 from urllib import urlencode
 from cms.models import Item, Agent, Site, AnonymousAgent, DemeSetting, friendly_name_for_ability
 
-#TODO obey self.format when rendering an error if possible
 
-class DemePermissionDenied(Exception):
-    def __init__(self, ability, item):
-        self.ability = ability
-        self.item = item
-        super(DemePermissionDenied, self).__init__("The agent does not have permission to perform the action")
-
+###############################################################################
+# Helper functions that don't require a Viewer
+###############################################################################
 
 def get_logged_in_agent(request):
     """
@@ -79,6 +75,17 @@ def get_current_site(request):
         return Site.objects.filter(hostname=hostname).get()
     except ObjectDoesNotExist:
         return get_default_site()
+
+
+###############################################################################
+# Classes that are used by Viewers
+###############################################################################
+
+class DemePermissionDenied(Exception):
+    def __init__(self, ability, item):
+        self.ability = ability
+        self.item = item
+        super(DemePermissionDenied, self).__init__("The agent does not have permission to perform the action")
 
 
 class VirtualRequest(HttpRequest):
@@ -132,6 +139,10 @@ class VirtualRequest(HttpRequest):
         return False
 
 
+###############################################################################
+# Viewer metaclass stuff
+###############################################################################
+
 class ViewerMetaClass(type):
     """
     Metaclass for viewers. Defines ViewerMetaClass.viewer_name_dict, a mapping
@@ -151,6 +162,25 @@ class ViewerMetaClass(type):
             ViewerMetaClass.viewer_name_dict[viewer_name] = result
         return result
 
+
+def get_viewer_class_by_name(viewer_name):
+    """
+    Return the viewer class with the given name. If no such class exists,
+    return None.
+    """
+    # Check the defined viewers in ViewerMetaClass.viewer_name_dict
+    result = ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
+    return result
+
+
+def all_viewer_classes():
+    "Return a list of all viewer classes defined."
+    return ViewerMetaClass.viewer_name_dict.values()
+
+
+###############################################################################
+# The Viewer class
+###############################################################################
 
 class Viewer(object):
     """
@@ -210,75 +240,14 @@ class Viewer(object):
     #TODO document the self.context variables
     __metaclass__ = ViewerMetaClass
 
+    ###########################################################################
+    # Important functions (initializing and dispatching)
+    ###########################################################################
+
     def __init__(self):
         # Nothing happens in the constructor. All of the initialization happens
         # in the init_for_* methods, based on how the viewer was loaded.
         pass
-
-    def cur_agent_can_global(self, ability, wildcard_suffix=False):
-        """
-        Return whether the currently logged in agent has the given global
-        ability. If wildcard_suffix=True, then return True if the agent has
-        **any** global ability whose prefix is the specified ability.
-        """
-        if wildcard_suffix:
-            global_abilities = self.permission_cache.global_abilities()
-            return any(x.startswith(ability) for x in global_abilities)
-        else:
-            return self.permission_cache.agent_can_global(ability)
-
-    def cur_agent_can(self, ability, item, wildcard_suffix=False):
-        """
-        Return whether the currently logged in agent has the given item ability
-        with respect to the given item. If wildcard_suffix=True, then return
-        True if the agent has **any** ability whose prefix is the specified
-        ability.
-        """
-        if wildcard_suffix:
-            abilities_for_item = self.permission_cache.item_abilities(item)
-            return any(x.startswith(ability) for x in abilities_for_item)
-        else:
-            return self.permission_cache.agent_can(ability, item)
-
-    def require_global_ability(self, ability, wildcard_suffix=False):
-        """
-        Raise a DemePermissionDenied exception if the current agent does not
-        have the specified global ability. The wildcard_suffix parameter is
-        defined same as in cur_agent_can_global.
-        """
-        if not self.cur_agent_can_global(ability, wildcard_suffix):
-            if wildcard_suffix:
-                raise DemePermissionDenied(_(ability.strip()), None)
-            else:
-                raise DemePermissionDenied(ability, None)
-
-    def require_ability(self, ability, item, wildcard_suffix=False):
-        """
-        Raise a DemePermissionDenied exception if the current agent does not
-        have the specified ability with respect to the specified item. The
-        wildcard_suffix parameter is defined same as in cur_agent_can.
-        """
-        if not self.cur_agent_can(ability, item, wildcard_suffix):
-            if wildcard_suffix:
-                raise DemePermissionDenied(_(ability.strip()), item)
-            else:
-                raise DemePermissionDenied(ability, item)
-
-    def render_error(self, title, body, request_class=HttpResponseBadRequest):
-        """
-        Return an HttpResponse (of type request_class) that displays a simple
-        error page with the specified title and body.
-        """
-        if 'action_title' not in self.context:
-            self.context['action_title'] = 'Error'
-        template = loader.get_template_from_string("""
-        {%% extends layout %%}
-        {%% load item_tags %%}
-        {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
-        {%% block title %%}<img src="{{ "error"|icon_url:24 }}" /> %s{%% endblock %%}
-        {%% block content %%}%s{%% endblock content %%}
-        """ % (title, body))
-        return request_class(template.render(self.context))
 
     def init_for_http(self, request, action, noun, format):
         """
@@ -454,6 +423,76 @@ class Viewer(object):
                     msg += u' (you need the "%s" ability on %s)' % (ability_friendly_name, permission_item_text)
             return self.render_error('Permission Denied', msg)
 
+    ###########################################################################
+    # Helper functions
+    ###########################################################################
+
+    def cur_agent_can_global(self, ability, wildcard_suffix=False):
+        """
+        Return whether the currently logged in agent has the given global
+        ability. If wildcard_suffix=True, then return True if the agent has
+        **any** global ability whose prefix is the specified ability.
+        """
+        if wildcard_suffix:
+            global_abilities = self.permission_cache.global_abilities()
+            return any(x.startswith(ability) for x in global_abilities)
+        else:
+            return self.permission_cache.agent_can_global(ability)
+
+    def cur_agent_can(self, ability, item, wildcard_suffix=False):
+        """
+        Return whether the currently logged in agent has the given item ability
+        with respect to the given item. If wildcard_suffix=True, then return
+        True if the agent has **any** ability whose prefix is the specified
+        ability.
+        """
+        if wildcard_suffix:
+            abilities_for_item = self.permission_cache.item_abilities(item)
+            return any(x.startswith(ability) for x in abilities_for_item)
+        else:
+            return self.permission_cache.agent_can(ability, item)
+
+    def require_global_ability(self, ability, wildcard_suffix=False):
+        """
+        Raise a DemePermissionDenied exception if the current agent does not
+        have the specified global ability. The wildcard_suffix parameter is
+        defined same as in cur_agent_can_global.
+        """
+        if not self.cur_agent_can_global(ability, wildcard_suffix):
+            if wildcard_suffix:
+                raise DemePermissionDenied(_(ability.strip()), None)
+            else:
+                raise DemePermissionDenied(ability, None)
+
+    def require_ability(self, ability, item, wildcard_suffix=False):
+        """
+        Raise a DemePermissionDenied exception if the current agent does not
+        have the specified ability with respect to the specified item. The
+        wildcard_suffix parameter is defined same as in cur_agent_can.
+        """
+        if not self.cur_agent_can(ability, item, wildcard_suffix):
+            if wildcard_suffix:
+                raise DemePermissionDenied(_(ability.strip()), item)
+            else:
+                raise DemePermissionDenied(ability, item)
+
+    def render_error(self, title, body, request_class=HttpResponseBadRequest):
+        """
+        Return an HttpResponse (of type request_class) that displays a simple
+        error page with the specified title and body.
+        """
+        #TODO obey self.format when rendering an error if possible
+        if 'action_title' not in self.context:
+            self.context['action_title'] = 'Error'
+        template = loader.get_template_from_string("""
+        {%% extends layout %%}
+        {%% load item_tags %%}
+        {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
+        {%% block title %%}<img src="{{ "error"|icon_url:24 }}" /> %s{%% endblock %%}
+        {%% block content %%}%s{%% endblock content %%}
+        """ % (title, body))
+        return request_class(template.render(self.context))
+
     def render_item_not_found(self):
         """
         Render an error response since the requested item could not be displayed.
@@ -621,17 +660,3 @@ class Viewer(object):
             cur_node = next_node
         return self.context['layout%s' % django_template_document.pk]
 
-
-def get_viewer_class_by_name(viewer_name):
-    """
-    Return the viewer class with the given name. If no such class exists,
-    return None.
-    """
-    # Check the defined viewers in ViewerMetaClass.viewer_name_dict
-    result = ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
-    return result
-
-
-def all_viewer_classes():
-    "Return a list of all viewer classes defined."
-    return ViewerMetaClass.viewer_name_dict.values()
