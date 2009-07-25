@@ -500,7 +500,7 @@ class Item(models.Model):
     destroy.alters_data = True
 
     @transaction.commit_on_success
-    def save_versioned(self, action_agent, action_summary=None, action_time=None, first_agent=False, initial_permissions=None):
+    def save_versioned(self, action_agent, action_summary=None, action_time=None, first_agent=False, initial_permissions=None, multi_agent_permission_cache=None):
         """
         Save the current item (the specified agent was responsible with the
         given summary at the given time), making sure to keep track of versions.
@@ -529,6 +529,11 @@ class Item(models.Model):
         action_summary = action_summary or ''
         action_time = action_time or datetime.datetime.now()
 
+        # Initialize a multi_agent_permission_cache if we weren't given one
+        if multi_agent_permission_cache is None:
+            from cms.permissions import MultiAgentPermissionCache
+            multi_agent_permission_cache = MultiAgentPermissionCache()
+
         # Set the special fields
         self.item_type_string = type(self).__name__
         if first_agent:
@@ -548,9 +553,9 @@ class Item(models.Model):
 
         # Execute before-callbacks
         if is_new:
-            self._before_create(action_agent, action_summary, action_time)
+            self._before_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
         else:
-            self._before_edit(action_agent, action_summary, action_time)
+            self._before_edit(action_agent, action_summary, action_time, multi_agent_permission_cache)
 
         # Save the old item version
         if not is_new:
@@ -570,9 +575,9 @@ class Item(models.Model):
 
         # Execute after-callbacks
         if is_new:
-            self._after_create(action_agent, action_summary, action_time)
+            self._after_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
         else:
-            self._after_edit(action_agent, action_summary, action_time)
+            self._after_edit(action_agent, action_summary, action_time, multi_agent_permission_cache)
 
         # Create relevant ActionNotices
         if is_new:
@@ -650,50 +655,50 @@ class Item(models.Model):
             choices = [x for x in default_viewer_field.choices if issubclass(item_type, get_viewer_class_by_name(x[0]).accepted_item_type)]
             attrs['default_viewer'] = default_viewer_field.formfield(initial=item_type.__name__.lower(), choices=choices)
 
-    def _before_create(self, action_agent, action_summary, action_time):
+    def _before_create(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
         """
         This method gets called before the first version of an item is
         created via save_versioned().
         
         Item types that want to trigger an action before creation should
         override this method, making sure to put a call to super at the top,
-        like super(Group, self)._before_create(action_agent, action_summary, action_time)
+        like super(Group, self)._before_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
         """
         pass
     _before_create.alters_data = True
 
-    def _after_create(self, action_agent, action_summary, action_time):
+    def _after_create(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
         """
         This method gets called after the first version of an item is
         created via save_versioned().
         
         Item types that want to trigger an action after creation should
         override this method, making sure to put a call to super at the top,
-        like super(Group, self)._after_create(action_agent, action_summary, action_time)
+        like super(Group, self)._after_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
         """
         pass
     _after_create.alters_data = True
 
-    def _before_edit(self, action_agent, action_summary, action_time):
+    def _before_edit(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
         """
         This method gets called before an existing item is edited via
         save_versioned().
         
         Item types that want to trigger an action before creation should
         override this method, making sure to put a call to super at the top,
-        like super(Group, self)._before_edit(action_agent, action_summary, action_time)
+        like super(Group, self)._before_edit(action_agent, action_summary, action_time, multi_agent_permission_cache)
         """
         pass
     _before_edit.alters_data = True
 
-    def _after_edit(self, action_agent, action_summary, action_time):
+    def _after_edit(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
         """
         This method gets called after an existing item is edited via
         save_versioned().
         
         Item types that want to trigger an action after creation should
         override this method, making sure to put a call to super at the top,
-        like super(Group, self)._after_edit(action_agent, action_summary, action_time)
+        like super(Group, self)._after_edit(action_agent, action_summary, action_time, multi_agent_permission_cache)
         """
         pass
     _after_edit.alters_data = True
@@ -1208,8 +1213,8 @@ class Group(Collection):
         verbose_name = _('group')
         verbose_name_plural = _('groups')
 
-    def _after_create(self, action_agent, action_summary, action_time):
-        super(Group, self)._after_create(action_agent, action_summary, action_time)
+    def _after_create(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
+        super(Group, self)._after_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
         # Create a folio for this group
         folio = Folio(group=self, name='%s folio' % self.display_name())
         permissions = [OneToOnePermission(source=action_agent, ability='do_anything', is_allowed=True)]
@@ -1266,35 +1271,31 @@ class Membership(Item):
     collection         = FixedForeignKey(Collection, related_name='child_memberships', verbose_name=_('collection'), required_abilities=['modify_membership'])
     permission_enabled = FixedBooleanField(_('permission enabled'), help_text=_('Enable this if you want collection-wide permissions to apply to this child item'))
 
-    def _before_create(self, action_agent, action_summary, action_time):
-        super(Membership, self)._before_create(action_agent, action_summary, action_time)
+    def _before_create(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
+        super(Membership, self)._before_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
         if self.permission_enabled:
-            #TODO it would be better if we could take the existing permission_cache
-            from cms.permissions import MultiAgentPermissionCache
-            permission_cache = MultiAgentPermissionCache().get(action_agent)
+            permission_cache = multi_agent_permission_cache.get(action_agent)
             if not permission_cache.agent_can('do_anything', self.item):
                 self.permission_enabled = False
     _before_create.alters_data = True
 
-    def _before_edit(self, action_agent, action_summary, action_time):
-        super(Membership, self)._before_edit(action_agent, action_summary, action_time)
+    def _before_edit(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
+        super(Membership, self)._before_edit(action_agent, action_summary, action_time, multi_agent_permission_cache)
         if self.permission_enabled:
-            #TODO it would be better if we could take the existing permission_cache
-            from cms.permissions import MultiAgentPermissionCache
-            permission_cache = MultiAgentPermissionCache().get(action_agent)
+            permission_cache = multi_agent_permission_cache.get(action_agent)
             if not permission_cache.agent_can('do_anything', self.item):
                 self.permission_enabled = False
     _before_edit.alters_data = True
 
-    def _after_create(self, action_agent, action_summary, action_time):
-        super(Membership, self)._after_create(action_agent, action_summary, action_time)
+    def _after_create(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
+        super(Membership, self)._after_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
         if self.collection.active:
             # Update the RecursiveMembership to indicate this Membership exists
             RecursiveMembership.recursive_add_membership(self)
     _after_create.alters_data = True
 
-    def _after_edit(self, action_agent, action_summary, action_time):
-        super(Membership, self)._after_edit(action_agent, action_summary, action_time)
+    def _after_edit(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
+        super(Membership, self)._after_edit(action_agent, action_summary, action_time, multi_agent_permission_cache)
         if self.collection.active:
             # Update the RecursiveMembership in case permission_enabled changed
             #TODO figure out how to do this only when permission_enabled actually changes, rather than for every edit
@@ -1530,8 +1531,8 @@ class Comment(Item):
     item_version_number = models.PositiveIntegerField(_('item version number'))
     from_contact_method = FixedForeignKey(ContactMethod, related_name='comments_from_contactmethod', null=True, blank=True, default=None, verbose_name=_('from contact method'), required_abilities=['do_anything'])
 
-    def _after_create(self, action_agent, action_summary, action_time):
-        super(Comment, self)._after_create(action_agent, action_summary, action_time)
+    def _after_create(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
+        super(Comment, self)._after_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
         # Update the RecursiveComment to indicate this Comment exists
         RecursiveComment.recursive_add_comment(self)
     _after_create.alters_data = True

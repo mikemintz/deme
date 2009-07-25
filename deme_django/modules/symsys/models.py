@@ -143,12 +143,12 @@ class SymsysCareer(Item):
         else:
             return super(SymsysCareer, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
 
-    def _after_create(self, action_agent, action_summary, action_time):
-        super(SymsysCareer, self)._after_create(action_agent, action_summary, action_time)
+    def _after_create(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
+        super(SymsysCareer, self)._after_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
         self._guarantee_consistency_after_changes()
 
-    def _after_edit(self, action_agent, action_summary, action_time):
-        super(SymsysCareer, self)._after_edit(action_agent, action_summary, action_time)
+    def _after_edit(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
+        super(SymsysCareer, self)._after_edit(action_agent, action_summary, action_time, multi_agent_permission_cache)
         self._guarantee_consistency_after_changes()
 
     def _after_deactivate(self, action_agent, action_summary, action_time):
@@ -471,8 +471,8 @@ class SymsysAffiliate(Person):
     about          = models.TextField(_('about'), blank=True)
     photo          = FixedForeignKey(ImageDocument, related_name='symsysaffiliates_with_photo', verbose_name=_('photo'), null=True, blank=True, default=None)
 
-    def _after_create(self, action_agent, action_summary, action_time):
-        super(SymsysAffiliate, self)._after_create(action_agent, action_summary, action_time)
+    def _after_create(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
+        super(SymsysAffiliate, self)._after_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
         group_creator = symsys_bot()
         all_ssp_users = get_or_create_group('all_ssp_users', 'All SSP Users', group_creator)
         membership = Membership(item=self, collection=all_ssp_users)
