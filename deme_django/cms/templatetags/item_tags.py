@@ -1067,7 +1067,7 @@ class PermissionEditor(template.Node):
             everyone_permissions = AllToAllPermission.objects.all()
             can_edit_permissions = agentcan_global_helper(context, 'do_anything')
         else:
-            if target is None:
+            if target is None or not agentcan_helper(context, 'view_permissions', target):
                 agent_permissions = []
                 collection_permissions = []
                 everyone_permissions = []
