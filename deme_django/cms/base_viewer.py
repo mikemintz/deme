@@ -196,6 +196,8 @@ class Viewer(object):
     * self.action (the action part of the URL)
     * self.noun (the noun part of the URL)
     * self.format (the format part of the URL)
+    * self.request (the HttpRequest that initiated this viewer)
+    * self.method (the HTTP method of the request, so that require_POST works)
     * self.cur_agent (the currently authenticated Agent or AnonymousAgent)
     * self.cur_site (the Site that is being used for this request)
     * self.multi_agent_permission_cache (a MultiAgentPermissionCache for
@@ -290,6 +292,7 @@ class Viewer(object):
         self.noun = noun
         self.format = format or 'html'
         self.request = request
+        self.method = self.request.method
         self.cur_agent = get_logged_in_agent(request)
         self.cur_site = get_current_site(request)
         self.multi_agent_permission_cache = MultiAgentPermissionCache()
@@ -330,6 +333,7 @@ class Viewer(object):
         else:
             path = reverse('item_url', kwargs={'viewer': self.viewer_name, 'action': action, 'noun': item.pk})
         self.request = VirtualRequest(original_viewer.request, path, query_string)
+        self.method = self.request.method
         self.cur_agent = original_viewer.cur_agent
         self.cur_site = original_viewer.cur_site
         self.multi_agent_permission_cache = original_viewer.multi_agent_permission_cache
@@ -366,6 +370,7 @@ class Viewer(object):
         and existing infrastructure that requires a viewer.
         """
         self.request = None
+        self.method = None
         self.cur_agent = agent
         self.cur_site = get_default_site()
         self.multi_agent_permission_cache = MultiAgentPermissionCache()
