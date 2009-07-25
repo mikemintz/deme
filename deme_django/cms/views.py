@@ -529,6 +529,12 @@ class WebpageViewer(ItemViewer):
     accepted_item_type = Webpage
     viewer_name = 'webpage'
 
+    def item_show_html(self):
+        self.context['action_title'] = 'Show'
+        self.context['url'] = self.item.url
+        template = loader.get_template('webpage/show.html')
+        return HttpResponse(template.render(self.context))
+
 
 class AgentViewer(ItemViewer):
     accepted_item_type = Agent

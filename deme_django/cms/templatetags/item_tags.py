@@ -162,13 +162,13 @@ def media_url(path):
 
 @register.simple_tag
 def module_media_url(module_name, path):
-    fs_path = os.path.join('modules', module_name, 'static', path)
+    fs_path = os.path.join(settings.MODULES_DIR, module_name, 'static', path)
     if os.path.exists(fs_path):
         path = 'modules/%s/%s' % (module_name, path)
         return urljoin(settings.MEDIA_URL, path)
     else:
         if settings.DEBUG:
-            return "[Couldn't find path %s on filesystem]" % path
+            return "[Couldn't find path %s on filesystem]" % fs_path
         else:
             return '' # Fail silently for invalid paths.
 
@@ -988,7 +988,7 @@ class EmbeddedItem(template.Node):
         item = item.downcast()
         viewer = viewer_class()
         viewer.init_for_div(context['_viewer'], 'show', item, '')
-        return """<div style="padding: 10px; border: thick solid #aaa;">%s</div>""" % viewer.dispatch().content
+        return """<div style="padding: 10px; border: 2px solid #aaa;">%s</div>""" % viewer.dispatch().content
 
 
 @register.tag
