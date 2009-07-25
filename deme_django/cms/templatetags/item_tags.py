@@ -848,6 +848,7 @@ class CalculateActionNotices(template.Node):
                 else:
                     action_summary_text = ''
                 if isinstance(action_notice, RelationActionNotice):
+                    from_item_text = get_item_link_tag(context, action_notice.from_item, action_notice.from_item_version_number)
                     natural_language_representation = action_notice.natural_language_representation(context['_viewer'].permission_cache)
                     action_sentence_parts = []
                     action_sentence_parts.append(action_agent_text)
