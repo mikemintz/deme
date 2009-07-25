@@ -688,13 +688,21 @@ class PermissionsBox(template.Node):
         abilities = permission_cache.item_abilities(item)
 
         result = []
-        if agentcan_helper(context, 'do_anything', item):
-            modify_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'itempermissions'})
-            result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify permissions</a></div>""" % modify_permissions_url)
+        if agentcan_helper(context, 'view_permissions', item):
+            if agentcan_helper(context, 'do_anything', item):
+                item_permissions_name = 'Modify permissions'
+            else:
+                item_permissions_name = 'View permissions'
+            item_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'itempermissions'})
+            result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>%s</a></div>""" % (item_permissions_url, item_permissions_name))
             if issubclass(item.actual_item_type(), Collection):
-                modify_collection_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'collectionpermissions'})
-                result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify collection permissions</a></div>""" % modify_collection_permissions_url)
-        elif agentcan_helper(context, 'modify_privacy_settings', item):
+                if agentcan_helper(context, 'do_anything', item):
+                    collection_permissions_name = 'Modify collection permissions'
+                else:
+                    collection_permissions_name = 'View collection permissions'
+                collection_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'collectionpermissions'})
+                result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>%s</a></div>""" % (collection_permissions_url, collection_permissions_name))
+        if agentcan_helper(context, 'modify_privacy_settings', item) and not agentcan_helper(context, 'do_anything', item):
             modify_privacy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'privacy'})
             result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify privacy</a></div>""" % modify_privacy_url)
         friendly_names = [x[1] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if x[0] in abilities]
@@ -1052,32 +1060,37 @@ class PermissionEditor(template.Node):
             possible_abilities = set([x for x in possible_abilities if x.startswith('view ')])
         possible_abilities = list((ability, capfirst(friendly_name)) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
 
-        if target is None:
-            agent_permissions = []
-            collection_permissions = []
-            everyone_permissions = []
-        else:
-            if self.target_level == 'one':
-                agent_permissions = target.one_to_one_permissions_as_target.all()
-                collection_permissions = target.some_to_one_permissions_as_target.all()
-                everyone_permissions = target.all_to_one_permissions_as_target.all()
-            elif self.target_level == 'some':
-                agent_permissions = target.one_to_some_permissions_as_target.all()
-                collection_permissions = target.some_to_some_permissions_as_target.all()
-                everyone_permissions = target.all_to_some_permissions_as_target.all()
-            elif self.target_level == 'all':
-                agent_permissions = OneToAllPermission.objects.all()
-                collection_permissions = SomeToAllPermission.objects.all()
-                everyone_permissions = AllToAllPermission.objects.all()
-            else:
-                assert False
 
-        if self.is_new_item:
-            # Creator has do_anything ability when creating a new item
-            creator = Agent.objects.get(pk=context['cur_agent'].pk)
-            creator_permission = OneToOnePermission(source=creator, ability='do_anything', is_allowed=True)
-            agent_permissions = [x for x in agent_permissions if not (x.source == creator and x.ability == 'do_anything')]
-            agent_permissions.append(creator_permission)
+        if self.target_level == 'all':
+            agent_permissions = OneToAllPermission.objects.all()
+            collection_permissions = SomeToAllPermission.objects.all()
+            everyone_permissions = AllToAllPermission.objects.all()
+            can_edit_permissions = agentcan_global_helper(context, 'do_anything')
+        else:
+            if target is None:
+                agent_permissions = []
+                collection_permissions = []
+                everyone_permissions = []
+            else:
+                if self.target_level == 'one':
+                    agent_permissions = target.one_to_one_permissions_as_target.all()
+                    collection_permissions = target.some_to_one_permissions_as_target.all()
+                    everyone_permissions = target.all_to_one_permissions_as_target.all()
+                elif self.target_level == 'some':
+                    agent_permissions = target.one_to_some_permissions_as_target.all()
+                    collection_permissions = target.some_to_some_permissions_as_target.all()
+                    everyone_permissions = target.all_to_some_permissions_as_target.all()
+                else:
+                    assert False
+            if self.is_new_item:
+                # Creator has do_anything ability when creating a new item
+                creator = Agent.objects.get(pk=context['cur_agent'].pk)
+                creator_permission = OneToOnePermission(source=creator, ability='do_anything', is_allowed=True)
+                agent_permissions = [x for x in agent_permissions if not (x.source == creator and x.ability == 'do_anything')]
+                agent_permissions.append(creator_permission)
+                can_edit_permissions = True
+            else:
+                can_edit_permissions = agentcan_helper(context, 'do_anything', target)
         
         agents = Agent.objects.filter(pk__in=set(x.source_id for x in agent_permissions))
         collections = Collection.objects.filter(pk__in=set(x.source_id for x in collection_permissions))
@@ -1118,13 +1131,20 @@ class PermissionEditor(template.Node):
         <script>
             var permission_counter = 1;
             var possible_abilities = %(possible_ability_javascript_array)s;
+            var can_edit_permissions = %(can_edit_permissions)s;
             function add_permission_fields(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
-                var remove_button = $('<a href="#" class="img_link"><img src="%(delete_img_url)s" /></a>');
-                remove_button.bind('click', function(e){wrapper.remove(); return false;});
-                wrapper.append(remove_button);
+                if (can_edit_permissions) {
+                    var remove_button = $('<a href="#" class="img_link"><img src="%(delete_img_url)s" /></a>');
+                    remove_button.bind('click', function(e){wrapper.remove(); return false;});
+                    wrapper.append(remove_button);
+                }
                 var is_allowed_checkbox = $('<input type="checkbox" id="newpermission' + permission_counter + '_is_allowed" name="newpermission' + permission_counter + '_is_allowed" value="on">');
                 is_allowed_checkbox.attr('checked', is_allowed);
                 is_allowed_checkbox.attr('defaultChecked', is_allowed);
+                if (!can_edit_permissions) {
+                    is_allowed_checkbox.attr('disabled', true);
+                    is_allowed_checkbox.attr('readonly', true);
+                }
                 wrapper.append(is_allowed_checkbox);
                 if (ability == '') {
                     var ability_select = $('<select name="newpermission' + permission_counter + '_ability">');
@@ -1168,15 +1188,17 @@ class PermissionEditor(template.Node):
                 }
                 var permissions_cell = $('<td>');
                 permissions_cell.addClass('permissions_cell');
-                var add_button = $('<a href="#" class="img_link">');
-                add_button.append('<img src="%(new_img_url)s" /> New Permission');
-                add_button.bind('click', function(e){
-                    var permission_div = $('<div>');
-                    add_permission_fields(permission_div, permission_type, agent_or_collection_id, true, '');
-                    permissions_cell.append(permission_div);
-                    return false;
-                });
-                permissions_cell.append(add_button);
+                if (can_edit_permissions) {
+                    var add_button = $('<a href="#" class="img_link">');
+                    add_button.append('<img src="%(new_img_url)s" /> New Permission');
+                    add_button.bind('click', function(e){
+                        var permission_div = $('<div>');
+                        add_permission_fields(permission_div, permission_type, agent_or_collection_id, true, '');
+                        permissions_cell.append(permission_div);
+                        return false;
+                    });
+                    permissions_cell.append(add_button);
+                }
                 row.append(permissions_cell);
                 return row;
             }
@@ -1233,20 +1255,16 @@ class PermissionEditor(template.Node):
                         }
                     },
                 });
+
+                if (can_edit_permissions) {
+                    $('#agent_and_collection_select_div').show();
+                }
             }
 
             $(document).ready(function(){
                 setup_permission_editor();
             });
         </script>
-
-        <div id="new_agent_dialog" style="display: none;">
-            Name: %(new_agent_select_widget)s
-        </div>
-
-        <div id="new_collection_dialog" style="display: none;">
-            Name: %(new_collection_select_widget)s
-        </div>
 
         <table id="permission_table" class="list" cellspacing="0">
             <tbody>
@@ -1257,9 +1275,20 @@ class PermissionEditor(template.Node):
             </tbody>
         </table>
 
-        <a href="#" class="img_link" onclick="$('#new_agent_dialog').dialog('open'); return false;"><img src="%(agent_img_url)s" /> <span>Select Agent</span></a>
-        <a href="#" class="img_link" onclick="$('#new_collection_dialog').dialog('open'); return false;"><img src="%(collection_img_url)s" /> <span>Select Collection</span></a>
+        <div id="new_agent_dialog" style="display: none;">
+            Name: %(new_agent_select_widget)s
+        </div>
+
+        <div id="new_collection_dialog" style="display: none;">
+            Name: %(new_collection_select_widget)s
+        </div>
+
+        <div style="display: none;" id="agent_and_collection_select_div">
+            <a href="#" class="img_link" onclick="$('#new_agent_dialog').dialog('open'); return false;"><img src="%(agent_img_url)s" /> <span>Select Agent</span></a>
+            <a href="#" class="img_link" onclick="$('#new_collection_dialog').dialog('open'); return false;"><img src="%(collection_img_url)s" /> <span>Select Collection</span></a>
+        </div>
 """ % {
+        'can_edit_permissions': simplejson.dumps(can_edit_permissions),
         'possible_ability_javascript_array': simplejson.dumps(possible_abilities, separators=(',',':')),
         'existing_permission_data_javascript_array': simplejson.dumps(existing_permission_data, separators=(',',':')),
         'sample_agent_url': reverse('item_url', kwargs={'viewer': 'agent', 'noun': '1'}),

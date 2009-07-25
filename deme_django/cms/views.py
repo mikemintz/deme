@@ -502,13 +502,13 @@ class ItemViewer(Viewer):
 
     def item_itempermissions_html(self):
         self.context['action_title'] = 'Item permissions'
-        self.require_ability('do_anything', self.item)
+        self.require_ability('view_permissions', self.item)
         template = loader.get_template('item/itempermissions.html')
         return HttpResponse(template.render(self.context))
 
     def item_collectionpermissions_html(self):
         self.context['action_title'] = 'Collection permissions'
-        self.require_ability('do_anything', self.item)
+        self.require_ability('view_permissions', self.item)
         template = loader.get_template('item/collectionpermissions.html')
         return HttpResponse(template.render(self.context))
 
