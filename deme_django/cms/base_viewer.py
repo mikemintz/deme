@@ -632,8 +632,12 @@ class Viewer(object):
         and it checks for permissions to view each DjangoTemplateDocument in
         the layout path.
         """
+        visited_nodes = set()
         cur_node = django_template_document
         while cur_node is not None:
+            if cur_node in visited_nodes:
+                raise Exception("There is a layout cycle")
+            visited_nodes.add(cur_node)
             context_key = 'layout%d' % cur_node.pk
             if context_key in self.context:
                 break
