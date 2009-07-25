@@ -22,7 +22,7 @@ from django.utils.text import get_text_list, capfirst
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from urllib import urlencode
-from cms.models import Item, Agent, Site, AnonymousAgent, DemeSetting
+from cms.models import Item, Agent, Site, AnonymousAgent, DemeSetting, friendly_name_for_ability
 
 #TODO obey self.format when rendering an error if possible
 
