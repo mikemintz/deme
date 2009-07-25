@@ -368,8 +368,10 @@ class Viewer(object):
                     msg += u' on %s' % get_item_link_tag(self.context, self.item)
                 if e.item is None:
                     msg += u' (you need the "%s" global ability)' % ability_friendly_name
+                elif e.item.destroyed:
+                    msg += u' (%s is destroyed)' % ('it' if e.item == self.item else get_item_link_tag(self.context, e.item))
                 else:
-                    msg += u' (you need the "%s" ability on %s)' % (ability_friendly_name, get_item_link_tag(self.context, e.item))
+                    msg += u' (you need the "%s" ability on %s)' % (ability_friendly_name, 'it' if e.item == self.item else get_item_link_tag(self.context, e.item))
                 return self.render_error('Permission Denied', msg)
         else:
             return None
