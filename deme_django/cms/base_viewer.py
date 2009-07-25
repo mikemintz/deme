@@ -1,6 +1,3 @@
-#TODO completely clean up code
-#TODO clean up the init_for_* methods and get_form_class_for_item_type
-
 """
 This module defines the abstract Viewer superclass of all item viewers.
 """
@@ -221,6 +218,7 @@ class Viewer(object):
     self.context, which is defined before the view is called.
         
     The following instance variables are defined on the viewer:
+    * self.item (the requested Item, or None if there is no noun)
     * self.context (the Context object used to render templates)
     * self.action (the action part of the URL)
     * self.noun (the noun part of the URL)
@@ -235,8 +233,26 @@ class Viewer(object):
     * self.item (the downcasted requested item if there's a noun in the request)
       - If there is a `version` parameter in the query string, the item's fields
         will be populated with data from the requested version
+    
+    The following context variables are defined:
+    * self.context['action'] (the action part of the URL)
+    * self.context['item'] (the requested Item, or None if there is no noun)
+    * self.context['specific_version'] (True if the user requested a specific
+      version of the item in the query string, otherwise False)
+    * self.context['viewer_name'] (value of viewer.viewer_name)
+    * self.context['accepted_item_type'] (value of viewer.accepted_item_type)
+    * self.context['accepted_item_type_name'] (verbose name of accepted_item_type)
+    * self.context['accepted_item_type_name_plural'] (verbose name plural of
+      accepted_item_type)
+    * self.context['full_path'] (the path to the current page)
+    * self.context['query_string'] (the query string for the current page)
+    * self.context['cur_agent'] (the currently authenticated Agent)
+    * self.context['cur_site'] (the Site that is being used for this request)
+    * self.context['_viewer'] (the viewer itself, only for custom tags/filters)
+    * self.context['layout'] (the layout that the template should inherit from)
+
+        
     """
-    #TODO document the self.context variables
     __metaclass__ = ViewerMetaClass
 
     ###########################################################################
@@ -310,7 +326,7 @@ class Viewer(object):
         if item is None:
             self.noun = None
         else:
-            self.noun = item.pk
+            self.noun = str(item.pk)
         self.item = item
         self.action = action
         self.context = Context()
@@ -512,12 +528,46 @@ class Viewer(object):
         return self.render_error(title, body, HttpResponseNotFound)
 
     def get_form_class_for_item_type(self, item_type, is_new, fields=None):
+        """
+        Return a Django form class to render a create/edit form for the given
+        item type. This form class will be dynamically created. If is_new=True,
+        it will be customized for creating new items, and if is_new=False, it
+        will be customized for editing existing items. If fields is a list,
+        the form fields will be limited to only the fields in that list (but if
+        it's None, the default form fields will be used).
+        
+        This function wraps around Django's modelforms.
+        """
         viewer = self
 
+        # Exclude parent_link fields, as well as immutable fields (when editing)
         exclude = []
         for field in item_type._meta.fields:
             if (field.rel and field.rel.parent_link) or ((not is_new) and field.name in item_type.all_immutable_fields()):
                 exclude.append(field.name)
+
+        # Sort the fields by their original ordering in the model
+        if fields is not None:
+            def field_sort_fn(field_name):
+                try:
+                    field = item_type._meta.get_field_by_name(field_name)[0]
+                    return (0, field)
+                except FieldDoesNotExist:
+                    return (1, None)
+            fields.sort(key=field_sort_fn)
+
+        # Set up the modelform class like modelform_factory does
+        #TODO check modelform_factory to see if there are updates to this, since it mentioned it was hacky
+        attrs = {}
+        class Meta:
+            pass
+        setattr(Meta, 'model', item_type)
+        setattr(Meta, 'fields', fields)
+        setattr(Meta, 'exclude', exclude)
+        attrs['Meta'] = Meta
+
+        # Define a custom formfield callback that will automatically use the
+        # AjaxModelChoiceField for all ForeignKey fields.
         def formfield_callback(f):
             if isinstance(f, models.ForeignKey):
                 options = {}
@@ -529,33 +579,20 @@ class Viewer(object):
                 return super(models.ForeignKey, f).formfield(**options)
             else:
                 return f.formfield()
-
-        if fields is not None:
-            # Sort the fields by their natural ordering
-            def field_sort_fn(field_name):
-                try:
-                    field = item_type._meta.get_field_by_name(field_name)[0]
-                    return (0, field)
-                except FieldDoesNotExist:
-                    return (1, None)
-            fields.sort(key=field_sort_fn)
-
-        #TODO check modelform_factory to see if there are updates to this
-        attrs = {}
-        class Meta:
-            pass
-        setattr(Meta, 'model', item_type)
-        setattr(Meta, 'fields', fields)
-        setattr(Meta, 'exclude', exclude)
-        class_name = item_type.__name__ + 'Form'
-        attrs['Meta'] = Meta
         attrs['formfield_callback'] = formfield_callback
+
+        # Create an action_summary field
         if 'action_summary' not in exclude:
             attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("Reason for %s this item" % ('creating' if is_new else 'editing')), widget=forms.TextInput, required=False)
+
+        # Create a JavaScriptSpamDetectionField for AnonymousAgents if enabled.
         if settings.USE_ANONYMOUS_JAVASCRIPT_SPAM_DETECTOR and self.cur_agent.is_anonymous():
             self.request.session.modified = True # We want to guarantee a cookie is given
             attrs['nospam'] = JavaScriptSpamDetectionField(self.request.session.session_key)
 
+        # Set the error message function for uniqueness constraint violations,
+        # so that when it is displayed, it links to the item it clashes with
+        # (and provides a quick link to overwrite it).
         def unique_error_message(self, unique_check):
             unique_field_dict = {}
             for field_name in unique_check:
@@ -565,9 +602,9 @@ class Viewer(object):
             except ObjectDoesNotExist:
                 existing_item = None
             if existing_item:
-                show_item_url = existing_item.get_absolute_url()
                 from cms.templatetags.item_tags import get_viewable_name
                 item_name = get_viewable_name(viewer.context, existing_item)
+                show_item_url = existing_item.get_absolute_url()
                 overwrite_url = reverse('item_url', kwargs={'viewer': existing_item.get_default_viewer(), 'noun': existing_item.pk, 'action': 'edit'})
                 overwrite_query_params = []
                 for k, v in self.cleaned_data.iteritems():
@@ -590,7 +627,11 @@ class Viewer(object):
             return mark_safe(result)
         attrs['unique_error_message'] = unique_error_message
         
+        # Allow the item type to do its own specialized form configuration
         item_type.do_specialized_form_configuration(item_type, is_new, attrs)
+
+        # Construct the form class
+        class_name = item_type.__name__ + 'Form'
         form_class = forms.models.ModelFormMetaclass(class_name, (forms.models.ModelForm,), attrs)
         return form_class
 
@@ -635,9 +676,13 @@ class Viewer(object):
         visited_nodes = set()
         cur_node = django_template_document
         while cur_node is not None:
+            # Check for cycles
             if cur_node in visited_nodes:
                 raise Exception("There is a layout cycle")
             visited_nodes.add(cur_node)
+
+            # Get the context variable name, and don't set it if it was set
+            # earlier (perhaps by an embedded document with the same layout).
             context_key = 'layout%d' % cur_node.pk
             if context_key in self.context:
                 break
