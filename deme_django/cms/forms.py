@@ -20,6 +20,7 @@ class AjaxModelChoiceWidget(forms.Widget):
 
     def __init__(self, *args, **kwargs):
         self.required_abilities = kwargs.pop('required_abilities')
+        self.permission_cache = kwargs.pop('permission_cache')
         super(AjaxModelChoiceWidget, self).__init__(*args, **kwargs)
 
     def render(self, name, value, attrs=None):
@@ -28,15 +29,15 @@ class AjaxModelChoiceWidget(forms.Widget):
         try:
             if issubclass(model, Item):
                 value_item = Item.objects.get(pk=value)
-            elif issubclass(model, Item.Version):
-                value_item = Item.Version.objects.get(pk=value)
             else:
                 value_item = None
         except:
             value_item = None
-        #TODO this next line poses a permission problem. someone can set an initial item, and figure out its name
-        # To fix, we need to given this widget access to the viewer, so it can do a permission_cache check on cur_agent
-        initial_search = value_item.display_name() if value_item else ''
+        if value_item:
+            can_view_name = self.permission_cache.agent_can('view Item.name', value_item)
+            initial_search = value_item.display_name(can_view_name_field=can_view_name)
+        else:
+            initial_search = ''
         if value is None: value = ''
         if attrs is None: attrs = {}
         ajax_query_string = '&'.join('ability=' + urlquote(ability) for ability in self.required_abilities)
@@ -120,7 +121,7 @@ class AjaxModelChoiceField(forms.ModelChoiceField):
     def __init__(self, *args, **kwargs):
         self.permission_cache = kwargs.pop('permission_cache')
         self.required_abilities = kwargs.pop('required_abilities')
-        self.widget = AjaxModelChoiceWidget(required_abilities=self.required_abilities)
+        self.widget = AjaxModelChoiceWidget(required_abilities=self.required_abilities, permission_cache=self.permission_cache)
         super(AjaxModelChoiceField, self).__init__(*args, **kwargs)
 
     def clean(self, value):
