@@ -168,7 +168,6 @@ def get_viewer_class_by_name(viewer_name):
     Return the viewer class with the given name. If no such class exists,
     return None.
     """
-    # Check the defined viewers in ViewerMetaClass.viewer_name_dict
     result = ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
     return result
 
@@ -612,6 +611,11 @@ class Viewer(object):
         return result
 
     def _set_default_layout(self):
+        """
+        Set the context['layout'] variable to the default layout template (from
+        a DjangoTemplateDocument) for the current Site, or default_layout.html
+        if there is no default layout item.
+        """
         self.context['layout'] = 'default_layout.html'
         if self.cur_agent_can('view Site.default_layout', self.cur_site):
             if self.cur_site.default_layout:
@@ -620,6 +624,14 @@ class Viewer(object):
             self.context['layout_permissions_problem'] = True
 
     def construct_template(self, django_template_document):
+        """
+        Construct a template object (like the result of loader.get_template)
+        from the specified DjangoTemplateDocument, as it should be rendered to
+        the current agent. This function takes care of rendering the
+        DjangoTemplateDocument within its layout (recursively all the way up),
+        and it checks for permissions to view each DjangoTemplateDocument in
+        the layout path.
+        """
         cur_node = django_template_document
         while cur_node is not None:
             context_key = 'layout%d' % cur_node.pk
