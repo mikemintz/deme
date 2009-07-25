@@ -21,7 +21,6 @@ from django.utils.text import get_text_list, capfirst
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from urllib import urlencode
-#from cms.models import *
 from cms.models import Item, Agent, Site, AnonymousAgent, DemeSetting
 
 #TODO obey self.format when rendering an error if possible
@@ -151,9 +150,6 @@ class ViewerMetaClass(type):
                 raise Exception("Viewer with name `%s` is defined multiple times" % viewer_name)
             ViewerMetaClass.viewer_name_dict[viewer_name] = result
         return result
-
-
-MAXIMUM_VIRTUAL_REQUEST_DEPTH = 10
 
 
 class Viewer(object):
@@ -292,7 +288,6 @@ class Viewer(object):
         self.context['item'] = self.item
         self.context['viewer_name'] = self.viewer_name
         self.context['accepted_item_type'] = self.accepted_item_type
-        self.context['accepted_item_type_class_name'] = self.accepted_item_type.__name__
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = self.request.get_full_path()
@@ -326,7 +321,6 @@ class Viewer(object):
         self.context['specific_version'] = False
         self.context['viewer_name'] = self.viewer_name
         self.context['accepted_item_type'] = self.accepted_item_type
-        self.context['accepted_item_type_class_name'] = self.accepted_item_type.__name__
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = original_viewer.context['full_path'] 
@@ -353,7 +347,6 @@ class Viewer(object):
         self.context['specific_version'] = False
         self.context['viewer_name'] = self.viewer_name
         self.context['accepted_item_type'] = self.accepted_item_type
-        self.context['accepted_item_type_class_name'] = self.accepted_item_type.__name__
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['full_path'] = '/'
