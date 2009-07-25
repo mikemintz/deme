@@ -6,7 +6,7 @@ This module defines the abstract Viewer superclass of all item viewers.
 
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseBadRequest, HttpResponseNotFound, HttpRequest, QueryDict
-from django.utils import datastructures
+from django.utils.datastructures import MergeDict
 from django.template import Context, loader
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
@@ -14,14 +14,15 @@ from django.conf import settings
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django import forms
-import datetime
+from datetime import datetime
 from cms.permissions import MultiAgentPermissionCache
-from cms.models import *
 from cms.forms import JavaScriptSpamDetectionField, AjaxModelChoiceField
 from django.utils.text import get_text_list, capfirst
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from urllib import urlencode
+#from cms.models import *
+from cms.models import Item, Agent, Site, AnonymousAgent, DemeSetting
 
 #TODO obey self.format when rendering an error if possible
 
@@ -30,6 +31,7 @@ class DemePermissionDenied(Exception):
         self.ability = ability
         self.item = item
         super(DemePermissionDenied, self).__init__("The agent does not have permission to perform the action")
+
 
 def get_logged_in_agent(request):
     """
@@ -52,7 +54,7 @@ def get_logged_in_agent(request):
             cur_agent = AnonymousAgent.objects.filter(active=True)[0:1].get()
         except ObjectDoesNotExist:
             raise Exception("You must create an anonymous agent")
-    Agent.objects.filter(pk=cur_agent.pk).update(last_online_at=datetime.datetime.now())
+    Agent.objects.filter(pk=cur_agent.pk).update(last_online_at=datetime.now())
     return cur_agent
 
 
@@ -64,6 +66,7 @@ def get_default_site():
         return Site.objects.get(pk=DemeSetting.get('cms.default_site'))
     except ObjectDoesNotExist:
         raise Exception("You must create a default Site")
+
 
 def get_current_site(request):
     """
@@ -79,6 +82,15 @@ def get_current_site(request):
 
 
 class VirtualRequest(HttpRequest):
+    """
+    A VirtualRequest is used to simulate the rendering of a page when it was
+    not itself initiated from an HTTP connection. This is particularly useful in
+    embedding viewers within other viewers. VirtualRequest requires an
+    `original_request` HttpRequest that is used to keep track of where it is
+    being embedded.
+    
+    VirtualRequest only supports the GET method.
+    """
 
     def __init__(self, original_request, path, query_string):
         self.original_request = original_request
@@ -88,7 +100,7 @@ class VirtualRequest(HttpRequest):
         self.GET = QueryDict(self.query_string, encoding=self._encoding)
         self.POST = QueryDict('', encoding=self._encoding)
         self.FILES = QueryDict('', encoding=self._encoding)
-        self.REQUEST = datastructures.MergeDict(self.POST, self.GET)
+        self.REQUEST = MergeDict(self.POST, self.GET)
         self.COOKIES = self.original_request.COOKIES
         self.META = {}
         self.raw_post_data = ''
@@ -102,6 +114,11 @@ class VirtualRequest(HttpRequest):
         return self.original_request.is_secure()
 
     def virtual_requests_too_deep(self, n):
+        """
+        Return whether the chain of virtual requests (going backwards through
+        original_requests) is longer than n. This is used as a simple hack to
+        prevent infinite loops when we have cycles of requests.
+        """
         if n <= 1:
             return True
         elif not hasattr(self.original_request, 'virtual_requests_too_deep'):
@@ -119,6 +136,10 @@ class ViewerMetaClass(type):
     def __new__(cls, name, bases, attrs):
         result = super(ViewerMetaClass, cls).__new__(cls, name, bases, attrs)
         if name != 'Viewer':
+            if 'viewer_name' not in attrs:
+                raise Exception("Viewer `%s` does not define `viewer_name`" % name)
+            if 'accepted_item_type' not in attrs:
+                raise Exception("Viewer `%s` does not define `accepted_item_type`" % name)
             viewer_name = attrs['viewer_name']
             if viewer_name in ViewerMetaClass.viewer_name_dict:
                 raise Exception("Viewer with name `%s` is defined multiple times" % viewer_name)
