@@ -141,7 +141,7 @@ class JavaScriptSpamDetectionField(forms.Field):
     """Hidden field that uses JavaScript to detect spam."""
 
     default_error_messages = {
-        'wrong_value': _(u'If you are not logged in, you must have JavaScript and cookies enabled to submit this form (for spam detection).'),
+        'wrong_value': _(u'You must either log in or enable JavaScript and cookies to submit this form (for spam detection).'),
     }
     
     def __init__(self, required_value):
