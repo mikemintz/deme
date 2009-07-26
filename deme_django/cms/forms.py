@@ -90,26 +90,6 @@ class AjaxModelChoiceWidget(forms.Widget):
         """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search}
         return result
 
-class JavaScriptSpamDetectionWidget(forms.Widget):
-    #TODO completely clean up code for this class
-    """Widget that uses JavaScript to detect spam."""
-
-    is_hidden = True
-
-    def __init__(self, required_value):
-        super(JavaScriptSpamDetectionWidget, self).__init__()
-        self.required_value = required_value
-
-    def render(self, name, value, attrs=None):
-        if value is None: value = ''
-        if attrs is None: attrs = {}
-        result = """
-        <input type="hidden" name="%(name)s" value="%(value)s" id="%(id)s" />
-        <script type="text/javascript">
-        document.getElementById('%(id)s').value = '%(required_value)s';
-        </script>
-        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'required_value': self.required_value}
-        return result
 
 class AjaxModelChoiceField(forms.ModelChoiceField):
     #TODO completely clean up code for this class
@@ -133,6 +113,29 @@ class AjaxModelChoiceField(forms.ModelChoiceField):
                     raise forms.util.ValidationError(self.error_messages['permission_denied'])
         return value
 
+
+class JavaScriptSpamDetectionWidget(forms.Widget):
+    #TODO completely clean up code for this class
+    """Widget that uses JavaScript to detect spam."""
+
+    is_hidden = True
+
+    def __init__(self, required_value):
+        super(JavaScriptSpamDetectionWidget, self).__init__()
+        self.required_value = required_value
+
+    def render(self, name, value, attrs=None):
+        if value is None: value = ''
+        if attrs is None: attrs = {}
+        result = """
+        <input type="hidden" name="%(name)s" value="%(value)s" id="%(id)s" />
+        <script type="text/javascript">
+        document.getElementById('%(id)s').value = '%(required_value)s';
+        </script>
+        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'required_value': self.required_value}
+        return result
+
+
 class JavaScriptSpamDetectionField(forms.Field):
     #TODO completely clean up code for this class
     """Hidden field that uses JavaScript to detect spam."""
@@ -149,3 +152,4 @@ class JavaScriptSpamDetectionField(forms.Field):
     def clean(self, value):
         if value != self.required_value:
             raise forms.util.ValidationError(self.error_messages['wrong_value'])
+
