@@ -1,21 +1,20 @@
-#TODO completely clean up code
-
 from django.core.urlresolvers import reverse
 from django import forms
-from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.http import urlquote
-from cms.models import *
+from cms.models import Item
 
 class JustTextNoInputWidget(forms.Widget):
     """A form widget that just displays text without any sort of input."""
     def render(self, name, value, attrs=None):
         if value is None: value = ''
         if attrs is None: attrs = {}
-        #TODO this is small and gray
+        #TODO this is small and gray, we need a better way to format help_text in CSS
         return """<span id="%(id)s">%(value)s</span>""" % {'id': attrs.get('id', ''), 'value': value}
 
+
 class AjaxModelChoiceWidget(forms.Widget):
+    #TODO completely clean up code for this class
     """Ajax auto-complete widget for ForeignKey fields."""
 
     def __init__(self, *args, **kwargs):
@@ -92,6 +91,7 @@ class AjaxModelChoiceWidget(forms.Widget):
         return result
 
 class JavaScriptSpamDetectionWidget(forms.Widget):
+    #TODO completely clean up code for this class
     """Widget that uses JavaScript to detect spam."""
 
     is_hidden = True
@@ -112,6 +112,7 @@ class JavaScriptSpamDetectionWidget(forms.Widget):
         return result
 
 class AjaxModelChoiceField(forms.ModelChoiceField):
+    #TODO completely clean up code for this class
     """Ajax auto-complete field for ForeignKey fields."""
 
     default_error_messages = {
@@ -133,6 +134,7 @@ class AjaxModelChoiceField(forms.ModelChoiceField):
         return value
 
 class JavaScriptSpamDetectionField(forms.Field):
+    #TODO completely clean up code for this class
     """Hidden field that uses JavaScript to detect spam."""
 
     default_error_messages = {
