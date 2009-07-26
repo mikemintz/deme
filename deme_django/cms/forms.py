@@ -102,7 +102,8 @@ class AjaxModelChoiceField(forms.ModelChoiceField):
     def __init__(self, *args, **kwargs):
         self.permission_cache = kwargs.pop('permission_cache')
         self.required_abilities = kwargs.pop('required_abilities')
-        self.widget = AjaxModelChoiceWidget(required_abilities=self.required_abilities, permission_cache=self.permission_cache)
+        self.widget = AjaxModelChoiceWidget(required_abilities=self.required_abilities,
+                                            permission_cache=self.permission_cache)
         super(AjaxModelChoiceField, self).__init__(*args, **kwargs)
 
     def clean(self, value):
@@ -115,8 +116,9 @@ class AjaxModelChoiceField(forms.ModelChoiceField):
 
 
 class JavaScriptSpamDetectionWidget(forms.Widget):
-    #TODO completely clean up code for this class
-    """Widget that uses JavaScript to detect spam."""
+    """
+    Widget that uses JavaScript to detect spam (for JavaScriptSpamDetectionField).
+    """
 
     is_hidden = True
 
@@ -132,13 +134,25 @@ class JavaScriptSpamDetectionWidget(forms.Widget):
         <script type="text/javascript">
         document.getElementById('%(id)s').value = '%(required_value)s';
         </script>
-        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'required_value': self.required_value}
+        """ % {'name': name,
+               'value': value,
+               'id': attrs.get('id', ''),
+               'required_value': self.required_value}
         return result
 
 
 class JavaScriptSpamDetectionField(forms.Field):
-    #TODO completely clean up code for this class
-    """Hidden field that uses JavaScript to detect spam."""
+    """
+    Hidden field that uses JavaScript to detect spam. It just creates a simple
+    hidden input and a line of JavaScript that sets the value of that input,
+    under the assumption that spam bots do not execute JavaScript. On
+    submission, if the value of this field is not correct, we raise a
+    validation error.
+    
+    The `required_value` parameter must be the same when in the view where the
+    form is created and in the view where the form is processed, but other than
+    that it can be any string.
+    """
 
     default_error_messages = {
         'wrong_value': _(u'You must either log in or enable JavaScript and cookies to submit this form (for spam detection).'),
