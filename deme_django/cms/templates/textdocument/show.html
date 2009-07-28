@@ -36,7 +36,7 @@
             targ = targ.parentNode;
         var tokenWrapper = targ;
         var index = tokenWrapper.deme_text_offset;
-        var url = '{% url item_type_url viewer="textcomment",action="new" %}?item={{ item.pk }}&item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&item_index=' + index;
+        var url = '{% url item_type_url viewer="textcomment",action="new" %}?populate_item={{ item.pk }}&populate_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&item_index=' + index;
         window.location = url;
         return false;
     }
