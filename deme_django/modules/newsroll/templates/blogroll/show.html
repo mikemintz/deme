@@ -1,0 +1,16 @@
+{% extends layout %}
+{% load newsroll_extras %}
+{% load item_tags %}
+{% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
+{% block content %}
+<div style="text-align: center; text-decoration: underline; font-size: 105%; margin-top: 3px;">
+    Links
+</div>
+
+{% for webpage in webpages %}
+    <div>
+        - <a href="{{ webpage.url }}">{% viewable_name webpage.member %}</a>
+    </div>
+{% endfor %}
+
+{% endblock %}

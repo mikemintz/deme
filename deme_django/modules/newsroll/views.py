@@ -5,6 +5,79 @@ from django.http import HttpResponse
 from cms.views import ItemViewer
 from cms.models import *
 
+#This class is purely for displaying the guide to making a blog
+class BlogGuide(ItemViewer):
+    accepted_item_type = Item
+    viewer_name = 'blogguide'
+
+    def type_show_html(self):
+        self.context['action_title'] = ''
+        template = loader.get_template('blogguide/show.html')
+        self.context['host'] = self.request.get_host()
+
+        return HttpResponse(template.render(self.context))
+
+#This class is for displaying the recent posts and grouping posts together on the side of a blog
+class BlogPostViewer(ItemViewer):
+    accepted_item_type = Collection
+    viewer_name = 'blogpost'
+
+    def item_show_html(self):
+        self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
+        template = loader.get_template('blogpost/show.html')
+        
+        if self.cur_agent_can_global('do_anything'):
+            recursive_filter = None
+        else:
+            visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
+            recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
+        members = self.item.all_contained_collection_members(recursive_filter).order_by('-created_at')
+
+        member_details = []
+        for member in members:
+            if issubclass(member.actual_item_type(), TextDocument):
+                member = member.downcast()
+                details = {}
+                details["member"] = member
+                details["name"] = member.display_name()
+                details["url"] = member.get_absolute_url() 
+                member_details.append(details)
+                
+        self.context['entries'] = member_details
+        return HttpResponse(template.render(self.context))
+
+#This class is for displaying "BlogRolls", i.e. collections of links 
+#on the side of a blog
+class BlogRollViewer(ItemViewer):
+    accepted_item_type = Collection
+    viewer_name = 'blogroll'
+
+    def item_show_html(self):
+        self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
+        template = loader.get_template('blogroll/show.html')
+        
+        if self.cur_agent_can_global('do_anything'):
+            recursive_filter = None
+        else:
+            visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
+            recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
+        members = self.item.all_contained_collection_members(recursive_filter).order_by('-created_at')
+
+        member_details = []
+        for member in members:
+            if issubclass(member.actual_item_type(), Webpage):
+                member = member.downcast()
+                details = {}
+                details["member"] = member
+                details["name"] = member.display_name()
+                details["url"] = member.url
+                member_details.append(details)
+            
+        self.context['webpages'] = member_details
+        return HttpResponse(template.render(self.context))
+
 class NewsRollViewer(ItemViewer):
     accepted_item_type = Collection
     viewer_name = 'newsroll'

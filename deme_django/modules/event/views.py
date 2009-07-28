@@ -23,7 +23,6 @@ class CalendarViewer(CollectionViewer):
         self.context['action_title'] = 'Show'
         template = loader.get_template('calendar/show.html')
         collection = self.item
-        self.context['collection'] = collection
 
         if self.cur_agent_can_global('do_anything'):
             recursive_filter = None
@@ -113,6 +112,7 @@ class CalendarViewer(CollectionViewer):
 
             event_week_list.append(event_week)
 
+        self.context['collection'] = collection
         self.context['this_month'] = date(year, month, today.day)
         self.context['week_list'] = event_week_list
         self.context['redirect'] = reverse('item_url', kwargs={'viewer': 'calendar', 'action': 'show', 'noun': collection.pk}) 

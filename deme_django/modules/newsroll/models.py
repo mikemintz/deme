@@ -1,1 +1,1 @@
-"The newroll module doesn't define any models"
+"The newsroll module doesn't define any models"

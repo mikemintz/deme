@@ -1,0 +1,103 @@
+{% load item_tags %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>{% viewable_name item %}</title>
+<link rel="stylesheet" href="{% media_url "stylesheets/blueprint/screen.css" %}" type="text/css" media="screen, projection" />
+<!--[if IE]>
+<link rel="stylesheet" href="{% media_url "stylesheets/blueprint/ie.css" %}" type="text/css" media="screen, projection" />
+<![endif]-->
+
+<link href="{% media_url "stylesheets/base.css" %}" media="all" rel="Stylesheet" type="text/css" />
+<link href="{% media_url "stylesheets/fg.menu.css" %}" media="screen" rel="stylesheet" type="text/css" />
+<!-- style exceptions for IE 6 -->
+<!--[if IE 6]>
+<style type="text/css">
+.fg-menu-ipod .fg-menu li { width: 95%; }
+.fg-menu-ipod .ui-widget-content { border:0; }
+</style>
+<![endif]-->
+
+</head>
+
+<body>
+<style type ="text/css">
+.divider{
+border: 1px solid #aaa;
+}
+.header{
+padding-top: 25px;
+padding-bottom: 15px;
+}
+#title{
+text-align: center;
+font-size: 30pt;
+}
+#picture{
+text-align: center;
+padding: 2px;
+margin-top: 10px;
+}
+#content{
+padding: 5px;
+border: 2px solid #aaa;
+margin-right: 5px;
+}
+.listedName{
+width: 160px;
+height: 15px;
+overflow: hidden;
+font-size: 90%;
+}
+</style>
+
+<div class="site_outer">
+<div class="site_inner">
+
+<div class="header">
+<div id="title">{% viewable_name item %}</div>
+<div class="divider"></div>
+<div id="picture" />
+<!-- IMAGE GOES BELOW -->
+
+
+</div>
+</div>
+
+<div class="content_box">
+
+<table cellspacing="0">
+<tr>
+<td style="vertical-align: top; width: 800px; padding:0;" id="center_table_column">
+<div id="content">
+{% block content %}
+{% endblock %}
+</div>
+</td>
+<td style="vertical-align: top; width: 160px; padding:0;" id="right_table_column">
+<div class="divider"></div>
+<!-- SIDEBAR ONE -->
+{{ item.description }}
+<p></p>
+<div class="divider"></div>
+<!-- SIDEBAR TWO -->
+
+
+<div class="divider"></div>
+<!-- SIDEBAR THREE -->
+
+
+</td>
+</tr>
+</table>
+
+</div>
+
+</div>
+</div>
+
+</body>
+
+</html> 
