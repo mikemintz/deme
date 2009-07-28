@@ -10,7 +10,7 @@ class BlogGuide(ItemViewer):
     accepted_item_type = Item
     viewer_name = 'blogguide'
 
-    def type_show_html(self):
+    def type_list_html(self):
         self.context['action_title'] = ''
         template = loader.get_template('blogguide/show.html')
         self.context['host'] = self.request.get_host()
