@@ -186,7 +186,7 @@ class ItemViewer(Viewer):
                 new_membership = Membership(item=new_item, collection=Collection.objects.get(pk=self.request.GET['add_to_collection']))
                 membership_permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
                 new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions) 
-            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': new_item.default_viewer, 'noun': new_item.pk}))
+            redirect = self.request.GET.get('redirect', new_item.get_absolute_url())
             return HttpResponseRedirect(redirect)
         else:
             return self.type_new_html(form)
