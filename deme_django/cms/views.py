@@ -867,6 +867,10 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
     def type_new_html(self, form=None):
         self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
+        try:
+            item = Item.objects.get(pk=self.request.REQUEST.get('populate_item'))
+        except:
+            return self.render_error('Invalid URL', "You must specify the item you are commenting on")
         if not self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__):
             form = None
         else:
@@ -874,21 +878,13 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
                 form_initial = self.get_populated_field_dict()
                 form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
-        try:
-            item = Item.objects.get(pk=self.request.REQUEST.get('populate_item'))
-        except:
-            return self.render_error('Invalid URL', "You must specify the item you are commenting on")
-        if form is None:
-            form_initial = self.get_populated_field_dict()
-            form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
-            form = form_class(initial=form_initial)
-            if issubclass(item.actual_item_type(), Comment):
-                comment_name = item.display_name()
-                if not comment_name.lower().startswith('re: '):
-                    comment_name = 'Re: %s' % comment_name
-                form.fields['name'].initial = comment_name
-                form.fields['name'].widget = JustTextNoInputWidget()
-                form.fields['name'].help_text = None
+                if issubclass(item.actual_item_type(), Comment):
+                    comment_name = item.display_name()
+                    if not comment_name.lower().startswith('re: '):
+                        comment_name = 'Re: %s' % comment_name
+                    form.fields['name'].initial = comment_name
+                    form.fields['name'].widget = JustTextNoInputWidget()
+                    form.fields['name'].help_text = None
         template = loader.get_template('item/new.html')
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
