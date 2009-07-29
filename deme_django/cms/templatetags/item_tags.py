@@ -630,10 +630,10 @@ class CalculateComments(template.Node):
                 comment = comment_info['comment']
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
-                result.append("""<div style="float: right;"><a href="%s?item=%s&amp;item_version_number=%s&amp;redirect=%s">[+] Reply</a></div>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
+                result.append("""<div style="float: right;"><a href="%s?populate_item=%s&amp;populate_item_version_number=%s&amp;redirect=%s">[+] Reply</a></div>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
                 if issubclass(comment.item.actual_item_type(), Comment):
                     if agentcan_helper(context, 'view TextDocument.body', comment):
-                        comment_name = escape(truncate_words(comment.body, 4))
+                        comment_name = escape(truncate_words(comment.display_name(), 4))
                     else:
                         comment_name = comment.display_name(can_view_name_field=False)
                 else:
