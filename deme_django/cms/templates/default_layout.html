@@ -168,6 +168,8 @@
 
 <script type="text/javascript">
     //TODO figure out padding
+    var PAGE_WIDTH = 960;
+
     function hide_column_right() {
         $('#right_table_column').hide();
         $('#right_table_column_hidden').show();
@@ -179,20 +181,18 @@
         $('#right_table_column_hidden').hide();
         $('#center_table_column').width(960 - $('#right_table_column').width() - $('#left_table_column').width());
     }
-                        //<div><a href="#" onclick="$('.comment_body, .comment_description').toggle(); return false;">Collapse/Expand</a></div>
     function show_comments_big() {
         $('#make_big').hide();
         $('#make_normal').show();
-        $('#center_table_column').width(300);
-        $('#left_table_column').width(120);
-        $('#right_table_column').width(540);
+        $('#center_table_column').width(.25*PAGE_WIDTH);
+        $('#right_table_column').width(.625*PAGE_WIDTH);
         $('.comment_body').show();
     }
     function hide_comments_big() {
         $('#make_big').show();
         $('#make_normal').hide();
-        $('#right_table_column').width(240);
-        $('#center_table_column').width(600);
+        $('#center_table_column').width(.625*PAGE_WIDTH);
+        $('#right_table_column').width(.25*PAGE_WIDTH);
         $('.comment_body').hide();
     }
 </script>
@@ -241,7 +241,7 @@
                     {% if item %}
 
                     <h3><a href="#">More about this item</a></h3>
-                    <div>
+                    <div id="accordion_details">
                         {% itemdetails %}
                     </div>
 
