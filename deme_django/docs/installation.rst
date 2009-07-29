@@ -28,11 +28,9 @@ We require Python 2.5 (although 2.6 will probably work, but 3.x will not).
 
 Django
 ^^^^^^
-We currently run with Django from SVN. You can follow the instructions for downloading it here:
+We currently run with Django 1.1. You can download it from http://www.djangoproject.com/download/
 
-http://docs.djangoproject.com/en/dev/topics/install/#installing-development-version
-
-When you check out Django from SVN, be sure to include the argument ``-r10834``, since we are currently developing against that revision.
+We often update the version of Django we run to an SVN version, so it may be easier to keep up with development by checking out the SVN version of 1.1 at http://code.djangoproject.com/svn/django/tags/releases/1.1
 
 PostgreSQL
 ^^^^^^^^^^
