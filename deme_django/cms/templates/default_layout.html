@@ -184,13 +184,15 @@
     function show_comments_big() {
         $('#make_big').hide();
         $('#make_normal').show();
+        $('#left_table_column').width(.125*PAGE_WIDTH);
         $('#center_table_column').width(.25*PAGE_WIDTH);
         $('#right_table_column').width(.625*PAGE_WIDTH);
         $('.comment_body').show();
     }
     function hide_comments_big() {
         $('#make_big').show();
-        $('#make_normal').hide();
+        $('#make_normal').hide();        
+        $('#left_table_column').width(.125*PAGE_WIDTH);
         $('#center_table_column').width(.625*PAGE_WIDTH);
         $('#right_table_column').width(.25*PAGE_WIDTH);
         $('.comment_body').hide();
