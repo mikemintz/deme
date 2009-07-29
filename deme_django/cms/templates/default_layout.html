@@ -179,6 +179,22 @@
         $('#right_table_column_hidden').hide();
         $('#center_table_column').width(960 - $('#right_table_column').width() - $('#left_table_column').width());
     }
+                        //<div><a href="#" onclick="$('.comment_body, .comment_description').toggle(); return false;">Collapse/Expand</a></div>
+    function show_comments_big() {
+        $('#make_big').hide();
+        $('#make_normal').show();
+        $('#center_table_column').width(300);
+        $('#left_table_column').width(120);
+        $('#right_table_column').width(540);
+        $('.comment_body').show();
+    }
+    function hide_comments_big() {
+        $('#make_big').show();
+        $('#make_normal').hide();
+        $('#right_table_column').width(240);
+        $('#center_table_column').width(600);
+        $('.comment_body').hide();
+    }
 </script>
 
 <div class="content_box">
@@ -231,8 +247,9 @@
 
                     {% calculatecomments %}
                     <h3><a href="#">{{ n_comments }} comment{{ n_comments|pluralize }}</a></h3>
-                    <div>
-                        <div><a href="#" onclick="$('.comment_body, .comment_description').toggle(); return false;">Collapse/Expand</a></div>
+                    <div id="accordion_comments">
+                        <div id="make_big"><a href="#" onclick="show_comments_big(); return false;">Expand Comments</a></div>
+                        <div id="make_normal" style="display: none;"><a href="#" onclick="hide_comments_big(); return false;">Collapse Comments</a></div>
                         {{ comment_box }}
                     </div>
 
