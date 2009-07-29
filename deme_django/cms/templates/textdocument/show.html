@@ -135,6 +135,7 @@
     function submit_highlights() {
         $('#excerpt_form').submit();
     }
+
 </script>
 
 <div id="parse_errors" style="display: none;">
@@ -184,5 +185,23 @@ When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); 
 <div id="docbody" style="padding: 10px;">{% display_body_with_inline_transclusions item is_html %}</div>
 {% endifagentcan %}
 
+<script type="text/javascript">
+    function show_show_comments() {
+        $('#show_comments_link').show();
+        $('#hide_comments_link').hide();
+        $('#right_accordion').accordion('activate', 0);
+        hide_comments_big();
+    }
+    function show_hide_comments() {
+        $('#show_comments_link').hide();
+        $('#hide_comments_link').show();
+        $('#right_accordion').accordion('activate', 1);
+        show_comments_big();
+    }
+
+</script>
+<div id="show_comments_link"><a href="#" onclick="show_hide_comments(); return false;">Show all comments</a></div>
+<div id="hide_comments_link" style="display: none;"><a href="#" onclick="show_show_comments(); return false;">Hide Comments</a>
+</div>
 {% endblock content %}
 
