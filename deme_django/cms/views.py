@@ -933,6 +933,29 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
         else:
             return self.type_new_html(form)
 
+    @require_POST
+    def type_accordioncreate_html(self):
+        for shit in self.request.POST:
+            print(shit)
+            print(self.request.POST[shit])
+        new_body = self.request.POST.get('body')
+        if new_body == '':
+            return self.render_error('Invalid Comment', "You must enter in a body for your comment")
+        title = self.request.POST.get('title')
+        if title == '':
+            return self.render_error('Invalid Comment', "You must enter in a title for your comment")
+        
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
+        item = Item.objects.get(pk=self.request.POST.get('item'))
+        self.require_ability('comment_on', item)
+
+        new_comment = TextComment(body=new_body, item=item, item_version_number=self.request.POST.get('item_version_number')) 
+        new_comment.name = title
+        permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
+        new_comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
+
+        redirect = self.request.GET.get('redirect', 'deme.stanford.edu')
+        return HttpResponseRedirect(redirect)
 
 class ExcerptViewer(ItemViewer):
     accepted_item_type = Excerpt

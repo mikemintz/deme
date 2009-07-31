@@ -197,6 +197,17 @@
         $('#right_table_column').width(.25*PAGE_WIDTH);
         $('.comment_body').hide();
     }
+    function openCommentDialog(name)
+    {
+        var dialogBox = $('#' + name);
+        dialogBox.dialog({
+            autoOpen: false,
+            bgiframe: true,
+            modal: true,
+            close: function(event, ui) {dialogBox.dialog('destroy')}
+        });
+        dialogBox.dialog('open');
+    }
 </script>
 
 <div class="content_box">

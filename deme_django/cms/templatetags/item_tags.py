@@ -623,14 +623,20 @@ class CalculateComments(template.Node):
         result.append("""<div class="comment_box">""")
         result.append("""<div class="comment_box_header">""")
         if agentcan_helper(context, 'comment_on', item):
-            result.append("""<a href="%s?populate_item=%s&amp;populate_item_version_number=%s&amp;redirect=%s">[+] Add Comment</a>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), item.pk, version_number, urlquote(full_path)))
-        result.append("""</div>""")
+            result.append("""<a href="#" onclick="openCommentDialog('comment%s'); return false;">[+] Add Comment</a>""" % (item.pk))
+            result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
+            result.append("""<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s"  """ % (item.pk, item.version_number))
+            result.append("""</form></div>""")
+            result.append("""</div>""")
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
+                result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
+                result.append("""<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s"  """ % (comment.name, comment.pk, comment.version_number))
+                result.append("""</form></div>""")
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
-                result.append("""<div style="float: right;"><a href="%s?populate_item=%s&amp;populate_item_version_number=%s&amp;redirect=%s">[+] Reply</a></div>""" % (reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'new'}), comment.pk, comment.version_number, urlquote(full_path)))
+                result.append("""<div style="float: right;"><a href="#" onclick="openCommentDialog('comment%s'); return false;">[+] Reply</a></div>""" % (comment.pk))
                 if issubclass(comment.item.actual_item_type(), Comment):
                     if agentcan_helper(context, 'view TextDocument.body', comment):
                         comment_name = escape(truncate_words(comment.display_name(), 4))
