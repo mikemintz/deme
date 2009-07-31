@@ -935,9 +935,6 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
     @require_POST
     def type_accordioncreate_html(self):
-        for shit in self.request.POST:
-            print(shit)
-            print(self.request.POST[shit])
         new_body = self.request.POST.get('body')
         if new_body == '':
             return self.render_error('Invalid Comment', "You must enter in a body for your comment")
@@ -954,7 +951,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
         new_comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
 
-        redirect = self.request.GET.get('redirect', 'deme.stanford.edu')
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_comment.pk}))
         return HttpResponseRedirect(redirect)
 
 class ExcerptViewer(ItemViewer):
