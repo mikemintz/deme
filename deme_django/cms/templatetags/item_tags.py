@@ -623,9 +623,13 @@ class CalculateComments(template.Node):
         result.append("""<div class="comment_box">""")
         result.append("""<div class="comment_box_header">""")
         if agentcan_helper(context, 'comment_on', item):
-            result.append("""<a href="#" onclick="openCommentDialog('comment%s'); return false;">[+] Add Comment</a>""" % (item.pk))
+            result.append("""<button href="#" onclick="openCommentDialog('comment%s'); return false;">[+] Add Comment</button>""" % (item.pk))
             result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
-            result.append("""<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s"  """ % (item.pk, item.version_number))
+            result.append("""<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> """)
+            from cms.forms import AjaxModelChoiceField
+            result.append("""<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> """ % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', None)))
+            result.append(""" <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s"  """ % (item.pk, item.version_number))
+            result.append("""<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedcomment%s'); return false;" >Advanced</a> """ % (item.pk))
             result.append("""</form></div>""")
             result.append("""</div>""")
         def add_comments_to_div(comments, nesting_level=0):
@@ -636,7 +640,7 @@ class CalculateComments(template.Node):
                 result.append("""</form></div>""")
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
                 result.append("""<div class="comment_header">""")
-                result.append("""<div style="float: right;"><a href="#" onclick="openCommentDialog('comment%s'); return false;">[+] Reply</a></div>""" % (comment.pk))
+                result.append("""<div style="float: right;"><a href="#" onclick="openCommentDialog('comment%s'); return false;">[+] Respond</a></div>""" % (comment.pk))
                 if issubclass(comment.item.actual_item_type(), Comment):
                     if agentcan_helper(context, 'view TextDocument.body', comment):
                         comment_name = escape(truncate_words(comment.display_name(), 4))

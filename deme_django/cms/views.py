@@ -935,6 +935,9 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
     @require_POST
     def type_accordioncreate_html(self):
+        for shit in self.request.POST:
+            print shit
+            print self.request.POST[shit]
         new_body = self.request.POST.get('body')
         if new_body == '':
             return self.render_error('Invalid Comment', "You must enter in a body for your comment")
@@ -948,6 +951,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
         new_comment = TextComment(body=new_body, item=item, item_version_number=self.request.POST.get('item_version_number')) 
         new_comment.name = title
+        new_comment.from_contact_method = ContactMethod.objects.get(pk=self.request.POST.get('new_from_contact_method'))
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
         new_comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
 
