@@ -1298,6 +1298,7 @@ class PermissionEditor(template.Node):
             <a href="#" class="img_link" onclick="$('#new_agent_dialog').dialog('open'); return false;"><img src="%(agent_img_url)s" /> <span>Select Agent</span></a>
             <a href="#" class="img_link" onclick="$('#new_collection_dialog').dialog('open'); return false;"><img src="%(collection_img_url)s" /> <span>Select Collection</span></a>
         </div>
+        Having trouble with permissions? Try reading the <a href="%(permissions_help_url)s">guide to using Permissions</a>
 """ % {
         'can_edit_permissions': simplejson.dumps(can_edit_permissions),
         'possible_ability_javascript_array': simplejson.dumps(possible_abilities, separators=(',',':')),
@@ -1310,6 +1311,7 @@ class PermissionEditor(template.Node):
         'collection_img_url': icon_url('Collection', 16),
         'new_agent_select_widget': AjaxModelChoiceField(Agent.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None),
         'new_collection_select_widget': AjaxModelChoiceField(Collection.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None),
+        'permissions_help_url': reverse('item_type_url', kwargs={'viewer': 'item', 'action':'permissionshelp'}),
         }
         return result
 

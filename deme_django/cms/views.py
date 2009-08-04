@@ -524,6 +524,11 @@ class ItemViewer(Viewer):
         template = loader.get_template('item/admin.html')
         return HttpResponse(template.render(self.context))
 
+    def type_permissionshelp_html(self):
+        self.context['action_title'] = ''
+        template = loader.get_template('item/permissionshelp.html')
+        return HttpResponse(template.render(self.context))
+
 
 class WebpageViewer(ItemViewer):
     accepted_item_type = Webpage
