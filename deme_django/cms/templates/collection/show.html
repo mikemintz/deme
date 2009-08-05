@@ -6,7 +6,7 @@
 
 {% ifagentcan 'modify_membership' item %}
 <div>
-    <button href="{% url item_type_url viewer="membership",action="new" %}?populate_collection={{ item.pk }}&redirect={{ full_path|urlencode }}"><img src="{{ "new"|icon_url:16 }}" />Add a member to collection</button>
+    <a href="{% url item_type_url viewer="membership",action="new" %}?populate_collection={{ item.pk }}&redirect={{ full_path|urlencode }}"><button><img src="{{ "new"|icon_url:16 }}" />Add an item to collection</button></a>
 </div>
 {% endifagentcan %}
 
