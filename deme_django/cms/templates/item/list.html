@@ -20,6 +20,13 @@
             ]</span>
             {% endfor %}
         </td>
+            {% ifagentcanglobal item_ability_lower  %}
+            <button href="{% url item_type_url viewer=item_type_lower,action="new" %}">Create a new {{ item_type_lower }}</button>
+            {% endifagentcanglobal %}
+    </tr>
+    <tr>
+        <td>
+        </td>
     </tr>
     <tr>
         <th>

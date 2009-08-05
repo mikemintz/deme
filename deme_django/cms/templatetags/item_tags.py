@@ -1467,7 +1467,7 @@ class ItemsMenu(template.Node):
             $('#items_menu_link').menu({
                 content: $('#items_menu_link').next().html(),
                 width: 240,
-                maxHeight: 400,
+                maxHeight: 445,
                 showSpeed: 50,
                 backLink: true,
                 topLinkText: 'Items',
