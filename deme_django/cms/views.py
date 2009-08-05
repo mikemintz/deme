@@ -37,7 +37,7 @@ class ItemViewer(Viewer):
         active = self.request.GET.get('active', '1') == '1'
         self.context['search_query'] = self.request.GET.get('q', '')
         self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
-        self.context['item_ability_lower'] = "create %s" % (self.accepted_item_type.__name__)
+        self.context['item_create_ability'] = "create %s" % (self.accepted_item_type.__name__)
         items = self.accepted_item_type.objects
         if self.context['search_query']:
             q = self.context['search_query']
