@@ -953,7 +953,8 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
         new_comment = TextComment(body=new_body, item=item, item_version_number=self.request.POST.get('item_version_number')) 
         new_comment.name = title
-        new_comment.from_contact_method = ContactMethod.objects.get(pk=self.request.POST.get('new_from_contact_method'))
+        if self.request.POST.get('new_from_contact_method') != '':
+            new_comment.from_contact_method = ContactMethod.objects.get(pk=self.request.POST.get('new_from_contact_method'))
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
         new_comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
 
