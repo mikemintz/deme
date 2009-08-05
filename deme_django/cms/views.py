@@ -940,9 +940,6 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
     @require_POST
     def type_accordioncreate_html(self):
-        for shit in self.request.POST:
-            print shit
-            print self.request.POST[shit]
         new_body = self.request.POST.get('body')
         if new_body == '':
             return self.render_error('Invalid Comment', "You must enter in a body for your comment")
