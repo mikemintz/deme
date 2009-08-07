@@ -6,7 +6,7 @@
 
 {% ifagentcan 'modify_membership' item %}
 <div>
-    <a href="{% url item_type_url viewer="membership",action="new" %}?populate_collection={{ item.pk }}&redirect={{ full_path|urlencode }}"><button><img src="{{ "new"|icon_url:16 }}" />Add an item to collection</button></a>
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" href="{% url item_type_url viewer="membership",action="new" %}?populate_collection={{ item.pk }}&redirect={{ full_path|urlencode }}"><img src="{{ "new"|icon_url:16 }}" />Add an item to collection</a><br><br>
 </div>
 {% endifagentcan %}
 
@@ -14,14 +14,14 @@
 {% ifagentcan 'remove_self' item %}
 <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
     <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
-    <button type="submit"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove myself from collection</span></button>
+    <button type="submit" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove myself from collection</span></button>
 </form>
 {% endifagentcan %}
 {% else %}
 {% ifagentcan 'add_self' item %}
 <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="addmember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
     <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
-    <button type="submit"><img src="{{ "new"|icon_url:16 }}" /> <span>Add myself to collection</span></button>
+    <button type="submit" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all"><img src="{{ "new"|icon_url:16 }}" /> <span>Add myself to collection</span></button>
 </form>
 {% endifagentcan %}
 {% endif %}
