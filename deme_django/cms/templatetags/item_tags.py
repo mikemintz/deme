@@ -1190,7 +1190,7 @@ class PermissionEditor(template.Node):
             }
 
             function add_agent_or_collection_row(permission_type, agent_or_collection_id, name) {
-                var row = $('<tr>');
+                var row = $('<tr style="border: 2px solid #aaa">');
                 if (permission_type == 'agent') {
                     var name_url = '%(sample_agent_url)s'.replace('1', agent_or_collection_id);
                     row.append('<td><a href="' + name_url + '">' + name + '</a></td>');
