@@ -3,6 +3,8 @@ import datetime
 from cms.models import HtmlDocument, Collection
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
+from django import forms
+from cms.forms import SelectTimeWidget
 
 __all__ = ['Event', 'Calendar'] 
 
@@ -53,6 +55,14 @@ class Event(HtmlDocument):
     end_time   = models.TimeField(_('end time'))
     location   = models.CharField(_('location'), max_length=255) 
     time_zone  = models.CharField(_('time zone'), max_length=255, choices=time_zones, default=settings.TIME_ZONE)
+
+
+    @classmethod
+    def do_specialized_form_configuration(cls, item_type, is_new, attrs):
+        super(Event, cls).do_specialized_form_configuration(item_type, is_new, attrs)
+        attrs['start_time'] = forms.CharField(label=_("Start Time"), widget=SelectTimeWidget(twelve_hr=True))
+        attrs['end_time'] = forms.CharField(label=_("End Time"), widget=SelectTimeWidget(twelve_hr=True))
+
 
 class Calendar(Collection):
 
