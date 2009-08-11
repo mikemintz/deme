@@ -176,6 +176,9 @@ class ItemViewer(Viewer):
 
     @require_POST
     def type_create_html(self):
+        for shit in self.request.POST:
+            print shit
+            print self.request.POST[shit]
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
         form = form_class(self.request.POST, self.request.FILES)
@@ -663,7 +666,9 @@ class CollectionViewer(ItemViewer):
     viewer_name = 'collection'
 
     def item_show_html(self):
+        from cms.forms import AjaxModelChoiceField
         self.context['action_title'] = ''
+        self.context['ajax_choice_field'] = AjaxModelChoiceField(Item.objects, permission_cache=self.permission_cache, required_abilities=[]).widget.render('item', None, {'id': 'item_to_add'})
         self.require_ability('view ', self.item, wildcard_suffix=True)
         memberships = self.item.child_memberships
         memberships = memberships.filter(active=True)
@@ -741,6 +746,15 @@ class FolioViewer(CollectionViewer):
 class MembershipViewer(ItemViewer):
     accepted_item_type = Membership
     viewer_name = 'membership'
+
+    def type_collectioncreate_html(self):
+        for shit in self.request.POST:
+            print shit
+            print self.request.POST[shit]
+
+        #redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_comment.pk}))
+        redirect = self.request.GET.get('redirect', 'www.google.com')
+        return HttpResponseRedirect(redirect)
 
 
 class DocumentViewer(ItemViewer):
@@ -957,7 +971,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
         if self.request.POST.get('new_from_contact_method') != '':
             new_comment.from_contact_method = ContactMethod.objects.get(pk=self.request.POST.get('new_from_contact_method'))
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
-        new_comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
+        new_comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
 
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_comment.pk}))
         return HttpResponseRedirect(redirect)
