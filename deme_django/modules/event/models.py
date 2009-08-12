@@ -63,7 +63,6 @@ class Event(HtmlDocument):
         attrs['start_time'] = forms.CharField(label=_("Start Time"), widget=SelectTimeWidget(twelve_hr=True))
         attrs['end_time'] = forms.CharField(label=_("End Time"), widget=SelectTimeWidget(twelve_hr=True))
 
-
 class Calendar(Collection):
 
     #Setup

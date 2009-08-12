@@ -668,7 +668,6 @@ class CollectionViewer(ItemViewer):
     def item_show_html(self):
         from cms.forms import AjaxModelChoiceField
         self.context['action_title'] = ''
-        self.context['ajax_choice_field'] = AjaxModelChoiceField(Item.objects, permission_cache=self.permission_cache, required_abilities=[]).widget.render('item', None, {'id': 'item_to_add'})
         self.require_ability('view ', self.item, wildcard_suffix=True)
         memberships = self.item.child_memberships
         memberships = memberships.filter(active=True)
@@ -748,10 +747,6 @@ class MembershipViewer(ItemViewer):
     viewer_name = 'membership'
 
     def type_collectioncreate_html(self):
-        for shit in self.request.POST:
-            print shit
-            print self.request.POST[shit]
-
         item_pk = self.request.POST.get('item')
         if item_pk == '':
             return self.render_error('Invalid Membership', "You must specify which item to add to the collection")
