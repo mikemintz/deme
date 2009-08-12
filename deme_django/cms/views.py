@@ -176,9 +176,6 @@ class ItemViewer(Viewer):
 
     @require_POST
     def type_create_html(self):
-        for shit in self.request.POST:
-            print shit
-            print self.request.POST[shit]
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
         form = form_class(self.request.POST, self.request.FILES)
