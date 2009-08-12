@@ -607,6 +607,51 @@ def display_body_with_inline_transclusions(item, is_html):
     return ''.join(result)
 
 
+@register.tag
+def newmemberdialog(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return NewMemberDialog()
+
+class NewMemberDialog(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<NewMemberDialogNode>"
+
+    def render(self, context):
+        from cms.forms import AjaxModelChoiceField
+        item = context['item']
+        full_path = context['full_path']
+        result = []
+
+        result.append( """
+            <div style="display: none;" id="addmember%(item.pk)s"> 
+            <form method="post" action="%(create_url)s?redirect=%(full_path)s"> 
+                Item: %(ajax_field)s 
+                <input type="hidden" name="collection" value="%(item.pk)s" /><br><br>
+                <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddmember%(item.pk)s'); return false;" >Advanced</a>
+                <div style="display: none;" id="advancedaddmember%(item.pk)s">
+                    Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br>
+                </div>
+                <input type="submit" value="Submit" />
+            </form>
+            </div>  """ %
+            {
+                'item.pk': item.pk,
+                'full_path': full_path,
+                'create_url': reverse('item_type_url', kwargs={'viewer':'membership', 'action':'collectioncreate'}),
+                'ajax_field': AjaxModelChoiceField(Item.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('item', None, {'id':'memberajaxfield'}),
+             })
+
+        #TO DO: figure out how to do the collection-wide permissions, the lines for input are below
+        #Permission Enabled: <input name="permissionenabled" type="checkbox" />
+        #<div style="float: top; font-size: 7pt;">Enable this if you want collection-wide permissions to apply to this child item</div>
+
+        return mark_safe('\n'.join(result))
+
 class CalculateComments(template.Node):
     def __init__(self):
         pass
@@ -627,8 +672,8 @@ class CalculateComments(template.Node):
             result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
             result.append("""<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> """)
             from cms.forms import AjaxModelChoiceField
-            result.append("""<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> """ % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', None)))
-            result.append(""" <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s"  """ % (item.pk, item.version_number))
+            result.append("""<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> """ % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', None, {'id':'commentajaxfield' })))
+            result.append(""" <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" />  """ % (item.pk, item.version_number))
             result.append("""<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedcomment%s'); return false;" >Advanced</a> """ % (item.pk))
             result.append("""</form></div>""")
             result.append("""</div>""")
@@ -638,7 +683,7 @@ class CalculateComments(template.Node):
                 result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
                 result.append("""<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> """ % comment.name)
                 result.append("""<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> """ % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', None)))
-                result.append(""" <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s"  """ % (comment.pk, comment.version_number))
+                result.append(""" <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> """ % (comment.pk, comment.version_number))
                 result.append("""<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedcomment%s'); return false;" >Advanced</a> """ % (comment.pk))
                 result.append("""</form></div>""")
                 result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))

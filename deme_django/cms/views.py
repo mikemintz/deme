@@ -752,8 +752,19 @@ class MembershipViewer(ItemViewer):
             print shit
             print self.request.POST[shit]
 
-        #redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_comment.pk}))
-        redirect = self.request.GET.get('redirect', 'www.google.com')
+        item_pk = self.request.POST.get('item')
+        if item_pk == '':
+            return self.render_error('Invalid Membership', "You must specify which item to add to the collection")
+        
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
+        item = Item.objects.get(pk=item_pk)
+        collection = Collection.objects.get(pk=self.request.POST['collection'])
+
+        new_member = Membership(collection=collection, item=item) 
+        permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
+        new_member.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
+        
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_member.pk}))
         return HttpResponseRedirect(redirect)
 
 

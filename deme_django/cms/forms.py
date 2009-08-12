@@ -303,6 +303,7 @@ class SelectTimeWidget(Widget):
         second_choices = [("%.2d"%i, "%.2d"%i) for i in self.seconds]
         local_attrs['id'] = self.second_field % id_
         select_html = Select(choices=second_choices).render(self.second_field % name, second_val, local_attrs)
+
         output.append(select_html)
     
         if self.twelve_hr:
@@ -327,7 +328,6 @@ class SelectTimeWidget(Widget):
         h = data.get(self.hour_field % name, 0) # hour
         m = data.get(self.minute_field % name, 0) # minute 
         s = data.get(self.second_field % name, 0) # second
-
         meridiem = data.get(self.meridiem_field % name, None)
 
         #NOTE: if meridiem IS None, assume 24-hr

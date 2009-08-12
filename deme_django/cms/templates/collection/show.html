@@ -2,12 +2,26 @@
 {% load item_tags %}
 {% block content %}
 
+<script type="text/javascript">
+    function openDialog(name)
+    {
+        var dialogBox = $("#" + name);
+        dialogBox.dialog({
+            autoOpen: false,
+            bgiframe: true,
+            modal: true,
+            close: function(event, ui) {dialogBox.dialog('destroy')}
+        });
+        dialogBox.dialog('open');
+    }   
+</script>
 {% subclassfields %}
 
 {% ifagentcan 'modify_membership' item %}
 <div>
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" href="{% url item_type_url viewer="membership",action="new" %}?populate_collection={{ item.pk }}&redirect={{ full_path|urlencode }}"><img src="{{ "new"|icon_url:16 }}" />Add an item to collection</a><br><br>
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;"><img src="{{ "new"|icon_url:16 }}" />Add an item to collection</a><br><br>
 </div>
+{% newmemberdialog %}
 {% endifagentcan %}
 
 {% if cur_agent_in_collection %}
