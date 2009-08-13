@@ -635,6 +635,8 @@ class NewMemberDialog(template.Node):
                 <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddmember%(item.pk)s'); return false;" >Advanced</a>
                 <div style="display: none;" id="advancedaddmember%(item.pk)s">
                     Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br>
+                    Permission Enabled: <input name="permissionenabled" type="checkbox" />
+                    <div style="float: top; font-size: 7pt;">Enable this if you want collection-wide permissions to apply to this child item</div>
                 </div>
                 <input type="submit" value="Submit" />
             </form>
@@ -645,10 +647,6 @@ class NewMemberDialog(template.Node):
                 'create_url': reverse('item_type_url', kwargs={'viewer':'membership', 'action':'collectioncreate'}),
                 'ajax_field': AjaxModelChoiceField(Item.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('item', None, {'id':'memberajaxfield'}),
              })
-
-        #TO DO: figure out how to do the collection-wide permissions, the lines for input are below
-        #Permission Enabled: <input name="permissionenabled" type="checkbox" />
-        #<div style="float: top; font-size: 7pt;">Enable this if you want collection-wide permissions to apply to this child item</div>
 
         return mark_safe('\n'.join(result))
 

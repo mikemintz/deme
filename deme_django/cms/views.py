@@ -753,6 +753,8 @@ class MembershipViewer(ItemViewer):
         collection = Collection.objects.get(pk=self.request.POST['collection'])
 
         new_member = Membership(collection=collection, item=item) 
+        if self.request.POST.get('permissionenabled', '') == 'on':
+            new_member.permission_enabled = True
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
         new_member.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
         
