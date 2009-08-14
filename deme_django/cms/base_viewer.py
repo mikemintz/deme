@@ -545,6 +545,8 @@ class Viewer(object):
         for field in item_type._meta.fields:
             if (field.rel and field.rel.parent_link) or ((not is_new) and field.name in item_type.all_immutable_fields()):
                 exclude.append(field.name)
+            if field.name == "default_viewer":
+                field.help_text = "(Advanced) The default viewer to display this item"
 
         # Sort the fields by their original ordering in the model
         if fields is not None:
@@ -583,12 +585,50 @@ class Viewer(object):
 
         # Create an action_summary field
         if 'action_summary' not in exclude:
-            attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("Reason for %s this item" % ('creating' if is_new else 'editing')), widget=forms.TextInput, required=False)
+            attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("(Advanced) Reason for %s this item" % ('creating' if is_new else 'editing')), widget=forms.TextInput, required=False)
 
         # Create a JavaScriptSpamDetectionField for AnonymousAgents if enabled.
         if settings.USE_ANONYMOUS_JAVASCRIPT_SPAM_DETECTOR and self.cur_agent.is_anonymous():
             self.request.session.modified = True # We want to guarantee a cookie is given
             attrs['nospam'] = JavaScriptSpamDetectionField(self.request.session.session_key)
+
+        # Method that converts a form to a table that replaces as_table() in django.forms.forms
+        # This method automatically hides all fields that have help_texts that begin with "(Advanced)"
+        def convert_form_to_table(self):
+            from django.forms.forms import BoundField
+            from django.utils.html import conditional_escape
+            from django.utils.encoding import force_unicode
+
+            "Returns this form rendered as HTML <tr>s -- excluding the <table></table>."
+            result = []
+
+            for name, field in self.fields.items():
+                bf = BoundField(self, field, name)
+                bf_errors = self.error_class([conditional_escape(error) for error in bf.errors]) # Escape and cache in local variable.
+                if bf.label:
+                    label = conditional_escape(force_unicode(bf.label))
+                help_text = force_unicode(field.help_text)
+                if help_text.startswith('(Advanced)'):
+                    result.append(""" <tr style="display: none;" class="advancedfield"><th>%(name)s:</th> <td>%(errors)s%(field)s<br>%(help_text)s</td></tr> """ %
+                        {
+                            'field':self[name],
+                            'name':label,
+                            'help_text': help_text,
+                            'errors': force_unicode(bf_errors),
+                        })
+                else:
+                    result.append(""" <tr><th>%(name)s:</th> <td>%(errors)s%(field)s<br>%(help_text)s</td></tr> """ %
+                        {
+                            'field':self[name],
+                            'name':label,
+                            'help_text': help_text,
+                            'errors': force_unicode(bf_errors),
+                        })
+
+            result.append("""<tr id="showadv"><td colspan="2"><a href="#" style="float: right; font-size: 130%;" onclick="$('.advancedfield').show(); $('#hideadv').show(); $('#showadv').hide(); return false;">Display Advanced Options</a></td></tr> """)
+            result.append("""<tr id="hideadv" style="display: none;"><td colspan="2"><a href="#" style="float: right; font-size: 130%;" onclick="$('.advancedfield').hide(); $('#hideadv').hide(); $('#showadv').show(); return false;">Hide Advanced Options</a></td></tr> """)
+            return mark_safe(u'\n'.join(result))
+
 
         # Set the error message function for uniqueness constraint violations,
         # so that when it is displayed, it links to the item it clashes with
@@ -633,6 +673,10 @@ class Viewer(object):
         # Construct the form class
         class_name = item_type.__name__ + 'Form'
         form_class = forms.models.ModelFormMetaclass(class_name, (forms.models.ModelForm,), attrs)
+
+        #Override the default as_table() method
+        form_class.as_table = convert_form_to_table
+
         return form_class
 
     def get_populated_field_dict(self):
