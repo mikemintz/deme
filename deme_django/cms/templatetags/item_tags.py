@@ -1333,18 +1333,20 @@ class PermissionEditor(template.Node):
         </table>
 
         <div id="new_agent_dialog" style="display: none;">
-            Name: %(new_agent_select_widget)s
+            Name of the user: %(new_agent_select_widget)s
         </div>
 
         <div id="new_collection_dialog" style="display: none;">
-            Name: %(new_collection_select_widget)s
+            Name of the group: %(new_collection_select_widget)s
         </div>
 
         <div style="display: none;" id="agent_and_collection_select_div">
-            <a href="#" class="img_link" onclick="$('#new_agent_dialog').dialog('open'); return false;"><img src="%(agent_img_url)s" /> <span>Select Agent</span></a>
-            <a href="#" class="img_link" onclick="$('#new_collection_dialog').dialog('open'); return false;"><img src="%(collection_img_url)s" /> <span>Select Collection</span></a>
+            <a href="#" class="img_link" onclick="$('#new_agent_dialog').dialog('open'); return false;"><img src="%(agent_img_url)s" /> <span>Assign a Permission to a User</span></a>
+            <a href="#" class="img_link" onclick="$('#new_collection_dialog').dialog('open'); return false;"><img src="%(collection_img_url)s" /> <span>Assign a Permission to a Group of Users</span></a>
         </div>
-        Having trouble with permissions? Try reading the <a href="%(permissions_help_url)s">guide to using Permissions</a>
+        <div style="margin-top: 10px;">
+            Having trouble with permissions? Try reading the <a href="%(permissions_help_url)s">guide to using Permissions</a>
+        </div>
 """ % {
         'can_edit_permissions': simplejson.dumps(can_edit_permissions),
         'possible_ability_javascript_array': simplejson.dumps(possible_abilities, separators=(',',':')),
