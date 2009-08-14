@@ -601,6 +601,14 @@ class Viewer(object):
 
             "Returns this form rendered as HTML <tr>s -- excluding the <table></table>."
             result = []
+    
+            for name, field in self.fields.items():
+                if name == "real_name":
+                    real_item_type_label = force_unicode(field.label)
+
+            for name, field in self.fields.items():
+                if name == "name":
+                    field.label = real_item_type_label
 
             for name, field in self.fields.items():
                 bf = BoundField(self, field, name)
@@ -616,6 +624,8 @@ class Viewer(object):
                             'help_text': help_text,
                             'errors': force_unicode(bf_errors),
                         })
+                elif bf.name == "real_name":
+                    continue
                 else:
                     result.append(""" <tr><th>%(name)s:</th> <td>%(errors)s%(field)s<br>%(help_text)s</td></tr> """ %
                         {
