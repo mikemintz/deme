@@ -655,7 +655,7 @@ class Item(models.Model):
             choices = [x for x in default_viewer_field.choices if issubclass(item_type, get_viewer_class_by_name(x[0]).accepted_item_type)]
             attrs['default_viewer'] = default_viewer_field.formfield(initial=item_type.__name__.lower(), choices=choices)
 
-        attrs['real_name'] = forms.CharField(label=_(item_type.__name__ + " name"), required=False)
+        attrs['name'] = forms.CharField(label=_(item_type.__name__ + " name"), help_text=_('The name used to refer to this ' + item_type.__name__.lower()), required=False)
 
     def _before_create(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
         """
