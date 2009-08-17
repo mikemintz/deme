@@ -594,7 +594,7 @@ class Viewer(object):
 
         # Method that converts a form to a table that replaces as_table() in django.forms.forms
         # This method automatically hides all fields that have help_texts that begin with "(Advanced)"
-        def convert_form_to_table(self):
+        def convert_form_to_table(form):
             from django.forms.forms import BoundField
             from django.utils.html import conditional_escape
             from django.utils.encoding import force_unicode
@@ -602,24 +602,24 @@ class Viewer(object):
             "Returns this form rendered as HTML <tr>s -- excluding the <table></table>."
             result = []
     
-            for name, field in self.fields.items():
+            for name, field in form.fields.items():
                 if name == "real_name":
                     real_item_type_label = force_unicode(field.label)
 
-            for name, field in self.fields.items():
+            for name, field in form.fields.items():
                 if name == "name":
                     field.label = real_item_type_label
 
-            for name, field in self.fields.items():
-                bf = BoundField(self, field, name)
-                bf_errors = self.error_class([conditional_escape(error) for error in bf.errors]) # Escape and cache in local variable.
+            for name, field in form.fields.items():
+                bf = BoundField(form, field, name)
+                bf_errors = form.error_class([conditional_escape(error) for error in bf.errors]) # Escape and cache in local variable.
                 if bf.label:
                     label = conditional_escape(force_unicode(bf.label))
                 help_text = force_unicode(field.help_text)
                 if help_text.startswith('(Advanced)'):
                     result.append(""" <tr style="display: none;" class="advancedfield"><th>%(name)s:</th> <td>%(errors)s%(field)s<br>%(help_text)s</td></tr> """ %
                         {
-                            'field':self[name],
+                            'field':form[name],
                             'name':label,
                             'help_text': help_text,
                             'errors': force_unicode(bf_errors),
@@ -629,7 +629,7 @@ class Viewer(object):
                 else:
                     result.append(""" <tr><th>%(name)s:</th> <td>%(errors)s%(field)s<br>%(help_text)s</td></tr> """ %
                         {
-                            'field':self[name],
+                            'field':form[name],
                             'name':label,
                             'help_text': help_text,
                             'errors': force_unicode(bf_errors),
