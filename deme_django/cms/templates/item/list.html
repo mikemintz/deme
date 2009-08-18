@@ -55,7 +55,8 @@
 </div>
 
 {% ifagentcanglobal item_create_ability %}
-    <button href="{% url item_type_url viewer=item_type_lower,action="new" %}">Create a new {{ item_type_lower }}</button>
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" href="{% url item_type_url viewer=item_type_lower,action="new" %}">Create a new {{ item_type_lower }}</a>
+    <br>
 {% endifagentcanglobal %}
 
 {% if items %}
