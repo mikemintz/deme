@@ -548,6 +548,7 @@ class Viewer(object):
             if field.name == "default_viewer":
                 field.help_text = "(Advanced) The default viewer to display this item"
 
+
         # Sort the fields by their original ordering in the model
         if fields is not None:
             def field_sort_fn(field_name):
@@ -669,6 +670,8 @@ class Viewer(object):
         
         # Allow the item type to do its own specialized form configuration
         item_type.do_specialized_form_configuration(item_type, is_new, attrs)
+        if not self.cur_agent.is_anonymous():
+            del attrs['captcha'] 
 
         # Construct the form class
         class_name = item_type.__name__ + 'Form'

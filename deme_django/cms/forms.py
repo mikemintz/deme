@@ -3,6 +3,10 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django.utils.http import urlquote
 from cms.models import Item
+from django.forms.fields import CharField, MultiValueField
+from django.forms.widgets import TextInput, MultiWidget, HiddenInput
+import hashlib
+import random
 
 class JustTextNoInputWidget(forms.Widget):
     """A form widget that just displays text without any sort of input."""
@@ -341,4 +345,56 @@ class SelectTimeWidget(Widget):
             return '%s:%s:%s' % (h, m, s)
 
         return data.get(name, None)
+
+#This widget was found at http://www.djangosnippets.org/snippets/1548/
+#Original author: user "gregb" on djangosnippets.org
+
+class CaptchaTextInput(MultiWidget):
+	def __init__(self,attrs=None):
+		widgets = (
+			HiddenInput(attrs),
+			TextInput(attrs),
+		)
+		super(CaptchaTextInput,self).__init__(widgets,attrs)
+
+	def decompress(self,value):
+		if value:
+			return value.split(',')
+		return [None,None]
+		
+	
+	def render(self, name, value, attrs=None):
+		ints = (random.randint(0,9),random.randint(0,9),)
+		answer = hashlib.sha1(str(sum(ints))).hexdigest()
+		#print ints, sum(ints), answer
+		
+		extra = """<span style="font-size: 11pt;">What is %d + %d?</span><br>""" % (ints[0], ints[1])
+		value = [answer, u'',]
+		
+		return mark_safe(extra + super(CaptchaTextInput, self).render(name, value, attrs=attrs))
+
+
+class CaptchaField(MultiValueField):
+	widget=CaptchaTextInput
+	
+	def __init__(self, *args,**kwargs):
+		fields = (
+			CharField(show_hidden_initial=True), 
+			CharField(),
+		)
+		super(CaptchaField,self).__init__(fields=fields, *args, **kwargs)
+	
+	def compress(self,data_list):
+		if data_list:
+			return ','.join(data_list)
+		return None
+		
+		
+	def clean(self, value):
+		super(CaptchaField, self).clean(value)
+		response, value[1] = value[1].strip().lower(), ''
+		
+		if not hashlib.sha1(str(response)).hexdigest() == value[0]:
+			raise forms.ValidationError("Sorry, you got the security question wrong - to prove you're not a spammer, please try again.")
+		return value
 
