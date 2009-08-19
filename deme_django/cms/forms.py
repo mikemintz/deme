@@ -119,59 +119,6 @@ class AjaxModelChoiceField(forms.ModelChoiceField):
         return value
 
 
-class JavaScriptSpamDetectionWidget(forms.Widget):
-    """
-    Widget that uses JavaScript to detect spam (for JavaScriptSpamDetectionField).
-    """
-
-    is_hidden = True
-
-    def __init__(self, required_value):
-        super(JavaScriptSpamDetectionWidget, self).__init__()
-        self.required_value = required_value
-
-    def render(self, name, value, attrs=None):
-        if value is None: value = ''
-        if attrs is None: attrs = {}
-        result = """
-        <input type="hidden" name="%(name)s" value="%(value)s" id="%(id)s" />
-        <script type="text/javascript">
-        document.getElementById('%(id)s').value = '%(required_value)s';
-        </script>
-        """ % {'name': name,
-               'value': value,
-               'id': attrs.get('id', ''),
-               'required_value': self.required_value}
-        return result
-
-
-class JavaScriptSpamDetectionField(forms.Field):
-    """
-    Hidden field that uses JavaScript to detect spam. It just creates a simple
-    hidden input and a line of JavaScript that sets the value of that input,
-    under the assumption that spam bots do not execute JavaScript. On
-    submission, if the value of this field is not correct, we raise a
-    validation error.
-    
-    The `required_value` parameter must be the same when in the view where the
-    form is created and in the view where the form is processed, but other than
-    that it can be any string.
-    """
-
-    default_error_messages = {
-        'wrong_value': _(u'You must either log in or enable JavaScript and cookies to submit this form (for spam detection).'),
-    }
-    
-    def __init__(self, required_value):
-        widget = JavaScriptSpamDetectionWidget(required_value)
-        super(JavaScriptSpamDetectionField, self).__init__(widget=widget)
-        self.required_value = required_value
-
-    def clean(self, value):
-        if value != self.required_value:
-            raise forms.util.ValidationError(self.error_messages['wrong_value'])
-
-
 #this widget is from djangosnippets.com and it was written by the user "bradmontgomery"
 #it can be found at http://www.djangosnippets.org/snippets/1202/
 

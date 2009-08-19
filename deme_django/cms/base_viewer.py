@@ -14,7 +14,7 @@ from django.db.models.fields import FieldDoesNotExist
 from django import forms
 from datetime import datetime
 from cms.permissions import MultiAgentPermissionCache
-from cms.forms import JavaScriptSpamDetectionField, AjaxModelChoiceField
+from cms.forms import AjaxModelChoiceField
 from django.utils.text import get_text_list, capfirst
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
@@ -587,11 +587,6 @@ class Viewer(object):
         # Create an action_summary field
         if 'action_summary' not in exclude:
             attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("(Advanced) Reason for %s this item" % ('creating' if is_new else 'editing')), widget=forms.TextInput, required=False)
-
-        # Create a JavaScriptSpamDetectionField for AnonymousAgents if enabled.
-        if settings.USE_ANONYMOUS_JAVASCRIPT_SPAM_DETECTOR and self.cur_agent.is_anonymous():
-            self.request.session.modified = True # We want to guarantee a cookie is given
-            attrs['nospam'] = JavaScriptSpamDetectionField(self.request.session.session_key)
 
         # Method that converts a form to a table that replaces as_table() in django.forms.forms
         # This method automatically hides all fields that have help_texts that begin with "(Advanced)"
