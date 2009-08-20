@@ -960,6 +960,11 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
     @require_POST
     def type_accordioncreate_html(self):
+        value = self.request.POST["sq_1"]
+        response, value = value.strip().lower(), ''
+		
+        if not hashlib.sha1(str(response)).hexdigest() == self.request.POST["sq_0"]:
+            return self.render_error('Invalid Answer', 'Add up the numbers correctly to prove you are not a spammer')
         new_body = self.request.POST.get('body')
         if new_body == '':
             return self.render_error('Invalid Comment', "You must enter in a body for your comment")
