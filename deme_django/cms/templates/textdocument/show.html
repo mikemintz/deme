@@ -36,9 +36,23 @@
             targ = targ.parentNode;
         var tokenWrapper = targ;
         var index = tokenWrapper.deme_text_offset;
-        var url = '{% url item_type_url viewer="textcomment",action="new" %}?populate_item={{ item.pk }}&populate_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&item_index=' + index;
-        window.location = url;
+        openLocatedCommentDialog('comment{{ item.pk }}', index);
+        //var url = '{% url item_type_url viewer="textcomment",action="new" %}?populate_item={{ item.pk }}&populate_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&populate_item_index=' + index;
+        //window.location = url;
         return false;
+    }
+    function openLocatedCommentDialog(name, position)
+    {
+        var dialogBox = $('#' + name);
+        var form = dialogBox.children();
+        form.replaceWith('<form method="post" action="/viewing/textcomment/accordioncreate?redirect={{ full_path }}&populate_item_index=' + position + '">' + form.html() + '</form>');  
+        dialogBox.dialog({
+            autoOpen: false,
+            bgiframe: true,
+            modal: true,
+            close: function(event, ui) {dialogBox.dialog('destroy')}
+        });
+        dialogBox.dialog('open');
     }
 
     function transclusion_token_click(e) {

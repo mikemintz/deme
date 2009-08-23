@@ -962,9 +962,9 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
     def type_accordioncreate_html(self):
         value = self.request.POST["sq_1"]
         response, value = value.strip().lower(), ''
-		
         if not hashlib.sha1(str(response)).hexdigest() == self.request.POST["sq_0"]:
             return self.render_error('Invalid Answer', 'Add up the numbers correctly to prove you are not a spammer')
+
         new_body = self.request.POST.get('body')
         if new_body == '':
             return self.render_error('Invalid Comment', "You must enter in a body for your comment")
@@ -980,6 +980,8 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
         new_comment.name = title
         if self.request.POST.get('new_from_contact_method') != '':
             new_comment.from_contact_method = ContactMethod.objects.get(pk=self.request.POST.get('new_from_contact_method'))
+        #if self.request.GET.get('populate_item_index') != '':
+            #set the item index here
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
         new_comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
 
