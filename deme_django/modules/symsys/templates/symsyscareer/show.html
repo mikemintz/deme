@@ -1,0 +1,78 @@
+{% extends layout %}
+{% load symsys_extras %}
+{% load item_tags %}
+{% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
+{% block content %}
+
+
+<ul style="list-style-type: none; margin-bottom: 20px; margin-top: 5px; padding: 0;">
+
+    {% if admin_title %}
+    {% ifagentcan 'view ProgramStaffSymsysCareer.admin_title' item %}
+    <li class="outerlist">
+    <b>Job Title: </b>
+    {{ admin_title }}
+    {% endifagentcan %}
+    {% endif %}
+
+    {% ifagentcan 'view SymsysCareer.start_date' item %}
+    <li class="outerlist">
+    <b>Start Date: </b>
+    {{ item.start_date }}
+    {% endifagentcan %}
+
+    {% ifagentcan 'view SymsysCareer.end_date' item %}
+    <li class="outerlist">
+    <b>End Date: </b>
+    {{ item.end_date }}
+    {% endifagentcan %}
+
+    {% ifagentcan 'view SymsysCareer.suid' item %}
+    <li class="outerlist">
+    <b>SUID number: </b>
+    {{ item.suid }}
+    {% endifagentcan %}
+
+    {% ifagentcan 'view SymsysCareer.finished' item %}
+    <li class="outerlist">
+    {% if item.finished %}
+    {% viewable_name item.symsys_affiliate %} is currently finished with this job
+    {% else %}
+    {% viewable_name item.symsys_affiliate %} is currently holding this job
+    {% endif %}
+    {% endifagentcan %}
+    
+
+    {% ifagentcan 'view SymsysCareer.original_first_name' item %}
+    {% ifagentcan 'view SymsysCareer.original_middle_names' item %}
+    {% ifagentcan 'view SymsysCareer.original_last_name' item %}
+    {% ifagentcan 'view SymsysCareer.original_suffix' item %}
+    <li class="outerlist">
+    <b>Original Full Name: </b> 
+    {% if item.original_first_name %}
+        {{ item.original_first_name }}
+    {% endif %}
+    {% if item.original_middle_names %}
+        {{ item.original_middle_names }}
+    {% endif %}
+    {% if item.original_last_name %}
+        {{ item.original_last_name }}
+    {% endif %}
+    {% if item.original_suffix %}
+        {{ item.original_suffix }}
+    {% endif %}
+
+    {% endifagentcan %}
+    {% endifagentcan %}
+    {% endifagentcan %}
+    {% endifagentcan %}
+
+    {% ifagentcan 'view SymsysCareer.original_photo' item %}
+    <li class="outerlist">
+    <b>Original Photo: </b>
+    {% embed 'imagedocument' item.original_photo %}
+    {% endifagentcan %}
+
+
+</ul>
+{% endblock %}

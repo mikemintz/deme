@@ -4,156 +4,144 @@
 {% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
-{% subclassfields %}
+<style type="text/css">
 
-<table cellspacing="0" class="twocol">
+    .outerlist{
+        padding: 2px 3px 2px 2px;
+        border: 1px grey solid;
+        margin-bottom: 7px;
+    }
+</style>
+
+{% subclassfields %}
+<ul style="list-style-type: none; margin: 10px; padding: 0;">
 
     {% ifagentcan 'view Person.first_name' item %}
-    {% if item.first_name %}
-    <tr>
-        <th>First name:</th>
-        <td>{{ item.first_name }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
     {% ifagentcan 'view Person.middle_names' item %}
-    {% if item.middle_names %}
-    <tr>
-        <th>Middle names:</th>
-        <td>{{ item.middle_names }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
     {% ifagentcan 'view Person.last_name' item %}
-    {% if item.last_name %}
-    <tr>
-        <th>Last name:</th>
-        <td>{{ item.last_name }}</td>
-    </tr>
-    {% endif %}
-    {% endifagentcan %}
-
     {% ifagentcan 'view Person.suffix' item %}
-    {% if item.suffix %}
-    <tr>
-        <th>Suffix:</th>
-        <td>{{ item.suffix }}</td>
-    </tr>
+    <li class="outerlist">
+    <b>Full Name: </b> 
+    {% if item.first_name %}
+        {{ item.first_name }}
     {% endif %}
+    {% if item.middle_names %}
+        {{ item.middle_names }}
+    {% endif %}
+    {% if item.last_name %}
+        {{ item.last_name }}
+    {% endif %}
+    {% if item.suffix %}
+        {{ item.suffix }}
+    {% endif %}
+
+    {% endifagentcan %}
+    {% endifagentcan %}
+    {% endifagentcan %}
     {% endifagentcan %}
 
     {% ifagentcan 'view SymsysAffiliate.w_organization' item %}
     {% if item.w_organization %}
-    <tr>
-        <th>Work organization:</th>
-        <td>{{ item.w_organization }}</td>
-    </tr>
+        <li class="outerlist">
+        <b>Work organization:</b>
+        {{ item.w_organization }}
     {% endif %}
     {% endifagentcan %}
 
     {% ifagentcan 'view SymsysAffiliate.w_position' item %}
     {% if item.w_position %}
-    <tr>
-        <th>Work position:</th>
-        <td>{{ item.w_position }}</td>
-    </tr>
+        <li class="outerlist">
+        <b>Work position:</b>
+        {{ item.w_position }}
     {% endif %}
     {% endifagentcan %}
 
     {% ifagentcan 'view SymsysAffiliate.background' item %}
     {% if item.background %}
-    <tr>
-        <th>Background:</th>
-        <td>{{ item.background|linebreaksbr|urlize }}</td>
-    </tr>
+        <li class="outerlist">
+        <b>Background:</b>
+        {{ item.background|linebreaksbr|urlize }}
     {% endif %}
     {% endifagentcan %}
 
     {% ifagentcan 'view SymsysAffiliate.doing_now' item %}
     {% if item.doing_now %}
-    <tr>
-        <th>Doing Now:</th>
-        <td>{{ item.doing_now|linebreaksbr|urlize }}</td>
-    </tr>
+        <li class="outerlist">
+        <b>Doing Now:</b>
+        {{ item.doing_now|linebreaksbr|urlize }}
     {% endif %}
     {% endifagentcan %}
 
     {% ifagentcan 'view SymsysAffiliate.interests' item %}
     {% if item.interests %}
-    <tr>
-        <th>Interests:</th>
-        <td>{{ item.interests|linebreaksbr|urlize }}</td>
-    </tr>
+        <li class="outerlist">
+        <b>Interests:</b>
+        {{ item.interests|linebreaksbr|urlize }}
     {% endif %}
     {% endifagentcan %}
 
     {% ifagentcan 'view SymsysAffiliate.publications' item %}
     {% if item.publications %}
-    <tr>
-        <th>Publications:</th>
-        <td>{{ item.publications|linebreaksbr|urlize }}</td>
-    </tr>
+        <li class="outerlist">
+        <b>Publications:</b>
+        {{ item.publications|linebreaksbr|urlize }}
     {% endif %}
     {% endifagentcan %}
 
     {% ifagentcan 'view SymsysAffiliate.office_hours' item %}
     {% if item.office_hours %}
-    <tr>
-        <th>Office hours:</th>
-        <td>{{ item.office_hours|linebreaksbr|urlize }}</td>
-    </tr>
+        <li class="outerlist">
+        <b>Office hours:</b>
+        {{ item.office_hours|linebreaksbr|urlize }}
     {% endif %}
     {% endifagentcan %}
 
     {% ifagentcan 'view SymsysAffiliate.about' item %}
     {% if item.about %}
-    <tr>
-        <th>About:</th>
-        <td>{{ item.about|linebreaksbr|urlize }}</td>
-    </tr>
+        <li class="outerlist">
+        <b>About:</b>
+        {{ item.about|linebreaksbr|urlize }}
     {% endif %}
     {% endifagentcan %}
 
     {# TODO display them as fields, rather than a silly list #}
+    <li class="outerlist">
+    <b>Collections containing {% viewable_name item %}:</b>
+    <ul>
     {% for collection in containing_collections %}
-    <tr>
-        <th>Collection:</th>
-        <td><a href="{{ collection.get_absolute_url }}">{% viewable_name collection %}</a></td>
-    </tr>
+        <li><a href="{{ collection.get_absolute_url }}">{% viewable_name collection %}</a>
     {% endfor %}
+    </ul>
 
     {# TODO display them more nicely, rather than simply embedded #}
+    <li class="outerlist">
+    <b>{% viewable_name item %}'s contact methods:</b>
+    <ul>
     {% for contact_method in contact_methods %}
-    <tr>
-        <th>Contact Method:</th>
-        <td>{% embed contact_method.get_default_viewer contact_method %}</td>
-    </tr>
+        <li>{{ contact_method }}
     {% endfor %}
+    </ul>
 
     {# TODO display them more nicely, rather than simply embedded #}
+    <li class="outerlist">
+    <b>SymSys related jobs held by {% viewable_name item %}</b><br>
     {% for symsys_career in symsys_careers %}
-    <tr>
-        <th>Symsys Career:</th>
-        <td>{% embed symsys_career.get_default_viewer symsys_career %}</td>
-    </tr>
+        <a href="{{ symsys_career.get_absolute_url }}" style="margin-left: 15px; font-weight: bold;">{% viewable_name symsys_career %}:</a>
+        {% embed symsys_career.get_default_viewer symsys_career %}
     {% endfor %}
 
     {% if item.photo %}
     {% if item.photo.active %}
     {% ifagentcan 'view SymsysAffiliate.photo' item %}
     {% ifagentcan 'view FileDocument.datafile' item.photo %}
-    <tr>
-        <th>Photo:</th>
-        <td><a href="{{ item.photo.get_absolute_url }}"><img src="{{ item.photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a></td>
-    </tr>
+        Photo:
+        <a href="{{ item.photo.get_absolute_url }}"><img src="{{ item.photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a>
     {% endifagentcan %}
     {% endifagentcan %}
     {% endif %}
     {% endif %}
 
-</table>
+</ul>
 
 {% endblock content %}
 
