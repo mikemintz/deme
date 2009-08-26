@@ -161,20 +161,23 @@
     function expand_comments_reallybig() {
         $('#show_comments_link').hide();
         $('#hide_comments_link').show();
-        $('#right_accordion').accordion('activate', 1);
+        $('.commentref').show();
+        show_column_right();
         $('#left_table_column').width(.125*PAGE_WIDTH);
-        $('#center_table_column').width(.25*PAGE_WIDTH);
-        $('#right_table_column').width(.625*PAGE_WIDTH);
+        $('#center_table_column').width(.375*PAGE_WIDTH);
+        $('#right_table_column').width(.5*PAGE_WIDTH);
+        $('#right_accordion').accordion('activate', 1);
         show_comments_big();
     }
     function hide_comments_reallybig() {
         $('#show_comments_link').show();
         $('#hide_comments_link').hide();
-        $('#right_accordion').accordion('activate', 0);
+        hide_comments_big();
+        $('.commentref').hide();
         $('#left_table_column').width(.125*PAGE_WIDTH);
         $('#center_table_column').width(.625*PAGE_WIDTH);
         $('#right_table_column').width(.25*PAGE_WIDTH);
-        hide_comments_big();
+        decrease_column_right();
     }
 
 </script>

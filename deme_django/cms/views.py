@@ -980,10 +980,13 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
         new_comment.name = title
         if self.request.POST.get('new_from_contact_method') != '':
             new_comment.from_contact_method = ContactMethod.objects.get(pk=self.request.POST.get('new_from_contact_method'))
-        #if self.request.GET.get('populate_item_index') != '':
-            #set the item index here
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
         new_comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
+        
+        if self.request.GET.get('populate_item_index') != '':
+            transclusion = Transclusion(from_item=item.downcast(), from_item_version_number=self.request.POST.get('item_version_number'), from_item_index=self.request.GET.get('populate_item_index'), to_item=new_comment)
+            transclusion_permissions = [OneToOnePermission(source=self.cur_agent, ability='do anything', is_allowed=True)]
+            transclusion.save_versioned(action_agent=self.cur_agent, initial_permissions=transclusion_permissions)
 
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_comment.pk}))
         return HttpResponseRedirect(redirect)
