@@ -384,7 +384,7 @@ class MastersSymsysCareer(StudentSymsysCareer, ThesisSymsysCareer):
 class HonorsSymsysCareer(ThesisSymsysCareer):
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset()
+    introduced_abilities = frozenset(['view HonorsSymsysCareer.advisor', 'edit HonorsSymsysCareer.advisor'])
     introduced_global_abilities = frozenset(['create HonorsSymsysCareer'])
     class Meta:
         verbose_name = _('honors Symsys career')

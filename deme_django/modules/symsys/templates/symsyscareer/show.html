@@ -16,29 +16,35 @@
     {% endif %}
 
     {% ifagentcan 'view SymsysCareer.start_date' item %}
+    {% if item.start_date %}
     <li class="outerlist">
     <b>Start Date: </b>
     {{ item.start_date }}
+    {% endif %}
     {% endifagentcan %}
 
     {% ifagentcan 'view SymsysCareer.end_date' item %}
+    {% if item.end_date %}
     <li class="outerlist">
     <b>End Date: </b>
     {{ item.end_date }}
+    {% endif %}
     {% endifagentcan %}
 
     {% ifagentcan 'view SymsysCareer.suid' item %}
+    {% if item.suid %}
     <li class="outerlist">
     <b>SUID number: </b>
     {{ item.suid }}
+    {% endif %}
     {% endifagentcan %}
 
     {% ifagentcan 'view SymsysCareer.finished' item %}
     <li class="outerlist">
     {% if item.finished %}
-    {% viewable_name item.symsys_affiliate %} is currently finished with this job
+    {% viewable_name item.symsys_affiliate %} is currently finished with this occupation
     {% else %}
-    {% viewable_name item.symsys_affiliate %} is currently holding this job
+    {% viewable_name item.symsys_affiliate %} is currently holding this occupation
     {% endif %}
     {% endifagentcan %}
     
@@ -68,9 +74,11 @@
     {% endifagentcan %}
 
     {% ifagentcan 'view SymsysCareer.original_photo' item %}
+    {% if item.original_photo %}
     <li class="outerlist">
     <b>Original Photo: </b>
     {% embed 'imagedocument' item.original_photo %}
+    {% endif %}
     {% endifagentcan %}
 
 

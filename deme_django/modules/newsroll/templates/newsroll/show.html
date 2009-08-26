@@ -22,7 +22,7 @@
                     </div>
                 {% endif %}
                 
-                <a href="{{ details.url }}"> Full Article </a>
+                <br><a href="{{ details.url }}"> Full Article </a>
            {% endifagentcan %}    
         {% endif %}
         
@@ -44,7 +44,12 @@
     <div style="border: 1px solid #aaa; margin-bottom: 8px; margin-top: 8px;"></div>
 
 {% endfor %}
-
+{% comment %}
+<div style="border-bottom: 1px solid #aaa; margin-bottom: 8px; margin-top: 8px;"></div>
+{% if members.has_previous %}
+{% endif %}
+</div>
+{% endcomment %}
 <div>
     {% ifagentcan 'modify_membership' collection %}
         <a href="{% url item_type_url viewer="htmldocument",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Create A New Entry ||</a> 

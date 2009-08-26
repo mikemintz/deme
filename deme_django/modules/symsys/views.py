@@ -100,7 +100,7 @@ class SymsysAffiliateViewer(PersonViewer):
                 contact_method_fields.append('(Fax) ' + contact_method.fax)
             if issubclass(contact_method.actual_item_type(), AIMContactMethod):
                 contact_method = contact_method.downcast()
-                contact_method_fields.append(contact_method.screen_name)
+                contact_method_fields.append('(AIM Screename) ' + contact_method.screen_name)
             if issubclass(contact_method.actual_item_type(), AddressContactMethod):
                 contact_method = contact_method.downcast()
                 if contact_method.street2:
