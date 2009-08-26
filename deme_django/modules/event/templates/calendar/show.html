@@ -15,8 +15,10 @@
             bgiframe: true,
             modal: true,
             buttons: {
-               'Close': function(){$(this).dialog('close')},
-               //'Edit This Item': function(){ window.location = edit_url }
+               //{% ifagentcan 'edit Item.name' collection %}
+                 //   'Edit This Item': function(){ window.location = edit_url },
+               //{% endifagentcan %}
+               'Close': function(){$(this).dialog('close')}
             },
             close: function(event, ui) {dialogBox.dialog('destroy')}
         });
@@ -36,7 +38,7 @@
 
 .day { 
   width: 14%;
-  height: 58px;
+  height: 70px;
   color: #456;
   text-align: right;
   vertical-align: top;

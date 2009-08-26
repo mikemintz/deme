@@ -49,9 +49,9 @@ class Event(HtmlDocument):
     )
 
     #fields:
-    start_date = models.DateField(_('start date'))
+    start_date = models.DateField(_('start date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     start_time = models.TimeField(_('start time'))
-    end_date   = models.DateField(_('end date'))
+    end_date   = models.DateField(_('end date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     end_time   = models.TimeField(_('end time'))
     location   = models.CharField(_('location'), max_length=255) 
     time_zone  = models.CharField(_('time zone'), max_length=255, choices=time_zones, default=settings.TIME_ZONE)
