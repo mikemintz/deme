@@ -226,15 +226,14 @@ class ItemViewer(Viewer):
             newPage = paginator.page(paginator.num_pages)
 
         page_range = paginator.page_range
+        displayed_page_range = []
         for possible_page in page_range:
-            if (possible_page > page + 10):
-                page_range.remove(possible_page)
-            if (possible_page < page - 10):
-                page_range.remove(possible_page)
+            if (possible_page < page + 10) and (possible_page > page-10):
+                displayed_page_range.append(possible_page)
 
         self.context['action_notices'] = newPage
         self.context['count'] = paginator.count
-        self.context['page_range'] = page_range
+        self.context['page_range'] = displayed_page_range
            
         return HttpResponse(template.render(self.context))
 

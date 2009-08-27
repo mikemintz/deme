@@ -46,13 +46,22 @@
 {% endfor %}
 <div style="border-bottom: 2px solid #aaa; margin-bottom: 8px; padding-bottom: 8px; text-align: center;">
 {% if members.has_previous %}
-<a href="?page={{ members.previous_page_number }}"> ~ Prev ||</a>
+<a href="?page={{ members.previous_page_number }}"> ~ Prev |</a>
 {% endif %}
+    {% for page in page_range %}
+        {% ifequal page members.number %} 
+            {{ members.number }}
+        {% endifequal %}
+
+        {% ifnotequal page members.number %}
+            <a href="?page={{ page }}">{{ page }}</a>
+        {% endifnotequal %}    
+    {% endfor %}
 {% if members.has_next %}
-<a href="?page={{ members.next_page_number }}"> Next ~</a>
+<a href="?page={{ members.next_page_number }}">| Next ~</a>
 {% endif %}
 </div>
-<div style="text-align: center; padding-left: 47px;">
+<div style="text-align: center; padding-left: 35px;">
     {% ifagentcan 'modify_membership' collection %}
         <a href="{% url item_type_url viewer="htmldocument",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Create A New Entry ||</a> 
     {% endifagentcan %}

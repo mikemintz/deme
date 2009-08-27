@@ -131,8 +131,14 @@ class NewsRollViewer(ItemViewer):
         except (EmptyPage, InvalidPage):
             entries = p.page(p.num_pages)
 
+        page_ranges = p.page_range
+        displayed_page_range = []
+        for possible_page in page_ranges:
+            if (possible_page < page + 10) and (possible_page > page-10):
+                displayed_page_range.append(possible_page)
+
         self.context['redirect'] = reverse('item_url', kwargs={'viewer': 'newsroll', 'action': 'show', 'noun': collection.pk}) 
         self.context['members'] = entries
-        self.context['page'] = page
+        self.context['page_range'] = displayed_page_range
         return HttpResponse(template.render(self.context))
 
