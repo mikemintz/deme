@@ -83,7 +83,7 @@ class NewsRollViewer(ItemViewer):
     viewer_name = 'newsroll'
 
     def item_show_html(self):
-        from django.core.paginator import Paginator
+        from django.core.paginator import Paginator, InvalidPage, EmptyPage
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('newsroll/show.html')
@@ -118,22 +118,21 @@ class NewsRollViewer(ItemViewer):
                 details["is_html"] = False
 
             member_details.append(details)
+        print "got here"
+        p = Paginator(member_details, 10)
 
-        #p = Paginator(member_details, 10)
+        try:
+            page = int(self.request.GET.get('page','1'))
+        except ValueError:
+            page = 1
 
-        #try:
-         #   page = int(self.request.GET.get('page','1'))
-        #except ValueError:
-         #   page = 1
-
-  #      try:
-   #         entries = p.page(page)
-    #    except (EmptyPage, InvalidPage):
-     #       entries = p.page(p.num_pages)
+        try:
+            entries = p.page(page)
+        except (EmptyPage, InvalidPage):
+            entries = p.page(p.num_pages)
 
         self.context['redirect'] = reverse('item_url', kwargs={'viewer': 'newsroll', 'action': 'show', 'noun': collection.pk}) 
-       # self.context['members'] = entries
-        self.context['members'] = member_details
-        #self.context['page'] = page
+        self.context['members'] = entries
+        self.context['page'] = page
         return HttpResponse(template.render(self.context))
 

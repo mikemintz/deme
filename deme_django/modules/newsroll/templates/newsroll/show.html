@@ -4,7 +4,7 @@
 {% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
-{% for details in members %}
+{% for details in members.object_list %}
 
     <div style="border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px">
         <div style="font-weight: bold;">
@@ -44,18 +44,20 @@
     <div style="border: 1px solid #aaa; margin-bottom: 8px; margin-top: 8px;"></div>
 
 {% endfor %}
-{% comment %}
-<div style="border-bottom: 1px solid #aaa; margin-bottom: 8px; margin-top: 8px;"></div>
+<div style="border-bottom: 2px solid #aaa; margin-bottom: 8px; padding-bottom: 8px; text-align: center;">
 {% if members.has_previous %}
+<a href="?page={{ members.previous_page_number }}"> ~ Prev ||</a>
+{% endif %}
+{% if members.has_next %}
+<a href="?page={{ members.next_page_number }}"> Next ~</a>
 {% endif %}
 </div>
-{% endcomment %}
-<div>
+<div style="text-align: center; padding-left: 47px;">
     {% ifagentcan 'modify_membership' collection %}
         <a href="{% url item_type_url viewer="htmldocument",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Create A New Entry ||</a> 
     {% endifagentcan %}
 
-    <a href="{% url item_type_url viewer="item",action="list.rss" %}?collection={{ collection.pk }}"> View this Blog's RSS Feed</a>
+    <a href="{% url item_type_url viewer="item",action="list.rss" %}?collection={{ collection.pk }}"> View this Listing's RSS Feed</a>
 </div>
 
 {% endblock content %}
