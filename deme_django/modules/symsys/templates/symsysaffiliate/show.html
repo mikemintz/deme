@@ -40,6 +40,18 @@
     {% endifagentcan %}
     {% endifagentcan %}
 
+    {% if item.photo %}
+    {% if item.photo.active %}
+    {% ifagentcan 'view SymsysAffiliate.photo' item %}
+    {% ifagentcan 'view FileDocument.datafile' item.photo %}
+    <li class="outerlist">
+        <a href="{{ item.photo.get_absolute_url }}"><img src="{{ item.photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a>
+        </li>
+    {% endifagentcan %}
+    {% endifagentcan %}
+    {% endif %}
+    {% endif %}
+
     {% ifagentcan 'view SymsysAffiliate.w_organization' item %}
     {% if item.w_organization %}
         <li class="outerlist">
@@ -114,7 +126,7 @@
 
     {# TODO display them as fields, rather than a silly list #}
     <li class="outerlist">
-    <b>Collections containing {% viewable_name item %}:</b>
+    <b>{% viewable_name item %} is a member of:</b>
     <ul>
     {% for collection in containing_collections %}
     <li><a href="{{ collection.get_absolute_url }}">{% viewable_name collection %}</a></li>
@@ -133,24 +145,12 @@
     </li>
     {# TODO display them more nicely, rather than simply embedded #}
     <li class="outerlist">
-    <b>SymSys related jobs held by {% viewable_name item %}</b><br>
+    <b>SymSys related occupations held by {% viewable_name item %}</b><br>
     {% for symsys_career in symsys_careers %}
         <a href="{{ symsys_career.get_absolute_url }}" style="margin-left: 15px; font-weight: bold;">{% viewable_name symsys_career %}:</a>
         {% embed symsys_career.get_default_viewer symsys_career %}
     {% endfor %}
     </li>
-    {% if item.photo %}
-    {% if item.photo.active %}
-    {% ifagentcan 'view SymsysAffiliate.photo' item %}
-    {% ifagentcan 'view FileDocument.datafile' item.photo %}
-    <li class="outerlist">
-        
-        <a href="{{ item.photo.get_absolute_url }}"><img src="{{ item.photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a>
-        </li>
-    {% endifagentcan %}
-    {% endifagentcan %}
-    {% endif %}
-    {% endif %}
 
 </ul>
 

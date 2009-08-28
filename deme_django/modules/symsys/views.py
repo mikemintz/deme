@@ -17,6 +17,12 @@ class SymsysCareerViewer(ItemViewer):
         if issubclass(self.item.actual_item_type(), ProgramStaffSymsysCareer):
             self.item = self.item.downcast()
             self.context['admin_title'] = self.item.admin_title
+        if issubclass(self.item.actual_item_type(), ResearcherSymsysCareer):
+            self.item = self.item.downcast()
+            self.context['researcher_academic_title'] = self.item.academic_title
+        if issubclass(self.item.actual_item_type(), FacultySymsysCareer):
+            self.item = self.item.downcast()
+            self.context['faculty_academic_title'] = self.item.academic_title
         self.context['item'] = self.item
         return HttpResponse(template.render(self.context))
 
@@ -25,11 +31,41 @@ class ThesisSymsysCareerViewer(SymsysCareerViewer):
     accepted_item_type = ThesisSymsysCareer
     viewer_name = 'thesissymsyscareer'
 
+    def item_show_html(self):
+        self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
+        template = loader.get_template('thesissymsyscareer/show.html')
+
+        if issubclass(self.item.actual_item_type(), HonorsSymsysCareer):
+            self.item = self.item.downcast()
+            self.context['advisor'] = self.item.advisor
+
+        return HttpResponse(template.render(self.context))
+
 
 class StudentSymsysCareerViewer(SymsysCareerViewer):
     accepted_item_type = StudentSymsysCareer
     viewer_name = 'studentsymsyscareer'
 
+    def item_show_html(self):
+        self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
+        template = loader.get_template('studentsymsyscareer/show.html')
+
+        if issubclass(self.item.actual_item_type(), BachelorsSymsysCareer):
+            self.item = self.item.downcast()
+            self.context['concentration'] = self.item.concentration
+            self.context['indiv_designed_conc'] = self.item.indivdesignedconc
+
+        if issubclass(self.item.actual_item_type(), MastersSymsysCareer):
+            self.item = self.item.downcast()
+            self.context['track'] = self.item.track
+            self.context['indiv_designed_track'] = self.item.indivdesignedtrack 
+            self.context['thesis'] = self.item.thesis
+            self.context['thesis_title'] = self.item.thesis_title
+            self.context['second_reader'] = self.item.second_reader
+
+        return HttpResponse(template.render(self.context))
 
 class MinorSymsysCareerViewer(StudentSymsysCareerViewer):
     accepted_item_type = MinorSymsysCareer
