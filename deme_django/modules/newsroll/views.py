@@ -118,7 +118,7 @@ class NewsRollViewer(ItemViewer):
                 details["is_html"] = False
 
             member_details.append(details)
-        print "got here"
+
         p = Paginator(member_details, 10)
 
         try:
