@@ -27,6 +27,9 @@ if Item.objects.count() != 0:
 
 admin = Agent(name="Admin")
 admin.save_versioned(action_agent=None, first_agent=True)
+admin_deme_account = DemeAccount(agent=admin, username='Admin')
+admin_deme_account.set_password('tomijo09011')
+admin_deme_account.save_versioned(action_agent=admin, initial_permissions=[OneToOnePermission(source=admin, ability='do_anything', is_allowed=True)])
 
 anonymous_agent = AnonymousAgent(name='Anonymous')
 anonymous_agent.save_versioned(action_agent=admin)
@@ -156,6 +159,6 @@ Subscription(contact_method=joe_email_contact_method, item=discuss_group.folios.
 
 #OneToAllPermission(source=anonymous_agent, ability='do_anything', is_allowed=False).save()
 
-AllToOnePermission(target=admin, ability='login_as', is_allowed=True).save()
+#AllToOnePermission(target=admin, ability='login_as', is_allowed=True).save()
 
 print 'Done'
