@@ -60,4 +60,7 @@
 <a href="?page={{ members.next_page_number }}">| Next ~</a>
 {% endif %}
 </div>
+<div style="text-align: center;">
+    View this group in a <a href="{% url item_url viewer="group",action="show",noun=item.pk %}">more compressed format</a>
+</div>
 {% endblock %}

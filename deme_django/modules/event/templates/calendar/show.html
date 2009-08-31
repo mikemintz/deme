@@ -118,7 +118,7 @@
 <form onsubmit="return false" action="" style="text-align: center; margin-right: 25px;">
     <b>Jump to a Month: </b>
     Month: <input type="text" id="month_selector" size=1 />
-    Year: <input type="text" id="year_selector" size=2 />
+    Year: <input type="text" id="year_selector" size=2 value={{ this_month.year }} />
     <input type="submit" value="Go!" onclick="GoToMonth();" />
 </form>
 <div style="text-align: center; font-size: 90%; margin-top: 3px;">
@@ -129,7 +129,8 @@
         <a href="{% url item_type_url viewer="event",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Add A New Event to this Calendar ||</a> 
     {% endifagentcan %}
 
-     <a href="{% url item_url viewer="calendar" action="exportguide" noun=collection.pk %}">Export this Calendar</a> 
+    <a href="{% url item_url viewer="calendar" action="exportguide" noun=collection.pk %}">Export this Calendar ||</a>
+    <a href="{% url item_url viewer="newsroll" action="show" noun=collection.pk %}">View a listing of this calendar's events</a> 
 </div>
 
 {% endblock %}

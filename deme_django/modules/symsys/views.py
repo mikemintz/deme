@@ -1,12 +1,12 @@
 from django.template import Context, loader
 from django.http import HttpResponse
-from cms.views import ItemViewer, PersonViewer, DocumentViewer, TextDocumentViewer, HtmlDocumentViewer
+from cms.views import ItemViewer, PersonViewer, DocumentViewer, TextDocumentViewer, HtmlDocumentViewer, CollectionViewer
 from cms.models import *
 from modules.symsys.models import *
 from django.db.models import Q
 
-class SymsysGroupViewer(ItemViewer):
-    accepted_item_type = Collection
+class SymsysGroupViewer(CollectionViewer):
+    accepted_item_type = Group
     viewer_name = 'symsysgroup'
 
     def item_show_html(self):
