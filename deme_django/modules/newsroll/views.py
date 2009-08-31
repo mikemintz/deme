@@ -97,7 +97,6 @@ class NewsRollViewer(ItemViewer):
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         members = collection.all_contained_collection_members(recursive_filter).order_by('-created_at')
 
-        #TODO pagination
         member_details = []
         for member in members:
             details = {}
