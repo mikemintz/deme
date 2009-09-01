@@ -113,7 +113,7 @@ class CalendarViewer(CollectionViewer):
             event_week_list.append(event_week)
 
         self.context['collection'] = collection
-        self.context['this_month'] = date(year, month, today.day)
+        self.context['this_month'] = date(year, month, 1)
         self.context['week_list'] = event_week_list
         self.context['redirect'] = reverse('item_url', kwargs={'viewer': 'calendar', 'action': 'show', 'noun': collection.pk}) 
         return HttpResponse(template.render(self.context))
