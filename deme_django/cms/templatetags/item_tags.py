@@ -676,6 +676,8 @@ class CalculateComments(template.Node):
             result.append("""<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedcomment%s'); return false;" >Advanced</a> """ % (item.pk))
             result.append("""</form></div>""")
             result.append("""</div>""")
+        else:
+            result.append("</div>")
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
