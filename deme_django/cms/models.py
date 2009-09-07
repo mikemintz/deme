@@ -793,7 +793,7 @@ class Webpage(Item):
         verbose_name_plural = _('webpages')
 
     # Fields
-    url = models.CharField(_('URL'), max_length=255, default='http://')
+    url = models.CharField(_('URL'), max_length=255, default='http://', help_text = _("URL's to outside websites have to start with 'http://'"))
 
 ###############################################################################
 # Agents and related item types
@@ -1045,7 +1045,7 @@ class WebsiteContactMethod(ContactMethod):
         verbose_name_plural = _('website contact methods')
 
     # Fields
-    url = models.CharField(_('website URL'), max_length=255)
+    url = models.CharField(_('website URL'), max_length=255, default='http://', help_text = _("URL's to outside websites have to start with 'http://'"))
 
 
 class AIMContactMethod(ContactMethod):
