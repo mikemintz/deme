@@ -1,9 +1,13 @@
 from django.template import Context, loader
 from django.http import HttpResponse
-from cms.views import ItemViewer, PersonViewer, DocumentViewer, TextDocumentViewer, HtmlDocumentViewer, CollectionViewer
+from cms.views import ItemViewer, PersonViewer, DocumentViewer, TextDocumentViewer, HtmlDocumentViewer, GroupViewer, CollectionViewer
 from cms.models import *
 from modules.symsys.models import *
 from django.db.models import Q
+
+#class SymsysFacultyGroupViewer(SymsysGroupViewer):
+ #   accepted_item_type = Collection
+  #  viewer_name = 'symsysfacultygroup'
 
 class SymsysGroupViewer(CollectionViewer):
     accepted_item_type = Group
@@ -40,6 +44,18 @@ class SymsysGroupViewer(CollectionViewer):
                     if issubclass(career.actual_item_type(), BachelorsSymsysCareer):
                         career = career.downcast()
                         member_details['concentration'] = career.concentration
+
+                    if issubclass(career.actual_item_type(), FacultySymsysCareer):
+                        career = career.downcast()
+                        member_details['is_staff'] = True
+                        member_details['academic_title'] = career.academic_title 
+                        member_details['publications'] = member.publications
+                        member_details['interests'] = member.interests
+                    if issubclass(career.actual_item_type(), ProgramStaffSymsysCareer):
+                        career = career.downcast()
+                        #member_details['is_staff'] = True
+                        member_details['academic_title'] = career.admin_title 
+                        
                 
                 members.append(member_details)
 
@@ -64,6 +80,7 @@ class SymsysGroupViewer(CollectionViewer):
         self.context['members'] = entries
         self.context['page_range'] = displayed_page_range
         return HttpResponse(template.render(self.context))
+
 
 class SymsysCareerViewer(ItemViewer):
     accepted_item_type = SymsysCareer

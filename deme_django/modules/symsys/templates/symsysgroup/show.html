@@ -5,6 +5,57 @@
 {% block content %}
 
 {% for member in members.object_list %}
+{% if member.is_staff %}
+<div id="staff{{ member.item.pk }}">
+<table>
+    <tr>
+        <td>
+            <a href="{{ member.item.get_absolute_url }}">{% viewable_name member.item %}</a>
+        </td>
+        <td>
+            <b>Academic Title: </b>{{ member.academic_title }} 
+        </td>
+    </tr>
+    <tr>
+        {% if member.photo %}
+        <td>
+            <a href="{{ member.photo.get_absolute_url }}"><img src="{{ member.photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a>
+        </td>
+        {% endif %}
+        <td>
+            {% if member.item.publications %}
+                <b>Publications: </b>{{ member.item.publications }} 
+                <br>
+            {% endif %}
+            {% if member.item.interests %}
+                <b>Interests: </b>{{ member.item.interests }}
+                <br>
+            {% else %}
+                {% if member.item.about %}
+                <b>About: </b>{{ member.item.about }}
+                <br>
+                {% endif %}
+            {% endif %}
+            {% if member.item.office_hours %}
+                <b>Office Hours: </b>
+                <br>
+                {{ member.item.office_hours }}
+            {% endif %}
+            <br>
+            <a href="#" onclick="$('#bigstaff{{ member.item.pk }}').show(); $('#staff{{ member.item.pk }}').hide(); return false;">Show {% viewable_name member.item %}'s complete profile</a>
+        </td>
+    </tr>
+</table>
+
+</div>
+<div id="bigstaff{{ member.item.pk }}" style="display: none;">
+    <a href="#" onclick="$('#bigstaff{{ member.item.pk }}').hide(); $('#staff{{ member.item.pk }}').show(); return false;">Hide all details</a>
+    {% embed 'symsysaffiliate' member.item %}
+</div>
+<hr>
+
+{% else %}
+<div id="person{{ member.item.pk}}">
 <table>
     <tr>
         <td>
@@ -27,20 +78,31 @@
             <a href="{{ member.photo.get_absolute_url }}"><img src="{{ member.photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a>
         </td>
         {% endif %}
-        <td colspan=2>
+        <td colspan=2 style="text-align: left;">
             {% if member.item.about %}
             <b>About: </b>
             {{ member.item.about }}
             <br>
+            {% else %}
+            <b>About: </b>
+            (blank)
             {% endif %}
             {% if member.item.office_hours %}
             <b>Office Hours: </b>
             {{ member.item.office_hours }}
             {% endif %}
+            <br>
+            <a href="#" onclick="$('#bigperson{{ member.item.pk }}').show(); $('#person{{ member.item.pk }}').hide(); return false;">Show {% viewable_name member.item %}'s complete profile</a>
         </td>
     </tr>
 </table>
+</div>
+<div id="bigperson{{ member.item.pk }}" style="display: none;">
+    <a href="#" onclick="$('#bigperson{{ member.item.pk }}').hide(); $('#person{{ member.item.pk }}').show(); return false;">Hide all details</a>
+    {% embed 'symsysaffiliate' member.item %}
+</div>
 <hr>
+{% endif %}
 {% endfor %}
 
 <div style="border: 2px solid #aaa; margin-bottom: 8px; padding-bottom: 8px; text-align: center;">
