@@ -38,8 +38,8 @@
             {% endif %}
             {% if member.item.office_hours %}
                 <b>Office Hours: </b>
-                <br>
                 {{ member.item.office_hours }}
+                <br>
             {% endif %}
             <br>
             <a href="#" onclick="$('#bigstaff{{ member.item.pk }}').show(); $('#staff{{ member.item.pk }}').hide(); return false;">Show {% viewable_name member.item %}'s complete profile</a>
