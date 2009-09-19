@@ -156,6 +156,6 @@ Subscription(contact_method=joe_email_contact_method, item=discuss_group.folios.
 
 #OneToAllPermission(source=anonymous_agent, ability='do_anything', is_allowed=False).save()
 
-#AllToOnePermission(target=admin, ability='login_as', is_allowed=True).save()
+AllToOnePermission(target=admin, ability='login_as', is_allowed=True).save()
 
 print 'Done'
