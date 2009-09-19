@@ -1411,7 +1411,7 @@ class DjangoTemplateDocument(TextDocument):
 
     # Fields
     layout = FixedForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout'))
-    override_default_layout = FixedBooleanField(_('override default layout'), default=False)
+    override_default_layout = FixedBooleanField(_('override default layout'), default=False, help_text=_('Select this if this item will be used as a layout template'))
 
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'layout':
