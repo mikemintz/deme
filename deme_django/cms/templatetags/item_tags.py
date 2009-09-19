@@ -533,7 +533,7 @@ class ItemDetails(template.Node):
 
         if agentcan_helper(context, 'view Item.name', item) and item.name:
             result.append('<tr>')
-            result.append('<th>Name:</th>')
+            result.append('<th>Item Name:</th>')
             result.append('<td>')
             result.append(escape(item.name))
             result.append('</td>')
