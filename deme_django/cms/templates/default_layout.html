@@ -154,9 +154,9 @@
                 <div class="title">
                 {% block title %}
                 {% if item %}
-                <img src="{{ item.actual_item_type|icon_url:24 }}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
+                <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
                 {% else %}
-                <img src="{{ accepted_item_type|icon_url:24 }}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
+                <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
                 {% endif %}
                 {% endblock title %}
                 </div>
