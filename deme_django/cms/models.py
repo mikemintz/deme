@@ -215,7 +215,7 @@ class Item(models.Model):
     creator          = FixedForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
     created_at       = models.DateTimeField(_('created at'), editable=False)
     name             = models.CharField(_('item name'), max_length=255, blank=True, help_text=_('The name used to refer to this item'))
-    description      = models.CharField(_('preface'), max_length=255, blank=True, help_text=_('Description of the purpose of this item'))
+    description      = models.CharField(_('purpose'), max_length=255, blank=True, help_text=_('Description of the purpose of this item'))
     default_viewer   = models.CharField(_('default viewer'), max_length=255, choices=PossibleViewerNamesIterable(), help_text=_('The default viewer to display this item'))
 
     def __unicode__(self):
