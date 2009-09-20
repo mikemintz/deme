@@ -392,6 +392,7 @@ class ItemToolbar(template.Node):
 
     def render(self, context):
         item = context['item']
+        item_name = get_viewable_name(context, item)
         version_number = item.version_number
         cur_item_type = context['_viewer'].accepted_item_type
         item_type_inheritance = []
@@ -413,13 +414,22 @@ class ItemToolbar(template.Node):
         #result.append('<div class="fg-toolbar ui-widget-header ui-corner-all ui-helper-clearfix">')
         result.append('<div class="ui-helper-clearfix" style="font-size: 85%;">')
         result.append('<div class="fg-buttonset ui-helper-clearfix">')
+        from cms.forms import AjaxModelChoiceField
+        result.append("""
+            <div id="subscribe_dialog" style="display: none;" title="Subscribe to '%s'">
+                <form method="post" action="%s?redirect=%s"> 
+                    Contact Method: %s 
+                    <input type="submit" value="Submit" />
+                </form>
+            </div>
+            """ % (item_name, 'lol', context['full_path'], AjaxModelChoiceField(EmailContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('item', None, {'id':'memberajaxfield'})  ))
 
         if isinstance(item, Agent):
             if agentcan_helper(context, 'add_authentication_method', item):
                 result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add authentication method</a>' % add_authentication_method_url)
             if agentcan_helper(context, 'add_contact_method', item):
                 result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a>' % add_contact_method_url)
-        result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscribe</a>' % subscribe_url)
+        result.append("""<a href="#" onclick="openCommentDialog('subscribe_dialog'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscribe</a>""")
         if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
             result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-pencil"></span>Edit</a>' % edit_url)
         if agentcan_global_helper(context, 'create %s' % item.item_type_string):
