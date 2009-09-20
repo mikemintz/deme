@@ -92,6 +92,16 @@ class AjaxModelChoiceWidget(forms.Widget):
         fn();
         </script>
         """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search}
+        result = """
+        <select id="%(id)s" name="%(name)s"></select>
+        <script>
+        $(function(){
+            $('#%(id)s').sexyCombo({
+                initialHiddenValue: "%(value)s",
+            });
+        });
+        </script>
+        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search}
         return result
 
 
