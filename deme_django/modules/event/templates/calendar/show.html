@@ -30,7 +30,7 @@
     {
         var month = document.getElementById("month_selector").value;
         var year = document.getElementById("year_selector").value;
-        window.location = ('?month=' + month + '&year=' + year);
+        window.location = ('{{ full_path }}?month=' + month + '&year=' + year);
     }
 </script>
 
@@ -65,8 +65,8 @@
 <h3 align="center">{{ this_month|date:"M Y" }}</h3>
 
 <div align="center">
-    <a href="?year={{ prev_year }}&month={{ prev_month }}">~ Previous Month |</a>
-    <a href="?year={{ next_year }}&month={{ next_month }}">| Next Month ~</a>
+    <a href="{{ full_path }}?year={{ prev_year }}&month={{ prev_month }}">~ Previous Month |</a>
+    <a href="{{ full_path }}?year={{ next_year }}&month={{ next_month }}">| Next Month ~</a>
 </div>
 
 <table class="calendar">

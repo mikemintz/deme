@@ -1115,7 +1115,7 @@ class Subscription(Item):
     # Fields
     contact_method = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'])
     item           = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view Item.action_notices'])
-    deep           = FixedBooleanField(_('deep subscription'), default=False, help_text=_("Enable this if you want to subscribe to all this item's versions"))
+    deep           = FixedBooleanField(_('deep subscription'), default=False, help_text=_("Enable this to extend your subscription to all members of this collection (applies only to collections)"))
 
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'contact_method':

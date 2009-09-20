@@ -316,9 +316,9 @@ class Viewer(object):
             path = reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': action})
         else:
             path = reverse('item_url', kwargs={'viewer': self.viewer_name, 'action': action, 'noun': item.pk})
-        if not query_string:
-            if original_viewer.context['full_path'].find('?') != -1: 
-                query_string = original_viewer.context['full_path'].split('?', 1)[1]
+        #if not query_string:
+         #   if original_viewer.context['full_path'].find('?') != -1: 
+          #      query_string = original_viewer.context['full_path'].split('?', 1)[1]
         self.request = VirtualRequest(original_viewer.request, path, query_string)
         self.method = self.request.method
         self.cur_agent = original_viewer.cur_agent
