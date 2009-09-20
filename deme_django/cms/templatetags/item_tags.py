@@ -428,12 +428,13 @@ class ItemToolbar(template.Node):
                 <div style="font-size: 9pt;">Subscriptions send emails to the email contact method specified below for every new notification on this item</div>
                 <br>
                 <form method="post" action="%s?redirect=%s"> 
+                    <input type="hidden" name="item" value="%s" />
                     Contact Method: %s 
                     <a href="%s" style="float: right; font-size: 9pt;" >Advanced</a>
                     <input type="submit" value="Submit" />
                 </form>
             </div>
-            """ % (item_name, 'lol', context['full_path'], AjaxModelChoiceField(EmailContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('item', None, {'id':'memberajaxfield'}), subscribe_url  ))
+            """ % (item_name, reverse('item_type_url', kwargs={'viewer':'subscription', 'action':'dialogcreate'}), context['full_path'], item.pk, AjaxModelChoiceField(EmailContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('email', None, {'id':'memberajaxfield'}), subscribe_url  ))
 
         if isinstance(item, Agent):
             if agentcan_helper(context, 'add_authentication_method', item):

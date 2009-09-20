@@ -656,6 +656,22 @@ class SubscriptionViewer(ItemViewer):
     accepted_item_type = Subscription
     viewer_name = 'subscription'
 
+    @require_POST
+    def type_dialogcreate_html(self):
+        if not self.request.POST.get('email'):
+            return self.render_error('Invalid Subscription', "You must specify an email contact method by selecting it from the drop down menu")
+
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
+        item = Item.objects.get(pk=self.request.POST.get('item'))
+        email = EmailContactMethod.objects.get(pk=self.request.POST.get('email'))
+
+        new_subscription = Subscription(contact_method=email, item=item) 
+        permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
+        new_subscription.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
+
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_subscription.pk}))
+        return HttpResponseRedirect(redirect)
+
 
 class CollectionViewer(ItemViewer):
     accepted_item_type = Collection
