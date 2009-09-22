@@ -680,6 +680,8 @@ class CalculateComments(template.Node):
         return "<CalculateCommentsNode>"
 
     def render(self, context):
+        from cms.forms import CaptchaField 
+        from cms.forms import AjaxModelChoiceField
         item = context['item']
         version_number = item.version_number
         full_path = context['full_path']
@@ -690,9 +692,7 @@ class CalculateComments(template.Node):
         if agentcan_helper(context, 'comment_on', item):
             result.append("""<button href="#" onclick="openCommentDialog('comment%s'); return false;">[+] Add Comment</button>""" % (item.pk))
             result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
-            from cms.forms import CaptchaField 
             result.append("""<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p>Security Question: <br>%s """ % CaptchaField(label=("Security Question")).widget.render('sq',None) )
-            from cms.forms import AjaxModelChoiceField
             result.append("""<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> """ % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', None, {'id':'commentajaxfield' })))
             result.append(""" <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" />  """ % (item.pk, item.version_number))
             result.append("""<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedcomment%s'); return false;" >Advanced</a> """ % (item.pk))
