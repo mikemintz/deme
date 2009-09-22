@@ -316,9 +316,6 @@ class Viewer(object):
             path = reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': action})
         else:
             path = reverse('item_url', kwargs={'viewer': self.viewer_name, 'action': action, 'noun': item.pk})
-        #if not query_string:
-         #   if original_viewer.context['full_path'].find('?') != -1: 
-          #      query_string = original_viewer.context['full_path'].split('?', 1)[1]
         self.request = VirtualRequest(original_viewer.request, path, query_string)
         self.method = self.request.method
         self.cur_agent = original_viewer.cur_agent
@@ -680,7 +677,7 @@ class Viewer(object):
 
         return form_class
 
-    def get_populated_field_dict(self):
+    def get_populated_field_dict(self, item_type):
         """
         Return a dict of populated fields from the query string. For example,
         say the query string is ?populate_name=Mike&populate_description=hi --
@@ -694,6 +691,7 @@ class Viewer(object):
             if key.startswith(key_prefix):
                 field_name = key.split(key_prefix, 1)[1]
                 result[field_name] = value
+        item_type.auto_populate_fields(item_type, result, self)
         return result
 
     def _set_default_layout(self):

@@ -161,7 +161,7 @@ class ItemViewer(Viewer):
             form = None
         else:
             if form is None:
-                form_initial = self.get_populated_field_dict()
+                form_initial = self.get_populated_field_dict(self.accepted_item_type)
                 form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
@@ -329,7 +329,7 @@ class ItemViewer(Viewer):
         abilities_for_item = self.permission_cache.item_abilities(self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         if form is None:
-            form_initial = self.get_populated_field_dict()
+            form_initial = self.get_populated_field_dict(self.accepted_item_type)
             fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
             form_class = self.get_form_class_for_item_type(self.accepted_item_type, False, fields_can_edit)
             form = form_class(instance=self.item, initial=form_initial)
@@ -810,7 +810,7 @@ class TextDocumentViewer(DocumentViewer):
         self.item.body = ''.join(body_as_list)
 
         if form is None:
-            form_initial = self.get_populated_field_dict()
+            form_initial = self.get_populated_field_dict(self.accepted_item_type)
             fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
             form_class = self.get_form_class_for_item_type(self.accepted_item_type, False, fields_can_edit)
             form = form_class(instance=self.item, initial=form_initial)
@@ -915,7 +915,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
             form = None
         else:
             if form is None:
-                form_initial = self.get_populated_field_dict()
+                form_initial = self.get_populated_field_dict(self.accepted_item_type)
                 form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
                 if issubclass(item.actual_item_type(), Comment):

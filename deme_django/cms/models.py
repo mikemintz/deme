@@ -659,6 +659,22 @@ class Item(models.Model):
         from cms.forms import CaptchaField 
         attrs['captcha'] = CaptchaField(label=("Security Question"))
 
+    @classmethod
+    def auto_populate_fields(cls, item_type, field_dict, viewer):
+        """
+        Given a field_dict from field names to initial values, populate any
+        other fields (in the dict) with values. For example, in a Subscription,
+        given that the subscribed item is X, we might want to set the name of
+        the subscription to "Subscription to X". This is used when presenting
+        a user with a form.
+        
+        Item types that want to automatically populate field names based on
+        other fields should override this method, making sure to put a call
+        superclasses at the top, like:
+        >> super(Subscription, cls).auto_populate_fields(item_type, field_dict, viewer)
+        """
+        pass
+
     def _before_create(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
         """
         This method gets called before the first version of an item is
@@ -1142,6 +1158,21 @@ class Subscription(Item):
                     return [action_item, _(' is no longer subscribed to via '), self]
         else:
             return super(Subscription, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
+
+    @classmethod
+    def auto_populate_fields(cls, item_type, field_dict, viewer):
+        super(Subscription, cls).auto_populate_fields(item_type, field_dict, viewer)
+        if 'item' in field_dict and 'name' not in field_dict:
+            try:
+                item = Item.objects.get(pk=field_dict['item'])
+            except ObjectDoesNotExist:
+                item = None
+            if item:
+                can_view_item_name = viewer.permission_cache.agent_can('view Item.name', item)
+                can_view_agent_name = viewer.permission_cache.agent_can('view Item.name', viewer.cur_agent)
+                item_name = item.display_name(can_view_item_name)
+                agent_name = viewer.cur_agent.display_name(can_view_agent_name)
+                field_dict['name'] = "%s's subscription to %s" % (agent_name, item_name)
 
 ###############################################################################
 # Collections and related item types
