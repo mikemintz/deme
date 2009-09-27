@@ -434,7 +434,7 @@ class ItemToolbar(template.Node):
                     <input type="submit" value="Submit" />
                 </form>
             </div>
-            """ % (item_name, reverse('item_type_url', kwargs={'viewer':'subscription', 'action':'dialogcreate'}), context['full_path'], item.pk, AjaxModelChoiceField(EmailContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('email', None, {'id':'memberajaxfield'}), subscribe_url  ))
+            """ % (item_name, reverse('item_type_url', kwargs={'viewer':'subscription', 'action':'dialogcreate'}), context['full_path'], item.pk, AjaxModelChoiceField(EmailContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=['add_subscription']).widget.render('email', None, {'id':'memberajaxfield'}), subscribe_url))
 
         if isinstance(item, Agent):
             if agentcan_helper(context, 'add_authentication_method', item):
