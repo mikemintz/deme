@@ -5,6 +5,7 @@ This module defines wrapper functions around the permission framework.
 from cms.models import *
 from django.db import models
 from django.db.models import Q
+from django.conf import settings
 
 ###############################################################################
 # Helper functions
@@ -100,8 +101,10 @@ class PermissionCache(object):
         """
         Return a set of global abilities the agent has.
         """
+        if not settings.ENABLE_PERMISSION_CHECKING:
+            return all_possible_global_abilities()
         if self._global_ability_cache is None:
-            abilities_yes, abilities_no = self.calculate_abilities(None, None)
+            abilities_yes, abilities_no = self._calculate_abilities(None, None)
             self._global_ability_cache = (abilities_yes, abilities_no)
         else:
             abilities_yes, abilities_no = self._global_ability_cache
@@ -113,9 +116,11 @@ class PermissionCache(object):
         """
         if item.destroyed:
             return frozenset()
+        item_type = item.actual_item_type()
+        if not settings.ENABLE_PERMISSION_CHECKING:
+            return all_possible_item_abilities(item_type)
         result = self._item_ability_cache.get(item.pk)
         if result is None:
-            item_type = item.actual_item_type()
             self.global_abilities() # cache the global abilities
             global_abilities_yes, global_abilities_no = self._global_ability_cache
             if 'do_anything' in global_abilities_yes:
@@ -125,7 +130,7 @@ class PermissionCache(object):
                 abilities_yes = frozenset()
                 abilities_no = all_possible_item_abilities(item_type)
             else:
-                abilities_yes, abilities_no = self.calculate_abilities(item, item_type)
+                abilities_yes, abilities_no = self._calculate_abilities(item, item_type)
             self._item_ability_cache[item.pk] = (abilities_yes, abilities_no)
         else:
             abilities_yes, abilities_no = result
@@ -136,7 +141,7 @@ class PermissionCache(object):
         Returns a QuerySet that filters the given QuerySet, into only the items
         that the specified agent has the specified ability to do.
         
-        Unlike filter_items_by_permission, this takes into account the fact that
+        Unlike _filter_items_by_permission, this takes into account the fact that
         agents with the global ability "do_anything" virtually have all item
         abilities.
         
@@ -145,6 +150,8 @@ class PermissionCache(object):
         the same agent and ability for all of the items in the queryset,
         without having to do a new database query each time.
         """
+        if not settings.ENABLE_PERMISSION_CHECKING:
+            return queryset
         item_type = queryset.model
         self.global_abilities() # cache the global abilities
         global_abilities_yes, global_abilities_no = self._global_ability_cache
@@ -157,7 +164,7 @@ class PermissionCache(object):
             # Nothing to update, since no more database calls need to be made
             return queryset.none()
         else:
-            authorized_queryset = queryset.filter(self.filter_items_by_permission(ability), destroyed=False)
+            authorized_queryset = queryset.filter(self._filter_items_by_permission(ability), destroyed=False)
             yes_ids = set(authorized_queryset.values_list('pk', flat=True))
             no_ids = set(queryset.values_list('pk', flat=True)) - yes_ids
             self._ability_yes_cache.setdefault(ability, set()).update(yes_ids)
@@ -168,7 +175,7 @@ class PermissionCache(object):
     # Methods to calculate ability sets
     ###############################################################################
 
-    def calculate_abilities(self, item, item_type):
+    def _calculate_abilities(self, item, item_type):
         """
         Return a pair (yes_abilities, no_abilities) where yes_abilities is the set
         of item abilities that the agent is granted and no_abilities is a set of
@@ -265,7 +272,7 @@ class PermissionCache(object):
     # Methods to calculate QuerySet filters
     ###############################################################################
 
-    def filter_items_by_permission(self, ability):
+    def _filter_items_by_permission(self, ability):
         """
         Return a Q object that can be used as a QuerySet filter, specifying only
         those items that the agent has the ability for.
@@ -320,7 +327,7 @@ class PermissionCache(object):
                 else:
                     no_q_filters.append(q_filter)
 
-        # Combine all of the Q objects by the rules specified in calculate_abilities
+        # Combine all of the Q objects by the rules specified in _calculate_abilities
         # Nested conjuncts: ~n1 & (y1 | (~n2 & (y2 | (~n3 & (y3 | (~n4 & (y4 | (~n5 & (y5 | ... )))))))))
         #TODO if we keep using the inelegant Q(pk__isnull=False) stuff, we could check for that and break early as an optimization
         result = Q()

@@ -83,6 +83,9 @@ DEFAULT_HOSTNAME = 'localhost'
 # The hostname from which notification emails are sent
 NOTIFICATION_EMAIL_HOSTNAME = 'localhost'
 
+# Enable if you want Deme to check permissions (highly recommended)
+ENABLE_PERMISSION_CHECKING = True
+
 INSTALLED_APPS = (
     'django.contrib.sessions',
     'deme_django.cms',

@@ -664,6 +664,8 @@ class SubscriptionViewer(ItemViewer):
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         item = Item.objects.get(pk=self.request.POST.get('item'))
         email = EmailContactMethod.objects.get(pk=self.request.POST.get('email'))
+        self.require_ability('add_subscription', email)
+        self.require_ability('view Item.action_notices', item)
 
         new_subscription = Subscription(contact_method=email, item=item) 
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
