@@ -3,6 +3,25 @@
 {% load item_tags %}
 {% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
+{% comment %}
+<script type="text/javascript">
+    function show_embedded_staff(pk){
+        var normal_window = $("#staff" + pk);
+        var embedded_profile = $("#bigstaff" + pk);
+        embedded_profile.append("lol");
+        embedded_profile.show();
+        normal_window.hide();
+    }
+    function show_embedded_person(pk){
+        var normal_window = $("#person" + pk);
+        var embedded_profile = $("#bigperson" + pk);
+        embedded_profile.append("lol");
+        embedded_profile.show();
+        normal_window.hide();
+    }
+
+</script>
+{% endcomment %}
 
 {% for member in members.object_list %}
 {% if member.is_staff %}
@@ -24,38 +43,49 @@
         {% endif %}
         <td>
             {% if member.item.publications %}
+            {% ifagentcan 'view SymsysAffiliate.publications' member.item %}
                 <b>Publications: </b>{{ member.item.publications }} 
                 <br>
+            {% endifagentcan %}
             {% endif %}
             {% if member.item.interests %}
+            {% ifagentcan 'view SymsysAffiliate.interests' member.item %}
                 <b>Interests: </b>{{ member.item.interests }}
                 <br>
+            {% endifagentcan %}
             {% else %}
                 {% if member.item.about %}
+                {% ifagentcan 'view SymsysAffiliate.about' member.item %}
                 <b>About: </b>{{ member.item.about }}
                 <br>
+                {% endifagentcan %}
                 {% endif %}
             {% endif %}
             {% if member.item.office_hours %}
+            {% ifagentcan 'view SymsysAffiliate.office_hours' member.item %}
                 <b>Office Hours: </b>
                 {{ member.item.office_hours }}
                 <br>
+            {% endifagentcan %}
             {% endif %}
             <br>
-            <a href="#" onclick="$('#bigstaff{{ member.item.pk }}').show(); $('#staff{{ member.item.pk }}').hide(); return false;">Show {% viewable_name member.item %}'s complete profile</a>
+            {% comment %}
+            <a href="#" onclick="show_embedded_staff({{ member.item.pk }}); return false;">Show {% viewable_name member.item %}'s complete profile</a>
+            {% endcomment %}
+            <a href="{{ member.item.get_absolute_url }}">Show {% viewable_name member.item %}'s complete profile</a>
         </td>
     </tr>
 </table>
-
+{% comment %}
 </div>
 <div id="bigstaff{{ member.item.pk }}" style="display: none;">
     <a href="#" onclick="$('#bigstaff{{ member.item.pk }}').hide(); $('#staff{{ member.item.pk }}').show(); return false;">Hide all details</a>
-    {% embed 'symsysaffiliate' member.item %}
 </div>
 <hr>
+{% endcomment %}
 
 {% else %}
-<div id="person{{ member.item.pk}}">
+<div id="person{{ member.item.pk }}">
 <table>
     <tr>
         <td>
@@ -80,27 +110,35 @@
         {% endif %}
         <td colspan=2 style="text-align: left;">
             {% if member.item.about %}
+            {% ifagentcan 'view SymsysAffiliate.about' member.item %}
             <b>About: </b>
             {{ member.item.about }}
             <br>
+            {% endifagentcan %}
             {% else %}
             <b>About: </b>
             (blank)
             {% endif %}
             {% if member.item.office_hours %}
+            {% ifagentcan 'view SymsysAffiliate.office_hours' member.item %}
             <b>Office Hours: </b>
             {{ member.item.office_hours }}
+            {% endifagentcan %}
             {% endif %}
             <br>
-            <a href="#" onclick="$('#bigperson{{ member.item.pk }}').show(); $('#person{{ member.item.pk }}').hide(); return false;">Show {% viewable_name member.item %}'s complete profile</a>
+            {% comment %}
+            <a href="#" onclick="show_embedded_person({{ member.item.pk }}); return false;">Show {% viewable_name member.item %}'s complete profile</a>
+            {% endcomment %}
+            <a href="{{ member.item.get_absolute_url }}">Show {% viewable_name member.item %}'s complete profile</a>
         </td>
     </tr>
 </table>
 </div>
+{% comment %}
 <div id="bigperson{{ member.item.pk }}" style="display: none;">
     <a href="#" onclick="$('#bigperson{{ member.item.pk }}').hide(); $('#person{{ member.item.pk }}').show(); return false;">Hide all details</a>
-    {% embed 'symsysaffiliate' member.item %}
 </div>
+{% endcomment %}
 <hr>
 {% endif %}
 {% endfor %}

@@ -33,11 +33,13 @@ class SymsysGroupViewer(CollectionViewer):
                 member_details = {}
                 member_details['item'] = member
                 if member.photo:
-                    member_details['photo'] = member.photo
+                    if self.cur_agent_can('view SymsysAffiliate.photo', member):
+                        member_details['photo'] = member.photo
                 careers = self.permission_cache.filter_items('view SymsysCareer.symsys_affiliate', member.symsys_careers).filter(active=True)
                 for career in careers:
                     if not ('photo' in member_details.keys()) and career.original_photo:
-                        member_details['photo'] = career.original_photo
+                        if self.cur_agent_can('view SymsysCareer.original_photo', career):
+                            member_details['photo'] = career.original_photo
                     if issubclass(career.actual_item_type(), StudentSymsysCareer):
                         career = career.downcast()
                         member_details['class_year'] = career.class_year
