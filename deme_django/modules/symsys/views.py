@@ -24,10 +24,23 @@ class SymsysGroupViewer(CollectionViewer):
         else:
             visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-        collection_members = self.item.all_contained_collection_members(recursive_filter)
+        collection_members = self.item.all_contained_collection_members(recursive_filter).order_by("name")
+
+        p = Paginator(collection_members, 10)
+
+        try:
+            page = int(self.request.GET.get('page','1'))
+        except ValueError:
+            page = 1
+
+        try:
+            entries = p.page(page)
+        except (EmptyPage, InvalidPage):
+            entries = p.page(p.num_pages)
 
         members = []
-        for member in collection_members:
+
+        for member in entries.object_list:
             if issubclass(member.actual_item_type(), SymsysAffiliate):
                 member = member.downcast()
                 member_details = {}
@@ -61,25 +74,13 @@ class SymsysGroupViewer(CollectionViewer):
                 
                 members.append(member_details)
 
-        p = Paginator(members, 10)
-
-        try:
-            page = int(self.request.GET.get('page','1'))
-        except ValueError:
-            page = 1
-
-        try:
-            entries = p.page(page)
-        except (EmptyPage, InvalidPage):
-            entries = p.page(p.num_pages)
-
         page_ranges = p.page_range
         displayed_page_range = []
         for possible_page in page_ranges:
             if (possible_page < page + 10) and (possible_page > page-10):
                 displayed_page_range.append(possible_page)
 
-        self.context['members'] = entries
+        self.context['members'] = members
         self.context['page_range'] = displayed_page_range
         return HttpResponse(template.render(self.context))
 

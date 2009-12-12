@@ -23,7 +23,7 @@
 </script>
 {% endcomment %}
 
-{% for member in members.object_list %}
+{% for member in members %}
 {% if member.is_staff %}
 <div id="staff{{ member.item.pk }}">
 <table>
