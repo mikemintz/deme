@@ -4,10 +4,6 @@
 {% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
-<div style="padding: 5px;">
-    View <a href="/viewing/item?collection={{ item.pk }}"> a compressed listing of this collection</a>
-</div>
-
 {% for details in members %}
 
     <div style="border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px">
