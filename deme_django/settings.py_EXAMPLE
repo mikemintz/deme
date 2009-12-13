@@ -89,6 +89,7 @@ ENABLE_PERMISSION_CHECKING = True
 INSTALLED_APPS = (
     'django.contrib.sessions',
     'deme_django.cms',
+    'south',
 )
 
 MODULES_DIR = os.path.join(ROOT_DIR, 'modules')

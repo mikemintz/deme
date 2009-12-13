@@ -64,6 +64,14 @@ class FixedBooleanField(models.NullBooleanField):
         defaults.update(kwargs)
         return super(FixedBooleanField, self).formfield(**defaults)
 
+    def south_field_triple(self):
+        "Returns a suitable description of this field for South."
+        # We'll just introspect ourselves, since we inherit.
+        from south.modelsinspector import introspector
+        field_class = "django.db.models.fields.NullBooleanField"
+        args, kwargs = introspector(self)
+        # That's our definition!
+        return (field_class, args, kwargs)
 
 class FixedForeignKey(models.ForeignKey):
     """
@@ -76,6 +84,15 @@ class FixedForeignKey(models.ForeignKey):
         self.required_abilities = kwargs.pop('required_abilities', [])
         super(FixedForeignKey, self).__init__(*args, **kwargs)
         
+    def south_field_triple(self):
+        "Returns a suitable description of this field for South."
+        # We'll just introspect ourselves, since we inherit.
+        from south.modelsinspector import introspector
+        field_class = "django.db.models.ForeignKey"
+        args, kwargs = introspector(self)
+        # That's our definition!
+        return (field_class, args, kwargs)
+
 
 ###############################################################################
 # Item framework

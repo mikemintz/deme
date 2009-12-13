@@ -32,13 +32,21 @@ We currently run with Django 1.1. You can download it from http://www.djangoproj
 
 We often update the version of Django we run to an SVN version, so it may be easier to keep up with development by checking out the SVN version of 1.1 at http://code.djangoproject.com/svn/django/tags/releases/1.1
 
+South
+^^^^^
+We use South 0.6 for database migrations.
+
+* On Ubuntu: ``sudo easy_install South``
+* On Mac OS X: ``sudo easy_install South``
+* Other OS: Download at http://south.aeracode.org/wiki/Download
+
 PostgreSQL
 ^^^^^^^^^^
 We develop against PostgreSQL 8.3 as our database, although other database engines may be supported. To install PostgreSQL:
 
 * On Ubuntu: ``sudo apt-get install postgresql``
 * On Mac OS X: Download http://www.enterprisedb.com/getfile.jsp?fileid=484
-* Other OS: Download the database at http://www.postgresql.org/download/ and the Python plugin at
+* Other OS: Download the database at http://www.postgresql.org/download/
 
 You'll also need the Python plugin to PostgreSQL:
 
