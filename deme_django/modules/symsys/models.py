@@ -154,6 +154,7 @@ class SymsysCareer(Item):
                                       'edit SymsysCareer.original_photo', 'edit SymsysCareer.start_date',
                                       'edit SymsysCareer.end_date', 'edit SymsysCareer.finished'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('Symsys career')
         verbose_name_plural = _('Symsys careers')
@@ -347,6 +348,7 @@ class ThesisSymsysCareer(SymsysCareer):
                                       'view ThesisSymsysCareer.thesis_title', 'edit ThesisSymsysCareer.second_reader',
                                       'edit ThesisSymsysCareer.thesis', 'edit ThesisSymsysCareer.thesis_title'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('thesis Symsys career')
         verbose_name_plural = _('thesis Symsys careers')
@@ -381,6 +383,7 @@ class StudentSymsysCareer(SymsysCareer):
                                       'view StudentSymsysCareer.other_degrees', 'edit StudentSymsysCareer.class_year',
                                       'edit StudentSymsysCareer.advisor', 'edit StudentSymsysCareer.other_degrees'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('student Symsys career')
         verbose_name_plural = _('student Symsys careers')
@@ -406,6 +409,7 @@ class MinorSymsysCareer(StudentSymsysCareer):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset([])
     introduced_global_abilities = frozenset(['create MinorSymsysCareer'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('minor Symsys career')
         verbose_name_plural = _('minor Symsys careers')
@@ -417,6 +421,7 @@ class BachelorsSymsysCareer(StudentSymsysCareer):
     introduced_abilities = frozenset(['view BachelorsSymsysCareer.indivdesignedconc', 'view BachelorsSymsysCareer.concentration',
                                       'edit BachelorsSymsysCareer.indivdesignedconc', 'edit BachelorsSymsysCareer.concentration'])
     introduced_global_abilities = frozenset(['create BachelorsSymsysCareer'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('bachelors Symsys career')
         verbose_name_plural = _('bachelors Symsys careers')
@@ -432,6 +437,7 @@ class MastersSymsysCareer(StudentSymsysCareer, ThesisSymsysCareer):
     introduced_abilities = frozenset(['view MastersSymsysCareer.indivdesignedtrack', 'view MastersSymsysCareer.track',
                                       'edit MastersSymsysCareer.indivdesignedtrack', 'edit MastersSymsysCareer.track'])
     introduced_global_abilities = frozenset(['create MastersSymsysCareer'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('masters Symsys career')
         verbose_name_plural = _('masters Symsys careers')
@@ -446,6 +452,7 @@ class HonorsSymsysCareer(ThesisSymsysCareer):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view HonorsSymsysCareer.advisor', 'edit HonorsSymsysCareer.advisor'])
     introduced_global_abilities = frozenset(['create HonorsSymsysCareer'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('honors Symsys career')
         verbose_name_plural = _('honors Symsys careers')
@@ -469,6 +476,7 @@ class ResearcherSymsysCareer(SymsysCareer):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view ResearcherSymsysCareer.academic_title', 'edit ResearcherSymsysCareer.academic_title'])
     introduced_global_abilities = frozenset(['create ResearcherSymsysCareer'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('researcher Symsys career')
         verbose_name_plural = _('researcher Symsys careers')
@@ -482,6 +490,7 @@ class FacultySymsysCareer(SymsysCareer):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view FacultySymsysCareer.academic_title', 'edit FacultySymsysCareer.academic_title'])
     introduced_global_abilities = frozenset(['create FacultySymsysCareer'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('faculty Symsys career')
         verbose_name_plural = _('faculty Symsys careers')
@@ -495,6 +504,7 @@ class ProgramStaffSymsysCareer(SymsysCareer):
     introduced_immutable_fields = frozenset(['admin_title'])
     introduced_abilities = frozenset(['view ProgramStaffSymsysCareer.admin_title', 'view ProgramStaffSymsysCareer.admin_title'])
     introduced_global_abilities = frozenset(['create ProgramStaffSymsysCareer'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('program staff Symsys career')
         verbose_name_plural = _('program staff Symsys careers')
@@ -516,6 +526,7 @@ class SymsysAffiliate(Person):
                                       'edit SymsysAffiliate.publications', 'edit SymsysAffiliate.office_hours',
                                       'edit SymsysAffiliate.about', 'edit SymsysAffiliate.photo'])
     introduced_global_abilities = frozenset(['create SymsysAffiliate'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('Symsys affiliate')
         verbose_name_plural = _('Symsys affiliates')
@@ -556,6 +567,7 @@ class Advertisement(Document):
     introduced_abilities = frozenset(['view Advertisement.contact_info', 'view Advertisement.expires_at',
                                       'edit Advertisement.contact_info', 'edit Advertisement.expires_at'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('advertisement')
         verbose_name_plural = _('advertisements')
@@ -570,6 +582,7 @@ class TextAdvertisement(TextDocument, Advertisement):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create TextAdvertisement'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('text advertisement')
         verbose_name_plural = _('text advertisements')
@@ -580,6 +593,7 @@ class HtmlAdvertisement(HtmlDocument, Advertisement):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create HtmlAdvertisement'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('HTML advertisement')
         verbose_name_plural = _('HTML advertisements')

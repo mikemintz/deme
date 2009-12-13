@@ -24,6 +24,7 @@ class DemeAccount(AuthenticationMethod):
                                       'edit DemeAccount.username', 'edit DemeAccount.password',
                                       'edit DemeAccount.password_question', 'edit DemeAccount.password_answer'])
     introduced_global_abilities = frozenset(['create DemeAccount'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('Deme account')
         verbose_name_plural = _('Deme accounts')

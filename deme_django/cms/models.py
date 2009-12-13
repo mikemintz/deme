@@ -194,6 +194,9 @@ class Item(models.Model):
       item type
     * introduced_global_abilities: a frozenset of global abilities that are
       introduced by this item type
+    * dyadic_relations: a dict from field_name1 to (field_name2, relation_name)
+      for showing that this item type is really just a dyadic relation between
+      the two fields
     """
 
     # Setup
@@ -203,6 +206,7 @@ class Item(models.Model):
                                       'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at', 'view Item.default_viewer',
                                       'edit Item.name', 'edit Item.description', 'edit Item.default_viewer'])
     introduced_global_abilities = frozenset(['do_anything'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('item')
         verbose_name_plural = _('items')
@@ -804,6 +808,7 @@ class Webpage(Item):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view Webpage.url', 'edit Webpage.url'])
     introduced_global_abilities = frozenset(['create Webpage'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('webpage')
         verbose_name_plural = _('webpages')
@@ -834,6 +839,7 @@ class Agent(Item):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['add_contact_method', 'add_authentication_method', 'login_as', 'view Agent.last_online_at'])
     introduced_global_abilities = frozenset(['create Agent'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('agent')
         verbose_name_plural = _('agents')
@@ -868,6 +874,7 @@ class AnonymousAgent(Agent):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('anonymous agent')
         verbose_name_plural = _('anonymous agents')
@@ -892,6 +899,7 @@ class GroupAgent(Agent):
     introduced_immutable_fields = frozenset(['group'])
     introduced_abilities = frozenset(['view GroupAgent.group'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('group agent')
         verbose_name_plural = _('group agents')
@@ -928,6 +936,7 @@ class AuthenticationMethod(Item):
     introduced_immutable_fields = frozenset(['agent'])
     introduced_abilities = frozenset(['view AuthenticationMethod.agent'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('authentication method')
         verbose_name_plural = _('authentication methods')
@@ -956,6 +965,7 @@ class Person(Agent):
     introduced_abilities = frozenset(['view Person.first_name', 'view Person.middle_names', 'view Person.last_name', 'view Person.suffix',
                                       'edit Person.first_name', 'edit Person.middle_names', 'edit Person.last_name', 'edit Person.suffix'])
     introduced_global_abilities = frozenset(['create Person'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('person')
         verbose_name_plural = _('people')
@@ -978,6 +988,7 @@ class ContactMethod(Item):
     introduced_immutable_fields = frozenset(['agent'])
     introduced_abilities = frozenset(['add_subscription', 'view ContactMethod.agent'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('contact method')
         verbose_name_plural = _('contact methods')
@@ -1005,6 +1016,7 @@ class EmailContactMethod(ContactMethod):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view EmailContactMethod.email', 'edit EmailContactMethod.email'])
     introduced_global_abilities = frozenset(['create EmailContactMethod'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('email contact method')
         verbose_name_plural = _('email contact methods')
@@ -1022,6 +1034,7 @@ class PhoneContactMethod(ContactMethod):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view PhoneContactMethod.phone', 'edit PhoneContactMethod.phone'])
     introduced_global_abilities = frozenset(['create PhoneContactMethod'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('phone contact method')
         verbose_name_plural = _('phone contact methods')
@@ -1039,6 +1052,7 @@ class FaxContactMethod(ContactMethod):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view FaxContactMethod.fax', 'edit FaxContactMethod.fax'])
     introduced_global_abilities = frozenset(['create FaxContactMethod'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('fax contact method')
         verbose_name_plural = _('fax contact methods')
@@ -1056,6 +1070,7 @@ class WebsiteContactMethod(ContactMethod):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view WebsiteContactMethod.url', 'edit WebsiteContactMethod.url'])
     introduced_global_abilities = frozenset(['create WebsiteContactMethod'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('website contact method')
         verbose_name_plural = _('website contact methods')
@@ -1073,6 +1088,7 @@ class AIMContactMethod(ContactMethod):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view AIMContactMethod.screen_name', 'edit AIMContactMethod.screen_name'])
     introduced_global_abilities = frozenset(['create AIMContactMethod'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('AIM contact method')
         verbose_name_plural = _('AIM contact methods')
@@ -1094,6 +1110,7 @@ class AddressContactMethod(ContactMethod):
                                       'edit AddressContactMethod.street1', 'edit AddressContactMethod.street2', 'edit AddressContactMethod.city',
                                       'edit AddressContactMethod.state', 'edit AddressContactMethod.country', 'edit AddressContactMethod.zip'])
     introduced_global_abilities = frozenset(['create AddressContactMethod'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('address contact method')
         verbose_name_plural = _('address contact methods')
@@ -1132,6 +1149,7 @@ class Subscription(Item):
                                       'view Subscription.subscribe_relations', 'edit Subscription.subscribe_relations',
                                       'view Subscription.subscribe_members', 'edit Subscription.subscribe_members'])
     introduced_global_abilities = frozenset(['create Subscription'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('subscription')
         verbose_name_plural = _('subscriptions')
@@ -1215,6 +1233,7 @@ class Collection(Item):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['modify_membership', 'add_self', 'remove_self'])
     introduced_global_abilities = frozenset(['create Collection'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('collection')
         verbose_name_plural = _('collections')
@@ -1258,6 +1277,7 @@ class Group(Collection):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create Group'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('group')
         verbose_name_plural = _('groups')
@@ -1284,6 +1304,7 @@ class Folio(Collection):
     introduced_immutable_fields = frozenset(['group'])
     introduced_abilities = frozenset(['view Folio.group'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('folio')
         verbose_name_plural = _('folios')
@@ -1310,6 +1331,7 @@ class Membership(Item):
     introduced_immutable_fields = frozenset(['item', 'collection'])
     introduced_abilities = frozenset(['view Membership.item', 'view Membership.collection', 'view Membership.permission_enabled', 'edit Membership.permission_enabled'])
     introduced_global_abilities = frozenset(['create Membership'])
+    dyadic_relations = {'item': ('collection', _('member of'))}
     class Meta:
         verbose_name = _('membership')
         verbose_name_plural = _('memberships')
@@ -1415,6 +1437,7 @@ class Document(Item):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('document')
         verbose_name_plural = _('documents')
@@ -1429,6 +1452,7 @@ class TextDocument(Document):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view TextDocument.body', 'edit TextDocument.body', 'add_transclusion'])
     introduced_global_abilities = frozenset(['create TextDocument'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('text document')
         verbose_name_plural = _('text documents')
@@ -1450,6 +1474,7 @@ class DjangoTemplateDocument(TextDocument):
     introduced_abilities = frozenset(['view DjangoTemplateDocument.layout', 'view DjangoTemplateDocument.override_default_layout',
                                     'edit DjangoTemplateDocument.layout', 'edit DjangoTemplateDocument.override_default_layout'])
     introduced_global_abilities = frozenset(['create DjangoTemplateDocument'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('Django template document')
         verbose_name_plural = _('Django template documents')
@@ -1477,6 +1502,7 @@ class HtmlDocument(TextDocument):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create HtmlDocument'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('HTML document')
         verbose_name_plural = _('HTML documents')
@@ -1497,6 +1523,7 @@ class FileDocument(Document):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view FileDocument.datafile', 'edit FileDocument.datafile'])
     introduced_global_abilities = frozenset(['create FileDocument'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('file document')
         verbose_name_plural = _('file documents')
@@ -1520,6 +1547,7 @@ class Transclusion(Item):
     introduced_abilities = frozenset(['view Transclusion.from_item', 'view Transclusion.from_item_version_number',
                                       'view Transclusion.from_item_index', 'view Transclusion.to_item', 'edit Transclusion.from_item_index'])
     introduced_global_abilities = frozenset(['create Transclusion'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('transclusion')
         verbose_name_plural = _('transclusions')
@@ -1571,6 +1599,7 @@ class Comment(Item):
     introduced_immutable_fields = frozenset(['item', 'item_version_number', 'from_contact_method'])
     introduced_abilities = frozenset(['view Comment.item', 'view Comment.item_version_number', 'view Comment.from_contact_method'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('comment')
         verbose_name_plural = _('comments')
@@ -1619,6 +1648,7 @@ class TextComment(TextDocument, Comment):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create TextComment'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('text comment')
         verbose_name_plural = _('text comments')
@@ -1647,6 +1677,7 @@ class Excerpt(Item):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('excerpt')
         verbose_name_plural = _('excerpts')
@@ -1669,6 +1700,7 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
                                       'edit TextDocumentExcerpt.text_document_version_number', 'edit TextDocumentExcerpt.start_index',
                                       'edit TextDocumentExcerpt.length']) 
     introduced_global_abilities = frozenset(['create TextDocumentExcerpt'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('text document excerpt')
         verbose_name_plural = _('text document excerpts')
@@ -1721,6 +1753,7 @@ class ViewerRequest(Item):
                                       'edit ViewerRequest.aliased_item', 'edit ViewerRequest.viewer', 'edit ViewerRequest.action',
                                       'edit ViewerRequest.query_string', 'edit ViewerRequest.format'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('viewer request')
         verbose_name_plural = _('viewer requests')
@@ -1767,6 +1800,7 @@ class Site(ViewerRequest):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view Site.hostname', 'edit Site.hostname', 'view Site.default_layout', 'edit Site.default_layout'])
     introduced_global_abilities = frozenset(['create Site'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('site')
         verbose_name_plural = _('sites')
@@ -1806,6 +1840,7 @@ class CustomUrl(ViewerRequest):
     introduced_immutable_fields = frozenset(['parent_url', 'path'])
     introduced_abilities = frozenset(['view CustomUrl.parent_url', 'view CustomUrl.path'])
     introduced_global_abilities = frozenset(['create CustomUrl'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('custom URL')
         verbose_name_plural = _('custom URLs')
@@ -1844,6 +1879,7 @@ class DemeSetting(Item):
     introduced_immutable_fields = frozenset(['key'])
     introduced_abilities = frozenset(['view DemeSetting.key', 'view DemeSetting.value', 'edit DemeSetting.value'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('Deme setting')
         verbose_name_plural = _('Deme settings')
