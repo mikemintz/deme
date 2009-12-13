@@ -833,7 +833,15 @@ class CalculateRelationships(template.Node):
             viewable_items = permission_cache.filter_items('view %s.%s' % (field.model.__name__, field.field.name), viewable_items)
             if viewable_items.count() == 0:
                 continue
-            relationship_item_type = manager.model
+            if field.field.name in field.model.dyadic_relations:
+                target_field_name, relation_name = field.model.dyadic_relations[field.field.name]
+                target_field = field.model._meta.get_field_by_name(target_field_name)[0]
+                target_model = target_field.rel.to
+                viewable_items = permission_cache.filter_items('view %s.%s' % (field.model.__name__, target_field_name), viewable_items)
+                filter_dict = {target_field.rel.related_name + "__in": viewable_items.values('pk').query, 'active': True}
+                viewable_items = target_model.objects.filter(**filter_dict)
+                relationship_set['name'] = relation_name
+                #TODO set relationship_set['field'] (or just set list_url) so it's correct for this dyadic relation
             permission_cache.filter_items('view Item.name', viewable_items)
             relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)

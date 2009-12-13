@@ -16,6 +16,7 @@ class Event(HtmlDocument):
                                       'view Event.end_date', 'view Event.end_time', 'edit Event.start_date', 'edit Event.start_time',
                                       'edit Event.end_date', 'edit Event.end_time',  'edit Event.location'])
     introduced_global_abilities = frozenset(['create Event'])
+    dyadic_relations = {}
 
     class Meta:    
         verbose_name = _('event')
@@ -69,6 +70,7 @@ class Calendar(Collection):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create Calendar'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('Calendar')
         verbose_name_plural = _('Calendar')
