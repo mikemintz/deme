@@ -17,6 +17,7 @@ import datetime
 from django.conf import settings
 import copy
 import html2text
+import re
 
 __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
         'AnonymousAgent', 'AuthenticationMethod',
@@ -307,6 +308,19 @@ class Item(models.Model):
         Item.get(pk=123).is_downcast() == false
         """
         return self.actual_item_type() == type(self)
+
+    def notification_email_username(self):
+        result = u'%s-%d' % (self.name if self.name else self.actual_item_type()._meta.verbose_name, self.pk)
+        result = result.lower()
+        result = re.sub("'", '', result)
+        result = re.sub('[^A-Za-z0-9]+', '-', result)
+        result = re.sub('^-+', '-', result)
+        return result
+
+    @staticmethod
+    def item_for_notification_email_username(email_username):
+        item_id = email_username.split('-')[-1]
+        return Item.objects.get(pk=item_id)
 
     def ancestor_collections(self, recursive_filter=None):
         """
@@ -2048,7 +2062,7 @@ class ActionNotice(models.Model):
             return 'http://%s%s' % (settings.DEFAULT_HOSTNAME, x.get_absolute_url())
         subscribed_item_name = get_viewable_name(viewer.context, subscribed_item)
         item_name = get_viewable_name(viewer.context, item)
-        reply_item_name = "Readers of item %d" % reply_item.pk
+        reply_item_name = "Subscribers to %s" % item_name
         topmost_item_name = get_viewable_name(viewer.context, topmost_item)
         action_agent_name = get_viewable_name(viewer.context, self.action_agent)
         recipient_name = get_viewable_name(viewer.context, agent)
@@ -2056,7 +2070,7 @@ class ActionNotice(models.Model):
         generic_from_email_name = 'Deme notifier'
         from_email_name = None
         from_email_address = None
-        reply_item_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
+        reply_item_email_address = '%s@%s' % (reply_item.notification_email_username(), settings.NOTIFICATION_EMAIL_HOSTNAME)
         recipient_email_address = email_contact_method.email
 
         # Generate the subject and body
