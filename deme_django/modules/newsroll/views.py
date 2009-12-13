@@ -136,9 +136,14 @@ class NewsRollViewer(ItemViewer):
             if (possible_page < page + 10) and (possible_page > page-10):
                 displayed_page_range.append(possible_page)
 
+        is_not_one_page = True
+        if len(page_ranges) == 1:
+            is_not_one_page = False
+
         self.context['redirect'] = reverse('item_url', kwargs={'viewer': 'newsroll', 'action': 'show', 'noun': collection.pk}) 
         self.context['members'] = member_details
         self.context['entries'] = entries
         self.context['page_range'] = displayed_page_range
+        self.context['is_not_one_page'] = is_not_one_page
         return HttpResponse(template.render(self.context))
 
