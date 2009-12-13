@@ -39,6 +39,7 @@ Features
 --------
 * Advanced search
 * CustomURL layouts should inherit from parent CustomURL layouts
+* Email alias field, optional for each address; could look for Postmaster spam using cron job each minute
 
 Layout
 ------
