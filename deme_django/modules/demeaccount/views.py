@@ -55,5 +55,19 @@ class DemeAccountViewer(AuthenticationMethodViewer):
     def type_loginmenuitem_html(self):
         self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('demeaccount/loginmenuitem.html')
+        auth_methods = DemeAccount.objects.filter(agent=self.cur_agent)
+        num_auth_methods = auth_methods.count()
+
+        one_or_more = True
+        two_or_more = True
+        if num_auth_methods == 0:
+            one_or_more = False
+            two_or_more = False
+        if num_auth_methods == 1:
+            two_or_more = False
+
+        self.context['auth_methods'] = auth_methods
+        self.context['one_or_more'] = one_or_more
+        self.context['two_or_more'] = two_or_more
         return HttpResponse(template.render(self.context))
 
