@@ -106,7 +106,7 @@
                                 <p>End Date: {{ event.end_date|date:"M d, Y" }}</p>
                                 Location: {{ event.location }}
                                 <p>Description: {{ event.body|safe|truncatewords_html:50 }}</p>
-                                <a href={{ event.url }}>View the full event</a> 
+                                <a href={{ event.url }} style="color: blue;">View the full event</a> 
                             </div>
                     </div>
                     {% endfor %}
