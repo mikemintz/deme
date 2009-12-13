@@ -70,8 +70,8 @@
 
     <a href="{% url item_type_url viewer="item",action="list.rss" %}?collection={{ collection.pk }}"> View this Listing's RSS Feed</a>
 </div>
-<div style="text-align: center; padding: 8px;">
-    View the whole <a href="{% url item_url viewer="collection",action="show",noun=item.pk %}">collection</a>
+<div style="text-align: center; padding: 2px;">
+    View all of <a href="{% url item_url viewer="collection",action="show",noun=item.pk %}">{% viewable_name item %}</a>
 </div>
 
 {% endblock content %}
