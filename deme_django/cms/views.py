@@ -609,6 +609,12 @@ class AuthenticationMethodViewer(ItemViewer):
     def type_loginmenuitem_html(self):
         self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('authenticationmethod/loginmenuitem.html')
+        login_as_agents = Agent.objects.filter(active=True).order_by('name')
+        login_as_agents = self.permission_cache.filter_items('login_as', login_as_agents)
+        can_login_as_anyone = True
+        if login_as_agents.count() == 0:
+            can_login_as_anyone = False
+        self.context['can_login_as_anyone'] = can_login_as_anyone
         return HttpResponse(template.render(self.context))
  
 
