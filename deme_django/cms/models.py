@@ -1547,7 +1547,7 @@ class Transclusion(Item):
     introduced_abilities = frozenset(['view Transclusion.from_item', 'view Transclusion.from_item_version_number',
                                       'view Transclusion.from_item_index', 'view Transclusion.to_item', 'edit Transclusion.from_item_index'])
     introduced_global_abilities = frozenset(['create Transclusion'])
-    dyadic_relations = {}
+    dyadic_relations = {'from_item': ('to_item', _('transcluded items')), 'to_item': ('from_item', _('transcluded in'))}
     class Meta:
         verbose_name = _('transclusion')
         verbose_name_plural = _('transclusions')
