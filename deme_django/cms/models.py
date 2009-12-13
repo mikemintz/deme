@@ -1129,7 +1129,8 @@ class Subscription(Item):
                                       'view Subscription.subscribe_edit', 'edit Subscription.subscribe_edit',
                                       'view Subscription.subscribe_delete', 'edit Subscription.subscribe_delete',
                                       'view Subscription.subscribe_comments', 'edit Subscription.subscribe_comments',
-                                      'view Subscription.subscribe_relations', 'edit Subscription.subscribe_relations'])
+                                      'view Subscription.subscribe_relations', 'edit Subscription.subscribe_relations',
+                                      'view Subscription.subscribe_members', 'edit Subscription.subscribe_members'])
     introduced_global_abilities = frozenset(['create Subscription'])
     class Meta:
         verbose_name = _('subscription')
@@ -1144,6 +1145,7 @@ class Subscription(Item):
     subscribe_delete    = FixedBooleanField(_('subscribe delete'), default=True, help_text=_("Enable this to receive notifications about deletes"))
     subscribe_comments  = FixedBooleanField(_('subscribe comments'), default=True, help_text=_("Enable this to receive notifications about comments"))
     subscribe_relations = FixedBooleanField(_('subscribe relations'), default=True, help_text=_("Enable this to receive notifications about relations"))
+    subscribe_members   = FixedBooleanField(_('subscribe members'), default=True, help_text=_("Enable this to receive notifications when members are added (applies only to collections)"))
 
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'contact_method':
@@ -1928,6 +1930,8 @@ class ActionNotice(models.Model):
 
         if isinstance(self, RelationActionNotice):
             subscription_type_filter = Q(subscribe_relations=True)
+            if self.from_field_name == 'collection' and self.from_field_model == 'Membership':
+                subscription_type_filter = subscription_type_filter | Q(subscribe_members=True)
         elif isinstance(self, DeactivateActionNotice):
             subscription_type_filter = Q(subscribe_delete=True)
         elif isinstance(self, ReactivateActionNotice):
