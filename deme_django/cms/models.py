@@ -2062,7 +2062,7 @@ class ActionNotice(models.Model):
             return 'http://%s%s' % (settings.DEFAULT_HOSTNAME, x.get_absolute_url())
         subscribed_item_name = get_viewable_name(viewer.context, subscribed_item)
         item_name = get_viewable_name(viewer.context, item)
-        reply_item_name = "Readers of item %d" % reply_item.pk
+        reply_item_name = "Subscribers to %s" % item_name
         topmost_item_name = get_viewable_name(viewer.context, topmost_item)
         action_agent_name = get_viewable_name(viewer.context, self.action_agent)
         recipient_name = get_viewable_name(viewer.context, agent)
