@@ -1116,12 +1116,20 @@ class Subscription(Item):
     If deep=True and the item is a Collection, then action notices on all items
     in the collection (direct or indirect) will be sent in addition to comments
     on the collection itself.
+    
+    The subscribe_edit, subscribe_delete, subscribe_comments, and
+    subscribe_relations fields determine what action notices will trigger this
+    subscription.
     """
 
     # Setup
     introduced_immutable_fields = frozenset(['contact_method', 'item'])
     introduced_abilities = frozenset(['view Subscription.contact_method', 'view Subscription.item',
-                                      'view Subscription.deep', 'edit Subscription.deep'])
+                                      'view Subscription.deep', 'edit Subscription.deep',
+                                      'view Subscription.subscribe_edit', 'edit Subscription.subscribe_edit',
+                                      'view Subscription.subscribe_delete', 'edit Subscription.subscribe_delete',
+                                      'view Subscription.subscribe_comments', 'edit Subscription.subscribe_comments',
+                                      'view Subscription.subscribe_relations', 'edit Subscription.subscribe_relations'])
     introduced_global_abilities = frozenset(['create Subscription'])
     class Meta:
         verbose_name = _('subscription')
@@ -1129,9 +1137,13 @@ class Subscription(Item):
         unique_together = ('contact_method', 'item')
 
     # Fields
-    contact_method = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'])
-    item           = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view Item.action_notices'])
-    deep           = FixedBooleanField(_('deep subscription'), default=False, help_text=_("Enable this to extend your subscription to all members of this collection (applies only to collections)"))
+    contact_method      = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'])
+    item                = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view Item.action_notices'])
+    deep                = FixedBooleanField(_('deep subscription'), default=False, help_text=_("Enable this to extend your subscription to all members of this collection (applies only to collections)"))
+    subscribe_edit      = FixedBooleanField(_('subscribe edit'), default=True, help_text=_("Enable this to receive notifications about edits"))
+    subscribe_delete    = FixedBooleanField(_('subscribe delete'), default=True, help_text=_("Enable this to receive notifications about deletes"))
+    subscribe_comments  = FixedBooleanField(_('subscribe comments'), default=True, help_text=_("Enable this to receive notifications about comments"))
+    subscribe_relations = FixedBooleanField(_('subscribe relations'), default=True, help_text=_("Enable this to receive notifications about relations"))
 
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'contact_method':
@@ -1914,12 +1926,33 @@ class ActionNotice(models.Model):
         viewer.init_for_outgoing_email(email_contact_method.agent)
         permission_cache = viewer.permission_cache
 
+        if isinstance(self, RelationActionNotice):
+            subscription_type_filter = Q(subscribe_relations=True)
+        elif isinstance(self, DeactivateActionNotice):
+            subscription_type_filter = Q(subscribe_delete=True)
+        elif isinstance(self, ReactivateActionNotice):
+            subscription_type_filter = Q(subscribe_delete=True)
+        elif isinstance(self, DestroyActionNotice):
+            subscription_type_filter = Q(subscribe_delete=True)
+        elif isinstance(self, CreateActionNotice):
+            if issubclass(self.action_item.actual_item_type(), TextComment):
+                subscription_type_filter = Q(subscribe_comments=True)
+            else:
+                subscription_type_filter = Q(subscribe_edit=True)
+        elif isinstance(self, EditActionNotice):
+            subscription_type_filter = Q(subscribe_edit=True)
+        else:
+            subscription_type_filter = Q(pk__isnull=True)
+
         # Decide if we're allowed to get this notification at all
         def direct_subscriptions():
             item_parent_pks_query = self.action_item.all_parents_in_thread().values('pk').query
             action_agent_parent_pks_query = self.action_agent.all_parents_in_thread().values('pk').query
-            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
-                                               active=True, contact_method=email_contact_method)
+            subscription_filter = subscription_type_filter
+            subscription_filter = subscription_filter & Q(active=True)
+            subscription_filter = subscription_filter & Q(contact_method=email_contact_method)
+            subscription_filter = subscription_filter & (Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query))
+            return Subscription.objects.filter(subscription_filter)
         def deep_subscriptions():
             if permission_cache.agent_can_global('do_anything'):
                 recursive_filter = None
@@ -1928,8 +1961,12 @@ class ActionNotice(models.Model):
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             item_parent_pks_query = self.action_item.all_parents_in_thread(True, recursive_filter).values('pk').query
             action_agent_parent_pks_query = self.action_agent.all_parents_in_thread(True, recursive_filter).values('pk').query
-            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
-                                               active=True, contact_method=email_contact_method, deep=True)
+            subscription_filter = subscription_type_filter
+            subscription_filter = subscription_filter & Q(active=True)
+            subscription_filter = subscription_filter & Q(contact_method=email_contact_method)
+            subscription_filter = subscription_filter & Q(deep=True)
+            subscription_filter = subscription_filter & (Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query))
+            return Subscription.objects.filter(subscription_filter)
         #TODO what happens if i'm subscribed to the item, but not allowed to view its action notices, but i AM allowed to view action
         #notices for the action_agent? or vice versa?
         if not (permission_cache.agent_can('view Item.action_notices', self.action_item) or permission_cache.agent_can('view Item.action_notices', self.action_agent)):
