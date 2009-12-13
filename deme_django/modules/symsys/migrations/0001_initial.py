@@ -5,6 +5,10 @@ from deme_django.modules.symsys.models import *
 
 class Migration:
     
+    depends_on = (
+        ("imagedocument", "0001_initial"),
+    )
+    
     def forwards(self, orm):
         
         # Adding model 'HtmlAdvertisement'
