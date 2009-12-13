@@ -96,7 +96,7 @@ I then added the following to the end of ``/etc/postfix/main.cf``::
 
 I then created a file called ``/etc/postfix/deme_transport`` containing the following::
 
-  /[0-9]+@deme\.stanford\.edu/    deme:
+  /.*-[0-9]+@deme\.stanford\.edu/    deme:
 
 Optional Dependencies
 ---------------------
