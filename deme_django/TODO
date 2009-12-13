@@ -1,4 +1,40 @@
 |==========|
+|Codesprint|
+|list 12/09|
+|==========|
+
+Sprint priorities
+* Email lists
+* Email notifications - better wording
+* Default Deme layout
+    * remove "Subscribe" button from views when not logged in
+    * Rename "More" button to "Item Data"
+    * Hide Items pulldown bar, Item Type icon, and breadcrumbs, as well as Metadata menu, when Item Data is minimized; Show all of these when "Item Data" is clicked
+    * Don't display "Login as" in Login pulldown options if there is no one to log in as
+* Symsys homepage
+* Webauth timing issue
+* Pull new data from old Symsys
+* Move from beta to Symsys
+* Certificate transfer?
+* Set up Todd's blog Mindroll
+* Make password setting easier
+* Migrations
+* Change wording of Related Items in metadata menu
+
+Other things to do
+* redesign logo so it includes "Symbolic Systems Program"
+* make links to Symsys internal pages work in static documents
+* Give way to show options when completing a text box (e.g. adding an item to a collection should not require one to type a random character in order to see the options) - make list alphabetical
+* Make it so you can add items with no name to a Newsroll
+* Get and install more memory
+* Give more data about each version in Versions metadata display (e.g. datetime, updater)
+* Discussion viewer - full page view of comment threads
+* Make event links in calendar shareable
+* Truncate event description in div onlick from calendar
+* Go through permissions and do sanity check for different categories of users
+* Expand search beyond name field; combinatorial search, etc.
+
+|==========|
 |Short Term|
 |to do list|
 |==========|
