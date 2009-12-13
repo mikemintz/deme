@@ -148,14 +148,16 @@
                 </div>
                 {% endif %}
 
-                <div class="crumbs">
+                <div>
+                <span class="crumbs hidden_item_details" style="display: none;">
                     {% crumbs %}
-                </div>
+                </span>
+            </div>
 
                 <div class="title">
                 {% block title %}
                 {% if item %}
-                <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
+                <span class="hidden_item_details" style="display: none;"><img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /></span> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
                 {% else %}
                 <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
                 {% endif %}
@@ -192,6 +194,7 @@
             $('#right_table_column_hidden').show();
             $('#right_table_column_hidden').width($('#right_table_column_hidden a').width());
             $('#center_table_column').width( .875*PAGE_WIDTH - $('#right_table_column_hidden').width() );
+            $('.hidden_item_details').hide();
         }
         else{
             $('#right_table_column').width( right_width - PAGE_WIDTH*.125 );
@@ -363,7 +366,7 @@
             </td>
             <td style="vertical-align: top; display: none; padding:0;" id="right_table_column_hidden">
                 <div class="ui-helper-clearfix" style="font-size: 60%;">
-                    <a href="#" onclick="show_column_right(); return false;" class="fg-button ui-state-default ui-corner-all" title="Show"><div style="font-size: 8pt;">More</div></a>
+                    <a href="#" onclick="show_column_right(); $('.hidden_item_details').show(); return false;" class="fg-button ui-state-default ui-corner-all" title="Show"><div style="font-size: 8pt;">Item Data</div></a>
                 </div>
             </td>
             <td style="vertical-align: top; width: 240px; padding:0;" id="right_table_column">
@@ -377,6 +380,7 @@
                     {% if item %}
 
                     <h3><a href="#">Item Details</a></h3>
+
                     <div>
                         {% itemdetails %}
                     </div>
