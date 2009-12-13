@@ -1193,7 +1193,7 @@ class Subscription(Item):
     subscribe_edit      = FixedBooleanField(_('subscribe edit'), default=True, help_text=_("Enable this to receive notifications about edits"))
     subscribe_delete    = FixedBooleanField(_('subscribe delete'), default=True, help_text=_("Enable this to receive notifications about deletes"))
     subscribe_comments  = FixedBooleanField(_('subscribe comments'), default=True, help_text=_("Enable this to receive notifications about comments"))
-    subscribe_relations = FixedBooleanField(_('subscribe relations'), default=True, help_text=_("Enable this to receive notifications about relations"))
+    subscribe_relations = FixedBooleanField(_('subscribe relations'), default=False, help_text=_("Enable this to receive notifications about relations"))
     subscribe_members   = FixedBooleanField(_('subscribe members'), default=True, help_text=_("Enable this to receive notifications when members are added (applies only to collections)"))
 
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):

@@ -51,6 +51,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* If someone makes a layout and screws up django template syntax, the site is completely screwed. Come up with failsafe
 * If you go to "new" and one of the initial model fields is permission denied (e.g., you're creating a membership on a collection you aren't allowed to modify_membership for, or creating a comment on an item you can't reply to), let the user know
 * the destroy action notice will never be read by anyone (since all permissions are effectively denied)
 * Methods that have to do with sending emails (about action notices) should go in EmailContactMethod, not ActionNotice
