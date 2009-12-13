@@ -56,4 +56,18 @@
 
 <li class="loginmenuitem"><a href="#" onclick="$('#login_dialog_password').dialog('open'); return false;">Deme account</a></li>
 
+{% else %}
+
+    {% if one_or_more %}
+        {% if two_or_more %}
+        {% for account in auth_methods %} 
+        <li class="loginmenuitem"><a href="{% url item_url viewer='demeaccount',action='edit',noun=account.pk %}">Change password for {% viewable_name account %}</a></li>
+        {% endfor %}
+        {% else %}
+        {% for account in auth_methods %} 
+        <li class="loginmenuitem"><a href="{% url item_url viewer='demeaccount',action='edit',noun=account.pk %}">Change password</a></li>
+        {% endfor %}
+        {% endif %}
+    {% endif %}    
+
 {% endif %}
