@@ -97,8 +97,20 @@ class NewsRollViewer(ItemViewer):
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         members = collection.all_contained_collection_members(recursive_filter).order_by('-created_at')
 
+        p = Paginator(members, 10)
+
+        try:
+            page = int(self.request.GET.get('page','1'))
+        except ValueError:
+            page = 1
+
+        try:
+            entries = p.page(page)
+        except (EmptyPage, InvalidPage):
+            entries = p.page(p.num_pages)
+
         member_details = []
-        for member in members:
+        for member in entries.object_list:
             details = {}
             details["member"] = member
             details["name"] = member.display_name()
@@ -118,18 +130,6 @@ class NewsRollViewer(ItemViewer):
 
             member_details.append(details)
 
-        p = Paginator(member_details, 10)
-
-        try:
-            page = int(self.request.GET.get('page','1'))
-        except ValueError:
-            page = 1
-
-        try:
-            entries = p.page(page)
-        except (EmptyPage, InvalidPage):
-            entries = p.page(p.num_pages)
-
         page_ranges = p.page_range
         displayed_page_range = []
         for possible_page in page_ranges:
@@ -137,7 +137,8 @@ class NewsRollViewer(ItemViewer):
                 displayed_page_range.append(possible_page)
 
         self.context['redirect'] = reverse('item_url', kwargs={'viewer': 'newsroll', 'action': 'show', 'noun': collection.pk}) 
-        self.context['members'] = entries
+        self.context['members'] = member_details
+        self.context['entries'] = entries
         self.context['page_range'] = displayed_page_range
         return HttpResponse(template.render(self.context))
 

@@ -4,11 +4,7 @@
 {% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
-<div style="padding: 5px;">
-    View <a href="/viewing/item?collection={{ item.pk }}"> a compressed listing of this collection</a>
-</div>
-
-{% for details in members.object_list %}
+{% for details in members %}
 
     <div style="border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px">
         <div style="font-weight: bold;">
@@ -49,20 +45,20 @@
 
 {% endfor %}
 <div style="border-bottom: 2px solid #aaa; margin-bottom: 8px; padding-bottom: 8px; text-align: center;">
-{% if members.has_previous %}
-<a href="{{ redirect }}?page={{ members.previous_page_number }}"> ~ Prev |</a>
+{% if entries.has_previous %}
+<a href="{{ redirect }}?page={{ entries.previous_page_number }}"> ~ Prev |</a>
 {% endif %}
     {% for page in page_range %}
-        {% ifequal page members.number %} 
-            {{ members.number }}
+        {% ifequal page entries.number %} 
+            {{ entries.number }}
         {% endifequal %}
 
-        {% ifnotequal page members.number %}
+        {% ifnotequal page entries.number %}
         <a href="{{ redirect }}?page={{ page }}">{{ page }}</a>
         {% endifnotequal %}    
     {% endfor %}
-{% if members.has_next %}
-<a href="{{ redirect }}?page={{ members.next_page_number }}">| Next ~</a>
+{% if entries.has_next %}
+<a href="{{ redirect }}?page={{ entries.next_page_number }}">| Next ~</a>
 {% endif %}
 </div>
 <div style="text-align: center; padding-left: 35px; padding-bottom: 8px;">
