@@ -999,9 +999,9 @@ class ContactMethod(Item):
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'agent':
             if relation_added:
-                status = _(" can now be contacted by ")
+                status = _(" can now be contacted via ")
             else:
-                status = _(" can no longer be contacted by ")
+                status = _(" can no longer be contacted via ")
             return [action_item, status, self]
         else:
             return super(ContactMethod, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
@@ -1315,9 +1315,9 @@ class Folio(Collection):
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'group':
             if relation_added:
-                status = _(" now has folio ")
+                status = _(" now has the folio ")
             else:
-                status = _(" no longer has folio ")
+                status = _(" no longer has the folio ")
             return [action_item, status, self]
         else:
             return super(Folio, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
@@ -1396,9 +1396,9 @@ class Membership(Item):
                     return [action_item, _(' no longer belongs to '), self.collection, _(' via '), self]
             else:
                 if relation_added:
-                    return [action_item, _(' now belongs to something via '), self]
+                    return [action_item, _(' now belongs to a collection via '), self]
                 else:
-                    return [action_item, _(' no longer belongs to something via '), self]
+                    return [action_item, _(' no longer belongs to a collection via '), self]
         elif field_name == 'collection':
             if permission_cache.agent_can('view Membership.item', self):
                 if relation_added:
@@ -1407,9 +1407,9 @@ class Membership(Item):
                     return [action_item, _(' no longer contains '), self.item, _(' via '), self]
             else:
                 if relation_added:
-                    return [action_item, _(' now contains something via '), self]
+                    return [action_item, _(' now contains an item via '), self]
                 else:
-                    return [action_item, _(' no longer contains something via '), self]
+                    return [action_item, _(' no longer contains an item via '), self]
         else:
             return super(Membership, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
 
@@ -1567,9 +1567,9 @@ class Transclusion(Item):
                     return [action_item, _(' no longer transcludes '), self.to_item, _(' via '), self]
             else:
                 if relation_added:
-                    return [action_item, _(' now transcludes something via '), self]
+                    return [action_item, _(' now transcludes an item via '), self]
                 else:
-                    return [action_item, _(' no longer transcludes something via '), self]
+                    return [action_item, _(' no longer transcludes an item via '), self]
         elif field_name == 'to_item':
             if permission_cache.agent_can('view Transclusion.from_item', self):
                 if relation_added:
@@ -1853,9 +1853,9 @@ class CustomUrl(ViewerRequest):
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'parent_url':
             if relation_added:
-                status = " has a child path "
+                status = " has a subdirectory "
             else:
-                status = " no longer has the child path "
+                status = " no longer has the subdirectory "
             return [action_item, status, self]
         else:
             return super(CustomUrl, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
