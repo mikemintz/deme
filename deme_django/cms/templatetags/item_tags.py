@@ -1537,21 +1537,25 @@ def crumbs(parser, token):
     return Crumbs()
 
 
-class ItemsMenu(template.Node):
+class NewItemMenu(template.Node):
     def __init__(self):
         pass
 
     def __repr__(self):
-        return "<ItemsMenu>"
+        return "<NewItemMenu>"
 
     def render(self, context):
         viewer = context['_viewer']
+        sorted_item_types = sorted(all_item_types(), key=lambda x: x._meta.verbose_name_plural.lower())
+        all_item_types_can_create = [x for x in sorted_item_types if agentcan_global_helper(context, 'create %s' % x.__name__)]
+        if not all_item_types_can_create:
+            return ''
         result = []
         result.append("""
         <script type="text/javascript">
         $(function(){
-            $('#items_menu_link').menu({
-                content: $('#items_menu_link').next().html(),
+            $('#new_item_menu_link').menu({
+                content: $('#new_item_menu_link').next().html(),
                 width: 240,
                 maxHeight: 445,
                 showSpeed: 50,
@@ -1562,17 +1566,14 @@ class ItemsMenu(template.Node):
             });
         });
         </script>
-        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="items_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>Items</a>
+        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="new_item_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>New item</a>
         <div style="display: none;">
         <ul style="font-size: 85%;">
         """)
-        sorted_item_types = sorted(all_item_types(), key=lambda x: x._meta.verbose_name_plural.lower())
         def add_item_type_to_menu(item_type):
             top_item_types = [item_type]
             if item_type == Item and viewer.accepted_item_type != Item:
                 top_item_types.append(viewer.accepted_item_type)
-            for top_item_type in top_item_types:
-                result.append(u'<li><a href="%s" class="img_link"><img src="%s" /> View all %s</a></li>' % (reverse('item_type_url', kwargs={'viewer': top_item_type.__name__.lower()}), icon_url(top_item_type, 16), top_item_type._meta.verbose_name_plural))
             for top_item_type in top_item_types:
                 if agentcan_global_helper(context, 'create %s' % top_item_type.__name__):
                     result.append(u'<li><a href="%s" class="img_link"><img src="%s" /> New %s</a></li>' % (reverse('item_type_url', kwargs={'viewer': top_item_type.__name__.lower(), 'action': 'new'}), icon_url(top_item_type, 16), top_item_type._meta.verbose_name))
@@ -1591,11 +1592,11 @@ class ItemsMenu(template.Node):
         return '\n'.join(result)
 
 @register.tag
-def items_menu(parser, token):
+def new_item_menu(parser, token):
     bits = list(token.split_contents())
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
-    return ItemsMenu()
+    return NewItemMenu()
 
 
 class LoginMenu(template.Node):
