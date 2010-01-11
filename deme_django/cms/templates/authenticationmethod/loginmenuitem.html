@@ -1,4 +1,6 @@
+{% if can_login_as_anyone %}
 <li class="loginmenuitem"><a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ redirect|urlencode }}">Login as</a></li>
+{% endif %}
 {% if cur_agent.is_anonymous %}
 {% else %}
 <li class="loginmenuitem"><a href="{{ cur_agent.get_absolute_url }}">My account</a></li>

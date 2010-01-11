@@ -83,6 +83,7 @@ class NewsRollViewer(ItemViewer):
     viewer_name = 'newsroll'
 
     def item_show_html(self):
+        from django.core.paginator import Paginator, InvalidPage, EmptyPage
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('newsroll/show.html')
@@ -96,9 +97,20 @@ class NewsRollViewer(ItemViewer):
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         members = collection.all_contained_collection_members(recursive_filter).order_by('-created_at')
 
-        #TODO pagination
+        p = Paginator(members, 10)
+
+        try:
+            page = int(self.request.GET.get('page','1'))
+        except ValueError:
+            page = 1
+
+        try:
+            entries = p.page(page)
+        except (EmptyPage, InvalidPage):
+            entries = p.page(p.num_pages)
+
         member_details = []
-        for member in members:
+        for member in entries.object_list:
             details = {}
             details["member"] = member
             details["name"] = member.display_name()
@@ -118,7 +130,20 @@ class NewsRollViewer(ItemViewer):
 
             member_details.append(details)
 
+        page_ranges = p.page_range
+        displayed_page_range = []
+        for possible_page in page_ranges:
+            if (possible_page < page + 10) and (possible_page > page-10):
+                displayed_page_range.append(possible_page)
+
+        is_not_one_page = True
+        if len(page_ranges) == 1:
+            is_not_one_page = False
+
         self.context['redirect'] = reverse('item_url', kwargs={'viewer': 'newsroll', 'action': 'show', 'noun': collection.pk}) 
         self.context['members'] = member_details
+        self.context['entries'] = entries
+        self.context['page_range'] = displayed_page_range
+        self.context['is_not_one_page'] = is_not_one_page
         return HttpResponse(template.render(self.context))
 

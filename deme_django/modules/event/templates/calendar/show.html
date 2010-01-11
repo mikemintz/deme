@@ -14,14 +14,24 @@
             autoOpen: false,
             bgiframe: true,
             modal: true,
+            width: 500,
             buttons: {
-               'Close': function(){$(this).dialog('close')},
-               'Edit This Item': function(){ window.location = edit_url }
+               //{% ifagentcan 'edit Item.name' collection %}
+                 //   'Edit This Item': function(){ window.location = edit_url },
+               //{% endifagentcan %}
+               'Close': function(){$(this).dialog('close')}
             },
             close: function(event, ui) {dialogBox.dialog('destroy')}
         });
         dialogBox.dialog('open');
     }   
+
+    function GoToMonth()
+    {
+        var month = document.getElementById("month_selector").value;
+        var year = document.getElementById("year_selector").value;
+        window.location = ('{{ redirect }}?month=' + month + '&year=' + year);
+    }
 </script>
 
 
@@ -36,7 +46,7 @@
 
 .day { 
   width: 14%;
-  height: 58px;
+  height: 70px;
   color: #456;
   text-align: right;
   vertical-align: top;
@@ -55,8 +65,8 @@
 <h3 align="center">{{ this_month|date:"M Y" }}</h3>
 
 <div align="center">
-    <a href="?year={{ prev_year }}&month={{ prev_month }}">~ Previous Month |</a>
-    <a href="?year={{ next_year }}&month={{ next_month }}">| Next Month ~</a>
+    <a href="{{ redirect }}?year={{ prev_year }}&month={{ prev_month }}">~ Previous Month |</a>
+    <a href="{{ redirect }}?year={{ next_year }}&month={{ next_month }}">| Next Month ~</a>
 </div>
 
 <table class="calendar">
@@ -95,7 +105,8 @@
                                 End Time: {{ event.end_time|time:"P" }}
                                 <p>End Date: {{ event.end_date|date:"M d, Y" }}</p>
                                 Location: {{ event.location }}
-                                <p>Description: {{ event.body|safe }}</p>
+                                <p>Description: {{ event.body|safe|truncatewords_html:50 }}</p>
+                                <a href={{ event.url }} style="color: blue;">View the full event</a> 
                             </div>
                     </div>
                     {% endfor %}
@@ -106,14 +117,22 @@
     </tbody>
 
 </table>
-<div>
+<form onsubmit="return false" action="" style="text-align: center; margin-right: 25px;">
+    <b>Jump to a Month: </b>
+    Month: <input type="text" id="month_selector" size=1 />
+    Year: <input type="text" id="year_selector" size=2 value={{ this_month.year }} />
+    <input type="submit" value="Go!" onclick="GoToMonth();" />
+</form>
+<div style="text-align: center; font-size: 90%; margin-top: 3px;">
+    The month must be a number between 1 and 12, and the year must be a 4 digit number
+</div>
+<div style="text-align: center; border-top: 1px solid black; padding: 4px; margin-top: 5px; margin-right: 40px;">
     {% ifagentcan 'modify_membership' collection %}
-        <a href="{% url item_type_url viewer="event",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Add A New Event to this Calendar</a> 
+        <a href="{% url item_type_url viewer="event",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Add A New Event to this Calendar ||</a> 
     {% endifagentcan %}
 
-</div>    
-<div>
-     <a href="{% url item_url viewer="calendar" action="exportguide" noun=collection.pk %}">Export this Calendar</a> 
+    <a href="{% url item_url viewer="calendar" action="exportguide" noun=collection.pk %}">Export this Calendar ||</a>
+    <a href="{% url item_url viewer="newsroll" action="show" noun=collection.pk %}">View a listing of this calendar's events</a> 
 </div>
 
 {% endblock %}

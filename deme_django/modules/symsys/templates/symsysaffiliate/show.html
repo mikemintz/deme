@@ -34,17 +34,30 @@
     {% if item.suffix %}
         {{ item.suffix }}
     {% endif %}
+    </li>
+    {% endifagentcan %}
+    {% endifagentcan %}
+    {% endifagentcan %}
+    {% endifagentcan %}
 
+    {% if item.photo %}
+    {% if item.photo.active %}
+    {% ifagentcan 'view SymsysAffiliate.photo' item %}
+    {% ifagentcan 'view FileDocument.datafile' item.photo %}
+    <li class="outerlist">
+        <a href="{{ item.photo.get_absolute_url }}"><img src="{{ item.photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a>
+        </li>
     {% endifagentcan %}
     {% endifagentcan %}
-    {% endifagentcan %}
-    {% endifagentcan %}
+    {% endif %}
+    {% endif %}
 
     {% ifagentcan 'view SymsysAffiliate.w_organization' item %}
     {% if item.w_organization %}
         <li class="outerlist">
         <b>Work organization:</b>
         {{ item.w_organization }}
+        </li>
     {% endif %}
     {% endifagentcan %}
 
@@ -53,6 +66,7 @@
         <li class="outerlist">
         <b>Work position:</b>
         {{ item.w_position }}
+        </li>
     {% endif %}
     {% endifagentcan %}
 
@@ -61,6 +75,7 @@
         <li class="outerlist">
         <b>Background:</b>
         {{ item.background|linebreaksbr|urlize }}
+        </li>
     {% endif %}
     {% endifagentcan %}
 
@@ -69,6 +84,7 @@
         <li class="outerlist">
         <b>Doing Now:</b>
         {{ item.doing_now|linebreaksbr|urlize }}
+        </li>
     {% endif %}
     {% endifagentcan %}
 
@@ -77,6 +93,7 @@
         <li class="outerlist">
         <b>Interests:</b>
         {{ item.interests|linebreaksbr|urlize }}
+        </li>
     {% endif %}
     {% endifagentcan %}
 
@@ -85,6 +102,7 @@
         <li class="outerlist">
         <b>Publications:</b>
         {{ item.publications|linebreaksbr|urlize }}
+        </li>
     {% endif %}
     {% endifagentcan %}
 
@@ -93,6 +111,7 @@
         <li class="outerlist">
         <b>Office hours:</b>
         {{ item.office_hours|linebreaksbr|urlize }}
+        </li>
     {% endif %}
     {% endifagentcan %}
 
@@ -101,45 +120,37 @@
         <li class="outerlist">
         <b>About:</b>
         {{ item.about|linebreaksbr|urlize }}
+        </li>
     {% endif %}
     {% endifagentcan %}
 
     {# TODO display them as fields, rather than a silly list #}
     <li class="outerlist">
-    <b>Collections containing {% viewable_name item %}:</b>
+    <b>{% viewable_name item %} is a member of:</b>
     <ul>
     {% for collection in containing_collections %}
-        <li><a href="{{ collection.get_absolute_url }}">{% viewable_name collection %}</a>
+    <li><a href="{{ collection.get_absolute_url }}">{% viewable_name collection %}</a></li>
     {% endfor %}
     </ul>
+    </li>
 
     {# TODO display them more nicely, rather than simply embedded #}
     <li class="outerlist">
     <b>{% viewable_name item %}'s contact methods:</b>
     <ul>
     {% for contact_method in contact_methods %}
-        <li>{{ contact_method }}
+    <li>{{ contact_method }}</li>
     {% endfor %}
     </ul>
-
+    </li>
     {# TODO display them more nicely, rather than simply embedded #}
     <li class="outerlist">
-    <b>SymSys related jobs held by {% viewable_name item %}</b><br>
+    <b>SymSys related occupations held by {% viewable_name item %}</b><br>
     {% for symsys_career in symsys_careers %}
         <a href="{{ symsys_career.get_absolute_url }}" style="margin-left: 15px; font-weight: bold;">{% viewable_name symsys_career %}:</a>
         {% embed symsys_career.get_default_viewer symsys_career %}
     {% endfor %}
-
-    {% if item.photo %}
-    {% if item.photo.active %}
-    {% ifagentcan 'view SymsysAffiliate.photo' item %}
-    {% ifagentcan 'view FileDocument.datafile' item.photo %}
-        Photo:
-        <a href="{{ item.photo.get_absolute_url }}"><img src="{{ item.photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a>
-    {% endifagentcan %}
-    {% endifagentcan %}
-    {% endif %}
-    {% endif %}
+    </li>
 
 </ul>
 

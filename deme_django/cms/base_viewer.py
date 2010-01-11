@@ -677,7 +677,7 @@ class Viewer(object):
 
         return form_class
 
-    def get_populated_field_dict(self):
+    def get_populated_field_dict(self, item_type):
         """
         Return a dict of populated fields from the query string. For example,
         say the query string is ?populate_name=Mike&populate_description=hi --
@@ -691,6 +691,7 @@ class Viewer(object):
             if key.startswith(key_prefix):
                 field_name = key.split(key_prefix, 1)[1]
                 result[field_name] = value
+        item_type.auto_populate_fields(item_type, result, self)
         return result
 
     def _set_default_layout(self):

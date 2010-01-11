@@ -16,6 +16,7 @@ class ImageDocument(FileDocument):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create ImageDocument'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('image document')
         verbose_name_plural = _('image documents')

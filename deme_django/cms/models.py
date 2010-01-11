@@ -17,6 +17,7 @@ import datetime
 from django.conf import settings
 import copy
 import html2text
+import re
 
 __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
         'AnonymousAgent', 'AuthenticationMethod',
@@ -64,6 +65,14 @@ class FixedBooleanField(models.NullBooleanField):
         defaults.update(kwargs)
         return super(FixedBooleanField, self).formfield(**defaults)
 
+    def south_field_triple(self):
+        "Returns a suitable description of this field for South."
+        # We'll just introspect ourselves, since we inherit.
+        from south.modelsinspector import introspector
+        field_class = "django.db.models.fields.NullBooleanField"
+        args, kwargs = introspector(self)
+        # That's our definition!
+        return (field_class, args, kwargs)
 
 class FixedForeignKey(models.ForeignKey):
     """
@@ -76,6 +85,15 @@ class FixedForeignKey(models.ForeignKey):
         self.required_abilities = kwargs.pop('required_abilities', [])
         super(FixedForeignKey, self).__init__(*args, **kwargs)
         
+    def south_field_triple(self):
+        "Returns a suitable description of this field for South."
+        # We'll just introspect ourselves, since we inherit.
+        from south.modelsinspector import introspector
+        field_class = "django.db.models.ForeignKey"
+        args, kwargs = introspector(self)
+        # That's our definition!
+        return (field_class, args, kwargs)
+
 
 ###############################################################################
 # Item framework
@@ -194,6 +212,9 @@ class Item(models.Model):
       item type
     * introduced_global_abilities: a frozenset of global abilities that are
       introduced by this item type
+    * dyadic_relations: a dict from field_name1 to (field_name2, relation_name)
+      for showing that this item type is really just a dyadic relation between
+      the two fields
     """
 
     # Setup
@@ -203,6 +224,7 @@ class Item(models.Model):
                                       'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at', 'view Item.default_viewer',
                                       'edit Item.name', 'edit Item.description', 'edit Item.default_viewer'])
     introduced_global_abilities = frozenset(['do_anything'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('item')
         verbose_name_plural = _('items')
@@ -215,7 +237,7 @@ class Item(models.Model):
     creator          = FixedForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
     created_at       = models.DateTimeField(_('created at'), editable=False)
     name             = models.CharField(_('item name'), max_length=255, blank=True, help_text=_('The name used to refer to this item'))
-    description      = models.CharField(_('preface'), max_length=255, blank=True, help_text=_('Description of the purpose of this item'))
+    description      = models.CharField(_('purpose'), max_length=255, blank=True, help_text=_('Description of the purpose of this item'))
     default_viewer   = models.CharField(_('default viewer'), max_length=255, choices=PossibleViewerNamesIterable(), help_text=_('The default viewer to display this item'))
 
     def __unicode__(self):
@@ -286,6 +308,19 @@ class Item(models.Model):
         Item.get(pk=123).is_downcast() == false
         """
         return self.actual_item_type() == type(self)
+
+    def notification_email_username(self):
+        result = u'%s-%d' % (self.name if self.name else self.actual_item_type()._meta.verbose_name, self.pk)
+        result = result.lower()
+        result = re.sub("'", '', result)
+        result = re.sub('[^A-Za-z0-9]+', '-', result)
+        result = re.sub('^-+', '-', result)
+        return result
+
+    @staticmethod
+    def item_for_notification_email_username(email_username):
+        item_id = email_username.split('-')[-1]
+        return Item.objects.get(pk=item_id)
 
     def ancestor_collections(self, recursive_filter=None):
         """
@@ -659,6 +694,22 @@ class Item(models.Model):
         from cms.forms import CaptchaField 
         attrs['captcha'] = CaptchaField(label=("Security Question"))
 
+    @classmethod
+    def auto_populate_fields(cls, item_type, field_dict, viewer):
+        """
+        Given a field_dict from field names to initial values, populate any
+        other fields (in the dict) with values. For example, in a Subscription,
+        given that the subscribed item is X, we might want to set the name of
+        the subscription to "Subscription to X". This is used when presenting
+        a user with a form.
+        
+        Item types that want to automatically populate field names based on
+        other fields should override this method, making sure to put a call
+        superclasses at the top, like:
+        >> super(Subscription, cls).auto_populate_fields(item_type, field_dict, viewer)
+        """
+        pass
+
     def _before_create(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
         """
         This method gets called before the first version of an item is
@@ -788,12 +839,13 @@ class Webpage(Item):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view Webpage.url', 'edit Webpage.url'])
     introduced_global_abilities = frozenset(['create Webpage'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('webpage')
         verbose_name_plural = _('webpages')
 
     # Fields
-    url = models.CharField(_('URL'), max_length=255, default='http://')
+    url = models.CharField(_('URL'), max_length=255, default='http://', help_text = _("URL's to outside websites have to start with 'http://'"))
 
 ###############################################################################
 # Agents and related item types
@@ -818,6 +870,7 @@ class Agent(Item):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['add_contact_method', 'add_authentication_method', 'login_as', 'view Agent.last_online_at'])
     introduced_global_abilities = frozenset(['create Agent'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('agent')
         verbose_name_plural = _('agents')
@@ -852,6 +905,7 @@ class AnonymousAgent(Agent):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('anonymous agent')
         verbose_name_plural = _('anonymous agents')
@@ -876,6 +930,7 @@ class GroupAgent(Agent):
     introduced_immutable_fields = frozenset(['group'])
     introduced_abilities = frozenset(['view GroupAgent.group'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('group agent')
         verbose_name_plural = _('group agents')
@@ -912,6 +967,7 @@ class AuthenticationMethod(Item):
     introduced_immutable_fields = frozenset(['agent'])
     introduced_abilities = frozenset(['view AuthenticationMethod.agent'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('authentication method')
         verbose_name_plural = _('authentication methods')
@@ -940,6 +996,7 @@ class Person(Agent):
     introduced_abilities = frozenset(['view Person.first_name', 'view Person.middle_names', 'view Person.last_name', 'view Person.suffix',
                                       'edit Person.first_name', 'edit Person.middle_names', 'edit Person.last_name', 'edit Person.suffix'])
     introduced_global_abilities = frozenset(['create Person'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('person')
         verbose_name_plural = _('people')
@@ -962,6 +1019,7 @@ class ContactMethod(Item):
     introduced_immutable_fields = frozenset(['agent'])
     introduced_abilities = frozenset(['add_subscription', 'view ContactMethod.agent'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('contact method')
         verbose_name_plural = _('contact methods')
@@ -972,9 +1030,9 @@ class ContactMethod(Item):
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'agent':
             if relation_added:
-                status = _(" can now be contacted by ")
+                status = _(" can now be contacted via ")
             else:
-                status = _(" can no longer be contacted by ")
+                status = _(" can no longer be contacted via ")
             return [action_item, status, self]
         else:
             return super(ContactMethod, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
@@ -989,6 +1047,7 @@ class EmailContactMethod(ContactMethod):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view EmailContactMethod.email', 'edit EmailContactMethod.email'])
     introduced_global_abilities = frozenset(['create EmailContactMethod'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('email contact method')
         verbose_name_plural = _('email contact methods')
@@ -1006,6 +1065,7 @@ class PhoneContactMethod(ContactMethod):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view PhoneContactMethod.phone', 'edit PhoneContactMethod.phone'])
     introduced_global_abilities = frozenset(['create PhoneContactMethod'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('phone contact method')
         verbose_name_plural = _('phone contact methods')
@@ -1023,6 +1083,7 @@ class FaxContactMethod(ContactMethod):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view FaxContactMethod.fax', 'edit FaxContactMethod.fax'])
     introduced_global_abilities = frozenset(['create FaxContactMethod'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('fax contact method')
         verbose_name_plural = _('fax contact methods')
@@ -1040,12 +1101,13 @@ class WebsiteContactMethod(ContactMethod):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view WebsiteContactMethod.url', 'edit WebsiteContactMethod.url'])
     introduced_global_abilities = frozenset(['create WebsiteContactMethod'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('website contact method')
         verbose_name_plural = _('website contact methods')
 
     # Fields
-    url = models.CharField(_('website URL'), max_length=255)
+    url = models.CharField(_('website URL'), max_length=255, default='http://', help_text = _("URL's to outside websites have to start with 'http://'"))
 
 
 class AIMContactMethod(ContactMethod):
@@ -1057,6 +1119,7 @@ class AIMContactMethod(ContactMethod):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view AIMContactMethod.screen_name', 'edit AIMContactMethod.screen_name'])
     introduced_global_abilities = frozenset(['create AIMContactMethod'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('AIM contact method')
         verbose_name_plural = _('AIM contact methods')
@@ -1078,6 +1141,7 @@ class AddressContactMethod(ContactMethod):
                                       'edit AddressContactMethod.street1', 'edit AddressContactMethod.street2', 'edit AddressContactMethod.city',
                                       'edit AddressContactMethod.state', 'edit AddressContactMethod.country', 'edit AddressContactMethod.zip'])
     introduced_global_abilities = frozenset(['create AddressContactMethod'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('address contact method')
         verbose_name_plural = _('address contact methods')
@@ -1100,22 +1164,37 @@ class Subscription(Item):
     If deep=True and the item is a Collection, then action notices on all items
     in the collection (direct or indirect) will be sent in addition to comments
     on the collection itself.
+    
+    The subscribe_edit, subscribe_delete, subscribe_comments, and
+    subscribe_relations fields determine what action notices will trigger this
+    subscription.
     """
 
     # Setup
     introduced_immutable_fields = frozenset(['contact_method', 'item'])
     introduced_abilities = frozenset(['view Subscription.contact_method', 'view Subscription.item',
-                                      'view Subscription.deep', 'edit Subscription.deep'])
+                                      'view Subscription.deep', 'edit Subscription.deep',
+                                      'view Subscription.subscribe_edit', 'edit Subscription.subscribe_edit',
+                                      'view Subscription.subscribe_delete', 'edit Subscription.subscribe_delete',
+                                      'view Subscription.subscribe_comments', 'edit Subscription.subscribe_comments',
+                                      'view Subscription.subscribe_relations', 'edit Subscription.subscribe_relations',
+                                      'view Subscription.subscribe_members', 'edit Subscription.subscribe_members'])
     introduced_global_abilities = frozenset(['create Subscription'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('subscription')
         verbose_name_plural = _('subscriptions')
         unique_together = ('contact_method', 'item')
 
     # Fields
-    contact_method = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'])
-    item           = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view Item.action_notices'])
-    deep           = FixedBooleanField(_('deep subscription'), default=False)
+    contact_method      = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'])
+    item                = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view Item.action_notices'])
+    deep                = FixedBooleanField(_('deep subscription'), default=False, help_text=_("Enable this to extend your subscription to all members of this collection (applies only to collections)"))
+    subscribe_edit      = FixedBooleanField(_('subscribe edit'), default=True, help_text=_("Enable this to receive notifications about edits"))
+    subscribe_delete    = FixedBooleanField(_('subscribe delete'), default=True, help_text=_("Enable this to receive notifications about deletes"))
+    subscribe_comments  = FixedBooleanField(_('subscribe comments'), default=True, help_text=_("Enable this to receive notifications about comments"))
+    subscribe_relations = FixedBooleanField(_('subscribe relations'), default=False, help_text=_("Enable this to receive notifications about relations"))
+    subscribe_members   = FixedBooleanField(_('subscribe members'), default=True, help_text=_("Enable this to receive notifications when members are added (applies only to collections)"))
 
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'contact_method':
@@ -1142,6 +1221,21 @@ class Subscription(Item):
                     return [action_item, _(' is no longer subscribed to via '), self]
         else:
             return super(Subscription, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
+
+    @classmethod
+    def auto_populate_fields(cls, item_type, field_dict, viewer):
+        super(Subscription, cls).auto_populate_fields(item_type, field_dict, viewer)
+        if 'item' in field_dict and 'name' not in field_dict:
+            try:
+                item = Item.objects.get(pk=field_dict['item'])
+            except ObjectDoesNotExist:
+                item = None
+            if item:
+                can_view_item_name = viewer.permission_cache.agent_can('view Item.name', item)
+                can_view_agent_name = viewer.permission_cache.agent_can('view Item.name', viewer.cur_agent)
+                item_name = item.display_name(can_view_item_name)
+                agent_name = viewer.cur_agent.display_name(can_view_agent_name)
+                field_dict['name'] = "%s's subscription to %s" % (agent_name, item_name)
 
 ###############################################################################
 # Collections and related item types
@@ -1170,6 +1264,7 @@ class Collection(Item):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['modify_membership', 'add_self', 'remove_self'])
     introduced_global_abilities = frozenset(['create Collection'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('collection')
         verbose_name_plural = _('collections')
@@ -1213,6 +1308,7 @@ class Group(Collection):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create Group'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('group')
         verbose_name_plural = _('groups')
@@ -1239,6 +1335,7 @@ class Folio(Collection):
     introduced_immutable_fields = frozenset(['group'])
     introduced_abilities = frozenset(['view Folio.group'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('folio')
         verbose_name_plural = _('folios')
@@ -1249,9 +1346,9 @@ class Folio(Collection):
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'group':
             if relation_added:
-                status = _(" now has folio ")
+                status = _(" now has the folio ")
             else:
-                status = _(" no longer has folio ")
+                status = _(" no longer has the folio ")
             return [action_item, status, self]
         else:
             return super(Folio, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
@@ -1265,6 +1362,7 @@ class Membership(Item):
     introduced_immutable_fields = frozenset(['item', 'collection'])
     introduced_abilities = frozenset(['view Membership.item', 'view Membership.collection', 'view Membership.permission_enabled', 'edit Membership.permission_enabled'])
     introduced_global_abilities = frozenset(['create Membership'])
+    dyadic_relations = {'item': ('collection', _('member of'))}
     class Meta:
         verbose_name = _('membership')
         verbose_name_plural = _('memberships')
@@ -1329,9 +1427,9 @@ class Membership(Item):
                     return [action_item, _(' no longer belongs to '), self.collection, _(' via '), self]
             else:
                 if relation_added:
-                    return [action_item, _(' now belongs to something via '), self]
+                    return [action_item, _(' now belongs to a collection via '), self]
                 else:
-                    return [action_item, _(' no longer belongs to something via '), self]
+                    return [action_item, _(' no longer belongs to a collection via '), self]
         elif field_name == 'collection':
             if permission_cache.agent_can('view Membership.item', self):
                 if relation_added:
@@ -1340,9 +1438,9 @@ class Membership(Item):
                     return [action_item, _(' no longer contains '), self.item, _(' via '), self]
             else:
                 if relation_added:
-                    return [action_item, _(' now contains something via '), self]
+                    return [action_item, _(' now contains an item via '), self]
                 else:
-                    return [action_item, _(' no longer contains something via '), self]
+                    return [action_item, _(' no longer contains an item via '), self]
         else:
             return super(Membership, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
 
@@ -1370,6 +1468,7 @@ class Document(Item):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('document')
         verbose_name_plural = _('documents')
@@ -1384,6 +1483,7 @@ class TextDocument(Document):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view TextDocument.body', 'edit TextDocument.body', 'add_transclusion'])
     introduced_global_abilities = frozenset(['create TextDocument'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('text document')
         verbose_name_plural = _('text documents')
@@ -1405,13 +1505,14 @@ class DjangoTemplateDocument(TextDocument):
     introduced_abilities = frozenset(['view DjangoTemplateDocument.layout', 'view DjangoTemplateDocument.override_default_layout',
                                     'edit DjangoTemplateDocument.layout', 'edit DjangoTemplateDocument.override_default_layout'])
     introduced_global_abilities = frozenset(['create DjangoTemplateDocument'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('Django template document')
         verbose_name_plural = _('Django template documents')
 
     # Fields
     layout = FixedForeignKey('DjangoTemplateDocument', related_name='django_template_documents_with_layout', null=True, blank=True, default=None, verbose_name=_('layout'))
-    override_default_layout = FixedBooleanField(_('override default layout'), default=False)
+    override_default_layout = FixedBooleanField(_('override default layout'), default=False, help_text=_('Select this if this item will be used as a layout template'))
 
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'layout':
@@ -1432,6 +1533,7 @@ class HtmlDocument(TextDocument):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create HtmlDocument'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('HTML document')
         verbose_name_plural = _('HTML documents')
@@ -1452,6 +1554,7 @@ class FileDocument(Document):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view FileDocument.datafile', 'edit FileDocument.datafile'])
     introduced_global_abilities = frozenset(['create FileDocument'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('file document')
         verbose_name_plural = _('file documents')
@@ -1475,6 +1578,7 @@ class Transclusion(Item):
     introduced_abilities = frozenset(['view Transclusion.from_item', 'view Transclusion.from_item_version_number',
                                       'view Transclusion.from_item_index', 'view Transclusion.to_item', 'edit Transclusion.from_item_index'])
     introduced_global_abilities = frozenset(['create Transclusion'])
+    dyadic_relations = {'from_item': ('to_item', _('transcluded items')), 'to_item': ('from_item', _('transcluded in'))}
     class Meta:
         verbose_name = _('transclusion')
         verbose_name_plural = _('transclusions')
@@ -1494,9 +1598,9 @@ class Transclusion(Item):
                     return [action_item, _(' no longer transcludes '), self.to_item, _(' via '), self]
             else:
                 if relation_added:
-                    return [action_item, _(' now transcludes something via '), self]
+                    return [action_item, _(' now transcludes an item via '), self]
                 else:
-                    return [action_item, _(' no longer transcludes something via '), self]
+                    return [action_item, _(' no longer transcludes an item via '), self]
         elif field_name == 'to_item':
             if permission_cache.agent_can('view Transclusion.from_item', self):
                 if relation_added:
@@ -1526,6 +1630,7 @@ class Comment(Item):
     introduced_immutable_fields = frozenset(['item', 'item_version_number', 'from_contact_method'])
     introduced_abilities = frozenset(['view Comment.item', 'view Comment.item_version_number', 'view Comment.from_contact_method'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('comment')
         verbose_name_plural = _('comments')
@@ -1574,6 +1679,7 @@ class TextComment(TextDocument, Comment):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create TextComment'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('text comment')
         verbose_name_plural = _('text comments')
@@ -1602,6 +1708,7 @@ class Excerpt(Item):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('excerpt')
         verbose_name_plural = _('excerpts')
@@ -1624,6 +1731,7 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
                                       'edit TextDocumentExcerpt.text_document_version_number', 'edit TextDocumentExcerpt.start_index',
                                       'edit TextDocumentExcerpt.length']) 
     introduced_global_abilities = frozenset(['create TextDocumentExcerpt'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('text document excerpt')
         verbose_name_plural = _('text document excerpts')
@@ -1676,6 +1784,7 @@ class ViewerRequest(Item):
                                       'edit ViewerRequest.aliased_item', 'edit ViewerRequest.viewer', 'edit ViewerRequest.action',
                                       'edit ViewerRequest.query_string', 'edit ViewerRequest.format'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('viewer request')
         verbose_name_plural = _('viewer requests')
@@ -1722,6 +1831,7 @@ class Site(ViewerRequest):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['view Site.hostname', 'edit Site.hostname', 'view Site.default_layout', 'edit Site.default_layout'])
     introduced_global_abilities = frozenset(['create Site'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('site')
         verbose_name_plural = _('sites')
@@ -1761,6 +1871,7 @@ class CustomUrl(ViewerRequest):
     introduced_immutable_fields = frozenset(['parent_url', 'path'])
     introduced_abilities = frozenset(['view CustomUrl.parent_url', 'view CustomUrl.path'])
     introduced_global_abilities = frozenset(['create CustomUrl'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('custom URL')
         verbose_name_plural = _('custom URLs')
@@ -1773,9 +1884,9 @@ class CustomUrl(ViewerRequest):
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'parent_url':
             if relation_added:
-                status = " has a child path "
+                status = " has a subdirectory "
             else:
-                status = " no longer has the child path "
+                status = " no longer has the subdirectory "
             return [action_item, status, self]
         else:
             return super(CustomUrl, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
@@ -1799,6 +1910,7 @@ class DemeSetting(Item):
     introduced_immutable_fields = frozenset(['key'])
     introduced_abilities = frozenset(['view DemeSetting.key', 'view DemeSetting.value', 'edit DemeSetting.value'])
     introduced_global_abilities = frozenset()
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('Deme setting')
         verbose_name_plural = _('Deme settings')
@@ -1883,12 +1995,35 @@ class ActionNotice(models.Model):
         viewer.init_for_outgoing_email(email_contact_method.agent)
         permission_cache = viewer.permission_cache
 
+        if isinstance(self, RelationActionNotice):
+            subscription_type_filter = Q(subscribe_relations=True)
+            if self.from_field_name == 'collection' and self.from_field_model == 'Membership':
+                subscription_type_filter = subscription_type_filter | Q(subscribe_members=True)
+        elif isinstance(self, DeactivateActionNotice):
+            subscription_type_filter = Q(subscribe_delete=True)
+        elif isinstance(self, ReactivateActionNotice):
+            subscription_type_filter = Q(subscribe_delete=True)
+        elif isinstance(self, DestroyActionNotice):
+            subscription_type_filter = Q(subscribe_delete=True)
+        elif isinstance(self, CreateActionNotice):
+            if issubclass(self.action_item.actual_item_type(), TextComment):
+                subscription_type_filter = Q(subscribe_comments=True)
+            else:
+                subscription_type_filter = Q(subscribe_edit=True)
+        elif isinstance(self, EditActionNotice):
+            subscription_type_filter = Q(subscribe_edit=True)
+        else:
+            subscription_type_filter = Q(pk__isnull=True)
+
         # Decide if we're allowed to get this notification at all
         def direct_subscriptions():
             item_parent_pks_query = self.action_item.all_parents_in_thread().values('pk').query
             action_agent_parent_pks_query = self.action_agent.all_parents_in_thread().values('pk').query
-            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
-                                               active=True, contact_method=email_contact_method)
+            subscription_filter = subscription_type_filter
+            subscription_filter = subscription_filter & Q(active=True)
+            subscription_filter = subscription_filter & Q(contact_method=email_contact_method)
+            subscription_filter = subscription_filter & (Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query))
+            return Subscription.objects.filter(subscription_filter)
         def deep_subscriptions():
             if permission_cache.agent_can_global('do_anything'):
                 recursive_filter = None
@@ -1897,8 +2032,12 @@ class ActionNotice(models.Model):
                 recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
             item_parent_pks_query = self.action_item.all_parents_in_thread(True, recursive_filter).values('pk').query
             action_agent_parent_pks_query = self.action_agent.all_parents_in_thread(True, recursive_filter).values('pk').query
-            return Subscription.objects.filter(Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query),
-                                               active=True, contact_method=email_contact_method, deep=True)
+            subscription_filter = subscription_type_filter
+            subscription_filter = subscription_filter & Q(active=True)
+            subscription_filter = subscription_filter & Q(contact_method=email_contact_method)
+            subscription_filter = subscription_filter & Q(deep=True)
+            subscription_filter = subscription_filter & (Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query))
+            return Subscription.objects.filter(subscription_filter)
         #TODO what happens if i'm subscribed to the item, but not allowed to view its action notices, but i AM allowed to view action
         #notices for the action_agent? or vice versa?
         if not (permission_cache.agent_can('view Item.action_notices', self.action_item) or permission_cache.agent_can('view Item.action_notices', self.action_agent)):
@@ -1923,7 +2062,7 @@ class ActionNotice(models.Model):
             return 'http://%s%s' % (settings.DEFAULT_HOSTNAME, x.get_absolute_url())
         subscribed_item_name = get_viewable_name(viewer.context, subscribed_item)
         item_name = get_viewable_name(viewer.context, item)
-        reply_item_name = "Readers of item %d" % reply_item.pk
+        reply_item_name = "Subscribers to %s" % item_name
         topmost_item_name = get_viewable_name(viewer.context, topmost_item)
         action_agent_name = get_viewable_name(viewer.context, self.action_agent)
         recipient_name = get_viewable_name(viewer.context, agent)
@@ -1931,7 +2070,7 @@ class ActionNotice(models.Model):
         generic_from_email_name = 'Deme notifier'
         from_email_name = None
         from_email_address = None
-        reply_item_email_address = '%s@%s' % (reply_item.pk, settings.NOTIFICATION_EMAIL_HOSTNAME)
+        reply_item_email_address = '%s@%s' % (reply_item.notification_email_username(), settings.NOTIFICATION_EMAIL_HOSTNAME)
         recipient_email_address = email_contact_method.email
 
         # Generate the subject and body

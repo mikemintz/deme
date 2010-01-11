@@ -161,20 +161,23 @@
     function expand_comments_reallybig() {
         $('#show_comments_link').hide();
         $('#hide_comments_link').show();
-        $('#right_accordion').accordion('activate', 1);
+        $('.commentref').show();
+        show_column_right();
         $('#left_table_column').width(.125*PAGE_WIDTH);
-        $('#center_table_column').width(.25*PAGE_WIDTH);
-        $('#right_table_column').width(.625*PAGE_WIDTH);
+        $('#center_table_column').width(.375*PAGE_WIDTH);
+        $('#right_table_column').width(.5*PAGE_WIDTH);
+        $('#right_accordion').accordion('activate', 1);
         show_comments_big();
     }
     function hide_comments_reallybig() {
         $('#show_comments_link').show();
         $('#hide_comments_link').hide();
-        $('#right_accordion').accordion('activate', 0);
+        hide_comments_big();
+        $('.commentref').hide();
         $('#left_table_column').width(.125*PAGE_WIDTH);
         $('#center_table_column').width(.625*PAGE_WIDTH);
         $('#right_table_column').width(.25*PAGE_WIDTH);
-        hide_comments_big();
+        decrease_column_right();
     }
 
 </script>
@@ -199,7 +202,7 @@
 
 {% ifagentcan 'comment_on' item %}
 <div id="add_located_comment_div">
-<a href="#" onclick="add_located_comment(); return false;">[+] Located Comment</a>
+<a href="#" onclick="add_located_comment(); return false;">Add Located Comment</a>
 </div>
 <div id="adding_located_comment_div" style="display: none;">
 Now just select text where you want to comment or
@@ -208,7 +211,7 @@ Now just select text where you want to comment or
 {% endifagentcan %}
 
 <div id="add_transclusion_div">
-<a href="#" onclick="add_transclusion(); return false;">[+] Transclusion</a>
+<a href="#" onclick="add_transclusion(); return false;">Add Transclusion</a>
 </div>
 <div id="adding_transclusion_div" style="display: none;">
 Now just select text where you want to add a Transclusion or
@@ -220,7 +223,7 @@ Now just select text where you want to add a Transclusion or
 {% ifagentcanglobal 'create TextDocumentExcerpt' %}
 {% ifagentcanglobal 'create Collection' %}
 <div id="add_highlight_div">
-<a href="#" onclick="start_highlighting(); return false;">[+] Highlight</a>
+<a href="#" onclick="start_highlighting(); return false;">Add Highlight</a>
 </div>
 
 <div id="adding_highlight_div" style="display: none;">
@@ -232,8 +235,14 @@ When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); 
 {% endifagentcanglobal %}
 {% endifagentcanglobal %}
 
-<div><a href="#" onclick="$('.commentref').toggle(); return false;">Toggle Inline Comments</a></div>
+<div id="show_located_comments"><a href="#" onclick="$('.commentref').show(); $('#hide_located_comments').show(); $('#show_located_comments').hide(); return false;">Show Located Comments</a></div>
+<div id="hide_located_comments" style="display: none;"><a href="#" onclick="$('.commentref').hide(); $('#hide_located_comments').hide(); $('#show_located_comments').show(); return false;">Hide Located Comments</a></div>
 
+<script type="text/javascript">
+        $(document).ready(function () {
+            $('.commentref').toggle();
+            });
+</script>
 {% endifagentcan %}
 
 {% endblock content %}

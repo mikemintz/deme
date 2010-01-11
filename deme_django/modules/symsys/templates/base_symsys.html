@@ -1,441 +1,444 @@
 {% load item_tags %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
+
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Symbolic Systems Program</title>
-<link href="/static/stylesheets/base.css" media="all" rel="Stylesheet" type="text/css" />
-<link href="/static/modules/symsys/symsys.css" media="all" rel="Stylesheet" type="text/css" />
-<script type="text/javascript" src="/static/javascripts/jquery-1.3.2.min.js"></script>
-<script type="text/javascript" src="/static/javascripts/jquery-ui-1.7.1.custom.min.js"></script>
-<script type="text/javascript" src="/static/javascripts/jquery-ui-layout-1.2.0.min.js"></script>
-<link href="/static/stylesheets/smoothness/jquery-ui-1.7.1.custom.css" media="all" rel="Stylesheet" type="text/css" />
-<link rel="shortcut icon" href="/static/modules/symsys/favicon.ico" type="image/x-icon">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    {% if item %}
+    <title>Deme &raquo; {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}</title>
+    {% else %}
+    <title>Deme{% if action_title %} &raquo; {{ action_title }}{% endif %}</title>
+    {% endif %}
+
+    
+    <link rel="shortcut icon" href="{% block favicon %}{% if item %}{{ item.actual_item_type|icon_url:24 }}{% else %}{{ accepted_item_type|icon_url:24 }}{% endif %}{% endblock favicon %}" type="image/x-icon" />
+    <!--<link rel="shortcut icon" href="{% media_url "favicon.ico" %}" type="image/x-icon" />-->
+
+    {% universal_edit_button %}
+
+    <link rel="stylesheet" href="{% media_url "stylesheets/blueprint/screen.css" %}" type="text/css" media="screen, projection" />
+    <link rel="stylesheet" href="{% media_url "stylesheets/blueprint/print.css" %}" type="text/css" media="print" />
+    <!--[if IE]>
+        <link rel="stylesheet" href="{% media_url "stylesheets/blueprint/ie.css" %}" type="text/css" media="screen, projection" />
+    <![endif]-->
+    <link href="{% media_url "stylesheets/base.css" %}" media="all" rel="Stylesheet" type="text/css" />
+
+    <script type="text/javascript" src="{% media_url "javascripts/jquery-1.3.2.min.js" %}"></script>
+    <script type="text/javascript" src="{% media_url "javascripts/jquery-ui-1.7.1.custom.min.js" %}"></script>
+    <link href="{% media_url "stylesheets/smoothness/jquery-ui-1.7.1.custom.css" %}" media="all" rel="Stylesheet" type="text/css" />
+
+    <script type="text/javascript" src="{% media_url "javascripts/fg.menu.js" %}"></script>
+    <link href="{% media_url "stylesheets/fg.menu.css" %}" media="screen" rel="stylesheet" type="text/css" />
+	<!-- style exceptions for IE 6 -->
+	<!--[if IE 6]>
+	<style type="text/css">
+		.fg-menu-ipod .fg-menu li { width: 95%; }
+		.fg-menu-ipod .ui-widget-content { border:0; }
+	</style>
+	<![endif]-->	
+    
+    {% ifequal action 'show' %}
+    {% if item %}
+    <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}" />
+    {% endif %}
+    {% endifequal %}
+    {% ifequal action 'list' %}
+    <link rel="alternate" type="application/rss+xml" title="Item feed" href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}" />
+    {% endifequal %}
+    <script type="text/javascript">
+        // from http://www.filamentgroup.com/examples/buttonFrameworkCSS/
+        $(function(){
+            //all hover and click logic for buttons
+            $(".fg-button:not(.ui-state-disabled)")
+            .hover(
+                function(){ 
+                    $(this).addClass("ui-state-hover"); 
+                },
+                function(){ 
+                    $(this).removeClass("ui-state-hover"); 
+                }
+            )
+            .mousedown(function(){
+                    $(this).parents('.fg-buttonset-single:first').find(".fg-button.ui-state-active").removeClass("ui-state-active");
+                    if( $(this).is('.ui-state-active.fg-button-toggleable, .fg-buttonset-multi .ui-state-active') ){ $(this).removeClass("ui-state-active"); }
+                    else { $(this).addClass("ui-state-active"); }	
+            })
+            .mouseup(function(){
+                if(! $(this).is('.fg-button-toggleable, .fg-buttonset-single .fg-button,  .fg-buttonset-multi .fg-button') ){
+                    $(this).removeClass("ui-state-active");
+                }
+            });
+        });
+
+        // To give the gray "Search" text in the search box
+        $(document).ready(function () {
+            var search_box_changed = {% if search_query %}true{% else %}false{% endif %};
+            var search_box = document.getElementById('search_box');
+            search_box.onfocus = function(e){
+                if (!search_box_changed) {
+                    search_box_changed = true;
+                    search_box.value = '';
+                    search_box.style.color = 'inherit';
+                }
+            };
+            search_box.onblur = function(e){
+                if (search_box.value == '') {
+                    search_box_changed = false;
+                    search_box.value = 'Search';
+                    search_box.style.color = '#777';
+                }
+            };
+            search_box.onblur();
+        });
+
+        $(document).ready(function () {
+            $("#right_accordion").accordion({
+                fillSpace: false,
+                autoHeight: false,
+            });
+            decrease_column_right();
+        });
+    </script>        
+
 </head>
+
 <body>
 
-<div class="site">
+<div class="site_outer">
+<div class="site_inner">
 
-<div class="header">
+<div class="header" style="padding-top: 3px; padding-bottom: 3px;">
 
-<div class="top_right">
-    <div class="top_right_text">
-    <form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">
-        <input type="hidden" name="login_type" value="logout" />
-    </form>
-    {% if cur_agent.is_anonymous %}
-    You are not logged in
-    [<a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login</a>]
-    {% else %}
-    You are logged in as <a href="{{ cur_agent.get_absolute_url }}">{% viewable_name cur_agent %}</a>
-    [<a href="#" onclick="document.forms['logout_form'].submit(); return false;">Logout</a>]
-    [<a href="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ full_path|urlencode }}">Login As Someone Else</a>]
-    {% endif %}
-    </div>
-    <div class="top_right_search">
-    <form method="get" action="{% url item_type_url viewer="item" %}">
-    <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
-    </form>
-    </div>
-    <script>
-        var search_box_changed = {% if search_query %}true{% else %}false{% endif %};
-        var search_box = document.getElementById('search_box');
-        search_box.onfocus = function(e){
-            if (!search_box_changed) {
-                search_box_changed = true;
-                search_box.value = '';
-                search_box.style.color = 'inherit';
-            }
-        };
-        search_box.onblur = function(e){
-            if (search_box.value == '') {
-                search_box_changed = false;
-                search_box.value = 'Search';
-                search_box.style.color = '#777';
-            }
-        };
-        search_box.onblur();
-    </script>
+    <table style="margin-bottom: 0;">
+        <tr>
+
+            <td style="vertical-align: top; width: 200px; padding: 0;" rowspan="2">
+                <div class="top_left">
+                    <a href="/"><img src="{% media_url "logo_websafe_cropped_200.jpg" %}" alt="Deme Logo" style="height: 100px; width: 200px; border: 1px solid #aaa; background-color: #00c; -moz-border-radius: 8px; -webkit-border-radius: 8px;" /></a>
+                </div>
+
+            </td>
+
+            <td style="vertical-align: top; text-align: center; padding: 0; padding-left: 5px; padding-right: 5px;">
+
+                {% new_item_menu %}
+
+                <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline;">
+                    <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
+                    {# TODO add magnifying glass #}
+                </form>
+            </td>
+
+            <td style="vertical-align: top; text-align: right; padding: 0;">
+                <div style="float: right;">
+                {% login_menu %}
+                </div>
+                <div style="clear: both;">
+                </div>
+            </td>
+
+        </tr>
+        <tr>
+            <td style="vertical-align: bottom; padding: 0; padding-left: 5px;" colspan="2">
+                <div style="clear: both;"></div>
+                {% if item %}
+                <div style="float: right;">
+                    {% itemtoolbar %}
+                </div>
+                {% endif %}
+
+                <div>
+                <span class="crumbs hidden_item_details" style="display: none;">
+                    {% crumbs %}
+                </span>
+            </div>
+
+                <div class="title">
+                {% block title %}
+                {% if item %}
+                <span class="hidden_item_details" style="display: none;"><img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /></span> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
+                {% else %}
+                <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
+                {% endif %}
+                {% endblock title %}
+                </div>
+            </td>
+        </tr>
+    </table>
+
 </div>
 
-<div class="title"><img src="/static/modules/symsys/images/SU_Seal_Blk_pos_purple64.png" /> Symbolic Systems Program</div>
+<script type="text/javascript">
+    //TODO figure out padding
+    var PAGE_WIDTH = 960;
 
-<div style="clear: both;"></div>
-</div>
-
-<ul class="tabnav">
-    <li{% ifequal full_path "/"%} class="tabhighlighted"{% endifequal %}><a href="/">Home</a></li>
-    <li{% ifequal full_path "/ssp_people"%} class="tabhighlighted"{% endifequal %}><a href="/ssp_people">People</a></li>
-    <li{% ifequal full_path "/ssp_events"%} class="tabhighlighted"{% endifequal %}><a href="/ssp_events">Events</a></li>
-    <li{% ifequal full_path "/ssp_courses"%} class="tabhighlighted"{% endifequal %}><a href="/ssp_courses">Courses</a></li>
-    <li{% ifequal full_path "/ssp_research"%} class="tabhighlighted"{% endifequal %}><a href="/ssp_research">Research</a></li>
-    <li{% ifequal full_path "/ssp_careers"%} class="tabhighlighted"{% endifequal %}><a href="/ssp_careers">Careers</a></li>
-</ul>
-
-<div class="content_box">
-{% if layout_permissions_problem %}
-<div style="color: #a00; padding: 15px; margin: 15px; border: thin dotted #a00; text-align: center;">
-    Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.
-</div>
-{% endif %}
-
-
-
-
-
-
-<table cellspacing="0" width="100%">
-<tr>
-
-<td width="1%" style="vertical-align: top; border: thin solid #aaa; background: #eee; padding: 5px;">
-
-
-
-
-<table cellspacing="0">
-
-    <tr>
-    <td style="vertical-align: top;"><img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" /></td>
-    <td colspan="2" class="nav_menu_header">
-        <a href="ssp_welcome">Welcome!</a>
-    </td>
-    </tr>
-
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="/ssp_static?page=ssp-description/expl1.html">What Is SSP?</a>
-    </td>
-    </tr>
-
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="/ssp_static?page=genInfo.html">Contact Information</a>
-    </td>
-    </tr>
-
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="/ssp_static?page=admissions2.html">Admissions</a>
-    </td>
-    </tr>
-
-
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="/ssp_static?page=degrees.html">Degrees</a>
-    </td>
-    </tr>
-
-<tr><td>&nbsp;</td></tr>
-            
-    <tr>
-    <td style="vertical-align: top;"><img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" /></td>
-    <td colspan="2" class="nav_menu_header">
-    <a href="ssp_people">People</a>
-    </td>
-    </tr>
-    
-    <tr>        
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="ssp_people?group=Students">Students</a> (<a href="ssp_people_full?group=Students">Expanded</a>)
-    </td>
-    </tr>
-            
-    <tr>        
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="ssp_people?group=Alumni">Alumni</a> (<a href="ssp_people_full?group=Alumni">Expanded</a>)
-    </td>
-    </tr>
-
-
-    <tr>        
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="ssp_people?group=Faculty">Faculty</a> (<a href="ssp_people_full?group=Faculty">Expanded</a>)
-    </td>
-    </tr>
-
-    <tr>        
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="ssp_people?group=AdvisingFellows">Advising Fellows</a>
-    </td>
-    </tr>
-
-    <tr>        
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="ssp_people?group=Administration">Administration</a>
-    </td>
-    </tr>
-    
-    <tr>        
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="ssp_facebook">SSP Facebook</a>
-    </td>
-    </tr>
-
-<tr><td>&nbsp;</td></tr>
-
-    <tr>
-    <td style="vertical-align: top;"><img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" /></td>            
-    <td colspan="2" class="nav_menu_header">
-    <a href="/ssp_static?page=events.html">Events</a>
-    </td>
-    
-    
-    
-    </tr>
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="ssp_events">SSP Calendar</a>
-    </td>
-    </tr>
-
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="/ssp_static?page=forum.html">SSP_Forum</a>
-    </td>
-    </tr>
-
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="http://www-csli.stanford.edu/events" target="_blank">CSLI Events</a>
-    </td>
-    </tr>
-
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="http://events.stanford.edu" target="_blank">Events at Stanford</a>
-    </td>
-    </tr>
-
-<tr><td>&nbsp;</td></tr>
-
-    <tr>
-    <td style="vertical-align: top;"><img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" /></td>            
-    <td colspan="2" class="nav_menu_header">
-    <a href="/ssp_static?page=courses.html">Courses</a>
-    </td>
-    </tr>
-
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="" target="_blank">Course Schedule</a>
-    </td>
-    </tr>
-    
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="http://www.stanford.edu/dept/registrar/bulletin/bulletin07-08/pdf/SymbolicSys.pdf" target="_blank">Course Descriptions</a>
-    </td>
-    </tr>
-     
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item"> 
-    <a href="ssp_courses">Course Websites</a><BR> 
-    </td>
-    </tr>
-
-<tr><td>&nbsp;</td></tr>
-
-    <tr>
-    <td style="vertical-align: top;"><img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" /></td>            
-    <td colspan="2" class="nav_menu_header">
-    <a href="/ssp_static?page=research.html">Research Opportunities</a>
-    </td>
-    </tr>
-
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="/ssp_static?page=choosehonor.html">Honors Program</a>
-    </td>
-    </tr>
-    
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="ssp_research">Academic Year Positions</a>
-    </td>
-    </tr>
-    
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="ssp_internships">Summer Internships</a>
-    </td>
-    </tr>
-    
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="ssp_other_research">Other Opportunities</a>
-    </td>
-    </tr>
-    
-    
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="http://urp.stanford.edu" target="_blank">Stanford URP Office</a>
-    </td>
-    </tr>
-        
-<tr><td>&nbsp;</td></tr>
-
-    <tr>
-    <td style="vertical-align: top;"><img src="/static/modules/symsys/images/triangle_bullet.gif" alt="+" /></td>            
-    <td colspan="2" class="nav_menu_header">
-    <a href="/ssp_static?page=jobs.html">Career Resources</a>
-    </td>
-    </tr>
-
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="ssp_jobs">SSP Jobs Database</a>
-    </td>
-    </tr>
-
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class=nav_menu_item>
-    <a href="/ssp_static?page=otherjobs.html">Other Resources</a>
-    </td>
-    </tr>
-
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="ssp_admin_jobs_create?action=create">List a Job</a>
-    </td>
-    </tr>
-    
-    <tr>
-    <td></td>
-    <td style="vertical-align: top;" class="nav_menu_item">&raquo;</td>
-    <td class="nav_menu_item">
-    <a href="http://cardinalrecruiting.stanford.edu/employers/" target="_blank">CDC Listing Service</a>
-    </td>
-    </tr>
-
-<tr><td>&nbsp;</td></tr>
-</table>
-
-
-<img src="/static/spacer.gif" alt="Clear image" width=155
-height=1 border=0>
-
-</td>
-
-<td style="vertical-align: top; padding-left: 15px;">
-
-<script>
-$(document).ready(function () {
-    document_layout = $('#content_layout').layout({
-        applyDefaultStyles: true,
-        east__size: 400,
-        east__initClosed: true,
-        south__initClosed: true,
-    });
-});
+    function increase_column_right()
+    {
+        var right_width = $('#right_table_column').width();
+        if( right_width >= PAGE_WIDTH*.75 ){
+            $('#center_table_column').hide();
+            $('#increasebutton').hide();
+            $('#right_table_column').width( .875*PAGE_WIDTH );
+        }
+        else{
+            $('#right_table_column').width( right_width + PAGE_WIDTH*.125 );
+            $('#center_table_column').width( PAGE_WIDTH*.75 - right_width );
+        }
+    }
+    function decrease_column_right()
+    {
+        var right_width = $('#right_table_column').width();
+        if( right_width <= PAGE_WIDTH*.25 ){
+            $('#right_table_column').hide();
+            $('#right_table_column_hidden').show();
+            $('#right_table_column_hidden').width($('#right_table_column_hidden a').width());
+            $('#center_table_column').width( .875*PAGE_WIDTH - $('#right_table_column_hidden').width() );
+            $('.hidden_item_details').hide();
+        }
+        else{
+            $('#right_table_column').width( right_width - PAGE_WIDTH*.125 );
+            $('#center_table_column').width( PAGE_WIDTH - right_width );
+            $('#center_table_column').show();
+            $('#increasebutton').show();
+        }
+    }
+    function show_column_right() {
+        $('#right_table_column').show();
+        $('#right_table_column_hidden').hide();
+        $('#center_table_column').width(960 - $('#right_table_column').width() - $('#left_table_column').width());
+    }
+    function show_comments_big() {
+        $('#make_big').hide();
+        $('#make_normal').show();
+        $('.comment_body').show();
+    }
+    function hide_comments_big() {
+        $('#make_big').show();
+        $('#make_normal').hide();        
+        $('.comment_body').hide();
+    }
+    function openCommentDialog(name)
+    {
+        var dialogBox = $('#' + name);
+        dialogBox.dialog({
+            autoOpen: false,
+            bgiframe: true,
+            modal: true,
+            close: function(event, ui) {dialogBox.dialog('destroy')}
+        });
+        dialogBox.dialog('open');
+    }
+    function displayHiddenDiv(name)
+    {
+        var hiddenDiv = $('#' + name);
+        hiddenDiv.show();
+    }
 </script>
 
-<div id="content_layout" style="height: 400px;">
+<div class="content_box">
 
-{% if item %}
-<div class="ui-layout-east" style="overflow: auto;">
-<div><a href="#" onclick="$('.comment_body, .comment_description').toggle(); return false;">Collapse/Expand</a></div>
-{% commentbox %}
-</div>
-{% endif %}
+    {% if layout_permissions_problem %}
+    <div style="color: #a00; padding: 15px; margin: 15px; border: thin dotted #a00; text-align: center;">
+        Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.
+    </div>
+    {% endif %}
 
-{% if item %}
-<div class="ui-layout-south" style="overflow: auto;">
-{% actionnoticebox %}
-</div>
-{% endif %}
+    <table cellspacing="0">
+        <tr>
+            <td style="vertical-align: top; width: 120px; padding:0;" id="left_table_column">
+                <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
+                    Navigation
+                </div>
+                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px;">
+                    <ul style="list-style-type: none; margin: 0; padding: 0;">
+                        <li{% ifequal full_path "/"%} style="font-weight: bold;"{% endifequal %}>
+                        <a href="/" style="text-decoration: underline;">Welcome!</a>
+                        </li>
+                        <ul>
+                        <li{% ifequal full_path "/ssp_description"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/ssp_description">What is Sym Sys?</a>
+                        </li>
+                        <li{% ifequal full_path "/gen_info"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/gen_info">Contact Information</a>
+                        </li>
+                        <li{% ifequal full_path "/admissions"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/admissions">Admissions</a>
+                        </li>
+                        <li{% ifequal full_path "/degrees"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/degrees">Degrees</a>
+                            </li>
+                        <li{% ifequal full_path "/courses"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/courses">Courses</a>
+                        </li>
+                        </ul>
+                        <li{% ifequal full_path "/viewing/symsysaffiliate"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/viewing/symsysaffiliate" style="text-decoration: underline;">People</a>
+                            </li>
+                        <ul>
+                        <li{% ifequal full_path "/students"%} style="font-weight: bold;"{% endifequal %}>
+                        <a href="/students">Students</a><br>
+                        </li>
+                            <a href="/students_list" style="font-size: 90%; margin-left: 13px; vertical-align: top;">list view</a>
+                        
+                        <li{% ifequal full_path "/alumni"%} style="font-weight: bold;"{% endifequal %}>
+                        <a href="/alumni">Alumni</a><br>
+                        </li>
+                            <a href="/alumni_list" style="font-size: 90%; margin-left: 13px; vertical-align: top;">list view</a>
 
-<div class="ui-layout-center" style="overflow: auto;">
-<div class="subtitle">{% block title %}{% endblock %}</div>
-{% if item %}
-<div style="text-align: right; margin-bottom: 5px;">
-    <button onclick="document_layout.toggle('east')"><img src="{{ "TextComment"|icon_url:16 }}" /> <span><b>{{ n_comments }}</b> comment{{ n_comments|pluralize }}</span></button>
-    <button onclick="document_layout.toggle('south')"><img src="{{ "history"|icon_url:16 }}" /> <span><b>{{ n_action_notices }}</b> action notice{{ n_action_notices|pluralize }}</span></button>
-</div>
-{% itemheader %} {#TODO include argument for page title#}
-{% else %}
-{% typeheader %} {#TODO include argument for page title#}
-{% endif %}
-{% block content %}
-{% endblock %}
-</div>
+                        <li{% ifequal full_path "/faculty"%} style="font-weight: bold;"{% endifequal %}>
+                        <a href="/faculty">Faculty</a><br>
+                        </li>
+                            <a href="/faculty_list" style="font-size: 90%; margin-left: 13px; vertical-align: top;">list view</a>
 
-</div>
+                        <li{% ifequal full_path "/advising_fellows"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/advising_fellows">Advising Fellows</a>
+                        </li>
+                        <li{% ifequal full_path "/admin"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/admin">Administration</a>
+                        </li>
+                        </ul>
+                        <li{% ifequal full_path "/events_page"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/events_page" style="text-decoration: underline;">Events</a>
+                        </li>
+                        <ul>
+                        <li{% ifequal full_path "/event_calendar"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/event_calendar">SSP Calendar</a>
+                        </li>
+                        <li{% ifequal full_path "/ssp_forum"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/ssp_forum">SSP Forum</a>
+                        </li>
+                        <li>
+                            <a href="http://www-csli.stanford.edu/events/">CSLI Events</a>
+                        </li>
+                        <li>
+                            <a href="http://events.stanford.edu">Events at Stanford</a>
+                        </li>
+                        </ul>
+                        
+                        <li{% ifequal full_path "/research"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/research" style="text-decoration: underline;">Research Opportunities</a>
+                        </li>
+                        <ul>
+                        <li{% ifequal full_path "/honors"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/honors">Honors Program</a>
+                        </li>
+                        <li{% ifequal full_path "/academic_year_positions"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/academic_year_positions">Academic Year Positions</a>
+                        </li>
+                            <a href="/ssp_research" style="font-size: 90%; margin-left: 13px; vertical-align: top;">list view</a>
+                        <li{% ifequal full_path "/ssp_internships"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/ssp_internships">Summer Internships</a>
+                        </li>
+                        <li{% ifequal full_path "/other_opportunities"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/other_opportunities">Other Opportunities</a>
+                        </li>
+                            <a href="/ssp_other_research" style="font-size: 90%; margin-left: 13px; vertical-align: top;">list view</a>
+                        <li>
+                            <a href="http://urp.stanford.edu">Stanford URP Office</a>
+                        </li>
+                        </ul>
+                        <li{% ifequal full_path "/ssp_jobs"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/ssp_jobs" style="text-decoration: underline;">SSP Jobs Database</a>
+                        </li>
+                            <a href="/ssp_jobs_list" style="font-size: 90%; margin-left: 40px; vertical-align: top;">list view</a>
+                        <ul>
+                        <li{% ifequal full_path "/other_resources"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/other_resources">Other Resources</a>
+                        </li>
+                        <li{% ifequal full_path "/viewing/htmladvertisement/new"%} style="font-weight: bold;"{% endifequal %}>
+                            <a href="/viewing/htmladvertisement/new">Add a job listing</a>
+                        </li>
+                        </ul>
+                        {% comment %}
+                        <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
+                        <li{% ifequal viewer_name "codegraph"%} style="font-weight: bold;"{% endifequal %}><a href="{% url item_type_url viewer="codegraph" %}">Codegraph</a></li>
+                        <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
+                        {% endcomment %}
+                    </ul>
+                </div>
+            </td>
+            <td style="vertical-align: top; width: 600px; padding:0;" id="center_table_column">
+                <div style="padding: 0 5px 0 5px;">
+                    {% block content %}
+                    {% endblock %}
+                </div>
+            </td>
+            <td style="vertical-align: top; display: none; padding:0;" id="right_table_column_hidden">
+                <div class="ui-helper-clearfix" style="font-size: 60%;">
+                    <a href="#" onclick="show_column_right(); $('.hidden_item_details').show(); return false;" class="fg-button ui-state-default ui-corner-all" title="Show"><div style="font-size: 8pt;">Item Data</div></a>
+                </div>
+            </td>
+            <td style="vertical-align: top; width: 240px; padding:0;" id="right_table_column">
+                <div class="ui-helper-clearfix" style="font-size: 60%;">
+                    <a href="#" id="increasebutton" onclick="increase_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Show"><span class="ui-icon ui-icon-arrowthickstop-1-w"></span> Show</a>
+                    <a href="#" id="decreasebutton" onclick="decrease_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Hide"><span class="ui-icon ui-icon-arrowthickstop-1-e"></span> Hide</a>
+                </div>
 
-</td>
-</tr>
-</table>
+                {# TODO links are black because of ui-widget-content to a #}
+                <div id="right_accordion">
+                    {% if item %}
 
+                    <h3><a href="#">Item Details</a></h3>
 
+                    <div>
+                        {% itemdetails %}
+                    </div>
 
+                    {% calculatecomments %}
+                    <h3><a href="#">{{ n_comments }} comment{{ n_comments|pluralize }}</a></h3>
+                    <div>
+                        <div id="make_big"><a href="#" onclick="show_comments_big(); return false;">Expand Comments</a></div>
+                        <div id="make_normal" style="display: none;"><a href="#" onclick="hide_comments_big(); return false;">Collapse Comments</a></div>
+                        {{ comment_box }}
+                    </div>
 
+                    {% calculateactionnotices %}
+                    <h3><a href="#">{{ n_action_notices }} action notice{{ n_action_notices|pluralize }}</a></h3>
+                    <div>
+                        {{ action_notice_box }}
+                    </div>
 
+                    {% calculatehistory %}
+                    <h3><a href="#">{{ n_versions }} version{{ n_versions|pluralize }}</a></h3>
+                    <div>
+                        {{ history_box }}
+                    </div>
+
+                    {% calculaterelationships %}
+                    <h3><a href="#">{{ n_relationships }} related item{{ n_relationships|pluralize }}</a></h3>
+                    <div>
+                        {{ relationships_box }}
+                    </div>
+
+                    <h3><a href="#">Permissions</a></h3>
+                    <div>
+                        {% permissions_box %}
+                    </div>
+
+                    {% else %}
+
+                    <h3><a href="#"></a></h3>
+                    <div>
+                    </div>
+
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    </table>
 
 </div>
 
 <div class="footer">
-    <p>Copyright &copy; {% now "Y" %} Symbolic Systems Program at Stanford University.</p>
-    <p>Please contact our <a href="mailto:ian.comfort@stanford.edu">webmaster</a> with any comments or corrections.</p>
-    <p>&nbsp;</p>
-    <p>Stanford University</p>
-    <p>Margaret Jacks Hall</p>
-    <p>Bldg 460, Rm. 40E</p>
-    <p>650-723-0950</p>
+    <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
+    <p>Desktop browser | <a href="list.mobi">Mobile</a> | <a href="list.rss">RSS</a></p> {# TODO generate formats list #}
 </div>
 
+</div>
 </div>
 
 </body>
+
 </html>
 

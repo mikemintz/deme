@@ -4,35 +4,7 @@
 {% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
-
 <ul style="list-style-type: none; margin-bottom: 20px; margin-top: 5px; padding: 0;">
-
-    {% if admin_title %}
-    {% ifagentcan 'view ProgramStaffSymsysCareer.admin_title' item %}
-    <li class="outerlist">
-    <b>Job Title: </b>
-    {{ admin_title }}
-    </li>
-    {% endifagentcan %}
-    {% endif %}
-
-    {% if researcher_academic_title %}
-    {% ifagentcan 'view ResearcherSymsysCareer.academic_title' item %}
-    <li class="outerlist">
-    <b>Researcher Title: </b>
-    {{ researcher_academic_title }}
-    </li>
-    {% endifagentcan %}
-    {% endif %}
-
-    {% if faculty_academic_title %}
-    {% ifagentcan 'view FacultySymsysCareer.academic_title' item %}
-    <li class="outerlist">
-    <b>Faculty Title: </b>
-    {{ faculty_academic_title }}
-    </li>
-    {% endifagentcan %}
-    {% endif %}
 
     {% ifagentcan 'view SymsysCareer.original_first_name' item %}
     {% ifagentcan 'view SymsysCareer.original_middle_names' item %}
@@ -63,6 +35,33 @@
     {% ifagentcan 'view SymsysCareer.original_photo' item %}
     <li class="outerlist">
         <a href="{{ item.original_photo.get_absolute_url }}"><img src="{{ item.original_photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a>
+    </li>
+    {% endifagentcan %}
+    {% endif %}
+
+    {% if item.thesis %}
+    {% ifagentcan 'view ThesisSymsysCareer.thesis' item %}
+    <li class="outerlist">
+    <b>Thesis: </b>
+    <a href="{{ item.thesis.get_absolute_url }}">{% if item.thesis_title %}{{ item.thesis_title }}{% else %}{% viewable_name item.thesis %}{% endif %}</a>
+    </li>
+    {% endifagentcan %}
+    {% endif %}
+
+    {% if advisor %}
+    {% ifagentcan 'view HonorsSymsysCareer.advisor' item %}
+    <li class="outerlist">
+    <b>Thesis Advisor: </b>
+    <a href="{{ advisor.get_absolute_url }}">{% viewable_name item.advisor %}</a>
+    </li>
+    {% endifagentcan %}
+    {% endif %}
+
+    {% if item.second_reader %}
+    {% ifagentcan 'view ThesisSymsysCareer.second_reader' item %}
+    <li class="outerlist">
+    <b>Second Reader: </b>
+    <a href="{{ item.second_reader.get_absolute_url }}">{% viewable_name item.second_reader %}</a>
     </li>
     {% endifagentcan %}
     {% endif %}
@@ -104,6 +103,5 @@
     </li>
     {% endifagentcan %}
     
-
 </ul>
-{% endblock %}
+{% endblock content %}

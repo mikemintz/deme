@@ -150,6 +150,14 @@ def icon_url(item_type, size=32):
     return urljoin(settings.MEDIA_URL, "crystal_project/%dx%d/%s.png" % (size, size, icon))
 
 @register.simple_tag
+def item_type_verbose_name(item_type):
+    if isinstance(item_type, basestring):
+        item_type = get_item_type_with_name(item_type)
+    elif isinstance(item_type, Item):
+        item_type = item_type.actual_item_type()
+    return item_type._meta.verbose_name
+
+@register.simple_tag
 def media_url(path):
     fs_path = os.path.join(settings.MEDIA_ROOT, path)
     if os.path.exists(fs_path):
@@ -392,6 +400,7 @@ class ItemToolbar(template.Node):
 
     def render(self, context):
         item = context['item']
+        item_name = get_viewable_name(context, item)
         version_number = item.version_number
         cur_item_type = context['_viewer'].accepted_item_type
         item_type_inheritance = []
@@ -413,13 +422,27 @@ class ItemToolbar(template.Node):
         #result.append('<div class="fg-toolbar ui-widget-header ui-corner-all ui-helper-clearfix">')
         result.append('<div class="ui-helper-clearfix" style="font-size: 85%;">')
         result.append('<div class="fg-buttonset ui-helper-clearfix">')
+        from cms.forms import AjaxModelChoiceField
+        result.append("""
+            <div id="subscribe_dialog" style="display: none;" title="Subscribe to '%s'">
+                <div style="font-size: 9pt;">Subscriptions send emails to the email contact method specified below for every new notification on this item</div>
+                <br>
+                <form method="post" action="%s?redirect=%s"> 
+                    <input type="hidden" name="item" value="%s" />
+                    Contact Method: %s 
+                    <a href="%s" style="float: right; font-size: 9pt;" >Advanced</a>
+                    <input type="submit" value="Submit" />
+                </form>
+            </div>
+            """ % (item_name, reverse('item_type_url', kwargs={'viewer':'subscription', 'action':'dialogcreate'}), context['full_path'], item.pk, AjaxModelChoiceField(EmailContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=['add_subscription']).widget.render('email', None, {'id':'memberajaxfield'}), subscribe_url))
 
         if isinstance(item, Agent):
             if agentcan_helper(context, 'add_authentication_method', item):
                 result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add authentication method</a>' % add_authentication_method_url)
             if agentcan_helper(context, 'add_contact_method', item):
                 result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a>' % add_contact_method_url)
-        result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscribe</a>' % subscribe_url)
+        if not context['cur_agent'].is_anonymous():
+            result.append("""<a href="#" onclick="openCommentDialog('subscribe_dialog'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscribe</a>""")
         if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
             result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-pencil"></span>Edit</a>' % edit_url)
         if agentcan_global_helper(context, 'create %s' % item.item_type_string):
@@ -525,7 +548,7 @@ class ItemDetails(template.Node):
 
         if agentcan_helper(context, 'view Item.name', item) and item.name:
             result.append('<tr>')
-            result.append('<th>Name:</th>')
+            result.append('<th>Item Name:</th>')
             result.append('<td>')
             result.append(escape(item.name))
             result.append('</td>')
@@ -658,6 +681,8 @@ class CalculateComments(template.Node):
         return "<CalculateCommentsNode>"
 
     def render(self, context):
+        from cms.forms import CaptchaField 
+        from cms.forms import AjaxModelChoiceField
         item = context['item']
         version_number = item.version_number
         full_path = context['full_path']
@@ -668,19 +693,23 @@ class CalculateComments(template.Node):
         if agentcan_helper(context, 'comment_on', item):
             result.append("""<button href="#" onclick="openCommentDialog('comment%s'); return false;">[+] Add Comment</button>""" % (item.pk))
             result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
-            from cms.forms import CaptchaField 
-            result.append("""<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p>Security Question: <br>%s """ % CaptchaField(label=("Security Question")).widget.render('sq',None) )
-            from cms.forms import AjaxModelChoiceField
+            result.append("""<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> """)
+            if context['cur_agent'].is_anonymous():
+                result.append("""  </p>Security Question: <br>%s """ % CaptchaField(label=("Security Question")).widget.render('sq',None) )
             result.append("""<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> """ % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', None, {'id':'commentajaxfield' })))
             result.append(""" <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" />  """ % (item.pk, item.version_number))
             result.append("""<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedcomment%s'); return false;" >Advanced</a> """ % (item.pk))
             result.append("""</form></div>""")
             result.append("""</div>""")
+        else:
+            result.append("</div>")
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
                 result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
-                result.append("""<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> Security Question: <br>%s """ % (comment.name,CaptchaField(label=("Security Question")).widget.render('sq', None)) )
+                result.append("""<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> """ )
+                if context['cur_agent'].is_anonymous():
+                    result.append("""  </p>Security Question: <br>%s """ % CaptchaField(label=("Security Question")).widget.render('sq',None) )
                 result.append("""<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> """ % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', None)))
                 result.append(""" <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> """ % (comment.pk, comment.version_number))
                 result.append("""<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedcomment%s'); return false;" >Advanced</a> """ % (comment.pk))
@@ -808,7 +837,15 @@ class CalculateRelationships(template.Node):
             viewable_items = permission_cache.filter_items('view %s.%s' % (field.model.__name__, field.field.name), viewable_items)
             if viewable_items.count() == 0:
                 continue
-            relationship_item_type = manager.model
+            if field.field.name in field.model.dyadic_relations:
+                target_field_name, relation_name = field.model.dyadic_relations[field.field.name]
+                target_field = field.model._meta.get_field_by_name(target_field_name)[0]
+                target_model = target_field.rel.to
+                viewable_items = permission_cache.filter_items('view %s.%s' % (field.model.__name__, target_field_name), viewable_items)
+                filter_dict = {target_field.rel.related_name + "__in": viewable_items.values('pk').query, 'active': True}
+                viewable_items = target_model.objects.filter(**filter_dict)
+                relationship_set['name'] = relation_name
+                #TODO set relationship_set['field'] (or just set list_url) so it's correct for this dyadic relation
             permission_cache.filter_items('view Item.name', viewable_items)
             relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)
@@ -1500,21 +1537,25 @@ def crumbs(parser, token):
     return Crumbs()
 
 
-class ItemsMenu(template.Node):
+class NewItemMenu(template.Node):
     def __init__(self):
         pass
 
     def __repr__(self):
-        return "<ItemsMenu>"
+        return "<NewItemMenu>"
 
     def render(self, context):
         viewer = context['_viewer']
+        sorted_item_types = sorted(all_item_types(), key=lambda x: x._meta.verbose_name_plural.lower())
+        all_item_types_can_create = [x for x in sorted_item_types if agentcan_global_helper(context, 'create %s' % x.__name__)]
+        if not all_item_types_can_create:
+            return ''
         result = []
         result.append("""
         <script type="text/javascript">
         $(function(){
-            $('#items_menu_link').menu({
-                content: $('#items_menu_link').next().html(),
+            $('#new_item_menu_link').menu({
+                content: $('#new_item_menu_link').next().html(),
                 width: 240,
                 maxHeight: 445,
                 showSpeed: 50,
@@ -1525,17 +1566,14 @@ class ItemsMenu(template.Node):
             });
         });
         </script>
-        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="items_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>Items</a>
+        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="new_item_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>New item</a>
         <div style="display: none;">
         <ul style="font-size: 85%;">
         """)
-        sorted_item_types = sorted(all_item_types(), key=lambda x: x._meta.verbose_name_plural.lower())
         def add_item_type_to_menu(item_type):
             top_item_types = [item_type]
             if item_type == Item and viewer.accepted_item_type != Item:
                 top_item_types.append(viewer.accepted_item_type)
-            for top_item_type in top_item_types:
-                result.append(u'<li><a href="%s" class="img_link"><img src="%s" /> View all %s</a></li>' % (reverse('item_type_url', kwargs={'viewer': top_item_type.__name__.lower()}), icon_url(top_item_type, 16), top_item_type._meta.verbose_name_plural))
             for top_item_type in top_item_types:
                 if agentcan_global_helper(context, 'create %s' % top_item_type.__name__):
                     result.append(u'<li><a href="%s" class="img_link"><img src="%s" /> New %s</a></li>' % (reverse('item_type_url', kwargs={'viewer': top_item_type.__name__.lower(), 'action': 'new'}), icon_url(top_item_type, 16), top_item_type._meta.verbose_name))
@@ -1554,11 +1592,11 @@ class ItemsMenu(template.Node):
         return '\n'.join(result)
 
 @register.tag
-def items_menu(parser, token):
+def new_item_menu(parser, token):
     bits = list(token.split_contents())
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
-    return ItemsMenu()
+    return NewItemMenu()
 
 
 class LoginMenu(template.Node):

@@ -6,4 +6,5 @@ rm -rf "$base_dir/static/filedocument/*"
 psql -U postgres -c "drop database deme_django;"
 psql -U postgres -c "create database deme_django WITH OWNER = postgres ENCODING = 'UTF8' TABLESPACE = pg_default;"
 $base_dir/manage.py syncdb
+$base_dir/manage.py migrate
 $base_dir/script/create_initial_data.py test

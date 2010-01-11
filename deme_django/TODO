@@ -1,5 +1,42 @@
 |==========|
+|Codesprint|
+|list 12/09|
+|==========|
+
+Sprint priorities
+* Email lists
+* Email notifications - better wording
+* Default Deme layout
+    * remove "Subscribe" button from views when not logged in
+    * Rename "More" button to "Item Data"
+    * Hide Items pulldown bar, Item Type icon, and breadcrumbs, as well as Metadata menu, when Item Data is minimized; Show all of these when "Item Data" is clicked
+    * Don't display "Login as" in Login pulldown options if there is no one to log in as
+* Symsys homepage
+* Webauth timing issue
+* Pull new data from old Symsys
+* Move from beta to Symsys
+* Certificate transfer?
+* Set up Todd's blog Mindroll
+* Make password setting easier
+* Migrations
+* Change wording of Related Items in metadata menu
+
+Other things to do
+* redesign logo so it includes "Symbolic Systems Program"
+* make links to Symsys internal pages work in static documents
+* Give way to show options when completing a text box (e.g. adding an item to a collection should not require one to type a random character in order to see the options) - make list alphabetical
+* Make it so you can add items with no name to a Newsroll
+* Get and install more memory
+* Give more data about each version in Versions metadata display (e.g. datetime, updater)
+* Discussion viewer - full page view of comment threads
+* Make event links in calendar shareable
+* Truncate event description in div onlick from calendar
+* Go through permissions and do sanity check for different categories of users
+* Expand search beyond name field; combinatorial search, etc.
+
+|==========|
 |Short Term|
+|to do list|
 |==========|
 
 
@@ -14,6 +51,7 @@ Ontology changes
 
 Code correctness/consistency/bugs
 ---------------------------------
+* If someone makes a layout and screws up django template syntax, the site is completely screwed. Come up with failsafe
 * If you go to "new" and one of the initial model fields is permission denied (e.g., you're creating a membership on a collection you aren't allowed to modify_membership for, or creating a comment on an item you can't reply to), let the user know
 * the destroy action notice will never be read by anyone (since all permissions are effectively denied)
 * Methods that have to do with sending emails (about action notices) should go in EmailContactMethod, not ActionNotice
@@ -38,6 +76,7 @@ Features
 --------
 * Advanced search
 * CustomURL layouts should inherit from parent CustomURL layouts
+* Email alias field, optional for each address; could look for Postmaster spam using cron job each minute
 
 Layout
 ------
@@ -84,6 +123,7 @@ Unusual things to remember
 Distant Future (sorted by approximate order of planned implementation)
 ----------------------------------------------------------------------
 * Migrations (let's use http://south.aeracode.org/)
+* Allow widgets to specify stylesheet and javascripts to add to the layout.
 * Write PermissionCache.filter_agents_by_permission so we can display which agents have a particular ability w.r.t. an item.
 * Comments that are generated from the website, when sent by email, should come from an EmailContactMethod if the user has a default contact method (we'll need a way to select a default contact method)
 * Specific-version destroying

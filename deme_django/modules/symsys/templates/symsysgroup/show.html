@@ -1,0 +1,167 @@
+{% extends layout %}
+{% load newsroll_extras %}
+{% load item_tags %}
+{% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
+{% block content %}
+{% comment %}
+<script type="text/javascript">
+    function show_embedded_staff(pk){
+        var normal_window = $("#staff" + pk);
+        var embedded_profile = $("#bigstaff" + pk);
+        embedded_profile.append("lol");
+        embedded_profile.show();
+        normal_window.hide();
+    }
+    function show_embedded_person(pk){
+        var normal_window = $("#person" + pk);
+        var embedded_profile = $("#bigperson" + pk);
+        embedded_profile.append("lol");
+        embedded_profile.show();
+        normal_window.hide();
+    }
+
+</script>
+{% endcomment %}
+
+{% for member in members %}
+{% if member.is_staff %}
+<div id="staff{{ member.item.pk }}">
+<table>
+    <tr>
+        <td>
+            <a href="{{ member.item.get_absolute_url }}">{% viewable_name member.item %}</a>
+        </td>
+        <td>
+            <b>Academic Title: </b>{{ member.academic_title }} 
+        </td>
+    </tr>
+    <tr>
+        {% if member.photo %}
+        <td>
+            <a href="{{ member.photo.get_absolute_url }}"><img src="{{ member.photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a>
+        </td>
+        {% endif %}
+        <td>
+            {% if member.item.publications %}
+            {% ifagentcan 'view SymsysAffiliate.publications' member.item %}
+                <b>Publications: </b>{{ member.item.publications }} 
+                <br>
+            {% endifagentcan %}
+            {% endif %}
+            {% if member.item.interests %}
+            {% ifagentcan 'view SymsysAffiliate.interests' member.item %}
+                <b>Interests: </b>{{ member.item.interests }}
+                <br>
+            {% endifagentcan %}
+            {% else %}
+                {% if member.item.about %}
+                {% ifagentcan 'view SymsysAffiliate.about' member.item %}
+                <b>About: </b>{{ member.item.about }}
+                <br>
+                {% endifagentcan %}
+                {% endif %}
+            {% endif %}
+            {% if member.item.office_hours %}
+            {% ifagentcan 'view SymsysAffiliate.office_hours' member.item %}
+                <b>Office Hours: </b>
+                {{ member.item.office_hours }}
+                <br>
+            {% endifagentcan %}
+            {% endif %}
+            <br>
+            {% comment %}
+            <a href="#" onclick="show_embedded_staff({{ member.item.pk }}); return false;">Show {% viewable_name member.item %}'s complete profile</a>
+            {% endcomment %}
+            <a href="{{ member.item.get_absolute_url }}">Show {% viewable_name member.item %}'s complete profile</a>
+        </td>
+    </tr>
+</table>
+<hr>
+{% comment %}
+</div>
+<div id="bigstaff{{ member.item.pk }}" style="display: none;">
+    <a href="#" onclick="$('#bigstaff{{ member.item.pk }}').hide(); $('#staff{{ member.item.pk }}').show(); return false;">Hide all details</a>
+</div>
+<hr>
+{% endcomment %}
+
+{% else %}
+<div id="person{{ member.item.pk }}">
+<table>
+    <tr>
+        <td>
+            <a href="{{ member.item.get_absolute_url }}">{% viewable_name member.item %}</a>
+        </td>
+        {% if member.class_year %}
+        <td style="text-align: left;">
+            <b>Class Year: </b>{{ member.class_year }}
+        </td>
+        {% endif %}
+        {% if member.concentration %}
+        <td>
+            <b>Concentration: </b>{{ member.concentration }}
+        </td>
+        {% endif %}
+    </tr>
+    <tr>
+        {% if member.photo %}
+        <td>
+            <a href="{{ member.photo.get_absolute_url }}"><img src="{{ member.photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a>
+        </td>
+        {% endif %}
+        <td colspan=2 style="text-align: left;">
+            {% if member.item.about %}
+            {% ifagentcan 'view SymsysAffiliate.about' member.item %}
+            <b>About: </b>
+            {{ member.item.about }}
+            <br>
+            {% endifagentcan %}
+            {% else %}
+            <b>About: </b>
+            (blank)
+            {% endif %}
+            {% if member.item.office_hours %}
+            {% ifagentcan 'view SymsysAffiliate.office_hours' member.item %}
+            <b>Office Hours: </b>
+            {{ member.item.office_hours }}
+            {% endifagentcan %}
+            {% endif %}
+            <br>
+            {% comment %}
+            <a href="#" onclick="show_embedded_person({{ member.item.pk }}); return false;">Show {% viewable_name member.item %}'s complete profile</a>
+            {% endcomment %}
+            <a href="{{ member.item.get_absolute_url }}">Show {% viewable_name member.item %}'s complete profile</a>
+        </td>
+    </tr>
+</table>
+</div>
+{% comment %}
+<div id="bigperson{{ member.item.pk }}" style="display: none;">
+    <a href="#" onclick="$('#bigperson{{ member.item.pk }}').hide(); $('#person{{ member.item.pk }}').show(); return false;">Hide all details</a>
+</div>
+{% endcomment %}
+<hr>
+{% endif %}
+{% endfor %}
+
+<div style="border: 2px solid #aaa; margin-bottom: 8px; padding-bottom: 8px; text-align: center;">
+{% if members.has_previous %}
+<a href="?page={{ members.previous_page_number }}"> ~ Prev |</a>
+{% endif %}
+    {% for page in page_range %}
+        {% ifequal page members.number %} 
+            {{ members.number }}
+        {% endifequal %}
+
+        {% ifnotequal page members.number %}
+            <a href="?page={{ page }}">{{ page }}</a>
+        {% endifnotequal %}    
+    {% endfor %}
+{% if members.has_next %}
+<a href="?page={{ members.next_page_number }}">| Next ~</a>
+{% endif %}
+</div>
+<div style="text-align: center;">
+    View this group in a <a href="{% url item_url viewer="group",action="show",noun=item.pk %}">more compressed format</a>
+</div>
+{% endblock %}

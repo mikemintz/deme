@@ -161,7 +161,7 @@ class ItemViewer(Viewer):
             form = None
         else:
             if form is None:
-                form_initial = self.get_populated_field_dict()
+                form_initial = self.get_populated_field_dict(self.accepted_item_type)
                 form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
         template = loader.get_template('item/new.html')
@@ -226,15 +226,14 @@ class ItemViewer(Viewer):
             newPage = paginator.page(paginator.num_pages)
 
         page_range = paginator.page_range
+        displayed_page_range = []
         for possible_page in page_range:
-            if (possible_page > page + 10):
-                page_range.remove(possible_page)
-            if (possible_page < page - 10):
-                page_range.remove(possible_page)
+            if (possible_page < page + 10) and (possible_page > page-10):
+                displayed_page_range.append(possible_page)
 
         self.context['action_notices'] = newPage
         self.context['count'] = paginator.count
-        self.context['page_range'] = page_range
+        self.context['page_range'] = displayed_page_range
            
         return HttpResponse(template.render(self.context))
 
@@ -330,7 +329,7 @@ class ItemViewer(Viewer):
         abilities_for_item = self.permission_cache.item_abilities(self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         if form is None:
-            form_initial = self.get_populated_field_dict()
+            form_initial = self.get_populated_field_dict(self.accepted_item_type)
             fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
             form_class = self.get_form_class_for_item_type(self.accepted_item_type, False, fields_can_edit)
             form = form_class(instance=self.item, initial=form_initial)
@@ -610,6 +609,12 @@ class AuthenticationMethodViewer(ItemViewer):
     def type_loginmenuitem_html(self):
         self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('authenticationmethod/loginmenuitem.html')
+        login_as_agents = Agent.objects.filter(active=True).order_by('name')
+        login_as_agents = self.permission_cache.filter_items('login_as', login_as_agents)
+        can_login_as_anyone = True
+        if login_as_agents.count() == 0:
+            can_login_as_anyone = False
+        self.context['can_login_as_anyone'] = can_login_as_anyone
         return HttpResponse(template.render(self.context))
  
 
@@ -656,6 +661,24 @@ class AddressContactMethodViewer(ContactMethodViewer):
 class SubscriptionViewer(ItemViewer):
     accepted_item_type = Subscription
     viewer_name = 'subscription'
+
+    @require_POST
+    def type_dialogcreate_html(self):
+        if not self.request.POST.get('email'):
+            return self.render_error('Invalid Subscription', "You must specify an email contact method by selecting it from the drop down menu")
+
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
+        item = Item.objects.get(pk=self.request.POST.get('item'))
+        email = EmailContactMethod.objects.get(pk=self.request.POST.get('email'))
+        self.require_ability('add_subscription', email)
+        self.require_ability('view Item.action_notices', item)
+
+        new_subscription = Subscription(contact_method=email, item=item) 
+        permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
+        new_subscription.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
+
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_subscription.pk}))
+        return HttpResponseRedirect(redirect)
 
 
 class CollectionViewer(ItemViewer):
@@ -795,7 +818,7 @@ class TextDocumentViewer(DocumentViewer):
         self.item.body = ''.join(body_as_list)
 
         if form is None:
-            form_initial = self.get_populated_field_dict()
+            form_initial = self.get_populated_field_dict(self.accepted_item_type)
             fields_can_edit = [x.split(' ')[1].split('.')[1] for x in abilities_for_item if x.startswith('edit ')]
             form_class = self.get_form_class_for_item_type(self.accepted_item_type, False, fields_can_edit)
             form = form_class(instance=self.item, initial=form_initial)
@@ -900,7 +923,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
             form = None
         else:
             if form is None:
-                form_initial = self.get_populated_field_dict()
+                form_initial = self.get_populated_field_dict(self.accepted_item_type)
                 form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
                 if issubclass(item.actual_item_type(), Comment):
@@ -960,10 +983,11 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
     @require_POST
     def type_accordioncreate_html(self):
-        value = self.request.POST["sq_1"]
-        response, value = value.strip().lower(), ''
-        if not hashlib.sha1(str(response)).hexdigest() == self.request.POST["sq_0"]:
-            return self.render_error('Invalid Answer', 'Add up the numbers correctly to prove you are not a spammer')
+        if "sq_1" in self.request.POST:
+            value = self.request.POST["sq_1"]
+            response, value = value.strip().lower(), ''
+            if not hashlib.sha1(str(response)).hexdigest() == self.request.POST["sq_0"]:
+                return self.render_error('Invalid Answer', 'Add up the numbers correctly to prove you are not a spammer')
 
         new_body = self.request.POST.get('body')
         if new_body == '':
@@ -978,12 +1002,15 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
         new_comment = TextComment(body=new_body, item=item, item_version_number=self.request.POST.get('item_version_number')) 
         new_comment.name = title
-        if self.request.POST.get('new_from_contact_method') != '':
+        if self.request.POST.get('new_from_contact_method'):
             new_comment.from_contact_method = ContactMethod.objects.get(pk=self.request.POST.get('new_from_contact_method'))
-        #if self.request.GET.get('populate_item_index') != '':
-            #set the item index here
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
         new_comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
+        
+        if self.request.GET.get('populate_item_index'):
+            transclusion = Transclusion(from_item=item.downcast(), from_item_version_number=self.request.POST.get('item_version_number'), from_item_index=self.request.GET.get('populate_item_index'), to_item=new_comment)
+            transclusion_permissions = [OneToOnePermission(source=self.cur_agent, ability='do anything', is_allowed=True)]
+            transclusion.save_versioned(action_agent=self.cur_agent, initial_permissions=transclusion_permissions)
 
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_comment.pk}))
         return HttpResponseRedirect(redirect)

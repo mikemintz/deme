@@ -28,7 +28,7 @@ def get_subject(msg):
 def get_from_email(msg):
     return email.utils.parseaddr(msg['From'])[1]
 
-def handle_email(msg, item_id):
+def handle_email(msg, email_username):
     multi_agent_permission_cache = MultiAgentPermissionCache()
     subject = get_subject(msg)
     if msg.is_multipart():
@@ -36,18 +36,18 @@ def handle_email(msg, item_id):
     else:
         body = msg.get_payload()
     from_email = get_from_email(msg)
-    to_email = "%s@%s" % (item_id, settings.NOTIFICATION_EMAIL_HOSTNAME)
     try:
         email_contact_method = EmailContactMethod.objects.get(email=from_email)
     except ObjectDoesNotExist:
         raise UserException('Error: Your comment could not be created because there is no agent with email address %s' % from_email)
     try:
-        item = Item.objects.get(pk=item_id)
+        item = Item.item_for_notification_email_username(email_username)
     except ObjectDoesNotExist:
-        raise UserException('Error: Your comment could not be created because there does is no item %s' % item_id)
+        raise UserException('Error: Your comment could not be created because there does is no item for email account %s' % email_username)
     permission_cache = multi_agent_permission_cache.get(email_contact_method.agent)
     if not permission_cache.agent_can('comment_on', item):
-        raise UserException('Error: Your comment could not be created because you do not have permission to comment on the item %s' % item_id)
+        display_name = item.display_name(permission_cache.agent_can('view Item.name', item)
+        raise UserException('Error: Your comment could not be created because you do not have permission to comment on %s' % display_name)
 
     agent = email_contact_method.agent
 
@@ -66,14 +66,14 @@ def handle_email(msg, item_id):
 
 def main():
     assert len(sys.argv) == 2
-    item_id = sys.argv[1] # I.e., the mailbox
+    email_username = sys.argv[1] # I.e., the mailbox
     msg = email.message_from_file(sys.stdin)
     try:
-        handle_email(msg, item_id)
+        handle_email(msg, email_username)
     except UserException, e:
         new_subject = 'Re: %s' % get_subject(msg)
         new_body = e.message
-        our_email = "%s@%s" % (item_id, settings.NOTIFICATION_EMAIL_HOSTNAME)
+        our_email = "%s@%s" % (email_username, settings.NOTIFICATION_EMAIL_HOSTNAME)
         their_email = get_from_email(msg)
         send_mail(new_subject, new_body, our_email, [their_email])
 

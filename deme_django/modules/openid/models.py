@@ -16,6 +16,7 @@ class OpenidAccount(AuthenticationMethod):
     introduced_immutable_fields = frozenset(['openid_url'])
     introduced_abilities = frozenset(['view OpenidAccount.openid_url'])
     introduced_global_abilities = frozenset(['create OpenidAccount'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('OpenID account')
         verbose_name_plural = _('OpenID accounts')

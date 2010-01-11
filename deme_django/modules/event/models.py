@@ -16,6 +16,7 @@ class Event(HtmlDocument):
                                       'view Event.end_date', 'view Event.end_time', 'edit Event.start_date', 'edit Event.start_time',
                                       'edit Event.end_date', 'edit Event.end_time',  'edit Event.location'])
     introduced_global_abilities = frozenset(['create Event'])
+    dyadic_relations = {}
 
     class Meta:    
         verbose_name = _('event')
@@ -49,9 +50,9 @@ class Event(HtmlDocument):
     )
 
     #fields:
-    start_date = models.DateField(_('start date'))
+    start_date = models.DateField(_('start date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     start_time = models.TimeField(_('start time'))
-    end_date   = models.DateField(_('end date'))
+    end_date   = models.DateField(_('end date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     end_time   = models.TimeField(_('end time'))
     location   = models.CharField(_('location'), max_length=255) 
     time_zone  = models.CharField(_('time zone'), max_length=255, choices=time_zones, default=settings.TIME_ZONE)
@@ -69,6 +70,7 @@ class Calendar(Collection):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create Calendar'])
+    dyadic_relations = {}
     class Meta:
         verbose_name = _('Calendar')
         verbose_name_plural = _('Calendar')
