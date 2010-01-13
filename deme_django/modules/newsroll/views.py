@@ -113,7 +113,7 @@ class NewsRollViewer(ItemViewer):
         for member in entries.object_list:
             details = {}
             details["member"] = member
-            details["name"] = member.display_name()
+            details["name"] = member.name
             details["url"] = member.get_absolute_url() 
             details["creator"] = member.creator.display_name()
             details["created_at"] = member.created_at
