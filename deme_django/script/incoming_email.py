@@ -46,7 +46,7 @@ def handle_email(msg, email_username):
         raise UserException('Error: Your comment could not be created because there does is no item for email account %s' % email_username)
     permission_cache = multi_agent_permission_cache.get(email_contact_method.agent)
     if not permission_cache.agent_can('comment_on', item):
-        display_name = item.display_name(permission_cache.agent_can('view Item.name', item)
+        display_name = item.display_name(permission_cache.agent_can('view Item.name', item))
         raise UserException('Error: Your comment could not be created because you do not have permission to comment on %s' % display_name)
 
     agent = email_contact_method.agent

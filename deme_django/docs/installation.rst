@@ -94,6 +94,8 @@ I then added the following to the end of ``/etc/postfix/main.cf``::
   transport_maps = regexp:/etc/postfix/deme_transport
   virtual_mailbox_domains = deme.stanford.edu
 
+You may also have to comment out the line in ``main.cf`` that starts with ``mydestination =``.
+
 I then created a file called ``/etc/postfix/deme_transport`` containing the following::
 
   /.*-[0-9]+@deme\.stanford\.edu/    deme:
