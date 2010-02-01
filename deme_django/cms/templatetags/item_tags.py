@@ -447,6 +447,30 @@ class ItemToolbar(template.Node):
             result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-pencil"></span>Edit</a>' % edit_url)
         if agentcan_global_helper(context, 'create %s' % item.item_type_string):
             result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-copy"></span>Copy</a>' % copy_url)
+        if agentcan_global_helper(context, 'create Membership'):
+            result.append("""<a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add item to collection</a>""" % (item.pk))
+            result.append( """
+            <div style="display: none;" id="additemtocollection%(item.pk)s"> 
+            <form method="post" action="%(create_url)s?redirect=%(full_path)s"> 
+                Collection: %(ajax_field)s 
+                <input type="hidden" name="item" value="%(item.pk)s" /><br><br>
+                <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddtocollection%(item.pk)s'); return false;" >Advanced</a>
+                <div style="display: none;" id="advancedaddtocollection%(item.pk)s">
+                    Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br>
+                    Permission Enabled: <input name="permissionenabled" type="checkbox" />
+                    <div style="float: top; font-size: 7pt;">Enable this if you want collection-wide permissions to apply to this child item</div>
+                </div>
+                <input type="submit" value="Submit" />
+            </form>
+            </div>  """ %
+            {
+                'item.pk': item.pk,
+                'full_path': context['full_path'],
+                'create_url': reverse('item_type_url', kwargs={'viewer':'membership', 'action':'itemmembercreate'}),
+                'ajax_field': AjaxModelChoiceField(Collection.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('collection', None, {'id':'memberajaxfield'}),
+             })
+
+            
         if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
             if item.active:
                 result.append("""
@@ -695,7 +719,9 @@ class CalculateComments(template.Node):
             result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
             result.append("""<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> """)
             if context['cur_agent'].is_anonymous():
-                result.append("""  </p>Security Question: <br>%s """ % CaptchaField(label=("Security Question")).widget.render('sq',None) )
+                result.append("""
+                    To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />
+                    """)
             result.append("""<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> """ % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', None, {'id':'commentajaxfield' })))
             result.append(""" <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" />  """ % (item.pk, item.version_number))
             result.append("""<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedcomment%s'); return false;" >Advanced</a> """ % (item.pk))
@@ -709,7 +735,9 @@ class CalculateComments(template.Node):
                 result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
                 result.append("""<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> """ )
                 if context['cur_agent'].is_anonymous():
-                    result.append("""  </p>Security Question: <br>%s """ % CaptchaField(label=("Security Question")).widget.render('sq',None) )
+                    result.append("""
+                    To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />
+                    """)
                 result.append("""<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> """ % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', None)))
                 result.append(""" <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> """ % (comment.pk, comment.version_number))
                 result.append("""<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedcomment%s'); return false;" >Advanced</a> """ % (comment.pk))

@@ -784,6 +784,24 @@ class MembershipViewer(ItemViewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_member.pk}))
         return HttpResponseRedirect(redirect)
 
+    def type_itemmembercreate_html(self):
+        collection_pk = self.request.POST.get('collection')
+        if collection_pk == '':
+            return self.render_error('Invalid Membership', "You must specify which collection to add this item to")
+        
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
+        collection = Collection.objects.get(pk=collection_pk)
+        item = Item.objects.get(pk=self.request.POST['item'])
+
+        new_member = Membership(collection=collection, item=item) 
+        if self.request.POST.get('permissionenabled', '') == 'on':
+            new_member.permission_enabled = True
+        permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
+        new_member.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
+        
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_member.pk}))
+        return HttpResponseRedirect(redirect)
+
 
 class DocumentViewer(ItemViewer):
     accepted_item_type = Document
@@ -983,11 +1001,15 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
     @require_POST
     def type_accordioncreate_html(self):
-        if "sq_1" in self.request.POST:
-            value = self.request.POST["sq_1"]
-            response, value = value.strip().lower(), ''
-            if not hashlib.sha1(str(response)).hexdigest() == self.request.POST["sq_0"]:
-                return self.render_error('Invalid Answer', 'Add up the numbers correctly to prove you are not a spammer')
+        #code for the previously cracked addition captcha
+        #if "sq_1" in self.request.POST:
+         #   value = self.request.POST["sq_1"]
+          #  response, value = value.strip().lower(), ''
+           # if not hashlib.sha1(str(response)).hexdigest() == self.request.POST["sq_0"]:
+            #    return self.render_error('Invalid Answer', 'Add up the numbers correctly to prove you are not a spammer')
+
+        if not self.request.POST.get('simple_captcha', '') == "abc123":
+            return self.render_error('Invalid Answer', 'Enter the phrase correctly to prove you are not a spammer')
 
         new_body = self.request.POST.get('body')
         if new_body == '':
