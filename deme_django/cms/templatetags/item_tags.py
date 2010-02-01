@@ -448,7 +448,7 @@ class ItemToolbar(template.Node):
         if agentcan_global_helper(context, 'create %s' % item.item_type_string):
             result.append('<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-copy"></span>Copy</a>' % copy_url)
         if agentcan_global_helper(context, 'create Membership'):
-            result.append("""<a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add item to collection</a>""" % (item.pk))
+            result.append("""<a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add this item to collection</a>""" % (item.pk))
             result.append( """
             <div style="display: none;" id="additemtocollection%(item.pk)s"> 
             <form method="post" action="%(create_url)s?redirect=%(full_path)s"> 
