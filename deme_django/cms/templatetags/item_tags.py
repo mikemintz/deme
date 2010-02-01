@@ -733,7 +733,7 @@ class CalculateComments(template.Node):
             for comment_info in comments:
                 comment = comment_info['comment']
                 result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
-                result.append("""<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> """ )
+                result.append("""<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> """ % (comment.name))
                 if context['cur_agent'].is_anonymous():
                     result.append("""
                     To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />
