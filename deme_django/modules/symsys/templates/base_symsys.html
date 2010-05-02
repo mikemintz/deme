@@ -198,6 +198,14 @@
         }
         else{
             $('#right_table_column').width( right_width - PAGE_WIDTH*.125 );
+            if( right_width <= $('#right_table_column').width() ){
+                $('#right_table_column').hide();
+                $('#right_table_column_hidden').show();
+                $('#right_table_column_hidden').width($('#right_table_column_hidden a').width());
+                $('#center_table_column').width( .875*PAGE_WIDTH - $('#right_table_column_hidden').width() );
+                $('.hidden_item_details').hide();
+            }
+
             $('#center_table_column').width( PAGE_WIDTH - right_width );
             $('#center_table_column').show();
             $('#increasebutton').show();
