@@ -203,27 +203,33 @@ class SymsysAffiliateViewer(PersonViewer):
         for contact_method in contact_methods:
             if issubclass(contact_method.actual_item_type(), EmailContactMethod):
                 contact_method = contact_method.downcast()
-                contact_method_fields.append(contact_method.email)
+                if self.permission_cache.agent_can('view EmailContactMethod.email', contact_method):
+                    contact_method_fields.append(contact_method.email)
             if issubclass(contact_method.actual_item_type(), WebsiteContactMethod):
                 contact_method = contact_method.downcast()
-                link = ("""<a href="%s">%s</a>""" % (contact_method.url, contact_method.url))
-                contact_method_fields.append(mark_safe(link))
+                if self.permission_cache.agent_can('view WebsiteContactMethod.url', contact_method):
+                    link = ("""<a href="%s">%s</a>""" % (contact_method.url, contact_method.url))
+                    contact_method_fields.append(mark_safe(link))
             if issubclass(contact_method.actual_item_type(), PhoneContactMethod):
                 contact_method = contact_method.downcast()
-                contact_method_fields.append(contact_method.phone)
+                if self.permission_cache.agent_can('view PhoneContactMethod.phone', contact_method):
+                    contact_method_fields.append(contact_method.phone)
             if issubclass(contact_method.actual_item_type(), FaxContactMethod):
                 contact_method = contact_method.downcast()
-                contact_method_fields.append('(Fax) ' + contact_method.fax)
+                if self.permission_cache.agent_can('view FaxContactMethod.fax', contact_method):
+                    contact_method_fields.append('(Fax) ' + contact_method.fax)
             if issubclass(contact_method.actual_item_type(), AIMContactMethod):
                 contact_method = contact_method.downcast()
-                contact_method_fields.append('(AIM Screename) ' + contact_method.screen_name)
+                if self.permission_cache.agent_can('view AIMContactMethod.screen_name', contact_method):
+                    contact_method_fields.append('(AIM Screename) ' + contact_method.screen_name)
             if issubclass(contact_method.actual_item_type(), AddressContactMethod):
                 contact_method = contact_method.downcast()
-                if contact_method.street2:
-                    address = (""" %s <br> %s <br>%s, %s %s  %s """ % (contact_method.street1, contact_method.street2, contact_method.city, contact_method.state, contact_method.country, contact_method.zip))
-                else:
-                    address = (""" %s <br>%s, %s %s  %s """ % (contact_method.street1, contact_method.city, contact_method.state, contact_method.country, contact_method.zip))
-                contact_method_fields.append(mark_safe(address))
+                if self.permission_cache.agent_can('view AddressContactMethod.street1', contact_method):
+                    if contact_method.street2:
+                        address = (""" %s <br> %s <br>%s, %s %s  %s """ % (contact_method.street1, contact_method.street2, contact_method.city, contact_method.state, contact_method.country, contact_method.zip))
+                    else:
+                        address = (""" %s <br>%s, %s %s  %s """ % (contact_method.street1, contact_method.city, contact_method.state, contact_method.country, contact_method.zip))
+                    contact_method_fields.append(mark_safe(address))
 
         self.context['contact_methods'] = contact_method_fields
         self.context['symsys_careers'] = self.permission_cache.filter_items('view SymsysCareer.symsys_affiliate', self.item.symsys_careers).filter(active=True)
