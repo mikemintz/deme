@@ -621,6 +621,23 @@ class ItemDetails(template.Node):
             result.append('</td>')
             result.append('</tr>')
 
+        for edit_action_notice in EditActionNotice.objects.filter(action_item=item, action_item_version_number=item.version_number)[0:1]:
+            if agentcan_helper(context, 'view Item.created_at', item):
+                result.append('<tr>')
+                result.append('<th>Updated:</th>')
+                result.append('<td>')
+                result.append('<span title="%s">%s ago</span>' % (edit_action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(edit_action_notice.action_time)))
+                result.append('</td>')
+                result.append('</tr>')
+
+            if agentcan_helper(context, 'view Item.creator', item):
+                result.append('<tr>')
+                result.append('<th>Updater:</th>')
+                result.append('<td>')
+                result.append(get_item_link_tag(context, edit_action_notice.action_agent))
+                result.append('</td>')
+                result.append('</tr>')
+
         result.append('</table>')
 
         return '\n'.join(result)
