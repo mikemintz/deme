@@ -383,8 +383,15 @@ class ItemViewer(Viewer):
             return self.render_error('Cannot delete', "This item may not be deleted")
         self.require_ability('delete', self.item)
         self.item.destroy(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
-        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'justdestroyed'}))
         return HttpResponseRedirect(redirect)
+
+    def item_justdestroyed_html(self):
+        if not self.item.destroyed:
+            return self.render_error('Destroy error', "The item was not successfully destroyed due to an error in the application")
+        self.context['action_title'] = 'Item destroyed'
+        template = loader.get_template('item/justdestroyed.html')
+        return HttpResponse(template.render(self.context))
 
     def _get_permissions_from_post_data(self, item_type, target_level):
         if target_level == 'one':
