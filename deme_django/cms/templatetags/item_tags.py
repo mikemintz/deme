@@ -837,9 +837,12 @@ class PermissionsBox(template.Node):
         if agentcan_helper(context, 'modify_privacy_settings', item) and not agentcan_helper(context, 'do_anything', item):
             modify_privacy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'privacy'})
             result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify privacy</a></div>""" % modify_privacy_url)
+        result.append("<div>As user %s, you can:</div>" % get_item_link_tag(context, cur_agent))
+        result.append("<ul>")
         friendly_names = [x[1] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if x[0] in abilities]
         for friendly_name in friendly_names:
-            result.append("""<div>%s</div>""" % escape(capfirst(friendly_name)))
+            result.append("<li>%s</li>" % escape(capfirst(friendly_name)))
+        result.append("</ul>")
         return '\n'.join(result)
 
 @register.tag
