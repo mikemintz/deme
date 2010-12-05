@@ -18,6 +18,7 @@ from django.utils import simplejson
 from django.utils.safestring import mark_safe
 from urlparse import urljoin
 import os
+import itertools
 
 register = template.Library()
 
@@ -927,14 +928,29 @@ class CalculateHistory(template.Node):
 
         result = []
         versions = item.versions.all()
-        for version in versions:
+        edit_action_notices = EditActionNotice.objects.filter(action_item=item)
+        create_action_notices = CreateActionNotice.objects.filter(action_item=item)
+        action_notices = itertools.chain(edit_action_notices, create_action_notices)
+        action_notice_map = {}
+        for action_notice in action_notices:
+            action_notice_map[action_notice.action_item_version_number] = action_notice
+        for version in itertools.chain(versions, [item]):
+            action_notice = action_notice_map[version.version_number]
             version_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk}) + '?version=%s' % version.version_number
-            result.append("""<div><a href="%s">Version %s</a></div>""" % (version_url, version.version_number))
-        current_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk})
-        result.append("""<div><a href="%s">Current version</a></div>""" % (current_url,))
+            version_name = 'Version %d' % version.version_number
+            version_text = '<a href="%s">%s</a>' % (version_url, version_name)
+            time_text = '<span title="%s">[%s ago]</span><br />' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
+            agent_text = ' by %s' % get_item_link_tag(context, action_notice.action_agent)
+            combined_text = '<div style="font-size: 85%%; margin-bottom: 5px;">%s%s%s</div>' % (
+                    (time_text if agentcan_helper(context, 'view Item.created_at', item) else ''),
+                    version_text,
+                    (agent_text if agentcan_helper(context, 'view Item.creator', item) else '')
+            )
+            result.append(combined_text)
         context['history_box'] = mark_safe('\n'.join(result))
         context['n_versions'] = len(versions) + 1
         return ''
+
 
 @register.tag
 def calculatehistory(parser, token):
