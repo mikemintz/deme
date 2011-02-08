@@ -1,0 +1,47 @@
+{% extends layout %}
+{% load item_tags %}
+{% block title %}Symsys Internship Position Upload{% endblock %}
+{% block content %}
+
+<script type="text/javascript" src="{% media_url "javascripts/tinymce/jscripts/tiny_mce/tiny_mce.js" %}"></script>
+<script type="text/javascript">
+tinyMCE.init({
+	// General options
+    mode: "exact",
+    elements: "body",
+	theme : "advanced",
+	plugins : "table,advimage,advlink,media,paste,fullscreen,xhtmlxtras",
+
+	// Theme options
+	theme_advanced_buttons1 : "bold,italic,underline,strikethrough,|,justifyleft,justifycenter,justifyright,justifyfull,|,formatselect,fontselect,fontsizeselect",
+	theme_advanced_buttons2 : "cut,copy,paste,pastetext,pasteword,|,bullist,numlist,|,outdent,indent,blockquote,|,cite,abbr,acronym,|,undo,redo,|,link,unlink,anchor,image,cleanup,code,|,forecolor,backcolor",
+	theme_advanced_buttons3 : "tablecontrols,|,hr,removeformat,|,sub,sup,|,charmap,media,|,fullscreen",
+	theme_advanced_toolbar_location : "top",
+	theme_advanced_toolbar_align : "left",
+	theme_advanced_statusbar_location : "bottom",
+	theme_advanced_resizing : true,
+    convert_urls : false,
+});
+</script>    
+
+<p>
+Your internship position will not be viewable by anyone except yourself and participating students starting Feb. 18th. 
+Please note that when you successfully create your internship, you will be redirected to the internship itself, where you can modify it as needed. 
+</p>
+<form method="post" action="{{ create_url }}">
+
+    <b>Internship Position Title:</b><br> 
+    <input type="text" size="35" name="ad_name" />
+    <input type="hidden" name="add_to_collection" value="{{ add_to_collection }}" />
+    <br><br>
+
+    <b>Body:</b><br>
+    <textarea cols="100" rows="20" name="body"> </textarea> <br>
+    <br><b>Contact Info:</b><br> 
+    <textarea cols="100" rows="20" name="contact_info"> </textarea> <br>
+    <input type="submit" value="Submit" />
+
+</form>
+
+
+{% endblock %}

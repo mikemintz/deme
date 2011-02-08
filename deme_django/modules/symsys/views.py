@@ -1,13 +1,15 @@
 from django.template import Context, loader
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from cms.views import ItemViewer, PersonViewer, DocumentViewer, TextDocumentViewer, HtmlDocumentViewer, GroupViewer, CollectionViewer
 from cms.models import *
 from modules.symsys.models import *
 from django.db.models import Q
+from django.core.urlresolvers import reverse
 
 #class SymsysFacultyGroupViewer(SymsysGroupViewer):
  #   accepted_item_type = Collection
   #  viewer_name = 'symsysfacultygroup'
+
 
 class SymsysGroupViewer(CollectionViewer):
     accepted_item_type = Group
@@ -249,3 +251,142 @@ class TextAdvertisementViewer(TextDocumentViewer, AdvertisementViewer):
 class HtmlAdvertisementViewer(HtmlDocumentViewer, AdvertisementViewer):
     accepted_item_type = HtmlAdvertisement
     viewer_name = 'htmladvertisement'
+
+
+
+#A helper class for students to create resumes that others can't view
+class SymsysResumeViewer(TextDocumentViewer):
+    accepted_item_type = HtmlDocument
+    viewer_name = 'symsysresume'
+
+    def type_new_html(self, form=None):
+        self.context['action_title'] = ''
+        template = loader.get_template('symsysresume/new.html')
+
+        #ensure the user is a symsysaffiliate and then get the right info
+        if not issubclass(self.cur_agent.actual_item_type(), SymsysAffiliate):
+            return self.render_error('Error', "You must be a SymsysAffiliate to post a resume")
+
+        #check that this symsysaffiliate is a member of the Students group
+        student_pk = Collection.objects.get(name="Students").pk
+        containing_collections = self.cur_agent.ancestor_collections()
+        is_student = False
+        for collection in containing_collections:
+            if collection.pk == student_pk:
+                is_student = True
+
+        if not is_student:
+            return self.render_error('Error', "You must be a current student to post a resume")
+            
+
+        symsys_aff = self.cur_agent.downcast()
+        self.context['resume_name'] = ('%s %s Resume' % (symsys_aff.first_name, symsys_aff.last_name))
+
+        #you need to specify the collection of resumes to add this resume to
+        add_coll = self.request.GET.get('add_to_collection')
+        if not add_coll:
+            return self.render_error('Error', "Bad link to the resume uploader")
+
+        self.context['add_to_collection'] = add_coll 
+        self.context['create_url'] = reverse('item_type_url', kwargs={'viewer':'symsysresume', 'action':'resumecreate'})
+
+
+        return HttpResponse(template.render(self.context))
+
+
+    def type_resumecreate_html(self):
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
+        
+        #check and make sure everything is there
+        resume = self.request.POST.get('resume')
+        if resume == '':
+            return self.render_error('Invalid Resume', "You must enter in your resume")
+        resume_name = self.request.POST.get('resume_name')
+        if resume_name == '':
+            return self.render_error('Invalid Resume Name', "You must enter in a title for your resume")
+        add_to_collection = self.request.POST.get('add_to_collection')
+        if add_to_collection == '':
+            return self.render_error('No add to collection field', "This shouldn't have happened")
+
+
+        new_res = HtmlDocument(body=resume, name=resume_name)
+        permissions = [AllToOnePermission(ability='do_anything', is_allowed=False)]
+        new_res.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
+
+        new_membership = Membership(item=new_res, collection=Collection.objects.get(pk=add_to_collection))
+        membership_permissions = [AllToOnePermission(ability='do_anything', is_allowed=False)]
+        new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions) 
+
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'htmldocument', 'noun': new_res.pk}))
+        return HttpResponseRedirect(redirect)
+
+
+#A helper class for faculty to create interships that others can't view
+class SymsysInternshipViewer(HtmlDocumentViewer, AdvertisementViewer):
+    accepted_item_type = HtmlAdvertisement
+    viewer_name = 'symsysinternship'
+
+    def type_new_html(self, form=None):
+        self.context['action_title'] = ''
+        template = loader.get_template('symsysinternship/new.html')
+
+        #ensure the user is a symsysaffiliate and then get the right info
+        if not issubclass(self.cur_agent.actual_item_type(), SymsysAffiliate):
+            return self.render_error('Error', "You must be a SymsysAffiliate to post an internship")
+
+        #TODO: check that this symsysaffiliate is a member of the Faculty group
+        faculty_pk = Collection.objects.get(name="Faculty").pk
+        containing_collections = self.cur_agent.ancestor_collections()
+        is_faculty = False
+        for collection in containing_collections:
+            if collection.pk == faculty_pk:
+                is_faculty = True
+
+        if not is_faculty:
+            return self.render_error('Error', "You must be a current Symsys faculty member to post an internship")
+
+
+        #you need to specify the collection of resumes to add this resume to
+        add_coll = self.request.GET.get('add_to_collection')
+        if not add_coll:
+            return self.render_error('Error', "Bad link to the internship uploader")
+
+        self.context['add_to_collection'] = add_coll 
+        self.context['create_url'] = reverse('item_type_url', kwargs={'viewer':'symsysinternship', 'action':'internshipcreate'})
+
+
+        return HttpResponse(template.render(self.context))
+
+
+    def type_internshipcreate_html(self):
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
+        
+        #check and make sure everything is there
+        body = self.request.POST.get('body')
+        if body == '':
+            return self.render_error('Invalid Body', "You must enter in a description of the internship")
+        contact_info = self.request.POST.get('contact_info')
+        if contact_info == '':
+            return self.render_error('Invalid Contact Info', "You must enter in contact information")
+        ad_name = self.request.POST.get('ad_name')
+        if ad_name == '':
+            return self.render_error('Invalid Internship Name', "You must enter in a title for your internship")
+        add_to_collection = self.request.POST.get('add_to_collection')
+        if add_to_collection == '':
+            return self.render_error('No add to collection field', "This shouldn't have happened")
+
+        #expiration = self.request.POST.get('expiration', '')
+
+
+        new_ad = HtmlAdvertisement(body=body, name=ad_name, contact_info=contact_info)
+        permissions = [AllToOnePermission(ability='do_anything', is_allowed=False)]
+        new_ad.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
+
+        new_membership = Membership(item=new_ad, collection=Collection.objects.get(pk=add_to_collection))
+        membership_permissions = [AllToOnePermission(ability='do_anything', is_allowed=False)]
+        new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions) 
+
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'htmladvertisement', 'noun': new_ad.pk}))
+        return HttpResponseRedirect(redirect)
+
+
