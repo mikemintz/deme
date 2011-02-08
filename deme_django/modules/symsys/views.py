@@ -310,7 +310,9 @@ class SymsysResumeViewer(TextDocumentViewer):
 
 
         new_res = HtmlDocument(body=resume, name=resume_name)
-        permissions = [AllToOnePermission(ability='do_anything', is_allowed=False)]
+        permissions = [AllToOnePermission(ability='do_anything', is_allowed=False), 
+                OneToOnePermission(source=self.cur_agent, ability='view', is_allowed=True),
+                OneToOnePermission(source=self.cur_agent, ability='edit', is_allowed=True)]
         new_res.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
 
         new_membership = Membership(item=new_res, collection=Collection.objects.get(pk=add_to_collection))
@@ -379,7 +381,9 @@ class SymsysInternshipViewer(HtmlDocumentViewer, AdvertisementViewer):
 
 
         new_ad = HtmlAdvertisement(body=body, name=ad_name, contact_info=contact_info)
-        permissions = [AllToOnePermission(ability='do_anything', is_allowed=False)]
+        permissions = [AllToOnePermission(ability='do_anything', is_allowed=False), 
+                OneToOnePermission(source=self.cur_agent, ability='view', is_allowed=True),
+                OneToOnePermission(source=self.cur_agent, ability='edit', is_allowed=True)]
         new_ad.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
 
         new_membership = Membership(item=new_ad, collection=Collection.objects.get(pk=add_to_collection))
