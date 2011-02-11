@@ -14,11 +14,11 @@
         {% if details.display_body %}
             {% ifagentcan 'view TextDocument.body' details.member %}
                 {% if details.is_html %}
-                    {{ details.body|safe|truncatewords_html:50 }}
+                    {{ details.body|safe|truncatewords_html:entry_length }}
 
                 {% else %}
                     <div>
-                        {{ details.body|truncatewords:50 }} 
+                        {{ details.body|truncatewords:entry_length }} 
                     </div>
                 {% endif %}
                 

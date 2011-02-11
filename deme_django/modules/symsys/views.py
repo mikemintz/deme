@@ -274,6 +274,7 @@ class SymsysResumeViewer(TextDocumentViewer):
         for collection in containing_collections:
             if collection.pk == student_pk:
                 is_student = True
+                break
 
         if not is_student:
             return self.render_error('Error', "You must be a current student to post a resume")
@@ -331,8 +332,8 @@ class SymsysInternshipViewer(HtmlDocumentViewer, AdvertisementViewer):
         self.context['action_title'] = ''
         template = loader.get_template('symsysinternship/new.html')
 
-        #ensure the user is a symsysaffiliate and then get the right info
-        if not issubclass(self.cur_agent.actual_item_type(), SymsysAffiliate):
+        #ensure the user is a symsysaffiliate or admin and then get the right info
+        if not (issubclass(self.cur_agent.actual_item_type(), SymsysAffiliate) or self.cur_agent.pk == 1):
             return self.render_error('Error', "You must be a SymsysAffiliate to post an internship")
 
         #TODO: check that this symsysaffiliate is a member of the Faculty group
@@ -342,6 +343,11 @@ class SymsysInternshipViewer(HtmlDocumentViewer, AdvertisementViewer):
         for collection in containing_collections:
             if collection.pk == faculty_pk:
                 is_faculty = True
+                break
+
+        #admin can do everything
+        if self.cur_agent.pk == 1:
+            is_faculty = True
 
         if not is_faculty:
             return self.render_error('Error', "You must be a current Symsys faculty member to post an internship")
