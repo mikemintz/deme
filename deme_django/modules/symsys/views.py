@@ -281,8 +281,15 @@ class SymsysResumeViewer(TextDocumentViewer):
             
 
         symsys_aff = self.cur_agent.downcast()
-        self.context['resume_name'] = ('%s %s Resume' % (symsys_aff.first_name, symsys_aff.last_name))
+        resume_name = ('%s %s Resume' % (symsys_aff.first_name, symsys_aff.last_name))
+        #make sure this user hasn't already entered a resume
+        resume = Document.objects.get(name=resume_name)
+        if resume:
+            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'htmldocument', 'noun': resume.pk}))
+            return HttpResponseRedirect(redirect)
 
+        self.context['resume_name'] = resume_name
+        
         #you need to specify the collection of resumes to add this resume to
         add_coll = self.request.GET.get('add_to_collection')
         if not add_coll:
