@@ -283,10 +283,10 @@ class SymsysResumeViewer(TextDocumentViewer):
         symsys_aff = self.cur_agent.downcast()
         resume_name = ('%s %s Resume' % (symsys_aff.first_name, symsys_aff.last_name))
         #make sure this user hasn't already entered a resume
-        resume = Document.objects.get(name=resume_name)
-        if resume:
-            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'htmldocument', 'noun': resume.pk}))
-            return HttpResponseRedirect(redirect)
+        #resume = Document.objects.get(name=resume_name)
+        #if resume:
+        #    redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'htmldocument', 'noun': resume.pk}))
+        #    return HttpResponseRedirect(redirect)
 
         self.context['resume_name'] = resume_name
         
