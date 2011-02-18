@@ -327,7 +327,7 @@ class SymsysResumeViewer(TextDocumentViewer):
                 OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
         new_res.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
 
-        new_membership = Membership(item=new_res, collection=Collection.objects.get(pk=add_to_collection))
+        new_membership = Membership(item=new_res, collection=Collection.objects.get(pk=add_to_collection), permission_enabled=True)
         membership_permissions = [AllToOnePermission(ability='do_anything', is_allowed=False)]
         new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions) 
 
@@ -402,7 +402,7 @@ class SymsysInternshipViewer(HtmlDocumentViewer, AdvertisementViewer):
                 OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
         new_ad.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
 
-        new_membership = Membership(item=new_ad, collection=Collection.objects.get(pk=add_to_collection))
+        new_membership = Membership(item=new_ad, collection=Collection.objects.get(pk=add_to_collection), permission_enabled=True)
         membership_permissions = [AllToOnePermission(ability='do_anything', is_allowed=False)]
         new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions) 
 
