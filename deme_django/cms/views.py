@@ -674,6 +674,7 @@ class SubscriptionViewer(ItemViewer):
         if not self.request.POST.get('email'):
             return self.render_error('Invalid Subscription', "You must specify an email contact method by selecting it from the drop down menu")
 
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         item = Item.objects.get(pk=self.request.POST.get('item'))
         email = EmailContactMethod.objects.get(pk=self.request.POST.get('email'))
         self.require_ability('add_subscription', email)
