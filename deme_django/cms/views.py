@@ -1006,15 +1006,16 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
     @require_POST
     def type_accordioncreate_html(self):
-        #code for the previously cracked addition captcha
-        #if "sq_1" in self.request.POST:
-         #   value = self.request.POST["sq_1"]
-          #  response, value = value.strip().lower(), ''
-           # if not hashlib.sha1(str(response)).hexdigest() == self.request.POST["sq_0"]:
-            #    return self.render_error('Invalid Answer', 'Add up the numbers correctly to prove you are not a spammer')
+        if self.cur_agent.is_anonymous():
+            #code for the previously cracked addition captcha
+            #if "sq_1" in self.request.POST:
+             #   value = self.request.POST["sq_1"]
+              #  response, value = value.strip().lower(), ''
+               # if not hashlib.sha1(str(response)).hexdigest() == self.request.POST["sq_0"]:
+                #    return self.render_error('Invalid Answer', 'Add up the numbers correctly to prove you are not a spammer')
 
-        if not self.request.POST.get('simple_captcha', '') == "abc123":
-            return self.render_error('Invalid Answer', 'Enter the phrase correctly to prove you are not a spammer')
+            if not self.request.POST.get('simple_captcha', '') == "abc123":
+                return self.render_error('Invalid Answer', 'Enter the phrase correctly to prove you are not a spammer')
 
         new_body = self.request.POST.get('body')
         if new_body == '':
