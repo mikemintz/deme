@@ -18,7 +18,9 @@ class EventViewer(HtmlDocumentViewer):
     def item_show_html(self):
         self.context['action_title'] = 'Show'
 
-        self.context['body'] = self.item.body
+        self.context['event'] = self.item
+
+
 
         template = loader.get_template('event/show.html')
         return HttpResponse(template.render(self.context))
