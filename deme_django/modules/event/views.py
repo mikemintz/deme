@@ -13,6 +13,15 @@ import time
 class EventViewer(HtmlDocumentViewer):
     accepted_item_type = Event
     viewer_name = 'event' 
+
+
+    def item_show_html(self):
+        self.context['action_title'] = 'Show'
+
+        self.context['body'] = self.item.body
+
+        template = loader.get_template('event/show.html')
+        return HttpResponse(template.render(self.context))
     
 
 class CalendarViewer(CollectionViewer):
