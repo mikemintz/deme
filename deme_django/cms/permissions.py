@@ -17,8 +17,10 @@ def all_possible_global_abilities():
 
 def all_possible_item_abilities(item_type):
     """Return a set of item abilities that are possible for this item type."""
+    if not isinstance(item_type, type):
+        raise Exception("You must call all_possible_item_abilities with a Python class, called with %s" % type(item_type))
     if not issubclass(item_type, Item):
-        raise Exception("You must call all_possible_item_abilities with a subclass of Item")
+        raise Exception("You must call all_possible_item_abilities with a subclass of Item, called with %s" % type(item_type))
     result = set()
     result.update(item_type.introduced_abilities)
     if item_type != Item:

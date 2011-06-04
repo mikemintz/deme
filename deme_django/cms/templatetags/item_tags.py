@@ -375,7 +375,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
             related_fields = ['creator']
             if include_recursive_collection_comments:
                 related_fields.extend(['item'])
-            new_comments = new_comments.select_related(*related_fields)
+            new_comments = new_comments.select_related(*related_fields) #TODO this line breaks on Django 1.2.5
             comments.extend(new_comments)
     comments.sort(key=lambda x: x.created_at)
     pk_to_comment_info = {}

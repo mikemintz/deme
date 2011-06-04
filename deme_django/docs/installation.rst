@@ -28,9 +28,9 @@ We require Python 2.5 (although 2.6 and 2.7 will probably work, but 3.x will not
 
 Django
 ^^^^^^
-We currently run with Django 1.2.5. You can download it from http://www.djangoproject.com/download/
+We currently run with Django 1.1.4. You can download it from http://www.djangoproject.com/download/
 
-We often update the version of Django we run to an SVN version, so it may be easier to keep up with development by checking out the SVN version at http://code.djangoproject.com/svn/django/tags/releases/1.2.5
+We often update the version of Django we run to an SVN version, so it may be easier to keep up with development by checking out the SVN version at http://code.djangoproject.com/svn/django/tags/releases/1.1.4
 
 If you download Django from SVN, you will want to add it to your path of Python modules. I added the following line to my ``.profile`` (although ``.bashrc`` or ``.bash_profile`` should work as well)::
 
