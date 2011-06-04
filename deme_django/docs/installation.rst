@@ -20,7 +20,7 @@ Required Dependencies
 
 Python
 ^^^^^^
-We require Python 2.5 (although 2.6 will probably work, but 3.x will not).
+We require Python 2.5 (although 2.6 and 2.7 will probably work, but 3.x will not).
 
 * On Ubuntu: ``sudo apt-get install python``
 * On Mac OS X: You probably have it already, but if you don't, try http://python.org/ftp/python/2.6.2/python-2.6.2-macosx2009-04-16.dmg
@@ -28,13 +28,17 @@ We require Python 2.5 (although 2.6 will probably work, but 3.x will not).
 
 Django
 ^^^^^^
-We currently run with Django 1.1. You can download it from http://www.djangoproject.com/download/
+We currently run with Django 1.2.5. You can download it from http://www.djangoproject.com/download/
 
-We often update the version of Django we run to an SVN version, so it may be easier to keep up with development by checking out the SVN version of 1.1 at http://code.djangoproject.com/svn/django/tags/releases/1.1
+We often update the version of Django we run to an SVN version, so it may be easier to keep up with development by checking out the SVN version at http://code.djangoproject.com/svn/django/tags/releases/1.2.5
+
+If you download Django from SVN, you will want to add it to your path of Python modules. I added the following line to my ``.profile`` (although ``.bashrc`` or ``.bash_profile`` should work as well)::
+
+  export PYTHONPATH="/path/to/django_src"
 
 South
 ^^^^^
-We use South 0.6 for database migrations.
+We use South 0.6 or 0.7 for database migrations.
 
 * On Ubuntu: ``sudo easy_install South``
 * On Mac OS X: ``sudo easy_install South``
@@ -42,7 +46,7 @@ We use South 0.6 for database migrations.
 
 PostgreSQL
 ^^^^^^^^^^
-We develop against PostgreSQL 8.3 as our database, although other database engines may be supported. To install PostgreSQL:
+We develop against PostgreSQL 8.3 or 8.4 as our database, although other database engines may be supported. To install PostgreSQL:
 
 * On Ubuntu: ``sudo apt-get install postgresql``
 * On Mac OS X: Download http://www.enterprisedb.com/getfile.jsp?fileid=484
@@ -55,6 +59,14 @@ You'll also need the Python plugin to PostgreSQL:
 * Other OS: You'll want postgresql_psycopg2. The publisher is at http://initd.org/pub/software/psycopg/
 
 You'll also need to configure a user that Django can use to authenticate. If you don't know how to set up users in PostgreSQL, search Google for setting up PostgreSQL and Django on your OS of choice, and find a tutorial.
+
+But here is what I did for reference::
+
+  $ sudo -u postgres psql template1
+  template1=# ALTER USER postgres WITH ENCRYPTED PASSWORD 'MYPASSWORD';
+  template1=# \q
+
+I then opened ``/etc/postgresql/8.4/main/pg_hba.conf`` in a text editor as root. I found the line that said ``local all postgres ident``, commented it out, and added a new line underneath that said ``local all postgres md5``. I also found the line that said ``local all all ident``, commented it out, and added a new line underneath that said ``local all all md5``. I also made a ``.pgpass`` file in my home directory that said ``localhost:*:*:postgres:MYPASSWORD`` and ran ``chmod 600 .pgpass``
 
 TinyMCE
 ^^^^^^^
