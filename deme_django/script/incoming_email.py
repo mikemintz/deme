@@ -14,6 +14,7 @@ from cms.permissions import MultiAgentPermissionCache
 import email
 from django.core.mail import send_mail
 from django.core.exceptions import ObjectDoesNotExist
+import time
 
 #TODO attachments? handle html formatting?
 #TODO let people comment on specific versions, like 123.2@deme.stanford.edu
@@ -68,14 +69,21 @@ def main():
     assert len(sys.argv) == 2
     email_username = sys.argv[1] # I.e., the mailbox
     msg = email.message_from_file(sys.stdin)
+    log_filename = os.path.join(os.path.join(os.path.dirname(__file__), '..'), 'incoming_email.log')
+    log_file = open(log_filename, 'a')
+    log_file.write('[%s] Received email from %s to %s: ' % (time.strftime('%Y-%m-%d %H:%M:%S'), get_from_email(msg), email_username))
     try:
         handle_email(msg, email_username)
+        log_file.write('successfully handled\n')
     except UserException, e:
+        log_file.write('exception, %s\n' % e.message)
         new_subject = 'Re: %s' % get_subject(msg)
         new_body = e.message
         our_email = "%s@%s" % (email_username, settings.NOTIFICATION_EMAIL_HOSTNAME)
         their_email = get_from_email(msg)
         send_mail(new_subject, new_body, our_email, [their_email])
+    finally:
+        log_file.close()
 
 if __name__ == '__main__':
     main()
