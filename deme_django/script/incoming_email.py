@@ -29,6 +29,13 @@ def get_subject(msg):
 def get_from_email(msg):
     return email.utils.parseaddr(msg['From'])[1]
 
+def email_address_from_local_system(email_address):
+    if '@' not in email_address: return True
+    local_part, domain = email_address.split('@', 1)
+    if local_part.lower() == 'mailer-daemon': return True
+    if domain.lower() == settings.NOTIFICATION_EMAIL_HOSTNAME.lower(): return True
+    return False
+
 def handle_email(msg, email_username):
     multi_agent_permission_cache = MultiAgentPermissionCache()
     subject = get_subject(msg)
@@ -68,20 +75,24 @@ def handle_email(msg, email_username):
 def main():
     assert len(sys.argv) == 2
     email_username = sys.argv[1] # I.e., the mailbox
+    their_email = get_from_email(msg)
     msg = email.message_from_file(sys.stdin)
     log_filename = os.path.join(os.path.join(os.path.dirname(__file__), '..'), 'incoming_email.log')
     log_file = open(log_filename, 'a')
-    log_file.write('[%s] Received email from %s to %s: ' % (time.strftime('%Y-%m-%d %H:%M:%S'), get_from_email(msg), email_username))
     try:
-        handle_email(msg, email_username)
-        log_file.write('successfully handled\n')
-    except UserException, e:
-        log_file.write('exception, %s\n' % e.message)
-        new_subject = 'Re: %s' % get_subject(msg)
-        new_body = e.message
-        our_email = "%s@%s" % (email_username, settings.NOTIFICATION_EMAIL_HOSTNAME)
-        their_email = get_from_email(msg)
-        send_mail(new_subject, new_body, our_email, [their_email])
+        log_file.write('[%s] Received email from %s to %s: ' % (time.strftime('%Y-%m-%d %H:%M:%S'), their_email, email_username))
+        if email_address_from_local_system(their_email):
+            log_file.write('ignored due to origin from local system\n')
+        else:
+            try:
+                handle_email(msg, email_username)
+                log_file.write('successfully handled\n')
+            except UserException, e:
+                log_file.write('exception, %s\n' % e.message)
+                new_subject = 'Re: %s' % get_subject(msg)
+                new_body = e.message
+                our_email = "%s@%s" % (email_username, settings.NOTIFICATION_EMAIL_HOSTNAME)
+                send_mail(new_subject, new_body, our_email, [their_email])
     finally:
         log_file.close()
 
