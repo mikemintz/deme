@@ -242,3 +242,7 @@ To see if everything is working, run::
 
 And visit http://localhost:8000/ on your computer. With any luck, Deme will be working!
 
+
+Upgrading Deme
+--------------
+When you upgrade Deme (by issuing a new ``git pull``), you should also type ``./manage.py migrate`` to make any necessary updates to the database schema.
