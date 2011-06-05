@@ -77,6 +77,10 @@ Below are the core item types and the role they play (see the full ontology at h
   * The ``created_at`` field is the date and time the item was created.
   * The ``active`` field is true or false, depending on whether the item is active or not.
   * The ``destroyed`` field is true or false, depending on whether the item is destroyed or not.
+  * The ``default_viewer`` field is the name of the default viewer to display this item (for the various places Deme generates links to an item).
+  * The ``email_list_address`` field optionally specifies a custom email address (the portion before the at-sign) when emails are sent to the subscribers of this item.
+  * The ``email_list_subject`` field optionally specifies a prefix of the subject field of emails sent to subscribers of this item.
+  * The ``email_sets_reply_to_all_subscribers`` field defines whether the reply-to field of emails sent to subscribers of the item goes to the subscribers (if True) or the sender (if False).
 
 * **Webpage:** A Webpage is an item with one extra field, ``URL``, used to represent external webpages.
 

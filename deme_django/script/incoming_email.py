@@ -75,8 +75,8 @@ def handle_email(msg, email_username):
 def main():
     assert len(sys.argv) == 2
     email_username = sys.argv[1] # I.e., the mailbox
-    their_email = get_from_email(msg)
     msg = email.message_from_file(sys.stdin)
+    their_email = get_from_email(msg)
     log_filename = os.path.join(os.path.join(os.path.dirname(__file__), '..'), 'incoming_email.log')
     log_file = open(log_filename, 'a')
     try:

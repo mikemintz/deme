@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import SMTPConnection, EmailMessage, EmailMultiAlternatives
 from django.core.urlresolvers import reverse
+from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
 from django.utils.text import capfirst, wrap
 from django.template import loader, Context
@@ -191,6 +192,13 @@ class ItemMetaClass(models.base.ModelBase):
         version_result.NotVersion = result
         return result
 
+email_local_address_re1 = re.compile(
+    r"(^[-!#$%&'*+/=?^_`{}|~0-9A-Z]+(\.[-!#$%&'*+/=?^_`{}|~0-9A-Z]+)*"  # dot-atom
+    r'|^"([\001-\010\013\014\016-\037!#-\[\]-\177]|\\[\001-011\013\014\016-\177])*"' # quoted-string
+    r')$', re.IGNORECASE)  # domain (lack of)
+
+# Email list address can't be of the form item-# or comment-#
+email_local_address_re2 = re.compile(r"^(?!(item|comment)-[0-9]+$)", re.IGNORECASE)
 
 class Item(models.Model):
     """
@@ -220,9 +228,7 @@ class Item(models.Model):
     # Setup
     __metaclass__ = ItemMetaClass
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'view_permissions', 'comment_on', 'delete', 'view Item.action_notices',
-                                      'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at', 'view Item.default_viewer',
-                                      'edit Item.name', 'edit Item.description', 'edit Item.default_viewer'])
+    introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'view_permissions', 'comment_on', 'delete', 'view Item.action_notices', 'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at', 'view Item.default_viewer', 'view Item.email_list_address', 'view Item.email_list_subject', 'view Item.email_sets_reply_to_all_subscribers', 'edit Item.name', 'edit Item.description', 'edit Item.default_viewer', 'edit Item.email_list_address', 'edit Item.email_list_subject', 'edit Item.email_sets_reply_to_all_subscribers'])
     introduced_global_abilities = frozenset(['do_anything'])
     dyadic_relations = {}
     class Meta:
@@ -230,15 +236,18 @@ class Item(models.Model):
         verbose_name_plural = _('items')
 
     # Fields
-    version_number   = models.PositiveIntegerField(_('version number'), default=1, editable=False)
-    item_type_string = models.CharField(_('item type'), max_length=255, editable=False)
-    active           = models.BooleanField(_('active'), default=True, editable=False, db_index=True)
-    destroyed        = models.BooleanField(_('destroyed'), default=False, editable=False)
-    creator          = FixedForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
-    created_at       = models.DateTimeField(_('created at'), editable=False)
-    name             = models.CharField(_('item name'), max_length=255, blank=True, help_text=_('The name used to refer to this item'))
-    description      = models.CharField(_('purpose'), max_length=255, blank=True, help_text=_('Description of the purpose of this item'))
+    version_number                      = models.PositiveIntegerField(_('version number'), default=1, editable=False)
+    item_type_string                    = models.CharField(_('item type'), max_length=255, editable=False)
+    active                              = models.BooleanField(_('active'), default=True, editable=False, db_index=True)
+    destroyed                           = models.BooleanField(_('destroyed'), default=False, editable=False)
+    creator                             = FixedForeignKey('Agent', related_name='items_created', editable=False, verbose_name=_('creator'))
+    created_at                          = models.DateTimeField(_('created at'), editable=False)
+    name                                = models.CharField(_('item name'), max_length=255, blank=True, help_text=_('The name used to refer to this item'))
+    description                         = models.CharField(_('purpose'), max_length=255, blank=True, help_text=_('Description of the purpose of this item'))
     default_viewer                      = models.CharField(_('default viewer'), max_length=255, choices=PossibleViewerNamesIterable(), help_text=_('(Advanced) The default viewer to display this item'))
+    email_list_address                  = models.CharField(_('email list address'), max_length=63, null=True, blank=True, unique=True, default=None, validators=[RegexValidator(email_local_address_re1, 'Field must be a valid local part of an email address (before the at-sign)'), RegexValidator(email_local_address_re2, 'Cannot be of the form "item-#" or "comment-#"')], help_text=_('(Advanced) The local part (before the at-sign) of the to email address of emails sent to subscribers of this item'))
+    email_list_subject                  = models.CharField(_('email list subject prefix'), max_length=255, blank=True, help_text=_('(Advanced) The prefix of the subject field of emails sent to subscribers of this item'))
+    email_sets_reply_to_all_subscribers = FixedBooleanField(_('email sets reply to all subscribers'), default=True, help_text=_('(Advanced) For the reply-to field of emails sent to subscribers of this item: if set, reply to all subscribers, else reply to sender'))
 
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type_string, self.pk, self.name)
@@ -585,6 +594,10 @@ class Item(models.Model):
         # Set default_viewer if it wasn't already set (for non-form item creations)
         if not self.default_viewer:
             self.default_viewer = type(self).__name__.lower()
+
+        # Set the email_list_address to null if blank
+        if not self.email_list_address:
+            self.email_list_address = None
 
         # Execute before-callbacks
         if is_new:
