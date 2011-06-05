@@ -32,6 +32,11 @@ def all_possible_item_and_global_abilities():
     """Return a set of item and global abilities that are possible."""
     return set(x[0] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES)
 
+def all_possible_permission_models():
+    return [OneToOnePermission, OneToSomePermission, OneToAllPermission,
+            SomeToOnePermission, SomeToSomePermission, SomeToAllPermission,
+            AllToOnePermission, AllToSomePermission, AllToAllPermission]
+
 ###############################################################################
 # PermissionCache class
 ###############################################################################
@@ -208,9 +213,7 @@ class PermissionCache(object):
             item_collection_ids = RecursiveMembership.objects.filter(child=item, permission_enabled=True).values('parent_id').query
 
         permission_querysets = []
-        for permission_class in [OneToOnePermission, OneToSomePermission, OneToAllPermission,
-                                SomeToOnePermission, SomeToSomePermission, SomeToAllPermission,
-                                AllToOnePermission, AllToSomePermission, AllToAllPermission]:
+        for permission_class in all_possible_permission_models():
             filter = {}
             if hasattr(permission_class, 'source'):
                 source_field = permission_class.source.field
@@ -292,9 +295,7 @@ class PermissionCache(object):
         # permission level
         yes_q_filters = []
         no_q_filters = []
-        for permission_class in [OneToOnePermission, OneToSomePermission, OneToAllPermission,
-                                SomeToOnePermission, SomeToSomePermission, SomeToAllPermission,
-                                AllToOnePermission, AllToSomePermission, AllToAllPermission]:
+        for permission_class in all_possible_permission_models():
             for is_allowed in [True, False]:
                 # Generate a Q object for this particular permission and is_allowed
                 args = {}
