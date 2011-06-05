@@ -105,6 +105,7 @@ I then added the following to the end of ``/etc/postfix/main.cf``::
   # Deme incoming mail    
   transport_maps = regexp:/etc/postfix/deme_transport
   virtual_mailbox_domains = deme.stanford.edu
+  virtual_mailbox_base = /var/mail
 
 You may also have to comment out the line in ``main.cf`` that starts with ``mydestination =``.
 
