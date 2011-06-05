@@ -545,8 +545,6 @@ class Viewer(object):
         for field in item_type._meta.fields:
             if (field.rel and field.rel.parent_link) or ((not is_new) and field.name in item_type.all_immutable_fields()):
                 exclude.append(field.name)
-            if field.name == "default_viewer":
-                field.help_text = "(Advanced) The default viewer to display this item"
 
 
         # Sort the fields by their original ordering in the model
