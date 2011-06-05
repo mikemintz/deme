@@ -108,7 +108,7 @@ class PossibleViewerNamesIterable(object):
     """
     def __iter__(self):
         from cms.base_viewer import all_viewer_classes
-        choices = [(x.viewer_name, capfirst(x.viewer_name)) for x in all_viewer_classes()]
+        choices = [(x.viewer_name, x.viewer_name) for x in all_viewer_classes()]
         choices.sort(key=lambda x: x[0])
         for x in choices:
             yield x
