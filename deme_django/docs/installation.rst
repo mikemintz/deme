@@ -38,7 +38,7 @@ If you download Django from SVN, you will want to add it to your path of Python 
 
 South
 ^^^^^
-We use South 0.6 or 0.7 for database migrations.
+We use South 0.7 for database migrations.
 
 * On Ubuntu: ``sudo easy_install South``
 * On Mac OS X: ``sudo easy_install South``
