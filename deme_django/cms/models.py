@@ -650,6 +650,53 @@ class Item(models.Model):
         # other ForeignKeys defined in Item
         return None
 
+    def unique_error_message(self, model_class, unique_check):
+        """
+        Set the error message function for uniqueness constraint violations, so
+        that when it is displayed, it links to the item it clashes with (and
+        provides a quick link to overwrite it).
+        """
+        from django.utils.html import escape
+        from django.utils.text import get_text_list, capfirst
+        from django.utils.safestring import mark_safe
+        from django.utils.html import escape
+        from urllib import urlencode
+        unique_field_dict = {}
+        for field_name in unique_check:
+            unique_field_dict[field_name] = getattr(self, field_name)
+        try:
+            existing_item = type(self).objects.get(**unique_field_dict)
+        except ObjectDoesNotExist:
+            existing_item = None
+        if existing_item:
+            #TODO we can't know if we have permission to view the name now that we don't have the viewer
+            item_name = existing_item.display_name(can_view_name_field=False)
+            show_item_url = existing_item.get_absolute_url()
+            overwrite_url = reverse('item_url', kwargs={'viewer': existing_item.get_default_viewer(), 'noun': existing_item.pk, 'action': 'edit'})
+            overwrite_query_params = []
+            for field in self._meta.fields:
+                k = 'populate_' + field.name
+                v = getattr(self, field.name)
+                if isinstance(v, Item):
+                    v = str(v.pk)
+                overwrite_query_params.append(urlencode({k: v}))
+            #TODO we can't do this anymore now now that we don't have the viewer
+            #for k, list_ in viewer.request.GET.lists():
+            #    overwrite_query_params.extend([urlencode({k: v}) for v in list_])
+            overwrite_query_string = '&'.join(overwrite_query_params)
+            existing_item_str = u' as <a href="%s">%s</a> (<a href="%s?%s">overwrite it</a>)' % (show_item_url, item_name, overwrite_url, escape(overwrite_query_string))
+            model_name = capfirst(self._meta.verbose_name)
+            field_labels = [self._meta.get_field(field_name).verbose_name for field_name in unique_check]
+            field_labels = get_text_list(field_labels, _('and'))
+            result = _(u"%(model_name)s with this %(field_label)s already exists%(existing_item_str)s.") %  {
+                'model_name': unicode(model_name),
+                'field_label': unicode(field_labels),
+                'existing_item_str': existing_item_str,
+            }
+            return mark_safe(result)
+        else:
+            return super(Item, self).unique_error_message(model_class, unique_check)
+
     @classmethod
     def all_immutable_fields(cls):
         """

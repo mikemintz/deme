@@ -624,43 +624,6 @@ class Viewer(object):
             return mark_safe(u'\n'.join(result))
 
 
-        # Set the error message function for uniqueness constraint violations,
-        # so that when it is displayed, it links to the item it clashes with
-        # (and provides a quick link to overwrite it).
-        def unique_error_message(self, unique_check):
-            unique_field_dict = {}
-            for field_name in unique_check:
-                unique_field_dict[field_name] = self.cleaned_data[field_name]
-            try:
-                existing_item = type(self.instance).objects.get(**unique_field_dict)
-            except ObjectDoesNotExist:
-                existing_item = None
-            if existing_item:
-                from cms.templatetags.item_tags import get_viewable_name
-                item_name = get_viewable_name(viewer.context, existing_item)
-                show_item_url = existing_item.get_absolute_url()
-                overwrite_url = reverse('item_url', kwargs={'viewer': existing_item.get_default_viewer(), 'noun': existing_item.pk, 'action': 'edit'})
-                overwrite_query_params = []
-                for k, v in self.cleaned_data.iteritems():
-                    k = 'populate_' + k
-                    if isinstance(v, Item):
-                        v = str(v.pk)
-                    overwrite_query_params.append(urlencode({k: v}))
-                for k, list_ in viewer.request.GET.lists():
-                    overwrite_query_params.extend([urlencode({k: v}) for v in list_])
-                overwrite_query_string = '&'.join(overwrite_query_params)
-                existing_item_str = u' as <a href="%s">%s</a> (<a href="%s?%s">overwrite it</a>)' % (show_item_url, item_name, overwrite_url, escape(overwrite_query_string))
-            model_name = capfirst(self.instance._meta.verbose_name)
-            field_labels = [self.fields[field_name].label for field_name in unique_check]
-            field_labels = get_text_list(field_labels, _('and'))
-            result = _(u"%(model_name)s with this %(field_label)s already exists%(existing_item_str)s.") %  {
-                'model_name': unicode(model_name),
-                'field_label': unicode(field_labels),
-                'existing_item_str': existing_item_str,
-            }
-            return mark_safe(result)
-        attrs['unique_error_message'] = unique_error_message
-        
         # Allow the item type to do its own specialized form configuration
         item_type.do_specialized_form_configuration(item_type, is_new, attrs)
         if not self.cur_agent.is_anonymous():
