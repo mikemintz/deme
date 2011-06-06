@@ -2043,80 +2043,56 @@ class ActionNotice(models.Model):
         """
         return self.action_item
 
-    def notification_email(self, email_contact_method):
+    def notification_email(self, subscription, email_contact_method):
         """
         Return an EmailMessage with the notification that should be sent to the
         specified EmailContactMethod. If there is no Subscription, or the Agent
         with the subscription is not allowed to receive the notification,
         return None.
         """
-        agent = email_contact_method.agent
+        # Make sure we were given consistent parameters
+        assert subscription.contact_method.pk == email_contact_method.pk, 'Subscription %s for %s does not match EmailContactMethod %s' % (subscription, subscription.contact_method, email_contact_method)
+
+        # Make sure the subscription is subscribed to this type of action notice
+        is_subscribed = False
+        if isinstance(self, RelationActionNotice):
+            is_membership_relation = self.from_field_name == 'collection' and self.from_field_model == 'Membership'
+            is_subscribed = subscription.subscribe_relations or (is_membership_relation and subscription.subscribe_members)
+        elif isinstance(self, DeactivateActionNotice):
+            is_subscribed = subscription.subscribe_delete
+        elif isinstance(self, ReactivateActionNotice):
+            is_subscribed = subscription.subscribe_delete
+        elif isinstance(self, DestroyActionNotice):
+            is_subscribed = subscription.subscribe_delete
+        elif isinstance(self, CreateActionNotice):
+            if issubclass(self.action_item.actual_item_type(), TextComment):
+                is_subscribed = subscription.subscribe_comments
+            else:
+                is_subscribed = subscription.subscribe_edit
+        elif isinstance(self, EditActionNotice):
+            is_subscribed = subscription.subscribe_edit
+        if not is_subscribed:
+            return None
+
+        # Initialize viewer
         from cms.views import ItemViewer
         from cms.templatetags.item_tags import get_viewable_name
         viewer = ItemViewer()
         viewer.init_for_outgoing_email(email_contact_method.agent)
         permission_cache = viewer.permission_cache
 
-        if isinstance(self, RelationActionNotice):
-            subscription_type_filter = Q(subscribe_relations=True)
-            if self.from_field_name == 'collection' and self.from_field_model == 'Membership':
-                subscription_type_filter = subscription_type_filter | Q(subscribe_members=True)
-        elif isinstance(self, DeactivateActionNotice):
-            subscription_type_filter = Q(subscribe_delete=True)
-        elif isinstance(self, ReactivateActionNotice):
-            subscription_type_filter = Q(subscribe_delete=True)
-        elif isinstance(self, DestroyActionNotice):
-            subscription_type_filter = Q(subscribe_delete=True)
-        elif isinstance(self, CreateActionNotice):
-            if issubclass(self.action_item.actual_item_type(), TextComment):
-                subscription_type_filter = Q(subscribe_comments=True)
-            else:
-                subscription_type_filter = Q(subscribe_edit=True)
-        elif isinstance(self, EditActionNotice):
-            subscription_type_filter = Q(subscribe_edit=True)
-        else:
-            subscription_type_filter = Q(pk__isnull=True)
-
-        # Decide if we're allowed to get this notification at all
-        def direct_subscriptions():
-            item_parent_pks_query = self.action_item.all_parents_in_thread().values('pk').query
-            action_agent_parent_pks_query = self.action_agent.all_parents_in_thread().values('pk').query
-            subscription_filter = subscription_type_filter
-            subscription_filter = subscription_filter & Q(active=True)
-            subscription_filter = subscription_filter & Q(contact_method=email_contact_method)
-            subscription_filter = subscription_filter & (Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query))
-            return Subscription.objects.filter(subscription_filter)
-        def deep_subscriptions():
-            if permission_cache.agent_can_global('do_anything'):
-                recursive_filter = None
-            else:
-                visible_memberships = permission_cache.filter_items('view Membership.item', Membership.objects)
-                recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-            item_parent_pks_query = self.action_item.all_parents_in_thread(True, recursive_filter).values('pk').query
-            action_agent_parent_pks_query = self.action_agent.all_parents_in_thread(True, recursive_filter).values('pk').query
-            subscription_filter = subscription_type_filter
-            subscription_filter = subscription_filter & Q(active=True)
-            subscription_filter = subscription_filter & Q(contact_method=email_contact_method)
-            subscription_filter = subscription_filter & Q(deep=True)
-            subscription_filter = subscription_filter & (Q(item__in=item_parent_pks_query) | Q(item__in=action_agent_parent_pks_query))
-            return Subscription.objects.filter(subscription_filter)
-        #TODO what happens if i'm subscribed to the item, but not allowed to view its action notices, but i AM allowed to view action
-        #notices for the action_agent? or vice versa?
+        # Make sure the recipient can view action_notices on the item
         if not (permission_cache.agent_can('view Item.action_notices', self.action_item) or permission_cache.agent_can('view Item.action_notices', self.action_agent)):
+            #TODO what happens if i'm subscribed to the item, but not allowed to view its action notices, but i AM allowed to view action
+            #notices for the action_agent? or vice versa?
+            # Malicious case: Jon does not want me to see his actions, but everything he acts upon allows me to see its actions. So I can subscribe to Jon and still get notifications
             return None
         if isinstance(self, RelationActionNotice):
             if not permission_cache.agent_can('view %s.%s' % (self.from_field_model, self.from_field_name), self.from_item):
                 return None
-        try:
-            arbitrary_subscription = direct_subscriptions().get()
-        except ObjectDoesNotExist:
-            try:
-                arbitrary_subscription = deep_subscriptions().get()
-            except ObjectDoesNotExist:
-                return None
 
-        # Get the fields we are allowed to view
-        subscribed_item = arbitrary_subscription.item #TODO this must be multiple and not be arbitrary
+        # Get the fields the recipient is allowed to view
+        subscribed_item = subscription.item
         item = self.action_item
         reply_item = self.notification_reply_item()
         topmost_item = item.original_item_in_thread()
@@ -2124,19 +2100,19 @@ class ActionNotice(models.Model):
             return 'http://%s%s' % (settings.DEFAULT_HOSTNAME, x.get_absolute_url())
         subscribed_item_name = get_viewable_name(viewer.context, subscribed_item)
         item_name = get_viewable_name(viewer.context, item)
-        reply_item_name = "Subscribers to %s" % item_name
         topmost_item_name = get_viewable_name(viewer.context, topmost_item)
         action_agent_name = get_viewable_name(viewer.context, self.action_agent)
-        recipient_name = get_viewable_name(viewer.context, agent)
+        recipient_name = get_viewable_name(viewer.context, email_contact_method.agent)
         can_view_email_list_subject = permission_cache.agent_can('view Item.email_list_subject', subscribed_item)
         subject_prefix = subscribed_item.email_list_subject if (can_view_email_list_subject and subscribed_item.email_list_subject) else subscribed_item_name
-        #TODO don't include subject_prefix if specified in Subscription.email_includes_subject_prefix
+        #TODO don't include subject_prefix if specified in subscription.email_includes_subject_prefix (when we add the field)
 
         generic_from_email_name = 'Deme action notice'
         noreply_from_email_address = '%s@%s' % ('noreply', settings.NOTIFICATION_EMAIL_HOSTNAME)
         from_email_name = None
         from_email_address = None
         subscribed_item_email_address = '%s@%s' % (subscribed_item.notification_email_username(), settings.NOTIFICATION_EMAIL_HOSTNAME)
+        reply_item_name = "Subscribers to %s" % item_name
         reply_item_email_address = '%s@%s' % (reply_item.notification_email_username(), settings.NOTIFICATION_EMAIL_HOSTNAME)
         recipient_email_address = email_contact_method.email
 
@@ -2248,19 +2224,16 @@ def _action_notice_post_save_handler(sender, **kwargs):
     every concrete subclass of ActionNotice.
     """
     action_notice = kwargs['instance']
-    # Email everyone subscribed to items this notice is relevant for
-    direct_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.action_item.all_parents_in_thread().values('pk').query) |
-                                                       Q(item__in=action_notice.action_agent.all_parents_in_thread().values('pk').query),
-                                                       active=True)
-    deep_subscriptions = Subscription.objects.filter(Q(item__in=action_notice.action_item.all_parents_in_thread(True).values('pk').query) |
-                                                     Q(item__in=action_notice.action_agent.all_parents_in_thread(True).values('pk').query),
-                                                     deep=True,
-                                                     active=True)
-    direct_q = Q(pk__in=direct_subscriptions.values('contact_method').query)
-    deep_q = Q(pk__in=deep_subscriptions.values('contact_method').query)
-    email_contact_methods = EmailContactMethod.objects.filter(direct_q | deep_q, active=True)
-    messages = [action_notice.notification_email(email_contact_method) for email_contact_method in email_contact_methods]
+    # Find all subscriptions to this item (both direct and deep)
+    direct_q = Q(item__in=action_notice.action_item.all_parents_in_thread().values('pk').query) | Q(item__in=action_notice.action_agent.all_parents_in_thread().values('pk').query)
+    deep_q = (Q(item__in=action_notice.action_item.all_parents_in_thread(True).values('pk').query) | Q(item__in=action_notice.action_agent.all_parents_in_thread(True).values('pk').query)) & Q(deep=True)
+    subscriptions = Subscription.objects.filter(direct_q | deep_q, active=True)
+    email_contact_methods = EmailContactMethod.objects.filter(pk__in=subscriptions.values('contact_method').query, active=True)
+    pk_to_email_contact_method = dict([(x.pk, x) for x in email_contact_methods])
+    # Generate an email for each subscription
+    messages = [action_notice.notification_email(x, pk_to_email_contact_method[x.contact_method_id]) for x in subscriptions]
     messages = [x for x in messages if x is not None]
+    # Send the emails
     if messages:
         smtp_connection = SMTPConnection()
         smtp_connection.send_messages(messages)
