@@ -319,17 +319,19 @@ class Item(models.Model):
         return self.actual_item_type() == type(self)
 
     def notification_email_username(self):
-        result = u'%s-%d' % (self.name if self.name else self.actual_item_type()._meta.verbose_name, self.pk)
-        result = result.lower()
-        result = re.sub("'", '', result)
-        result = re.sub('[^A-Za-z0-9]+', '-', result)
-        result = re.sub('^-+', '-', result)
-        return result
+        if self.email_list_address:
+            return self.email_list_address
+        prefix = 'comment' if issubclass(self.actual_item_type(), Comment) else 'item'
+        return u'%s-%d' % (prefix, self.pk)
 
     @staticmethod
     def item_for_notification_email_username(email_username):
-        item_id = email_username.split('-')[-1]
-        return Item.objects.get(pk=item_id)
+        m = re.match(r'(item|comment)-(\d+)', email_username, re.IGNORECASE)
+        if m:
+            item_id = m.group(2)
+            return Item.objects.get(pk=item_id)
+        else:
+            return Item.objects.get(email_list_address__iexact=email_username)
 
     def ancestor_collections(self, recursive_filter=None):
         """
@@ -2114,7 +2116,7 @@ class ActionNotice(models.Model):
                 return None
 
         # Get the fields we are allowed to view
-        subscribed_item = arbitrary_subscription.item
+        subscribed_item = arbitrary_subscription.item #TODO this must be multiple and not be arbitrary
         item = self.action_item
         reply_item = self.notification_reply_item()
         topmost_item = item.original_item_in_thread()
@@ -2126,10 +2128,15 @@ class ActionNotice(models.Model):
         topmost_item_name = get_viewable_name(viewer.context, topmost_item)
         action_agent_name = get_viewable_name(viewer.context, self.action_agent)
         recipient_name = get_viewable_name(viewer.context, agent)
+        can_view_email_list_subject = permission_cache.agent_can('view Item.email_list_subject', subscribed_item)
+        subject_prefix = subscribed_item.email_list_subject if (can_view_email_list_subject and subscribed_item.email_list_subject) else subscribed_item_name
+        #TODO don't include subject_prefix if specified in Subscription.email_includes_subject_prefix
 
-        generic_from_email_name = 'Deme notifier'
+        generic_from_email_name = 'Deme action notice'
+        noreply_from_email_address = '%s@%s' % ('noreply', settings.NOTIFICATION_EMAIL_HOSTNAME)
         from_email_name = None
         from_email_address = None
+        subscribed_item_email_address = '%s@%s' % (subscribed_item.notification_email_username(), settings.NOTIFICATION_EMAIL_HOSTNAME)
         reply_item_email_address = '%s@%s' % (reply_item.notification_email_username(), settings.NOTIFICATION_EMAIL_HOSTNAME)
         recipient_email_address = email_contact_method.email
 
@@ -2154,7 +2161,7 @@ class ActionNotice(models.Model):
                 else:
                     action_sentence_parts.append(unicode(part))
             action_sentence = u''.join(action_sentence_parts)
-            subject = '[%s] %s' % (subscribed_item_name, action_sentence)
+            subject = '[%s] %s' % (subject_prefix, action_sentence)
             template_name = 'relation'
             viewer.context['relation_added'] = self.relation_added
             viewer.context['from_item'] = self.from_item
@@ -2163,15 +2170,15 @@ class ActionNotice(models.Model):
             viewer.context['from_field_model'] = self.from_field_model
             viewer.context['natural_language_representation'] = natural_language_representation
         elif isinstance(self, DeactivateActionNotice):
-            subject = '[%s] %s deactivated %s' % (subscribed_item_name, action_agent_name, item_name)
+            subject = '[%s] %s deactivated %s' % (subject_prefix, action_agent_name, item_name)
             template_name = 'delete'
             viewer.context['delete_type'] = 'deactivate'
         elif isinstance(self, ReactivateActionNotice):
-            subject = '[%s] %s reactivated %s' % (subscribed_item_name, action_agent_name, item_name)
+            subject = '[%s] %s reactivated %s' % (subject_prefix, action_agent_name, item_name)
             template_name = 'delete'
             viewer.context['delete_type'] = 'reactivate'
         elif isinstance(self, DestroyActionNotice):
-            subject = '[%s] %s destroyed %s' % (subscribed_item_name, action_agent_name, item_name)
+            subject = '[%s] %s destroyed %s' % (subject_prefix, action_agent_name, item_name)
             template_name = 'delete'
             viewer.context['delete_type'] = 'destroy'
         elif isinstance(self, CreateActionNotice):
@@ -2184,18 +2191,20 @@ class ActionNotice(models.Model):
                         from_email_contact_method = comment.from_contact_method.downcast()
                         if permission_cache.agent_can('view EmailContactMethod.email', from_email_contact_method):
                             comment_creator_email_address = from_email_contact_method.email
+                from_email_name = action_agent_name
                 if comment_creator_email_address:
-                    from_email_name = action_agent_name
                     from_email_address = comment_creator_email_address
-                subject = comment_name
+                else:
+                    from_email_address = noreply_from_email_address
+                subject = '[%s] %s' % (subject_prefix, comment_name)
                 template_name = 'comment'
                 viewer.context['comment'] = comment
             else:
-                subject = '[%s] %s created %s' % (subscribed_item_name, action_agent_name, item_name)
+                subject = '[%s] %s created %s' % (subject_prefix, action_agent_name, item_name)
                 template_name = 'save'
                 viewer.context['save_type'] = 'create'
         elif isinstance(self, EditActionNotice):
-            subject = '[%s] %s edited %s' % (subscribed_item_name, action_agent_name, item_name)
+            subject = '[%s] %s edited %s' % (subject_prefix, action_agent_name, item_name)
             template_name = 'save'
             viewer.context['save_type'] = 'edit'
         else:
@@ -2206,6 +2215,7 @@ class ActionNotice(models.Model):
         body_html = template.render(viewer.context)
         body_text = html2text.html2text_file(body_html, None)
         body_text = wrap(body_text, 78)
+        subscribed_item_email = formataddr((subscribed_item_name, subscribed_item_email_address))
         reply_item_email = formataddr((reply_item_name, reply_item_email_address))
         recipient_email = formataddr((recipient_name, recipient_email_address))
         if from_email_address is None:
@@ -2213,7 +2223,8 @@ class ActionNotice(models.Model):
         else:
             from_email = formataddr((from_email_name, from_email_address))
         headers = {}
-        headers['To'] = reply_item_email
+        headers['To'] = subscribed_item_email
+        headers['Reply-To'] = reply_item_email if subscribed_item.email_sets_reply_to_all_subscribers else from_email
         def messageid(x):
             prefix = 'notice' if isinstance(x, ActionNotice) else 'item'
             date = (x.action_time if isinstance(x, ActionNotice) else x.created_at).strftime("%Y%m%d%H%M%S")
