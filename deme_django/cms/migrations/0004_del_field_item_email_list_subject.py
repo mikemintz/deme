@@ -10,57 +10,35 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
-        # Adding field 'Item.email_list_address'
-        db.add_column('cms_item', 'email_list_address', self.gf('django.db.models.fields.CharField')(default=None, max_length=63, unique=True, null=True, blank=True), keep_default=False)
-
-        # Adding field 'Item.email_list_subject'
-        db.add_column('cms_item', 'email_list_subject', self.gf('django.db.models.fields.CharField')(default='', max_length=255, null=True, blank=True), keep_default=False)
-
-        # Adding field 'Item.email_sets_reply_to_all_subscribers'
-        db.add_column('cms_item', 'email_sets_reply_to_all_subscribers', self.gf('django.db.models.fields.NullBooleanField')(default=True, null=True, blank=True), keep_default=False)
-
-        # Adding field 'ItemVersion.email_list_address'
-        db.add_column('cms_itemversion', 'email_list_address', self.gf('django.db.models.fields.CharField')(default=None, max_length=63, null=True, blank=True), keep_default=False)
-
-        # Adding field 'ItemVersion.email_list_subject'
-        db.add_column('cms_itemversion', 'email_list_subject', self.gf('django.db.models.fields.CharField')(default='', max_length=255, null=True, blank=True), keep_default=False)
-
-        # Adding field 'ItemVersion.email_sets_reply_to_all_subscribers'
-        db.add_column('cms_itemversion', 'email_sets_reply_to_all_subscribers', self.gf('django.db.models.fields.NullBooleanField')(default=True, null=True, blank=True), keep_default=False)
-
-        # Adding default permissions for the new fields
-        for action in ['view', 'edit']:
-            for field in ['Item.email_list_address', 'Item.email_list_subject', 'Item.email_sets_reply_to_all_subscribers']:
-                ability = '%s %s' % (action, field)
-                is_allowed = action == 'view'
-                AllToAllPermission(ability=ability, is_allowed=is_allowed).save()
-
-    def backwards(self, orm):
-        
-        # Deleting field 'Item.email_list_address'
-        db.delete_column('cms_item', 'email_list_address')
-
         # Deleting field 'Item.email_list_subject'
         db.delete_column('cms_item', 'email_list_subject')
-
-        # Deleting field 'Item.email_sets_reply_to_all_subscribers'
-        db.delete_column('cms_item', 'email_sets_reply_to_all_subscribers')
-
-        # Deleting field 'ItemVersion.email_list_address'
-        db.delete_column('cms_itemversion', 'email_list_address')
 
         # Deleting field 'ItemVersion.email_list_subject'
         db.delete_column('cms_itemversion', 'email_list_subject')
 
-        # Deleting field 'ItemVersion.email_sets_reply_to_all_subscribers'
-        db.delete_column('cms_itemversion', 'email_sets_reply_to_all_subscribers')
-
-        # Deleting permissions for the new fields
+        # Deleting permissions for the relevant fields
         for action in ['view', 'edit']:
-            for field in ['Item.email_list_address', 'Item.email_list_subject', 'Item.email_sets_reply_to_all_subscribers']:
+            for field in ['Item.email_list_subject']:
                 for permission_model in all_possible_permission_models():
                     ability = '%s %s' % (action, field)
                     permission_model.objects.filter(ability=ability).delete()
+
+
+    def backwards(self, orm):
+        
+        # Adding field 'Item.email_list_subject'
+        db.add_column('cms_item', 'email_list_subject', self.gf('django.db.models.fields.CharField')(default='', max_length=255, null=True, blank=True), keep_default=False)
+
+        # Adding field 'ItemVersion.email_list_subject'
+        db.add_column('cms_itemversion', 'email_list_subject', self.gf('django.db.models.fields.CharField')(default='', max_length=255, null=True, blank=True), keep_default=False)
+
+        # Adding default permissions for the relevant fields
+        for action in ['view', 'edit']:
+            for field in ['Item.email_list_subject']:
+                ability = '%s %s' % (action, field)
+                is_allowed = action == 'view'
+                AllToAllPermission(ability=ability, is_allowed=is_allowed).save()
+
 
     models = {
         'cms.actionnotice': {
@@ -314,7 +292,6 @@ class Migration(SchemaMigration):
             'description': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'destroyed': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'email_list_address': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '63', 'unique': 'True', 'null': 'True', 'blank': 'True'}),
-            'email_list_subject': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'email_sets_reply_to_all_subscribers': ('django.db.models.fields.NullBooleanField', [], {'default': 'True', 'null': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'item_type_string': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
@@ -327,7 +304,6 @@ class Migration(SchemaMigration):
             'default_viewer': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True'}),
             'description': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'email_list_address': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '63', 'null': 'True', 'blank': 'True'}),
-            'email_list_subject': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'email_sets_reply_to_all_subscribers': ('django.db.models.fields.NullBooleanField', [], {'default': 'True', 'null': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'}),

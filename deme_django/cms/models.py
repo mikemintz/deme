@@ -228,7 +228,7 @@ class Item(models.Model):
     # Setup
     __metaclass__ = ItemMetaClass
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'view_permissions', 'comment_on', 'delete', 'view Item.action_notices', 'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at', 'view Item.default_viewer', 'view Item.email_list_address', 'view Item.email_list_subject', 'view Item.email_sets_reply_to_all_subscribers', 'edit Item.name', 'edit Item.description', 'edit Item.default_viewer', 'edit Item.email_list_address', 'edit Item.email_list_subject', 'edit Item.email_sets_reply_to_all_subscribers'])
+    introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'view_permissions', 'comment_on', 'delete', 'view Item.action_notices', 'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at', 'view Item.default_viewer', 'view Item.email_list_address', 'view Item.email_sets_reply_to_all_subscribers', 'edit Item.name', 'edit Item.description', 'edit Item.default_viewer', 'edit Item.email_list_address', 'edit Item.email_sets_reply_to_all_subscribers'])
     introduced_global_abilities = frozenset(['do_anything'])
     dyadic_relations = {}
     class Meta:
@@ -246,7 +246,6 @@ class Item(models.Model):
     description                         = models.CharField(_('purpose'), max_length=255, blank=True, help_text=_('Description of the purpose of this item'))
     default_viewer                      = models.CharField(_('default viewer'), max_length=255, choices=PossibleViewerNamesIterable(), help_text=_('(Advanced) The default viewer to display this item'))
     email_list_address                  = models.CharField(_('email list address'), max_length=63, null=True, blank=True, unique=True, default=None, validators=[RegexValidator(email_local_address_re1, 'Field must be a valid local part of an email address (before the at-sign)'), RegexValidator(email_local_address_re2, 'Cannot be of the form "item-#" or "comment-#"')], help_text=_('(Advanced) The local part (before the at-sign) of the to email address of emails sent to subscribers of this item'))
-    email_list_subject                  = models.CharField(_('email list subject prefix'), max_length=255, blank=True, help_text=_('(Advanced) The prefix of the subject field of emails sent to subscribers of this item'))
     email_sets_reply_to_all_subscribers = FixedBooleanField(_('email sets reply to all subscribers'), default=True, help_text=_('(Advanced) For the reply-to field of emails sent to subscribers of this item: if set, reply to all subscribers, else reply to sender'))
 
     def __unicode__(self):
@@ -2103,10 +2102,8 @@ class ActionNotice(models.Model):
         topmost_item_name = get_viewable_name(viewer.context, topmost_item)
         action_agent_name = get_viewable_name(viewer.context, self.action_agent)
         recipient_name = get_viewable_name(viewer.context, email_contact_method.agent)
-        can_view_email_list_subject = permission_cache.agent_can('view Item.email_list_subject', subscribed_item)
-        subject_prefix = subscribed_item.email_list_subject if (can_view_email_list_subject and subscribed_item.email_list_subject) else subscribed_item_name
-        #TODO don't include subject_prefix if specified in subscription.email_includes_subject_prefix (when we add the field)
 
+        #TODO what happens if agent cannot view email_list_address of subscribed_item and/or reply_item?
         generic_from_email_name = 'Deme action notice'
         noreply_from_email_address = '%s@%s' % ('noreply', settings.NOTIFICATION_EMAIL_HOSTNAME)
         from_email_name = None
@@ -2115,6 +2112,7 @@ class ActionNotice(models.Model):
         reply_item_name = "Subscribers to %s" % item_name
         reply_item_email_address = '%s@%s' % (reply_item.notification_email_username(), settings.NOTIFICATION_EMAIL_HOSTNAME)
         recipient_email_address = email_contact_method.email
+        subject_prefix = subscribed_item_email_address
 
         # Generate the subject and body
         viewer.context['action_item'] = self.action_item
