@@ -4,13 +4,10 @@
 
 <p>
 <a href="{{ url_prefix }}{{ action_agent.get_absolute_url }}">{% viewable_name action_agent %}</a>
-commented on
+commented
+<a href="{{ url_prefix }}{{ comment.get_absolute_url }}">{% viewable_name comment %}</a>
+on
 <a href="{{ url_prefix }}{{ topmost_item.get_absolute_url }}">{% viewable_name topmost_item %}</a>
-</p>
-
-<p>
-<a href="{{ url_prefix }}{{ topmost_item.get_absolute_url }}?highlighted_comment={{ comment.pk }}">Click here to view this comment in context</a>
-{#TODO make the comment highlighted when you go there #}
 </p>
 
 <hr />
