@@ -1729,6 +1729,23 @@ class Comment(Item):
         else:
             return super(Comment, self).relation_action_notice_natural_language_representation(permission_cache, field_name, relation_added, action_item)
 
+    def original_comment_in_thread(self):
+        """
+        Return the original comment at the top of this thread. If this already
+        the topmost comment (i.e. it is a comment on a non-comment item), just
+        return self.
+        
+        For example, imagine self is comment A, and A is a reply to comment B,
+        and B is a reply to non-comment item C. This method would return B.
+        This method uses the RecursiveComment table.
+        """
+        parent_pks_query = RecursiveComment.objects.filter(child=self).values('parent').query
+        comment_pks_query = Comment.objects.all().values('pk').query
+        try:
+            return Comment.objects.exclude(item__pk__in=comment_pks_query).get(pk__in=parent_pks_query)
+        except ObjectDoesNotExist:
+            return self
+
 
 class TextComment(TextDocument, Comment):
     """
@@ -2158,7 +2175,8 @@ class ActionNotice(models.Model):
         elif isinstance(self, CreateActionNotice):
             if issubclass(item.actual_item_type(), TextComment):
                 comment = item.downcast()
-                comment_name = get_viewable_name(viewer.context, comment)
+                topmost_comment = comment.original_comment_in_thread()
+                topmost_comment_name = get_viewable_name(viewer.context, topmost_comment)
                 comment_creator_email_address = None
                 if comment.from_contact_method and issubclass(comment.from_contact_method.actual_item_type(), EmailContactMethod):
                     if permission_cache.agent_can('view Comment.from_contact_method', comment):
@@ -2170,7 +2188,9 @@ class ActionNotice(models.Model):
                     from_email_address = comment_creator_email_address
                 else:
                     from_email_address = noreply_from_email_address
-                subject = '[%s] %s' % (subject_prefix, comment_name)
+                subject = '[%s] %s' % (subject_prefix, topmost_comment_name)
+                if comment.pk != topmost_comment.pk:
+                    subject = 'Re: %s' % subject
                 template_name = 'comment'
                 viewer.context['comment'] = comment
             else:
@@ -2197,8 +2217,9 @@ class ActionNotice(models.Model):
         else:
             from_email = formataddr((from_email_name, from_email_address))
         headers = {}
-        headers['To'] = subscribed_item_email
-        headers['Reply-To'] = reply_item_email if subscribed_item.email_sets_reply_to_all_subscribers else from_email
+        headers['To'] = reply_item_email
+        if subscribed_item.email_sets_reply_to_all_subscribers:
+            headers['Reply-To'] = headers['To']
         def messageid(x):
             prefix = 'notice' if isinstance(x, ActionNotice) else 'item'
             date = (x.action_time if isinstance(x, ActionNotice) else x.created_at).strftime("%Y%m%d%H%M%S")
