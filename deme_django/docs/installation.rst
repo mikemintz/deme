@@ -111,7 +111,7 @@ You may also have to comment out the line in ``main.cf`` that starts with ``myde
 
 I then created a file called ``/etc/postfix/deme_transport`` containing the following::
 
-  /.*-[0-9]+@deme\.stanford\.edu/    deme:
+  /.*@deme\.stanford\.edu/    deme:
 
 Optional Dependencies
 ---------------------
