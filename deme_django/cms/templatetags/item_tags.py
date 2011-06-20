@@ -887,6 +887,10 @@ class CalculateRelationships(template.Node):
             viewable_items = manager.filter(active=True)
             if viewable_items.count() == 0:
                 continue
+            if viewable_items.count() > 500:
+                context['relationships_box'] = 'Too many related items to render'
+                context['n_relationships'] = viewable_items.count()
+                return ''
             viewable_items = permission_cache.filter_items('view %s.%s' % (field.model.__name__, field.field.name), viewable_items)
             if viewable_items.count() == 0:
                 continue
@@ -982,6 +986,10 @@ class CalculateActionNotices(template.Node):
         if agentcan_helper(context, 'view Item.action_notices', item):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
             action_notices = ActionNotice.objects.filter(Q(action_item=item) | Q(action_agent=item)).order_by('action_time')
+            if action_notices.count() > 500:
+                context['n_action_notices'] = action_notices.count()
+                context['action_notice_box'] = 'Too many action notices to render'
+                return ''
             action_notice_pk_to_object_map = {}
             for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
                 select_related_fields = ['action_agent__name', 'action_item__name']
