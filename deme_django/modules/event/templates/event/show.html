@@ -4,4 +4,9 @@
 
 {{ event.body|safe }}
 
+<p>Title:  {{event.name}}</p>
+<p>From: {{event.start_date}} {{event.start_time}} To:  {{event.end_time}} {{event.end_date}} </p>
+<p>Location: {{event.location}}</p>
+<p>Description: {{event.description}}</p>
+
 {% endblock content %}
