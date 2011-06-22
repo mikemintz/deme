@@ -260,3 +260,83 @@ Performance
   - Be careful, since it will screw with body_str in TextDocumentViewer.show
 * When admin (id=1) adds an item, no need to by default include the permission that he gets do_anything
 
+
+
+
+
+Mike's TODO list
+================
+
+2011-06-09
+----------
+* calculcatehistory breaks on destroyed items
+
+2011-06-04
+----------
+* Maybe we need a db_index on email_list_address
+* Group can have multiple folios
+* Diff viewer
+* Warn if editing when someone else is editing or just made a new version that you haven't seen yet
+* Advanced fields is hacky the way it's done, and if there is a validation error in one of them, you don't see it unless you expand
+* Form popups are hacky, don't do permissions, all fields
+* Wait for https://code.djangoproject.com/ticket/16159 or rather https://code.djangoproject.com/ticket/15321 to get fixed (for uniqueness error in email_list_address)
+* Wait for https://code.djangoproject.com/ticket/13781 to get fixed (in order to be able to use select_related in things with multiple inheritance like TextComment)
+* Email-list-related fields in item aren't displayed anywhere (unless you go to edit)
+* Start using django logging in email handling when we upgrade to django 1.3
+
+Friday June 12 notes
+--------------------
+* Send todd things he should describe, and the ideal syntax, for symsys website (permissions, groups, etc), not this weekend
+
+Friday June 5 notes
+-------------------
+* Change more buttons to jquery ui buttons
+* add customizable columns to list view
+* Get forward links to include breadcrumbs (difficult problem, since there are so many forward links)
+* Come up with better breadcrumb url if possible
+* Create concentration groups for faculty that they can join and leave at will.
+* Spreadsheet UI with hierarchy like finder (regular view)
+  - http://ludo.cubicphuse.nl/jquery-plugins/treeTable/doc/index.html
+    - Won't let us have DAG or incrementally load data using ajax
+  - http://www.hanpau.com/index.php?page=jqtreetable
+    - Even simpler, no ajax
+  - http://trirand.com/jqgrid/jqgrid.html
+    - Most flexible, looks funny though, but currently uses nested set model which we don't use
+* Consider what to do with other permissions, like 'modify_membership' and 'view action_notices' and 'view_permissions', maybe we could unify names
+
+Thursday May 29 notes
+---------------------
+* maybe later, automatically generate the foreignkey field permissions
+
+Friday May 22 notes
+-------------------
+Priorities for symsys site
+* Blog-like viewer that views collections of arbitrary items, items can be in multiple collections (like categories)
+  - Advertisements will be displayed in blog viewer, except blog viewer needs to check "expires_at" field
+* Calendar with upcoming events to embed on home page
+
+Friday May 15 notes
+-------------------
+* Try to move comment generating pages to the ItemViewer with a current item. Probably same with transclusions and highlights and contact methods and stuff.
+
+Friday may 1 notes
+------------------
+* AF group gets permission to do things to careers, except confer them (only Bachelor and Minor careers), and they'll have a special declare view that does things automatically without giving them permission to change them later.
+* If a user makes something on their career private, then the AF just can't view it.
+* Everything I wrote above is wrong. AFs are automatically included in the default permissions with do_anything. Actually, nevermind: we can't let them view transcripts.
+
+Absolutely necessary
+--------------------
+* Talk more about subject line
+* Extract classes like Event and AIMContactMethod to other modules
+* Navigation and layout (NEEDS MORE DISCUSSION)
+* Figure out the group hierarchy to have for Symsys.
+  - We might need an after_modify_permissions callback
+* Make sure there is an interface to create new careers/students/whatever, confer them, and all of the permissions will be set by default here (or somehow in the model).
+* Make an interface to upload a thesis
+
+Nice to have
+------------
+* Page of all recent activity (i.e., action notices)
+* Make custom text for each RelationActionNotice/field
+* More sophisticated event day/time stuff.
