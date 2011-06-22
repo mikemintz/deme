@@ -4,10 +4,10 @@
 
 <p>
 <a href="{{ url_prefix }}{{ action_agent.get_absolute_url }}">{% viewable_name action_agent %}</a>
-commented
-<a href="{{ url_prefix }}{{ comment.get_absolute_url }}">{% viewable_name comment %}</a>
-on
+commented on
 <a href="{{ url_prefix }}{{ topmost_item.get_absolute_url }}">{% viewable_name topmost_item %}</a>
+<br />
+Comment title: <a href="{{ url_prefix }}{{ comment.get_absolute_url }}">{% viewable_name comment %}</a>
 </p>
 
 <hr />

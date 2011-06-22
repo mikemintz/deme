@@ -4,8 +4,8 @@
 
 <p>
 
-Courtesy of
-<a href="{{ url_prefix }}{{ action_agent.get_absolute_url }}">{% viewable_name action_agent %}</a>,
+Action performed by
+<a href="{{ url_prefix }}{{ action_agent.get_absolute_url }}">{% viewable_name action_agent %}</a>:
 {% for part in natural_language_representation %}
 {% if part.pk %}
 <a href="{{ url_prefix }}{{ part.get_absolute_url }}">{% viewable_name part %}</a>
