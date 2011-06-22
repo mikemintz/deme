@@ -2,11 +2,32 @@
 {% load item_tags %}
 {% block content %}
 
+<head>
+<style> 
+
+p {
+  font-size:120%;
+}
+
+#title {
+   font-size: 200%;
+   margin-bottom: 1em;
+}
+
+</style>
+</head>
+
+<body>
+<p id="title">{{event.name}}</p>
+{% ifequal event.start_date event.end_date %}
+<p id="time"> {{event.start_date}} {{event.start_time}} to {{event.end_time}}</p>
+{% else %}
+<p id="time"> {{event.start_date}} {{event.start_time}} to {{event.end_time}} {{event.end_time}}
+</p>
+{% endifequal %}
+<p id="location">at {{event.location}}</p>
+
 {{ event.body|safe }}
 
-<p>Title:  {{event.name}}</p>
-<p>From: {{event.start_date}} {{event.start_time}} To:  {{event.end_time}} {{event.end_date}} </p>
-<p>Location: {{event.location}}</p>
-<p>Description: {{event.description}}</p>
-
 {% endblock content %}
+</body>
