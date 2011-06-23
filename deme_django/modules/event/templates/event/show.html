@@ -22,8 +22,7 @@ p {
 {% ifequal event.start_date event.end_date %}
 <p id="time"> {{event.start_date}} {{event.start_time}} to {{event.end_time}}</p>
 {% else %}
-<p id="time"> {{event.start_date}} {{event.start_time}} to {{event.end_time}} {{event.end_time}}
-</p>
+<p id="time"> {{event.start_date}} {{event.start_time}} to {{event.end_date}} {{event.end_time}}</p>
 {% endifequal %}
 <p id="location">at {{event.location}}</p>
 
