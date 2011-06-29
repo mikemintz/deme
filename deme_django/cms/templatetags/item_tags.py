@@ -1794,7 +1794,7 @@ class DisplayDiff(template.Node):
                 continue
             reference_value = getattr(reference_item, field.name)
             new_value = getattr(new_item, field.name)
-            is_html = False #TODO calculate
+            is_html = isinstance(new_item, HtmlDocument) and field.name == 'body'
             difference_html = self.display_field_difference_html(field, reference_value, new_value, is_html)
             if difference_html:
                 field_dict = {'field': field, 'reference_value': reference_value, 'new_value': new_value, 'name': field.verbose_name, 'diff': difference_html}
