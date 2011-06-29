@@ -1749,9 +1749,30 @@ class DisplayDiff(template.Node):
         return "<DisplayDiffNode>"
         
     def render(self, context):
-        #TODO still need to set diff_fields correctly
-        diff_fields = [{'name': 'description', 'diff': '1 -> 2'}, {'name': 'body', 'diff': '<b>DELETED</b>'}]
-        #diff_fields = []
+        try:
+            item = self.item.resolve(context)
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve item variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+        try:
+            reference_version_number = self.reference_version_number.resolve(context)
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve reference_version_number variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+        try:
+            new_version_number = self.new_version_number.resolve(context)
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve new_version_number variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+        # Get a list of field differences
+        diff_fields = self.calculate_field_differences(item, reference_version_number, new_version_number)
+        # Render the underlying nodelists for each field
         result = []
         for field in diff_fields:
             context.update({'field': field})
@@ -1761,6 +1782,30 @@ class DisplayDiff(template.Node):
             return '\n'.join(result)
         else:
             return self.nodelist_same.render(context)
+
+    def calculate_field_differences(self, item, reference_version_number, new_version_number):
+        reference_item = item.actual_item_type().objects.get(pk=item.pk)
+        new_item = item.actual_item_type().objects.get(pk=item.pk)
+        reference_item.copy_fields_from_version(reference_version_number)
+        new_item.copy_fields_from_version(new_version_number)
+        result = []
+        for field in item._meta.fields:
+            if isinstance(field, (models.OneToOneField, models.ManyToManyField)):
+                continue
+            reference_value = getattr(reference_item, field.name)
+            new_value = getattr(new_item, field.name)
+            difference_html = self.display_field_difference_html(field, reference_value, new_value)
+            if difference_html:
+                field_dict = {'field': field, 'reference_value': reference_value, 'new_value': new_value, 'name': field.verbose_name, 'diff': difference_html}
+                result.append(field_dict)
+        return result
+
+    def display_field_difference_html(self, field, reference_value, new_value):
+        if reference_value == new_value:
+            return 'DID NOT CHANGE'
+            #return None
+        else:
+            return mark_safe(u'<b>1</b> -> 2')
         
 
 
@@ -1778,11 +1823,4 @@ def displaydiff(parser, token):
     else:
         nodelist_same = template.NodeList()
     return DisplayDiff(bits[1], bits[2], bits[3], nodelist_different, nodelist_same)
-
-
-
-
-    
-
-
 
