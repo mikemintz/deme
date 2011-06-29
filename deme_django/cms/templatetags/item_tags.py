@@ -950,11 +950,14 @@ class CalculateHistory(template.Node):
             version_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk}) + '?version=%s' % version.version_number
             version_name = 'Version %d' % version.version_number
             version_text = '<a href="%s">%s</a>' % (version_url, version_name)
+            diff_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'diff', 'noun': item.pk}) + '?version=%s&reference_version=%s' % (version.version_number, version.version_number - 1)
+            diff_text = ' <a href="%s">(Diff)</a>' % diff_url if version.version_number >= 1 else ''
             time_text = '<span title="%s">[%s ago]</span><br />' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
             agent_text = ' by %s' % get_item_link_tag(context, action_notice.action_agent)
-            combined_text = '<div style="font-size: 85%%; margin-bottom: 5px;">%s%s%s</div>' % (
+            combined_text = '<div style="font-size: 85%%; margin-bottom: 5px;">%s%s%s%s</div>' % (
                     (time_text if agentcan_helper(context, 'view Item.created_at', item) else ''),
                     version_text,
+                    diff_text,
                     (agent_text if agentcan_helper(context, 'view Item.creator', item) else '')
             )
             result.append(combined_text)
@@ -1044,7 +1047,8 @@ class CalculateActionNotices(template.Node):
                     if isinstance(action_notice, CreateActionNotice):
                         action_text = 'created'
                     if isinstance(action_notice, EditActionNotice):
-                        action_text = 'edited'
+                        diff_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'diff', 'noun': action_notice.action_item.pk}) + '?version=%s&reference_version=%s' % (action_notice.action_item_version_number, action_notice.action_item_version_number - 1)
+                        action_text = '<a href="%s">edited</a>' % diff_url
                     action_sentence = '%s %s %s' % (action_agent_text, action_text, action_item_text)
                 result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">[%s]<br />%s%s</div>' % (action_time_text, action_sentence, action_summary_text))
                 context['n_action_notices'] += 1

@@ -17,6 +17,14 @@ created
 
 </p>
 
+{% ifequal save_type "edit" %}
+{% displaydiff action_item action_item_version_number|add:"-1" action_item_version_number %}
+<div><strong>{{ field.name }}:</strong> {{ field.diff }}</div>
+{% else %}
+<div>No differences found</div>
+{% enddisplaydiff %}
+{% endifequal %}
+
 {% if action_summary %}
 <p>
 <strong>Action summary:</strong> {{ action_summary }}
