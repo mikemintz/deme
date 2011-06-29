@@ -1794,13 +1794,15 @@ class DisplayDiff(template.Node):
                 continue
             reference_value = getattr(reference_item, field.name)
             new_value = getattr(new_item, field.name)
-            difference_html = self.display_field_difference_html(field, reference_value, new_value)
+            is_html = False #TODO calculate
+            difference_html = self.display_field_difference_html(field, reference_value, new_value, is_html)
             if difference_html:
                 field_dict = {'field': field, 'reference_value': reference_value, 'new_value': new_value, 'name': field.verbose_name, 'diff': difference_html}
                 result.append(field_dict)
         return result
 
-    def display_field_difference_html(self, field, reference_value, new_value):
+    def display_field_difference_html(self, field, reference_value, new_value, is_html):
+        #TODO compute
         if reference_value == new_value:
             return 'DID NOT CHANGE'
             #return None
