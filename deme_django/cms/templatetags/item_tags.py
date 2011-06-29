@@ -951,7 +951,7 @@ class CalculateHistory(template.Node):
             version_name = 'Version %d' % version.version_number
             version_text = '<a href="%s">%s</a>' % (version_url, version_name)
             diff_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'diff', 'noun': item.pk}) + '?version=%s&reference_version=%s' % (version.version_number, version.version_number - 1)
-            diff_text = ' <a href="%s">(Diff)</a>' % diff_url if version.version_number >= 1 else ''
+            diff_text = ' <a href="%s">(Diff)</a>' % diff_url if version.version_number > 1 else ''
             time_text = '<span title="%s">[%s ago]</span><br />' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
             agent_text = ' by %s' % get_item_link_tag(context, action_notice.action_agent)
             combined_text = '<div style="font-size: 85%%; margin-bottom: 5px;">%s%s%s%s</div>' % (
