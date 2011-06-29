@@ -1771,7 +1771,7 @@ class DisplayDiff(template.Node):
             else:
                 return '' # Fail silently for invalid variables.
         # Get a list of field differences
-        diff_fields = self.calculate_field_differences(item, reference_version_number, new_version_number)
+        diff_fields = self.calculate_field_differences(context, item, reference_version_number, new_version_number)
         # Render the underlying nodelists for each field
         result = []
         for field in diff_fields:
@@ -1783,7 +1783,7 @@ class DisplayDiff(template.Node):
         else:
             return self.nodelist_same.render(context)
 
-    def calculate_field_differences(self, item, reference_version_number, new_version_number):
+    def calculate_field_differences(self, context, item, reference_version_number, new_version_number):
         reference_item = item.actual_item_type().objects.get(pk=item.pk)
         new_item = item.actual_item_type().objects.get(pk=item.pk)
         reference_item.copy_fields_from_version(reference_version_number)
@@ -1792,9 +1792,14 @@ class DisplayDiff(template.Node):
         for field in item._meta.fields:
             if isinstance(field, (models.OneToOneField, models.ManyToManyField)):
                 continue
+            model = item._meta.get_field_by_name(field.name)[1]
+            if model is None:
+                model = type(item)
+            if not agentcan_helper(context, 'view %s.%s' % (model.__name__, field.name), item):
+                continue
             reference_value = getattr(reference_item, field.name)
             new_value = getattr(new_item, field.name)
-            is_html = isinstance(new_item, HtmlDocument) and field.name == 'body'
+            is_html = isinstance(item, HtmlDocument) and field.name == 'body'
             difference_html = self.display_field_difference_html(field, reference_value, new_value, is_html)
             if difference_html:
                 field_dict = {'field': field, 'reference_value': reference_value, 'new_value': new_value, 'name': field.verbose_name, 'diff': difference_html}
