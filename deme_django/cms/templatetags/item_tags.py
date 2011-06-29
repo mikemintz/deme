@@ -1733,3 +1733,52 @@ def login_menu(parser, token):
     return LoginMenu()
 
 
+
+class DisplayDiff(template.Node):
+    def __init__(self, item, reference_version_number, new_version_number, nodelist_different, nodelist_same):
+        self.item = template.Variable(item)
+        self.reference_version_number = template.Variable(reference_version_number)
+        self.new_version_number = template.Variable(new_version_number)
+        self.nodelist_different, self.nodelist_same = nodelist_different, nodelist_same
+
+    def __repr__(self):
+        return "<DisplayDiffNode>"
+        
+    def render(self, context):
+        #TODO still need to set diff_fields correctly
+        diff_fields = [{'name': 'description', 'diff': '1 -> 2'}, {'name': 'body', 'diff': '<b>DELETED</b>'}]
+        #diff_fields = []
+        result = []
+        for field in diff_fields:
+            context.update({'field': field})
+            result.append(self.nodelist_different.render(context))
+            context.pop()
+        if result:
+            return '\n'.join(result)
+        else:
+            return self.nodelist_same.render(context)
+        
+
+
+@register.tag
+def displaydiff(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 4:
+        raise template.TemplateSyntaxError, "%r takes three arguments" % bits[0]
+    end_tag = 'end' + bits[0]
+    nodelist_different = parser.parse(('else', end_tag))
+    token = parser.next_token()
+    if token.contents == 'else':
+        nodelist_same = parser.parse((end_tag,))
+        parser.delete_first_token()
+    else:
+        nodelist_same = template.NodeList()
+    return DisplayDiff(bits[1], bits[2], bits[3], nodelist_different, nodelist_same)
+
+
+
+
+    
+
+
+

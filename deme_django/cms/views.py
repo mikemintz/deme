@@ -26,7 +26,7 @@ from cms.permissions import all_possible_item_abilities, all_possible_item_and_g
 class ItemViewer(Viewer):
     accepted_item_type = Item
     viewer_name = 'item'
-
+    
     def _type_list_helper(self):
         if self.request.GET.get('collection'):
             collection = Item.objects.get(pk=self.request.GET.get('collection')).downcast()
@@ -536,6 +536,11 @@ class ItemViewer(Viewer):
         template = loader.get_template('item/permissionshelp.html')
         return HttpResponse(template.render(self.context))
 
+    def item_diff_html(self):
+        self.context['action_title'] = 'Changes'
+        self.context['reference_version_number'] = self.request.GET.get('reference_version', '')
+        template = loader.get_template('item/diff.html')
+        return HttpResponse(template.render(self.context))
 
 class WebpageViewer(ItemViewer):
     accepted_item_type = Webpage
@@ -1132,4 +1137,24 @@ class DemeSettingViewer(ItemViewer):
         DemeSetting.set(key, value, self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'modify'}))
         return HttpResponseRedirect(redirect)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+
 
