@@ -1188,7 +1188,7 @@ class ViewableName(template.Node):
                 return "[Couldn't resolve item variable]"
             else:
                 return '' # Fail silently for invalid variables.
-        return get_viewable_name(context, item)
+        return mark_safe(escape(get_viewable_name(context, item)))
 
 @register.tag
 def viewable_name(parser, token):
@@ -1800,25 +1800,78 @@ class DisplayDiff(template.Node):
             reference_value = getattr(reference_item, field.name)
             new_value = getattr(new_item, field.name)
             is_html = isinstance(item, HtmlDocument) and field.name == 'body'
-            difference_html = self.display_field_difference_html(field, reference_value, new_value, is_html)
+            difference_html = self.display_field_difference_html(context, field, reference_value, new_value, is_html)
             if difference_html:
                 field_dict = {'field': field, 'reference_value': reference_value, 'new_value': new_value, 'name': field.verbose_name, 'diff': difference_html}
                 result.append(field_dict)
         return result
 
-    def display_field_difference_html(self, field, reference_value, new_value, is_html):
-        #TODO compute
+    def display_field_difference_html(self, context, field, reference_value, new_value, is_html):
         if reference_value == new_value:
-            return 'DID NOT CHANGE'
-            #return None
+            return None
         else:
-            result = []
-            result.append(u'<b>')
-            result.append(unicode(reference_value))
-            result.append(u'</b> ->')
-            result.append(unicode(new_value))
-            return mark_safe(u'\n'.join(result))
+            if isinstance(field, (models.CharField, models.TextField)):
+                return self.text_field_difference(context, reference_value, new_value, is_html)
+            def value_to_html(x):
+                if isinstance(field, models.ForeignKey):
+                    return get_item_link_tag(context, x) if x else 'None'
+                elif isinstance(field, models.FileField):
+                    #TODO use .url
+                    return '<a href="%s%s">%s</a>' % (escape(settings.MEDIA_URL), escape(x), escape(x))
+                else:
+                    return urlize(escape(x)).replace('\n', '<br />')
+            reference_html = value_to_html(reference_value)
+            new_html = value_to_html(new_value)
+            return mark_safe(u'<del style="background:#ffe6e6;">%s</del> <ins style="background: #e6ffe6;">%s</ins>' % (reference_html, new_html))
         
+    def text_field_difference(self, context, reference_value, new_value, is_html):
+        import diff_match_patch
+        if not is_html:
+            encode = lambda x: urlize(escape(x)).replace('\n', '<br />')
+            reference_value = encode(reference_value)
+            new_value = encode(new_value)
+        dmp = diff_match_patch.diff_match_patch()
+        diffs = dmp.diff_main(reference_value, new_value)
+        dmp.diff_cleanupSemantic(diffs)
+        html = []
+        def write_fragment(start_tag, end_tag, text):
+            while text:
+                # Find where the next lt or gt sign is
+                lt_index = text.find('<')
+                gt_index = text.find('>')
+                if lt_index == -1: lt_index = len(text)
+                if gt_index == -1: gt_index = len(text) + 1
+                # Determine whether we're currently in a tag and split the text
+                if lt_index == 0 or lt_index > gt_index:
+                    currently_in_tag = True
+                    head = text[:gt_index+1]
+                    text = text[gt_index+1:]
+                else:
+                    currently_in_tag = False
+                    head = text[:lt_index]
+                    text = text[lt_index:]
+                # Write out the text, surrounded by start_tag and end_tag, unless currently_in_tag
+                if currently_in_tag:
+                    html.append(head)
+                else:
+                    html.append(start_tag)
+                    html.append(head)
+                    html.append(end_tag)
+
+        for (op, text) in diffs:
+            if op == dmp.DIFF_INSERT:
+                start_tag = u'<ins style="background: #e6ffe6;">'
+                end_tag = u'</ins>'
+                write_fragment(start_tag, end_tag, text)
+            elif op == dmp.DIFF_DELETE:
+                start_tag = u'<del style="background: #ffe6e6;">'
+                end_tag = u'</del>'
+                write_fragment(start_tag, end_tag, text)
+            elif op == dmp.DIFF_EQUAL:
+                write_fragment('', '', text)
+        result = u''.join(html)
+        return mark_safe(result)
+
 
 
 @register.tag
