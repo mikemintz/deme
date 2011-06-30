@@ -1812,7 +1812,12 @@ class DisplayDiff(template.Node):
             return 'DID NOT CHANGE'
             #return None
         else:
-            return mark_safe(u'<b>1</b> -> 2')
+            result = []
+            result.append(u'<b>')
+            result.append(unicode(reference_value))
+            result.append(u'</b> ->')
+            result.append(unicode(new_value))
+            return mark_safe(u'\n'.join(result))
         
 
 
