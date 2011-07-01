@@ -3,30 +3,97 @@
 {% block content %}
 
 <head>
-<style> 
+<style type="text/css">
 
-p {
-  font-size:120%;
+div {
+ margin-right: 5px;
 }
 
-#title {
-   font-size: 200%;
-   margin-bottom: 1em;
+div.title p #label{
+  display: block;
+  font-size: 150%;
+  margin-bottom: 0;
 }
 
+div.title #label{
+  margin-bottom: 20px;
+}
+
+div p {
+  font-size:120%
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+#label {
+  font-size: 8px;
+  color: blue;
+  margin: 0;
+}
+
+div.date {
+  float:left;
+  margin-bottom: 1em;
+}
+
+#to {
+  float: left;
+  height: 3em;
+  margin-right: .5em;
+  margin-left: 0;
+}
+
+div.location {
+  clear:both;
+  margin-bottom: 1em;
+}
 </style>
 </head>
 
 <body>
-<p id="title">{{event.name}}</p>
+<div class="title">
+ <p>{{event.name}}</p>
+ <p id="label">Event name</p>
+</div>
 {% ifequal event.start_date event.end_date %}
-<p id="time"> {{event.start_date}} {{event.start_time}} to {{event.end_time}}</p>
+<div class="date" id="Start_Date">
+  <p>{{event.start_date}}</p>
+  <p id="label">Start Date</p>
+  <p id="label">& End Date<p>
+</div>
+<div class="date" id="Start_Time">
+  <p>{{event.start_time}}</p>
+  <p id="label">Start Time</p>
+</div>
+<div class="date" id="to"> to </div>
+<div class="date" id="End_Time"> 
+  <p>{{event.end_time}}</p>
+  <p id="label">End Time</p>
+</div>
 {% else %}
-<p id="time"> {{event.start_date}} {{event.start_time}} to {{event.end_date}} {{event.end_time}}</p>
+<div class="date" id="Start_Date">
+  <p>{{event.start_date}}</p>
+  <p id="label">Start Date</p>
+</div>
+<div class="date" id="Start_Time">
+  <p>{{event.start_time}}</p>
+  <p id="label">Start Time</p>
+</div>
+<div class="date" id="to"> to </div>
+<div class="date" id="End_Date">
+  <p>{{event.end_date}}</p>
+  <p id="label">End Date</p>
+</div>
+<div class="date" id="End_Time"> 
+  <p>{{event.end_time}}</p>
+  <p id="label">End Time</p>
+</div>
 {% endifequal %}
-<p id="location">at {{event.location}}</p>
-
+<div class="location">
+  <p>at {{event.location}}</p>
+  <p id="label">   Location </p>
+</div>
 {{ event.body|safe }}
-
+<p id="label"> Description </p>
 {% endblock content %}
 </body>
