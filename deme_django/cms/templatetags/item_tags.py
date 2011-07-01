@@ -950,11 +950,14 @@ class CalculateHistory(template.Node):
             version_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk}) + '?version=%s' % version.version_number
             version_name = 'Version %d' % version.version_number
             version_text = '<a href="%s">%s</a>' % (version_url, version_name)
+            diff_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'diff', 'noun': item.pk}) + '?version=%s&reference_version=%s' % (version.version_number, version.version_number - 1)
+            diff_text = ' <a href="%s">(Diff)</a>' % diff_url if version.version_number > 1 else ''
             time_text = '<span title="%s">[%s ago]</span><br />' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
             agent_text = ' by %s' % get_item_link_tag(context, action_notice.action_agent)
-            combined_text = '<div style="font-size: 85%%; margin-bottom: 5px;">%s%s%s</div>' % (
+            combined_text = '<div style="font-size: 85%%; margin-bottom: 5px;">%s%s%s%s</div>' % (
                     (time_text if agentcan_helper(context, 'view Item.created_at', item) else ''),
                     version_text,
+                    diff_text,
                     (agent_text if agentcan_helper(context, 'view Item.creator', item) else '')
             )
             result.append(combined_text)
@@ -1044,7 +1047,8 @@ class CalculateActionNotices(template.Node):
                     if isinstance(action_notice, CreateActionNotice):
                         action_text = 'created'
                     if isinstance(action_notice, EditActionNotice):
-                        action_text = 'edited'
+                        diff_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'diff', 'noun': action_notice.action_item.pk}) + '?version=%s&reference_version=%s' % (action_notice.action_item_version_number, action_notice.action_item_version_number - 1)
+                        action_text = '<a href="%s">edited</a>' % diff_url
                     action_sentence = '%s %s %s' % (action_agent_text, action_text, action_item_text)
                 result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">[%s]<br />%s%s</div>' % (action_time_text, action_sentence, action_summary_text))
                 context['n_action_notices'] += 1
@@ -1184,7 +1188,7 @@ class ViewableName(template.Node):
                 return "[Couldn't resolve item variable]"
             else:
                 return '' # Fail silently for invalid variables.
-        return get_viewable_name(context, item)
+        return mark_safe(escape(get_viewable_name(context, item)))
 
 @register.tag
 def viewable_name(parser, token):
@@ -1732,4 +1736,156 @@ def login_menu(parser, token):
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
     return LoginMenu()
 
+
+
+class DisplayDiff(template.Node):
+    def __init__(self, item, reference_version_number, new_version_number, nodelist_different, nodelist_same):
+        self.item = template.Variable(item)
+        self.reference_version_number = template.Variable(reference_version_number)
+        self.new_version_number = template.Variable(new_version_number)
+        self.nodelist_different, self.nodelist_same = nodelist_different, nodelist_same
+
+    def __repr__(self):
+        return "<DisplayDiffNode>"
+        
+    def render(self, context):
+        try:
+            item = self.item.resolve(context)
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve item variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+        try:
+            reference_version_number = self.reference_version_number.resolve(context)
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve reference_version_number variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+        try:
+            new_version_number = self.new_version_number.resolve(context)
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve new_version_number variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+        # Get a list of field differences
+        diff_fields = self.calculate_field_differences(context, item, reference_version_number, new_version_number)
+        # Render the underlying nodelists for each field
+        result = []
+        for field in diff_fields:
+            context.update({'field': field})
+            result.append(self.nodelist_different.render(context))
+            context.pop()
+        if result:
+            return '\n'.join(result)
+        else:
+            return self.nodelist_same.render(context)
+
+    def calculate_field_differences(self, context, item, reference_version_number, new_version_number):
+        reference_item = item.actual_item_type().objects.get(pk=item.pk)
+        new_item = item.actual_item_type().objects.get(pk=item.pk)
+        reference_item.copy_fields_from_version(reference_version_number)
+        new_item.copy_fields_from_version(new_version_number)
+        result = []
+        for field in item._meta.fields:
+            if isinstance(field, (models.OneToOneField, models.ManyToManyField)):
+                continue
+            model = item._meta.get_field_by_name(field.name)[1]
+            if model is None:
+                model = type(item)
+            if not agentcan_helper(context, 'view %s.%s' % (model.__name__, field.name), item):
+                continue
+            reference_value = getattr(reference_item, field.name)
+            new_value = getattr(new_item, field.name)
+            is_html = isinstance(item, HtmlDocument) and field.name == 'body'
+            difference_html = self.display_field_difference_html(context, field, reference_value, new_value, is_html)
+            if difference_html:
+                field_dict = {'field': field, 'reference_value': reference_value, 'new_value': new_value, 'name': field.verbose_name, 'diff': difference_html}
+                result.append(field_dict)
+        return result
+
+    def display_field_difference_html(self, context, field, reference_value, new_value, is_html):
+        if reference_value == new_value:
+            return None
+        else:
+            if isinstance(field, (models.CharField, models.TextField)):
+                return self.text_field_difference(context, reference_value, new_value, is_html)
+            def value_to_html(x):
+                if isinstance(field, models.ForeignKey):
+                    return get_item_link_tag(context, x) if x else 'None'
+                elif isinstance(field, models.FileField):
+                    #TODO use .url
+                    return '<a href="%s%s">%s</a>' % (escape(settings.MEDIA_URL), escape(x), escape(x))
+                else:
+                    return urlize(escape(x)).replace('\n', '<br />')
+            reference_html = value_to_html(reference_value)
+            new_html = value_to_html(new_value)
+            return mark_safe(u'<del style="background:#ffe6e6;">%s</del> <ins style="background: #e6ffe6;">%s</ins>' % (reference_html, new_html))
+        
+    def text_field_difference(self, context, reference_value, new_value, is_html):
+        import diff_match_patch
+        if not is_html:
+            encode = lambda x: urlize(escape(x)).replace('\n', '<br />')
+            reference_value = encode(reference_value)
+            new_value = encode(new_value)
+        dmp = diff_match_patch.diff_match_patch()
+        diffs = dmp.diff_main(reference_value, new_value)
+        dmp.diff_cleanupSemantic(diffs)
+        html = []
+        def write_fragment(start_tag, end_tag, text):
+            while text:
+                # Find where the next lt or gt sign is
+                lt_index = text.find('<')
+                gt_index = text.find('>')
+                if lt_index == -1: lt_index = len(text)
+                if gt_index == -1: gt_index = len(text) + 1
+                # Determine whether we're currently in a tag and split the text
+                if lt_index == 0 or lt_index > gt_index:
+                    currently_in_tag = True
+                    head = text[:gt_index+1]
+                    text = text[gt_index+1:]
+                else:
+                    currently_in_tag = False
+                    head = text[:lt_index]
+                    text = text[lt_index:]
+                # Write out the text, surrounded by start_tag and end_tag, unless currently_in_tag
+                if currently_in_tag:
+                    html.append(head)
+                else:
+                    html.append(start_tag)
+                    html.append(head)
+                    html.append(end_tag)
+
+        for (op, text) in diffs:
+            if op == dmp.DIFF_INSERT:
+                start_tag = u'<ins style="background: #e6ffe6;">'
+                end_tag = u'</ins>'
+                write_fragment(start_tag, end_tag, text)
+            elif op == dmp.DIFF_DELETE:
+                start_tag = u'<del style="background: #ffe6e6;">'
+                end_tag = u'</del>'
+                write_fragment(start_tag, end_tag, text)
+            elif op == dmp.DIFF_EQUAL:
+                write_fragment('', '', text)
+        result = u''.join(html)
+        return mark_safe(result)
+
+
+
+@register.tag
+def displaydiff(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 4:
+        raise template.TemplateSyntaxError, "%r takes three arguments" % bits[0]
+    end_tag = 'end' + bits[0]
+    nodelist_different = parser.parse(('else', end_tag))
+    token = parser.next_token()
+    if token.contents == 'else':
+        nodelist_same = parser.parse((end_tag,))
+        parser.delete_first_token()
+    else:
+        nodelist_same = template.NodeList()
+    return DisplayDiff(bits[1], bits[2], bits[3], nodelist_different, nodelist_same)
 

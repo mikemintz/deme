@@ -1,0 +1,21 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+<p>
+Changes in
+<a href="{% url item_url viewer=viewer_name,action="show",noun=item.pk %}">{% viewable_name item %}</a>
+between versions
+<a href="{% url item_url viewer=viewer_name,action="show",noun=item.pk %}?version={{ reference_version_number }}">{{ reference_version_number }}</a>
+and
+<a href="{% url item_url viewer=viewer_name,action="show",noun=item.pk %}?version={{ item.version_number }}">{{ item.version_number }}</a>
+</p>
+
+<table>
+{% displaydiff item reference_version_number item.version_number %}
+<tr><td><strong>{{ field.name|capfirst }}:</strong></td><td>{{ field.diff }}</td></tr>
+{% else %}
+<tr><td>No differences found</td></tr>
+{% enddisplaydiff %}
+</table>
+
+{% endblock content %}

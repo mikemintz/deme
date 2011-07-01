@@ -2133,6 +2133,7 @@ class ActionNotice(models.Model):
 
         # Generate the subject and body
         viewer.context['action_item'] = self.action_item
+        viewer.context['action_item_reference_version_number'] = self.action_item_version_number - 1
         viewer.context['action_item_version_number'] = self.action_item_version_number
         viewer.context['action_agent'] = self.action_agent
         viewer.context['action_time'] = self.action_time
