@@ -47,52 +47,98 @@ div.location {
   clear:both;
   margin-bottom: 1em;
 }
+
+#No_Permission {
+	font-size: 12px;
+}
 </style>
 
+
 <body>
+
 <div class="title">
+ {% ifagentcan 'view Item.name' event %}
  <p>{{event.name}}</p>
+ {% else %}
+ <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
+ {% endifagentcan %}
  <p id="label">Event name</p>
 </div>
 {% ifequal event.start_date event.end_date %}
 <div class="date" id="Start_Date">
+ {% ifagentcan 'view Event.start_date' event %}	
   <p>{{event.start_date}}</p>
+ {% else %}
+  <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
+ {% endifagentcan %}
   <p id="label">Start Date</p>
   <p id="label">& End Date<p>
 </div>
 <div class="date" id="Start_Time">
-  <p>{{event.start_time}}</p>
+  {% ifagentcan 'view Event.start_time' event %}	
+    <p>{{event.start_time}}</p>
+  {% else %}
+    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
+  {% endifagentcan %}
   <p id="label">Start Time</p>
 </div>
 <div class="date" id="to"> to </div>
-<div class="date" id="End_Time"> 
-  <p>{{event.end_time}}</p>
+<div class="date" id="End_Time">
+ {% ifagentcan 'view Event.end_time' event %}
+    <p>{{event.end_time}}</p>
+ {% else %}
+    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
+ {% endifagentcan %}
   <p id="label">End Time</p>
 </div>
 {% else %}
 <div class="date" id="Start_Date">
-  <p>{{event.start_date}}</p>
+  {% ifagentcan 'view Event.start_date' event %}	
+    <p>{{event.start_date}}</p>
+  {% else %}
+    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
+  {% endifagentcan %}
   <p id="label">Start Date</p>
 </div>
 <div class="date" id="Start_Time">
-  <p>{{event.start_time}}</p>
+  {% ifagentcan 'view Event.start_time' event %}
+    <p>{{event.start_time}}</p>
+  {% else %}
+    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
+  {% endifagentcan %}
   <p id="label">Start Time</p>
 </div>
 <div class="date" id="to"> to </div>
 <div class="date" id="End_Date">
-  <p>{{event.end_date}}</p>
+  {% ifagentcan 'view Event.end_date' event %}
+    <p>{{event.end_date}}</p>
+  {% else %}
+    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
+  {% endifagentcan %}
   <p id="label">End Date</p>
 </div>
 <div class="date" id="End_Time"> 
-  <p>{{event.end_time}}</p>
+  {% ifagentcan 'view Event.end_time' event %}
+    <p>{{event.end_time}}</p>
+  {% else %}
+    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
+  {% endifagentcan %}
   <p id="label">End Time</p>
 </div>
 {% endifequal %}
 <div class="location">
-  <p>at {{event.location}}</p>
+  {% ifagentcan 'view Event.location' event %}	
+    <p>at {{event.location}}</p>
+  {% else %}
+    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
+  {% endifagentcan %}
   <p id="label">   Location </p>
 </div>
+{% ifagentcan 'view Item.description' event %}
 {{ event.body|safe }}
+{% else %}
+  <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
+{% endifagentcan %}
 <p id="label"> Description </p>
-
+</body>
 {% endblock content %}
