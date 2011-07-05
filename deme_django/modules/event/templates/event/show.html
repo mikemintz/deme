@@ -2,8 +2,7 @@
 {% load item_tags %}
 {% block content %}
 
-<<<<<<< HEAD
-<head>
+
 <style type="text/css">
 
 div {
@@ -49,7 +48,6 @@ div.location {
   margin-bottom: 1em;
 }
 </style>
-</head>
 
 <body>
 <div class="title">
@@ -96,13 +94,6 @@ div.location {
 </div>
 {{ event.body|safe }}
 <p id="label"> Description </p>
-=======
 {{ event.body|safe }}
 
-<p>Title:  {{event.name}}</p>
-<p>From: {{event.start_date}} {{event.start_time}} To:  {{event.end_time}} {{event.end_date}} </p>
-<p>Location: {{event.location}}</p>
-<p>Description: {{event.description}}</p>
-
->>>>>>> 5f75cfa8f46ebb434a389ddb30ee6486904899a9
 {% endblock content %}
