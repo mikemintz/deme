@@ -85,6 +85,7 @@ Issue	                                                                          
 32. Create diff functionality for emails and action notices, using simple + and - to show what was changed
 
 33. validate new ViewerRequest.viewe33. validate new ViewerRequest.viewe33. validate new ViewerRequest.viewer
+34. Diff functionality can break on complicated formatting changes of HTML documents
 
 
 |==========|
