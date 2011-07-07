@@ -1,0 +1,9 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+hello world!
+<p>Title:  {{project.name}}</p>
+<p>Due: {{project.due_time}} {{project.due_date}} </p>
+
+{% endblock content %}
