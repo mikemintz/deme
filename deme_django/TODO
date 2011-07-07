@@ -59,6 +59,7 @@ Add support for clashing edits (Todd, 6/22/2011)
 
 Change "delete" in sense of deactivate/destroy/reactivate to "change activation status" or something like that to make it more understandable in permissions, file names, etc. (Todd, 6/22/2011)
 
+Standalone comment viewing does not show previous comment in a chain in Related Items. This should be fixed. (Todd, 7/7/2011)
 
 Issue	                                                                                        Man-hours  Value	Todd?
 1. Symsys: Adding Symsys affiliates is too cumbersome - needs to be streamlined (Todd)	           4	     2	        Todd
