@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpRequest
 from cms.views import HtmlDocumentViewer, CollectionViewer, ItemViewer
 from cms.models import *
 from django.db.models import Q
-from modules.project.models import Project
+from modules.project.models import Project, Task
 from datetime import date, datetime, timedelta, tzinfo
 import calendar
 import time
@@ -23,6 +23,21 @@ class ProjectViewer(CollectionViewer):
 
 
         template = loader.get_template('project/show.html')
+        return HttpResponse(template.render(self.context))
+        
+class TaskViewer(HtmlDocumentViewer):
+    accepted_item_type = Task
+    viewer_name = 'task' 
+
+
+    def item_show_html(self):
+        self.context['action_title'] = 'Show'
+
+        self.context['task'] = self.item
+
+
+
+        template = loader.get_template('project/task.html')
         return HttpResponse(template.render(self.context))
     
 

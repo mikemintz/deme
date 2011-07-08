@@ -1,0 +1,12 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+hello world!
+<p>Title:  {{task.name}}</p>
+<p>Author: {{task.creator}}
+<p>Priority:  {{task.priority}}</p>
+<p>Status: {{task.status}}</p>
+<p>Est. Time: {{task.length}}</p>
+
+{% endblock content %}
