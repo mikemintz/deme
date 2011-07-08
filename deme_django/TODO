@@ -59,6 +59,9 @@ Add support for clashing edits (Todd, 6/22/2011)
 
 Change "delete" in sense of deactivate/destroy/reactivate to "change activation status" or something like that to make it more understandable in permissions, file names, etc. (Todd, 6/22/2011)
 
+Standalone comment viewing does not show previous comment in a chain in Related Items. This should be fixed. (Todd, 7/7/2011)
+
+When the Subscribe button is clicked for an item while user is logged in, the dialogue box should prompt the user with a list of ContactMethods that point to that user, which can be selected for the subscription. (Todd, 7/7/2011)
 
 Issue	                                                                                        Man-hours  Value	Todd?
 1. Symsys: Adding Symsys affiliates is too cumbersome - needs to be streamlined (Todd)	           4	     2	        Todd
@@ -70,7 +73,7 @@ Issue	                                                                          
 9. Improve search. It should search for more fields than just the name (but keep permissions in mind), and it shouldn't require exact match	                                                                                    20	     3	 
 11. Symsys: Let's make the end date for a Symsys career be YYYY-12-31 instead of YYYY-01-01. (Todd) 0.5	     2	 
 14. We need a bulk uploader for ImageDocuments, so you can upload a bunch of photos without having to fill out a fresh form (html5 http://code.google.com/p/jquery-html5-upload/). (Todd)	                                    2.5	     2	 
-15. Symsys: Need to enable Webauth logins. Get SSL working (Todd)	                             3	     3	 
+15. Symsys: Need to enable Webauth logins. Get SSL working (Todd). Update 7/7/2011: we've been asked to either do this or disable Webauth option on Symsys until it is available.   	                                      3	     3	 
 
 
 21. Merge performance changes made directly on symsys site into git repository (Mike 12/4/10)	    0.5	     3	
