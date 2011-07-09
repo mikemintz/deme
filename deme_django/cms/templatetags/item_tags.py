@@ -734,39 +734,35 @@ class CalculateComments(template.Node):
         except ObjectDoesNotExist:
             default_from_contact_method_pk = None
         result = []
-        result.append("""<div class="comment_box">""")
-        result.append("""<div class="comment_box_header">""")
+        result.append(u'<div class="comment_box">')
+        result.append(u'<div class="comment_box_header">')
         if agentcan_helper(context, 'comment_on', item):
-            result.append("""<button href="#" onclick="openCommentDialog('comment%s'); return false;">[+] Add Comment</button>""" % (item.pk))
-            result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
-            result.append("""<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> """)
+            result.append(u'<button href="#" onclick="openCommentDialog(\'comment%s\'); return false;">[+] Add Comment</button>' % (item.pk))
+            result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
+            result.append(u'<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> ')
             if context['cur_agent'].is_anonymous():
-                result.append("""
-                    To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />
-                    """)
-            result.append("""<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> """ % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'commentajaxfield'})))
-            result.append(""" <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" />  """ % (item.pk, item.version_number))
-            result.append("""<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedcomment%s'); return false;" >Advanced</a> """ % (item.pk))
-            result.append("""</form></div>""")
-            result.append("""</div>""")
+                result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
+            result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'commentajaxfield'})))
+            result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (item.pk, item.version_number))
+            result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;" >Advanced</a> ' % (item.pk))
+            result.append(u'</form></div>')
+            result.append(u'</div>')
         else:
             result.append("</div>")
         def add_comments_to_div(comments, nesting_level=0):
             for comment_info in comments:
                 comment = comment_info['comment']
-                result.append("""<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">"""% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
-                result.append("""<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> """ % (comment.name))
+                result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
+                result.append(u'<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> ' % (comment.name))
                 if context['cur_agent'].is_anonymous():
-                    result.append("""
-                    To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />
-                    """)
-                result.append("""<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> """ % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk)))
-                result.append(""" <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> """ % (comment.pk, comment.version_number))
-                result.append("""<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedcomment%s'); return false;" >Advanced</a> """ % (comment.pk))
-                result.append("""</form></div>""")
-                result.append("""<div class="comment_outer%s">""" % (' comment_outer_toplevel' if nesting_level == 0 else '',))
-                result.append("""<div class="comment_header">""")
-                result.append("""<div style="float: right;"><a href="#" onclick="openCommentDialog('comment%s'); return false;">[+] Respond</a></div>""" % (comment.pk))
+                    result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
+                result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk)))
+                result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (comment.pk, comment.version_number))
+                result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;" >Advanced</a> ' % (comment.pk))
+                result.append(u'</form></div>')
+                result.append(u'<div class="comment_outer%s">' % (' comment_outer_toplevel' if nesting_level == 0 else '',))
+                result.append(u'<div class="comment_header">')
+                result.append(u'<div style="float: right;"><a href="#" onclick="openCommentDialog(\'comment%s\'); return false;">[+] Respond</a></div>' % (comment.pk))
                 if issubclass(comment.item.actual_item_type(), Comment):
                     if agentcan_helper(context, 'view TextDocument.body', comment):
                         comment_name = escape(truncate_words(comment.display_name(), 4))
@@ -774,7 +770,7 @@ class CalculateComments(template.Node):
                         comment_name = comment.display_name(can_view_name_field=False)
                 else:
                     comment_name = escape(get_viewable_name(context, comment))
-                result.append("""<a href="%s">%s</a>""" % (comment.get_absolute_url(), comment_name))
+                result.append(u'<a href="%s">%s</a>' % (comment.get_absolute_url(), comment_name))
                 if agentcan_helper(context, 'view Item.creator', comment):
                     result.append('by %s' % get_item_link_tag(context, comment.creator))
                 if item.pk != comment.item_id and nesting_level == 0:
@@ -792,7 +788,7 @@ class CalculateComments(template.Node):
                         comment_body = ''
                 else:
                     comment_body = '[INACTIVE]'
-                result.append("""<div class="comment_body" style="display: none;">%s</div>""" % comment_body)
+                result.append(u'<div class="comment_body" style="display: none;">%s</div>' % comment_body)
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
         comment_dicts, n_comments = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection))
@@ -870,6 +866,7 @@ class CalculateRelationships(template.Node):
         cur_agent = context['cur_agent']
 
         relationship_sets = []
+        all_pks = []
         for name in sorted(item._meta.get_all_field_names()):
             field, model, direct, m2m = item._meta.get_field_by_name(name)
             if not isinstance(field, models.related.RelatedObject):
@@ -891,30 +888,30 @@ class CalculateRelationships(template.Node):
                 context['relationships_box'] = 'Too many related items to render'
                 context['n_relationships'] = viewable_items.count()
                 return ''
-            viewable_items = permission_cache.filter_items('view %s.%s' % (field.model.__name__, field.field.name), viewable_items)
-            if viewable_items.count() == 0:
-                continue
+            viewable_items = permission_cache.filter_items('view %s.%s' % (field.model.__name__, field.field.name), viewable_items, cache_results=False)
             if field.field.name in field.model.dyadic_relations:
                 target_field_name, relation_name = field.model.dyadic_relations[field.field.name]
                 target_field = field.model._meta.get_field_by_name(target_field_name)[0]
                 target_model = target_field.rel.to
-                viewable_items = permission_cache.filter_items('view %s.%s' % (field.model.__name__, target_field_name), viewable_items)
-                filter_dict = {target_field.rel.related_name + "__in": viewable_items.values('pk').query, 'active': True}
+                viewable_items = permission_cache.filter_items('view %s.%s' % (field.model.__name__, target_field_name), viewable_items, cache_results=False)
+                filter_dict = {target_field.rel.related_name + "__in": list(viewable_items), 'active': True}
                 viewable_items = target_model.objects.filter(**filter_dict)
                 relationship_set['name'] = relation_name
                 #TODO set relationship_set['field'] (or just set list_url) so it's correct for this dyadic relation
-            permission_cache.filter_items('view Item.name', viewable_items)
+            for related_item in viewable_items:
+                all_pks.append(item.pk)
             relationship_set['items'] = viewable_items
             relationship_sets.append(relationship_set)
 
+        permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=all_pks))
         result = []
         for relationship_set in relationship_sets:
             friendly_name = capfirst(relationship_set['name']).replace('_', ' ')
             field = relationship_set['field']
             list_url = '%s?filter=%s.%d' % (reverse('item_type_url', kwargs={'viewer': field.model.__name__.lower()}), field.field.name, item.pk)
-            result.append("""<div><a href="%s"><b>%s</b></a></div>""" % (list_url, friendly_name))
+            result.append('<div><a href="%s"><b>%s</b></a></div>' % (list_url, friendly_name))
             for related_item in relationship_set['items']:
-                result.append("""<div>%s</div>""" % get_item_link_tag(context, related_item))
+                result.append('<div>%s</div>' % get_item_link_tag(context, related_item))
         context['relationships_box'] = mark_safe('\n'.join(result))
         context['n_relationships'] = sum(len(x['items']) for x in relationship_sets)
         return ''
@@ -948,20 +945,21 @@ class CalculateHistory(template.Node):
         for version in itertools.chain(versions, [item]):
             action_notice = action_notice_map[version.version_number]
             version_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk}) + '?version=%s' % version.version_number
-            version_name = 'Version %d' % version.version_number
-            version_text = '<a href="%s">%s</a>' % (version_url, version_name)
+            version_name = u'Version %d' % version.version_number
+            version_text = u'<a href="%s">%s</a>' % (version_url, version_name)
             diff_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'diff', 'noun': item.pk}) + '?version=%s&reference_version=%s' % (version.version_number, version.version_number - 1)
-            diff_text = ' <a href="%s">(Diff)</a>' % diff_url if version.version_number > 1 else ''
-            time_text = '<span title="%s">[%s ago]</span><br />' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
-            agent_text = ' by %s' % get_item_link_tag(context, action_notice.action_agent)
-            combined_text = '<div style="font-size: 85%%; margin-bottom: 5px;">%s%s%s%s</div>' % (
-                    (time_text if agentcan_helper(context, 'view Item.created_at', item) else ''),
-                    version_text,
-                    diff_text,
-                    (agent_text if agentcan_helper(context, 'view Item.creator', item) else '')
-            )
-            result.append(combined_text)
-        context['history_box'] = mark_safe('\n'.join(result))
+            diff_text = u'<a href="%s">(Diff)</a>' % diff_url if version.version_number > 1 else ''
+            time_text = u'<span title="%s">[%s ago]</span><br />' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
+            agent_text = u'by %s' % get_item_link_tag(context, action_notice.action_agent)
+            result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">')
+            if agentcan_helper(context, 'view Item.created_at', item):
+                result.append(time_text)
+            result.append(version_text)
+            result.append(diff_text)
+            if agentcan_helper(context, 'view Item.creator', item):
+                result.append(agent_text)
+            result.append(u'</div>')
+        context['history_box'] = mark_safe(u'\n'.join(result))
         context['n_versions'] = len(versions) + 1
         return ''
 
@@ -1009,7 +1007,7 @@ class CalculateActionNotices(template.Node):
                 if isinstance(action_notice, RelationActionNotice):
                     if not agentcan_helper(context, 'view %s.%s' % (action_notice.from_field_model, action_notice.from_field_name), action_notice.from_item):
                         continue
-                action_time_text = '<span title="%s">%s ago</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
+                action_time_text = '<span title="%s">[%s ago]</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
                 action_agent_text = get_item_link_tag(context, action_notice.action_agent)
                 if action_notice.action_item.pk == item.pk:
                     action_item_name = 'this'
@@ -1050,12 +1048,17 @@ class CalculateActionNotices(template.Node):
                         diff_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'diff', 'noun': action_notice.action_item.pk}) + '?version=%s&reference_version=%s' % (action_notice.action_item_version_number, action_notice.action_item_version_number - 1)
                         action_text = '<a href="%s">edited</a>' % diff_url
                     action_sentence = '%s %s %s' % (action_agent_text, action_text, action_item_text)
-                result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">[%s]<br />%s%s</div>' % (action_time_text, action_sentence, action_summary_text))
+                result.append(u'<div style="font-size: 85%; margin-bottom: 5px;">')
+                result.append(action_time_text)
+                result.append(u'<br />')
+                result.append(action_sentence)
+                result.append(action_summary_text)
+                result.append(u'</div>')
                 context['n_action_notices'] += 1
         else:
             action_notices = []
 
-        context['action_notice_box'] = mark_safe('\n'.join(result))
+        context['action_notice_box'] = mark_safe(u'\n'.join(result))
         return ''
 
 @register.tag
