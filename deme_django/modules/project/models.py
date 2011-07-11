@@ -39,6 +39,7 @@ class Task(HtmlDocument):
         verbose_name_plural = _('tasks')
 
     #fields:
+	start_date = models.DateField(_('due date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     due_date = models.DateField(_('due date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     due_time = models.TimeField(_('due time'))
     
@@ -49,20 +50,19 @@ class Task(HtmlDocument):
     )
     priority = models.CharField(_('priority'),max_length=10, choices=Priority_Choices)
     
-    length = models.DecimalField(_('length'), max_digits=6, decimal_places = 2)
+    length = models.DecimalField(_('length'), max_digits=6, decimal_places = 2, help_text=_('in hours'))
     
     Status_Choices = (
-        ('None', 'None - This is the default status of a newly created task.'),
-        ('Next Action', 'Next Action - This can be used to indicate which tasks must be completed next.'),
-        ('Active', 'Active - Indicates a task that must be completed.'),
-        ('Planning', 'Planning - A task that you are planning, so it may not be active yet.'),
-        ('Delegated ', 'Delegated - A task that you have given to someone else.'),
-        ('Waiting', 'Waiting - You are waiting on something external.'),
-        ('Hold', 'Hold - This task has been placed on hold indefinitely, or until you take it off hold.'),
-        ('Postponed', 'Postponed - This task has been delayed.'),
-        ('Someday', "Someday- An optional task, or something that you don't know if you want to do, but you still want to record it for the future."),
-        ('Canceled', "Canceled- You don't want to complete this task, but you still need it recorded for some reason."),
-        ('Reference', "Reference - Use this for tasks that aren't really tasks, but are more of a piece of reference info."),
+        ('Unassigned', 'Unassigned'),
+        ('Assigned', 'Assigned'),
+        ('Completed', 'Completed'),
     )
-    status = models.CharField(_('priority'),max_length=16, choices=Status_Choices)
+    status = models.CharField(_('status'),max_length=16, choices=Status_Choices)
+
+	Bool_Choices = (
+		('Yes', 'Y'),
+		('No', 'N'),
+	)
+	
+	repeating = models.CharField(_('status'), max_length=16, choices=Bool_Choices)
     
