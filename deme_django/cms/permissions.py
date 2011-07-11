@@ -82,6 +82,7 @@ class PermissionCache(object):
         self._item_ability_cache = {}     # item_id --> (set(abilities_yes), set(abilities_no))
         self._ability_yes_cache = {}      # ability --> set(item_ids)
         self._ability_no_cache = {}       # ability --> set(item_ids)
+        self._filter_q_cache = {}         # ability --> filter_q
 
     def agent_can_global(self, ability):
         """
@@ -143,7 +144,7 @@ class PermissionCache(object):
             abilities_yes, abilities_no = result
         return abilities_yes
 
-    def filter_items(self, ability, queryset):
+    def filter_items(self, ability, queryset, cache_results=True):
         """
         Returns a QuerySet that filters the given QuerySet, into only the items
         that the specified agent has the specified ability to do.
@@ -171,11 +172,16 @@ class PermissionCache(object):
             # Nothing to update, since no more database calls need to be made
             return queryset.none()
         else:
-            authorized_queryset = queryset.filter(self._filter_items_by_permission(ability), destroyed=False)
-            yes_ids = set(authorized_queryset.values_list('pk', flat=True))
-            no_ids = set(queryset.values_list('pk', flat=True)) - yes_ids
-            self._ability_yes_cache.setdefault(ability, set()).update(yes_ids)
-            self._ability_no_cache.setdefault(ability, set()).update(no_ids)
+            permission_filter_q = self._filter_q_cache.get(ability, None)
+            if permission_filter_q is None:
+                permission_filter_q = self._filter_items_by_permission(ability)
+                self._filter_q_cache[ability] = permission_filter_q
+            authorized_queryset = queryset.filter(permission_filter_q, destroyed=False)
+            if cache_results:
+                yes_ids = set(authorized_queryset.values_list('pk', flat=True))
+                no_ids = set(queryset.values_list('pk', flat=True)) - yes_ids
+                self._ability_yes_cache.setdefault(ability, set()).update(yes_ids)
+                self._ability_no_cache.setdefault(ability, set()).update(no_ids)
             return authorized_queryset
 
     ###############################################################################
