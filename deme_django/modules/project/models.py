@@ -1,6 +1,6 @@
 from django.db import models
 import datetime
-from cms.models import HtmlDocument, Collection
+from cms.models import HtmlDocument, Collection, FixedBooleanField, Agent, FixedForeignKey
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django import forms
@@ -39,7 +39,7 @@ class Task(HtmlDocument):
         verbose_name_plural = _('tasks')
 
     #fields:
-	start_date = models.DateField(_('due date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
+	#start_date = models.DateField(_('start date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     due_date = models.DateField(_('due date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     due_time = models.TimeField(_('due time'))
     
@@ -58,11 +58,11 @@ class Task(HtmlDocument):
         ('Completed', 'Completed'),
     )
     status = models.CharField(_('status'),max_length=16, choices=Status_Choices)
-
-	Bool_Choices = (
-		('Yes', 'Y'),
-		('No', 'N'),
-	)
 	
-	repeating = models.CharField(_('status'), max_length=16, choices=Bool_Choices)
+    is_repeating = FixedBooleanField(_('is repeating'), default=False, help_text=_('Select this if this task will be repeated.'))
+    
+    task_handler = FixedForeignKey(Agent, related_name='task_handler', null=True, blank=True, default=None)
+    
+    
+    
     
