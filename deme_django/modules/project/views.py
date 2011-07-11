@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpRequest
 from cms.views import HtmlDocumentViewer, CollectionViewer, ItemViewer
 from cms.models import *
 from django.db.models import Q
-from modules.project.models import Project, Task
+from modules.project.models import Project, Task,TaskDependency
 from datetime import date, datetime, timedelta, tzinfo
 import calendar
 import time
@@ -30,7 +30,7 @@ class ProjectViewer(CollectionViewer):
         self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
         template = loader.get_template('project/show.html')
         return HttpResponse(template.render(self.context))
-        
+
 class TaskViewer(HtmlDocumentViewer):
     accepted_item_type = Task
     viewer_name = 'task' 
@@ -45,5 +45,21 @@ class TaskViewer(HtmlDocumentViewer):
 
         template = loader.get_template('project/task.html')
         return HttpResponse(template.render(self.context))
-    
+
+
+class TaskDependencyViewer(ItemViewer):
+    accepted_item_type = TaskDependency
+    viewer_name = 'taskdependency' 
+
+
+    def item_show_html(self):
+        self.context['action_title'] = 'Show'
+
+        self.context['item'] = self.item
+
+
+
+        template = loader.get_template('project/task_dependency.html')
+        return HttpResponse(template.render(self.context))
+
 
