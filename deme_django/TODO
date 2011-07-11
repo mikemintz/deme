@@ -71,6 +71,8 @@ RSS and Mobi links at bottom of page should display RSS feed and a mobi format, 
 
 Transcluded documents should render in HTMLDocument view of the transcluding document. (Todd, 7/11/2011)
 
+Permissions displayed in Item Data menu should include negative permissions (e.g."As Anonymous you cannot * View body"). (Todd, 7/11/2011)
+
 Issue	                                                                                        Man-hours  Value	Todd?
 1. Symsys: Adding Symsys affiliates is too cumbersome - needs to be streamlined (Todd)	           4	     2	        Todd
 3. Unify collection viewer with list action, include bulk actions such as bulk deactivate/reactivate/destroy, and if possible bulk edit where you can change some fields without modifying others, better sorting of any type (without violating permissions to view the name)	                                                                           20	     3	 
