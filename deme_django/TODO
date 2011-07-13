@@ -32,24 +32,6 @@ Trying to comment on this item (Deme Issues) when logged in as Mike says "enter 
 
 Diff functionality can break on complicated formatting changes of HTML documents
 
-Sprint priorities
-* Email lists
-* Email notifications - better wording
-* Default Deme layout
-    * remove "Subscribe" button from views when not logged in
-    * Rename "More" button to "Item Data"
-    * Hide Items pulldown bar, Item Type icon, and breadcrumbs, as well as Metadata menu, when Item Data is minimized; Show all of these when "Item Data" is clicked
-    * Don't display "Login as" in Login pulldown options if there is no one to log in as
-* Symsys homepage
-* Webauth timing issue
-* Pull new data from old Symsys
-* Move from beta to Symsys
-* Certificate transfer?
-* Set up Todd's blog Mindroll
-* Make password setting easier
-* Migrations
-* Change wording of Related Items in metadata menu
-
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
 * make links to Symsys internal pages work in static documents
@@ -91,7 +73,6 @@ Layout
 Interface
 ---------
 * Threaded comment viewer with plus/minuses, but only at the top level (collapsed by default). When you visit a textdocument, you can have a comment in query string which gets highlighted and expanded, and highlight also highlights the transclusion (first chronologically)
-* Make notifications have different messages for each RelationActionNotice (at least for many-to-many things like Membership and Transclusion)
 * Make the action at top-right of item more of a javascript menu, like in gmail
 * There should be a full interface for specifying CommentLocations
 * Some sort of arrows in the side-by-side comment interface, or just click->highlight/scroll (just for TextDocuments right now)
@@ -103,7 +84,7 @@ Interface
 Documentation
 -------------
 * Document more functions with docstrings more
-* Make some sort of API doc
+* Generate some sort of API doc website
 
 Small Details
 -------------
@@ -126,10 +107,8 @@ New Functionality (longer term)
 
 Distant Future (sorted by approximate order of planned implementation)
 ----------------------------------------------------------------------
-* Migrations (let's use http://south.aeracode.org/)
 * Allow widgets to specify stylesheet and javascripts to add to the layout.
 * Write PermissionCache.filter_agents_by_permission so we can display which agents have a particular ability w.r.t. an item.
-* Comments that are generated from the website, when sent by email, should come from an EmailContactMethod if the user has a default contact method (we'll need a way to select a default contact method)
 * Specific-version destroying
 * Edit locks (merging, or even synchro editing)
 * Implement some sort of SiteAlias so a Site can have more than one hostname
@@ -170,7 +149,6 @@ Performance
   - Maybe Postgres has some nice full-text indexing for good searching
 * we need multi-column indexes for permissions (so far it doesn't look like it's helping)
   - we'll try http://docs.djangoproject.com/en/dev/howto/initial-data/#howto-initial-data
-* See if permissions speed up with more postgres memory (so far it doesn't look like it's helping)
 * Use spaceless tag to compress whitespace
   - Be careful, since it will screw with body_str in TextDocumentViewer.show
 * When admin (id=1) adds an item, no need to by default include the permission that he gets do_anything
@@ -281,10 +259,6 @@ Mike's TODO list
 * Email-list-related fields in item aren't displayed anywhere (unless you go to edit)
 * Start using django logging in email handling when we upgrade to django 1.3
 
-Friday June 12 notes
---------------------
-* Send todd things he should describe, and the ideal syntax, for symsys website (permissions, groups, etc), not this weekend
-
 Friday June 5 notes
 -------------------
 * Change more buttons to jquery ui buttons
@@ -324,8 +298,7 @@ Friday may 1 notes
 
 Absolutely necessary
 --------------------
-* Talk more about subject line
-* Extract classes like Event and AIMContactMethod to other modules
+* Extract classes like AIMContactMethod to other modules
 * Navigation and layout (NEEDS MORE DISCUSSION)
 * Figure out the group hierarchy to have for Symsys.
   - We might need an after_modify_permissions callback
@@ -334,6 +307,23 @@ Absolutely necessary
 
 Nice to have
 ------------
-* Page of all recent activity (i.e., action notices)
-* Make custom text for each RelationActionNotice/field
 * More sophisticated event day/time stuff.
+
+Sprint priorities
+* Email lists
+* Email notifications - better wording
+* Default Deme layout
+    * remove "Subscribe" button from views when not logged in
+    * Rename "More" button to "Item Data"
+    * Hide Items pulldown bar, Item Type icon, and breadcrumbs, as well as Metadata menu, when Item Data is minimized; Show all of these when "Item Data" is clicked
+    * Don't display "Login as" in Login pulldown options if there is no one to log in as
+* Symsys homepage
+* Webauth timing issue
+* Pull new data from old Symsys
+* Move from beta to Symsys
+* Certificate transfer?
+* Set up Todd's blog Mindroll
+* Make password setting easier
+* Migrations
+* Change wording of Related Items in metadata menu
+
