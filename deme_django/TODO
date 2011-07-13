@@ -1,53 +1,10 @@
+DEME
+Fix Bug (short term)
 Creator of a Deme account can Login As that account holder. This should be stopped. Login As should probably be a global ability reserved for administrators. (Todd, 2/8/2011)
-
-Symsys: Symsys Affiliates cannot edit their own passwords and password questions by default. This should be changed. May be a general feature of Deme Accounts. (Todd, 2/8/2011)
-
-Display for events should be a little more elegant (e.g. http://symsys.stanford.edu/viewing/event/14240 - starts with "End Date" etc.) (Todd, 2/2011)
-
-Symsys: We need a way to distinguish a student career that ended in graduation from one that ended with them leaving the degree program. E.g. Emilie Dannenberg, undeclared the B.S. and then declared a minor. If i mark her as "finished' with the B.S. career, she gets added to alums, which is not right.  But if I give her an end date in her B.S. career without checking finished, she is still active in the B.S. career even after the end date has passed. (Todd, 2/17/2011)
-
-Symsys:
-
-from Todd:
- We recently had a case on Symsys of the deme-on deactiving a membership
- (13908) for reasons I don't understand. Rosenn Cima was taken out of the
- Advising Fellows group
- (http://symsys.stanford.edu/viewing/item/recentchanges?page=10) at around
- the time she added herself to the HCI Concentration.
-
-from Mike: Anytime someone creates/edits/deactivates/reactives a SymsysCareer
-(note: this is not an affiliate, but a career, which an affiliate has
-zero or more of), _guarantee_consistency_after_changes is called. It
-looks at the properties of the affiliate, and makes a list of groups
-that the *affiliate* should be a member of, and adds them to groups
-they aren't part of and removes them from groups they shouldn't be in.
-You're looking at the Advising Fellow group, so I will paste below the
-code that determins whether they are in that group
-(modules/symsys/models.py line 255):
-
-        if any(x.actual_item_type() == ProgramStaffSymsysCareer and
-x.finished == True and x.programstaffsymsyscareer.admin_title ==
-'Advising Fellow' for x in my_careers):
-            groups.append(get_or_create_group('past_af'))
-        if any(x.actual_item_type() == ProgramStaffSymsysCareer and
-x.finished == False and x.programstaffsymsyscareer.admin_title ==
-'Advising Fellow' for x in my_careers):
-            groups.append(get_or_create_group('present_af'))
-
-For reference, my_careers =
-SymsysCareer.objects.filter(symsys_affiliate=agent, active=True)
-
-Is this consistent with what's happening? Does Rosenn have a
-ProgramStaffSymsysCareer with finished=False and admin_title='Advising
-Fellow'?
-
-Symsys: Items added to a newsroll viewer diaplay the title to people who have permission NOT Do anything. For example, anonymous users cannot do anything with http://symsys.stanford.edu/viewing/event/14634, but Frontpage News viewer displays the title to all users. (Todd, 4/18/2011)
 
 TinyMCE inserts a blank space between paragraphs in wysiwyg edit mode. Can it be configured so it doesn't insert the blank space? (Todd, 4/20/2011)
 
 Recent Changes does not show changes to permissions. It seems like it should do this for a user who has global Do anything, and also if a user is the one who made the permissions change. (Todd, 4/20/2011)
-
-Investigate cloud hosting: Google App Engine, Linode.com
 
 User who creates a new person can add ContactMethods and AuthenticationMethods to person's profile, but the person himself cannot do so. Also, the created methods are not created with appropriate permissions for the user unless this is selected separately before creation. (Todd, 6/20/2011)
 
@@ -55,13 +12,11 @@ When creating ContactMethod or AuthenticationMethod via button from agent's prof
 
 When in New Item menu the back button will close the menu but not go back one step. For example: I click agents>anonymous agents and see that it is empty so I click back and that closes the menu instead of going back to agents. (Jimmy, 6/20/2011)
 
-Add support for clashing edits (Todd, 6/22/2011)
+When the Subscribe button is clicked for an item while user is logged in, the dialogue box should prompt the user with a list of ContactMethods that point to that user, which can be selected for the subscription. (Todd, 7/7/2011)
 
 Change "delete" in sense of deactivate/destroy/reactivate to "change activation status" or something like that to make it more understandable in permissions, file names, etc. (Todd, 6/22/2011)
 
 Standalone comment viewing does not show previous comment in a chain in Related Items. This should be fixed. (Todd, 7/7/2011)
-
-When the Subscribe button is clicked for an item while user is logged in, the dialogue box should prompt the user with a list of ContactMethods that point to that user, which can be selected for the subscription. (Todd, 7/7/2011)
 
 Action summary field should appear in regular view, not advanced options, when editing an item, to encourage updaters to create action summaries. (Todd, 7/10/2011)
 
@@ -73,39 +28,9 @@ Transcluded documents should render in HTMLDocument view of the transcluding doc
 
 Permissions displayed in Item Data menu should include negative permissions (e.g."As Anonymous you cannot * View body"). (Todd, 7/11/2011)
 
-Issue	                                                                                        Man-hours  Value	Todd?
-1. Symsys: Adding Symsys affiliates is too cumbersome - needs to be streamlined (Todd)	           4	     2	        Todd
-3. Unify collection viewer with list action, include bulk actions such as bulk deactivate/reactivate/destroy, and if possible bulk edit where you can change some fields without modifying others, better sorting of any type (without violating permissions to view the name)	                                                                           20	     3	 
-4. Fix captcha or better prevent spam in anonymous postings	                                    8	     3	        Todd
-5. Trying to comment on this item (Deme Issues) when logged in as Mike says "enter phrase to prove you're not a spammer" but no textbox appeared to enter the phrase. (Mike)	                                                    2        3	 
-6. Symsys: Change "occupation" to "affiliation" for Symsys affiliates. (Todd)	                   0.4	     2	 
-7. Event viewer starts with end date and time. Should display times and location more gracefully (start time before end time). (Todd)	                                                                                           0.5	     2	 
-9. Improve search. It should search for more fields than just the name (but keep permissions in mind), and it shouldn't require exact match	                                                                                    20	     3	 
-11. Symsys: Let's make the end date for a Symsys career be YYYY-12-31 instead of YYYY-01-01. (Todd) 0.5	     2	 
-14. We need a bulk uploader for ImageDocuments, so you can upload a bunch of photos without having to fill out a fresh form (html5 http://code.google.com/p/jquery-html5-upload/). (Todd)	                                    2.5	     2	 
-15. Symsys: Need to enable Webauth logins. Get SSL working (Todd). Update 7/7/2011: we've been asked to either do this or disable Webauth option on Symsys until it is available.   	                                      3	     3	 
+Trying to comment on this item (Deme Issues) when logged in as Mike says "enter phrase to prove you're not a spammer" but no textbox appeared to enter the phrase. (Mike)	
 
-
-21. Merge performance changes made directly on symsys site into git repository (Mike 12/4/10)	    0.5	     3	
-22. Deme/Symsys: When I click on create new Deme Account while viewing a SymsysAffiliate, I get "You do not have permission to create authentication methods." even though I can create the account. (Todd, 12/4/10)	             5	     2	 
-23. Deme: Should support graphic layout design within Deme, e.g. for DjangoTemplateDocuments, or at least editing the standard menus (Navigation menu). Potentially a set of skins (Todd, 12/4/10)	                            100	     1	 
-26. Deme: Permission setting should have a much easier interface. Replace unchecked versus checked box with minus and plus to indicate negative and positive permissions. Create hierarchies of permissions so that one setting can result in a whole bunch of abilities being assigned. (Todd, 12/4/10)	                                                     15	     2	        Todd
-28. Symsys: Academic Year Research Opportunities, Other Opportunities, and Jobs lead to New HTML Document when the Create new button is pressed. Should create a new HTML Advertisement instead. This is what the nav menu link for new jobs does. All these should be collections of HTML Adverstisements, not HTML Documents generally. (Todd, 12/4/10)	      1	     2	 
-30. Upgrade symsyshoster to see more than 3.2gb memory: http://www.cyberciti.biz/faq/ubuntu-linux-4gb-ram-limitation-solution/ (Mike, 12/4/10)	 	                                                                                     3	 
-31. If the memory upgrade does not solve stability issues, then do something else about it	      	     3	 
-21. Deme project site should save permissions data in between restarts. I lost global abillities settings I had created for Anonymous on the Deme site after a recent restart. I had taken away create abilities for Anonymous so we wouldn't get spam and hacking attempts. (Todd, 12/4/2010)
-                                                                                                             3
-32. Create diff functionality for emails and action notices, using simple + and - to show what was changed
-
-33. validate new ViewerRequest.viewe33. validate new ViewerRequest.viewe33. validate new ViewerRequest.viewer
-34. Diff functionality can break on complicated formatting changes of HTML documents
-35. Figure out robust caching invalidation scheme for Deme.
-
-
-|==========|
-|Codesprint|
-|list 12/09|
-|==========|
+Diff functionality can break on complicated formatting changes of HTML documents
 
 Sprint priorities
 * Email lists
@@ -137,24 +62,6 @@ Other things to do
 * Truncate event description in div onlick from calendar
 * Go through permissions and do sanity check for different categories of users
 * Expand search beyond name field; combinatorial search, etc.
-
-|==========|
-|Short Term|
-|to do list|
-|==========|
-
-
-Symsys module
--------------
-* come up with specification for new symsys layout
-* Figure out how to port mailing lists over
-  - announce list == manually created subscriptions with special permissions, such that you cannot unsubscribe, and announcements are just comments on the group
-
-Ontology changes
-----------------
-
-Code correctness/consistency/bugs
----------------------------------
 * If someone makes a layout and screws up django template syntax, the site is completely screwed. Come up with failsafe
 * If you go to "new" and one of the initial model fields is permission denied (e.g., you're creating a membership on a collection you aren't allowed to modify_membership for, or creating a comment on an item you can't reply to), let the user know
 * the destroy action notice will never be read by anyone (since all permissions are effectively denied)
@@ -166,7 +73,6 @@ Code correctness/consistency/bugs
 * Code cleanup: views, templatetags, and templates, and symsys everything
 * Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun)
 * Do a more thorough job ensuring fields are not null (unless allowed_to_be_null_before_destroyed == True). We might have to wait for real model-based validations (Django 1.2).
-
 Django bugs
 -----------
 * Fix the multiple inheritance bug
@@ -175,9 +81,6 @@ Django bugs
   - http://code.djangoproject.com/ticket/2227
 * HTML special chars are being escaped twice in RSS feeds
   - http://code.djangoproject.com/ticket/6533
-
-Features
---------
 * Advanced search
 * CustomURL layouts should inherit from parent CustomURL layouts
 * Email alias field, optional for each address; could look for Postmaster spam using cron job each minute
@@ -219,10 +122,7 @@ Unusual things to remember
 
 
 
-|=========|
-|Long Term|
-|=========|
-
+New Functionality (longer term)
 
 Distant Future (sorted by approximate order of planned implementation)
 ----------------------------------------------------------------------
@@ -274,6 +174,88 @@ Performance
 * Use spaceless tag to compress whitespace
   - Be careful, since it will screw with body_str in TextDocumentViewer.show
 * When admin (id=1) adds an item, no need to by default include the permission that he gets do_anything
+
+Investigate cloud hosting: Google App Engine, Linode.com
+Add support for clashing edits (Todd, 6/22/2011)
+Unify collection viewer with list action, include bulk actions such as bulk deactivate/reactivate/destroy, and if possible bulk edit where you can change some fields without modifying others, better sorting of any type (without violating permissions to view the name)
+Fix captcha or better prevent spam in anonymous postings
+Improve search. It should search for more fields than just the name (but keep permissions in mind), and it shouldn't require exact match	
+We need a bulk uploader for ImageDocuments, so you can upload a bunch of photos without having to fill out a fresh form (html5 http://code.google.com/p/jquery-html5-upload/). (Todd)
+Should support graphic layout design within Deme, e.g. for DjangoTemplateDocuments, or at least editing the standard menus (Navigation menu). Potentially a set of skins (Todd, 12/4/10)	
+Permission setting should have a much easier interface. Replace unchecked versus checked box with minus and plus to indicate negative and positive permissions. Create hierarchies of permissions so that one setting can result in a whole bunch of abilities being assigned. (Todd, 12/4/10)
+If the memory upgrade does not solve stability issues, then do something else about it
+Deme project site should save permissions data in between restarts. I lost global abillities settings I had created for Anonymous on the Deme site after a recent restart. I had taken away create abilities for Anonymous so we wouldn't get spam and hacking attempts. (Todd, 12/4/2010)
+validate new ViewerRequest.viewer
+Figure out robust caching invalidation scheme for Deme
+|==========|
+
+
+SYMSYS
+Symsys: Symsys Affiliates cannot edit their own passwords and password questions by default. This should be changed. May be a general feature of Deme Accounts. (Todd, 2/8/2011)
+
+Merge performance changes made directly on symsys site into git repository (Mike 12/4/10)
+
+Symsys: We need a way to distinguish a student career that ended in graduation from one that ended with them leaving the degree program. E.g. Emilie Dannenberg, undeclared the B.S. and then declared a minor. If i mark her as "finished' with the B.S. career, she gets added to alums, which is not right.  But if I give her an end date in her B.S. career without checking finished, she is still active in the B.S. career even after the end date has passed. (Todd, 2/17/2011)
+
+from Todd:
+ We recently had a case on Symsys of the deme-on deactiving a membership
+ (13908) for reasons I don't understand. Rosenn Cima was taken out of the
+ Advising Fellows group
+ (http://symsys.stanford.edu/viewing/item/recentchanges?page=10) at around
+ the time she added herself to the HCI Concentration.
+
+from Mike: Anytime someone creates/edits/deactivates/reactives a SymsysCareer
+(note: this is not an affiliate, but a career, which an affiliate has
+zero or more of), _guarantee_consistency_after_changes is called. It
+looks at the properties of the affiliate, and makes a list of groups
+that the *affiliate* should be a member of, and adds them to groups
+they aren't part of and removes them from groups they shouldn't be in.
+You're looking at the Advising Fellow group, so I will paste below the
+code that determins whether they are in that group
+(modules/symsys/models.py line 255):
+
+        if any(x.actual_item_type() == ProgramStaffSymsysCareer and
+x.finished == True and x.programstaffsymsyscareer.admin_title ==
+'Advising Fellow' for x in my_careers):
+            groups.append(get_or_create_group('past_af'))
+        if any(x.actual_item_type() == ProgramStaffSymsysCareer and
+x.finished == False and x.programstaffsymsyscareer.admin_title ==
+'Advising Fellow' for x in my_careers):
+            groups.append(get_or_create_group('present_af'))
+
+For reference, my_careers =
+SymsysCareer.objects.filter(symsys_affiliate=agent, active=True)
+
+Is this consistent with what's happening? Does Rosenn have a
+ProgramStaffSymsysCareer with finished=False and admin_title='Advising
+Fellow'?
+
+Symsys: Items added to a newsroll viewer diaplay the title to people who have permission NOT Do anything. For example, anonymous users cannot do anything with http://symsys.stanford.edu/viewing/event/14634, but Frontpage News viewer displays the title to all users. (Todd, 4/18/2011)
+
+
+Symsys: Adding Symsys affiliates is too cumbersome - needs to be streamlined (Todd)	
+
+Symsys: Change "occupation" to "affiliation" for Symsys affiliates. (Todd
+
+Symsys: Let's make the end date for a Symsys career be YYYY-12-31 instead of YYYY-01-01
+
+Symsys: Need to enable Webauth logins. Get SSL working (Todd). Update 7/7/2011: we've been asked to either do this or disable Webauth option on Symsys until it is available.   	
+
+Deme/Symsys: When I click on create new Deme Account while viewing a SymsysAffiliate, I get "You do not have permission to create authentication methods." even though I can create the account. (Todd, 12/4/10)
+
+Academic Year Research Opportunities, Other Opportunities, and Jobs lead to New HTML Document when the Create new button is pressed. Should create a new HTML Advertisement instead. This is what the nav menu link for new jobs does. All these should be collections of HTML Adverstisements, not HTML Documents generally.
+Upgrade symsyshoster to see more than 3.2gb memory: http://www.cyberciti.biz/faq/ubuntu-linux-4gb-ram-limitation-solution/ (Mike, 12/4/10)
+
+Symsys module
+-------------
+* come up with specification for new symsys layout
+* Figure out how to port mailing lists over
+  - announce list == manually created subscriptions with special permissions, such that you cannot unsubscribe, and announcements are just comments on the group
+
+
+
+
+
 
 
 
