@@ -30,7 +30,10 @@ class Task(HtmlDocument):
 
     #Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset()
+    introduced_abilities = frozenset(['view Task.due_date', 'edit Task.due_date', 'view Task.beggining_date', 'edit Task.beggining_date',
+                                     'view Task.due_time', 'edit Task.due_time', 'view Task.priority', 'edit Task.priority',
+                                     'view Task.length', 'edit Task.length', 'view Task.status', 'edit Task.status',
+                                     'view Task.is_repeating', 'edit Task.is_repeating', 'view Task.task_handler', 'edit Task.task_handler'])
     introduced_global_abilities = frozenset(['create Task'])
     dyadic_relations = {}
 
@@ -39,8 +42,9 @@ class Task(HtmlDocument):
         verbose_name_plural = _('tasks')
 
     #fields:
-	#start_date = models.DateField(_('start date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     due_date = models.DateField(_('due date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
+    beggining_date = models.DateField(_('beggining date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
+    
     due_time = models.TimeField(_('due time'))
     
     Priority_Choices = (

@@ -9,6 +9,8 @@
 <p>Est. Time: {{task.length}}</p>
 <p>Repeating: {{task.is_repeating}} </p>
 <p>Handler: {{task.task_handler.name}}</p>
+<p>Start Date: {{task.beggining_date}}</p>
+<p>Due Date: {{task.due_date}}</p>
 
 {% if is_dependent %}
     {% for membership in is_dependent %}
