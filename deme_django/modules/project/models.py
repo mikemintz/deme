@@ -67,7 +67,7 @@ class TaskDependency(Item):
 
     #Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset()
+    introduced_abilities = frozenset(['view TaskDependency.dependent_task', 'view TaskDependency.required_task'])
     introduced_global_abilities = frozenset(['create TaskDependency'])
     dyadic_relations = {}
 

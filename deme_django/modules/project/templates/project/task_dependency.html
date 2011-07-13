@@ -4,9 +4,7 @@
 
 <p>Title:  {{item.name}}</p>
 <p>Required {{item.required_task}} </p>
-<a href="{{ item.required_task.get_absolute_url }}">{% viewable_name item.required_task %}</a>
 <p>Dependent {{item.dependent_task}}</p>
-<a href="{{ item.dependent_task.get_absolute_url }}">{% viewable_name item.dependent_task %}</a>
 
 
 

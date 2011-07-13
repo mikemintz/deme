@@ -38,6 +38,10 @@ class TaskViewer(HtmlDocumentViewer):
 
     def item_show_html(self):
         self.context['action_title'] = 'Show'
+        dependencies = TaskDependency.objects.all()
+        
+        self.context['is_dependent'] = dependencies.filter(dependent_task=self.item.pk)
+        self.context['is_required'] = dependencies.filter(required_task=self.item.pk)      
 
         self.context['task'] = self.item
 

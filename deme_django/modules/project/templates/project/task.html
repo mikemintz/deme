@@ -10,4 +10,20 @@
 <p>Repeating: {{task.is_repeating}} </p>
 <p>Handler: {{task.task_handler.name}}</p>
 
+{% if is_dependent %}
+    {% for membership in is_dependent %}
+        <p> Required for this task: <a href="{{ membership.required_task.get_absolute_url }}">{% viewable_name membership.required_task %}</a></p>
+    {% endfor %}
+{% else %}
+    <p>There are no required tasks for this task</p>
+{% endif %}
+
+{% if is_required %}
+    {% for membership in is_required %}
+        <p> Task(s) depending on this task:<a href="{{ membership.dependent_task.get_absolute_url }}">{% viewable_name membership.dependent_task %}</a> </p>
+    {% endfor %}
+{% else %}
+    <p>There are no tasks depending on this task</p>
+{% endif %}
+
 {% endblock content %}
