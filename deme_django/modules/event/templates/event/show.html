@@ -119,7 +119,7 @@ div.location {
   {% endifagentcan %}
   <p id="label">   Location </p>
 </div>
-{% ifagentcan 'view Item.description' event %}
+{% ifagentcan 'view TextDocument.body' event %}
 {{ event.body|safe }}
 {% else %}
   <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
