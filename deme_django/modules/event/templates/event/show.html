@@ -9,24 +9,14 @@ div {
  margin-right: 5px;
 }
 
-div.title p #label{
-  display: block;
-  font-size: 150%;
-  margin-bottom: 0;
-}
-
-div.title #label{
-  margin-bottom: 20px;
-}
-
 div p {
-  font-size:120%
+  font-size: 16px;
   margin-top: 0;
   margin-bottom: 0;
 }
 
 #label {
-  font-size: 8px;
+  font-size: 12px;
   color: blue;
   margin: 0;
 }
@@ -34,13 +24,16 @@ div p {
 div.date {
   float:left;
   margin-bottom: 1em;
+  margin-top: 2em;
 }
 
 #to {
   float: left;
-  height: 3em;
   margin-right: .5em;
   margin-left: 0;
+  font-size: 16px;
+  height: 1em;
+  margin-top: 4.3%;
 }
 
 div.location {
@@ -56,14 +49,6 @@ div.location {
 
 <body>
 
-<div class="title">
- {% ifagentcan 'view Item.name' event %}
- <p>{{event.name}}</p>
- {% else %}
- <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
- {% endifagentcan %}
- <p id="label">Event name</p>
-</div>
 {% ifequal event.start_date event.end_date %}
 <div class="date" id="Start_Date">
  {% ifagentcan 'view Event.start_date' event %}	
@@ -72,7 +57,7 @@ div.location {
   <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>
  {% endifagentcan %}
   <p id="label">Start Date</p>
-  <p id="label">& End Date<p>
+  <p id="label">&amp; End Date<p>
 </div>
 <div class="date" id="Start_Time">
   {% ifagentcan 'view Event.start_time' event %}	
@@ -134,7 +119,7 @@ div.location {
   {% endifagentcan %}
   <p id="label">   Location </p>
 </div>
-{% ifagentcan 'view Item.description' event %}
+{% ifagentcan 'view TextDocument.body' event %}
 {{ event.body|safe }}
 {% else %}
   <p id="No_Permission">YOU CANNOT VIEW THIS FIELD<p>

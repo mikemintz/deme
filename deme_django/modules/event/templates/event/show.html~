@@ -1,0 +1,108 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+<<<<<<< HEAD
+<head>
+<style type="text/css">
+
+div {
+ margin-right: 5px;
+}
+
+div.title p #label{
+  display: block;
+  font-size: 150%;
+  margin-bottom: 0;
+}
+
+div.title #label{
+  margin-bottom: 20px;
+}
+
+div p {
+  font-size:120%
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+#label {
+  font-size: 8px;
+  color: blue;
+  margin: 0;
+}
+
+div.date {
+  float:left;
+  margin-bottom: 1em;
+}
+
+#to {
+  float: left;
+  height: 3em;
+  margin-right: .5em;
+  margin-left: 0;
+}
+
+div.location {
+  clear:both;
+  margin-bottom: 1em;
+}
+</style>
+</head>
+
+<body>
+<div class="title">
+ <p>{{event.name}}</p>
+ <p id="label">Event name</p>
+</div>
+{% ifequal event.start_date event.end_date %}
+<div class="date" id="Start_Date">
+  <p>{{event.start_date}}</p>
+  <p id="label">Start Date</p>
+  <p id="label">& End Date<p>
+</div>
+<div class="date" id="Start_Time">
+  <p>{{event.start_time}}</p>
+  <p id="label">Start Time</p>
+</div>
+<div class="date" id="to"> to </div>
+<div class="date" id="End_Time"> 
+  <p>{{event.end_time}}</p>
+  <p id="label">End Time</p>
+</div>
+{% else %}
+<div class="date" id="Start_Date">
+  <p>{{event.start_date}}</p>
+  <p id="label">Start Date</p>
+</div>
+<div class="date" id="Start_Time">
+  <p>{{event.start_time}}</p>
+  <p id="label">Start Time</p>
+</div>
+<div class="date" id="to"> to </div>
+<div class="date" id="End_Date">
+  <p>{{event.end_date}}</p>
+  <p id="label">End Date</p>
+</div>
+<div class="date" id="End_Time"> 
+  <p>{{event.end_time}}</p>
+  <p id="label">End Time</p>
+</div>
+{% endifequal %}
+<div class="location">
+  <p>at {{event.location}}</p>
+  <p id="label">   Location </p>
+</div>
+{{ event.body|safe }}
+<p id="label"> Description </p>
+=======
+{{ event.body|safe }}
+
+<p>Title:  {{event.name}}</p>
+<p>From: {{event.start_date}} {{event.start_time}} To:  {{event.end_time}} {{event.end_date}} </p>
+<p>Location: {{event.location}}</p>
+<p>Description: {{event.description}}</p>
+
+>>>>>>> 5f75cfa8f46ebb434a389ddb30ee6486904899a9
+{% endblock content %}
