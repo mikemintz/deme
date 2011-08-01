@@ -34,6 +34,8 @@ Diff functionality can break on complicated formatting changes of HTML documents
 
 Versions should add a field for "Minor Change" - a boolean checkbox to indicate unsubstantial difference with previous version. This could be used to display only the most recent version in a chain of Minor Changes in the default view of Versions of an Item. (Todd, 8/1/2011)
 
+The creator of an Item should be able to create EmailContactMethod subscriptions to the Item. There should be a way to specify that every member of a group whose Folio corresponds to an email list, for example, gets subscribed to the Folio email list. The servers should send each bulk subscribed member a message asking for confirmation. (Todd, 8/1/2011)
+
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
 * make links to Symsys internal pages work in static documents
