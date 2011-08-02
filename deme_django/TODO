@@ -41,9 +41,11 @@ Subscription interface is buggy. Logged in as Todd Davies, I was able to subscri
 
 A comment posted via the Web to an item in a folio generates a comment on the overall folio. I posted a comment on http://symsys.stanford.edu/viewing/webpage/16235 and it got posted as a comment on http://symsys.stanford.edu/viewing/folio/31. This might be correct behavior, but I am not sure. I thought comments only got posted in once place. (Todd, 8/2/2011) NOTE: I just noticed that Symsys has not be updated in a while, in particular it doesn't include in the latter updates on email integration. Maybe this is the problem? (Todd, 8/2/2011)
 
-Permission failure message should tell the user why they do not have permission. (8/2/2011)
+Permission failure message should tell the user why they do not have permission. (Todd, 8/2/2011)
 
-A comment posted on an item that is in a collection for which Everyone has not do anything can be visible to anonymous users without a specific permission that allows this. For example, I posted a comment on http://symsys.stanford.edu/viewing/webpage/16235, giving the login name and password to this outside site. The item is in the Advising Fellows Folio, which is only available to Advising Fellows and Administrators, but for some reason anyone can view comments on items within the folio unless this is blocked by a negative permission for the specific comment. In this case, I did block this specific comment after seeing that it was publicly visible. (8/2/2011)
+A comment posted on an item that is in a collection for which Everyone has not do anything can be visible to anonymous users without a specific permission that allows this. For example, I posted a comment on http://symsys.stanford.edu/viewing/webpage/16235, giving the login name and password to this outside site. The item is in the Advising Fellows Folio, which is only available to Advising Fellows and Administrators, but for some reason anyone can view comments on items within the folio unless this is blocked by a negative permission for the specific comment. In this case, I did block this specific comment after seeing that it was publicly visible. (Todd, 8/2/2011)
+
+The viewer for a Collection and the one for Groups both have the same buttons: "Add an item to this Collection" and "Become a member of <Collection>." The latter button only makes sense for Groups, not Folios and other types of Collections. The former does not make sense for Groups. (Todd, 8/2/2011)
 
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
