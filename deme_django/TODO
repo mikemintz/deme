@@ -43,7 +43,7 @@ A comment posted via the Web to an item in a folio generates a comment on the ov
 
 Permission failure message should tell the user why they do not have permission. (8/2/2011)
 
-A comment posted on an item that is in a collection for which Everyone has not do anything can be visible to anonymous users without a specific permission that allows this. For example, I posted a comment on http://symsys.stanford.edu/viewing/webpage/16235, giving the login name and password to this outside site. The item is in the Advising Fellows Folio, which is only available to Advising Fellows and Administrators, but for some reason anyone can view comments on items within the folio unless this is blocked by a negative permission for the specific comment. In this case, I did block this specific comment. (8/2/2011)
+A comment posted on an item that is in a collection for which Everyone has not do anything can be visible to anonymous users without a specific permission that allows this. For example, I posted a comment on http://symsys.stanford.edu/viewing/webpage/16235, giving the login name and password to this outside site. The item is in the Advising Fellows Folio, which is only available to Advising Fellows and Administrators, but for some reason anyone can view comments on items within the folio unless this is blocked by a negative permission for the specific comment. In this case, I did block this specific comment after seeing that it was publicly visible. (8/2/2011)
 
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
