@@ -49,6 +49,8 @@ The viewer for a Collection and the one for Groups both have the same buttons: "
 
 The viewer for a Webpage item should show the URL of the link and provide way to open it in a new window/tab. (Todd, 8/2/2011)
 
+I get "Server Error" when I click on "My account" when logged in as Todd Davies on Deme.Stanford.edu. (Todd, 8/10/2011)
+
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
 * make links to Symsys internal pages work in static documents
