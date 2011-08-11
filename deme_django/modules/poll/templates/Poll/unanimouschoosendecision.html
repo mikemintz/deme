@@ -1,0 +1,16 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+<p>Name: {{ item.name }}
+<p>Poll:  {{ item.poll }}</p>
+<p>Quorum: {{ item.quorum }} %</p>
+<p>Max Poll Takers: {{ maxPollTakers }}</p>
+<p>Number of responses: {{ numResponses }} </p>
+<p>Number needed for response out of participants: {{ minpeoplefordecision }}</p>
+<p>Most popular: {{ mostPopular }}  </p>
+<p>N: {{ item.num_decision }}</p>
+<p>m: {{ item.m_decision }}</p>
+<p>Participants {{participants}}</p>
+
+{% endblock content %}

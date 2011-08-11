@@ -3,15 +3,7 @@
 {% block content %}
 
 <p>Title:  {{item.name}}</p>
-<p>Question: {{ item.question }}</p>
-<p>Response Format: {{ item.response_format }}</p>
-<p>Beginning Date: {{ item.begins }} </p>
-<p>Deadline: {{ item.deadline }}</p>
-<p>Eligibles: {{ item.eligibles }}</p>
-<p>Visibility {{item.visibility}}</p>
-<p>Write in visibility: {{ item.display_write_ins }}</p>
-<p>Max Poll Takers: {{ maxPollTakers }}</p>
-
+<p>Poll:  {{ item.poll }}</p>
 
 <script type="text/javascript">
     function openDialog(name)
@@ -80,13 +72,4 @@
 {% endifagentcan %}
 {% endif %}
 
-{% if responses %}
-    {% for response in responses %}
-        <p> participant: {{ response.participant }} response: {{ response.proposition }}  </p>
-    {% endfor %}
-{% else %}
-    <p>There are no responses for this poll yet.</p>
-{% endif %}
-
 {% endblock content %}
-
