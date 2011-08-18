@@ -1,4 +1,5 @@
-DEME
+DEME - Unclassified issues, need to be categorized and handled:
+
 Fix Bug (short term)
 Creator of a Deme account can Login As that account holder. This should be stopped. Login As should probably be a global ability reserved for administrators. (Todd, 2/8/2011)
 
@@ -33,6 +34,24 @@ Trying to comment on this item (Deme Issues) when logged in as Mike says "enter 
 Diff functionality can break on complicated formatting changes of HTML documents
 
 RSS link does not work in vanity URLs (see deme.stanford.edu home page) (Mike, 2011-08-18)
+
+Versions should add a field for "Minor Change" - a boolean checkbox to indicate unsubstantial difference with previous version. This could be used to display only the most recent version in a chain of Minor Changes in the default view of Versions of an Item. (Todd, 8/1/2011)
+
+The creator of an Item should be able to create EmailContactMethod subscriptions to the Item. There should be a way to specify that every member of a group whose Folio corresponds to an email list, for example, gets subscribed to the Folio email list. The servers should send each bulk subscribed member a message asking for confirmation. (Todd, 8/1/2011)
+
+Subscription interface is buggy. Logged in as Todd Davies, I was able to subscribe Tim Luo to the Advising Fellows folio on Symsys. He showed up in the dropdown after I typed his first name, and the subscription went through. Typing Clayton Mellina's name (or just "Clayton"), I get no drop down options, and if I type "Clayton Mellina's primary email contact method" into the subscription window, logged in as Todd Davies, I get an error that says I have to choose one of the options in the dropdown menu, even though that is a valid item name and EmailContactMethod. When I try to delete or edit the subscription between Tim Luo and the Advising Fellows folio, I don't get an edit or deactivate button, even though I created the subscription. I get these buttons if I log in as Admin, and can then deactivate the subscription. If I try to destroy it, I get a server error. If I then click on the subscription item in Recent Changes, I also get a server error. (Todd, 8/1/2011)
+
+A comment posted via the Web to an item in a folio generates a comment on the overall folio. I posted a comment on http://symsys.stanford.edu/viewing/webpage/16235 and it got posted as a comment on http://symsys.stanford.edu/viewing/folio/31. This might be correct behavior, but I am not sure. I thought comments only got posted in once place. (Todd, 8/2/2011) NOTE: I just noticed that Symsys has not be updated in a while, in particular it doesn't include in the latter updates on email integration. Maybe this is the problem? (Todd, 8/2/2011)
+
+Permission failure message should tell the user why they do not have permission. (Todd, 8/2/2011)
+
+A comment posted on an item that is in a collection for which Everyone has not do anything can be visible to anonymous users without a specific permission that allows this. For example, I posted a comment on http://symsys.stanford.edu/viewing/webpage/16235, giving the login name and password to this outside site. The item is in the Advising Fellows Folio, which is only available to Advising Fellows and Administrators, but for some reason anyone can view comments on items within the folio unless this is blocked by a negative permission for the specific comment. In this case, I did block this specific comment after seeing that it was publicly visible. (Todd, 8/2/2011)
+
+The viewer for a Collection and the one for Groups both have the same buttons: "Add an item to this Collection" and "Become a member of <Collection>." The latter button only makes sense for Groups, not Folios and other types of Collections. The former does not make sense for Groups. (Todd, 8/2/2011)
+
+The viewer for a Webpage item should show the URL of the link and provide way to open it in a new window/tab. (Todd, 8/2/2011)
+
+I get "Server Error" when I click on "My account" when logged in as Todd Davies on Deme.Stanford.edu. (Todd, 8/10/2011)
 
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
@@ -168,76 +187,6 @@ Deme project site should save permissions data in between restarts. I lost globa
 validate new ViewerRequest.viewer
 Figure out robust caching invalidation scheme for Deme
 |==========|
-
-
-SYMSYS
-Symsys: Symsys Affiliates cannot edit their own passwords and password questions by default. This should be changed. May be a general feature of Deme Accounts. (Todd, 2/8/2011)
-
-Merge performance changes made directly on symsys site into git repository (Mike 12/4/10)
-
-Symsys: We need a way to distinguish a student career that ended in graduation from one that ended with them leaving the degree program. E.g. Emilie Dannenberg, undeclared the B.S. and then declared a minor. If i mark her as "finished' with the B.S. career, she gets added to alums, which is not right.  But if I give her an end date in her B.S. career without checking finished, she is still active in the B.S. career even after the end date has passed. (Todd, 2/17/2011)
-
-from Todd:
- We recently had a case on Symsys of the deme-on deactiving a membership
- (13908) for reasons I don't understand. Rosenn Cima was taken out of the
- Advising Fellows group
- (http://symsys.stanford.edu/viewing/item/recentchanges?page=10) at around
- the time she added herself to the HCI Concentration.
-
-from Mike: Anytime someone creates/edits/deactivates/reactives a SymsysCareer
-(note: this is not an affiliate, but a career, which an affiliate has
-zero or more of), _guarantee_consistency_after_changes is called. It
-looks at the properties of the affiliate, and makes a list of groups
-that the *affiliate* should be a member of, and adds them to groups
-they aren't part of and removes them from groups they shouldn't be in.
-You're looking at the Advising Fellow group, so I will paste below the
-code that determins whether they are in that group
-(modules/symsys/models.py line 255):
-
-        if any(x.actual_item_type() == ProgramStaffSymsysCareer and
-x.finished == True and x.programstaffsymsyscareer.admin_title ==
-'Advising Fellow' for x in my_careers):
-            groups.append(get_or_create_group('past_af'))
-        if any(x.actual_item_type() == ProgramStaffSymsysCareer and
-x.finished == False and x.programstaffsymsyscareer.admin_title ==
-'Advising Fellow' for x in my_careers):
-            groups.append(get_or_create_group('present_af'))
-
-For reference, my_careers =
-SymsysCareer.objects.filter(symsys_affiliate=agent, active=True)
-
-Is this consistent with what's happening? Does Rosenn have a
-ProgramStaffSymsysCareer with finished=False and admin_title='Advising
-Fellow'?
-
-Symsys: Items added to a newsroll viewer diaplay the title to people who have permission NOT Do anything. For example, anonymous users cannot do anything with http://symsys.stanford.edu/viewing/event/14634, but Frontpage News viewer displays the title to all users. (Todd, 4/18/2011)
-
-
-Symsys: Adding Symsys affiliates is too cumbersome - needs to be streamlined (Todd)	
-
-Symsys: Change "occupation" to "affiliation" for Symsys affiliates. (Todd
-
-Symsys: Let's make the end date for a Symsys career be YYYY-12-31 instead of YYYY-01-01
-
-Symsys: Need to enable Webauth logins. Get SSL working (Todd). Update 7/7/2011: we've been asked to either do this or disable Webauth option on Symsys until it is available.   	
-
-Deme/Symsys: When I click on create new Deme Account while viewing a SymsysAffiliate, I get "You do not have permission to create authentication methods." even though I can create the account. (Todd, 12/4/10)
-
-Academic Year Research Opportunities, Other Opportunities, and Jobs lead to New HTML Document when the Create new button is pressed. Should create a new HTML Advertisement instead. This is what the nav menu link for new jobs does. All these should be collections of HTML Adverstisements, not HTML Documents generally.
-Upgrade symsyshoster to see more than 3.2gb memory: http://www.cyberciti.biz/faq/ubuntu-linux-4gb-ram-limitation-solution/ (Mike, 12/4/10)
-
-Symsys module
--------------
-* come up with specification for new symsys layout
-* Figure out how to port mailing lists over
-  - announce list == manually created subscriptions with special permissions, such that you cannot unsubscribe, and announcements are just comments on the group
-
-
-
-
-
-
-
 
 
 

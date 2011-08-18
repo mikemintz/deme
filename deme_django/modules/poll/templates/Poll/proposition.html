@@ -1,0 +1,13 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+<p>Title:  {{ item.name }}</p>
+<p>Implementation Plan: {{ item.body }} </p>
+<p>Summary Text: {{ item.summary_text }}</p>
+<p>Write In: {{ item.is_write_in }}</p>
+
+
+
+
+{% endblock content %}

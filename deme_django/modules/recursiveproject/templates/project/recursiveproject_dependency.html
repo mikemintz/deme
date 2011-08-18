@@ -1,0 +1,11 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+<p>Title:  {{item.name}}</p>
+<p>Required {{item.required_RecursiveProject}} </p>
+<p>Dependent {{item.dependent_RecursiveProject}}</p>
+
+
+
+{% endblock content %}

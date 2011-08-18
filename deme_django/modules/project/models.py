@@ -42,9 +42,8 @@ class Task(HtmlDocument):
         verbose_name_plural = _('tasks')
 
     #fields:
-    due_date = models.DateField(_('due date'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     beginning_date = models.DateField(_('beginning date'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
-    
+    due_date = models.DateField(_('due date'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     due_time = models.TimeField(_('due time'), null=True, blank=True, default=None)
     
     Priority_Choices = (
