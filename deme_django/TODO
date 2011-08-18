@@ -32,6 +32,8 @@ Trying to comment on this item (Deme Issues) when logged in as Mike says "enter 
 
 Diff functionality can break on complicated formatting changes of HTML documents
 
+RSS link does not work in vanity URLs (see deme.stanford.edu home page) (Mike, 2011-08-18)
+
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
 * make links to Symsys internal pages work in static documents
