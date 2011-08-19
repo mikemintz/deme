@@ -9,6 +9,7 @@ from cms.permissions import all_possible_item_abilities, all_possible_item_and_g
 from cms.base_viewer import all_viewer_classes
 from django.utils.http import urlquote
 from django.utils.html import escape, urlize
+from django.utils.encoding import force_unicode
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
@@ -180,71 +181,6 @@ def module_media_url(module_name, path):
             return "[Couldn't find path %s on filesystem]" % fs_path
         else:
             return '' # Fail silently for invalid paths.
-
-
-class ListResultsNavigator(template.Node):
-    def __init__(self, max_pages):
-        self.max_pages = template.Variable(max_pages)
-
-    def __repr__(self):
-        return "<ListResultsNavigator>"
-
-    def render(self, context):
-        """
-        Make an HTML pagination navigator (page number links with prev and next
-        links on both sides).
-        
-        The prev link will have class="list_results_prev". The next link will have
-        class="list_results_next". Each page number link will have
-        class="list_results_step". The current page number will be in a span with
-        class="list_results_highlighted".
-        """
-        try:
-            max_pages = self.max_pages.resolve(context)
-        except template.VariableDoesNotExist:
-            if settings.DEBUG:
-                return "[Couldn't resolve max_pages variable]"
-            else:
-                return '' # Fail silently for invalid variables.
-        viewer = context['_viewer']
-        n_results = context['n_listable_items']
-        limit = context['limit']
-        offset = context['offset']
-        def url_with_offset(offset):
-            querydict = viewer.request.GET.copy()
-            querydict['offset'] = str(offset)
-            return '%s?%s' % (viewer.request.path, querydict.urlencode())
-        if n_results <= limit:
-            return ''
-        result = []
-        # Add a prev link
-        if offset > 0:
-            new_offset = max(0, offset - limit)
-            prev_text = _('Prev')
-            link = u'<a class="list_results_prev" href="%s">&laquo; %s</a>' % (url_with_offset(new_offset), prev_text)
-            result.append(link)
-        # Add the page links
-        for new_offset in xrange(max(0, offset - limit * max_pages), min(n_results - 1, offset + limit * max_pages), limit):
-            if new_offset == offset:
-                link = '<span class="list_results_highlighted">%d</span>' % (1 + new_offset / limit,)
-            else:
-                link = '<a class="list_results_step" href="%s">%d</a>' % (url_with_offset(new_offset), 1 + new_offset / limit)
-            result.append(link)
-        # Add a next link
-        if offset + limit < n_results:
-            new_offset = offset + limit
-            next_text = _('Next')
-            link = u'<a class="list_results_next" href="%s">%s &raquo;</a>' % (url_with_offset(new_offset), next_text)
-            result.append(link)
-        return ''.join(result)
-
-
-@register.tag
-def list_results_navigator(parser, token):
-    bits = list(token.split_contents())
-    if len(bits) != 2:
-        raise template.TemplateSyntaxError, "%r takes one arguments" % bits[0]
-    return ListResultsNavigator(bits[1])
 
 
 class UniversalEditButton(template.Node):
@@ -1067,6 +1003,77 @@ def calculateactionnotices(parser, token):
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
     return CalculateActionNotices()
+
+
+class ListGridBox(template.Node):
+    def __init__(self, item_type):
+        self.item_type = template.Variable(item_type)
+
+    def __repr__(self):
+        return "<ListGridBox>"
+
+    def render(self, context):
+        viewer = context['_viewer']
+        item_type = self.item_type.resolve(context)
+        filter_string = viewer.request.GET.get('filter', '')
+        q = viewer.request.GET.get('q', '')
+        collection = viewer.request.GET.get('collection', '')
+        fields = []
+        possible_abilities = all_possible_item_abilities(item_type)
+        for field in item_type._meta.fields:
+            if isinstance(field, (models.OneToOneField, models.ManyToManyField)):
+                continue
+            if force_unicode(field.help_text).startswith('(Advanced)'):
+                continue
+            ability = 'view %s.%s' % (field.model.__name__, field.name)
+            if ability in possible_abilities:
+                fields.append(field)
+        fields.sort(key=lambda field: 0 if field.name == 'name' else 1)
+        col_names = [u'%s' % capfirst(field.verbose_name) for field in fields]
+        col_model = []
+        for field in fields:
+            field_dict = {}
+            field_dict['name'] = field.name
+            field_dict['index'] = field.name
+            col_model.append(field_dict)
+        post_data = {'fields': ','.join([field.name for field in fields]), 'filter': filter_string}
+        if q:
+            post_data['searchField'] = 'name'
+            post_data['searchOper'] = 'cn'
+            post_data['searchString'] = q
+        if collection:
+            post_data['collection'] = collection
+        url = reverse('item_type_url', kwargs={'viewer': item_type.__name__.lower(), 'action': 'grid', 'format': 'json'})
+        r = []
+        r.append("""<table id="jqgrid_list"></table>""")
+        r.append("""<div id="jqgrid_pager"></div>""")
+        r.append("""<script type="text/javascript">""")
+        r.append("""$(document).ready(function () {""")
+        r.append("""  $("#jqgrid_list").jqGrid({""")
+        r.append("""    url: '%s',""" % url)
+        r.append("""    postData: %s,""" % simplejson.dumps(post_data))
+        r.append("""    datatype: "json",""")
+        r.append("""    colNames: %s,""" % simplejson.dumps(col_names))
+        r.append("""    colModel: %s,""" % simplejson.dumps(col_model))
+        r.append("""    rowNum: 10,""")
+        r.append("""    rowList: [10,20,50,100],""")
+        r.append("""    viewrecords: true,""")
+        r.append("""    pager: '#jqgrid_pager',""")
+        r.append("""    height: "100%",""")
+        r.append("""    autowidth: true,""")
+        r.append("""  });""")
+        r.append("""  $("#jqgrid_list").jqGrid('navGrid','#jqgrid_pager',{edit:false,add:false,del:false});""")
+        r.append("""});""")
+        r.append("""</script>""")
+        return '\n'.join(r)
+
+
+@register.tag
+def listgridbox(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError, "%r takes one arguments" % bits[0]
+    return ListGridBox(bits[1])
 
 
 class SubclassFieldsBox(template.Node):

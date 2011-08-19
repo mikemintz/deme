@@ -55,37 +55,14 @@
 </div>
 
 {% ifagentcanglobal item_create_ability %}
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" href="{% url item_type_url viewer=item_type_lower,action="new" %}">Create a new {{ item_type_lower }}</a>
-    <br>
+<div class="ui-helper-clearfix" style="margin-bottom: 1em;">
+    <div class="fg-buttonset ui-helper-clearfix">
+        <a class="fg-button fg-button-icon-left ui-widget ui-state-default ui-corner-all" href="{% url item_type_url viewer=item_type_lower,action="new" %}"><span class="ui-icon ui-icon-circle-plus"></span>Create a new {{ item_type_lower }}</a>
+    </div>
+</div>
 {% endifagentcanglobal %}
 
-{% if items %}
-
-<div style="text-align: right; font-size: smaller;">
-    Displaying {{ list_start_i }} - {{ list_end_i }} of {{ n_listable_items }} listable {{ accepted_item_type_name_plural }}
-</div>
-
-<div style="margin-top: 10px; margin-bottom: 10px; text-align: center;">
-    {% list_results_navigator 10 %}
-</div>
-
-<table cellspacing="0" class="list" width="100%">
-    <tr>
-        <th>Name</th>
-    </tr>
-    {% for item in items %}
-    <tr class="{% cycle 'even' 'odd' %}">
-        <td><a class="img_link" href="{{ item.get_absolute_url }}?crumb_item_type={{ item_type_lower }}&crumb_filter={{ filter_string }}"><img src="{{ item|icon_url:16 }}" /><span>{% viewable_name item %}</span></a></td>
-    </tr>
-    {% endfor %}
-</table>
-{% else %}
-    No {{ accepted_item_type_name_plural }} Found
-{% endif %}
-
-<div style="margin-top: 10px; text-align: center;">
-    {% list_results_navigator 10 %}
-</div>
+{% listgridbox accepted_item_type %}
 
 {% endblock content %}
 

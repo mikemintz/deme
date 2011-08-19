@@ -11,12 +11,14 @@ from django.db.models import Q
 from django.conf import settings
 from django.utils import simplejson
 from django.utils.text import capfirst
+from django.utils.timesince import timesince
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.fields import FieldDoesNotExist
 import django.contrib.syndication.feeds
 import django.contrib.syndication.views
 from django.views.decorators.http import require_POST
 import re
+import math
 from urlparse import urljoin
 from cms.models import *
 from cms.forms import *
@@ -27,15 +29,15 @@ class ItemViewer(Viewer):
     accepted_item_type = Item
     viewer_name = 'item'
     
-    def _type_list_helper(self):
+    def _type_list_helper(self, offset=None, limit=None, q=None):
         if self.request.GET.get('collection'):
             collection = Item.objects.get(pk=self.request.GET.get('collection')).downcast()
         else:
             collection = None
-        offset = int(self.request.GET.get('offset', 0))
-        limit = int(self.request.GET.get('limit', 100))
+        offset = offset or int(self.request.GET.get('offset', 0))
+        limit = limit or int(self.request.GET.get('limit', 100))
         active = self.request.GET.get('active', '1') == '1'
-        self.context['search_query'] = self.request.GET.get('q', '')
+        self.context['search_query'] = q or self.request.GET.get('q', '')
         self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         self.context['item_create_ability'] = "create %s" % (self.accepted_item_type.__name__)
         items = self.accepted_item_type.objects
@@ -129,13 +131,192 @@ class ItemViewer(Viewer):
 
     def type_list_html(self):
         self.context['action_title'] = ''
-        self._type_list_helper()
+        self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
+        self.context['item_create_ability'] = "create %s" % (self.accepted_item_type.__name__)
         template = loader.get_template('item/list.html')
         return HttpResponse(template.render(self.context))
 
     def type_list_json(self):
         self._type_list_helper()
         data = [[item.name, item.pk] for item in self.context['items']]
+        json_str = simplejson.dumps(data, separators=(',',':'))
+        return HttpResponse(json_str, mimetype='application/json')
+
+    def type_grid_json(self):
+        from cms.templatetags.item_tags import icon_url
+        from django.utils.html import escape
+
+        field_names = self.request.GET['fields'].split(',')
+        n_rows = int(self.request.GET['rows'])
+        page = int(self.request.GET['page'])
+        search_field = self.request.GET.get('searchField', '')
+        search_oper = self.request.GET.get('searchOper', '')
+        search_string = self.request.GET.get('searchString', '')
+        sort_field = self.request.GET.get('sidx', '')
+        sort_ascending = self.request.GET['sord'] == 'asc'
+        if self.request.GET.get('collection'):
+            collection = Item.objects.get(pk=self.request.GET.get('collection')).downcast()
+        else:
+            collection = None
+
+        offset = (page - 1) * n_rows
+        active = True
+
+        # Get the basic list of items
+        items = self.accepted_item_type.objects
+        items = items.filter(active=active)
+        for ability in self.request.GET.getlist('ability'):
+            items = self.permission_cache.filter_items(ability, items)
+        # Filter by the search
+        if search_field:
+            field = self.accepted_item_type._meta.get_field_by_name(search_field)[0]
+            # Make sure we can see the field
+            ability = 'view %s.%s' % (field.model.__name__, field.name)
+            items = self.permission_cache.filter_items(ability, items)
+            # Generate the search query on the field
+            operation_map = {
+                'eq': (True, 'iexact'),
+                'ne': (False, 'iexact'),
+                'bw': (True, 'istartswith'),
+                'bn': (False, 'istartswith'),
+                'ew': (True, 'iendswith'),
+                'en': (False, 'iendswith'),
+                'cn': (True, 'icontains'),
+                'nc': (False, 'icontains'),
+                'nu': (True, 'isnull'),
+                'nn': (False, 'isnull'),
+                'in': (True, 'in'),#TODO
+                'ni': (False, 'in'),#TODO
+            }
+            django_positive, django_operation = operation_map[search_oper]
+            search_key = '%s__%s' % ('name' if isinstance(field, models.ForeignKey) else field.name, django_operation)
+            search_value = True if django_operation == 'isnull' else search_string
+            search_filter = Q(**{search_key: search_value})
+            if not django_positive:
+                search_filter = ~search_filter
+            if isinstance(field, models.ForeignKey):
+                foreign_items = field.rel.to.objects.filter(search_filter)
+                foreign_items = self.permission_cache.filter_items('view Item.name', foreign_items)
+                items = items.filter(**{field.name + "__in": foreign_items})
+            else:
+                items = items.filter(search_filter)
+        # Filter by the filter parameter
+        for filter_string in self.request.GET.getlist('filter'):
+            if not filter_string: continue
+            filter_string = str(filter_string) # Unicode doesn't work here
+            self.context['filter_string'] = filter_string
+            parts = filter_string.split('.')
+            target_pk = parts.pop()
+            fields = []
+            item_types = []
+            cur_item_type = self.accepted_item_type
+            for part in parts:
+                field, model, direct, m2m = cur_item_type._meta.get_field_by_name(part)
+                if model is None:
+                    model = cur_item_type
+                fields.append(field)
+                item_types.append(model)
+                if isinstance(field, models.ForeignKey):
+                    cur_item_type = field.rel.to
+                elif isinstance(field, models.related.RelatedObject):
+                    cur_item_type = field.model
+                else:
+                    raise Exception("Cannot filter on field %s.%s (not a related field)" % (cur_item_type.__name__, field.name))
+                if not issubclass(cur_item_type, Item):
+                    raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
+
+            def filter_by_filter(queryset, fields, item_types):
+                if not fields:
+                    return queryset.filter(pk=target_pk)
+                field = fields[0]
+                item_type = item_types[0]
+                if isinstance(field, models.ForeignKey):
+                    next_item_type = field.rel.to
+                elif isinstance(field, models.related.RelatedObject):
+                    next_item_type = field.model
+                next_queryset = filter_by_filter(next_item_type.objects, fields[1:], item_types[1:])
+                if isinstance(field, models.ForeignKey):
+                    query_dict = {field.name + '__in': next_queryset}
+                    result = queryset.filter(**query_dict)
+                    ability = 'view %s.%s' % (item_type.__name__, field.name)
+                    result = self.permission_cache.filter_items(ability, result)
+                elif isinstance(field, models.related.RelatedObject):
+                    if not isinstance(field.field, models.OneToOneField):
+                        ability = 'view %s.%s' % (next_item_type.__name__, field.field.name)
+                        next_queryset = self.permission_cache.filter_items(ability, next_queryset)
+                    query_dict = {'pk__in': next_queryset.values(field.field.name).query}
+                    result = queryset.filter(**query_dict)
+                else:
+                    assert False
+                result = result.filter(active=True)
+                return result
+            items = filter_by_filter(items, fields, item_types)
+        # Filter by collection
+        if isinstance(collection, Collection):
+            if self.cur_agent_can_global('do_anything'):
+                recursive_filter = None
+            else:
+                visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
+                recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
+            items = items.filter(pk__in=collection.all_contained_collection_members(recursive_filter).values('pk').query)
+        # Perform the ordering
+        if sort_field:
+            field = self.accepted_item_type._meta.get_field_by_name(sort_field)[0]
+            # Make sure we can see the field
+            ability = 'view %s.%s' % (field.model.__name__, field.name)
+            items = self.permission_cache.filter_items(ability, items)
+            if isinstance(field, models.ForeignKey):
+                foreign_items = self.permission_cache.filter_items('view Item.name', field.rel.to.objects)
+                items = items.filter(**{field.name + '__in': foreign_items})
+                sort_field = sort_field + "__name"
+            items = items.order_by(('' if sort_ascending else '-') + sort_field)
+        # Count and limit
+        n_items = items.count()
+        items = [item for item in items.all()[offset:offset+n_rows]]
+
+        fields = [self.accepted_item_type._meta.get_field_by_name(field_name)[0] for field_name in field_names]
+
+        def item_link(item):
+            can_view_name = self.cur_agent_can('view Item.name', item)
+            url = item.get_absolute_url()
+            icon = icon_url(item, 16)
+            name = escape(item.display_name(can_view_name))
+            return '<a class="imglink" href="%s"><img src="%s" /><span>%s</span></a>' % (url, icon, name)
+
+        rows = []
+        for item in items:
+            cell = []
+            for field in fields:
+                if field.name == 'name':
+                    cell.append(item_link(item))
+                elif self.cur_agent_can('view %s.%s' % (field.model.__name__, field.name), item):
+                    if isinstance(field, models.ForeignKey):
+                        foreign_item = getattr(item, field.name)
+                        if foreign_item:
+                            cell.append(item_link(foreign_item))
+                        else:
+                            cell.append("")
+                    else:
+                        data = getattr(item, field.name)
+                        if isinstance(field, models.FileField):
+                            #TODO use .url
+                            cell.append('<a href="%s%s">%s</a>' % (escape(settings.MEDIA_URL), escape(data), escape(data)))
+                        elif isinstance(field, models.DateTimeField):
+                            cell.append('<span title="%s">%s ago</span>' % (item.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(item.created_at)))
+                        else:
+                            truncate_length = 50
+                            data = unicode(data)
+                            truncated_data = data if len(data) < truncate_length else data[:truncate_length] + '...'
+                            cell.append(escape(truncated_data))
+                else:
+                    cell.append("")
+            row = {'id': item.pk, 'cell': cell}
+            rows.append(row)
+        data = {}
+        data['page'] = page
+        data['total'] = int(math.ceil(float(n_items) / n_rows))
+        data['records'] = n_items
+        data['rows'] = rows
         json_str = simplejson.dumps(data, separators=(',',':'))
         return HttpResponse(json_str, mimetype='application/json')
 
