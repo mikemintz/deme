@@ -133,6 +133,16 @@ class ItemViewer(Viewer):
         self.context['action_title'] = ''
         self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         self.context['item_create_ability'] = "create %s" % (self.accepted_item_type.__name__)
+        self.context['search_query'] = self.request.GET.get('q', '')
+        item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
+        item_types.sort(key=lambda x:x['name'].lower())
+        self.context['item_types'] = item_types
+        if self.request.GET.get('collection'):
+            collection = Item.objects.get(pk=self.request.GET.get('collection')).downcast()
+        else:
+            collection = None
+        self.context['collection'] = collection
+        self.context['all_collections'] = self.permission_cache.filter_items('view Item.name', Collection.objects.filter(active=True)).order_by('name')
         template = loader.get_template('item/list.html')
         return HttpResponse(template.render(self.context))
 
