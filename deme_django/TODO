@@ -33,6 +33,8 @@ Trying to comment on this item (Deme Issues) when logged in as Mike says "enter 
 
 Diff functionality can break on complicated formatting changes of HTML documents
 
+RSS link does not work in vanity URLs (see deme.stanford.edu home page) (Mike, 2011-08-18)
+
 Versions should add a field for "Minor Change" - a boolean checkbox to indicate unsubstantial difference with previous version. This could be used to display only the most recent version in a chain of Minor Changes in the default view of Versions of an Item. (Todd, 8/1/2011)
 
 The creator of an Item should be able to create EmailContactMethod subscriptions to the Item. There should be a way to specify that every member of a group whose Folio corresponds to an email list, for example, gets subscribed to the Folio email list. The servers should send each bulk subscribed member a message asking for confirmation. (Todd, 8/1/2011)
@@ -50,6 +52,8 @@ The viewer for a Collection and the one for Groups both have the same buttons: "
 The viewer for a Webpage item should show the URL of the link and provide way to open it in a new window/tab. (Todd, 8/2/2011)
 
 I get "Server Error" when I click on "My account" when logged in as Todd Davies on Deme.Stanford.edu. (Todd, 8/10/2011)
+
+When you deactivate a membership from a collection and try to reactivate it, the membership creator doesn't check to see if a deactivated membership exists and creates a new one. This leads to a server error. (Jimmy 8/19/11)
 
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
@@ -72,7 +76,7 @@ Other things to do
 * Figure out correct way to manage assets (maybe like in rails)
 * figure out how we are determining the permission to view comment hierarchy (i.e., comment.commented_item)
 * Code cleanup: views, templatetags, and templates, and symsys everything
-* Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun)
+* Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun). In general though, we definitely have an issue where we assume a given HTML container will only be loaded once.
 * Do a more thorough job ensuring fields are not null (unless allowed_to_be_null_before_destroyed == True). We might have to wait for real model-based validations (Django 1.2).
 Django bugs
 -----------
