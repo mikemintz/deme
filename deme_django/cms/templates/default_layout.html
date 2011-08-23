@@ -103,7 +103,21 @@
                 autoHeight: false,
             });
         });
-    </script>        
+    </script> 
+    
+	<script type="text/javascript">
+	    function max()
+	    {
+	    	window.open("", "_self", "fullscreen=yes, scrollbars=auto"); 
+	    }
+		function resizeText(multiplier) {
+		  if (document.body.style.fontSize == "") {
+		    document.body.style.fontSize = "1.0em";
+		  }
+		  document.body.style.fontSize = parseFloat(document.body.style.fontSize) + (multiplier * 0.2) + "em";
+		}
+	</script>
+	
 
 </head>
 
@@ -330,6 +344,11 @@
     </table>
 
 </div>
+
+<input type="button" value="Open Fullscreen" onclick="max()" />
+<input type="button" value="Increase text size" onclick="resizeText(1)" />
+<input type="button" value="Decrease text size" onclick="resizeText(-1)" />
+
 
 <div class="footer">
     <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
