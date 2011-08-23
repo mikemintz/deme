@@ -106,16 +106,12 @@
     </script> 
     
 	<script type="text/javascript">
-	    function max()
-	    {
-	    	window.open("", "_self", "fullscreen=yes, scrollbars=auto"); 
-	    }
-		function resizeText(multiplier) {
-		  if (document.body.style.fontSize == "") {
-		    document.body.style.fontSize = "1.0em";
-		  }
-		  document.body.style.fontSize = parseFloat(document.body.style.fontSize) + (multiplier * 0.2) + "em";
-		}
+	   function max()
+	   {
+	       self.moveTo(0,0);
+	       self.resizeTo(screen.availWidth,screen.availHeight);
+
+	   }
 	</script>
 	
 
