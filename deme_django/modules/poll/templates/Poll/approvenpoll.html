@@ -1,16 +1,83 @@
 {% extends layout %}
 {% load item_tags %}
 {% block content %}
+<head>
+<style>
+div {
+ margin-right: 5px;
+}
 
-<p>Title:  {{item.name}}</p>
-<p>Question: {{ item.question }}</p>
-<p>Response Format: {{ item.response_format }}</p>
-<p>Beginning Date: {{ item.begins }} </p>
-<p>Deadline: {{ item.deadline }}</p>
-<p>Eligibles: {{ item.eligibles }}</p>
-<p>Visibility {{item.visibility}}</p>
-<p>Write in visibility: {{ item.display_write_ins }}</p>
-<p> N : {{ item.n }} </p>
+div p {
+  font-size: 16px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+#label {
+  font-size: 12px;
+  color: blue;
+  margin: 0;
+}
+
+div.Question {
+  float:left;
+  margin-right: 6em;
+}
+
+div.Beginning p{
+
+  font-size: 10px;
+}
+
+div.Deadline p{
+	
+	font-size: 20px;
+	color: red;
+}
+
+div.Instructions p{
+	float:left;
+	font-size: 12px;
+}
+
+#No_Permission {
+	font-size: 12px;
+}
+
+div.submit_button a.poll {
+	float:left;
+}
+
+
+</style>
+</head>
+<script type="text/javascript">
+function toggle(){
+   var div1 = getElementById("bottom")
+   if (div1.style.display == 'none') {
+       div1.style.display = 'block'
+   } else {
+       div1.style.display = 'none'
+   }
+}
+</script>
+
+
+<div class='Question'> 
+	<p>{{ item.question }}</p>
+	<p id='label'> Question </p>
+</div>
+<div class='Deadline'>
+	<p>Deadline: {{ item.deadline }}</p>
+</div>
+<div class='Beginning'>
+	<p>Poll started: {{ item.begins }}</p>
+</div>
+<br />
+<br />
+<div class='Instructions'>
+	<p>Approve {{ item.n }} or fewer propositions.</p>
+<div>
 
 
 <script type="text/javascript">
@@ -32,53 +99,69 @@
 
 {% if memberships %}
 <table cellspacing="0" class="list">
-    <tr>
-        <th>Name</th>
-        <th>Membership</th>
+	<tr>
+        <th>Propositions:</th>
     </tr>
     {% for membership in memberships %}
-    <tr class="{% cycle 'even' 'odd' %}">
-        <td>
-            <a href="{{ membership.item.get_absolute_url }}">{% viewable_name membership.item %}</a>
-        </td>
-        <td>
-            <a href="{{ membership.get_absolute_url }}">{{ membership.pk }}</a>
+    <tr class="{% cycle 'even' 'odd' %} top">
+           <td> <a href="{{ membership.item.get_absolute_url }}">{% viewable_name membership.item %}</a> </td>
+			<td>{{membership.summary_text}}</td>
+        	<td><select name="value">
+	        <option value="no vote">Not Voted</option>
+			<option value="approve">Approve</option>
+			<option value="disapprove">Disapprove</option>
+			</select></td>
+			<td><input type="button" value="Hide Details" onclick="toggle()" /></td>
+			<td><input type="button" value="Comment"></td>
             {% ifagentcan 'modify_membership' item %}
-            <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+  			{# make it a trashcan instead of an x #}
+            <td><form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
                 <input type="hidden" name="item" value="{{ membership.item.pk }}" />
-                <button type="submit"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove from collection</span></button>
-            </form>
+                <button type="submit"><span>Remove</span></button>
+            </form></td>
             {% endifagentcan %}
-        </td>
     </tr>
+    <tr>
+	<td id="bottom">This is a test. I'm going to write a lot and it's going to screw stuff up so let's see if that's true. Oh
+		well hot damn it goes to a new line so it looks kinda like it works. This is very very very exciting. Let's see how
+		far we can go!</td>
+		{# Set a limit 12 lines or use a scroll bar #}
+	</tr>
     {% endfor %}
 </table>
+<div style="margin-left:40%; margin-bottom:1em;">
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="submit">Submit</a><br><br>
+</div>
+
 {% else %}
     No Items In This Collection
 {% endif %}
 
+{# We need to figure out where all the buttons go. So "Make new write in" cannot happen if you are admin and the poll hasn't started #}
+
+<div class="submit_button" style="margin-left:3em;">
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" >View Write-ins</a>
+</div>
+
+<div class="submit_button">
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" >Make New Write-in</a>
+</div>
+
+<div class="submit_button">
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" >Make New Proposition</a>
+</div>
+
+<div class="submit_button" style="margin-left:5em;">
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" >Make New Decision</a>
+</div>
+
+
 {% ifagentcan 'modify_membership' item %}
 <div>
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;"><img src="{{ "new"|icon_url:16 }}" />Add an item to collection</a><br><br>
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a><br><br>
 </div>
 {% newmemberdialog %}
 {% endifagentcan %}
-
-{% if cur_agent_in_collection %}
-{% ifagentcan 'remove_self' item %}
-<form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
-    <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
-    <button type="submit" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove my membership in {% viewable_name item %}</span></button>
-</form>
-{% endifagentcan %}
-{% else %}
-{% ifagentcan 'add_self' item %}
-<form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="addmember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
-    <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
-    <button type="submit" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all"><img src="{{ "new"|icon_url:16 }}" /> <span>Become a member of {% viewable_name item %}</span></button>
-</form>
-{% endifagentcan %}
-{% endif %}
 
 {% if responses %}
     {% for response in responses %}
@@ -87,6 +170,21 @@
 {% else %}
     <p>There are no responses for this poll yet.</p>
 {% endif %}
+<table cellspacing="0" class="list">
+	<tr>
+        <th>Name</th>
+    </tr>
+    {% for eligible in eligible_memberships %}
+    <tr class="{% cycle 'even' 'odd' %} top">
+           <td> <a href="{{ eligible.item.get_absolute_url }}">{% viewable_name eligible.item %}
+	{% if eligible.item in participants %} has responded {% else %} has not responded {% endif %}</a> </td>
+    </tr>
+ {% endfor %}
+</table>
+
+{% for participant in participants %}
+   <p> {{participant.name}} X</p>
+{% endfor %}
 
 {% endblock content %}
 

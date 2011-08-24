@@ -3,7 +3,7 @@
 {% block content %}
 
 <p>Title:  {{ item.name }}</p>
-<p>Implementation Plan: {{ item.body }} </p>
+<p>Implementation Plan: {{ item.body|safe }} </p>
 <p>Summary Text: {{ item.summary_text }}</p>
 <p>Write In: {{ item.is_write_in }}</p>
 

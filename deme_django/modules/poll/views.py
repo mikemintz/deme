@@ -79,6 +79,16 @@ class ApproveNPollViewer(PollViewer):
             self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
         self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can('view Item.name', x.item), x.item.name))
         self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
+        self.context['responses'] = PropositionResponseApprove.objects.all().filter(poll=self.item)
+        eligible_agents = self.item.eligibles.child_memberships
+        eligible_agents = eligible_agents.filter(active=True)
+        eligible_agents = eligible_agents.filter(item__active=True)
+        eligible_agents = self.permission_cache.filter_items('view Membership.item', eligible_agents)
+        eligible_agents = eligible_agents.select_related('item')
+        if eligible_agents:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in eligible_agents]))
+        self.context['eligible_agents'] = sorted(eligible_agents, key=lambda x: (not self.permission_cache.agent_can('view Item.name', x.item), x.item.name))
+        self.context['participants'] = Agent.objects.filter(poll_participant__poll=self.item)
         template = loader.get_template('poll/approvenpoll.html')
         return HttpResponse(template.render(self.context))
         
