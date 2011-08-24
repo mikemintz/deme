@@ -48,6 +48,12 @@ div.submit_button a.poll {
 	float:left;
 }
 
+div #Results {
+	float:left;
+	background-color: #66FFFF;
+	outline: 2px solid black;
+}
+
 
 </style>
 </head>
@@ -70,14 +76,26 @@ function toggle(){
 <div class='Deadline'>
 	<p>Deadline: {{ item.deadline }}</p>
 </div>
+
 <div class='Beginning'>
 	<p>Poll started: {{ item.begins }}</p>
+</div>
+<div id='Results'>
+	<p>View Results<p>
+	{% if decisions %}
+		{% for decision in decisions %}
+	 		<p><a href="{{ decision.get_absolute_url }}">{% viewable_name decision %}</a></p>
+		{% endfor %}
+	{% else %}
+		<p>No Results Yet<p>
+	{% endif %}
 </div>
 <br />
 <br />
 <div class='Instructions'>
 	<p>Approve {{ item.n }} or fewer propositions.</p>
 <div>
+
 
 
 <script type="text/javascript">
@@ -102,25 +120,21 @@ function toggle(){
 	<tr>
         <th>Propositions:</th>
     </tr>
-    {% for membership in memberships %}
+<form method="post" enctype="multipart/form-data" 
+	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
+    
+	
+	{% for membership in memberships %}
     <tr class="{% cycle 'even' 'odd' %} top">
            <td> <a href="{{ membership.item.get_absolute_url }}">{% viewable_name membership.item %}</a> </td>
 			<td>{{membership.summary_text}}</td>
-        	<td><select name="value">
+        	<td><select name="vote">
 	        <option value="no vote">Not Voted</option>
 			<option value="approve">Approve</option>
 			<option value="disapprove">Disapprove</option>
 			</select></td>
 			<td><input type="button" value="Hide Details" onclick="toggle()" /></td>
-			<td><input type="button" value="Comment"></td>
-            {% ifagentcan 'modify_membership' item %}
-  			{# make it a trashcan instead of an x #}
-            <td><form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
-                <input type="hidden" name="item" value="{{ membership.item.pk }}" />
-                <button type="submit"><span>Remove</span></button>
-            </form></td>
-            {% endifagentcan %}
-    </tr>
+			<td><input type="button" value="Comment"></td></tr>
     <tr>
 	<td id="bottom">This is a test. I'm going to write a lot and it's going to screw stuff up so let's see if that's true. Oh
 		well hot damn it goes to a new line so it looks kinda like it works. This is very very very exciting. Let's see how
@@ -132,7 +146,7 @@ function toggle(){
 <div style="margin-left:40%; margin-bottom:1em;">
     <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="submit">Submit</a><br><br>
 </div>
-
+</form>
 {% else %}
     No Items In This Collection
 {% endif %}
@@ -163,28 +177,34 @@ function toggle(){
 {% newmemberdialog %}
 {% endifagentcan %}
 
-{% if responses %}
-    {% for response in responses %}
-        <p> participant: {{ response.participant }} response: {{ response.proposition }}  </p>
-    {% endfor %}
-{% else %}
-    <p>There are no responses for this poll yet.</p>
-{% endif %}
+
 <table cellspacing="0" class="list">
 	<tr>
         <th>Name</th>
     </tr>
-    {% for eligible in eligible_memberships %}
-    <tr class="{% cycle 'even' 'odd' %} top">
-           <td> <a href="{{ eligible.item.get_absolute_url }}">{% viewable_name eligible.item %}
-	{% if eligible.item in participants %} has responded {% else %} has not responded {% endif %}</a> </td>
-    </tr>
- {% endfor %}
+    	{% for key,value in Responses.items %}
+    		<tr class="{% cycle 'even' 'odd' %} top">   
+			<td> <a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+			{% ifnotequal item.visibility 'closed' %}
+			     {% if value %} has responded </td></tr>
+					{% ifequal item.visibility 'responses visible' %} 
+					    {% for response in value %} 
+		    				<tr><td><a href="{{ response.proposition.get_absolute_url }}"> 
+							{% viewable_name response.proposition %}</a>: {{ response.value }}</td></tr>
+						{% endfor %}
+					{% endifequal %}
+				{% else %}
+		 			has not responded </td></tr>
+				{% endif %} 
+			{% else %}
+				</td></tr>
+			{% endifnotequal %}
+ 		{% endfor %}
 </table>
 
-{% for participant in participants %}
-   <p> {{participant.name}} X</p>
-{% endfor %}
+
+
+
 
 {% endblock content %}
 

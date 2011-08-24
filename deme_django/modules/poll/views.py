@@ -89,8 +89,24 @@ class ApproveNPollViewer(PollViewer):
             self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in eligible_agents]))
         self.context['eligible_agents'] = sorted(eligible_agents, key=lambda x: (not self.permission_cache.agent_can('view Item.name', x.item), x.item.name))
         self.context['participants'] = Agent.objects.filter(poll_participant__poll=self.item)
+        Responses = dict()
+        for agent in eligible_agents:
+            Responses[agent.item] = PropositionResponseApprove.objects.all().filter(poll=self.item).filter(participant=agent.item)
+        self.context['Responses'] = Responses
+        self.context['decisions'] = Decision.objects.all().filter(poll=self.item)
         template = loader.get_template('poll/approvenpoll.html')
         return HttpResponse(template.render(self.context))
+
+    #def respondtopropositions(self):
+     #   if request.method == 'POST':
+     #       form = ContactForm(self.request.POST)
+     #       if form.is_valid():
+     #   response = PropositionResponseChoose.objects.create(poll=self., participant= "", proposition = "", value = "")
+     #  try:
+     #       vote = RecursiveProject.objects.get(pk=self.request.POST.get('vote'))
+     #   except:
+     #       return self.render_error('Invalid URL', "There is something wrong....")
+     #   print(vote)
         
 class PropositionViewer(HtmlDocumentViewer):
     accepted_item_type = Proposition

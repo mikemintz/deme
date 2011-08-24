@@ -14,7 +14,10 @@ class Poll(Collection):
 
     #Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset()
+    introduced_abilities = frozenset(['edit Poll.visibility', 'view Poll.visibility', 'edit Poll.question', 'view Poll.question',
+                                      'edit Poll.begins', 'view Poll.begins', 'edit Poll.deadline', 'view Poll.deadline', 
+                                      'edit Poll.eligibles', 'view Poll.eligibles', 'edit Poll.display_write_ins', 
+                                      'view Poll.display_write_ins'])
     introduced_global_abilities = frozenset(['create Poll'])
     dyadic_relations = {}
 
@@ -39,7 +42,7 @@ class ChooseNPoll(Poll):
 
     #Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset()
+    introduced_abilities = frozenset(['view ChooseNPoll.n', 'edit ChooseNPoll.n'])
     introduced_global_abilities = frozenset(['create ChooseNPoll'])
     dyadic_relations = {}
 
@@ -56,7 +59,7 @@ class ApproveNPoll(Poll):
 
     #Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset()
+    introduced_abilities = frozenset(['view ApproveNPoll.n', 'edit ApproveNPoll.n'])
     introduced_global_abilities = frozenset(['create ApproveNPoll'])
     dyadic_relations = {}
 
@@ -75,7 +78,8 @@ class Proposition(HtmlDocument):
 
     #Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset()
+    introduced_abilities = frozenset(['edit Proposition.summary_text', 'view Proposition.summary_text', 
+                                      'edit Proposition.is_write_in', 'view Proposition.is_write_in'])
     introduced_global_abilities = frozenset(['create Proposition'])
     dyadic_relations = {}
 
@@ -305,7 +309,12 @@ class ThresholdEApproveNDecision(Decision):
     e_choices = zip( range(0,101), range(0,101) )
     e_decision = models.IntegerField(blank=True, choices=e_choices)
     
-    
+#class ApproveNForm(forms.Form):
+#          ('approve' , 'Approve' ),
+#           ('dissaprove', 'Disapprove'),
+#           ('no vote', 'No Vote'),
+#       )
+#    vote = models.CharField(_('status'), default='Unassigned', max_length=36, choices=value_choices)  
     
     
     
