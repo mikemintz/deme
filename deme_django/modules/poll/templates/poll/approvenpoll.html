@@ -116,12 +116,12 @@ function toggle(){
 
 
 {% if memberships %}
+<form method="post" enctype="multipart/form-data" 
+	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
 <table cellspacing="0" class="list">
 	<tr>
         <th>Propositions:</th>
     </tr>
-<form method="post" enctype="multipart/form-data" 
-	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
     
 	
 	{% for membership in memberships %}
@@ -144,7 +144,7 @@ function toggle(){
     {% endfor %}
 </table>
 <div style="margin-left:40%; margin-bottom:1em;">
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="submit">Submit</a><br><br>
+    <input type="submit" value="Submit" /><br><br>
 </div>
 </form>
 {% else %}

@@ -97,7 +97,8 @@ class ApproveNPollViewer(PollViewer):
         template = loader.get_template('poll/approvenpoll.html')
         return HttpResponse(template.render(self.context))
 
-    #def respondtopropositions(self):
+    def item_respondtopropositions_html(self):
+        return HttpResponse('hello')
      #   if request.method == 'POST':
      #       form = ContactForm(self.request.POST)
      #       if form.is_valid():
