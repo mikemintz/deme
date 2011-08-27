@@ -1,6 +1,6 @@
 from django.template import Context, loader
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpRequest
+from django.http import HttpResponse, HttpRequest, HttpResponseRedirect
 from cms.views import HtmlDocumentViewer, CollectionViewer, ItemViewer
 from cms.models import *
 from django.db.models import Q
@@ -98,16 +98,24 @@ class ApproveNPollViewer(PollViewer):
         return HttpResponse(template.render(self.context))
 
     def item_respondtopropositions_html(self):
-        return HttpResponse('hello')
-     #   if request.method == 'POST':
-     #       form = ContactForm(self.request.POST)
-     #       if form.is_valid():
-     #   response = PropositionResponseChoose.objects.create(poll=self., participant= "", proposition = "", value = "")
-     #  try:
-     #       vote = RecursiveProject.objects.get(pk=self.request.POST.get('vote'))
-     #   except:
-     #       return self.render_error('Invalid URL', "There is something wrong....")
-     #   print(vote)
+        dictionary = self.request.POST
+        for key in dictionary:
+            print key
+            print key
+            print dictionary[key]
+            response = PropositionResponseApprove(poll=self.item, participant= self.cur_agent, proposition = Proposition.objects.get(pk=key), value = dictionary[key])
+            response.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
+        #   if request.method == 'POST':
+        #       form = ContactForm(self.request.POST)
+        #       if form.is_valid():
+        #   response = PropositionResponseChoose.objects.create(poll=self., participant= "", proposition = "", value = "")
+        #  try:
+        #       vote = RecursiveProject.objects.get(pk=self.request.POST.get('vote'))
+        #   except:
+        #       return self.render_error('Invalid URL', "There is something wrong....")
+        #   print(vote)
         
 class PropositionViewer(HtmlDocumentViewer):
     accepted_item_type = Proposition

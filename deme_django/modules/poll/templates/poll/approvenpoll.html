@@ -128,7 +128,7 @@ function toggle(){
     <tr class="{% cycle 'even' 'odd' %} top">
            <td> <a href="{{ membership.item.get_absolute_url }}">{% viewable_name membership.item %}</a> </td>
 			<td>{{membership.summary_text}}</td>
-        	<td><select name="vote">
+        	<td><select name="{{ membership.item.pk }}">
 	        <option value="no vote">Not Voted</option>
 			<option value="approve">Approve</option>
 			<option value="disapprove">Disapprove</option>
