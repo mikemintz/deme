@@ -110,6 +110,7 @@ div.container div.implementation{
 <script type="text/javascript">
 	function toggleResponses(pk){
 		var response = "#Responses" + pk;
+		var button = "#hide" + pk;
 		if ($(response).is(":hidden")) {
 			$(response).slideDown("slow");
 			$(button).val(" Hide Responses");
@@ -237,7 +238,7 @@ div.container div.implementation{
 <div id="hiddenDecisionButtons" style="margin: 4px; height 2em; display: none;">
 	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='pluralityapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Plurality Decision</a>
 	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Threshold Decision</a>
-	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New ThresholdE Decision</a>
+	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New ThresholdE Decision</a>
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')">Cancel</a><br><br>
 </div>
 
