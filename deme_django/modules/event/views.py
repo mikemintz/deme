@@ -17,7 +17,6 @@ class EventViewer(HtmlDocumentViewer):
 
     def item_show_html(self):
         self.context['action_title'] = 'Show'
-
         self.context['event'] = self.item
 
 

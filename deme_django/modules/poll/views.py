@@ -94,16 +94,28 @@ class ApproveNPollViewer(PollViewer):
             Responses[agent.item] = PropositionResponseApprove.objects.all().filter(poll=self.item).filter(participant=agent.item)
         self.context['Responses'] = Responses
         self.context['decisions'] = Decision.objects.all().filter(poll=self.item)
+        self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
         template = loader.get_template('poll/approvenpoll.html')
         return HttpResponse(template.render(self.context))
 
     def item_respondtopropositions_html(self):
-        dictionary = self.request.POST
-        for key in dictionary:
-            print key
-            print key
-            print dictionary[key]
-            response = PropositionResponseApprove(poll=self.item, participant= self.cur_agent, proposition = Proposition.objects.get(pk=key), value = dictionary[key])
+        propositions = self.request.POST
+        #verify that the cur agent is in the eligbles
+        
+        #verify that there isn't already an entry
+        if PropositionResponseApprove.objects.all().filter(poll=self.item, participant=self.cur_agent):
+            return self.render_error('Response Already Exists', "You have already responded to this poll")
+        #verify that there are only n or less responses
+        counter=0
+        print self.item.n
+        for response in propositions:    
+            if propositions[response]=="approve" or propositions[response]=="disapprove":
+                counter=counter+1
+                print counter
+                if counter>self.item.n:
+                    return self.render_error('Too many votes', "Approve "+str(self.item.n)+" or fewer propositions.")
+        for response in propositions:
+            response = PropositionResponseApprove(poll=self.item, participant= self.cur_agent, proposition = Proposition.objects.get(pk=response), value = propositions[response])
             response.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
@@ -116,7 +128,19 @@ class ApproveNPollViewer(PollViewer):
         #   except:
         #       return self.render_error('Invalid URL', "There is something wrong....")
         #   print(vote)
-        
+
+    #def item_respondtopropositions_item(self):
+     #   if request.method == 'POST':
+     #       form = ContactForm(self.request.POST)
+     #       if form.is_valid():
+     #   response = PropositionResponseChoose.objects.create(poll=self., participant= "", proposition = "", value = "")
+     #  try:
+     #       vote = RecursiveProject.objects.get(pk=self.request.POST.get('vote'))
+     #   except:
+     #       return self.render_error('Invalid URL', "There is something wrong....")
+     #   print(vote)
+
+
 class PropositionViewer(HtmlDocumentViewer):
     accepted_item_type = Proposition
     viewer_name = 'proposition' 

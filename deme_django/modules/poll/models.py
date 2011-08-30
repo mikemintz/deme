@@ -6,7 +6,7 @@ from django.conf import settings
 from django import forms
 from cms.forms import SelectTimeWidget
 from django.forms.extras.widgets import SelectDateWidget
-
+from django.core.validators import  MaxLengthValidator
 
 __all__ = ['Poll'] 
 
@@ -88,7 +88,7 @@ class Proposition(HtmlDocument):
         verbose_name_plural = _('propositions')
 
     #fields:
-    summary_text = models.TextField(_('summary text'), blank=True)
+    summary_text = models.CharField(_('summary text'), blank=True, max_length=40)
     is_write_in  = FixedBooleanField(_('is write in'), default=False, help_text=_('Select this if you wish to make a write in proposition'))
 
 class WriteInPropositions(Collection):

@@ -20,7 +20,7 @@ div p {
 }
 
 div.Question {
-  float:left;
+
   margin-right: 6em;
 }
 
@@ -36,7 +36,7 @@ div.Deadline p{
 }
 
 div.Instructions p{
-	float:left;
+
 	font-size: 12px;
 }
 
@@ -45,30 +45,100 @@ div.Instructions p{
 }
 
 div.submit_button a.poll {
-	float:left;
 }
 
 div #Results {
-	float:left;
-	background-color: #66FFFF;
+    width: 20%;
+    padding-left: 1em;
+	background-color: #CCF;
 	outline: 2px solid black;
+	float: right;
 }
+
+div.container.propositions div.row.odd span{
+	background-color: #CCF;
+}
+
+div.container.propositions div.row.even span{
+	background-color: #F0F0F0;
+}
+
+div.container div.row.even{
+	background-color: #F0F0F0;
+	height: 3em;
+}
+
+div.container div.row.odd{
+	background-color: #CCF;
+	height: 3em;
+}
+
+
+div.container.propositions a{
+	margin-right: 2em;
+}
+
+div.container span span{
+	float: right;
+	margin-left: 1em;
+}
+
+div.container div.implementation{
+	height: 16em;
+	overflow: hidden;
+	margin: 0em;
+	display: none;
+}
+
 
 
 </style>
 </head>
 <script type="text/javascript">
-function toggle(){
-   var div1 = getElementById("bottom")
-   if (div1.style.display == 'none') {
-       div1.style.display = 'block'
-   } else {
-       div1.style.display = 'none'
-   }
-}
+	function toggleImplementation(pk){
+		var button = "#hide" + pk;
+		var implementation = "#" + pk;
+		if ($(implementation).is(":hidden")) {
+			$(implementation).slideDown("slow");
+			$(button).val(" Hide Details");
+		} else {
+			$(implementation).slideUp("fast");
+			$(button).val("Show Details");
+		}
+	};
+</script>
+<script type="text/javascript">
+	function toggleResponses(pk){
+		var response = "#Responses" + pk;
+		if ($(response).is(":hidden")) {
+			$(response).slideDown("slow");
+			$(button).val(" Hide Responses");
+		} else {
+			$(response).slideUp("fast");
+			$(button).val("Show Responses");
+		}
+	};
+	
+	function toggleButtons(className){
+		var buttons = "#" + className;
+		if ($(buttons).is(":hidden")) {
+			$(buttons).slideDown("slow");
+		} else {
+			$(buttons).slideUp("slow");
+		}
+	};
 </script>
 
-
+<div id='Results'>
+	<p>View Results<p>
+	{% if decisions %}
+		{% for decision in decisions %}
+	 		<p><a href="{{ decision.get_absolute_url }}">{% viewable_name decision %}</a></p>
+		{% endfor %}
+	{% else %}
+		<p>No Results Yet<p>
+	{% endif %}
+</div>
 <div class='Question'> 
 	<p>{{ item.question }}</p>
 	<p id='label'> Question </p>
@@ -80,16 +150,7 @@ function toggle(){
 <div class='Beginning'>
 	<p>Poll started: {{ item.begins }}</p>
 </div>
-<div id='Results'>
-	<p>View Results<p>
-	{% if decisions %}
-		{% for decision in decisions %}
-	 		<p><a href="{{ decision.get_absolute_url }}">{% viewable_name decision %}</a></p>
-		{% endfor %}
-	{% else %}
-		<p>No Results Yet<p>
-	{% endif %}
-</div>
+
 <br />
 <br />
 <div class='Instructions'>
@@ -118,34 +179,27 @@ function toggle(){
 {% if memberships %}
 <form method="post" enctype="multipart/form-data" 
 	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
-<table cellspacing="0" class="list">
-	<tr>
-        <th>Propositions:</th>
-    </tr>
+<div class="container propositions" id="Propcontainer">
     
 	
-	{% for membership in memberships %}
-    <tr class="{% cycle 'even' 'odd' %} top">
-           <td> <a href="{{ membership.item.get_absolute_url }}">{% viewable_name membership.item %}</a> </td>
-			<td>{{membership.summary_text}}</td>
-        	<td><select name="{{ membership.item.pk }}">
+	{% for membership in propositions %}
+    <div class="{% cycle 'even' 'odd' %} row " >
+           <span class="row"> <a style="width=100px; overflow:hidden;"href="{{ membership.get_absolute_url }}">{% viewable_name membership %}</a>
+			Summary: {{membership.summary_text}}
+			<span><select name="{{ membership.pk }}">
 	        <option value="no vote">Not Voted</option>
 			<option value="approve">Approve</option>
 			<option value="disapprove">Disapprove</option>
-			</select></td>
-			<td><input type="button" value="Hide Details" onclick="toggle()" /></td>
-			<td><input type="button" value="Comment"></td></tr>
-    <tr>
-	<td id="bottom">This is a test. I'm going to write a lot and it's going to screw stuff up so let's see if that's true. Oh
-		well hot damn it goes to a new line so it looks kinda like it works. This is very very very exciting. Let's see how
-		far we can go!</td>
-		{# Set a limit 12 lines or use a scroll bar #}
-	</tr>
+			</select>
+			<input type="button" value="Show Details" id="hide{{ membership.pk }}" onclick="toggleImplementation('{{ membership.pk }}')" />
+			<input type="button" value="Comment"></span></span></div>
+    <div class="implementation"id="{{ membership.pk }}">
+	<a href="{{ membership.get_absolute_url }}">View as an item</a>{{membership.body|safe}} 
+	</div>
     {% endfor %}
-</table>
 <div style="margin-left:40%; margin-bottom:1em;">
     <input type="submit" value="Submit" /><br><br>
-</div>
+</div></div>
 </form>
 {% else %}
     No Items In This Collection
@@ -153,54 +207,71 @@ function toggle(){
 
 {# We need to figure out where all the buttons go. So "Make new write in" cannot happen if you are admin and the poll hasn't started #}
 
-<div class="submit_button" style="margin-left:3em;">
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" >View Write-ins</a>
-</div>
 
-<div class="submit_button">
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" >Make New Write-in</a>
-</div>
 
-<div class="submit_button">
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" >Make New Proposition</a>
-</div>
-
-<div class="submit_button" style="margin-left:5em;">
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" >Make New Decision</a>
-</div>
+{# href="{% url item_url viewer="pluralityapprovendecision",action="new" %}?populate_poll=item.pk&amp;redirect={{ full_path|urlencode }}" #}
 
 
 {% ifagentcan 'modify_membership' item %}
-<div>
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a><br><br>
+
+<div class="submit_button">
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Add a Proposition</a>
 </div>
+
+<div class="submit_button" id="NewDecision" style="margin-left:5em;">
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')">Make New Decision</a>
+</div>
+<br />
+<br />
+{# NEED TO MAKE THIS IFAGENTCAN CREATE PROPOSITION AND MODIFY MEMBERSHIP(WHICH IT ALREADY IS CHECKING) #}
+<div id="hiddenPropositionButtons" style="margin: 4px; height 2em; display:none;">
+	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Proposition</a>
+	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a>
+	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="togglePropButtons()">Cancel</a><br><br>
+</div>
+
+	 
 {% newmemberdialog %}
 {% endifagentcan %}
+{# NEED TO MAKE THIS IFAGENT CAN CREATE DECISION #}
+<div id="hiddenDecisionButtons" style="margin: 4px; height 2em; display: none;">
+	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='pluralityapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Plurality Decision</a>
+	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Threshold Decision</a>
+	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New ThresholdE Decision</a>
+	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleDecisions()">Cancel</a><br><br>
+</div>
 
 
-<table cellspacing="0" class="list">
-	<tr>
-        <th>Name</th>
-    </tr>
-    	{% for key,value in Responses.items %}
-    		<tr class="{% cycle 'even' 'odd' %} top">   
-			<td> <a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+<br />
+<br />
+<p>Responses:</p>
+<div class="container responses" id="Propcontainer">
+	{% for key,value in Responses.items %}
+	<div class="{% cycle 'even' 'odd' %} row " >
+	<span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
 			{% ifnotequal item.visibility 'closed' %}
-			     {% if value %} has responded </td></tr>
-					{% ifequal item.visibility 'responses visible' %} 
-					    {% for response in value %} 
-		    				<tr><td><a href="{{ response.proposition.get_absolute_url }}"> 
-							{% viewable_name response.proposition %}</a>: {{ response.value }}</td></tr>
+			     {% if value %} has responded 
+					{% ifequal item.visibility 'responses visible' %} </span>
+						<input type="button" style="float:right;" 
+							value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" /></div>
+						<div id="Responses{{ key.pk }}" style="display: none">
+					    {% for response in value %}
+								<p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;"> 
+								{% viewable_name response.proposition %}</a>: {{ response.value }}</p>
 						{% endfor %}
+						</div>
+					{% else %}
+						</span></div>
 					{% endifequal %}
 				{% else %}
-		 			has not responded </td></tr>
+		 			has not responded </span></div>
 				{% endif %} 
 			{% else %}
-				</td></tr>
+			</span></div>
 			{% endifnotequal %}
  		{% endfor %}
-</table>
+</div>
+
 
 
 

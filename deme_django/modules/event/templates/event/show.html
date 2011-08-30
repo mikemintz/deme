@@ -54,6 +54,17 @@ div.location {
 
 <body>
 
+	<script>
+	function googleSectionalElementInit() {
+	  new google.translate.SectionalElement({
+	    sectionalNodeClassName: 'goog-trans-section',
+	    controlNodeClassName: 'goog-trans-control',
+	    background: '#f4fa58'
+	  }, 'google_sectional_element');
+	}
+	</script>
+	<script src="//translate.google.com/translate_a/element.js?cb=googleSectionalElementInit&ug=section&hl=en"></script>
+
 {% ifequal event.start_date event.end_date %}
 <div class="date" id="Start_Date">
  {% ifagentcan 'view Event.start_date' event %}	

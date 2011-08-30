@@ -1,17 +1,91 @@
 {% extends layout %}
 {% load item_tags %}
 {% block content %}
+<style>
+div {
+ margin-right: 5px;
+}
 
-<p>Due: {{item.due_time}} {{item.due_date}} </p>
-<p>Title:  {{item.name}}</p>
-<p>Author: {{item.creator}}
-<p>Priority:  {{item.priority}}</p>
-<p>Status: {{item.status}}</p>
-<p>Est. Time: {{item.length}}</p>
-<p>Repeating: {{item.is_repeating}} </p>
-<p>Handler: {{item.task_handler.name}}</p>
-<p>Start Date: {{item.beggining_date}}</p>
-<p>Description: {{ item.body }} </p>
+div p{
+  font-size: 16px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+#label {
+  font-size: 12px;
+  color: blue;
+  margin: 0;
+}
+
+div.status {
+	float: left;
+}
+
+div.due p{
+  font-size: 180%;
+  margin-left: 50%;
+  color: red;
+}
+
+#repeat{
+   font-size: 12px;
+   color: black;
+}
+
+div.due #label{
+  margin-left: 50%;
+}
+
+div.start {
+	margin-left: 0;
+}
+
+#No_Permission {
+	font-size: 12px;
+}
+</style>
+
+
+<div class="status">
+	{# ifagentcan 'view RecursiveProject.status' item #}
+	  <p>{{ item.status }}
+	  {% ifequal item.status "Assigned" %} to {{ item.RecursiveProject_handler.name }} {% endifequal %} 
+      {% ifequal item.status "Unassigned" %} <button><span>Assign</span></button> {% endifequal %}
+      </p> 
+   {# else #}
+     
+   {# endifagentcan #}
+	  <p id="label">Status</p>
+</div>
+<div class="due">
+	<p>{{ item.due_date }} at {{ item.due_time }} </p>
+	<p id="label">Due Date </p>
+		<form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="setstatustocompleted",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+        <input type="hidden" name="item" value="{{ item.pk }}" /><button type="submit" style= "margin-left: 4em;"><span>Completed</span></button></form>
+	{% ifnotequal item.repeat "Never" %}<p id="repeat">This event repeats: {{ item.repeat }}</p>{% endifnotequal %}
+</div>
+<div class="author">
+	<p>{{ item.creator }} </p>
+	<p id="label">Author </p>
+</div>
+<div class="priority">
+	<p>{% ifequal item.priority "Other" %} {% if item.priority_text %} {{ item.priority_text }} {% else %} {{ item.priority }} {% endif %}  {% else %} {{ item.priority }} {% endifequal %} </p> 
+	<p id="label">Priority </p>
+</div>
+
+<div class="duration">
+	<p>{{ item.length }}</p> 
+	<p id="label">Estimated Time </p>
+</div>
+
+
+<div class="start">{{ item.beginning_date }}</p> 
+	<p id="label">Start Date</p>
+</div>
+<div class="description"><p>{{ item.body|safe }} </p> 
+	<p id="label">Description</p>
+</div>
 
 {% if is_dependent %}
     {% for membership in is_dependent %}
@@ -54,19 +128,40 @@
 <table cellspacing="0" class="list">
     <tr>
         <th>Name</th>
+        <th>Due</th>
+		<th />
+        <th>Priority</th>
+        <th>Status</th>
         <th>Membership</th>
     </tr>
-    {% for membership in memberships %}
+    {% for subproject in child_projects %}
     <tr class="{% cycle 'even' 'odd' %}">
         <td>
-            <a href="{{ membership.item.get_absolute_url }}">{% viewable_name membership.item %}</a>
+            <a href="{{ subproject.get_absolute_url }}">{% viewable_name subproject %}</a>
         </td>
+		<td>
+			{{ subproject.due_date }} at {{ subproject.due_time }}
+		</td>
+		<td> 
+			<form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="setstatustocompleted",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                <input type="hidden" name="item" value="{{ subproject.pk }}" />
+                <button type="submit"><span>Completed</span></button>
+		</td>
+		<td>
+			{% ifequal subproject.priority "Other" %} {% if subproject.priority_text %} {{ subproject.priority_text }} {% else %} {{ subproject.priority }} {% endif %}  {% else %} {{ subproject.priority }} {% endifequal %}
+		</td>
+		<td>
+			
+			{{ subproject.status}} {% ifequal subproject.status "Assigned" %} to {{ subproject.RecursiveProject_handler.name }} {% endifequal %} {% ifequal subproject.status "Unassigned" %} <button><span>Assign</span></button> {% endifequal %}
+			
+		</td>
+	    
         <td>
-            <a href="{{ membership.get_absolute_url }}">{{ membership.pk }}</a>
-            {% ifagentcan 'modify_membership' item %}
-            <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
-                <input type="hidden" name="item" value="{{ membership.item.pk }}" />
-                <button type="submit"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove from collection</span></button>
+            <a href="{{ subproject.get_absolute_url }}">{{ subproject.pk }}</a>
+            {% ifagentcan 'modify_membership' subproject %}
+            <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=subproject.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                <input type="hidden" name="item" value="{{ subproject.pk }}" />
+                <button type="submit"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove</span></button>
             </form>
             {% endifagentcan %}
         </td>
@@ -74,31 +169,21 @@
     {% endfor %}
 </table>
 {% else %}
-    No Items In This Collection
+    No Subtasks in this Project
 {% endif %}
+
+
 
 {% ifagentcan 'modify_membership' item %}
 <div>
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;"><img src="{{ "new"|icon_url:16 }}" />Add an item to collection</a><br><br>
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;"><img src="{{ "new"|icon_url:16 }}" />Add task</a><br><br>
 </div>
 {% newmemberdialog %}
 {% endifagentcan %}
 
-{% if cur_agent_in_collection %}
-{% ifagentcan 'remove_self' item %}
-<form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
-    <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
-    <button type="submit" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove my membership in {% viewable_name item %}</span></button>
-</form>
-{% endifagentcan %}
-{% else %}
-{% ifagentcan 'add_self' item %}
-<form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="addmember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
-    <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
-    <button type="submit" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all"><img src="{{ "new"|icon_url:16 }}" /> <span>Become a member of {% viewable_name item %}</span></button>
-</form>
-{% endifagentcan %}
-{% endif %}
+
+
+
 
 {% endblock content %}
 

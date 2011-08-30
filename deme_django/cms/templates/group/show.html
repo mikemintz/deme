@@ -4,10 +4,15 @@
 
 {% subclassfields %}
 
-<div style="font-size: larger; margin: 10px 0 10px 0;">Roster</div>
-<div style="padding: 10px; border: 2px solid #aaa;">
+<div style="font-size: larger; margin-left: 55% ">Members</div>
+<div style = "float: left; margin-top: 2em;">
+	<p>{{ Group.description }}</p>
+	<p> Group Description </p>
+</div>
+<div style="padding: 10px; border: 2px solid #aaa; max-width:50%; margin-left: 55%">
     {% embed 'collection' item %}
 </div>
+<div style="font-size: larger; margin-left: 58% "><a>All</a><a style="margin-left:1em">Individuals only</a> <a style="margin-left:1em;">Subgroups only</a></div>
 
 {% if folio %}
 <div style="font-size: larger; margin: 10px 0 10px 0;"><a href="{{ folio.get_absolute_url }}">Folio for this group</a></div>
