@@ -8,6 +8,7 @@ from cms.forms import SelectTimeWidget
 from django.forms.extras.widgets import SelectDateWidget
 
 
+
 __all__ = ['RecursiveProject', 'RecursiveProjectDependency'] 
 
 class RecursiveProject(Collection, HtmlDocument):
