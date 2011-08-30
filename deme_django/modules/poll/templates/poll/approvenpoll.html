@@ -227,7 +227,7 @@ div.container div.implementation{
 <div id="hiddenPropositionButtons" style="margin: 4px; height 2em; display:none;">
 	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Proposition</a>
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a>
-	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="togglePropButtons()">Cancel</a><br><br>
+	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Cancel</a><br><br>
 </div>
 
 	 
@@ -238,7 +238,7 @@ div.container div.implementation{
 	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='pluralityapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Plurality Decision</a>
 	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Threshold Decision</a>
 	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New ThresholdE Decision</a>
-	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleDecisions()">Cancel</a><br><br>
+	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')">Cancel</a><br><br>
 </div>
 
 
