@@ -1,7 +1,6 @@
 {% extends layout %}
 {% load item_tags %}
 {% block content %}
-<head>
 <style>
 div {
  margin-right: 5px;
@@ -20,23 +19,19 @@ div p {
 }
 
 div.Question {
-
   margin-right: 6em;
 }
 
 div.Beginning p{
-
   font-size: 10px;
 }
 
 div.Deadline p{
-	
 	font-size: 20px;
 	color: red;
 }
 
 div.Instructions p{
-
 	font-size: 12px;
 }
 
@@ -90,10 +85,8 @@ div.container div.implementation{
 	display: none;
 }
 
-
-
 </style>
-</head>
+
 <script type="text/javascript">
 	function toggleImplementation(pk){
 		var button = "#hide" + pk;
@@ -109,7 +102,7 @@ div.container div.implementation{
 </script>
 <script type="text/javascript">
 	function toggleResponses(pk){
-		var response = "#Responses" + pk;
+		var response = "#responses" + pk;
 		var button = "#hide" + pk;
 		if ($(response).is(":hidden")) {
 			$(response).slideDown("slow");
@@ -173,29 +166,28 @@ div.container div.implementation{
         dialogBox.dialog('open');
     }   
 </script>
-{% subclassfields %}
 
 
 
-{% if memberships %}
+{% if propositions %}
 <form method="post" enctype="multipart/form-data" 
 	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
 <div class="container propositions" id="Propcontainer">
     
 	
-	{% for membership in propositions %}
+	{% for proposition in propositions %}
     <div class="{% cycle 'even' 'odd' %} row " >
-           <span class="row"> <a style="width=100px; overflow:hidden;"href="{{ membership.get_absolute_url }}">{% viewable_name membership %}</a>
-			Summary: {{membership.summary_text}}
-			<span><select name="{{ membership.pk }}">
+           <span class="row"> <a style="width=100px; overflow:hidden;" href="{{ proposition.get_absolute_url }}">{% viewable_name proposition %}</a>
+			Summary: {{proposition.summary_text}}
+			<span><select name="{{ proposition.pk }}">
 	        <option value="no vote">Not Voted</option>
 			<option value="approve">Approve</option>
 			<option value="disapprove">Disapprove</option>
 			</select>
-			<input type="button" value="Show Details" id="hide{{ membership.pk }}" onclick="toggleImplementation('{{ membership.pk }}')" />
+			<input type="button" value="Show Details" id="hide{{ proposition.pk }}" onclick="toggleImplementation('{{ proposition.pk }}')" />
 			<input type="button" value="Comment"></span></span></div>
-    <div class="implementation"id="{{ membership.pk }}">
-	<a href="{{ membership.get_absolute_url }}">View as an item</a>{{membership.body|safe}} 
+    <div class="implementation"id="{{ proposition.pk }}">
+	<a href="{{ proposition.get_absolute_url }}">View as an item</a>{{proposition.body|safe}} 
 	</div>
     {% endfor %}
 <div style="margin-left:40%; margin-bottom:1em;">
@@ -203,7 +195,7 @@ div.container div.implementation{
 </div></div>
 </form>
 {% else %}
-    No Items In This Collection
+    No propositions in this poll
 {% endif %}
 
 {# We need to figure out where all the buttons go. So "Make new write in" cannot happen if you are admin and the poll hasn't started #}
@@ -247,30 +239,37 @@ div.container div.implementation{
 <br />
 <p>Responses:</p>
 <div class="container responses" id="Propcontainer">
-	{% for key,value in Responses.items %}
-	<div class="{% cycle 'even' 'odd' %} row " >
-	<span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
-			{% ifnotequal item.visibility 'closed' %}
-			     {% if value %} has responded 
-					{% ifequal item.visibility 'responses visible' %} </span>
-						<input type="button" style="float:right;" 
-							value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" /></div>
-						<div id="Responses{{ key.pk }}" style="display: none">
-					    {% for response in value %}
-								<p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;"> 
-								{% viewable_name response.proposition %}</a>: {{ response.value }}</p>
-						{% endfor %}
-						</div>
-					{% else %}
-						</span></div>
-					{% endifequal %}
-				{% else %}
-		 			has not responded </span></div>
-				{% endif %} 
-			{% else %}
-			</span></div>
-			{% endifnotequal %}
- 		{% endfor %}
+    {% if can_view_response_names_and_values %}
+        {% for key,value in responses.items %}
+        <div class="{% cycle 'even' 'odd' %} row " >
+        <span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+        {% if value %} has responded {% else %} has not responded {% endif %}
+        </span></div>
+        {% endfor %}
+    {% else %}{% if can_view_response_names %}
+        {% for key,value in responses.items %}
+        <div class="{% cycle 'even' 'odd' %} row " >
+        <span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+        {% if value %}
+            has responded
+            {% ifequal item.visibility 'responses visible' %} </span>
+                <input type="button" style="float:right;"
+                    value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" /></div>
+                <div id="responses{{ key.pk }}" style="display: none">
+                {% for response in value %}
+                        <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
+                        {% viewable_name response.proposition %}</a>: {{ response.value }}</p>
+                {% endfor %}
+                </div>
+            {% endifequal %}
+        {% else %}
+            has not responded
+        {% endif %}
+        </span></div>
+        {% endfor %}
+    {% else %}
+        Responses are not visible
+    {% endif %}{% endif %}
 </div>
 
 
