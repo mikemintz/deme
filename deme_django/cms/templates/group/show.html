@@ -2,12 +2,25 @@
 {% load item_tags %}
 {% block content %}
 
-{% subclassfields %}
 
 <div style="font-size: larger; margin-left: 55% ">Members</div>
-<div style = "float: left; margin-top: 2em;">
-	<p>{{ Group.description }}</p>
-	<p> Group Description </p>
+
+<div style = "float: left; width: 50%; margin-bottom;">
+	{% if item.image %}
+	{% ifagentcan 'view Group.image' item %}
+	{% ifagentcan 'view FileDocument.datafile' item.image %}
+	<img src="{{ item.image.datafile.url }}" style="max-width: 200px; max-height: 200px;" />
+	{% endifagentcan %}
+	{% endifagentcan %}
+	{% endif %}
+	<p style="color: blue; margin-top:.5em;"> Group Image </p>
+
+	{% ifagentcan 'view Item.description' item %}
+	<p style="font-size: 15px; margin-bottom:.5em;">{{ item.description }}</p>
+	{% else %}
+	<p style="font-size: 15px; margin-bottom:.5em;">YOU CANNOT VIEW THIS FIELD</p>
+	{% endifagentcan %}
+	<p style="color: blue; margin-top:.5em;"> Group Description </p>
 </div>
 <div style="padding: 10px; border: 2px solid #aaa; max-width:50%; margin-left: 55%">
     {% embed 'collection' item %}
