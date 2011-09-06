@@ -48,42 +48,87 @@ div.start {
 
 
 <div class="status">
-	{# ifagentcan 'view RecursiveProject.status' item #}
+	{% ifagentcan 'view RecursiveProject.status' item %}
 	  <p>{{ item.status }}
-	  {% ifequal item.status "Assigned" %} to {{ item.RecursiveProject_handler.name }} {% endifequal %} 
-      {% ifequal item.status "Unassigned" %} <button><span>Assign</span></button> {% endifequal %}
+	  {% ifequal item.status "Assigned"%} {% if item.RecursiveProject_handler %} to {{ item.RecursiveProject_handler.name }} 
+		{% endif %} {% endifequal %} 
       </p> 
-   {# else #}
-     
-   {# endifagentcan #}
+   {% else %}
+     <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
+   {% endifagentcan %}
 	  <p id="label">Status</p>
 </div>
 <div class="due">
-	<p>{{ item.due_date }} at {{ item.due_time }} </p>
+		<p>{% ifagentcan 'view RecursiveProject.due_date' item %}
+			{{ item.due_date }}
+		 {% else %}
+		     <span id="No_Permission">YOU CANNOT VIEW THIS FIELD</span>
+		 {% endifagentcan %}
+		at 
+		 {% ifagentcan 'view RecursiveProject.due_time' item %}
+			{{ item.due_time }} 
+		 {% else %}
+		     <span id="No_Permission">YOU CANNOT VIEW THIS FIELD</span>
+		  {% endifagentcan %}</p>
 	<p id="label">Due Date </p>
+	{% ifagentcan 'edit RecursiveProject.status' item %}
 		<form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="setstatustocompleted",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
         <input type="hidden" name="item" value="{{ item.pk }}" /><button type="submit" style= "margin-left: 4em;"><span>Completed</span></button></form>
-	{% ifnotequal item.repeat "Never" %}<p id="repeat">This event repeats: {{ item.repeat }}</p>{% endifnotequal %}
+   	{% endifagentcan %}
+	{% ifagentcan 'view RecursiveProject.repeat' item %}
+		{% ifnotequal item.repeat "Never" %}
+			<p id="repeat">This event repeats: {{ item.repeat }}</p>
+		{% endifnotequal %}
+	{% endifagentcan %}
 </div>
 <div class="author">
-	<p>{{ item.creator }} </p>
+	{% ifagentcan 'view Item.creator' item %} 
+		<p>{{ item.creator }} 
+	{% else %}
+     	<p id="No_Permission">YOU CANNOT VIEW THIS FIELD
+	{% endifagentcan %}</p>
 	<p id="label">Author </p>
 </div>
 <div class="priority">
-	<p>{% ifequal item.priority "Other" %} {% if item.priority_text %} {{ item.priority_text }} {% else %} {{ item.priority }} {% endif %}  {% else %} {{ item.priority }} {% endifequal %} </p> 
+	{% ifagentcan 'view RecursiveProject.priority_text' item %} 
+		<p>{% ifequal item.priority "Other" %} 
+			{% if item.priority_text %} 
+				{{ item.priority_text }} 
+			{% else %} 
+				{{ item.priority }} 
+			{% endif %}  
+		{% else %}
+	 		{{ item.priority }} {% endifequal %} </p> 
+	{% else %}
+	    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
+    {% endifagentcan %}
 	<p id="label">Priority </p>
 </div>
 
 <div class="duration">
+	{% ifagentcan 'view RecursiveProject.length' item %} 
 	<p>{{ item.length }}</p> 
+	{% else %}
+	    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
+    {% endifagentcan %}
 	<p id="label">Estimated Time </p>
 </div>
 
 
-<div class="start">{{ item.beginning_date }}</p> 
+<div class="start">
+	{% ifagentcan 'view RecursiveProject.length' item %} 
+	<p>{{ item.beginning_date }}</p> 
+	{% else %}
+	    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
+    {% endifagentcan %}
 	<p id="label">Start Date</p>
 </div>
-<div class="description"><p>{{ item.body|safe }} </p> 
+<div class="description">
+	{% ifagentcan 'view TextDocument.body' item %}
+	{{ item.body|safe }}
+	{% else %}
+	    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
+    {% endifagentcan %}
 	<p id="label">Description</p>
 </div>
 
@@ -137,27 +182,54 @@ div.start {
     {% for subproject in child_projects %}
     <tr class="{% cycle 'even' 'odd' %}">
         <td>
-            <a href="{{ subproject.get_absolute_url }}">{% viewable_name subproject %}</a>
+            <a href="{{ subproject.get_absolute_url }}">
+			{% ifagentcan 'view Item.viewable_name' subproject %} 
+				{% viewable_name subproject %} 
+			{% else %} Project {{ subproject.pk }}
+			{% endifagentcan %}</a>
         </td>
 		<td>
-			{{ subproject.due_date }} at {{ subproject.due_time }}
+			{% ifagentcan 'view RecursiveProject.due_date' subproject %}
+				{{ subproject.due_date }} at 
+			{% else %}
+				Cannot View Date
+			{% endifagentcan %}
+			{% ifagentcan 'view RecursiveProject.due_time' subproject %}
+			 	{{ subproject.due_time }}
+			{% else %}
+			 	Cannot View Time
+			{% endifagentcan %}
 		</td>
 		<td> 
+			{% ifagentcan 'edit RecursiveProject.status' item %}
 			<form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="setstatustocompleted",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
                 <input type="hidden" name="item" value="{{ subproject.pk }}" />
                 <button type="submit"><span>Completed</span></button>
+			{% endifagentcan %}
 		</td>
 		<td>
-			{% ifequal subproject.priority "Other" %} {% if subproject.priority_text %} {{ subproject.priority_text }} {% else %} {{ subproject.priority }} {% endif %}  {% else %} {{ subproject.priority }} {% endifequal %}
+		{% ifagentcan 'view RecursiveProject.priority' subproject %}
+			{% ifequal subproject.priority "Other" %} 
+				{% if subproject.priority_text %} 
+					{{ subproject.priority_text }} 
+				{% else %} 
+					{{ subproject.priority }} 
+				{% endif %}  
+			{% else %} 
+				{{ subproject.priority }}
+			{% endifequal %}
+		{% endifagentcan %}
 		</td>
 		<td>
-			
-			{{ subproject.status}} {% ifequal subproject.status "Assigned" %} to {{ subproject.RecursiveProject_handler.name }} {% endifequal %} {% ifequal subproject.status "Unassigned" %} <button><span>Assign</span></button> {% endifequal %}
-			
+			{% ifagentcan 'view RecursiveProject.status' subproject %}
+				{{ subproject.status}} 
+				{% ifequal subproject.status "Assigned" %} 
+					to {{ subproject.RecursiveProject_handler.name }} 
+				{% endifequal %} 
+			{% endifagentcan %}
 		</td>
 	    
         <td>
-            <a href="{{ subproject.get_absolute_url }}">{{ subproject.pk }}</a>
             {% ifagentcan 'modify_membership' subproject %}
             <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=subproject.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
                 <input type="hidden" name="item" value="{{ subproject.pk }}" />
