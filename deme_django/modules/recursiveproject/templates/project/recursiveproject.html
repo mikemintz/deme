@@ -90,15 +90,18 @@ div.start {
 	<p id="label">Author </p>
 </div>
 <div class="priority">
-	{% ifagentcan 'view RecursiveProject.priority_text' item %} 
-		<p>{% ifequal item.priority "Other" %} 
+	{% ifagentcan 'view RecursiveProject.priority' item %} 
+		<p>
+		{% ifequal item.priority "Other" %} 
 			{% if item.priority_text %} 
 				{{ item.priority_text }} 
 			{% else %} 
 				{{ item.priority }} 
 			{% endif %}  
 		{% else %}
-	 		{{ item.priority }} {% endifequal %} </p> 
+	 		{{ item.priority }} 
+		{% endifequal %} 
+		</p> 
 	{% else %}
 	    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
     {% endifagentcan %}
