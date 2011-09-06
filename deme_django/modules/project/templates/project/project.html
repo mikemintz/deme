@@ -1,0 +1,264 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+<style>
+div {
+ margin-right: 5px;
+}
+
+div p{
+  font-size: 16px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+#label {
+  font-size: 12px;
+  color: blue;
+  margin: 0;
+}
+
+div.status {
+	float: left;
+}
+
+div.due p{
+  font-size: 180%;
+  margin-left: 50%;
+  color: red;
+}
+
+#repeat{
+   font-size: 12px;
+   color: black;
+}
+
+div.due #label{
+  margin-left: 50%;
+}
+
+div.start {
+	margin-left: 0;
+}
+
+#No_Permission {
+	font-size: 12px;
+}
+</style>
+
+
+<div class="status">
+	{% ifagentcan 'view Project.status' item %}
+	  <p>{{ item.status }}
+	  {% ifequal item.status "Assigned"%} {% if item.Project_handler %} to {{ item.Project_handler.name }} 
+		{% endif %} {% endifequal %} 
+      </p> 
+   {% else %}
+     <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
+   {% endifagentcan %}
+	  <p id="label">Status</p>
+</div>
+<div class="due">
+		<p>{% ifagentcan 'view Project.due_date' item %}
+			{{ item.due_date }}
+		 {% else %}
+		     <span id="No_Permission">YOU CANNOT VIEW THIS FIELD</span>
+		 {% endifagentcan %}
+		at 
+		 {% ifagentcan 'view Project.due_time' item %}
+			{{ item.due_time }} 
+		 {% else %}
+		     <span id="No_Permission">YOU CANNOT VIEW THIS FIELD</span>
+		  {% endifagentcan %}</p>
+	<p id="label">Due Date </p>
+	{% ifagentcan 'edit Project.status' item %}
+		<form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="setstatustocompleted",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+        <input type="hidden" name="item" value="{{ item.pk }}" /><button type="submit" style= "margin-left: 4em;"><span>Completed</span></button></form>
+   	{% endifagentcan %}
+	{% ifagentcan 'view Project.repeat' item %}
+		{% ifnotequal item.repeat "Never" %}
+			<p id="repeat">This event repeats: {{ item.repeat }}</p>
+		{% endifnotequal %}
+	{% endifagentcan %}
+</div>
+<div class="author">
+	{% ifagentcan 'view Item.creator' item %} 
+		<p>{{ item.creator }} 
+	{% else %}
+     	<p id="No_Permission">YOU CANNOT VIEW THIS FIELD
+	{% endifagentcan %}</p>
+	<p id="label">Author </p>
+</div>
+<div class="priority">
+	{% ifagentcan 'view Project.priority' item %} 
+		<p>
+		{% ifequal item.priority "Other" %} 
+			{% if item.priority_text %} 
+				{{ item.priority_text }} 
+			{% else %} 
+				{{ item.priority }} 
+			{% endif %}  
+		{% else %}
+	 		{{ item.priority }} 
+		{% endifequal %} 
+		</p> 
+	{% else %}
+	    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
+    {% endifagentcan %}
+	<p id="label">Priority </p>
+</div>
+
+<div class="duration">
+	{% ifagentcan 'view Project.length' item %} 
+	<p>{{ item.length }}</p> 
+	{% else %}
+	    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
+    {% endifagentcan %}
+	<p id="label">Estimated Time </p>
+</div>
+
+
+<div class="start">
+	{% ifagentcan 'view Project.length' item %} 
+	<p>{{ item.beginning_date }}</p> 
+	{% else %}
+	    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
+    {% endifagentcan %}
+	<p id="label">Start Date</p>
+</div>
+<div class="description">
+	{% ifagentcan 'view TextDocument.body' item %}
+	{{ item.body|safe }}
+	{% else %}
+	    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
+    {% endifagentcan %}
+	<p id="label">Description</p>
+</div>
+
+{% if is_dependent %}
+    {% for membership in is_dependent %}
+        <p> Required for this task: <a href="{{ membership.required_Project.get_absolute_url }}">{% viewable_name membership.required_Project %}</a></p>
+    {% endfor %}
+{% else %}
+    <p>There are no required tasks for this task</p>
+{% endif %}
+
+{% if is_required %}
+    {% for membership in is_required %}
+        <p> Task(s) depending on this task:<a href="{{ membership.dependent_Project.get_absolute_url }}">{% viewable_name membership.dependent_Project %}</a> </p>
+    {% endfor %}
+{% else %}
+    <p>There are no tasks depending on this task</p>
+{% endif %}
+
+
+
+
+
+<script type="text/javascript">
+    function openDialog(name)
+    {
+        var dialogBox = $("#" + name);
+        dialogBox.dialog({
+            autoOpen: false,
+            bgiframe: true,
+            modal: true,
+            close: function(event, ui) {dialogBox.dialog('destroy')}
+        });
+        dialogBox.dialog('open');
+    }   
+</script>
+{% subclassfields %}
+
+
+
+{% if memberships %}
+<table cellspacing="0" class="list">
+    <tr>
+        <th>Name</th>
+        <th>Due</th>
+		<th />
+        <th>Priority</th>
+        <th>Status</th>
+        <th>Membership</th>
+    </tr>
+    {% for subproject in child_projects %}
+    <tr class="{% cycle 'even' 'odd' %}">
+        <td>
+            <a href="{{ subproject.get_absolute_url }}">
+			{% ifagentcan 'view Item.viewable_name' subproject %} 
+				{% viewable_name subproject %} 
+			{% else %} Project {{ subproject.pk }}
+			{% endifagentcan %}</a>
+        </td>
+		<td>
+			{% ifagentcan 'view Project.due_date' subproject %}
+				{{ subproject.due_date }} at 
+			{% else %}
+				Cannot View Date
+			{% endifagentcan %}
+			{% ifagentcan 'view Project.due_time' subproject %}
+			 	{{ subproject.due_time }}
+			{% else %}
+			 	Cannot View Time
+			{% endifagentcan %}
+		</td>
+		<td> 
+			{% ifagentcan 'edit Project.status' item %}
+			<form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="setstatustocompleted",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                <input type="hidden" name="item" value="{{ subproject.pk }}" />
+                <button type="submit"><span>Completed</span></button>
+			{% endifagentcan %}
+		</td>
+		<td>
+		{% ifagentcan 'view Project.priority' subproject %}
+			{% ifequal subproject.priority "Other" %} 
+				{% if subproject.priority_text %} 
+					{{ subproject.priority_text }} 
+				{% else %} 
+					{{ subproject.priority }} 
+				{% endif %}  
+			{% else %} 
+				{{ subproject.priority }}
+			{% endifequal %}
+		{% endifagentcan %}
+		</td>
+		<td>
+			{% ifagentcan 'view Project.status' subproject %}
+				{{ subproject.status}} 
+				{% ifequal subproject.status "Assigned" %} 
+					to {{ subproject.Project_handler.name }} 
+				{% endifequal %} 
+			{% endifagentcan %}
+		</td>
+	    
+        <td>
+            {% ifagentcan 'modify_membership' subproject %}
+            <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=subproject.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+                <input type="hidden" name="item" value="{{ subproject.pk }}" />
+                <button type="submit"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove</span></button>
+            </form>
+            {% endifagentcan %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+    No Subtasks in this Project
+{% endif %}
+
+
+
+{% ifagentcan 'modify_membership' item %}
+<div>
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;"><img src="{{ "new"|icon_url:16 }}" />Add task</a><br><br>
+</div>
+{% newmemberdialog %}
+{% endifagentcan %}
+
+
+
+
+
+{% endblock content %}
+

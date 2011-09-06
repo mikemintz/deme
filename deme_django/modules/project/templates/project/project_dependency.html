@@ -1,0 +1,11 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+<p>Title:  {{item.name}}</p>
+<p>Required {{item.required_Project}} </p>
+<p>Dependent {{item.dependent_Project}}</p>
+
+
+
+{% endblock content %}
