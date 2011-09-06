@@ -1367,12 +1367,15 @@ class Group(Collection):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset()
+    introduced_abilities = frozenset(['view Group.image', 'edit Group.image'])
     introduced_global_abilities = frozenset(['create Group'])
     dyadic_relations = {}
     class Meta:
         verbose_name = _('group')
         verbose_name_plural = _('groups')
+
+    # Fields
+    image = FixedForeignKey('ImageDocument', related_name='groups_with_image', null=True, blank=True, default=None, verbose_name=_('image'))
 
     def _after_create(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
         super(Group, self)._after_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
