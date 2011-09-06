@@ -61,11 +61,13 @@ div.container.propositions div.row.even span{
 div.container div.row.even{
 	background-color: #F0F0F0;
 	height: 3em;
+	border: 1px solid gray
 }
 
 div.container div.row.odd{
 	background-color: #CCF;
 	height: 3em;
+	border: 1px solid gray
 }
 
 
@@ -95,7 +97,7 @@ div.container div.implementation{
 			$(implementation).slideDown("slow");
 			$(button).val(" Hide Details");
 		} else {
-			$(implementation).slideUp("fast");
+			$(implementation).slideUp("slow");
 			$(button).val("Show Details");
 		}
 	};
@@ -108,7 +110,7 @@ div.container div.implementation{
 			$(response).slideDown("slow");
 			$(button).val(" Hide Responses");
 		} else {
-			$(response).slideUp("fast");
+			$(response).slideUp("slow");
 			$(button).val("Show Responses");
 		}
 	};
@@ -123,32 +125,45 @@ div.container div.implementation{
 	};
 </script>
 
+
 <div id='Results'>
 	<p>View Results<p>
 	{% if decisions %}
 		{% for decision in decisions %}
+			{% ifagentcan 'view Decision.poll' decision %}
 	 		<p><a href="{{ decision.get_absolute_url }}">{% viewable_name decision %}</a></p>
+			{% endifagentcan %}
 		{% endfor %}
 	{% else %}
 		<p>No Results Yet<p>
 	{% endif %}
 </div>
 <div class='Question'> 
+	{% ifagentcan 'view Poll.question' item %}
 	<p>{{ item.question }}</p>
+	{% else %}
+	<p> YOU CANNOT VIEW THIS FIELD </p>
+	{% endifagentcan %}
 	<p id='label'> Question </p>
 </div>
 <div class='Deadline'>
+	{% ifagentcan 'view Poll.deadline' item %}
 	<p>Deadline: {{ item.deadline }}</p>
+	{% endifagentcan %}
 </div>
 
 <div class='Beginning'>
+	{% ifagentcan 'view Poll.begins' item %}
 	<p>Poll started: {{ item.begins }}</p>
+	{% endifagentcan %}
 </div>
 
 <br />
 <br />
 <div class='Instructions'>
-	<p>Approve {{ item.n }} or fewer propositions.</p>
+	{% ifagentcan 'view ApproveNPoll.n' item %}
+	<p style="font-size: 16px;">Approve {{ item.n }} or fewer propositions.</p>
+	{% endifagentcan %}
 <div>
 
 
@@ -164,7 +179,7 @@ div.container div.implementation{
             close: function(event, ui) {dialogBox.dialog('destroy')}
         });
         dialogBox.dialog('open');
-    }   
+    }   =me
 </script>
 
 
@@ -172,101 +187,111 @@ div.container div.implementation{
 {% if propositions %}
 <form method="post" enctype="multipart/form-data" 
 	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
-<div class="container propositions" id="Propcontainer">
+<div class="container propositions" id="Propcontainer" style="width: 78%; margin-left: 0; ">
     
 	
 	{% for proposition in propositions %}
-    <div class="{% cycle 'even' 'odd' %} row " >
-           <span class="row"> <a style="width=100px; overflow:hidden;" href="{{ proposition.get_absolute_url }}">{% viewable_name proposition %}</a>
-			Summary: {{proposition.summary_text}}
-			<span><select name="{{ proposition.pk }}">
-	        <option value="no vote">Not Voted</option>
-			<option value="approve">Approve</option>
-			<option value="disapprove">Disapprove</option>
-			</select>
-			<input type="button" value="Show Details" id="hide{{ proposition.pk }}" onclick="toggleImplementation('{{ proposition.pk }}')" />
-			<input type="button" value="Comment"></span></span></div>
+    <div class="{% cycle 'even' 'odd' %} row ">
+           <div class='description' style="float:left"><span class="row"> <a style="width=100px; overflow:hidden;" href="{{ proposition.get_absolute_url }}?crumb_filter=memberships.collection.{{ item.pk }}">{% viewable_name proposition %}</a><br>
+	 {% ifagentcan 'view Proposition.summary_text' proposition %}{{proposition.summary_text}}{% endifagentcan %}</div>
+			<div style="float: right">
+				{% if cur_agent_in_eligbles %}
+				<select name="{{ proposition.pk }}">
+	        	<option value="no vote">Not Voted</option>
+				<option value="approve">Approve</option>
+				<option value="disapprove">Disapprove</option>
+				</select> 
+				{% endif %}
+			<input type="button" value="Show Details" id="hide{{ proposition.pk }}" onclick="toggleImplementation('{{ proposition.pk }}')" /></div><div style="clear: both;"></div></span></div>
+			
     <div class="implementation"id="{{ proposition.pk }}">
 	<a href="{{ proposition.get_absolute_url }}">View as an item</a>{{proposition.body|safe}} 
 	</div>
     {% endfor %}
+{% if cur_agent_in_eligbles %}
 <div style="margin-left:40%; margin-bottom:1em;">
     <input type="submit" value="Submit" /><br><br>
-</div></div>
+</div>
+{% endif %}
+</div>
 </form>
 {% else %}
     No propositions in this poll
 {% endif %}
 
-{# We need to figure out where all the buttons go. So "Make new write in" cannot happen if you are admin and the poll hasn't started #}
-
-
-
-{# href="{% url item_url viewer="pluralityapprovendecision",action="new" %}?populate_poll=item.pk&amp;redirect={{ full_path|urlencode }}" #}
 
 
 {% ifagentcan 'modify_membership' item %}
-
-<div class="submit_button">
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Add a Proposition</a>
+<div class="submit_button">  
+	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Add a Proposition</a>
 </div>
+{% endifagentcan %}
 
+{% if cur_agent_can_make_a_decision %}
 <div class="submit_button" id="NewDecision" style="margin-left:5em;">
     <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')">Make New Decision</a>
 </div>
+{% endif %}
 <br />
 <br />
 {# NEED TO MAKE THIS IFAGENTCAN CREATE PROPOSITION AND MODIFY MEMBERSHIP(WHICH IT ALREADY IS CHECKING) #}
 <div id="hiddenPropositionButtons" style="margin: 4px; height 2em; display:none;">
+	{% ifagentcanglobal 'create Proposition' %}
 	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Proposition</a>
+	{% endifagentcanglobal %}
+	{% ifagentcan 'modify_membership' item %}
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a>
+	{% endifagentcan %}
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Cancel</a><br><br>
 </div>
 
-	 
-{% newmemberdialog %}
-{% endifagentcan %}
-{# NEED TO MAKE THIS IFAGENT CAN CREATE DECISION #}
 <div id="hiddenDecisionButtons" style="margin: 4px; height 2em; display: none;">
-	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='pluralityapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Plurality Decision</a>
+	{% ifagentcanglobal 'create PluralityApproveNDecision' %} 
+	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='pluralityapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Plurality Decision</a>
+	{% endifagentcanglobal %}
+	{% ifagentcanglobal 'create ThresholdApproveNDecision' %}
 	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Threshold Decision</a>
+	{% endifagentcanglobal %}
+	{% ifagentcanglobal 'create ThresholdEApproveNDecision' %}
 	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New ThresholdE Decision</a>
+	{% endifagentcanglobal %}
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')">Cancel</a><br><br>
 </div>
 
 
 <br />
 <br />
-<p>Responses:</p>
-<div class="container responses" id="Propcontainer">
+<p style="font-size:16px;">Responses:</p>
+{# make this a bulleted list with hidden divs #}
+<div class="container responses" id="Propcontainer" style="width: 60%; margin-left: 0;">
     {% if can_view_response_names_and_values %}
         {% for key,value in responses.items %}
-        <div class="{% cycle 'even' 'odd' %} row " >
-        <span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
-        {% if value %} has responded {% else %} has not responded {% endif %}
-        </span></div>
-        {% endfor %}
-    {% else %}{% if can_view_response_names %}
-        {% for key,value in responses.items %}
-        <div class="{% cycle 'even' 'odd' %} row " >
-        <span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
-        {% if value %}
-            has responded
-            {% ifequal item.visibility 'responses visible' %} </span>
+        	<div class="{% cycle 'even' 'odd' %} row " >
+        	<span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+     		{% if value %}
+            	has responded 
                 <input type="button" style="float:right;"
-                    value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" /></div>
-                <div id="responses{{ key.pk }}" style="display: none">
+                value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
+				</div>
+               	<div id="responses{{ key.pk }}" style="display: none">
                 {% for response in value %}
-                        <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
-                        {% viewable_name response.proposition %}</a>: {{ response.value }}</p>
+                     <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
+                     {% viewable_name response.proposition %}</a>: {{ response.value }}</p>
                 {% endfor %}
-                </div>
-            {% endifequal %}
-        {% else %}
-            has not responded
-        {% endif %}
-        </span></div>
+                </div></span>
+        	{% else %}
+            	has not responded </span></div>
+        	{% endif %}
         {% endfor %}
+	</div>
+    {% else %}{% if can_view_response_names %}
+	{% for key,value in responses.items %}
+    <div class="{% cycle 'even' 'odd' %} row " >
+    <span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+    {% if value %} has responded {% else %} has not responded {% endif %}
+    </span></div>
+    {% endfor %}
+        
     {% else %}
         Responses are not visible
     {% endif %}{% endif %}

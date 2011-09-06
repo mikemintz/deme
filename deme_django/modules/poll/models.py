@@ -1,6 +1,6 @@
 from django.db import models
 import datetime
-from cms.models import HtmlDocument, Collection, FixedBooleanField, Agent, FixedForeignKey, Item, Group
+from cms.models import HtmlDocument, Collection, FixedBooleanField, Agent, FixedForeignKey, Item, Group, RecursiveMembership
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django import forms
@@ -16,8 +16,7 @@ class Poll(Collection):
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['edit Poll.visibility', 'view Poll.visibility', 'edit Poll.question', 'view Poll.question',
                                       'edit Poll.begins', 'view Poll.begins', 'edit Poll.deadline', 'view Poll.deadline', 
-                                      'edit Poll.eligibles', 'view Poll.eligibles', 'edit Poll.display_write_ins', 
-                                      'view Poll.display_write_ins', 'access_proposition_responses'])
+                                      'edit Poll.eligibles', 'view Poll.eligibles', 'access_proposition_responses'])
     introduced_global_abilities = frozenset(['create Poll'])
     dyadic_relations = {}
 
@@ -36,7 +35,10 @@ class Poll(Collection):
         ('closed' , 'closed - neither who has responded nor how they have responded is visible'),
     )
     visibility = models.CharField(_('status'), default='Unassigned', max_length=36, choices=visibility_choices)
-    display_write_ins = FixedBooleanField(_('display write ins'), default=False, help_text=_('Select this if you wish to display write ins'))
+
+    def agent_eligible_to_vote(self, agent):
+        return RecursiveMembership.objects.filter(parent=self.eligibles, child=agent).exists()
+
 
 class ChooseNPoll(Poll):
 
@@ -308,13 +310,6 @@ class ThresholdEApproveNDecision(Decision):
     num_decision = models.IntegerField(blank=True, choices=n_choices)
     e_choices = zip( range(0,101), range(0,101) )
     e_decision = models.IntegerField(blank=True, choices=e_choices)
-    
-#class ApproveNForm(forms.Form):
-#          ('approve' , 'Approve' ),
-#           ('dissaprove', 'Disapprove'),
-#           ('no vote', 'No Vote'),
-#       )
-#    vote = models.CharField(_('status'), default='Unassigned', max_length=36, choices=value_choices)  
     
     
     

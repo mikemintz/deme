@@ -91,13 +91,16 @@ class ApproveNPollViewer(PollViewer):
         self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
         self.context['can_view_response_names'] = self.item.visibility != 'closed' or self.permission_cache.agent_can('access_proposition_responses', self.item)
         self.context['can_view_response_names_and_values'] = self.item.visibility == 'responses visible' or self.permission_cache.agent_can('access_proposition_responses', self.item)
+        self.context['cur_agent_in_eligbles'] = self.item.agent_eligible_to_vote(self.cur_agent)
+        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision') 
         template = loader.get_template('poll/approvenpoll.html')
         return HttpResponse(template.render(self.context))
 
     def item_respondtopropositions_html(self):
         propositions = self.request.POST
         #verify that the cur agent is in the eligbles
-        
+        if not self.item.agent_eligible_to_vote(self.cur_agent):
+            return self.render_error('Not an eligible agent', "You are not permitted to vote on this poll")
         #verify that there isn't already an entry
         if PropositionResponseApprove.objects.all().filter(poll=self.item, participant=self.cur_agent):
             return self.render_error('Response Already Exists', "You have already responded to this poll")
@@ -115,26 +118,6 @@ class ApproveNPollViewer(PollViewer):
             response.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
-        #   if request.method == 'POST':
-        #       form = ContactForm(self.request.POST)
-        #       if form.is_valid():
-        #   response = PropositionResponseChoose.objects.create(poll=self., participant= "", proposition = "", value = "")
-        #  try:
-        #       vote = RecursiveProject.objects.get(pk=self.request.POST.get('vote'))
-        #   except:
-        #       return self.render_error('Invalid URL', "There is something wrong....")
-        #   print(vote)
-
-    #def item_respondtopropositions_item(self):
-     #   if request.method == 'POST':
-     #       form = ContactForm(self.request.POST)
-     #       if form.is_valid():
-     #   response = PropositionResponseChoose.objects.create(poll=self., participant= "", proposition = "", value = "")
-     #  try:
-     #       vote = RecursiveProject.objects.get(pk=self.request.POST.get('vote'))
-     #   except:
-     #       return self.render_error('Invalid URL', "There is something wrong....")
-     #   print(vote)
 
 
 class PropositionViewer(HtmlDocumentViewer):
