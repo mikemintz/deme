@@ -71,30 +71,26 @@ class ApproveNPollViewer(PollViewer):
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
         memberships = self.item.child_memberships
-        memberships = memberships.filter(active=True)
-        memberships = memberships.filter(item__active=True)
+        memberships = memberships.filter(active=True, item__active=True)
         memberships = self.permission_cache.filter_items('view Membership.item', memberships)
         memberships = memberships.select_related('item')
         if memberships:
             self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
-        self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can('view Item.name', x.item), x.item.name))
-        self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
-        self.context['responses'] = PropositionResponseApprove.objects.all().filter(poll=self.item)
-        eligible_agents = self.item.eligibles.child_memberships
-        eligible_agents = eligible_agents.filter(active=True)
-        eligible_agents = eligible_agents.filter(item__active=True)
-        eligible_agents = self.permission_cache.filter_items('view Membership.item', eligible_agents)
-        eligible_agents = eligible_agents.select_related('item')
-        if eligible_agents:
-            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in eligible_agents]))
-        self.context['eligible_agents'] = sorted(eligible_agents, key=lambda x: (not self.permission_cache.agent_can('view Item.name', x.item), x.item.name))
-        self.context['participants'] = Agent.objects.filter(poll_participant__poll=self.item)
-        Responses = dict()
-        for agent in eligible_agents:
-            Responses[agent.item] = PropositionResponseApprove.objects.all().filter(poll=self.item).filter(participant=agent.item)
-        self.context['Responses'] = Responses
-        self.context['decisions'] = Decision.objects.all().filter(poll=self.item)
+        self.context['responses'] = PropositionResponseApprove.objects.filter(poll=self.item)
+        eligible_agent_memberships = self.item.eligibles.child_memberships
+        eligible_agent_memberships = eligible_agent_memberships.filter(active=True, item__active=True)
+        eligible_agent_memberships = self.permission_cache.filter_items('view Membership.item', eligible_agent_memberships)
+        eligible_agent_memberships = eligible_agent_memberships.select_related('item')
+        if eligible_agent_memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in eligible_agent_memberships]))
+        responses = {}
+        for agent_membership in eligible_agent_memberships:
+            responses[agent_membership.item] = PropositionResponseApprove.objects.filter(poll=self.item).filter(participant=agent_membership.item)
+        self.context['responses'] = responses
+        self.context['decisions'] = Decision.objects.filter(poll=self.item)
         self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
+        self.context['can_view_response_names'] = self.item.visibility != 'closed' or self.permission_cache.agent_can('access_proposition_responses', self.item)
+        self.context['can_view_response_names_and_values'] = self.item.visibility == 'responses visible' or self.permission_cache.agent_can('access_proposition_responses', self.item)
         template = loader.get_template('poll/approvenpoll.html')
         return HttpResponse(template.render(self.context))
 
