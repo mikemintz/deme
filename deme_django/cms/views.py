@@ -1119,6 +1119,17 @@ class FileDocumentViewer(DocumentViewer):
     viewer_name = 'filedocument'
 
 
+class ImageDocumentViewer(FileDocumentViewer):
+    accepted_item_type = ImageDocument
+    viewer_name = 'imagedocument'
+
+    def item_show_html(self):
+        self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
+        template = loader.get_template('imagedocument/show.html')
+        return HttpResponse(template.render(self.context))
+
+
 class TransclusionViewer(ItemViewer):
     accepted_item_type = Transclusion
     viewer_name = 'transclusion'

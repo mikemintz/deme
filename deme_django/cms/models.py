@@ -26,7 +26,7 @@ __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
         'CustomUrl', 'DemeSetting',
         'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt',
         'FaxContactMethod', 'FileDocument', 'Folio',
-        'Group', 'GroupAgent', 'HtmlDocument', 'Item', 'Membership',
+        'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership',
         'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES',
         'POSSIBLE_ITEM_AND_GLOBAL_ABILITIES', 'Person',
         'PhoneContactMethod', 'RecursiveComment', 'RecursiveMembership',
@@ -1622,6 +1622,25 @@ class FileDocument(Document):
 
     # Fields
     datafile = models.FileField(_('data file'), upload_to='filedocument/%Y/%m/%d', max_length=255)
+
+
+class ImageDocument(FileDocument):
+    """
+    An ImageDocument is a FileDocument that stores an image.
+    
+    Right now, the only difference is that viewers know the file can be
+    displayed as an image. In the future, this may add metadata like EXIF data
+    and thumbnails.
+    """
+
+    # Setup
+    introduced_immutable_fields = frozenset()
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create ImageDocument'])
+    dyadic_relations = {}
+    class Meta:
+        verbose_name = _('image document')
+        verbose_name_plural = _('image documents')
 
 
 ###############################################################################
