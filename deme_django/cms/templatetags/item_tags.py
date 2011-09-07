@@ -288,7 +288,7 @@ def ifagentcanglobal(parser, token):
     return IfAgentCanGlobal(bits[1], nodelist_true, nodelist_false)
 
 # remember this includes inactive comments, which should be displayed differently after calling this
-def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments):
+def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments, nested):
     permission_cache = context['_viewer'].permission_cache
     comment_subclasses = [TextComment]
     comments = []
@@ -323,7 +323,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
     for comment in comments:
         child = pk_to_comment_info[comment.pk]
         parent = pk_to_comment_info.get(comment.item_id)
-        if parent:
+        if nested and parent:
             parent['subcomments'].append(child)
         else:
             comment_dicts.append(child)
@@ -727,7 +727,7 @@ class CalculateComments(template.Node):
                 result.append(u'<div class="comment_body" style="display: none;">%s</div>' % comment_body)
                 add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                 result.append("</div>")
-        comment_dicts, n_comments = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection))
+        comment_dicts, n_comments = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection), True)
         add_comments_to_div(comment_dicts)
         result.append("</div>")
         context['comment_box'] = mark_safe('\n'.join(result))
