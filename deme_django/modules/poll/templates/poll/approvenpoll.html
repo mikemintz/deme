@@ -14,7 +14,7 @@ div p {
 
 #label {
   font-size: 12px;
-  color: blue;
+  font-weight: bold;
   margin: 0;
 }
 
@@ -22,13 +22,8 @@ div.Question {
   margin-right: 6em;
 }
 
-div.Beginning p{
-  font-size: 10px;
-}
-
 div.Deadline p{
 	font-size: 20px;
-	color: red;
 }
 
 div.Instructions p{
@@ -147,15 +142,20 @@ div.container div.implementation{
 	<p id='label'> Question </p>
 </div>
 <div class='Deadline'>
-	{% ifagentcan 'view Poll.deadline' item %}
-	<p>Deadline: {{ item.deadline }}</p>
-	{% endifagentcan %}
+	<p>{% ifagentcan 'view Poll.deadline_date' item %} {{ item.deadline_date }} {% endifagentcan %} 
+		{% ifagentcan 'view Poll.deadline_time' item %} at {{ item.deadline_time }} {% endifagentcan %} 
+	</p>
+	<p id='label'> Deadline </p>
 </div>
-
+<div class='timezone'>
+	<p>{% ifagentcan 'view Poll.time_zone' item %} {{ item.time_zone }} {% endifagentcan %}</p>
+	<p id='label'> Timezone </p>
+</div>
 <div class='Beginning'>
 	{% ifagentcan 'view Poll.begins' item %}
-	<p>Poll started: {{ item.begins }}</p>
+	<p>{{ item.begins }}</p>
 	{% endifagentcan %}
+	<p id='label'> Poll Started </p>
 </div>
 
 <br />
@@ -218,6 +218,7 @@ div.container div.implementation{
 {% else %}
     No propositions in this poll
 {% endif %}
+<br />
 
 
 
@@ -289,11 +290,42 @@ div.container div.implementation{
     <div class="{% cycle 'even' 'odd' %} row " >
     <span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
     {% if value %} has responded {% else %} has not responded {% endif %}
+	{% ifequal cur_agent key %} 
+		<input type="button" style="float:right;"
+        value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
+		</div>
+       	<div id="responses{{ key.pk }}" style="display: none">
+        {% for response in value %}
+             <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
+             {% viewable_name response.proposition %}</a>: {{ response.value }}</p>
+        {% endfor %}
+	{% endifequal %}
     </span></div>
     {% endfor %}
-        
     {% else %}
-        Responses are not visible
+		Responses are not visible
+		<p>You're response:</p>
+		 {% for key,value in responses.items %}
+			
+			{% ifequal cur_agent.pk key.pk %}
+	        	<div class="{% cycle 'even' 'odd' %} row " >
+	        	<span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+	     		{% if value %}
+	            	has responded 
+	                <input type="button" style="float:right;"
+	                value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
+					</div>
+	               	<div id="responses{{ key.pk }}" style="display: none">
+	                {% for response in value %}
+	                     <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
+	                     {% viewable_name response.proposition %}</a>: {{ response.value }}</p>
+	                {% endfor %}
+	                </div></span>
+	        	{% else %}
+	            	has not responded </span></div>
+	        	{% endif %}
+			{% endifequal %}
+	       {% endfor %}
     {% endif %}{% endif %}
 </div>
 
