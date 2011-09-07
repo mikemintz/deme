@@ -5,6 +5,7 @@
 {% subclassfields %}
 
 <script type="text/javascript" src="{% media_url "javascripts/highlighting.js" %}"></script>
+<script type="text/javascript" src="{% media_url "javascripts/canvas_pointing.js" %}"></script>
 
 <style type="text/css">
     .transclude_token:hover {
@@ -17,6 +18,10 @@
 </style>
 
 <script type="text/javascript">
+    $(document).ready(function () {
+        DemeCanvasPointing.setup();
+    });
+
     var is_escaped = {% if is_html %}false{% else %}true{% endif %};
     var body_str = "{{ item.body|escapejs }}";
 

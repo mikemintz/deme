@@ -133,7 +133,7 @@
         </div>
 
         {% calculatecomments %}
-        <h3><a href="#">{{ n_comments }} comment{{ n_comments|pluralize }}</a></h3>
+        <h3 id="accordion_header_comments"><a href="#">{{ n_comments }} comment{{ n_comments|pluralize }}</a></h3>
         <div>
             <div id="make_big"><a href="#" onclick="show_comments_big(); return false;">Expand Comments</a></div>
             <div id="make_normal" style="display: none;"><a href="#" onclick="hide_comments_big(); return false;">Collapse Comments</a></div>

@@ -601,9 +601,14 @@ def display_body_with_inline_transclusions(item, is_html):
     result = []
     last_i = None
     for transclusion in transclusions:
+        to_item = transclusion.to_item.downcast()
+        if isinstance(to_item, Comment) and to_item.item_id == item.pk:
+            transclusion_html = '<a href="#" onclick="$(\'#right_accordion\').accordion(\'activate\', \'#accordion_header_comments\'); DemeCanvasPointing.drawLine($(this), $(\'#right_pane_comment_%d\')); return false;" class="commentref">%s</a>' % (to_item.pk, escape(transclusion.to_item.display_name()),)
+        else:
+            transclusion_html = '<a href="%s" class="commentref">%s</a>' % (transclusion.to_item.get_absolute_url(), escape(transclusion.to_item.display_name()))
         i = transclusion.from_item_index
         result.insert(0, format(item.body[i:last_i]))
-        result.insert(0, '<a href="%s" class="commentref">%s</a>' % (transclusion.to_item.get_absolute_url(), escape(transclusion.to_item.display_name())))
+        result.insert(0, transclusion_html)
         last_i = i
     result.insert(0, format(item.body[0:last_i]))
     return ''.join(result)
@@ -696,7 +701,7 @@ class CalculateComments(template.Node):
                 result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (comment.pk, comment.version_number))
                 result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;" >Advanced</a> ' % (comment.pk))
                 result.append(u'</form></div>')
-                result.append(u'<div class="comment_outer%s">' % (' comment_outer_toplevel' if nesting_level == 0 else '',))
+                result.append(u'<div class="comment_outer%s" id="right_pane_comment_%d">' % (' comment_outer_toplevel' if nesting_level == 0 else '', comment.pk))
                 result.append(u'<div class="comment_header">')
                 result.append(u'<div style="float: right;"><a href="#" onclick="openCommentDialog(\'comment%s\'); return false;">[+] Respond</a></div>' % (comment.pk))
                 if issubclass(comment.item.actual_item_type(), Comment):
