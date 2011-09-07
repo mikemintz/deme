@@ -15,8 +15,9 @@ class Poll(Collection):
     #Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['edit Poll.visibility', 'view Poll.visibility', 'edit Poll.question', 'view Poll.question',
-                                      'edit Poll.begins', 'view Poll.begins', 'edit Poll.deadline', 'view Poll.deadline', 
-                                      'edit Poll.eligibles', 'view Poll.eligibles', 'access_proposition_responses'])
+                                      'edit Poll.begins', 'view Poll.begins', 'edit Poll.deadline_date', 'view Poll.deadline_date', 
+                                      'edit Poll.deadline_time', 'view Poll.deadline_time', 'edit Poll.eligibles', 'view Poll.time_zone',
+                                      'edit Poll.time_zone', 'view Poll.eligibles', 'access_proposition_responses'])
     introduced_global_abilities = frozenset(['create Poll'])
     dyadic_relations = {}
 
@@ -27,14 +28,42 @@ class Poll(Collection):
     #fields:
     question = models.TextField(_('question'), blank=True)
     begins = models.DateField(_('begins'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
-    deadline = models.DateField(_('deadline'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
+    deadline_date = models.DateTimeField(_('deadline date'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
+    deadline_time = models.TimeField(_('deadline time'), null=True, blank=True, default=None, )
+    time_zones = (
+        (settings.TIME_ZONE, u'(default) ' + settings.TIME_ZONE),
+        (u'UTC-8', u'Pacific Standard Time (UTC -8)'),
+        (u'UTC-7', u'Mountain Standard Time (UTC -7)'),
+        (u'UTC-6', u'Central Standard Time (UTC -6)'),
+        (u'UTC-5', u'Eastern Standard Time (UTC -5)'),
+        (u'UTC-4', u'Western Brazilian Time (UTC -4)'),
+        (u'UTC-3', u'Eastern Brazilian Time (UTC -3)'),
+        (u'UTC-1', u'West African Time (UTC -1)'),
+        (u'UTC', u'Greenwich Mean Time (UTC)'),
+        (u'UTC+1', u'Central Europe Time (UTC +1)'),
+        (u'UTC+2', u'Eastern Europe Time (UTC +2)'),
+        (u'UTC+3', u'Moscow Time (UTC +3)'),
+        (u'UTC+3:30', u'Iran Time (UTC +3:30)'),
+        (u'UTC+4', u'Samara Time (UTC +4)'),
+        (u'UTC+5', u'Pakistan Time (UTC +5)'),
+        (u'UTC+6', u'Lankan/Bangla Desh Time (UTC +6)'),
+        (u'UTC+7', u'West Indonesia/West Australia Time (UTC +7)'),
+        (u'UTC+8', u'China/Central Indonesia Time (UTC +8)'),
+        (u'UTC+9', u'Japan/Korea Standard Time (UTC +9)'),
+        (u'UTC+9:30', u'Central Australian Standard Time (UTC +9:30)'),
+        (u'UTC+10', u'Guam Standard Time (UTC +10)'),
+        (u'UTC+12', u'New Zealand Standard Time (UTC +12)'),
+        (u'UTC-9', u'Yukon Standard Time (UTC -9)'),
+        (u'UTC-10', u'Alaska/Hawaii Standard Time (UTC -10)'),
+    )
+    time_zone  = models.CharField(_('time zone'), max_length=255, choices=time_zones, default=settings.TIME_ZONE)
     eligibles = FixedForeignKey(Group, related_name='poll_participant', null=True, blank=True, default=None)
     visibility_choices = (
         ('responses visible' , 'responses visible - each eligible that has responded is visible' ),
         ('who responded visible', 'who responded visible - who has responded is visible, but not how they responded'),
         ('closed' , 'closed - neither who has responded nor how they have responded is visible'),
     )
-    visibility = models.CharField(_('status'), default='Unassigned', max_length=36, choices=visibility_choices)
+    visibility = models.CharField(_('visibility'), default='Unassigned', max_length=36, choices=visibility_choices)
 
     def agent_eligible_to_vote(self, agent):
         return RecursiveMembership.objects.filter(parent=self.eligibles, child=agent).exists()
@@ -71,7 +100,7 @@ class ApproveNPoll(Poll):
 
     #fields:
     n_choices = zip( range(0,101), range(0,101) )
-    n = models.IntegerField(blank=True, choices=n_choices)
+    n = models.IntegerField(blank=True, choices=n_choices, verbose_name=_('maximum allowed approvals'))
 
     
    
@@ -80,8 +109,7 @@ class Proposition(HtmlDocument):
 
     #Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['edit Proposition.summary_text', 'view Proposition.summary_text', 
-                                      'edit Proposition.is_write_in', 'view Proposition.is_write_in'])
+    introduced_abilities = frozenset(['edit Proposition.summary_text', 'view Proposition.summary_text'])
     introduced_global_abilities = frozenset(['create Proposition'])
     dyadic_relations = {}
 
@@ -91,24 +119,9 @@ class Proposition(HtmlDocument):
 
     #fields:
     summary_text = models.CharField(_('summary text'), blank=True, max_length=40)
-    is_write_in  = FixedBooleanField(_('is write in'), default=False, help_text=_('Select this if you wish to make a write in proposition'))
 
-class WriteInPropositions(Collection):
 
-    #Setup
-    introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset()
-    introduced_global_abilities = frozenset(['create WriteInPropositions'])
-    dyadic_relations = {}
-
-    class Meta:    
-        verbose_name = _('writeinproposition')
-        verbose_name_plural = _('writeinpropositions')
-        
-    #fields:
-    poll = FixedForeignKey(Poll, related_name='poll_writein', null=True, blank=True, default=None)
-
-class PropositionResponse(HtmlDocument):
+class PropositionResponse(models.Model):
 
     #Setup
     introduced_immutable_fields = frozenset()
