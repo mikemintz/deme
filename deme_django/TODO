@@ -51,8 +51,6 @@ I get "Server Error" when I click on "My account" when logged in as Todd Davies 
 
 When you deactivate a membership from a collection and try to reactivate it, the membership creator doesn't check to see if a deactivated membership exists and creates a new one. This leads to a server error. (Jimmy 8/19/11)
 
-When you destroy a FileDocument, it doesn't delete the file from the static directory (Mike, 2011-08-29)
-
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
 * make links to Symsys internal pages work in static documents
