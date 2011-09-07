@@ -43,11 +43,9 @@
 	</style>
 	<![endif]-->	
     
-    {% ifequal action 'show' %}
     {% if item %}
     <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}" />
     {% endif %}
-    {% endifequal %}
     {% ifequal action 'list' %}
     <link rel="alternate" type="application/rss+xml" title="Item feed" href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}" />
     {% endifequal %}
@@ -299,7 +297,6 @@
                     <ul style="list-style-type: none; margin: 0; padding: 0;">
                         <li{% ifequal full_path "/"%} style="font-weight: bold;"{% endifequal %}><a href="/">Home</a></li>
                         <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
-                        <li{% ifequal viewer_name "codegraph"%} style="font-weight: bold;"{% endifequal %}><a href="{% url item_type_url viewer="codegraph" %}">Codegraph</a></li>
                         <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
                     </ul>
                 </div>
@@ -322,7 +319,17 @@
 
 <div class="footer">
     <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
-    <p>Desktop browser | <a href="list.mobi">Mobile</a> | <a href="list.rss">RSS</a></p> {# TODO generate formats list #}
+    <p>
+        <b>Desktop Browser</b>
+        {% if item %}
+        |
+        <a href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}">RSS</a>
+        {% endif %}
+        {% ifequal action 'list' %}
+        |
+        <a href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}?{{ query_string }}">RSS</a>
+        {% endifequal %}
+    </p>
 </div>
 
 </div>

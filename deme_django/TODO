@@ -23,8 +23,6 @@ Action summary field should appear in regular view, not advanced options, when e
 
 Subscribe should include an RSS option in the interface - just a link to the RSS viewer which provides a subscription dialogue. (Todd, 7/11/2011)
 
-RSS and Mobi links at bottom of page should display RSS feed and a mobi format, if available. (Todd, 7/11/2011)
-
 Transcluded documents should render in HTMLDocument view of the transcluding document. (Todd, 7/11/2011)
 
 Permissions displayed in Item Data menu should include negative permissions (e.g."As Anonymous you cannot * View body"). (Todd, 7/11/2011)
@@ -32,8 +30,6 @@ Permissions displayed in Item Data menu should include negative permissions (e.g
 Trying to comment on this item (Deme Issues) when logged in as Mike says "enter phrase to prove you're not a spammer" but no textbox appeared to enter the phrase. (Mike)	
 
 Diff functionality can break on complicated formatting changes of HTML documents
-
-RSS link does not work in vanity URLs (see deme.stanford.edu home page) (Mike, 2011-08-18)
 
 Versions should add a field for "Minor Change" - a boolean checkbox to indicate unsubstantial difference with previous version. This could be used to display only the most recent version in a chain of Minor Changes in the default view of Versions of an Item. (Todd, 8/1/2011)
 
