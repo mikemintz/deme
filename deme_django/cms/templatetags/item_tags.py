@@ -877,31 +877,35 @@ class CalculateHistory(template.Node):
 
         result = []
         versions = item.versions.all()
-        edit_action_notices = EditActionNotice.objects.filter(action_item=item)
-        create_action_notices = CreateActionNotice.objects.filter(action_item=item)
-        action_notices = itertools.chain(edit_action_notices, create_action_notices)
-        action_notice_map = {}
-        for action_notice in action_notices:
-            action_notice_map[action_notice.action_item_version_number] = action_notice
-        for version in itertools.chain(versions, [item]):
-            action_notice = action_notice_map[version.version_number]
-            version_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk}) + '?version=%s' % version.version_number
-            version_name = u'Version %d' % version.version_number
-            version_text = u'<a href="%s">%s</a>' % (version_url, version_name)
-            diff_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'diff', 'noun': item.pk}) + '?version=%s&reference_version=%s' % (version.version_number, version.version_number - 1)
-            diff_text = u'<a href="%s">(Diff)</a>' % diff_url if version.version_number > 1 else ''
-            time_text = u'<span title="%s">[%s ago]</span><br />' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
-            agent_text = u'by %s' % get_item_link_tag(context, action_notice.action_agent)
-            result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">')
-            if agentcan_helper(context, 'view Item.created_at', item):
-                result.append(time_text)
-            result.append(version_text)
-            result.append(diff_text)
-            if agentcan_helper(context, 'view Item.creator', item):
-                result.append(agent_text)
-            result.append(u'</div>')
-        context['history_box'] = mark_safe(u'\n'.join(result))
-        context['n_versions'] = len(versions) + 1
+        if versions.exists():
+            edit_action_notices = EditActionNotice.objects.filter(action_item=item)
+            create_action_notices = CreateActionNotice.objects.filter(action_item=item)
+            action_notices = itertools.chain(edit_action_notices, create_action_notices)
+            action_notice_map = {}
+            for action_notice in action_notices:
+                action_notice_map[action_notice.action_item_version_number] = action_notice
+            for version in itertools.chain(versions, [item]):
+                action_notice = action_notice_map[version.version_number]
+                version_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk}) + '?version=%s' % version.version_number
+                version_name = u'Version %d' % version.version_number
+                version_text = u'<a href="%s">%s</a>' % (version_url, version_name)
+                diff_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'diff', 'noun': item.pk}) + '?version=%s&reference_version=%s' % (version.version_number, version.version_number - 1)
+                diff_text = u'<a href="%s">(Diff)</a>' % diff_url if version.version_number > 1 else ''
+                time_text = u'<span title="%s">[%s ago]</span><br />' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
+                agent_text = u'by %s' % get_item_link_tag(context, action_notice.action_agent)
+                result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">')
+                if agentcan_helper(context, 'view Item.created_at', item):
+                    result.append(time_text)
+                result.append(version_text)
+                result.append(diff_text)
+                if agentcan_helper(context, 'view Item.creator', item):
+                    result.append(agent_text)
+                result.append(u'</div>')
+            context['history_box'] = mark_safe(u'\n'.join(result))
+            context['n_versions'] = len(versions) + 1
+        else:
+            context['history_box'] = u''
+            context['n_versions'] = 0
         return ''
 
 

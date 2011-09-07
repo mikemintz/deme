@@ -191,10 +191,6 @@ Figure out robust caching invalidation scheme for Deme
 Mike's TODO list
 ================
 
-2011-06-09
-----------
-* calculcatehistory breaks on destroyed items
-
 2011-06-04
 ----------
 * Maybe we need a db_index on email_list_address
