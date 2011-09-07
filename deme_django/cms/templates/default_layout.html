@@ -316,9 +316,7 @@
 <input type="button" value="Increase text size" onclick="resizeText(1)" />
 <input type="button" value="Decrease text size" onclick="resizeText(-1)" />
 
-
 <div class="footer">
-    <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
     <p>
         <b>Desktop Browser</b>
         {% if item %}
@@ -329,7 +327,22 @@
         |
         <a href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}?{{ query_string }}">RSS</a>
         {% endifequal %}
+        |
+        <a href="#" onclick="$('#google_translate_dialog').dialog({close: function(event, ui) {$('#google_translate_dialog').dialog('destroy')}}); return false;">Translate</a>
+        <div id="google_translate_dialog" title="Translate" style="display: none;">
+            <div id="google_translate_element">
+            </div>
+        </div>
+        <script>
+        function googleTranslateElementInit() {
+          new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+          }, 'google_translate_element');
+        }
+        </script><script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     </p>
+    <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
 </div>
 
 </div>
