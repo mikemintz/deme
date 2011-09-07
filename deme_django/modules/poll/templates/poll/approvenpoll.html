@@ -230,7 +230,7 @@ div.container div.implementation{
 
 {% if cur_agent_can_make_a_decision %}
 <div class="submit_button" id="NewDecision" style="margin-left:5em;">
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')">Make New Decision</a>
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')">Calculate Result</a>
 </div>
 {% endif %}
 <br />
@@ -246,20 +246,21 @@ div.container div.implementation{
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Cancel</a><br><br>
 </div>
 
-<div id="hiddenDecisionButtons" style="margin: 4px; height 2em; display: none;">
+<div id="hiddenDecisionButtons" style="margin: 4px; height 5em; display: none;">
 	{% ifagentcanglobal 'create PluralityApproveNDecision' %} 
-	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='pluralityapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Plurality Decision</a>
+	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='pluralityapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">
+		New Plurality Aggregation</a>
 	{% endifagentcanglobal %}
 	{% ifagentcanglobal 'create ThresholdApproveNDecision' %}
-	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Threshold Decision</a>
+	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">New Threshold Aggregation</a>
 	{% endifagentcanglobal %}
 	{% ifagentcanglobal 'create ThresholdEApproveNDecision' %}
-	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New ThresholdE Decision</a>
+	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">New ThresholdE Aggregation</a>
 	{% endifagentcanglobal %}
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')">Cancel</a><br><br>
 </div>
 
-
+<br />
 <br />
 <br />
 <p style="font-size:16px;">Responses:</p>
