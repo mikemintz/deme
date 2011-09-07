@@ -255,8 +255,6 @@ Nice to have
 * More sophisticated event day/time stuff.
 
 Sprint priorities
-* Email lists
-* Email notifications - better wording
 * Default Deme layout
     * remove "Subscribe" button from views when not logged in
     * Rename "More" button to "Item Data"
@@ -264,11 +262,7 @@ Sprint priorities
     * Don't display "Login as" in Login pulldown options if there is no one to log in as
 * Symsys homepage
 * Webauth timing issue
-* Pull new data from old Symsys
-* Move from beta to Symsys
 * Certificate transfer?
-* Set up Todd's blog Mindroll
 * Make password setting easier
-* Migrations
 * Change wording of Related Items in metadata menu
 
