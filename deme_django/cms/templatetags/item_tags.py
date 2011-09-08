@@ -691,8 +691,9 @@ class CalculateComments(template.Node):
         else:
             result.append("</div>")
         def add_comments_to_div(comments, nesting_level=0):
-            result.append(u'<div class="subcomments">')
             for comment_info in comments:
+                for i in xrange(nesting_level + 1):
+                    result.append(u'<div class="subcomments">')
                 comment = comment_info['comment']
                 result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
                 result.append(u'<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> ' % (comment.name))
@@ -707,8 +708,8 @@ class CalculateComments(template.Node):
                 if comment_info['subcomments']:
                     result.append(u'<div style="position: absolute; top: 1px; left: -10px; border: 2px solid #bbb; background: #fff; width: 15px; height: 15px; text-align: center; vertical-align: middle; font-size: 12px; font-weight: bold; cursor: pointer;" onclick="$(\'#comment_children%s\').toggle(); if ($(this).text() == \'+\') { $(this).text(\'-\') } else { $(this).text(\'+\') }">-</div>' % comment.pk)
                 result.append(u'</div>')
-                result.append(u'<div class="comment_outer" id="right_pane_comment_%d">' % comment.pk)
-                result.append(u'<div class="comment_header">')
+                result.append(u'<div class="comment_header" id="right_pane_comment_%d">' % comment.pk)
+                result.append(u'<div style="float: left;"><img src="%s" /></div>' % icon_url(item, 24))
                 if comment.active:
                     if agentcan_helper(context, 'view TextDocument.name', comment):
                         comment_name = escape(truncate_words(comment.display_name(), 4))
@@ -725,7 +726,10 @@ class CalculateComments(template.Node):
                     result.append(comment.created_at.strftime("- %Y %b %d %H:%M"))
                 if comment.version_number > 1:
                     result.append(' (updated)')
-                result.append("</div>")
+                result.append(u'<div style="clear: both;"></div>')
+                result.append(u'</div>')
+                for i in xrange(nesting_level + 1):
+                    result.append(u'</div>')
                 if isinstance(comment, TextComment):
                     if agentcan_helper(context, 'view TextDocument.body', comment):
                         comment_body = escape(comment.body).replace('\n', '<br />')
@@ -742,8 +746,6 @@ class CalculateComments(template.Node):
                     result.append(u'<div id="comment_children%s">' % comment.pk)
                     add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
                     result.append(u'</div>')
-                result.append("</div>")
-            result.append("</div>")
         comment_dicts, n_comments = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection), True)
         add_comments_to_div(comment_dicts)
         result.append("</div>")

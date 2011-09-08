@@ -35,6 +35,11 @@ var DemeCanvasPointing = function() {
         }
     }
 
+    function redrawTimer() {
+        redrawIfActive();
+        setTimeout(redrawTimer, 100);
+    }
+
 	pub.drawLine = function(newSrcJq, newTrgJq) {
         srcJq = newSrcJq;
         trgJq = newTrgJq;
@@ -51,9 +56,7 @@ var DemeCanvasPointing = function() {
         $(document).ready(function(){
             $('body').prepend('<canvas id="pointing_canvas" style="position: absolute; z-index: -100;"></canvas>');
         });
-        $(window).resize(redrawIfActive);
-        $(window).scroll(redrawIfActive);
-        $("#fixed_right_pane").scroll(redrawIfActive);
+        redrawTimer();
     };
 
     return pub;
