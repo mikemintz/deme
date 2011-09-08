@@ -57,6 +57,8 @@ When you deactivate a membership from a collection and try to reactivate it, the
 
 When you destroy a FileDocument, it doesn't delete the file from the static directory (Mike, 2011-08-29)
 
+Have an "other" field for priority on Project. When the user specifies "other" then a dialog box will show up on the form to set a custom status.
+
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
 * make links to Symsys internal pages work in static documents
