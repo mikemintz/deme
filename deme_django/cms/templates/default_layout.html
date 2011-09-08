@@ -119,10 +119,11 @@
 
 {% if item %}
 <div id="fixed_right_pane" style="position: fixed; overflow-y: auto; top: 10px; bottom: 10px; right: 10px; width: 20%;">
-    <div class="ui-helper-clearfix" style="font-size: 60%;">
+    <div class="ui-helper-clearfix" style="font-size: 60%; float: right;">
         <a href="#" id="increasebutton" onclick="increase_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Show"><span class="ui-icon ui-icon-arrowthickstop-1-w"></span> Show</a>
         <a href="#" id="decreasebutton" onclick="decrease_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Hide"><span class="ui-icon ui-icon-arrowthickstop-1-e"></span> Hide</a>
     </div>
+    <div style="clear: both;"></div>
 
     {# TODO links are black because of ui-widget-content to a #}
     <div id="right_accordion">
@@ -134,9 +135,7 @@
 
         {% calculatecomments %}
         <h3 id="accordion_header_comments"><a href="#">{{ n_comments }} comment{{ n_comments|pluralize }}</a></h3>
-        <div>
-            <div id="make_big"><a href="#" onclick="show_comments_big(); return false;">Expand Comments</a></div>
-            <div id="make_normal" style="display: none;"><a href="#" onclick="hide_comments_big(); return false;">Collapse Comments</a></div>
+        <div style="background: none;">
             {{ comment_box }}
         </div>
 
@@ -250,16 +249,6 @@
     }
     function decrease_column_right() {
         increase_fixed_right_pane(-3, 10);
-    }
-    function show_comments_big() {
-        $('#make_big').hide();
-        $('#make_normal').show();
-        $('.comment_body').show();
-    }
-    function hide_comments_big() {
-        $('#make_big').show();
-        $('#make_normal').hide();        
-        $('.comment_body').hide();
     }
     function openCommentDialog(name)
     {

@@ -15,7 +15,7 @@ var DemeCanvasPointing = function() {
 		var cOffset = canvasJq.offset();
 		var ctx = canvasEl.getContext("2d");
 		ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-        if (srcJq != null && trgJq != null && srcJq.length && trgJq.length) {
+        if (srcJq != null && trgJq != null && srcJq.length && trgJq.length && srcJq.is(":visible") && trgJq.is(":visible")) {
             ctx.beginPath();
             var srcOffset = srcJq.offset();
             var srcMidHeight = srcJq.height() / 2;

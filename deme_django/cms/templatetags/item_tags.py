@@ -368,7 +368,7 @@ class ItemToolbar(template.Node):
                 <form method="post" action="%s?redirect=%s"> 
                     <input type="hidden" name="item" value="%s" />
                     Contact Method: %s 
-                    <a href="%s" style="float: right; font-size: 9pt;" >Advanced</a>
+                    <a href="%s" style="float: right; font-size: 9pt;">Advanced</a>
                     <input type="submit" value="Submit" />
                 </form>
             </div>
@@ -392,7 +392,7 @@ class ItemToolbar(template.Node):
             <form method="post" action="%(create_url)s?redirect=%(full_path)s"> 
                 Collection: %(ajax_field)s 
                 <input type="hidden" name="item" value="%(item.pk)s" /><br><br>
-                <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddtocollection%(item.pk)s'); return false;" >Advanced</a>
+                <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddtocollection%(item.pk)s'); return false;">Advanced</a>
                 <div style="display: none;" id="advancedaddtocollection%(item.pk)s">
                     Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br>
                     Permission Enabled: <input name="permissionenabled" type="checkbox" />
@@ -639,7 +639,7 @@ class NewMemberDialog(template.Node):
             <form method="post" action="%(create_url)s?redirect=%(full_path)s"> 
                 Item: %(ajax_field)s 
                 <input type="hidden" name="collection" value="%(item.pk)s" /><br><br>
-                <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddmember%(item.pk)s'); return false;" >Advanced</a>
+                <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddmember%(item.pk)s'); return false;">Advanced</a>
                 <div style="display: none;" id="advancedaddmember%(item.pk)s">
                     Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br>
                     Permission Enabled: <input name="permissionenabled" type="checkbox" />
@@ -685,7 +685,7 @@ class CalculateComments(template.Node):
                 result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
             result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'commentajaxfield'})))
             result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (item.pk, item.version_number))
-            result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;" >Advanced</a> ' % (item.pk))
+            result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (item.pk))
             result.append(u'</form></div>')
             result.append(u'</div>')
         else:
@@ -700,7 +700,7 @@ class CalculateComments(template.Node):
                     result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
                 result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk)))
                 result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (comment.pk, comment.version_number))
-                result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;" >Advanced</a> ' % (comment.pk))
+                result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (comment.pk))
                 result.append(u'</form></div>')
                 result.append(u'<div style="position: relative;">')
                 result.append(u'<div style="position: absolute; top: 10px; left: 0; width: 20px; border-top: 2px dotted #bbb;"></div>')
@@ -709,33 +709,35 @@ class CalculateComments(template.Node):
                 result.append(u'</div>')
                 result.append(u'<div class="comment_outer" id="right_pane_comment_%d">' % comment.pk)
                 result.append(u'<div class="comment_header">')
-                result.append(u'<div style="float: right;"><a href="#" onclick="openCommentDialog(\'comment%s\'); return false;">[+] Respond</a></div>' % (comment.pk))
-                if issubclass(comment.item.actual_item_type(), Comment):
-                    if agentcan_helper(context, 'view TextDocument.body', comment):
+                if comment.active:
+                    if agentcan_helper(context, 'view TextDocument.name', comment):
                         comment_name = escape(truncate_words(comment.display_name(), 4))
                     else:
                         comment_name = comment.display_name(can_view_name_field=False)
                 else:
-                    comment_name = escape(get_viewable_name(context, comment))
-                result.append(u'<a href="%s">%s</a>' % (comment.get_absolute_url(), comment_name))
+                    comment_name = '(Inactive comment)'
+                result.append(u'<a href="#" onclick="$(\'#comment_body%s\').toggle(); return false;">%s</a>' % (comment.pk, comment_name))
                 if agentcan_helper(context, 'view Item.creator', comment):
-                    result.append('by %s' % get_item_link_tag(context, comment.creator))
+                    result.append('- %s' % get_item_link_tag(context, comment.creator))
                 if item.pk != comment.item_id and nesting_level == 0:
                     result.append('for %s' % get_item_link_tag(context, comment.item))
                 if agentcan_helper(context, 'view Item.created_at', comment):
-                    result.append('<span title="%s">%s ago</span>' % (comment.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(comment.created_at)))
+                    result.append(comment.created_at.strftime("- %Y %b %d %H:%M"))
+                if comment.version_number > 1:
+                    result.append(' (updated)')
                 result.append("</div>")
-                if comment.active:
-                    if isinstance(comment, TextComment):
-                        if agentcan_helper(context, 'view TextDocument.body', comment):
-                            comment_body = escape(comment.body).replace('\n', '<br />')
-                        else:
-                            comment_body = ''
+                if isinstance(comment, TextComment):
+                    if agentcan_helper(context, 'view TextDocument.body', comment):
+                        comment_body = escape(comment.body).replace('\n', '<br />')
                     else:
                         comment_body = ''
                 else:
-                    comment_body = '[INACTIVE]'
-                result.append(u'<div class="comment_body" style="display: none;">%s</div>' % comment_body)
+                    comment_body = ''
+                result.append(u'<div id="comment_body%d" class="comment_body" style="display: none;">' % comment.pk)
+                result.append(comment_body)
+                result.append(u'<br /><a href="#" onclick="openCommentDialog(\'comment%s\'); return false;">Respond</a>' % (comment.pk))
+                result.append(u'<br /><a href="%s">View comment as item</a>' % comment.get_absolute_url())
+                result.append(u'</div>')
                 if comment_info['subcomments']:
                     result.append(u'<div id="comment_children%s">' % comment.pk)
                     add_comments_to_div(comment_info['subcomments'], nesting_level + 1)

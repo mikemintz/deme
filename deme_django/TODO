@@ -51,6 +51,8 @@ I get "Server Error" when I click on "My account" when logged in as Todd Davies 
 
 When you deactivate a membership from a collection and try to reactivate it, the membership creator doesn't check to see if a deactivated membership exists and creates a new one. This leads to a server error. (Jimmy 8/19/11)
 
+If you destroy a comment, the subcomments won't appear in the same thread since there is no evidence they are descendents of the destroyed comment's parent. (Mike 2011-09-08)
+
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
 * make links to Symsys internal pages work in static documents
