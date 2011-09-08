@@ -214,7 +214,6 @@ class ItemViewer(Viewer):
         for filter_string in self.request.GET.getlist('filter'):
             if not filter_string: continue
             filter_string = str(filter_string) # Unicode doesn't work here
-            self.context['filter_string'] = filter_string
             parts = filter_string.split('.')
             target_pk = parts.pop()
             fields = []
@@ -288,7 +287,7 @@ class ItemViewer(Viewer):
 
         def item_link(item):
             can_view_name = self.cur_agent_can('view Item.name', item)
-            url = item.get_absolute_url()
+            url = "%s?%s" % (item.get_absolute_url(), '&amp;'.join('crumb_filter=' + x for x in self.request.GET.getlist('filter')))
             icon = icon_url(item, 16)
             name = escape(item.display_name(can_view_name))
             return '<a class="imglink" href="%s"><img src="%s" /><span>%s</span></a>' % (url, icon, name)
@@ -891,15 +890,7 @@ class CollectionViewer(ItemViewer):
         from cms.forms import AjaxModelChoiceField
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
-        memberships = self.item.child_memberships
-        memberships = memberships.filter(active=True)
-        memberships = memberships.filter(item__active=True)
-        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
-        memberships = memberships.select_related('item')
-        if memberships:
-            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
-        self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can('view Item.name', x.item), x.item.name))
-        self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
+        self.context['cur_agent_in_collection'] = self.item.child_memberships.filter(active=True, item=self.cur_agent).exists()
         template = loader.get_template('collection/show.html')
         return HttpResponse(template.render(self.context))
 
@@ -928,7 +919,7 @@ class CollectionViewer(ItemViewer):
         try:
             member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
-            return self.render_error('Invalid URL', "You must specify the member you are adding")
+            return self.render_error('Invalid URL', "You must specify the member you are removing")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('remove_self', self.item))):
             raise DemePermissionDenied('modify_membership', None)
         try:
