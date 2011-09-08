@@ -37,7 +37,7 @@ var DemeCanvasPointing = function() {
 
     function redrawTimer() {
         redrawIfActive();
-        setTimeout(redrawTimer, 100);
+        setTimeout(redrawTimer, 250);
     }
 
 	pub.drawLine = function(newSrcJq, newTrgJq) {
