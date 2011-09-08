@@ -56,13 +56,11 @@ Other things to do
 * make links to Symsys internal pages work in static documents
 * Give way to show options when completing a text box (e.g. adding an item to a collection should not require one to type a random character in order to see the options) - make list alphabetical
 * Make it so you can add items with no name to a Newsroll
-* Get and install more memory
 * Give more data about each version in Versions metadata display (e.g. datetime, updater)
 * Discussion viewer - full page view of comment threads
 * Make event links in calendar shareable
 * Truncate event description in div onlick from calendar
 * Go through permissions and do sanity check for different categories of users
-* Expand search beyond name field; combinatorial search, etc.
 * If someone makes a layout and screws up django template syntax, the site is completely screwed. Come up with failsafe
 * If you go to "new" and one of the initial model fields is permission denied (e.g., you're creating a membership on a collection you aren't allowed to modify_membership for, or creating a comment on an item you can't reply to), let the user know
 * the destroy action notice will never be read by anyone (since all permissions are effectively denied)
@@ -74,6 +72,9 @@ Other things to do
 * Code cleanup: views, templatetags, and templates, and symsys everything
 * Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun). In general though, we definitely have an issue where we assume a given HTML container will only be loaded once.
 * Do a more thorough job ensuring fields are not null (unless allowed_to_be_null_before_destroyed == True). We might have to wait for real model-based validations (Django 1.2).
+* Advanced search; combinatorial search, etc.
+* CustomURL layouts should inherit from parent CustomURL layouts
+
 Django bugs
 -----------
 * Fix the multiple inheritance bug
@@ -82,9 +83,6 @@ Django bugs
   - http://code.djangoproject.com/ticket/2227
 * HTML special chars are being escaped twice in RSS feeds
   - http://code.djangoproject.com/ticket/6533
-* Advanced search
-* CustomURL layouts should inherit from parent CustomURL layouts
-* Email alias field, optional for each address; could look for Postmaster spam using cron job each minute
 
 Layout
 ------

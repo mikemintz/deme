@@ -248,17 +248,14 @@ div.comment_box_header {
     margin-bottom: 5px;
 }
 
+div.subcomments {
+    margin-left: 20px;
+    border-left: 2px dotted #bbb;
+}
 div.comment_outer {
     margin-left: 20px;
-    border: thin solid #aaa;
-    border-width: thin 0 0 thin;
-}
-div.comment_outer_toplevel {
-    margin-left: 0;
-    border-width: thin thin thin thin;
 }
 div.comment_header {
-    background: #ccc;
     padding: 3px;
 }
 div.comment_body {

@@ -691,6 +691,7 @@ class CalculateComments(template.Node):
         else:
             result.append("</div>")
         def add_comments_to_div(comments, nesting_level=0):
+            result.append(u'<div class="subcomments">')
             for comment_info in comments:
                 comment = comment_info['comment']
                 result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
@@ -701,7 +702,12 @@ class CalculateComments(template.Node):
                 result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (comment.pk, comment.version_number))
                 result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;" >Advanced</a> ' % (comment.pk))
                 result.append(u'</form></div>')
-                result.append(u'<div class="comment_outer%s" id="right_pane_comment_%d">' % (' comment_outer_toplevel' if nesting_level == 0 else '', comment.pk))
+                result.append(u'<div style="position: relative;">')
+                result.append(u'<div style="position: absolute; top: 10px; left: 0; width: 20px; border-top: 2px dotted #bbb;"></div>')
+                if comment_info['subcomments']:
+                    result.append(u'<div style="position: absolute; top: 1px; left: -10px; border: 2px solid #bbb; background: #fff; width: 15px; height: 15px; text-align: center; vertical-align: middle; font-size: 12px; font-weight: bold; cursor: pointer;" onclick="$(\'#comment_children%s\').toggle(); if ($(this).text() == \'+\') { $(this).text(\'-\') } else { $(this).text(\'+\') }">-</div>' % comment.pk)
+                result.append(u'</div>')
+                result.append(u'<div class="comment_outer" id="right_pane_comment_%d">' % comment.pk)
                 result.append(u'<div class="comment_header">')
                 result.append(u'<div style="float: right;"><a href="#" onclick="openCommentDialog(\'comment%s\'); return false;">[+] Respond</a></div>' % (comment.pk))
                 if issubclass(comment.item.actual_item_type(), Comment):
@@ -730,8 +736,12 @@ class CalculateComments(template.Node):
                 else:
                     comment_body = '[INACTIVE]'
                 result.append(u'<div class="comment_body" style="display: none;">%s</div>' % comment_body)
-                add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
+                if comment_info['subcomments']:
+                    result.append(u'<div id="comment_children%s">' % comment.pk)
+                    add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
+                    result.append(u'</div>')
                 result.append("</div>")
+            result.append("</div>")
         comment_dicts, n_comments = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection), True)
         add_comments_to_div(comment_dicts)
         result.append("</div>")
