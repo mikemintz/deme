@@ -42,6 +42,7 @@ class PollViewer(CollectionViewer):
     def verifyCurAgentIsEligible(self):
         if not self.item.agent_eligible_to_vote(self.cur_agent):
             return self.render_error('Not an eligible agent', "You are not permitted to vote on this poll")
+     
             
 class ChooseNPollViewer(PollViewer):
     accepted_item_type = ChooseNPoll
@@ -101,7 +102,6 @@ class ApproveNPollViewer(PollViewer):
         return HttpResponse(template.render(self.context))
 
     def item_respondtopropositions_html(self):
-        from datetime import date
         propositions = self.request.POST
         #verify that the cur agent is in the eligbles
         self.verifyCurAgentIsEligible()

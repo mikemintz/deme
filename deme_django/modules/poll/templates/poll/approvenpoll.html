@@ -7,7 +7,7 @@ div {
 }
 
 div p {
-  font-size: 16px;
+  font-size: 14px;
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -39,9 +39,9 @@ div.submit_button a.poll {
 
 div #Results {
     width: 20%;
-    padding-left: 1em;
-	background-color: #CCF;
-	outline: 2px solid black;
+	padding: 0;
+	margin: .2em;
+	margin-left: .5em;
 	float: right;
 }
 
@@ -77,9 +77,15 @@ div.container span span{
 
 div.container div.implementation{
 	height: 16em;
-	overflow: hidden;
+	width: 30%;
+	overflow-y: hidden;
+	overflow-x: hidden;
 	margin: 0em;
 	display: none;
+}
+
+#hiddenDecisionButtons p{
+	font-size: 10px;
 }
 
 </style>
@@ -118,11 +124,21 @@ div.container div.implementation{
 			$(buttons).slideUp("slow");
 		}
 	};
+	
+	function removeMember(pk){
+		$("#removeInput").val(pk);
+		$("#removemember").submit();
+	};
+	
+    
 </script>
-
+<form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+    <input id="removeInput"type="hidden" name="item" value="{{ membership.item.pk }}" />
+</form>
 
 <div id='Results'>
-	<p>View Results<p>
+	<div style="font-size: 16px; padding-left: .6em; margin: 0; background-color: #CCF; outline: 1px solid black;">View Results</div>
+	<div style="overflow-x: hidden; overflow-y: scroll; padding: 0; margin: 0; height: 100px; background-color: #CCF; outline: 1px solid black;">
 	{% if decisions %}
 		{% for decision in decisions %}
 			{% ifagentcan 'view Decision.poll' decision %}
@@ -132,8 +148,29 @@ div.container div.implementation{
 	{% else %}
 		<p>No Results Yet<p>
 	{% endif %}
+	</div>
+	<div style="float:right;">
+		{% if cur_agent_can_make_a_decision %}
+		<div class="submit_button" id="NewDecision" style="margin-top: .5em; float:right;">
+		    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')" style="float: right; width: 110%; font-size: 13px; margin-right:0;">Calculate Result</a>
+		</div>
+		{% endif %}
+		<div id="hiddenDecisionButtons" style="display: none; width: 150%;">
+			{% ifagentcanglobal 'create PluralityApproveNDecision' %} 
+			<p><a href="{% url item_type_url viewer='pluralityapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Plurality Aggregation</a></p>
+			{% endifagentcanglobal %}
+			{% ifagentcanglobal 'create ThresholdApproveNDecision' %}
+			 <p><a  href="{% url item_type_url viewer='thresholdapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Threshold Aggregation</a></p>
+			{% endifagentcanglobal %}
+			{% ifagentcanglobal 'create ThresholdEApproveNDecision' %}
+			 <p><a  href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">ThresholdE Aggregation</a></p>
+			{% endifagentcanglobal %}
+		</div>
+	</div>
 </div>
-<div class='Question'> 
+
+
+<div class='Question' style="width: 50%"> 
 	{% ifagentcan 'view Poll.question' item %}
 	<p>{{ item.question }}</p>
 	{% else %}
@@ -141,10 +178,8 @@ div.container div.implementation{
 	{% endifagentcan %}
 	<p id='label'> Question </p>
 </div>
-<div class='Deadline'>
-	<p>{% ifagentcan 'view Poll.deadline_date' item %} {{ item.deadline_date }} {% endifagentcan %} 
-		{% ifagentcan 'view Poll.deadline_time' item %} at {{ item.deadline_time }} {% endifagentcan %} 
-	</p>
+<div class='Deadline' style="width: 50%">
+	<p>{% ifagentcan 'view Poll.deadline' item %} {{ item.deadline }} {% endifagentcan %} </p>
 	<p id='label'> Deadline </p>
 </div>
 <div class='timezone'>
@@ -158,13 +193,14 @@ div.container div.implementation{
 	<p id='label'> Poll Started </p>
 </div>
 
+
 <br />
 <br />
 <div class='Instructions'>
 	{% ifagentcan 'view ApproveNPoll.n' item %}
 	<p style="font-size: 16px;">Approve {{ item.n }} or fewer propositions.</p>
 	{% endifagentcan %}
-<div>
+</div>
 
 
 
@@ -202,7 +238,12 @@ div.container div.implementation{
 				<option value="disapprove">Disapprove</option>
 				</select> 
 				{% endif %}
-			<input type="button" value="Show Details" id="hide{{ proposition.pk }}" onclick="toggleImplementation('{{ proposition.pk }}')" /></div><div style="clear: both;"></div></span></div>
+			<input type="button" value="Show Details" id="hide{{ proposition.pk }}" onclick="toggleImplementation('{{ proposition.pk }}')" />				 	
+					{% ifagentcan 'modify_membership' item %}
+		                <button type="button" onclick="removeMember('{{ proposition.pk }}')"><img src="{{ "delete"|icon_url:16 }}" /> Remove</button>
+		            {% endifagentcan %}<div style="clear: both;"></div>		
+				
+			</div></span></div>
 			
     <div class="implementation"id="{{ proposition.pk }}">
 	<a href="{{ proposition.get_absolute_url }}">View as an item</a>{{proposition.body|safe}} 
@@ -218,8 +259,6 @@ div.container div.implementation{
 {% else %}
     No propositions in this poll
 {% endif %}
-<br />
-
 
 
 {% ifagentcan 'modify_membership' item %}
@@ -227,15 +266,8 @@ div.container div.implementation{
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Add a Proposition</a>
 </div>
 {% endifagentcan %}
-
-{% if cur_agent_can_make_a_decision %}
-<div class="submit_button" id="NewDecision" style="margin-left:5em;">
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')">Calculate Result</a>
-</div>
-{% endif %}
-<br />
-<br />
-{# NEED TO MAKE THIS IFAGENTCAN CREATE PROPOSITION AND MODIFY MEMBERSHIP(WHICH IT ALREADY IS CHECKING) #}
+<br>
+<br>
 <div id="hiddenPropositionButtons" style="margin: 4px; height 2em; display:none;">
 	{% ifagentcanglobal 'create Proposition' %}
 	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Proposition</a>
@@ -246,23 +278,6 @@ div.container div.implementation{
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Cancel</a><br><br>
 </div>
 
-<div id="hiddenDecisionButtons" style="margin: 4px; height 5em; display: none;">
-	{% ifagentcanglobal 'create PluralityApproveNDecision' %} 
-	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='pluralityapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">
-		New Plurality Aggregation</a>
-	{% endifagentcanglobal %}
-	{% ifagentcanglobal 'create ThresholdApproveNDecision' %}
-	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">New Threshold Aggregation</a>
-	{% endifagentcanglobal %}
-	{% ifagentcanglobal 'create ThresholdEApproveNDecision' %}
-	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">New ThresholdE Aggregation</a>
-	{% endifagentcanglobal %}
-	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')">Cancel</a><br><br>
-</div>
-
-<br />
-<br />
-<br />
 <p style="font-size:16px;">Responses:</p>
 {# make this a bulleted list with hidden divs #}
 <div class="container responses" id="Propcontainer" style="width: 60%; margin-left: 0;">

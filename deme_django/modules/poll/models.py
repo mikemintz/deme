@@ -15,9 +15,9 @@ class Poll(Collection):
     #Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['edit Poll.visibility', 'view Poll.visibility', 'edit Poll.question', 'view Poll.question',
-                                      'edit Poll.begins', 'view Poll.begins', 'edit Poll.deadline_date', 'view Poll.deadline_date', 
-                                      'edit Poll.deadline_time', 'view Poll.deadline_time', 'edit Poll.eligibles', 'view Poll.time_zone',
-                                      'edit Poll.time_zone', 'view Poll.eligibles', 'access_proposition_responses'])
+                                      'edit Poll.begins', 'view Poll.begins', 'edit Poll.deadline', 'view Poll.deadline', 
+                                      'edit Poll.eligibles', 'view Poll.time_zone', 'edit Poll.time_zone', 'view Poll.eligibles', 
+                                      'access_proposition_responses'])
     introduced_global_abilities = frozenset(['create Poll'])
     dyadic_relations = {}
 
@@ -27,9 +27,8 @@ class Poll(Collection):
 
     #fields:
     question = models.TextField(_('question'), blank=True)
-    begins = models.DateField(_('begins'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
-    deadline_date = models.DateTimeField(_('deadline date'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
-    deadline_time = models.TimeField(_('deadline time'), null=True, blank=True, default=None, )
+    begins = models.DateTimeField(_('begins'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
+    deadline = models.DateTimeField(_('deadline'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     time_zones = (
         (settings.TIME_ZONE, u'(default) ' + settings.TIME_ZONE),
         (u'UTC-8', u'Pacific Standard Time (UTC -8)'),
