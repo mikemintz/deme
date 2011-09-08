@@ -68,6 +68,7 @@ $(document).ready(function () {
     },
   });
   $("#jqgrid_list_collection_{{ item.pk }}").jqGrid('navGrid','#jqgrid_pager_collection_{{ item.pk }}',{edit:false,add:false,del:false});
+  $("#jqgrid_list_collection_{{ item.pk }}").jqGrid('navButtonAdd',"#jqgrid_pager_collection_{{ item.pk }}",{caption:"Columns",title:"Choose columns",buttonicon:"ui-icon-gear",onClickButton:function(){$("#jqgrid_list_collection_{{ item.pk }}").jqGrid('columnChooser',{});}});
 
   {% ifagentcan 'modify_membership' item %}
   $("#jqgrid_list_collection_{{ item.pk }}").jqGrid('navButtonAdd',"#jqgrid_pager_collection_{{ item.pk }}",{caption:"Add",title:"Add an item to {% viewable_name item %}",buttonicon:"ui-icon-circle-plus",onClickButton:function(){openDialog('addmember{{ item.pk }}');}})
