@@ -5,15 +5,16 @@
 
 <div style="font-size: larger; margin-left: 55% ">Members</div>
 
-<div style = "float: left; width: 50%; margin-bottom;">
+<div style = "float: left; width: 50%;">
 	{% if item.image %}
 	{% ifagentcan 'view Group.image' item %}
 	{% ifagentcan 'view FileDocument.datafile' item.image %}
 	<img src="{{ item.image.datafile.url }}" style="max-width: 200px; max-height: 200px;" />
+	<p style="front-weight: bold; margin-top:.5em;"> Group Image </p>
 	{% endifagentcan %}
 	{% endifagentcan %}
 	{% endif %}
-	<p style="color: blue; margin-top:.5em;"> Group Image </p>
+	
 
 	{% ifagentcan 'view Item.description' item %}
 	<p style="font-size: 15px; margin-bottom:.5em;">{{ item.description }}</p>

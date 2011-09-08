@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpRequest, HttpResponseRedirect
 from cms.views import HtmlDocumentViewer, CollectionViewer, ItemViewer
 from cms.models import *
 from django.db.models import Q
-from modules.poll.models import Poll, Proposition, PropositionResponse, Decision, WriteInPropositions, PropositionResponseChoose, PropositionResponseApprove, ChooseNPoll, ApproveNPoll, UnanimousChooseNDecision
+from modules.poll.models import Poll, Proposition, PropositionResponse, Decision, PropositionResponseChoose, PropositionResponseApprove, ChooseNPoll, ApproveNPoll, UnanimousChooseNDecision
 from modules.poll.models import PluralityChooseNDecision, ThresholdChooseNDecision, ThresholdEChooseNDecision, PluralityApproveNDecision, ThresholdApproveNDecision, ThresholdEApproveNDecision
 from datetime import date, datetime, timedelta, tzinfo
 import calendar
@@ -38,7 +38,12 @@ class PollViewer(CollectionViewer):
         self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
         template = loader.get_template('poll/poll.html')
         return HttpResponse(template.render(self.context))
-
+    
+    def verifyCurAgentIsEligible(self):
+        if not self.item.agent_eligible_to_vote(self.cur_agent):
+            return self.render_error('Not an eligible agent', "You are not permitted to vote on this poll")
+     
+            
 class ChooseNPollViewer(PollViewer):
     accepted_item_type = ChooseNPoll
     viewer_name = 'choosenpoll' 
@@ -91,50 +96,33 @@ class ApproveNPollViewer(PollViewer):
         self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
         self.context['can_view_response_names'] = self.item.visibility != 'closed' or self.permission_cache.agent_can('access_proposition_responses', self.item)
         self.context['can_view_response_names_and_values'] = self.item.visibility == 'responses visible' or self.permission_cache.agent_can('access_proposition_responses', self.item)
+        self.context['cur_agent_in_eligbles'] = self.item.agent_eligible_to_vote(self.cur_agent)
+        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision') 
         template = loader.get_template('poll/approvenpoll.html')
         return HttpResponse(template.render(self.context))
 
     def item_respondtopropositions_html(self):
         propositions = self.request.POST
         #verify that the cur agent is in the eligbles
+        self.verifyCurAgentIsEligible()
+        #verify that it is not before or after the deadline
         
-        #verify that there isn't already an entry
-        if PropositionResponseApprove.objects.all().filter(poll=self.item, participant=self.cur_agent):
-            return self.render_error('Response Already Exists', "You have already responded to this poll")
         #verify that there are only n or less responses
         counter=0
-        print self.item.n
         for response in propositions:    
             if propositions[response]=="approve" or propositions[response]=="disapprove":
                 counter=counter+1
-                print counter
-                if counter>self.item.n:
+                if counter>self.item.n: #this needs to be changed for chooseN
                     return self.render_error('Too many votes', "Approve "+str(self.item.n)+" or fewer propositions.")
+                    
+        #delete old response (even if one doesn't exist)
+        PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent).delete()
+        #make a new response
         for response in propositions:
-            response = PropositionResponseApprove(poll=self.item, participant= self.cur_agent, proposition = Proposition.objects.get(pk=response), value = propositions[response])
-            response.save_versioned(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+            newResponse = PropositionResponseApprove(poll=self.item, participant= self.cur_agent, proposition = Proposition.objects.get(pk=response), value = propositions[response])
+            newResponse.save()
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
-        #   if request.method == 'POST':
-        #       form = ContactForm(self.request.POST)
-        #       if form.is_valid():
-        #   response = PropositionResponseChoose.objects.create(poll=self., participant= "", proposition = "", value = "")
-        #  try:
-        #       vote = RecursiveProject.objects.get(pk=self.request.POST.get('vote'))
-        #   except:
-        #       return self.render_error('Invalid URL', "There is something wrong....")
-        #   print(vote)
-
-    #def item_respondtopropositions_item(self):
-     #   if request.method == 'POST':
-     #       form = ContactForm(self.request.POST)
-     #       if form.is_valid():
-     #   response = PropositionResponseChoose.objects.create(poll=self., participant= "", proposition = "", value = "")
-     #  try:
-     #       vote = RecursiveProject.objects.get(pk=self.request.POST.get('vote'))
-     #   except:
-     #       return self.render_error('Invalid URL', "There is something wrong....")
-     #   print(vote)
 
 
 class PropositionViewer(HtmlDocumentViewer):
@@ -145,36 +133,6 @@ class PropositionViewer(HtmlDocumentViewer):
         self.context['action_title'] = 'Show'
         self.context['item'] = self.item
         template = loader.get_template('poll/proposition.html')
-        return HttpResponse(template.render(self.context))
-
-class PropositionResponseViewer(HtmlDocumentViewer):
-    accepted_item_type = PropositionResponse
-    viewer_name = 'propositionresponse' 
-
-    def item_show_html(self):
-        self.context['action_title'] = 'Show'
-        self.context['item'] = self.item
-        template = loader.get_template('poll/propositionresponse.html')
-        return HttpResponse(template.render(self.context))
-        
-class PropositionResponseChooseViewer(PropositionResponseViewer):
-    accepted_item_type = PropositionResponseChoose
-    viewer_name = 'propositionresponsechoose' 
-
-    def item_show_html(self):
-        self.context['action_title'] = 'Show'
-        self.context['item'] = self.item
-        template = loader.get_template('poll/propositionresponsechoose.html')
-        return HttpResponse(template.render(self.context))
-
-class PropositionResponseApproveViewer(PropositionResponseViewer):
-    accepted_item_type = PropositionResponseApprove
-    viewer_name = 'propositionresponseapprove' 
-
-    def item_show_html(self):
-        self.context['action_title'] = 'Show'
-        self.context['item'] = self.item
-        template = loader.get_template('poll/propositionresponseapprove.html')
         return HttpResponse(template.render(self.context))
 
 class DecisionViewer(ItemViewer):
@@ -534,30 +492,30 @@ class ThresholdEApproveNDecisionViewer(DecisionViewer):
         template = loader.get_template('poll/thresholdechoosendecision.html')
         return HttpResponse(template.render(self.context))
 
-class WriteInPropositionsViewer(CollectionViewer):
-    accepted_item_type = WriteInPropositions 
-    viewer_name = 'writeinpropositions' 
-
-
-    def item_show_html(self):
-        dependencies = PropositionResponse.objects.all()
-
-        self.context['responses'] = dependencies.filter(poll=self.item.pk)
-
-        from cms.forms import AjaxModelChoiceField
-        self.context['action_title'] = ''
-        self.require_ability('view ', self.item, wildcard_suffix=True)
-        memberships = self.item.child_memberships
-        memberships = memberships.filter(active=True)
-        memberships = memberships.filter(item__active=True)
-        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
-        memberships = memberships.select_related('item')
-        if memberships:
-            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
-        self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can('view Item.name', x.item), x.item.name))
-        self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
-        template = loader.get_template('poll/writein.html')
-        return HttpResponse(template.render(self.context))
+# class WriteInPropositionsViewer(CollectionViewer):
+#     accepted_item_type = WriteInPropositions 
+#     viewer_name = 'writeinpropositions' 
+# 
+# 
+#     def item_show_html(self):
+#         dependencies = PropositionResponse.objects.all()
+# 
+#         self.context['responses'] = dependencies.filter(poll=self.item.pk)
+# 
+#         from cms.forms import AjaxModelChoiceField
+#         self.context['action_title'] = ''
+#         self.require_ability('view ', self.item, wildcard_suffix=True)
+#         memberships = self.item.child_memberships
+#         memberships = memberships.filter(active=True)
+#         memberships = memberships.filter(item__active=True)
+#         memberships = self.permission_cache.filter_items('view Membership.item', memberships)
+#         memberships = memberships.select_related('item')
+#         if memberships:
+#             self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+#         self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can('view Item.name', x.item), x.item.name))
+#         self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
+#         template = loader.get_template('poll/writein.html')
+#         return HttpResponse(template.render(self.context))
 
 
 
