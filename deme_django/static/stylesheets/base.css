@@ -252,9 +252,13 @@ div.subcomments {
     margin-left: 20px;
     border-left: 2px dotted #bbb;
 }
+div.subcomments_last {
+    margin-left: 20px;
+    /*border-left: 2px dotted #bbb;*/
+}
 div.comment_header {
     padding: 3px;
-    margin-left: 20px;
+    margin-left: 10px;
 }
 div.comment_body {
     padding-bottom: 5px;
