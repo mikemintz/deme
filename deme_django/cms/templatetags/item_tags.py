@@ -841,6 +841,7 @@ class CalculateRelationships(template.Node):
 
         permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=all_pks))
         result = []
+        memberOf = []
         for relationship_set in relationship_sets:
             friendly_name = capfirst(relationship_set['name']).replace('_', ' ')
             field = relationship_set['field']
@@ -848,7 +849,10 @@ class CalculateRelationships(template.Node):
             result.append('<div><a href="%s"><b>%s</b></a></div>' % (list_url, friendly_name))
             for related_item in relationship_set['items']:
                 result.append('<div>%s</div>' % get_item_link_tag(context, related_item))
+                if friendly_name == "Member of":
+                    memberOf.append('<div>%s</div>' % get_item_link_tag(context, related_item))             
         context['relationships_box'] = mark_safe('\n'.join(result))
+        context['memberOf_box'] = mark_safe('\n'.join(memberOf))
         context['n_relationships'] = sum(len(x['items']) for x in relationship_sets)
         return ''
 
