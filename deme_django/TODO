@@ -55,6 +55,8 @@ If you destroy a comment, the subcomments won't appear in the same thread since 
 
 The list viewer should allow you to refer to related items (a particular field) in a column, which will load all related items and display that field, as permissions allow. Sorting and searching will also need to be implemented. Maybe this would use subgrids?
 
+Have an "other" field for priority on Project. When the user specifies "other" then a dialog box will show up on the form to set a custom status.
+
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
 * make links to Symsys internal pages work in static documents

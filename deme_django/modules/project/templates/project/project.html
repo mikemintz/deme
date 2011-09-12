@@ -14,7 +14,7 @@ div p{
 
 #label {
   font-size: 12px;
-  color: blue;
+  font-weight: bold;
   margin: 0;
 }
 
@@ -25,7 +25,6 @@ div.status {
 div.due p{
   font-size: 180%;
   margin-left: 50%;
-  color: red;
 }
 
 #repeat{
@@ -76,9 +75,8 @@ div.start {
         <input type="hidden" name="item" value="{{ item.pk }}" /><button type="submit" style= "margin-left: 4em;"><span>Completed</span></button></form>
    	{% endifagentcan %}
 	{% ifagentcan 'view Project.repeat' item %}
-		{% ifnotequal item.repeat "Never" %}
-			<p id="repeat">This event repeats: {{ item.repeat }}</p>
-		{% endifnotequal %}
+			<p id="repeat">{{ item.repeat }}</p>
+			<p id="label">Repeats</p> 
 	{% endifagentcan %}
 </div>
 <div class="author">
@@ -91,17 +89,7 @@ div.start {
 </div>
 <div class="priority">
 	{% ifagentcan 'view Project.priority' item %} 
-		<p>
-		{% ifequal item.priority "Other" %} 
-			{% if item.priority_text %} 
-				{{ item.priority_text }} 
-			{% else %} 
-				{{ item.priority }} 
-			{% endif %}  
-		{% else %}
-	 		{{ item.priority }} 
-		{% endifequal %} 
-		</p> 
+		<p>	{{ item.priority }} </p> 
 	{% else %}
 	    <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
     {% endifagentcan %}
@@ -173,7 +161,7 @@ div.start {
 
 <br />
 <br />
-<p style="font-size: 12px;">Tasks and Subprojects:</p>
+<p style="font-size: 12px;">Subprojects:</p>
 {% if memberships %}
 <table cellspacing="0" class="list">
     <tr>
@@ -216,15 +204,7 @@ div.start {
 		</td>
 		<td>
 		{% ifagentcan 'view Project.priority' subproject %}
-			{% ifequal subproject.priority "Other" %} 
-				{% if subproject.priority_text %} 
-					{{ subproject.priority_text }} 
-				{% else %} 
-					{{ subproject.priority }} 
-				{% endif %}  
-			{% else %} 
 				{{ subproject.priority }}
-			{% endifequal %}
 		{% endifagentcan %}
 		</td>
 		<td>

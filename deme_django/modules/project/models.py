@@ -34,10 +34,8 @@ class Project(Collection, HtmlDocument):
         ('Low', 'Low'),
         ('Medium', 'Medium'),
         ('High', 'High'), 
-        ('Other', 'Other'),
     )
     priority = models.CharField(_('priority'), max_length=10, default='Low', choices=Priority_Choices) 
-    priority_text = models.CharField(_('other'), max_length=16, null=True, blank=True, default=None)
     length = models.DecimalField(_('length'), default=0, max_digits=6, decimal_places=2, help_text=_('in hours'))
     Status_Choices = (
         ('Unassigned', 'Unassigned'),
@@ -46,7 +44,7 @@ class Project(Collection, HtmlDocument):
     )
     status = models.CharField(_('status'), default='Unassigned', max_length=16, choices=Status_Choices)
     Repeat_Choices = (
-        ('Never', 'Never'),
+        ('No', 'No'),
         ('Daily', 'Daily'),
         ('Weekly', 'Weekly'),
         ('Monthly', 'Monthly'),

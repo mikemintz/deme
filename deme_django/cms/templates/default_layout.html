@@ -290,6 +290,16 @@
                         <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
                     </ul>
                 </div>
+				{% if item %}
+				<br>
+				<div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
+                    Member Of
+                </div>
+				{% calculaterelationships %}
+                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px;">
+                     {{ memberOf_box }}
+                </div>
+				{% endif %}
             </td>
             <td style="vertical-align: top; width: 85%; padding:0;" id="center_table_column">
                 <div style="padding: 0 5px 0 5px;">
