@@ -315,9 +315,13 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
             #new_comments = new_comments.select_related(*related_fields) 
             comments.extend(new_comments)
     comments.sort(key=lambda x: x.created_at)
+    transclusions_to = Transclusion.objects.filter(to_item__in=[x.pk for x in comments])
+    transclusions_to = permission_cache.filter_items('view Transclusion.from_item', transclusions_to)
+    transclusions_to = permission_cache.filter_items('view Transclusion.to_item', transclusions_to)
     pk_to_comment_info = {}
     for comment in comments:
-        comment_info = {'comment': comment, 'subcomments': []}
+        transclusions_to_comment = [x for x in transclusions_to if x.to_item_id == comment.pk]
+        comment_info = {'comment': comment, 'transclusions_to': transclusions_to_comment, 'subcomments': []}
         pk_to_comment_info[comment.pk] = comment_info
     comment_dicts = []
     for comment in comments:
@@ -742,6 +746,12 @@ class CalculateComments(template.Node):
             result.append(u'</div>')
             for i in xrange(len(parents) + 1):
                 result.append(u'</div>')
+            transclusions_to = []
+            for node in parents + (comment_info,):
+                transclusions_to.extend(node['transclusions_to'])
+            transclusion_text = ''
+            for transclusion in transclusions_to:
+                transclusion_text += u'<div>%s</div>' % get_item_link_tag(context, transclusion)
             if isinstance(comment, TextComment):
                 if agentcan_helper(context, 'view TextDocument.body', comment):
                     comment_body = escape(comment.body).replace('\n', '<br />')
@@ -751,9 +761,14 @@ class CalculateComments(template.Node):
                 comment_body = ''
             comment_url = u'%s?crumb_filter=recursive_comments_as_child.parent.%d' % (comment.get_absolute_url(), item.pk)
             result.append(u'<div id="comment_body%d" class="comment_body" style="display: none;">' % comment.pk)
-            result.append(comment_body)
-            result.append(u'<br /><a href="#" onclick="openCommentDialog(\'comment%s\'); return false;">Respond</a>' % (comment.pk))
-            result.append(u'<br /><a href="%s">View comment as item</a>' % comment_url)
+            if transclusions_to:
+                result.append(u'<div style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: thin solid #ccc;">%s</div>' % transclusion_text)
+            result.append(u'<div>%s</div>' % comment_body)
+            result.append(u'<div style="clear: both; font-size: smaller; margin-top: 5px; padding-top: 5px; border-top: thin solid #ccc;">')
+            result.append(u'<a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Respond</a>' % comment.pk)
+            result.append(u'<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-newwin"></span>View comment as item</a>' % comment_url)
+            result.append(u'<div style="clear: both;"></div>')
+            result.append(u'</div>')
             result.append(u'</div>')
             result.append(u'<div id="comment_children%s">' % comment.pk)
             for subcomment in comment_info['subcomments']:
