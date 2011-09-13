@@ -33,33 +33,42 @@
         if (highlighted_transclusion_id != null) {
             $('#inline_transclusion_' + highlighted_transclusion_id).removeClass('commentref_highlighted');
         }
+        DemeCanvasPointing.clearLine();
 
         if (comment_id == highlighted_comment_id && transclusion_id == highlighted_transclusion_id) {
-            // If comment/transclusion is same as before, remove all highlighting
-            DemeCanvasPointing.clearLine();
+            // If comment/transclusion is same as before, don't re-highlight
             highlighted_comment_id = null;
             highlighted_transclusion_id = null;
         } else {
-            // Expand the accordion to the comment section
-            $('#right_accordion').accordion('activate', '#accordion_header_comments');
-            // Show located comments
-            $('.commentref').show();
-            $('#hide_located_comments').show();
-            $('#show_located_comments').hide();
+            if (comment_id != null) {
+                // Expand the accordion to the comment section
+                $('#right_accordion').accordion('activate', '#accordion_header_comments');
+                // Highlight the comment
+                $('#right_pane_comment_' + comment_id).addClass('comment_header_highlighted');
+                // Scroll to the proper place in the comment sidebar
+                if (scroll_comments) {
+                    var y = $('#right_pane_comment_' + comment_id).offset().top - $('#fixed_right_pane').offset().top;
+                    $('#fixed_right_pane').scrollTop(y);
+                }
+            }
+            if (transclusion_id != null) {
+                // Show located comments
+                $('.commentref').show();
+                $('#hide_located_comments').show();
+                $('#show_located_comments').hide();
+                // Highlight the transclusion
+                $('#inline_transclusion_' + transclusion_id).addClass('commentref_highlighted');
+                // Scroll to the proper place in the document body
+                if (scroll_body) {
+                    var y = $('#inline_transclusion_' + transclusion_id).offset().top;
+                    $(document.body).scrollTop(y);
+                }
+            }
             // Setup the canvas pointing line between transclusion and comment
-            DemeCanvasPointing.drawLine($('#inline_transclusion_' + transclusion_id), $('#right_pane_comment_' + comment_id));
-            // Highlight the comment
-            $('#right_pane_comment_' + comment_id).addClass('comment_header_highlighted');
-            // Highlight the transclusion
-            $('#inline_transclusion_' + transclusion_id).addClass('commentref_highlighted');
-            if (scroll_body) {
-                var y = $('#inline_transclusion_' + transclusion_id).offset().top;
-                $(document.body).scrollTop(y);
+            if (comment_id != null && transclusion_id != null) {
+                DemeCanvasPointing.drawLine($('#inline_transclusion_' + transclusion_id), $('#right_pane_comment_' + comment_id));
             }
-            if (scroll_comments) {
-                var y = $('#right_pane_comment_' + comment_id).offset().top - $('#fixed_right_pane').offset().top;
-                $('#fixed_right_pane').scrollTop(y);
-            }
+            // Store the currently highlighted comment and transclusion
             highlighted_comment_id = comment_id;
             highlighted_transclusion_id = transclusion_id;
         }

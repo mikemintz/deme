@@ -608,7 +608,14 @@ def display_body_with_inline_transclusions(item, is_html):
     last_i = None
     for transclusion in transclusions:
         if RecursiveComment.objects.filter(parent=item, child=transclusion.to_item).exists():
-            transclusion_html = '<a href="#" onclick="highlight_comment(\'%d\', \'%d\', false, true); return false;" class="commentref" id="inline_transclusion_%d">%s</a>' % (transclusion.to_item.pk, transclusion.pk, transclusion.pk, escape(transclusion.to_item.display_name()))
+            n_replies = RecursiveComment.objects.filter(parent=transclusion.to_item).count()
+            transclusion_main_html = u'<a href="#" onclick="highlight_comment(\'%d\', \'%d\', false, true); return false;" class="commentref" id="inline_transclusion_%d">%s</a>' % (transclusion.to_item.pk, transclusion.pk, transclusion.pk, escape(transclusion.to_item.display_name()))
+            if n_replies > 0:
+                #TODO this should point to the replies, not the first comment (ideally by just having a class name for each parent)
+                transclusion_replies_html = u' <a href="#" onclick="highlight_comment(\'%d\', \'replies%d\', false, true); return false;" class="commentref" id="inline_transclusion_replies%d">%d replies</a>' % (transclusion.to_item.pk, transclusion.pk, transclusion.pk, n_replies)
+            else:
+                transclusion_replies_html = u''
+            transclusion_html = u'%s%s' % (transclusion_main_html, transclusion_replies_html)
         else:
             transclusion_url = u'%s?crumb_filter=transclusions_to.from_item.%d' % (transclusion.to_item.get_absolute_url(), item.pk)
             transclusion_html = u'<a href="%s" class="commentref" id="inline_transclusion_%d">%s</a>' % (transclusion_url, transclusion.pk, escape(transclusion.to_item.display_name()))
@@ -725,9 +732,14 @@ class CalculateComments(template.Node):
             result.append(u'<div style="position: relative;"><div style="position: absolute; top: 0; left: 0;">')
             if original_comment.item.pk == item.pk:
                 relevant_transclusions = [x for x in transclusions_to if x.from_item_id == item.pk and x.from_item_version_number == item.version_number]
+                #TODO point to all transclusions
                 transclusion = relevant_transclusions[0] if relevant_transclusions else None #TODO less arbitrary way to calculate
-                if transclusion:
-                    result.append(u'<a href="#" onclick="highlight_comment(\'%d\', \'%d\', true, false); return false;">' % (comment.pk, transclusion.pk))
+                if context.get('in_textdocument_show', False):
+                    if transclusion:
+                        transclusion_html_id = ('' if transclusion.to_item_id == comment.pk else 'replies') + ('%d' % transclusion.pk)
+                        result.append(u'<a href="#" onclick="highlight_comment(\'%s\', \'%s\', true, false); return false;">' % (comment.pk, transclusion_html_id))
+                    else:
+                        result.append(u'<a href="#" onclick="highlight_comment(\'%s\', null, false, false); return false;">' % comment.pk)
                 else:
                     result.append(u'<a href="#" onclick="return false;">')
             else:
