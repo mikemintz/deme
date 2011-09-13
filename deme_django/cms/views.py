@@ -231,8 +231,6 @@ class ItemViewer(Viewer):
                     cur_item_type = field.model
                 else:
                     raise Exception("Cannot filter on field %s.%s (not a related field)" % (cur_item_type.__name__, field.name))
-                if not issubclass(cur_item_type, Item):
-                    raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
 
             def filter_by_filter(queryset, fields, item_types):
                 if not fields:
@@ -247,17 +245,19 @@ class ItemViewer(Viewer):
                 if isinstance(field, models.ForeignKey):
                     query_dict = {field.name + '__in': next_queryset}
                     result = queryset.filter(**query_dict)
-                    ability = 'view %s.%s' % (item_type.__name__, field.name)
-                    result = self.permission_cache.filter_items(ability, result)
+                    if issubclass(item_type, Item):
+                        ability = 'view %s.%s' % (item_type.__name__, field.name)
+                        result = self.permission_cache.filter_items(ability, result)
                 elif isinstance(field, models.related.RelatedObject):
-                    if not isinstance(field.field, models.OneToOneField):
+                    if issubclass(next_item_type, Item) and not isinstance(field.field, models.OneToOneField):
                         ability = 'view %s.%s' % (next_item_type.__name__, field.field.name)
                         next_queryset = self.permission_cache.filter_items(ability, next_queryset)
                     query_dict = {'pk__in': next_queryset.values(field.field.name).query}
                     result = queryset.filter(**query_dict)
                 else:
                     assert False
-                result = result.filter(active=True)
+                if issubclass(item_type, Item):
+                    result = result.filter(active=True)
                 return result
             items = filter_by_filter(items, fields, item_types)
         # Filter by collection
@@ -275,7 +275,8 @@ class ItemViewer(Viewer):
             ability = 'view %s.%s' % (field.model.__name__, field.name)
             items = self.permission_cache.filter_items(ability, items)
             if isinstance(field, models.ForeignKey):
-                foreign_items = self.permission_cache.filter_items('view Item.name', field.rel.to.objects)
+                foreign_items = field.rel.to.objects
+                foreign_items = self.permission_cache.filter_items('view Item.name', foreign_items)
                 items = items.filter(**{field.name + '__in': foreign_items})
                 sort_field = sort_field + "__name"
             items = items.order_by(('' if sort_ascending else '-') + sort_field)

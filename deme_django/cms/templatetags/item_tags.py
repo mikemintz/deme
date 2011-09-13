@@ -748,10 +748,11 @@ class CalculateComments(template.Node):
                     comment_body = ''
             else:
                 comment_body = ''
+            comment_url = u'%s?crumb_filter=recursive_comments_as_child.parent.%d' % (comment.get_absolute_url(), item.pk)
             result.append(u'<div id="comment_body%d" class="comment_body" style="display: none;">' % comment.pk)
             result.append(comment_body)
             result.append(u'<br /><a href="#" onclick="openCommentDialog(\'comment%s\'); return false;">Respond</a>' % (comment.pk))
-            result.append(u'<br /><a href="%s">View comment as item</a>' % comment.get_absolute_url())
+            result.append(u'<br /><a href="%s">View comment as item</a>' % comment_url)
             result.append(u'</div>')
             result.append(u'<div id="comment_children%s">' % comment.pk)
             for subcomment in comment_info['subcomments']:
@@ -1610,8 +1611,6 @@ class Crumbs(template.Node):
                     cur_item_type = field.model
                 else:
                     raise Exception("Cannot filter on field %s.%s (not a related field)" % (cur_item_type.__name__, field.name))
-                if not issubclass(cur_item_type, Item):
-                    raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
                 field_models.append(cur_item_type)
             target = field_models[-1].objects.get(pk=target_pk)
             reverse_fields = []
@@ -1640,6 +1639,9 @@ class Crumbs(template.Node):
                 subfilter_url = '%s?filter=%s' % (reverse('item_type_url', kwargs={'viewer': subfilter_item_type.__name__.lower()}), subfilter)
                 if isinstance(field, models.OneToOneField):
                     # We don't display crumbs for OneToOneFields like item_ptr
+                    continue
+                if not issubclass(subfilter_item_type, Item):
+                    # We don't display crumbs for non-item-types
                     continue
                 if isinstance(field, models.ForeignKey):
                     # Make it plural
