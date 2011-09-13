@@ -679,8 +679,10 @@ class CalculateComments(template.Node):
         result = []
         result.append(u'<div class="comment_box">')
         result.append(u'<div class="comment_box_header">')
+        grid_url = u'%s?filter=recursive_comments_as_child.parent.%d' % (reverse('item_type_url', kwargs={'viewer': 'textcomment'}), item.pk)
+        result.append(u'<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-calculator"></span>Grid</a>' % grid_url)
         if agentcan_helper(context, 'comment_on', item):
-            result.append(u'<button href="#" onclick="openCommentDialog(\'comment%s\'); return false;">[+] Add Comment</button>' % (item.pk))
+            result.append(u'<a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Add comment</a>' % item.pk)
             result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
             result.append(u'<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> ')
             if context['cur_agent'].is_anonymous():
@@ -689,9 +691,8 @@ class CalculateComments(template.Node):
             result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (item.pk, item.version_number))
             result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (item.pk))
             result.append(u'</form></div>')
-            result.append(u'</div>')
-        else:
-            result.append("</div>")
+        result.append(u'<div style="clear: both;"></div>')
+        result.append(u'</div>')
         def add_comment_to_div(comment_info, parents):
             for node in parents + (comment_info,):
                 if node['siblings'][-1]['comment'].pk == node['comment'].pk:

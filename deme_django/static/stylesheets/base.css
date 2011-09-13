@@ -243,9 +243,8 @@ form.item_form ul.errorlist li {
 div.comment_box {
 }
 div.comment_box_header {
-    text-align: right;
     font-size: smaller;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
 }
 
 div.subcomments {
