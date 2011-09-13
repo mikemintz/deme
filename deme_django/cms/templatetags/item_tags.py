@@ -724,7 +724,7 @@ class CalculateComments(template.Node):
             result.append(u'</div></div>')
             result.append(u'<div style="margin-left: 7px; padding-left: 19px;%s">' % (' border-left: 2px dotted #bbb;' if comment_info['subcomments'] else ''))
             if comment.active:
-                if agentcan_helper(context, 'view TextDocument.name', comment):
+                if agentcan_helper(context, 'view Item.name', comment):
                     comment_name = escape(truncate_words(comment.display_name(), 4))
                 else:
                     comment_name = comment.display_name(can_view_name_field=False)
