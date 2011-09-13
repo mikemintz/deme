@@ -1629,6 +1629,8 @@ class FileDocument(Document):
     def _before_destroy(self, action_agent, action_summary, action_time):
         super(FileDocument, self)._before_destroy(action_agent, action_summary, action_time)
         # Delete the datafile from the filesystem
+        for version in FileDocument.Version.objects.filter(current_item=self.pk):
+            version.datafile.delete()
         self.datafile.delete()
     _before_destroy.alters_data = True
 
