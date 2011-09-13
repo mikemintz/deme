@@ -18,9 +18,52 @@
 </style>
 
 <script type="text/javascript">
+    var highlighted_comment_id = null;
+    var highlighted_transclusion_id = null;
+
     $(document).ready(function () {
         DemeCanvasPointing.setup();
     });
+
+    function highlight_comment(comment_id, transclusion_id, scroll_body, scroll_comments) {
+        // Remove highlighting on previously highlighted comment/transclusion
+        if (highlighted_comment_id != null) {
+            $('#right_pane_comment_' + highlighted_comment_id).removeClass('comment_header_highlighted');
+        }
+        if (highlighted_transclusion_id != null) {
+            $('#inline_transclusion_' + highlighted_transclusion_id).removeClass('commentref_highlighted');
+        }
+
+        if (comment_id == highlighted_comment_id && transclusion_id == highlighted_transclusion_id) {
+            // If comment/transclusion is same as before, remove all highlighting
+            DemeCanvasPointing.clearLine();
+            highlighted_comment_id = null;
+            highlighted_transclusion_id = null;
+        } else {
+            // Expand the accordion to the comment section
+            $('#right_accordion').accordion('activate', '#accordion_header_comments');
+            // Show located comments
+            $('.commentref').show();
+            $('#hide_located_comments').show();
+            $('#show_located_comments').hide();
+            // Setup the canvas pointing line between transclusion and comment
+            DemeCanvasPointing.drawLine($('#inline_transclusion_' + transclusion_id), $('#right_pane_comment_' + comment_id));
+            // Highlight the comment
+            $('#right_pane_comment_' + comment_id).addClass('comment_header_highlighted');
+            // Highlight the transclusion
+            $('#inline_transclusion_' + transclusion_id).addClass('commentref_highlighted');
+            if (scroll_body) {
+                var y = $('#inline_transclusion_' + transclusion_id).offset().top;
+                $(document.body).scrollTop(y);
+            }
+            if (scroll_comments) {
+                var y = $('#right_pane_comment_' + comment_id).offset().top - $('#fixed_right_pane').offset().top;
+                $('#fixed_right_pane').scrollTop(y);
+            }
+            highlighted_comment_id = comment_id;
+            highlighted_transclusion_id = transclusion_id;
+        }
+    }
 
     var is_escaped = {% if is_html %}false{% else %}true{% endif %};
     var body_str = "{{ item.body|escapejs }}";

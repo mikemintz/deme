@@ -259,6 +259,9 @@ div.comment_header {
     padding: 3px;
     margin-left: 10px;
 }
+div.comment_header_highlighted {
+    background: #ff0;
+}
 div.comment_body {
     padding-bottom: 5px;
     padding-left: 5px;
@@ -277,6 +280,9 @@ div.comment_body {
     border: 1px dotted #777;
     padding: 1px;
     margin: 0 3px 0 3px;
+}
+.commentref_highlighted {
+    background: #ff0;
 }
 
 .ajax_choice_results {

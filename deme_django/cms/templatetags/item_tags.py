@@ -607,11 +607,11 @@ def display_body_with_inline_transclusions(item, is_html):
     result = []
     last_i = None
     for transclusion in transclusions:
-        to_item = transclusion.to_item.downcast()
-        if isinstance(to_item, Comment) and to_item.item_id == item.pk:
-            transclusion_html = '<a href="#" onclick="$(\'#right_accordion\').accordion(\'activate\', \'#accordion_header_comments\'); DemeCanvasPointing.drawLine($(this), $(\'#right_pane_comment_%d\')); return false;" class="commentref">%s</a>' % (to_item.pk, escape(transclusion.to_item.display_name()),)
+        if RecursiveComment.objects.filter(parent=item, child=transclusion.to_item).exists():
+            transclusion_html = '<a href="#" onclick="highlight_comment(\'%d\', \'%d\', false, true); return false;" class="commentref" id="inline_transclusion_%d">%s</a>' % (transclusion.to_item.pk, transclusion.pk, transclusion.pk, escape(transclusion.to_item.display_name()))
         else:
-            transclusion_html = '<a href="%s" class="commentref">%s</a>' % (transclusion.to_item.get_absolute_url(), escape(transclusion.to_item.display_name()))
+            transclusion_url = u'%s?crumb_filter=transclusions_to.from_item.%d' % (transclusion.to_item.get_absolute_url(), item.pk)
+            transclusion_html = u'<a href="%s" class="commentref" id="inline_transclusion_%d">%s</a>' % (transclusion_url, transclusion.pk, escape(transclusion.to_item.display_name()))
         i = transclusion.from_item_index
         result.insert(0, format(item.body[i:last_i]))
         result.insert(0, transclusion_html)
@@ -698,6 +698,9 @@ class CalculateComments(template.Node):
         result.append(u'<div style="clear: both;"></div>')
         result.append(u'</div>')
         def add_comment_to_div(comment_info, parents):
+            transclusions_to = []
+            for node in parents + (comment_info,):
+                transclusions_to.extend(node['transclusions_to'])
             for node in parents + (comment_info,):
                 if node['siblings'][-1]['comment'].pk == node['comment'].pk:
                     result.append(u'<div class="subcomments_last">')
@@ -721,9 +724,15 @@ class CalculateComments(template.Node):
             result.append(u'<div class="comment_header" id="right_pane_comment_%d">' % comment.pk)
             result.append(u'<div style="position: relative;"><div style="position: absolute; top: 0; left: 0;">')
             if original_comment.item.pk == item.pk:
-                result.append(u'<a href="#" onclick="return false;">')
+                relevant_transclusions = [x for x in transclusions_to if x.from_item_id == item.pk and x.from_item_version_number == item.version_number]
+                transclusion = relevant_transclusions[0] if relevant_transclusions else None #TODO less arbitrary way to calculate
+                if transclusion:
+                    result.append(u'<a href="#" onclick="highlight_comment(\'%d\', \'%d\', true, false); return false;">' % (comment.pk, transclusion.pk))
+                else:
+                    result.append(u'<a href="#" onclick="return false;">')
             else:
-                result.append(u'<a href="%s">' % original_comment.item.get_absolute_url())
+                itemref_url = '%s?crumb_filter=recursive_memberships_as_child.parent.%d' % (original_comment.item.get_absolute_url(), item.pk)
+                result.append(u'<a href="%s">' % itemref_url)
             result.append(u'<img src="%s" />' % icon_url(original_comment.item, 24))
             result.append(u'</a>')
             result.append(u'</div></div>')
@@ -746,9 +755,6 @@ class CalculateComments(template.Node):
             result.append(u'</div>')
             for i in xrange(len(parents) + 1):
                 result.append(u'</div>')
-            transclusions_to = []
-            for node in parents + (comment_info,):
-                transclusions_to.extend(node['transclusions_to'])
             transclusion_text = ''
             for transclusion in transclusions_to:
                 transclusion_text += u'<div>%s</div>' % get_item_link_tag(context, transclusion)
