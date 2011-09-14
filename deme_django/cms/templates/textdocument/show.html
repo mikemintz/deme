@@ -23,6 +23,9 @@
 
     $(document).ready(function () {
         DemeCanvasPointing.setup();
+        var comment_id = {% if highlighted_comment_id %}'{{ highlighted_comment_id }}'{% else %}null{% endif %};
+        var transclusion_id = {% if highlighted_transclusion_id %}'{{ highlighted_transclusion_id }}'{% else %}null{% endif %};
+        highlight_comment(comment_id, transclusion_id, true, true);
     });
 
     function highlight_comment(comment_id, transclusion_id, scroll_body, scroll_comments) {
@@ -48,7 +51,7 @@
                 // Scroll to the proper place in the comment sidebar
                 if (scroll_comments) {
                     var y = $('#right_pane_comment_' + comment_id).offset().top - $('#fixed_right_pane').offset().top;
-                    $('#fixed_right_pane').scrollTop(y);
+                    $('#fixed_right_pane').animate({scrollTop:y}, 500);
                 }
             }
             if (transclusion_id != null) {
@@ -61,7 +64,7 @@
                 // Scroll to the proper place in the document body
                 if (scroll_body) {
                     var y = $('#inline_transclusion_' + transclusion_id).offset().top;
-                    $(document.body).scrollTop(y);
+                    $(document.body).animate({scrollTop:y}, 500);
                 }
             }
             // Setup the canvas pointing line between transclusion and comment
@@ -292,14 +295,9 @@ When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); 
 {% endifagentcanglobal %}
 {% endifagentcanglobal %}
 
-<div id="show_located_comments"><a href="#" onclick="$('.commentref').show(); $('#hide_located_comments').show(); $('#show_located_comments').hide(); return false;">Show Located Comments</a></div>
-<div id="hide_located_comments" style="display: none;"><a href="#" onclick="$('.commentref').hide(); $('#hide_located_comments').hide(); $('#show_located_comments').show(); DemeCanvasPointing.clearLine(); return false;">Hide Located Comments</a></div>
+<div id="show_located_comments" style="display: none;"><a href="#" onclick="$('.commentref').show(); $('#hide_located_comments').show(); $('#show_located_comments').hide(); return false;">Show Located Comments</a></div>
+<div id="hide_located_comments"><a href="#" onclick="$('.commentref').hide(); $('#hide_located_comments').hide(); $('#show_located_comments').show(); DemeCanvasPointing.clearLine(); return false;">Hide Located Comments</a></div>
 
-<script type="text/javascript">
-        $(document).ready(function () {
-            $('.commentref').toggle();
-            });
-</script>
 {% endifagentcan %}
 
 {% endblock content %}

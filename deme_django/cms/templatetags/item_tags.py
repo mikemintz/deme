@@ -705,15 +705,17 @@ class CalculateComments(template.Node):
         result.append(u'<div style="clear: both;"></div>')
         result.append(u'</div>')
         def add_comment_to_div(comment_info, parents):
+            comment = comment_info['comment']
             transclusions_to = []
             for node in parents + (comment_info,):
                 transclusions_to.extend(node['transclusions_to'])
+            relevant_transclusions = [x for x in transclusions_to if x.from_item_version_number == x.from_item.version_number]
+            relevant_transclusions.sort(key=lambda x: (x.to_item_id != comment.pk, x.from_item_id == item.pk, x.from_item_index))
             for node in parents + (comment_info,):
                 if node['siblings'][-1]['comment'].pk == node['comment'].pk:
                     result.append(u'<div class="subcomments_last">')
                 else:
                     result.append(u'<div class="subcomments">')
-            comment = comment_info['comment']
             original_comment = parents[0]['comment'] if parents else comment
             result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
             result.append(u'<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> ' % (comment.name))
@@ -731,9 +733,8 @@ class CalculateComments(template.Node):
             result.append(u'<div class="comment_header" id="right_pane_comment_%d">' % comment.pk)
             result.append(u'<div style="position: relative;"><div style="position: absolute; top: 0; left: 0;">')
             if original_comment.item.pk == item.pk:
-                relevant_transclusions = [x for x in transclusions_to if x.from_item_id == item.pk and x.from_item_version_number == item.version_number]
                 #TODO point to all transclusions
-                transclusion = relevant_transclusions[0] if relevant_transclusions else None #TODO less arbitrary way to calculate
+                transclusion = relevant_transclusions[0] if relevant_transclusions else None
                 if context.get('in_textdocument_show', False):
                     if transclusion:
                         transclusion_html_id = ('' if transclusion.to_item_id == comment.pk else 'replies') + ('%d' % transclusion.pk)
@@ -768,8 +769,15 @@ class CalculateComments(template.Node):
             for i in xrange(len(parents) + 1):
                 result.append(u'</div>')
             transclusion_text = ''
-            for transclusion in transclusions_to:
-                transclusion_text += u'<div>%s</div>' % get_item_link_tag(context, transclusion)
+            for transclusion in relevant_transclusions:
+                transclusion_text += u'<div style="float: left; border: thin dotted #aaa; margin: 3px; padding: 3px;">'
+                if transclusion.from_item_id == item.pk:
+                    transclusion_html_id = ('' if transclusion.to_item_id == comment.pk else 'replies') + ('%d' % transclusion.pk)
+                    transclusion_text += u'<a href="#" onclick="highlight_comment(\'%s\', \'%s\', true, false); return false;">%s</a>' % (comment.pk, transclusion_html_id, get_viewable_name(context, transclusion.from_item))
+                else:
+                    transclusion_text += u'<a href="%s?highlighted_transclusion=%s">%s</a>' % (transclusion.from_item.get_absolute_url(), transclusion.pk, get_viewable_name(context, transclusion.from_item))
+                transclusion_text += u'</div>'
+            transclusion_text += u'<div style="clear: both;"></div>'
             if isinstance(comment, TextComment):
                 if agentcan_helper(context, 'view TextDocument.body', comment):
                     comment_body = escape(comment.body).replace('\n', '<br />')
@@ -779,7 +787,7 @@ class CalculateComments(template.Node):
                 comment_body = ''
             comment_url = u'%s?crumb_filter=recursive_comments_as_child.parent.%d' % (comment.get_absolute_url(), item.pk)
             result.append(u'<div id="comment_body%d" class="comment_body" style="display: none;">' % comment.pk)
-            if transclusions_to:
+            if relevant_transclusions:
                 result.append(u'<div style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: thin solid #ccc;">%s</div>' % transclusion_text)
             result.append(u'<div>%s</div>' % comment_body)
             result.append(u'<div style="clear: both; font-size: smaller; margin-top: 5px; padding-top: 5px; border-top: thin solid #ccc;">')

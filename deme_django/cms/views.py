@@ -1009,6 +1009,8 @@ class TextDocumentViewer(DocumentViewer):
     def item_show_html(self):
         self.context['action_title'] = ''
         self.context['in_textdocument_show'] = True
+        self.context['highlighted_transclusion_id'] = self.request.GET.get('highlighted_transclusion')
+        self.context['highlighted_comment_id'] = self.request.GET.get('highlighted_comment')
         self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('textdocument/show.html')
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
