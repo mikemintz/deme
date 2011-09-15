@@ -197,7 +197,7 @@ class Decision(Item):
     
     #TODO: find out how to set max value in integer field
     quorum_choices = zip( range(0,101), range(0,101) )
-    quorum = models.IntegerField(blank=True, choices=quorum_choices)
+    quorum = models.IntegerField(_('Quorum %'),blank=True, choices=quorum_choices)
     poll = FixedForeignKey(Poll, related_name='polls_decision', null=True, blank=True, default=None)
     
 
@@ -210,8 +210,8 @@ class PluralityChooseNDecision(Decision):
     dyadic_relations = {}
 
     class Meta:    
-        verbose_name = _('PluralityChooseNDecision')
-        verbose_name_plural = _('PluralityChooseNDecision')
+        verbose_name = _('Choose Plurality Decision')
+        verbose_name_plural = _('Choose Plurality Decisions')
     
     #fields
     n_choices = zip( range(0,101), range(0,101) )
@@ -226,14 +226,14 @@ class ThresholdChooseNDecision(Decision):
     dyadic_relations = {}
 
     class Meta:    
-        verbose_name = _('ThresholdChooseNDecision')
-        verbose_name_plural = _('ThresholdChooseNDecision')
+        verbose_name = _('Choose Threshold Participants Decision')
+        verbose_name_plural = _('Choose Threshold Participants Decisions')
 
     #fields
     n_choices = zip( range(0,101), range(0,101) )
     num_decision = models.IntegerField(blank=True, choices=n_choices)
     p_choices = zip( range(0,101), range(0,101) )
-    p_decision = models.IntegerField(blank=True, choices=p_choices)
+    p_decision = models.IntegerField(_('Threshold %'),blank=True, choices=p_choices)
 
 class ThresholdEChooseNDecision(Decision):
     #Setup
@@ -244,14 +244,14 @@ class ThresholdEChooseNDecision(Decision):
     dyadic_relations = {}
 
     class Meta:    
-        verbose_name = _('ThresholdEChooseNDecision')
-        verbose_name_plural = _('ThresholdEChooseNDecision')
+        verbose_name = _('Choose Threshold Eligibles Decision')
+        verbose_name_plural = _('Choose Threshold Eligibles Decisions')
 
     #fields
     n_choices = zip( range(0,101), range(0,101) )
     num_decision = models.IntegerField(blank=True, choices=n_choices)
     e_choices = zip( range(0,101), range(0,101) )
-    e_decision = models.IntegerField(blank=True, choices=e_choices)
+    e_decision = models.IntegerField(_('Threshold for eligibles %'),blank=True, choices=e_choices)
 
 class UnanimousChooseNDecision(Decision):
     #Setup
@@ -262,14 +262,14 @@ class UnanimousChooseNDecision(Decision):
     dyadic_relations = {}
 
     class Meta:    
-        verbose_name = _('UnanimousChooseNDecision')
-        verbose_name_plural = _('UnanimousChooseNDecision')
+        verbose_name = _('Choose Unanimous Decision')
+        verbose_name_plural = _('Choose Unanimous Decisions')
 
     #fields
     n_choices = zip( range(0,101), range(0,101) )
     num_decision = models.IntegerField(blank=True, choices=n_choices)
     m_choices = zip( range(0,101), range(0,101) )
-    m_decision = models.IntegerField(blank=True, choices=m_choices)
+    m_decision = models.IntegerField(_('Unanimous minus'),blank=True, choices=m_choices)
 
 class PluralityApproveNDecision(Decision):
     #Setup
@@ -280,8 +280,8 @@ class PluralityApproveNDecision(Decision):
     dyadic_relations = {}
 
     class Meta:    
-        verbose_name = _('PluralityApproveNDecision')
-        verbose_name_plural = _('PluralityApproveNDecision')
+        verbose_name = _(' Approve Plurality Decision')
+        verbose_name_plural = _('Approve Plurality Decisions')
 
     #fields
     n_choices = zip( range(0,101), range(0,101) )
@@ -296,14 +296,14 @@ class ThresholdApproveNDecision(Decision):
     dyadic_relations = {}
 
     class Meta:    
-        verbose_name = _('ThresholdApproveNDecision')
-        verbose_name_plural = _('ThresholdApproveNDecision')
+        verbose_name = _('Approve Threshold Decision')
+        verbose_name_plural = _('Approve Threshold Decisions')
 
     #fields
     n_choices = zip( range(0,101), range(0,101) )
     num_decision = models.IntegerField(blank=True, choices=n_choices)
     p_choices = zip( range(0,101), range(0,101) )
-    p_decision = models.IntegerField(blank=True, choices=p_choices)
+    p_decision = models.IntegerField(_('Threshold Participants %'),blank=True, choices=p_choices)
 
 class ThresholdEApproveNDecision(Decision):
     #Setup
@@ -314,14 +314,14 @@ class ThresholdEApproveNDecision(Decision):
     dyadic_relations = {}
 
     class Meta:    
-        verbose_name = _('ThresholdEApproveNDecision')
-        verbose_name_plural = _('ThresholdEApproveNDecision')
+        verbose_name = _('Approve Threshold Eligible Decision')
+        verbose_name_plural = _('Approve Threshold Eligible Decisions')
 
     #fields
     n_choices = zip( range(0,101), range(0,101) )
     num_decision = models.IntegerField(blank=True, choices=n_choices)
     e_choices = zip( range(0,101), range(0,101) )
-    e_decision = models.IntegerField(blank=True, choices=e_choices)
+    e_decision = models.IntegerField(_('Threshold eligible %'),blank=True, choices=e_choices)
     
     
     

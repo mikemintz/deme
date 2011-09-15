@@ -2,15 +2,65 @@
 {% load item_tags %}
 {% block content %}
 
-<p>Name: {{ item.name }}
-<p>Poll:  {{ item.poll }}</p>
-<p>Quorum: {{ item.quorum }} %</p>
-<p>Max Poll Takers: {{ maxPollTakers }}</p>
-<p>Number of responses: {{ numResponses }} </p>
-<p>Number needed for response out of participants: {{ minpeoplefordecision }}</p>
-<p>Most popular: {{ mostPopular }}  </p>
-<p>N: {{ item.num_decision }}</p>
-<p>p% {{ item.p_decision }}</p>
-<p>Participants {{participants}}</p>
+<style>
+div p{
+	font-size:13px;
+}
 
+div #results{
+	align: center;
+	font-size: 20px;
+}
+
+div #results table {
+	width: 50%;
+	position:relative;
+	margin-left:auto;
+	margin-right:auto;
+}
+
+div #results table tr.header {
+	font-size:15px;
+}
+
+div #linkToPoll a{
+	font-size: 15px;
+	position: relative;
+	left: 250px;
+}
+
+</style>
+<div id="results">
+	<table cellspacing="0" class="list">
+		{% for result in propositions %}
+			<tr class="{% cycle 'even' 'odd' %} top">
+				<td><a href="{{ result.get_absolute_url }}">{% viewable_name result %}</a></td>
+				{% if result in mostPopular %}
+				<td>approved</td>
+				{% else %}
+				<td>not approved</td>
+				{% endif %}
+			</tr>
+		{% endfor %}
+	</table>
+</div>
+
+<div id='linkToPoll'>
+	<a href="{{ item.poll.get_absolute_url }}">View Poll</a>
+</div>
+<div>
+	<p>Quorum: {{ item.quorum }} %</p>
+</div>
+<div>
+	<p>Max Poll Takers: {{ maxPollTakers }}</p>
+</div>
+<div>
+	<p>Number of responses: {{ numResponses }} </p>
+</div>
+<div>
+<p>Number of responses needed for quorum: {{ minResponses }}</p>
+</div>
+<div>
+	<p>Decision Rule: Will approve of {{item.num_decisions}} proposition(s) with the most approvals among all propositions in poll and surpasses threshold {{ item.p_decision}} % of participants.</p>
+</div>
 {% endblock content %}

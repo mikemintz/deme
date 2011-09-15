@@ -32,13 +32,19 @@ div #linkToPoll a{
 </style>
 <div id="results">
 	<table cellspacing="0" class="list">
-		{% for result in mostPopular %}
+		{% for result in propositions %}
 			<tr class="{% cycle 'even' 'odd' %} top">
 				<td><a href="{{ result.get_absolute_url }}">{% viewable_name result %}</a></td>
+				{% if result in mostPopular %}
+				<td>approved</td>
+				{% else %}
+				<td>not approved</td>
+				{% endif %}
 			</tr>
 		{% endfor %}
 	</table>
 </div>
+
 <div id='linkToPoll'>
 	<a href="{{ item.poll.get_absolute_url }}">View Poll</a>
 </div>
