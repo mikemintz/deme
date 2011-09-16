@@ -288,7 +288,7 @@ def ifagentcanglobal(parser, token):
     return IfAgentCanGlobal(bits[1], nodelist_true, nodelist_false)
 
 # remember this includes inactive comments, which should be displayed differently after calling this
-def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments):
+def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments, nested):
     permission_cache = context['_viewer'].permission_cache
     comment_subclasses = [TextComment]
     comments = []
@@ -315,18 +315,24 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
             #new_comments = new_comments.select_related(*related_fields) 
             comments.extend(new_comments)
     comments.sort(key=lambda x: x.created_at)
+    transclusions_to = Transclusion.objects.filter(to_item__in=[x.pk for x in comments])
+    transclusions_to = permission_cache.filter_items('view Transclusion.from_item', transclusions_to)
+    transclusions_to = permission_cache.filter_items('view Transclusion.to_item', transclusions_to)
     pk_to_comment_info = {}
     for comment in comments:
-        comment_info = {'comment': comment, 'subcomments': []}
+        transclusions_to_comment = [x for x in transclusions_to if x.to_item_id == comment.pk]
+        comment_info = {'comment': comment, 'transclusions_to': transclusions_to_comment, 'subcomments': []}
         pk_to_comment_info[comment.pk] = comment_info
     comment_dicts = []
     for comment in comments:
         child = pk_to_comment_info[comment.pk]
         parent = pk_to_comment_info.get(comment.item_id)
-        if parent:
+        if nested and parent:
             parent['subcomments'].append(child)
+            child['siblings'] = parent['subcomments']
         else:
             comment_dicts.append(child)
+            child['siblings'] = comment_dicts
     return comment_dicts, len(comments)
 
 class ItemToolbar(template.Node):
@@ -368,7 +374,7 @@ class ItemToolbar(template.Node):
                 <form method="post" action="%s?redirect=%s"> 
                     <input type="hidden" name="item" value="%s" />
                     Contact Method: %s 
-                    <a href="%s" style="float: right; font-size: 9pt;" >Advanced</a>
+                    <a href="%s" style="float: right; font-size: 9pt;">Advanced</a>
                     <input type="submit" value="Submit" />
                 </form>
             </div>
@@ -392,7 +398,7 @@ class ItemToolbar(template.Node):
             <form method="post" action="%(create_url)s?redirect=%(full_path)s"> 
                 Collection: %(ajax_field)s 
                 <input type="hidden" name="item" value="%(item.pk)s" /><br><br>
-                <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddtocollection%(item.pk)s'); return false;" >Advanced</a>
+                <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddtocollection%(item.pk)s'); return false;">Advanced</a>
                 <div style="display: none;" id="advancedaddtocollection%(item.pk)s">
                     Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br>
                     Permission Enabled: <input name="permissionenabled" type="checkbox" />
@@ -601,9 +607,21 @@ def display_body_with_inline_transclusions(item, is_html):
     result = []
     last_i = None
     for transclusion in transclusions:
+        if RecursiveComment.objects.filter(parent=item, child=transclusion.to_item).exists():
+            n_replies = RecursiveComment.objects.filter(parent=transclusion.to_item).count()
+            transclusion_main_html = u'<a href="#" onclick="highlight_comment(\'%d\', \'%d\', false, true); return false;" class="commentref" id="inline_transclusion_%d">%s</a>' % (transclusion.to_item.pk, transclusion.pk, transclusion.pk, escape(transclusion.to_item.display_name()))
+            if n_replies > 0:
+                #TODO this should point to the replies, not the first comment (ideally by just having a class name for each parent)
+                transclusion_replies_html = u' <a href="#" onclick="highlight_comment(\'%d\', \'replies%d\', false, true); return false;" class="commentref" id="inline_transclusion_replies%d">%d replies</a>' % (transclusion.to_item.pk, transclusion.pk, transclusion.pk, n_replies)
+            else:
+                transclusion_replies_html = u''
+            transclusion_html = u'%s%s' % (transclusion_main_html, transclusion_replies_html)
+        else:
+            transclusion_url = u'%s?crumb_filter=transclusions_to.from_item.%d' % (transclusion.to_item.get_absolute_url(), item.pk)
+            transclusion_html = u'<a href="%s" class="commentref" id="inline_transclusion_%d">%s</a>' % (transclusion_url, transclusion.pk, escape(transclusion.to_item.display_name()))
         i = transclusion.from_item_index
         result.insert(0, format(item.body[i:last_i]))
-        result.insert(0, '<a href="%s" class="commentref">%s</a>' % (transclusion.to_item.get_absolute_url(), escape(transclusion.to_item.display_name())))
+        result.insert(0, transclusion_html)
         last_i = i
     result.insert(0, format(item.body[0:last_i]))
     return ''.join(result)
@@ -634,7 +652,7 @@ class NewMemberDialog(template.Node):
             <form method="post" action="%(create_url)s?redirect=%(full_path)s"> 
                 Item: %(ajax_field)s 
                 <input type="hidden" name="collection" value="%(item.pk)s" /><br><br>
-                <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddmember%(item.pk)s'); return false;" >Advanced</a>
+                <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddmember%(item.pk)s'); return false;">Advanced</a>
                 <div style="display: none;" id="advancedaddmember%(item.pk)s">
                     Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br>
                     Permission Enabled: <input name="permissionenabled" type="checkbox" />
@@ -672,63 +690,119 @@ class CalculateComments(template.Node):
         result = []
         result.append(u'<div class="comment_box">')
         result.append(u'<div class="comment_box_header">')
+        grid_url = u'%s?filter=recursive_comments_as_child.parent.%d' % (reverse('item_type_url', kwargs={'viewer': 'textcomment'}), item.pk)
+        result.append(u'<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-calculator"></span>Grid</a>' % grid_url)
         if agentcan_helper(context, 'comment_on', item):
-            result.append(u'<button href="#" onclick="openCommentDialog(\'comment%s\'); return false;">[+] Add Comment</button>' % (item.pk))
+            result.append(u'<a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Add comment</a>' % item.pk)
             result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
             result.append(u'<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> ')
             if context['cur_agent'].is_anonymous():
                 result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
             result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'commentajaxfield'})))
             result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (item.pk, item.version_number))
-            result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;" >Advanced</a> ' % (item.pk))
+            result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (item.pk))
             result.append(u'</form></div>')
+        result.append(u'<div style="clear: both;"></div>')
+        result.append(u'</div>')
+        def add_comment_to_div(comment_info, parents):
+            comment = comment_info['comment']
+            transclusions_to = []
+            for node in parents + (comment_info,):
+                transclusions_to.extend(node['transclusions_to'])
+            relevant_transclusions = [x for x in transclusions_to if x.from_item_version_number == x.from_item.version_number]
+            relevant_transclusions.sort(key=lambda x: (x.to_item_id != comment.pk, x.from_item_id == item.pk, x.from_item_index))
+            for node in parents + (comment_info,):
+                if node['siblings'][-1]['comment'].pk == node['comment'].pk:
+                    result.append(u'<div class="subcomments_last">')
+                else:
+                    result.append(u'<div class="subcomments">')
+            original_comment = parents[0]['comment'] if parents else comment
+            result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
+            result.append(u'<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> ' % (comment.name))
+            if context['cur_agent'].is_anonymous():
+                result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
+            result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk)))
+            result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (comment.pk, comment.version_number))
+            result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (comment.pk))
+            result.append(u'</form></div>')
+            result.append(u'<div style="position: relative;">')
+            result.append(u'<div style="position: absolute; top: 10px; left: 0; width: 20px; border-top: 2px dotted #bbb;"></div>')
+            if comment_info['subcomments']:
+                result.append(u'<div style="position: absolute; top: 1px; left: -10px; border: 2px solid #bbb; background: #fff; width: 15px; height: 15px; text-align: center; vertical-align: middle; font-size: 12px; font-weight: bold; cursor: pointer;" onclick="$(\'#comment_children%s\').toggle(); if ($(this).text() == \'+\') { $(this).text(\'-\') } else { $(this).text(\'+\') }">-</div>' % comment.pk)
             result.append(u'</div>')
-        else:
-            result.append("</div>")
-        def add_comments_to_div(comments, nesting_level=0):
-            for comment_info in comments:
-                comment = comment_info['comment']
-                result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
-                result.append(u'<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="body" style="height: 200px; width: 250px;"></textarea> </p> ' % (comment.name))
-                if context['cur_agent'].is_anonymous():
-                    result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
-                result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk)))
-                result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (comment.pk, comment.version_number))
-                result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;" >Advanced</a> ' % (comment.pk))
-                result.append(u'</form></div>')
-                result.append(u'<div class="comment_outer%s">' % (' comment_outer_toplevel' if nesting_level == 0 else '',))
-                result.append(u'<div class="comment_header">')
-                result.append(u'<div style="float: right;"><a href="#" onclick="openCommentDialog(\'comment%s\'); return false;">[+] Respond</a></div>' % (comment.pk))
-                if issubclass(comment.item.actual_item_type(), Comment):
-                    if agentcan_helper(context, 'view TextDocument.body', comment):
-                        comment_name = escape(truncate_words(comment.display_name(), 4))
+            result.append(u'<div class="comment_header" id="right_pane_comment_%d">' % comment.pk)
+            result.append(u'<div style="position: relative;"><div style="position: absolute; top: 0; left: 0;">')
+            if original_comment.item.pk == item.pk:
+                #TODO point to all transclusions
+                transclusion = relevant_transclusions[0] if relevant_transclusions else None
+                if context.get('in_textdocument_show', False):
+                    if transclusion:
+                        transclusion_html_id = ('' if transclusion.to_item_id == comment.pk else 'replies') + ('%d' % transclusion.pk)
+                        result.append(u'<a href="#" onclick="highlight_comment(\'%s\', \'%s\', true, false); return false;">' % (comment.pk, transclusion_html_id))
                     else:
-                        comment_name = comment.display_name(can_view_name_field=False)
+                        result.append(u'<a href="#" onclick="highlight_comment(\'%s\', null, false, false); return false;">' % comment.pk)
                 else:
-                    comment_name = escape(get_viewable_name(context, comment))
-                result.append(u'<a href="%s">%s</a>' % (comment.get_absolute_url(), comment_name))
-                if agentcan_helper(context, 'view Item.creator', comment):
-                    result.append('by %s' % get_item_link_tag(context, comment.creator))
-                if item.pk != comment.item_id and nesting_level == 0:
-                    result.append('for %s' % get_item_link_tag(context, comment.item))
-                if agentcan_helper(context, 'view Item.created_at', comment):
-                    result.append('<span title="%s">%s ago</span>' % (comment.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(comment.created_at)))
-                result.append("</div>")
-                if comment.active:
-                    if isinstance(comment, TextComment):
-                        if agentcan_helper(context, 'view TextDocument.body', comment):
-                            comment_body = escape(comment.body).replace('\n', '<br />')
-                        else:
-                            comment_body = ''
-                    else:
-                        comment_body = ''
+                    result.append(u'<a href="#" onclick="return false;">')
+            else:
+                itemref_url = '%s?crumb_filter=recursive_memberships_as_child.parent.%d' % (original_comment.item.get_absolute_url(), item.pk)
+                result.append(u'<a href="%s">' % itemref_url)
+            result.append(u'<img src="%s" />' % icon_url(original_comment.item, 24))
+            result.append(u'</a>')
+            result.append(u'</div></div>')
+            result.append(u'<div style="margin-left: 7px; padding-left: 19px;%s">' % (' border-left: 2px dotted #bbb;' if comment_info['subcomments'] else ''))
+            if comment.active:
+                if agentcan_helper(context, 'view Item.name', comment):
+                    comment_name = escape(truncate_words(comment.display_name(), 4))
                 else:
-                    comment_body = '[INACTIVE]'
-                result.append(u'<div class="comment_body" style="display: none;">%s</div>' % comment_body)
-                add_comments_to_div(comment_info['subcomments'], nesting_level + 1)
-                result.append("</div>")
-        comment_dicts, n_comments = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection))
-        add_comments_to_div(comment_dicts)
+                    comment_name = comment.display_name(can_view_name_field=False)
+            else:
+                comment_name = '(Inactive comment)'
+            result.append(u'<a href="#" onclick="$(\'#comment_body%s\').toggle(); return false;">%s</a>' % (comment.pk, comment_name))
+            if agentcan_helper(context, 'view Item.creator', comment):
+                result.append('- %s' % get_item_link_tag(context, comment.creator))
+            if agentcan_helper(context, 'view Item.created_at', comment):
+                result.append(comment.created_at.strftime("- %Y %b %d %H:%M"))
+            if comment.version_number > 1:
+                result.append(' (updated)')
+            result.append(u'</div>')
+            result.append(u'</div>')
+            for i in xrange(len(parents) + 1):
+                result.append(u'</div>')
+            transclusion_text = ''
+            for transclusion in relevant_transclusions:
+                transclusion_text += u'<div style="float: left; border: thin dotted #aaa; margin: 3px; padding: 3px;">'
+                if transclusion.from_item_id == item.pk:
+                    transclusion_html_id = ('' if transclusion.to_item_id == comment.pk else 'replies') + ('%d' % transclusion.pk)
+                    transclusion_text += u'<a href="#" onclick="highlight_comment(\'%s\', \'%s\', true, false); return false;">%s</a>' % (comment.pk, transclusion_html_id, get_viewable_name(context, transclusion.from_item))
+                else:
+                    transclusion_text += u'<a href="%s?highlighted_transclusion=%s">%s</a>' % (transclusion.from_item.get_absolute_url(), transclusion.pk, get_viewable_name(context, transclusion.from_item))
+                transclusion_text += u'</div>'
+            transclusion_text += u'<div style="clear: both;"></div>'
+            if isinstance(comment, TextComment):
+                if agentcan_helper(context, 'view TextDocument.body', comment):
+                    comment_body = escape(comment.body).replace('\n', '<br />')
+                else:
+                    comment_body = ''
+            else:
+                comment_body = ''
+            comment_url = u'%s?crumb_filter=recursive_comments_as_child.parent.%d' % (comment.get_absolute_url(), item.pk)
+            result.append(u'<div id="comment_body%d" class="comment_body" style="display: none;">' % comment.pk)
+            if relevant_transclusions:
+                result.append(u'<div style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: thin solid #ccc;">%s</div>' % transclusion_text)
+            result.append(u'<div>%s</div>' % comment_body)
+            result.append(u'<div style="clear: both; font-size: smaller; margin-top: 5px; padding-top: 5px; border-top: thin solid #ccc;">')
+            result.append(u'<a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Respond</a>' % comment.pk)
+            result.append(u'<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-newwin"></span>View comment as item</a>' % comment_url)
+            result.append(u'<div style="clear: both;"></div>')
+            result.append(u'</div>')
+            result.append(u'</div>')
+            result.append(u'<div id="comment_children%s">' % comment.pk)
+            for subcomment in comment_info['subcomments']:
+                add_comment_to_div(subcomment, parents + (comment_info,))
+            result.append(u'</div>')
+        comment_dicts, n_comments = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection), True)
+        for comment_dict in comment_dicts:
+            add_comment_to_div(comment_dict, ())
         result.append("</div>")
         context['comment_box'] = mark_safe('\n'.join(result))
         context['n_comments'] = n_comments
@@ -876,31 +950,35 @@ class CalculateHistory(template.Node):
 
         result = []
         versions = item.versions.all()
-        edit_action_notices = EditActionNotice.objects.filter(action_item=item)
-        create_action_notices = CreateActionNotice.objects.filter(action_item=item)
-        action_notices = itertools.chain(edit_action_notices, create_action_notices)
-        action_notice_map = {}
-        for action_notice in action_notices:
-            action_notice_map[action_notice.action_item_version_number] = action_notice
-        for version in itertools.chain(versions, [item]):
-            action_notice = action_notice_map[version.version_number]
-            version_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk}) + '?version=%s' % version.version_number
-            version_name = u'Version %d' % version.version_number
-            version_text = u'<a href="%s">%s</a>' % (version_url, version_name)
-            diff_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'diff', 'noun': item.pk}) + '?version=%s&reference_version=%s' % (version.version_number, version.version_number - 1)
-            diff_text = u'<a href="%s">(Diff)</a>' % diff_url if version.version_number > 1 else ''
-            time_text = u'<span title="%s">[%s ago]</span><br />' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
-            agent_text = u'by %s' % get_item_link_tag(context, action_notice.action_agent)
-            result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">')
-            if agentcan_helper(context, 'view Item.created_at', item):
-                result.append(time_text)
-            result.append(version_text)
-            result.append(diff_text)
-            if agentcan_helper(context, 'view Item.creator', item):
-                result.append(agent_text)
-            result.append(u'</div>')
-        context['history_box'] = mark_safe(u'\n'.join(result))
-        context['n_versions'] = len(versions) + 1
+        if versions.exists():
+            edit_action_notices = EditActionNotice.objects.filter(action_item=item)
+            create_action_notices = CreateActionNotice.objects.filter(action_item=item)
+            action_notices = itertools.chain(edit_action_notices, create_action_notices)
+            action_notice_map = {}
+            for action_notice in action_notices:
+                action_notice_map[action_notice.action_item_version_number] = action_notice
+            for version in itertools.chain(versions, [item]):
+                action_notice = action_notice_map[version.version_number]
+                version_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk}) + '?version=%s' % version.version_number
+                version_name = u'Version %d' % version.version_number
+                version_text = u'<a href="%s">%s</a>' % (version_url, version_name)
+                diff_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'diff', 'noun': item.pk}) + '?version=%s&reference_version=%s' % (version.version_number, version.version_number - 1)
+                diff_text = u'<a href="%s">(Diff)</a>' % diff_url if version.version_number > 1 else ''
+                time_text = u'<span title="%s">[%s ago]</span><br />' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
+                agent_text = u'by %s' % get_item_link_tag(context, action_notice.action_agent)
+                result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">')
+                if agentcan_helper(context, 'view Item.created_at', item):
+                    result.append(time_text)
+                result.append(version_text)
+                result.append(diff_text)
+                if agentcan_helper(context, 'view Item.creator', item):
+                    result.append(agent_text)
+                result.append(u'</div>')
+            context['history_box'] = mark_safe(u'\n'.join(result))
+            context['n_versions'] = len(versions) + 1
+        else:
+            context['history_box'] = u''
+            context['n_versions'] = 0
         return ''
 
 
@@ -1067,6 +1145,7 @@ class ListGridBox(template.Node):
         r.append("""    autowidth: true,""")
         r.append("""  });""")
         r.append("""  $("#jqgrid_list").jqGrid('navGrid','#jqgrid_pager',{edit:false,add:false,del:false});""")
+        r.append("""  $("#jqgrid_list").jqGrid('navButtonAdd',"#jqgrid_pager",{caption:"Columns",title:"Choose columns",buttonicon:"ui-icon-gear",onClickButton:function(){$("#jqgrid_list").jqGrid('columnChooser',{});}});""")
         r.append("""});""")
         r.append("""</script>""")
         return '\n'.join(r)
@@ -1574,8 +1653,6 @@ class Crumbs(template.Node):
                     cur_item_type = field.model
                 else:
                     raise Exception("Cannot filter on field %s.%s (not a related field)" % (cur_item_type.__name__, field.name))
-                if not issubclass(cur_item_type, Item):
-                    raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
                 field_models.append(cur_item_type)
             target = field_models[-1].objects.get(pk=target_pk)
             reverse_fields = []
@@ -1604,6 +1681,9 @@ class Crumbs(template.Node):
                 subfilter_url = '%s?filter=%s' % (reverse('item_type_url', kwargs={'viewer': subfilter_item_type.__name__.lower()}), subfilter)
                 if isinstance(field, models.OneToOneField):
                     # We don't display crumbs for OneToOneFields like item_ptr
+                    continue
+                if not issubclass(subfilter_item_type, Item):
+                    # We don't display crumbs for non-item-types
                     continue
                 if isinstance(field, models.ForeignKey):
                     # Make it plural

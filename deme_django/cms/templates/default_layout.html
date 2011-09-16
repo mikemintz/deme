@@ -34,6 +34,15 @@
     <link href="{% media_url "stylesheets/ui.jqgrid.css" %}" media="all" rel="Stylesheet" type="text/css" />
 
     <script type="text/javascript" src="{% media_url "javascripts/fg.menu.js" %}"></script>
+	<script type="text/javascript">
+	        $(document).ready(function () {
+	            $('#showhidetarget').hide();
+
+	            $('a#showhidetrigger').click(function () {
+	                $('#showhidetarget').toggle(400);
+	            });
+	        });
+	    </script>
     <link href="{% media_url "stylesheets/fg.menu.css" %}" media="screen" rel="stylesheet" type="text/css" />
 	<!-- style exceptions for IE 6 -->
 	<!--[if IE 6]>
@@ -43,11 +52,9 @@
 	</style>
 	<![endif]-->	
     
-    {% ifequal action 'show' %}
     {% if item %}
     <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}" />
     {% endif %}
-    {% endifequal %}
     {% ifequal action 'list' %}
     <link rel="alternate" type="application/rss+xml" title="Item feed" href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}" />
     {% endifequal %}
@@ -102,16 +109,26 @@
                 fillSpace: false,
                 autoHeight: false,
             });
+            $("#right_accordion").show();
         });
     </script> 
     
 	<script type="text/javascript">
-	   function max()
-	   {
-	       self.moveTo(0,0);
-	       self.resizeTo(screen.availWidth,screen.availHeight);
 
-	   }
+	 function resizeText(multiplier) {
+	  if (document.body.style.fontSize == "") {
+	    document.body.style.fontSize = "1.0em";
+	  }
+	  document.body.style.fontSize = parseFloat(document.body.style.fontSize) + (multiplier * 0.2) + "em";
+	}
+	<script type="text/javascript">
+	 function unhide(divID) {
+	 var item = document.getElementById(divID);
+	 if (item) {
+	 item.className=(item.className=='hidden')?'unhidden':'hidden';
+	 }
+	 }
+	 </script>
 	</script>
 	
 
@@ -119,8 +136,58 @@
 
 <body>
 
+{% if item %}
+<div id="fixed_right_pane" style="position: fixed; overflow-y: auto; top: 10px; bottom: 10px; right: 10px; width: 20%;">
+    <div class="ui-helper-clearfix" style="font-size: 60%; float: right;">
+        <a href="#" id="increasebutton" onclick="increase_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Show"><span class="ui-icon ui-icon-arrowthickstop-1-w"></span> Show</a>
+        <a href="#" id="decreasebutton" onclick="decrease_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Hide"><span class="ui-icon ui-icon-arrowthickstop-1-e"></span> Hide</a>
+    </div>
+    <div style="clear: both;"></div>
+
+    {# TODO links are black because of ui-widget-content to a #}
+    <div id="right_accordion" style="display: none;">
+
+        <h3><a href="#">Item Details</a></h3>
+        <div id="accordion_details">
+            {% itemdetails %}
+        </div>
+
+        {% calculatecomments %}
+        <h3 id="accordion_header_comments"><a href="#">{{ n_comments }} comment{{ n_comments|pluralize }}</a></h3>
+        <div style="background: none;">
+            {{ comment_box }}
+        </div>
+
+        {% calculateactionnotices %}
+        <h3><a href="#">{{ n_action_notices }} action notice{{ n_action_notices|pluralize }}</a></h3>
+        <div>
+            {{ action_notice_box }}
+        </div>
+
+        {% calculatehistory %}
+        <h3><a href="#">{{ n_versions }} version{{ n_versions|pluralize }}</a></h3>
+        <div>
+            {{ history_box }}
+        </div>
+
+        {% calculaterelationships %}
+        <h3><a href="#">{{ n_relationships }} related item{{ n_relationships|pluralize }}</a></h3>
+        <div>
+            {{ relationships_box }}
+        </div>
+
+        <h3><a href="#">Permissions</a></h3>
+        <div>
+            {% permissions_box %}
+        </div>
+
+
+    </div>
+</div>
+{% endif %}
+
 <div class="site_outer">
-<div class="site_inner">
+<div class="site_inner" {% if item %}style="width: 77%;"{% endif %}>
 
 <div class="header" style="padding-top: 3px; padding-bottom: 3px;">
 
@@ -182,52 +249,25 @@
 </div>
 
 <script type="text/javascript">
-    //TODO figure out padding
-    var PAGE_WIDTH = 960;
-
-    function increase_column_right()
-    {
-        var right_width = $('#right_table_column').width();
-        if( right_width >= PAGE_WIDTH*.75 ){
-            $('#center_table_column').hide();
-            $('#increasebutton').hide();
-            $('#right_table_column').width( .875*PAGE_WIDTH );
-        }
-        else{
-            $('#right_table_column').width( right_width + PAGE_WIDTH*.125 );
-            $('#center_table_column').width( PAGE_WIDTH*.75 - right_width );
+    function increase_fixed_right_pane(percent_incr, min_width_percent) {
+        var left_width_text = $('.site_inner')[0].style.width;
+        var right_width_text = $('#fixed_right_pane')[0].style.width;
+        var left_width = parseInt(left_width_text.replace("%", ""), 10);
+        var right_width = parseInt(right_width_text.replace("%", ""), 10);
+        var new_left_width = left_width - percent_incr;
+        var new_right_width = right_width + percent_incr;
+        var new_left_width_text = new_left_width + "%";
+        var new_right_width_text = new_right_width + "%";
+        if (new_left_width > min_width_percent && new_right_width > min_width_percent) {
+            $('.site_inner')[0].style.width = new_left_width_text;
+            $('#fixed_right_pane')[0].style.width = new_right_width_text;
         }
     }
-    function decrease_column_right()
-    {
-        var right_width = $('#right_table_column').width();
-        if( right_width <= PAGE_WIDTH*.25 ){
-            $('#right_table_column').hide();
-            $('#right_table_column_hidden').show();
-            $('#right_table_column_hidden').width($('#right_table_column_hidden a').width());
-            $('#center_table_column').width( .875*PAGE_WIDTH - $('#right_table_column_hidden').width() );
-        }
-        else{
-            $('#right_table_column').width( right_width - PAGE_WIDTH*.125 );
-            $('#center_table_column').width( PAGE_WIDTH - right_width );
-            $('#center_table_column').show();
-            $('#increasebutton').show();
-        }
+    function increase_column_right() {
+        increase_fixed_right_pane(3, 10);
     }
-    function show_column_right() {
-        $('#right_table_column').show();
-        $('#right_table_column_hidden').hide();
-        $('#center_table_column').width(960 - $('#right_table_column').width() - $('#left_table_column').width());
-    }
-    function show_comments_big() {
-        $('#make_big').hide();
-        $('#make_normal').show();
-        $('.comment_body').show();
-    }
-    function hide_comments_big() {
-        $('#make_big').show();
-        $('#make_normal').hide();        
-        $('.comment_body').hide();
+    function decrease_column_right() {
+        increase_fixed_right_pane(-3, 10);
     }
     function openCommentDialog(name)
     {
@@ -257,7 +297,7 @@
 
     <table cellspacing="0">
         <tr>
-            <td style="vertical-align: top; width: 120px; padding:0;" id="left_table_column">
+            <td style="vertical-align: top; width: 15%; padding:0;" id="left_table_column">
                 <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
                     Navigation
                 </div>
@@ -265,7 +305,6 @@
                     <ul style="list-style-type: none; margin: 0; padding: 0;">
                         <li{% ifequal full_path "/"%} style="font-weight: bold;"{% endifequal %}><a href="/">Home</a></li>
                         <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
-                        <li{% ifequal viewer_name "codegraph"%} style="font-weight: bold;"{% endifequal %}><a href="{% url item_type_url viewer="codegraph" %}">Codegraph</a></li>
                         <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
                     </ul>
                 </div>
@@ -280,89 +319,63 @@
                 </div>
 				{% endif %}
             </td>
-            
-            <td style="vertical-align: top; {% if item %} width: 600px; {% else %} width: 840px; {% endif %} padding:0;" id="center_table_column">
+            <td style="vertical-align: top; width: 85%; padding:0;" id="center_table_column">
                 <div style="padding: 0 5px 0 5px;">
                     {% block content %}
                     {% endblock %}
                 </div>
             </td>
-
-            {% if item %}
-
-            <td style="vertical-align: top; display: none; padding:0;" id="right_table_column_hidden">
-                <div class="ui-helper-clearfix" style="font-size: 60%;">
-                    <a href="#" onclick="show_column_right(); return false;" class="fg-button ui-state-default ui-corner-all" title="Show"><div style="font-size: 9pt;">Item Data</div></a>
-                </div>
-            </td>
-            <td style="vertical-align: top; width: 240px; padding:0;" id="right_table_column">
-                <div class="ui-helper-clearfix" style="font-size: 60%;">
-                    <a href="#" id="increasebutton" onclick="increase_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Show"><span class="ui-icon ui-icon-arrowthickstop-1-w"></span> Show</a>
-                    <a href="#" id="decreasebutton" onclick="decrease_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Hide"><span class="ui-icon ui-icon-arrowthickstop-1-e"></span> Hide</a>
-                </div>
-
-                {# TODO links are black because of ui-widget-content to a #}
-                <div id="right_accordion">
-
-                    <h3><a href="#">Item Details</a></h3>
-                    <div id="accordion_details">
-                        {% itemdetails %}
-                    </div>
-
-                    {% calculatecomments %}
-                    <h3><a href="#">{{ n_comments }} comment{{ n_comments|pluralize }}</a></h3>
-                    <div>
-                        <div id="make_big"><a href="#" onclick="show_comments_big(); return false;">Expand Comments</a></div>
-                        <div id="make_normal" style="display: none;"><a href="#" onclick="hide_comments_big(); return false;">Collapse Comments</a></div>
-                        {{ comment_box }}
-                    </div>
-
-                    {% calculateactionnotices %}
-                    <h3><a href="#">{{ n_action_notices }} action notice{{ n_action_notices|pluralize }}</a></h3>
-                    <div>
-                        {{ action_notice_box }}
-                    </div>
-
-                    {% calculatehistory %}
-                    <h3><a href="#">{{ n_versions }} version{{ n_versions|pluralize }}</a></h3>
-                    <div>
-                        {{ history_box }}
-                    </div>
-
-                    {% calculaterelationships %}
-                    <h3><a href="#">{{ n_relationships }} related item{{ n_relationships|pluralize }}</a></h3>
-                    <div>
-                        {{ relationships_box }}
-                    </div>
-
-                    <h3><a href="#">Permissions</a></h3>
-                    <div>
-                        {% permissions_box %}
-                    </div>
-
-
-                </div>
-            </td>
-            
-
-            {% endif %}
         </tr>
     </table>
 
 </div>
 
-<input type="button" value="Open Fullscreen" onclick="max()" />
-<input type="button" value="Increase text size" onclick="resizeText(1)" />
-<input type="button" value="Decrease text size" onclick="resizeText(-1)" />
-
-
 <div class="footer">
+    <p>
+        <b>Desktop Browser</b>
+        {% if item %}
+        |
+        <a href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}">RSS</a>
+        {% endif %}
+        {% ifequal action 'list' %}
+        |
+        <a href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}?{{ query_string }}">RSS</a>
+        {% endifequal %}
+        |
+		<a href="#" onclick="resizeText(1)">Increase text size</a>
+		|
+		<a href="#" onclick="resizeText(-1)">Decrease text size</a>
+		|
+		<a href="#"id="showhidetrigger" href="#">Fullscreen</a>
+		|
+        <a href="#" onclick="$('#google_translate_dialog').dialog({close: function(event, ui) {$('#google_translate_dialog').dialog('destroy')}}); return false;">Translate</a>
+        <div id="google_translate_dialog" title="Translate" style="display: none;">
+            <div id="google_translate_element">
+            </div>
+        </div>
+        <script>
+        function googleTranslateElementInit() {
+          new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+          }, 'google_translate_element');
+        }
+        </script><script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    </p>
     <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
-    <p>Desktop browser | <a href="list.mobi">Mobile</a> | <a href="list.rss">RSS</a></p> {# TODO generate formats list #}
+</div>
+  <div id="showhidetarget">
+    <p>For Internet Explorer users:
+		Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option 		labeled Full Screen.
+	</p>
+		
+	<p>For Chrome users:Click on the Chrome "wrench" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>
+	<p>For Firefox user:Click on the View menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>
+	<p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>
+  </div>
+</div>
 </div>
 
-</div>
-</div>
 
 </body>
 

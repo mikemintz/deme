@@ -9,7 +9,7 @@ http://github.com/mikemintz/deme/tree/master
 
 To install Git and learn how to use it, visit:
 
-http://github.com/guides/home
+http://help.github.com/linux-set-up-git/
 
 To checkout Deme, type::
 

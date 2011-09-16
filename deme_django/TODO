@@ -23,8 +23,6 @@ Action summary field should appear in regular view, not advanced options, when e
 
 Subscribe should include an RSS option in the interface - just a link to the RSS viewer which provides a subscription dialogue. (Todd, 7/11/2011)
 
-RSS and Mobi links at bottom of page should display RSS feed and a mobi format, if available. (Todd, 7/11/2011)
-
 Transcluded documents should render in HTMLDocument view of the transcluding document. (Todd, 7/11/2011)
 
 Permissions displayed in Item Data menu should include negative permissions (e.g."As Anonymous you cannot * View body"). (Todd, 7/11/2011)
@@ -32,8 +30,6 @@ Permissions displayed in Item Data menu should include negative permissions (e.g
 Trying to comment on this item (Deme Issues) when logged in as Mike says "enter phrase to prove you're not a spammer" but no textbox appeared to enter the phrase. (Mike)	
 
 Diff functionality can break on complicated formatting changes of HTML documents
-
-RSS link does not work in vanity URLs (see deme.stanford.edu home page) (Mike, 2011-08-18)
 
 Versions should add a field for "Minor Change" - a boolean checkbox to indicate unsubstantial difference with previous version. This could be used to display only the most recent version in a chain of Minor Changes in the default view of Versions of an Item. (Todd, 8/1/2011)
 
@@ -55,7 +51,11 @@ I get "Server Error" when I click on "My account" when logged in as Todd Davies 
 
 When you deactivate a membership from a collection and try to reactivate it, the membership creator doesn't check to see if a deactivated membership exists and creates a new one. This leads to a server error. (Jimmy 8/19/11)
 
-When you destroy a FileDocument, it doesn't delete the file from the static directory (Mike, 2011-08-29)
+If you destroy a comment, the subcomments won't appear in the same thread since there is no evidence they are descendents of the destroyed comment's parent. (Mike 2011-09-08)
+
+The list viewer should allow you to refer to related items (a particular field) in a column, which will load all related items and display that field, as permissions allow. Sorting and searching will also need to be implemented. Maybe this would use subgrids? (Mike 2011-09-12)
+
+If you click away from an HTMLDocument you are editing (e.g. by clicking on Modify Permissions during editing), you can lose your edits. Back clicking goes to a fresh edit page. This should be fixed so that people don't lose their edits. (Todd 2011-09-13)
 
 Have an "other" field for priority on Project. When the user specifies "other" then a dialog box will show up on the form to set a custom status. (Jimmy, 9/8/2011)
 
@@ -66,13 +66,11 @@ Other things to do
 * make links to Symsys internal pages work in static documents
 * Give way to show options when completing a text box (e.g. adding an item to a collection should not require one to type a random character in order to see the options) - make list alphabetical
 * Make it so you can add items with no name to a Newsroll
-* Get and install more memory
 * Give more data about each version in Versions metadata display (e.g. datetime, updater)
 * Discussion viewer - full page view of comment threads
 * Make event links in calendar shareable
 * Truncate event description in div onlick from calendar
 * Go through permissions and do sanity check for different categories of users
-* Expand search beyond name field; combinatorial search, etc.
 * If someone makes a layout and screws up django template syntax, the site is completely screwed. Come up with failsafe
 * If you go to "new" and one of the initial model fields is permission denied (e.g., you're creating a membership on a collection you aren't allowed to modify_membership for, or creating a comment on an item you can't reply to), let the user know
 * the destroy action notice will never be read by anyone (since all permissions are effectively denied)
@@ -84,6 +82,9 @@ Other things to do
 * Code cleanup: views, templatetags, and templates, and symsys everything
 * Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun). In general though, we definitely have an issue where we assume a given HTML container will only be loaded once.
 * Do a more thorough job ensuring fields are not null (unless allowed_to_be_null_before_destroyed == True). We might have to wait for real model-based validations (Django 1.2).
+* Advanced search; combinatorial search, etc.
+* CustomURL layouts should inherit from parent CustomURL layouts
+
 Django bugs
 -----------
 * Fix the multiple inheritance bug
@@ -92,9 +93,6 @@ Django bugs
   - http://code.djangoproject.com/ticket/2227
 * HTML special chars are being escaped twice in RSS feeds
   - http://code.djangoproject.com/ticket/6533
-* Advanced search
-* CustomURL layouts should inherit from parent CustomURL layouts
-* Email alias field, optional for each address; could look for Postmaster spam using cron job each minute
 
 Layout
 ------
@@ -201,10 +199,6 @@ Figure out robust caching invalidation scheme for Deme
 Mike's TODO list
 ================
 
-2011-06-09
-----------
-* calculcatehistory breaks on destroyed items
-
 2011-06-04
 ----------
 * Maybe we need a db_index on email_list_address
@@ -269,8 +263,6 @@ Nice to have
 * More sophisticated event day/time stuff.
 
 Sprint priorities
-* Email lists
-* Email notifications - better wording
 * Default Deme layout
     * remove "Subscribe" button from views when not logged in
     * Rename "More" button to "Item Data"
@@ -278,11 +270,7 @@ Sprint priorities
     * Don't display "Login as" in Login pulldown options if there is no one to log in as
 * Symsys homepage
 * Webauth timing issue
-* Pull new data from old Symsys
-* Move from beta to Symsys
 * Certificate transfer?
-* Set up Todd's blog Mindroll
 * Make password setting easier
-* Migrations
 * Change wording of Related Items in metadata menu
 

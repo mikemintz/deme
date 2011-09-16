@@ -9,16 +9,15 @@ body {
 }
 
 div.site_outer {
-    text-align: center;
+    text-align: left;
     width: 100%;
     height: 100%;
 }
 
 div.site_inner {
     text-align: left;
-    margin: 0 auto;
-    padding: 0 0em;
-    width: 960px;
+    margin: 0;
+    padding: 10px;
 }
 
 .header {
@@ -244,28 +243,30 @@ form.item_form ul.errorlist li {
 div.comment_box {
 }
 div.comment_box_header {
-    text-align: right;
     font-size: smaller;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
 }
 
-div.comment_outer {
+div.subcomments {
     margin-left: 20px;
-    border: thin solid #aaa;
-    border-width: thin 0 0 thin;
+    border-left: 2px dotted #bbb;
 }
-div.comment_outer_toplevel {
-    margin-left: 0;
-    border-width: thin thin thin thin;
+div.subcomments_last {
+    margin-left: 20px;
+    /*border-left: 2px dotted #bbb;*/
 }
 div.comment_header {
-    background: #ccc;
     padding: 3px;
+    margin-left: 10px;
+}
+div.comment_header_highlighted {
+    background: #ff0;
 }
 div.comment_body {
     padding-bottom: 5px;
     padding-left: 5px;
     padding-right: 5px;
+    border: thin solid #000;
 }
 
 .commentref {
@@ -279,6 +280,9 @@ div.comment_body {
     border: 1px dotted #777;
     padding: 1px;
     margin: 0 3px 0 3px;
+}
+.commentref_highlighted {
+    background: #ff0;
 }
 
 .ajax_choice_results {

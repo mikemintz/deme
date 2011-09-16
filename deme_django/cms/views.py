@@ -214,7 +214,6 @@ class ItemViewer(Viewer):
         for filter_string in self.request.GET.getlist('filter'):
             if not filter_string: continue
             filter_string = str(filter_string) # Unicode doesn't work here
-            self.context['filter_string'] = filter_string
             parts = filter_string.split('.')
             target_pk = parts.pop()
             fields = []
@@ -232,8 +231,6 @@ class ItemViewer(Viewer):
                     cur_item_type = field.model
                 else:
                     raise Exception("Cannot filter on field %s.%s (not a related field)" % (cur_item_type.__name__, field.name))
-                if not issubclass(cur_item_type, Item):
-                    raise Exception("Cannot filter on field %s.%s (non item-type model)" % (cur_item_type.__name__, field.name))
 
             def filter_by_filter(queryset, fields, item_types):
                 if not fields:
@@ -248,17 +245,19 @@ class ItemViewer(Viewer):
                 if isinstance(field, models.ForeignKey):
                     query_dict = {field.name + '__in': next_queryset}
                     result = queryset.filter(**query_dict)
-                    ability = 'view %s.%s' % (item_type.__name__, field.name)
-                    result = self.permission_cache.filter_items(ability, result)
+                    if issubclass(item_type, Item):
+                        ability = 'view %s.%s' % (item_type.__name__, field.name)
+                        result = self.permission_cache.filter_items(ability, result)
                 elif isinstance(field, models.related.RelatedObject):
-                    if not isinstance(field.field, models.OneToOneField):
+                    if issubclass(next_item_type, Item) and not isinstance(field.field, models.OneToOneField):
                         ability = 'view %s.%s' % (next_item_type.__name__, field.field.name)
                         next_queryset = self.permission_cache.filter_items(ability, next_queryset)
                     query_dict = {'pk__in': next_queryset.values(field.field.name).query}
                     result = queryset.filter(**query_dict)
                 else:
                     assert False
-                result = result.filter(active=True)
+                if issubclass(item_type, Item):
+                    result = result.filter(active=True)
                 return result
             items = filter_by_filter(items, fields, item_types)
         # Filter by collection
@@ -276,7 +275,8 @@ class ItemViewer(Viewer):
             ability = 'view %s.%s' % (field.model.__name__, field.name)
             items = self.permission_cache.filter_items(ability, items)
             if isinstance(field, models.ForeignKey):
-                foreign_items = self.permission_cache.filter_items('view Item.name', field.rel.to.objects)
+                foreign_items = field.rel.to.objects
+                foreign_items = self.permission_cache.filter_items('view Item.name', foreign_items)
                 items = items.filter(**{field.name + '__in': foreign_items})
                 sort_field = sort_field + "__name"
             items = items.order_by(('' if sort_ascending else '-') + sort_field)
@@ -288,7 +288,7 @@ class ItemViewer(Viewer):
 
         def item_link(item):
             can_view_name = self.cur_agent_can('view Item.name', item)
-            url = item.get_absolute_url()
+            url = "%s?%s" % (item.get_absolute_url(), '&amp;'.join('crumb_filter=' + x for x in self.request.GET.getlist('filter')))
             icon = icon_url(item, 16)
             name = escape(item.display_name(can_view_name))
             return '<a class="imglink" href="%s"><img src="%s" /><span>%s</span></a>' % (url, icon, name)
@@ -891,15 +891,7 @@ class CollectionViewer(ItemViewer):
         from cms.forms import AjaxModelChoiceField
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
-        memberships = self.item.child_memberships
-        memberships = memberships.filter(active=True)
-        memberships = memberships.filter(item__active=True)
-        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
-        memberships = memberships.select_related('item')
-        if memberships:
-            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
-        self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can('view Item.name', x.item), x.item.name))
-        self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
+        self.context['cur_agent_in_collection'] = self.item.child_memberships.filter(active=True, item=self.cur_agent).exists()
         template = loader.get_template('collection/show.html')
         return HttpResponse(template.render(self.context))
 
@@ -928,7 +920,7 @@ class CollectionViewer(ItemViewer):
         try:
             member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
-            return self.render_error('Invalid URL', "You must specify the member you are adding")
+            return self.render_error('Invalid URL', "You must specify the member you are removing")
         if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('remove_self', self.item))):
             raise DemePermissionDenied('modify_membership', None)
         try:
@@ -1016,6 +1008,9 @@ class TextDocumentViewer(DocumentViewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        self.context['in_textdocument_show'] = True
+        self.context['highlighted_transclusion_id'] = self.request.GET.get('highlighted_transclusion')
+        self.context['highlighted_comment_id'] = self.request.GET.get('highlighted_comment')
         self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('textdocument/show.html')
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
