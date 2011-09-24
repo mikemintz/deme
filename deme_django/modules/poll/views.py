@@ -54,16 +54,53 @@ class ChooseNPollViewer(PollViewer):
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
         memberships = self.item.child_memberships
-        memberships = memberships.filter(active=True)
-        memberships = memberships.filter(item__active=True)
+        memberships = memberships.filter(active=True, item__active=True)
         memberships = self.permission_cache.filter_items('view Membership.item', memberships)
         memberships = memberships.select_related('item')
         if memberships:
             self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
-        self.context['memberships'] = sorted(memberships, key=lambda x: (not self.permission_cache.agent_can('view Item.name', x.item), x.item.name))
-        self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
+        self.context['responses'] = PropositionResponseChoose.objects.filter(poll=self.item)
+        eligible_agent_memberships = self.item.eligibles.child_memberships
+        eligible_agent_memberships = eligible_agent_memberships.filter(active=True, item__active=True)
+        eligible_agent_memberships = self.permission_cache.filter_items('view Membership.item', eligible_agent_memberships)
+        eligible_agent_memberships = eligible_agent_memberships.select_related('item')
+        if eligible_agent_memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in eligible_agent_memberships]))
+        responses = {}
+        for agent_membership in eligible_agent_memberships:
+            responses[agent_membership.item] = PropositionResponseChoose.objects.filter(poll=self.item).filter(participant=agent_membership.item)
+        self.context['responses'] = responses
+        self.context['decisions'] = Decision.objects.filter(poll=self.item)
+        self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
+        self.context['can_view_response_names'] = self.item.visibility != 'closed' or self.permission_cache.agent_can('access_proposition_responses', self.item)
+        self.context['can_view_response_names_and_values'] = self.item.visibility == 'responses visible' or self.permission_cache.agent_can('access_proposition_responses', self.item)
+        self.context['cur_agent_in_eligbles'] = self.item.agent_eligible_to_vote(self.cur_agent)
+        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdChooseNDecision') or self.permission_cache.agent_can_global('create ThresholdEChooseNDecision')  or self.permission_cache.agent_can_global('create PluralityChooseNDecision') or self.permission_cache.agent_can_global('create UnanimousChooseNDecision')
         template = loader.get_template('poll/choosenpoll.html')
         return HttpResponse(template.render(self.context))
+    
+    def item_respondtopropositions_html(self):
+        propositions = self.request.POST
+        #verify that the cur agent is in the eligbles
+        self.verifyCurAgentIsEligible()
+        #verify that it is not before or after the deadline
+
+        #verify that there are only n or less responses
+        counter=0
+        for response in propositions:    
+            if propositions[response]=="chosen":
+                counter=counter+1
+        if counter!=self.item.n: #this needs to be changed for chooseN
+            return self.render_error('Incorect input of votes', "Choose "+str(self.item.n)+".")
+
+        #delete old response (even if one doesn't exist)
+        PropositionResponseChoose.objects.filter(poll=self.item, participant=self.cur_agent).delete()
+        #make a new response
+        for response in propositions:
+            newResponse = PropositionResponseChoose(poll=self.item, participant= self.cur_agent, proposition = Proposition.objects.get(pk=response), value = propositions[response])
+            newResponse.save()
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
         
 
 class ApproveNPollViewer(PollViewer):
@@ -194,7 +231,13 @@ class PluralityChooseNDecisionViewer(DecisionViewer):
     def item_show_html(self):
         self.context['action_title'] = 'Show'
         self.context['item'] = self.item
-
+        memberships = self.item.poll.child_memberships
+        memberships = memberships.filter(active=True, item__active=True)
+        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
+        memberships = memberships.select_related('item')
+        if memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+        self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
         maxPollTakers = len(Membership.objects.all().filter(collection=self.item.poll.eligibles))
         responses = PropositionResponseChoose.objects.all().filter(poll=self.item.poll.pk).filter(value='chosen')
         mostPopular = None
@@ -234,6 +277,13 @@ class ThresholdChooseNDecisionViewer(DecisionViewer):
     def item_show_html(self):
         self.context['action_title'] = 'Show'
         self.context['item'] = self.item
+        memberships = self.item.poll.child_memberships
+        memberships = memberships.filter(active=True, item__active=True)
+        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
+        memberships = memberships.select_related('item')
+        if memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+        self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
         pollTakers = Membership.objects.all().filter(collection=self.item.poll.eligibles)
         participants = Agent.objects.filter(poll_participant__poll=self.item.poll)
         minForDecision = int(math.ceil(len(participants) * (self.item.p_decision/100.0)))
@@ -279,6 +329,14 @@ class ThresholdEChooseNDecisionViewer(DecisionViewer):
     def item_show_html(self):
         self.context['action_title'] = 'Show'
         self.context['item'] = self.item
+        memberships = self.item.poll.child_memberships
+        memberships = memberships.filter(active=True, item__active=True)
+        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
+        memberships = memberships.select_related('item')
+        if memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+        self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
+            
         pollTakers = Membership.objects.all().filter(collection=self.item.poll.eligibles)
         minForDecision = int(math.ceil(len(pollTakers) * (self.item.e_decision/100.0)))
         maxPollTakers = len(pollTakers)
@@ -324,6 +382,13 @@ class UnanimousChooseNDecisionViewer(DecisionViewer):
     def item_show_html(self):
         self.context['action_title'] = 'Show'
         self.context['item'] = self.item
+        memberships = self.item.poll.child_memberships
+        memberships = memberships.filter(active=True, item__active=True)
+        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
+        memberships = memberships.select_related('item')
+        if memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+        self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
         pollTakers = Membership.objects.all().filter(collection=self.item.poll.eligibles)
         minForDecision = len(pollTakers) - self.item.m_decision
         maxPollTakers = len(pollTakers)
@@ -368,7 +433,13 @@ class PluralityApproveNDecisionViewer(DecisionViewer):
     def item_show_html(self):
         self.context['action_title'] = 'Show'
         self.context['item'] = self.item
-
+        memberships = self.item.poll.child_memberships
+        memberships = memberships.filter(active=True, item__active=True)
+        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
+        memberships = memberships.select_related('item')
+        if memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+        self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
         maxPollTakers = len(Membership.objects.all().filter(collection=self.item.poll.eligibles))
         responses = PropositionResponseApprove.objects.all().filter(poll=self.item.poll.pk).filter(value='approve')
         mostPopular = None
@@ -408,6 +479,15 @@ class ThresholdApproveNDecisionViewer(DecisionViewer):
     def item_show_html(self):
         self.context['action_title'] = 'Show'
         self.context['item'] = self.item
+        self.context['action_title'] = 'Show'
+        self.context['item'] = self.item
+        memberships = self.item.poll.child_memberships
+        memberships = memberships.filter(active=True, item__active=True)
+        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
+        memberships = memberships.select_related('item')
+        if memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+        self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
         pollTakers = Membership.objects.all().filter(collection=self.item.poll.eligibles)
         participants = Agent.objects.filter(poll_participant__poll=self.item.poll)
         minForDecision = int(math.ceil(len(participants) * (self.item.p_decision/100.0)))
@@ -454,6 +534,15 @@ class ThresholdEApproveNDecisionViewer(DecisionViewer):
     def item_show_html(self):
         self.context['action_title'] = 'Show'
         self.context['item'] = self.item
+        self.context['action_title'] = 'Show'
+        self.context['item'] = self.item
+        memberships = self.item.poll.child_memberships
+        memberships = memberships.filter(active=True, item__active=True)
+        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
+        memberships = memberships.select_related('item')
+        if memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+        self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
         pollTakers = Membership.objects.all().filter(collection=self.item.poll.eligibles)
         minForDecision = int(math.ceil(len(pollTakers) * (self.item.e_decision/100.0)))
         maxPollTakers = len(pollTakers)
@@ -489,7 +578,7 @@ class ThresholdEApproveNDecisionViewer(DecisionViewer):
         self.context['minpeoplefordecision'] = minForDecision
         self.context['participants'] = Agent.objects.filter(poll_participant__poll=self.item.poll)
         
-        template = loader.get_template('poll/thresholdechoosendecision.html')
+        template = loader.get_template('poll/thresholdeapprovendecision.html')
         return HttpResponse(template.render(self.context))
 
 # class WriteInPropositionsViewer(CollectionViewer):

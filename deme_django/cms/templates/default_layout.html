@@ -34,6 +34,15 @@
     <link href="{% media_url "stylesheets/ui.jqgrid.css" %}" media="all" rel="Stylesheet" type="text/css" />
 
     <script type="text/javascript" src="{% media_url "javascripts/fg.menu.js" %}"></script>
+	<script type="text/javascript">
+	        $(document).ready(function () {
+	            $('#showhidetarget').hide();
+
+	            $('a#showhidetrigger').click(function () {
+	                $('#showhidetarget').toggle(400);
+	            });
+	        });
+	    </script>
     <link href="{% media_url "stylesheets/fg.menu.css" %}" media="screen" rel="stylesheet" type="text/css" />
 	<!-- style exceptions for IE 6 -->
 	<!--[if IE 6]>
@@ -105,12 +114,21 @@
     </script> 
     
 	<script type="text/javascript">
-	   function max()
-	   {
-	       self.moveTo(0,0);
-	       self.resizeTo(screen.availWidth,screen.availHeight);
 
-	   }
+	 function resizeText(multiplier) {
+	  if (document.body.style.fontSize == "") {
+	    document.body.style.fontSize = "1.0em";
+	  }
+	  document.body.style.fontSize = parseFloat(document.body.style.fontSize) + (multiplier * 0.2) + "em";
+	}
+	<script type="text/javascript">
+	 function unhide(divID) {
+	 var item = document.getElementById(divID);
+	 if (item) {
+	 item.className=(item.className=='hidden')?'unhidden':'hidden';
+	 }
+	 }
+	 </script>
 	</script>
 	
 
@@ -312,10 +330,6 @@
 
 </div>
 
-<input type="button" value="Open Fullscreen" onclick="max()" />
-<input type="button" value="Increase text size" onclick="resizeText(1)" />
-<input type="button" value="Decrease text size" onclick="resizeText(-1)" />
-
 <div class="footer">
     <p>
         <b>Desktop Browser</b>
@@ -328,6 +342,12 @@
         <a href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}?{{ query_string }}">RSS</a>
         {% endifequal %}
         |
+		<a href="#" onclick="resizeText(1)">Increase text size</a>
+		|
+		<a href="#" onclick="resizeText(-1)">Decrease text size</a>
+		|
+		<a href="#"id="showhidetrigger" href="#">Fullscreen</a>
+		|
         <a href="#" onclick="$('#google_translate_dialog').dialog({close: function(event, ui) {$('#google_translate_dialog').dialog('destroy')}}); return false;">Translate</a>
         <div id="google_translate_dialog" title="Translate" style="display: none;">
             <div id="google_translate_element">
@@ -344,9 +364,18 @@
     </p>
     <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
 </div>
+  <div id="showhidetarget">
+    <p>For Internet Explorer users:
+		Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option 		labeled Full Screen.
+	</p>
+		
+	<p>For Chrome users:Click on the Chrome "wrench" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>
+	<p>For Firefox user:Click on the View menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>
+	<p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>
+  </div>
+</div>
+</div>
 
-</div>
-</div>
 
 </body>
 

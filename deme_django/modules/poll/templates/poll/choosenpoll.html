@@ -1,16 +1,212 @@
 {% extends layout %}
 {% load item_tags %}
 {% block content %}
+<style>
+div {
+ margin-right: 5px;
+}
 
-<p>Title:  {{item.name}}</p>
-<p>Question: {{ item.question }}</p>
-<p>Response Format: {{ item.response_format }}</p>
-<p>Beginning Date: {{ item.begins }} </p>
-<p>Deadline: {{ item.deadline }}</p>
-<p>Eligibles: {{ item.eligibles }}</p>
-<p>Visibility {{item.visibility}}</p>
-<p>Write in visibility: {{ item.display_write_ins }}</p>
-<p> N : {{ item.n }} </p>
+div p {
+  font-size: 14px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+#label {
+  font-size: 12px;
+  font-weight: bold;
+  margin: 0;
+}
+
+div.Question {
+  margin-right: 6em;
+}
+
+div.Deadline p{
+	font-size: 20px;
+}
+
+div.Instructions p{
+	font-size: 12px;
+}
+
+#No_Permission {
+	font-size: 12px;
+}
+
+div.submit_button a.poll {
+}
+
+div #Results {
+    width: 20%;
+	padding: 0;
+	margin: .2em;
+	margin-left: .5em;
+	float: right;
+}
+
+div.container.propositions div.row.odd span{
+	background-color: #CCF;
+}
+
+div.container.propositions div.row.even span{
+	background-color: #F0F0F0;
+}
+
+div.container div.row.even{
+	background-color: #F0F0F0;
+	height: 3em;
+	border: 1px solid gray
+}
+
+div.container div.row.odd{
+	background-color: #CCF;
+	height: 3em;
+	border: 1px solid gray
+}
+
+
+div.container.propositions a{
+	margin-right: 2em;
+}
+
+div.container span span{
+	float: right;
+	margin-left: 1em;
+}
+
+div.container div.implementation{
+	height: 16em;
+	width: 30%;
+	overflow-y: hidden;
+	overflow-x: hidden;
+	margin: 0em;
+	display: none;
+}
+
+#hiddenDecisionButtons p{
+	font-size: 10px;
+}
+
+</style>
+
+<script type="text/javascript">
+	function toggleImplementation(pk){
+		var button = "#hide" + pk;
+		var implementation = "#" + pk;
+		if ($(implementation).is(":hidden")) {
+			$(implementation).slideDown("slow");
+			$(button).val(" Hide Details");
+		} else {
+			$(implementation).slideUp("slow");
+			$(button).val("Show Details");
+		}
+	};
+</script>
+<script type="text/javascript">
+	function toggleResponses(pk){
+		var response = "#responses" + pk;
+		var button = "#hide" + pk;
+		if ($(response).is(":hidden")) {
+			$(response).slideDown("slow");
+			$(button).val(" Hide Responses");
+		} else {
+			$(response).slideUp("slow");
+			$(button).val("Show Responses");
+		}
+	};
+	
+	function toggleButtons(className){
+		var buttons = "#" + className;
+		if ($(buttons).is(":hidden")) {
+			$(buttons).slideDown("slow");
+		} else {
+			$(buttons).slideUp("slow");
+		}
+	};
+	
+	function removeMember(pk){
+		$("#removeInput").val(pk);
+		$("#removemember").submit();
+	};
+	
+    
+</script>
+<form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+    <input id="removeInput"type="hidden" name="item" value="{{ membership.item.pk }}" />
+</form>
+
+<div id='Results'>
+	<div style="font-size: 16px; padding-left: .6em; margin: 0; background-color: #CCF; outline: 1px solid black;">View Results</div>
+	<div style="overflow-x: hidden; overflow-y: scroll; padding: 0; margin: 0; height: 100px; background-color: #CCF; outline: 1px solid black;">
+	{% if decisions %}
+		{% for decision in decisions %}
+			{% ifagentcan 'view Decision.poll' decision %}
+	 		<p><a href="{{ decision.get_absolute_url }}">{% viewable_name decision %}</a></p>
+			{% endifagentcan %}
+		{% endfor %}
+	{% else %}
+		<p>No Results Yet<p>
+	{% endif %}
+	</div>
+	<div style="float:right;">
+		{% if cur_agent_can_make_a_decision %}
+		<div class="submit_button" id="NewDecision" style="margin-top: .5em; ">
+		    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')" style="float: right; width: 110%; font-size: 13px; margin-right:0;">Calculate Result</a>
+		</div>
+		{% endif %}
+		<br>
+		<br>
+		<div id="hiddenDecisionButtons" style="display: none; width: 150%;">
+			{% ifagentcanglobal 'create PluralityChooseNDecision' %} 
+			<p><a href="{% url item_type_url viewer='pluralitychoosendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Plurality Aggregation</a></p>
+			{% endifagentcanglobal %}
+			{% ifagentcanglobal 'create ThresholdChooseNDecision' %}
+			 <p><a  href="{% url item_type_url viewer='thresholdchoosendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Threshold Participant Aggregation</a></p>
+			{% endifagentcanglobal %}
+			{% ifagentcanglobal 'create ThresholdEChooseNDecision' %}
+			 <p><a  href="{% url item_type_url viewer='thresholdechoosendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Threshold Eligibles Aggregation</a></p>
+			{% endifagentcanglobal %}
+			{% ifagentcanglobal 'create UnanimousChooseNDecision' %}
+			 <p><a  href="{% url item_type_url viewer='unanimouschoosendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Unanimous Aggregation</a></p>
+			{% endifagentcanglobal %}
+		</div>
+	</div>
+</div>
+
+
+<div class='Question' style="width: 50%"> 
+	{% ifagentcan 'view Poll.question' item %}
+	<p>{{ item.question }}</p>
+	{% else %}
+	<p> YOU CANNOT VIEW THIS FIELD </p>
+	{% endifagentcan %}
+	<p id='label'> Question </p>
+</div>
+<div class='Deadline' style="width: 50%">
+	<p>{% ifagentcan 'view Poll.deadline' item %} {{ item.deadline }} {% endifagentcan %} </p>
+	<p id='label'> Deadline </p>
+</div>
+<div class='timezone'>
+	<p>{% ifagentcan 'view Poll.time_zone' item %} {{ item.time_zone }} {% endifagentcan %}</p>
+	<p id='label'> Timezone </p>
+</div>
+<div class='Beginning'>
+	{% ifagentcan 'view Poll.begins' item %}
+	<p>{{ item.begins }}</p>
+	{% endifagentcan %}
+	<p id='label'> Poll Started </p>
+</div>
+
+
+<br />
+<br />
+<div class='Instructions'>
+	{% ifagentcan 'view ChooseNPoll.n' item %}
+	<p style="font-size: 16px;">Choose {{ item.n }} propositions.</p>
+	{% endifagentcan %}
+</div>
+
 
 
 <script type="text/javascript">
@@ -24,69 +220,141 @@
             close: function(event, ui) {dialogBox.dialog('destroy')}
         });
         dialogBox.dialog('open');
-    }   
+    }   =me
 </script>
-{% subclassfields %}
 
 
 
-{% if memberships %}
-<table cellspacing="0" class="list">
-    <tr>
-        <th>Name</th>
-        <th>Membership</th>
-    </tr>
-    {% for membership in memberships %}
-    <tr class="{% cycle 'even' 'odd' %}">
-        <td>
-            <a href="{{ membership.item.get_absolute_url }}">{% viewable_name membership.item %}</a>
-        </td>
-        <td>
-            <a href="{{ membership.get_absolute_url }}">{{ membership.pk }}</a>
-            {% ifagentcan 'modify_membership' item %}
-            <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
-                <input type="hidden" name="item" value="{{ membership.item.pk }}" />
-                <button type="submit"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove from collection</span></button>
-            </form>
-            {% endifagentcan %}
-        </td>
-    </tr>
+{% if propositions %}
+<form method="post" enctype="multipart/form-data" 
+	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
+<div class="container propositions" id="Propcontainer" style="width: 78%; margin-left: 0; ">
+    
+	
+	{% for proposition in propositions %}
+    <div class="{% cycle 'even' 'odd' %} row ">
+           <div class='description' style="float:left"><span class="row"> <a style="width=100px; overflow:hidden;" href="{{ proposition.get_absolute_url }}?crumb_filter=memberships.collection.{{ item.pk }}">{% viewable_name proposition %}</a><br>
+	 {% ifagentcan 'view Proposition.summary_text' proposition %}{{proposition.summary_text}}{% endifagentcan %}</div>
+			<div style="float: right">
+				{% if cur_agent_in_eligbles %}
+				<select name="{{ proposition.pk }}">
+	        	<option value="not chosen">Not Chosen</option>
+				<option value="chosen">Chosen</option>
+				</select> 
+				{% endif %}
+			<input type="button" value="Show Details" id="hide{{ proposition.pk }}" onclick="toggleImplementation('{{ proposition.pk }}')" />				 	
+					{% ifagentcan 'modify_membership' item %}
+		                <button type="button" onclick="removeMember('{{ proposition.pk }}')"><img src="{{ "delete"|icon_url:16 }}" /> Remove</button>
+		            {% endifagentcan %}<div style="clear: both;"></div>		
+				
+			</div></span></div>
+			
+    <div class="implementation"id="{{ proposition.pk }}">
+	<a href="{{ proposition.get_absolute_url }}">View as an item</a>{{proposition.body|safe}} 
+	</div>
     {% endfor %}
-</table>
-{% else %}
-    No Items In This Collection
+{% if cur_agent_in_eligbles %}
+<div style="margin-left:40%; margin-bottom:1em;">
+    <input type="submit" value="Submit" /><br><br>
+</div>
 {% endif %}
+</div>
+</form>
+{% else %}
+    No propositions in this poll
+{% endif %}
+
 
 {% ifagentcan 'modify_membership' item %}
-<div>
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;"><img src="{{ "new"|icon_url:16 }}" />Add an item to collection</a><br><br>
+<div class="submit_button">  
+	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Add a Proposition</a>
 </div>
-{% newmemberdialog %}
 {% endifagentcan %}
+<br>
+<br>
+<div id="hiddenPropositionButtons" style="margin: 4px; height 2em; display:none;">
+	{% ifagentcanglobal 'create Proposition' %}
+	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Proposition</a>
+	{% endifagentcanglobal %}
+	{% ifagentcan 'modify_membership' item %}
+	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a>
+	{% endifagentcan %}
+	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Cancel</a><br><br>
+</div>
+<br>
+<br>
 
-{% if cur_agent_in_collection %}
-{% ifagentcan 'remove_self' item %}
-<form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
-    <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
-    <button type="submit" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove my membership in {% viewable_name item %}</span></button>
-</form>
-{% endifagentcan %}
-{% else %}
-{% ifagentcan 'add_self' item %}
-<form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="addmember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
-    <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
-    <button type="submit" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all"><img src="{{ "new"|icon_url:16 }}" /> <span>Become a member of {% viewable_name item %}</span></button>
-</form>
-{% endifagentcan %}
-{% endif %}
+<p style="font-size:16px;">Responses:</p>
+{# make this a bulleted list with hidden divs #}
+<div class="container responses" id="Propcontainer" style="width: 60%; margin-left: 0;">
+    {% if can_view_response_names_and_values %}
+        {% for key,value in responses.items %}
+        	<div class="{% cycle 'even' 'odd' %} row " >
+        	<span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+     		{% if value %}
+            	has responded 
+                <input type="button" style="float:right;"
+                value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
+				</div>
+               	<div id="responses{{ key.pk }}" style="display: none">
+                {% for response in value %}
+                     <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
+                     {% viewable_name response.proposition %}</a>: {{ response.value }}</p>
+                {% endfor %}
+                </div></span>
+        	{% else %}
+            	has not responded </span></div>
+        	{% endif %}
+        {% endfor %}
+	</div>
+    {% else %}{% if can_view_response_names %}
+	{% for key,value in responses.items %}
+    <div class="{% cycle 'even' 'odd' %} row " >
+    <span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+    {% if value %} has responded {% else %} has not responded {% endif %}
+	{% ifequal cur_agent key %} 
+		<input type="button" style="float:right;"
+        value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
+		</div>
+       	<div id="responses{{ key.pk }}" style="display: none">
+        {% for response in value %}
+             <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
+             {% viewable_name response.proposition %}</a>: {{ response.value }}</p>
+        {% endfor %}
+	{% endifequal %}
+    </span></div>
+    {% endfor %}
+    {% else %}
+		Responses are not visible
+		<p>You're response:</p>
+		 {% for key,value in responses.items %}
+			
+			{% ifequal cur_agent.pk key.pk %}
+	        	<div class="{% cycle 'even' 'odd' %} row " >
+	        	<span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+	     		{% if value %}
+	            	has responded 
+	                <input type="button" style="float:right;"
+	                value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
+					</div>
+	               	<div id="responses{{ key.pk }}" style="display: none">
+	                {% for response in value %}
+	                     <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
+	                     {% viewable_name response.proposition %}</a>: {{ response.value }}</p>
+	                {% endfor %}
+	                </div></span>
+	        	{% else %}
+	            	has not responded </span></div>
+	        	{% endif %}
+			{% endifequal %}
+	       {% endfor %}
+    {% endif %}{% endif %}
+</div>
 
-{% if responses %}
-    {% for response in responses %}
-        <p> participant: {{ response.participant }} response: {{ response.proposition }}  </p>
-    {% endfor %}
-{% else %}
-    <p>There are no responses for this poll yet.</p>
-{% endif %}
+
+
+
+
 
 {% endblock content %}
 

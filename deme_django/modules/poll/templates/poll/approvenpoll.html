@@ -162,10 +162,10 @@ div.container div.implementation{
 			<p><a href="{% url item_type_url viewer='pluralityapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Plurality Aggregation</a></p>
 			{% endifagentcanglobal %}
 			{% ifagentcanglobal 'create ThresholdApproveNDecision' %}
-			 <p><a  href="{% url item_type_url viewer='thresholdapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Threshold Aggregation</a></p>
+			 <p><a  href="{% url item_type_url viewer='thresholdapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Threshold Participant Aggregation</a></p>
 			{% endifagentcanglobal %}
 			{% ifagentcanglobal 'create ThresholdEApproveNDecision' %}
-			 <p><a  href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">ThresholdE Aggregation</a></p>
+			 <p><a  href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Threshold Eligible Aggregation</a></p>
 			{% endifagentcanglobal %}
 		</div>
 	</div>
