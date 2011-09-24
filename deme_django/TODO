@@ -59,6 +59,8 @@ If you click away from an HTMLDocument you are editing (e.g. by clicking on Modi
 
 If you create a DemeAccount with the same username as a destroyed one, there's a ValueError instead of a nice uniqueness validation message (Mike 2011-09-15)
 
+Fix newsroll viewer so it obeys permissions. Right now, for example, the page can crash if a member or creator is destroyed.
+
 Have an "other" field for priority on Project. When the user specifies "other" then a dialog box will show up on the form to set a custom status.
 
 Other things to do
