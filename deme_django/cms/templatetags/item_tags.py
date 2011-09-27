@@ -1108,8 +1108,9 @@ class ListGridBox(template.Node):
             if force_unicode(field.help_text).startswith('(Advanced)'):
                 continue
             ability = 'view %s.%s' % (field.model.__name__, field.name)
-            if ability in possible_abilities:
-                fields.append(field)
+            if field not in fields: # prevent duplicates due to multiple inheritance
+                if ability in possible_abilities:
+                    fields.append(field)
         fields.sort(key=lambda field: 0 if field.name == 'name' else 1)
         col_names = [u'%s' % capfirst(field.verbose_name) for field in fields]
         col_model = []
