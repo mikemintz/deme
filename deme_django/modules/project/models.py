@@ -57,7 +57,7 @@ class Project(Collection, HtmlDocument):
 
     def _before_edit(self, action_agent, action_summary, action_time, multi_agent_permission_cache):
         super(Project, self)._before_edit(action_agent, action_summary, action_time, multi_agent_permission_cache)
-        if self.status == 'Completed' and self.repeat != 'Never':
+        if self.status == 'Completed' and self.repeat != 'No':
             self.advance_due_date_one_period()
             self.change_status_to_assigned()
     _before_edit.alters_data = True
