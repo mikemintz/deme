@@ -1,0 +1,276 @@
+DEME - Unclassified issues, need to be categorized and handled:
+
+Fix Bug (short term)
+Creator of a Deme account can Login As that account holder. This should be stopped. Login As should probably be a global ability reserved for administrators. (Todd, 2/8/2011)
+
+TinyMCE inserts a blank space between paragraphs in wysiwyg edit mode. Can it be configured so it doesn't insert the blank space? (Todd, 4/20/2011)
+
+Recent Changes does not show changes to permissions. It seems like it should do this for a user who has global Do anything, and also if a user is the one who made the permissions change. (Todd, 4/20/2011)
+
+User who creates a new person can add ContactMethods and AuthenticationMethods to person's profile, but the person himself cannot do so. Also, the created methods are not created with appropriate permissions for the user unless this is selected separately before creation. (Todd, 6/20/2011)
+
+When creating ContactMethod or AuthenticationMethod via button from agent's profile viewer, viewer should default autofill the name field to "<Agent>'s [Authentication or Email] Contact Method". Should be done via module, not custom code for each viewer. (Todd, 6/20/2011)
+
+When in New Item menu the back button will close the menu but not go back one step. For example: I click agents>anonymous agents and see that it is empty so I click back and that closes the menu instead of going back to agents. (Jimmy, 6/20/2011)
+
+When the Subscribe button is clicked for an item while user is logged in, the dialogue box should prompt the user with a list of ContactMethods that point to that user, which can be selected for the subscription. (Todd, 7/7/2011)
+
+Change "delete" in sense of deactivate/destroy/reactivate to "change activation status" or something like that to make it more understandable in permissions, file names, etc. (Todd, 6/22/2011)
+
+Standalone comment viewing does not show previous comment in a chain in Related Items. This should be fixed. (Todd, 7/7/2011)
+
+Action summary field should appear in regular view, not advanced options, when editing an item, to encourage updaters to create action summaries. (Todd, 7/10/2011)
+
+Subscribe should include an RSS option in the interface - just a link to the RSS viewer which provides a subscription dialogue. (Todd, 7/11/2011)
+
+Transcluded documents should render in HTMLDocument view of the transcluding document. (Todd, 7/11/2011)
+
+Permissions displayed in Item Data menu should include negative permissions (e.g."As Anonymous you cannot * View body"). (Todd, 7/11/2011)
+
+Trying to comment on this item (Deme Issues) when logged in as Mike says "enter phrase to prove you're not a spammer" but no textbox appeared to enter the phrase. (Mike)   
+
+Diff functionality can break on complicated formatting changes of HTML documents
+
+Versions should add a field for "Minor Change" - a boolean checkbox to indicate unsubstantial difference with previous version. This could be used to display only the most recent version in a chain of Minor Changes in the default view of Versions of an Item. (Todd, 8/1/2011)
+
+The creator of an Item should be able to create EmailContactMethod subscriptions to the Item. There should be a way to specify that every member of a group whose Folio corresponds to an email list, for example, gets subscribed to the Folio email list. The servers should send each bulk subscribed member a message asking for confirmation. (Todd, 8/1/2011)
+
+Subscription interface is buggy. Logged in as Todd Davies, I was able to subscribe Tim Luo to the Advising Fellows folio on Symsys. He showed up in the dropdown after I typed his first name, and the subscription went through. Typing Clayton Mellina's name (or just "Clayton"), I get no drop down options, and if I type "Clayton Mellina's primary email contact method" into the subscription window, logged in as Todd Davies, I get an error that says I have to choose one of the options in the dropdown menu, even though that is a valid item name and EmailContactMethod. When I try to delete or edit the subscription between Tim Luo and the Advising Fellows folio, I don't get an edit or deactivate button, even though I created the subscription. I get these buttons if I log in as Admin, and can then deactivate the subscription. If I try to destroy it, I get a server error. If I then click on the subscription item in Recent Changes, I also get a server error. (Todd, 8/1/2011)
+
+A comment posted via the Web to an item in a folio generates a comment on the overall folio. I posted a comment on http://symsys.stanford.edu/viewing/webpage/16235 and it got posted as a comment on http://symsys.stanford.edu/viewing/folio/31. This might be correct behavior, but I am not sure. I thought comments only got posted in once place. (Todd, 8/2/2011) NOTE: I just noticed that Symsys has not be updated in a while, in particular it doesn't include in the latter updates on email integration. Maybe this is the problem? (Todd, 8/2/2011)
+
+Permission failure message should tell the user why they do not have permission. (Todd, 8/2/2011)
+
+A comment posted on an item that is in a collection for which Everyone has not do anything can be visible to anonymous users without a specific permission that allows this. For example, I posted a comment on http://symsys.stanford.edu/viewing/webpage/16235, giving the login name and password to this outside site. The item is in the Advising Fellows Folio, which is only available to Advising Fellows and Administrators, but for some reason anyone can view comments on items within the folio unless this is blocked by a negative permission for the specific comment. In this case, I did block this specific comment after seeing that it was publicly visible. (Todd, 8/2/2011)
+
+The viewer for a Collection and the one for Groups both have the same buttons: "Add an item to this Collection" and "Become a member of <Collection>." The latter button only makes sense for Groups, not Folios and other types of Collections. The former does not make sense for Groups. (Todd, 8/2/2011)
+
+The viewer for a Webpage item should show the URL of the link and provide way to open it in a new window/tab. (Todd, 8/2/2011)
+
+I get "Server Error" when I click on "My account" when logged in as Todd Davies on Deme.Stanford.edu. (Todd, 8/10/2011)
+
+When you deactivate a membership from a collection and try to reactivate it, the membership creator doesn't check to see if a deactivated membership exists and creates a new one. This leads to a server error. (Jimmy 8/19/11)
+
+If you destroy a comment, the subcomments won't appear in the same thread since there is no evidence they are descendents of the destroyed comment's parent. (Mike 2011-09-08)
+
+The list viewer should allow you to refer to related items (a particular field) in a column, which will load all related items and display that field, as permissions allow. Sorting and searching will also need to be implemented. Maybe this would use subgrids? (Mike 2011-09-12)
+
+If you click away from an HTMLDocument you are editing (e.g. by clicking on Modify Permissions during editing), you can lose your edits. Back clicking goes to a fresh edit page. This should be fixed so that people don't lose their edits. (Todd 2011-09-13)
+
+Have an "other" field for priority on Project. When the user specifies "other" then a dialog box will show up on the form to set a custom status. (Jimmy, 9/8/2011)
+
+In the email about a located comments we should put in two lines and show the comment for context. (Jimmy 9/10/2011)
+
+Other things to do
+* redesign logo so it includes "Symbolic Systems Program"
+* make links to Symsys internal pages work in static documents
+* Give way to show options when completing a text box (e.g. adding an item to a collection should not require one to type a random character in order to see the options) - make list alphabetical
+* Make it so you can add items with no name to a Newsroll
+* Give more data about each version in Versions metadata display (e.g. datetime, updater)
+* Discussion viewer - full page view of comment threads
+* Make event links in calendar shareable
+* Truncate event description in div onlick from calendar
+* Go through permissions and do sanity check for different categories of users
+* If someone makes a layout and screws up django template syntax, the site is completely screwed. Come up with failsafe
+* If you go to "new" and one of the initial model fields is permission denied (e.g., you're creating a membership on a collection you aren't allowed to modify_membership for, or creating a comment on an item you can't reply to), let the user know
+* the destroy action notice will never be read by anyone (since all permissions are effectively denied)
+* Methods that have to do with sending emails (about action notices) should go in EmailContactMethod, not ActionNotice
+* The viewer should probably define a list of actions for each item type to be displayed in a menu
+* Probably don't need auto-load modules: INSTALLED_APPS is more explicit and familiar
+* Figure out correct way to manage assets (maybe like in rails)
+* figure out how we are determining the permission to view comment hierarchy (i.e., comment.commented_item)
+* Code cleanup: views, templatetags, and templates, and symsys everything
+* Idea for conflicting HTML id attributes with embedded documents: each id has a prefix representing the current item (or a combination of the viewer/action/noun). In general though, we definitely have an issue where we assume a given HTML container will only be loaded once.
+* Do a more thorough job ensuring fields are not null (unless allowed_to_be_null_before_destroyed == True). We might have to wait for real model-based validations (Django 1.2).
+* Advanced search; combinatorial search, etc.
+* CustomURL layouts should inherit from parent CustomURL layouts
+
+Django bugs
+-----------
+* Fix the multiple inheritance bug
+  - http://code.djangoproject.com/ticket/10808
+* Either rewrite save_versioned so that we don't have nested transactions (when after_create and permissions call save_versioned again) or wait for this bug to be fixed
+  - http://code.djangoproject.com/ticket/2227
+* HTML special chars are being escaped twice in RSS feeds
+  - http://code.djangoproject.com/ticket/6533
+
+Layout
+------
+
+Interface
+---------
+* Threaded comment viewer with plus/minuses, but only at the top level (collapsed by default). When you visit a textdocument, you can have a comment in query string which gets highlighted and expanded, and highlight also highlights the transclusion (first chronologically)
+* Make the action at top-right of item more of a javascript menu, like in gmail
+* There should be a full interface for specifying CommentLocations
+* Some sort of arrows in the side-by-side comment interface, or just click->highlight/scroll (just for TextDocuments right now)
+* Include hCard in user profiles
+* Include iCal export of calendar
+* Nicer autocompleter (jquery plugin?)
+* Make things more user friendly, i.e. making the accordion more easily understandable.
+
+Documentation
+-------------
+* Document more functions with docstrings more
+* Generate some sort of API doc website
+
+Small Details
+-------------
+
+Unusual things to remember
+--------------------------
+* In order to know that X is a member of Y, you only need to have permission to "view item" for the Membership
+* The Meta class of a model does not get propagated to the ItemVersion
+* remember to fully respect active=0 everywhere, like in groups, comments, etc.
+* There are cases when there is a cur_agent but no associated account (anonymous, login_as other)
+* Some code (especially recursive comments and memberships) assumes that immutable fields actually cannot change
+  - This also assumes that `active` can only change in deactivate() and reactivate(), and items are always created active
+* Don't forget to update crystal icons for new models
+* If someone has permission to edit the body of an item, we allow them to add transclusions in some situations (TextDocumentViewer.edit)
+* We do not [knowingly] support OneToOneFields and ManyToManyFields in item types
+
+
+
+New Functionality (longer term)
+
+Distant Future (sorted by approximate order of planned implementation)
+----------------------------------------------------------------------
+* Allow widgets to specify stylesheet and javascripts to add to the layout.
+* Write PermissionCache.filter_agents_by_permission so we can display which agents have a particular ability w.r.t. an item.
+* Specific-version destroying
+* Edit locks (merging, or even synchro editing)
+* Implement some sort of SiteAlias so a Site can have more than one hostname
+* Internationalize using ugettext_lazy
+* Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
+* Customizable email template per site that gets sent out for each notification
+* When HtmlDocuments are uploaded, the server should do checks to make sure there is nothing malicious.
+* Facebook API
+* Installation-to-installation API
+  - Allow, as an option, an alias to refer to the hostname of the installation, such as i-numbers (to allow a consistent identifier when people change hostnames for their installation).
+* Think about PermissionActionNotices (where you need permission to view_permissions).
+* Add options to subscriptions, like which kinds of action notices you want and whether you want to subscribe to the entire comment thread.
+* Add other types of subscriptions, like text messages / IMs
+* Add exceptions to subscriptions, so you can deeply subscribe to an itemset or item, but cut off certain parts you want to ignore
+* Captchas
+* Way to subscribe to "all items", such that the subscription will include newly created items.
+* We will eventually want to have a item_type table
+* More efficient versioning (like like latest version in db, but have deltas to prev versions)
+  - Consider not necessarily having linear deltas. If we start with version 1, a spammer comes in and messes it up for version 2, and I "edit" version 1 so that it becomes version 3, the delta would be more efficient if it knew I started with version 1 in order to get to version 3.
+* We're going to have to integrate permissions into binary files (e.g., MediaDocument) so that users can't bypass Deme and download things from Apache directly.
+  - I'd like to have a settings option where you either have apache with no permissions, django with no permissions, or django with full permissions (or maybe later a workaround with apache and permissions based on cookie)
+* More dynamic way of setting whether certain fields can be blank (or other constraints) within an installation.
+* Have XML output and stuff
+* User-friendly item type creator (like cck in drupal)
+* Maybe events can have multi-field dates, like you can specify the year and month but not the day and time.
+* When matching SiteDomain in alias, match iteratively until all subdomains are gone, so if we have deme.com, then www.deme.com matches unless already taken
+* Add to ImageDocument metadata like width, height, exif, and a pointer to a thumbfile or 2
+* Temporal history viewer that lets you look at the state of the world at a given time (e.g., the roster of a group 1 year ago)
+* In CustomUrl, we should prevent top level names like 'static' and 'item' and 'modules', although not a big deal since it doesn't overwrite
+* later, think about adding back "edit downcast". we'll have to think about
+  - what happens when viewer2 inherits from viewer1, and viewer2 item type subclasses viewer1 item type, and viewer2 inherits the edit/update functionality?
+  - make it work better when you downcast an item in the editor, with versioning backward, and calling actions that should be called on create
+* work on google app engine
+
+Performance
+-----------
+* add indexes on things besides foreign keys, like name, description (for search)
+  - Maybe Postgres has some nice full-text indexing for good searching
+* we need multi-column indexes for permissions (so far it doesn't look like it's helping)
+  - we'll try http://docs.djangoproject.com/en/dev/howto/initial-data/#howto-initial-data
+* Use spaceless tag to compress whitespace
+  - Be careful, since it will screw with body_str in TextDocumentViewer.show
+* When admin (id=1) adds an item, no need to by default include the permission that he gets do_anything
+
+Investigate cloud hosting: Google App Engine, Linode.com
+Add support for clashing edits (Todd, 6/22/2011)
+Unify collection viewer with list action, include bulk actions such as bulk deactivate/reactivate/destroy, and if possible bulk edit where you can change some fields without modifying others, better sorting of any type (without violating permissions to view the name)
+Fix captcha or better prevent spam in anonymous postings
+Improve search. It should search for more fields than just the name (but keep permissions in mind), and it shouldn't require exact match    
+We need a bulk uploader for ImageDocuments, so you can upload a bunch of photos without having to fill out a fresh form (html5 http://code.google.com/p/jquery-html5-upload/). (Todd)
+Should support graphic layout design within Deme, e.g. for DjangoTemplateDocuments, or at least editing the standard menus (Navigation menu). Potentially a set of skins (Todd, 12/4/10)    
+Permission setting should have a much easier interface. Replace unchecked versus checked box with minus and plus to indicate negative and positive permissions. Create hierarchies of permissions so that one setting can result in a whole bunch of abilities being assigned. (Todd, 12/4/10)
+If the memory upgrade does not solve stability issues, then do something else about it
+Deme project site should save permissions data in between restarts. I lost global abillities settings I had created for Anonymous on the Deme site after a recent restart. I had taken away create abilities for Anonymous so we wouldn't get spam and hacking attempts. (Todd, 12/4/2010)
+validate new ViewerRequest.viewer
+Figure out robust caching invalidation scheme for Deme
+|==========|
+
+
+
+Mike's TODO list
+================
+
+2011-06-04
+----------
+* Maybe we need a db_index on email_list_address
+* Group can have multiple folios
+* Diff viewer
+* Warn if editing when someone else is editing or just made a new version that you haven't seen yet
+* Advanced fields is hacky the way it's done, and if there is a validation error in one of them, you don't see it unless you expand
+* Form popups are hacky, don't do permissions, all fields
+* Wait for https://code.djangoproject.com/ticket/16159 or rather https://code.djangoproject.com/ticket/15321 to get fixed (for uniqueness error in email_list_address)
+* Wait for https://code.djangoproject.com/ticket/13781 to get fixed (in order to be able to use select_related in things with multiple inheritance like TextComment)
+* Email-list-related fields in item aren't displayed anywhere (unless you go to edit)
+* Start using django logging in email handling when we upgrade to django 1.3
+
+Friday June 5 notes
+-------------------
+* Change more buttons to jquery ui buttons
+* add customizable columns to list view
+* Get forward links to include breadcrumbs (difficult problem, since there are so many forward links)
+* Come up with better breadcrumb url if possible
+* Create concentration groups for faculty that they can join and leave at will.
+* Spreadsheet UI with hierarchy like finder (regular view)
+  - http://ludo.cubicphuse.nl/jquery-plugins/treeTable/doc/index.html
+    - Won't let us have DAG or incrementally load data using ajax
+  - http://www.hanpau.com/index.php?page=jqtreetable
+    - Even simpler, no ajax
+  - http://trirand.com/jqgrid/jqgrid.html
+    - Most flexible, looks funny though, but currently uses nested set model which we don't use
+* Consider what to do with other permissions, like 'modify_membership' and 'view action_notices' and 'view_permissions', maybe we could unify names
+
+Thursday May 29 notes
+---------------------
+* maybe later, automatically generate the foreignkey field permissions
+
+Friday May 22 notes
+-------------------
+Priorities for symsys site
+* Blog-like viewer that views collections of arbitrary items, items can be in multiple collections (like categories)
+  - Advertisements will be displayed in blog viewer, except blog viewer needs to check "expires_at" field
+* Calendar with upcoming events to embed on home page
+
+Friday May 15 notes
+-------------------
+* Try to move comment generating pages to the ItemViewer with a current item. Probably same with transclusions and highlights and contact methods and stuff.
+
+Friday may 1 notes
+------------------
+* AF group gets permission to do things to careers, except confer them (only Bachelor and Minor careers), and they'll have a special declare view that does things automatically without giving them permission to change them later.
+* If a user makes something on their career private, then the AF just can't view it.
+* Everything I wrote above is wrong. AFs are automatically included in the default permissions with do_anything. Actually, nevermind: we can't let them view transcripts.
+
+Absolutely necessary
+--------------------
+* Extract classes like AIMContactMethod to other modules
+* Navigation and layout (NEEDS MORE DISCUSSION)
+* Figure out the group hierarchy to have for Symsys.
+  - We might need an after_modify_permissions callback
+* Make sure there is an interface to create new careers/students/whatever, confer them, and all of the permissions will be set by default here (or somehow in the model).
+* Make an interface to upload a thesis
+
+Nice to have
+------------
+* More sophisticated event day/time stuff.
+
+Sprint priorities
+* Default Deme layout
+    * remove "Subscribe" button from views when not logged in
+    * Rename "More" button to "Item Data"
+    * Hide Items pulldown bar, Item Type icon, and breadcrumbs, as well as Metadata menu, when Item Data is minimized; Show all of these when "Item Data" is clicked
+    * Don't display "Login as" in Login pulldown options if there is no one to log in as
+* Symsys homepage
+* Webauth timing issue
+* Certificate transfer?
+* Make password setting easier
+* Change wording of Related Items in metadata menu
+
