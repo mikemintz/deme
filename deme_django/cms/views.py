@@ -733,6 +733,24 @@ class ItemViewer(Viewer):
         template = loader.get_template('item/diff.html')
         return HttpResponse(template.render(self.context))
 
+    def type_recentlyviewedbox_json(self):
+        pages = self.request.session.get('recentlyviewed', [])
+        num_pages = int(self.request.REQUEST['num_pages'])
+        new_url = self.request.REQUEST.get('new_url')
+        new_title = self.request.REQUEST.get('new_title')
+        clear_history = self.request.REQUEST.get('clear_history')
+        if new_url and new_title:
+            pages = [x for x in pages if x[0] != new_url]
+            pages.insert(0, (new_url, new_title))
+            pages = pages[:100]
+            self.request.session['recentlyviewed'] = pages
+        if clear_history:
+            pages = []
+            self.request.session['recentlyviewed'] = pages
+        data = pages[:num_pages]
+        json_str = simplejson.dumps(data, separators=(',',':'))
+        return HttpResponse(json_str, mimetype='application/json')
+
 class WebpageViewer(ItemViewer):
     accepted_item_type = Webpage
     viewer_name = 'webpage'

@@ -134,6 +134,13 @@
 
 </head>
 
+{% if item %}
+    {% calculatecomments %}
+    {% calculateactionnotices %}
+    {% calculatehistory %}
+    {% calculaterelationships %}
+{% endif %}
+
 <body>
 
 {% if item %}
@@ -152,25 +159,21 @@
             {% itemdetails %}
         </div>
 
-        {% calculatecomments %}
         <h3 id="accordion_header_comments"><a href="#">{{ n_comments }} comment{{ n_comments|pluralize }}</a></h3>
         <div style="background: none;">
             {{ comment_box }}
         </div>
 
-        {% calculateactionnotices %}
         <h3><a href="#">{{ n_action_notices }} action notice{{ n_action_notices|pluralize }}</a></h3>
         <div>
             {{ action_notice_box }}
         </div>
 
-        {% calculatehistory %}
         <h3><a href="#">{{ n_versions }} version{{ n_versions|pluralize }}</a></h3>
         <div>
             {{ history_box }}
         </div>
 
-        {% calculaterelationships %}
         <h3><a href="#">{{ n_relationships }} related item{{ n_relationships|pluralize }}</a></h3>
         <div>
             {{ relationships_box }}
@@ -301,21 +304,25 @@
                 <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
                     Navigation
                 </div>
-                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px;">
+                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
                     <ul style="list-style-type: none; margin: 0; padding: 0;">
                         <li{% ifequal full_path "/"%} style="font-weight: bold;"{% endifequal %}><a href="/">Home</a></li>
                         <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
                         <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
                     </ul>
                 </div>
+				<div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
+                    Recently Viewed
+                </div>
+                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
+                    {% recently_viewed %}
+                </div>
 				{% if item %}
-				<br>
 				<div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
                     Member Of
                 </div>
-				{% calculaterelationships %}
-                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px;">
-                     {{ memberOf_box }}
+                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
+                    {{ memberOf_box }}
                 </div>
 				{% endif %}
             </td>

@@ -1774,6 +1774,67 @@ def new_item_menu(parser, token):
     return NewItemMenu()
 
 
+class RecentlyViewed(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<RecentlyViewed>"
+
+    def render(self, context):
+        viewer = context['_viewer']
+
+        if viewer.item:
+            new_title = get_viewable_name(context, viewer.item)
+            if context['action_title']:
+                new_title += ' &raquo; %s' % context['action_title']
+        else:
+            if context['action_title']:
+                new_title = context['action_title']
+            else:
+                new_title = capfirst(viewer.accepted_item_type._meta.verbose_name_plural)
+        ajax_url = reverse('item_type_url', kwargs={'viewer': 'item', 'action': 'recentlyviewedbox', 'format': 'json'})
+        result = """
+        <div id="recently_viewed_data">
+        </div>
+        <script type="text/javascript">
+        var num_recently_viewed_pages = 3;
+        function display_recently_viewed_pages(is_initial, is_clear) {
+            var data = {};
+            data['num_pages'] = num_recently_viewed_pages;
+            if (is_clear) {
+                data['clear_history'] = true;
+            }
+            if (is_initial) {
+                data['new_url'] = "%(new_url)s";
+                data['new_title'] = "%(new_title)s";
+            }
+            var outer_div = $("#recently_viewed_data");
+            jQuery.getJSON('%(ajax_url)s', data, function(json) {
+                $("#recently_viewed_data div").remove('div');
+                $.each(json, function(i, datum){
+                    var url = datum[0];
+                    var title = datum[1];
+                    outer_div.append('<div><a href="' + url + '">' + title + '</a></div>');
+                });
+                outer_div.append('<div><a href="#" onclick="num_recently_viewed_pages += 10; display_recently_viewed_pages(false, false); return false;">[More]</a> <a href="#" onclick="num_recently_viewed_pages += 10; display_recently_viewed_pages(false, true); return false;">[Clear]</a></div>');
+            });
+        }
+        $(function(){
+            display_recently_viewed_pages(true, false);
+        });
+        </script>
+        """ % {'new_url': context['full_path'], 'new_title': new_title, 'ajax_url': ajax_url}
+        return result
+
+@register.tag
+def recently_viewed(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return RecentlyViewed()
+
+
 class LoginMenu(template.Node):
     def __init__(self):
         pass
