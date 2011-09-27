@@ -121,6 +121,7 @@
 	  }
 	  document.body.style.fontSize = parseFloat(document.body.style.fontSize) + (multiplier * 0.2) + "em";
 	}
+	</script>
 	<script type="text/javascript">
 	 function unhide(divID) {
 	 var item = document.getElementById(divID);
@@ -129,7 +130,6 @@
 	 }
 	 }
 	 </script>
-	</script>
 	
 
 </head>
@@ -342,11 +342,11 @@
         <a href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}?{{ query_string }}">RSS</a>
         {% endifequal %}
         |
-		<a href="#" onclick="resizeText(1)">Increase text size</a>
+		<a href="#" onclick="resizeText(1); return false;">Increase text size</a>
 		|
-		<a href="#" onclick="resizeText(-1)">Decrease text size</a>
+		<a href="#" onclick="resizeText(-1); return false;">Decrease text size</a>
 		|
-		<a href="#"id="showhidetrigger" href="#">Fullscreen</a>
+		<a href="#" id="showhidetrigger">Fullscreen</a>
 		|
         <a href="#" onclick="$('#google_translate_dialog').dialog({close: function(event, ui) {$('#google_translate_dialog').dialog('destroy')}}); return false;">Translate</a>
         <div id="google_translate_dialog" title="Translate" style="display: none;">
