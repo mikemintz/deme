@@ -61,6 +61,8 @@ Have an "other" field for priority on Project. When the user specifies "other" t
 
 In the email about a located comments we should put in two lines and show the comment for context. (Jimmy 9/10/2011)
 
+Modify privacy settings ability doesn't work on symsys site (boxes just grayed out). (Mike 2011-09-28)
+
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
 * make links to Symsys internal pages work in static documents
