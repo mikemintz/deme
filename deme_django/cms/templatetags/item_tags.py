@@ -193,7 +193,7 @@ class UniversalEditButton(template.Node):
     def render(self, context):
         item = context['item']
         if item and agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
-            edit_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % item.version_number
+            edit_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'edit'}) + ('?version=%s' % item.version_number if context['specific_version'] else '')
             return '<link rel="alternate" type="application/wiki" title="Edit" href="%s" />' % escape(edit_url)
         else:
             return ''
@@ -355,8 +355,8 @@ class ItemToolbar(template.Node):
         result = []
 
         subscribe_url = reverse('item_type_url', kwargs={'viewer': 'subscription', 'action': 'new'}) + '?populate_item=%s' % item.pk
-        edit_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % version_number
-        copy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'copy'}) + '?version=%s' % version_number
+        edit_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'edit'}) + ('?version=%s' % version_number if context['specific_version'] else '')
+        copy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'copy'}) + ('?version=%s' % version_number if context['specific_version'] else '')
         deactivate_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'deactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
         reactivate_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'reactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
         destroy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'destroy'})
@@ -691,7 +691,7 @@ class CalculateComments(template.Node):
         result.append(u'<div class="comment_box">')
         result.append(u'<div class="comment_box_header">')
         grid_url = u'%s?filter=recursive_comments_as_child.parent.%d' % (reverse('item_type_url', kwargs={'viewer': 'textcomment'}), item.pk)
-        result.append(u'<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-calculator"></span>Grid</a>' % grid_url)
+        result.append(u'<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-calculator"></span>Grid view</a>' % grid_url)
         if agentcan_helper(context, 'comment_on', item):
             result.append(u'<a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Add comment</a>' % item.pk)
             result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))

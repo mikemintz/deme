@@ -36,7 +36,7 @@ class ProjectViewer(CollectionViewer, HtmlDocumentViewer):
 
     def change_status_to_assigned(self):
         self.require_ability('edit Project.status', self.item)
-        self.Project.status = 'Assigned'
+        self.Project.status = 'Not Completed'
 
     def item_setstatustocompleted_html(self):
         try:

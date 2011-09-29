@@ -38,8 +38,7 @@ class Project(Collection, HtmlDocument):
     priority = models.CharField(_('priority'), max_length=10, default='Low', choices=Priority_Choices) 
     length = models.DecimalField(_('length'), default=0, max_digits=6, decimal_places=2, help_text=_('in hours'))
     Status_Choices = (
-        ('Unassigned', 'Unassigned'),
-        ('Assigned', 'Assigned'),
+        ('Not Completed', 'Not Completed'),
         ('Completed', 'Completed'),
     )
     status = models.CharField(_('status'), default='Unassigned', max_length=16, choices=Status_Choices)
@@ -50,7 +49,7 @@ class Project(Collection, HtmlDocument):
         ('Monthly', 'Monthly'),
         ('Yearly', 'Yearly'),
     )
-    repeat = models.CharField(_('repeating?'), default='Never', max_length=16, choices=Repeat_Choices)
+    repeat = models.CharField(_('repeating?'), default='No', max_length=16, choices=Repeat_Choices)
     Project_handler = FixedForeignKey(Agent, related_name='Project_handler', null=True, blank=True, default=None)
 
    
@@ -79,7 +78,7 @@ class Project(Collection, HtmlDocument):
             self.due_date = due_date + year
 
     def change_status_to_assigned(self):
-        self.status = "Assigned"
+        self.status = "Not Completed"
     
 	
 class ProjectDependency(Item):

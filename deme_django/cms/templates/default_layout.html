@@ -58,6 +58,7 @@
 					{
 					$("#showhidetarget").html("<p>For Chrome users: Click on the Chrome \"wrench\" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>");
 					}
+					return false;
 				});
 	        });
 		</script>
@@ -138,7 +139,7 @@
 
 	 function resizeText(multiplier) {
 	  if (document.body.style.fontSize == "") {
-	    document.body.style.fontSize = "1.0em";
+	    document.body.style.fontSize = ".8em";
 	  }
 	  document.body.style.fontSize = parseFloat(document.body.style.fontSize) + (multiplier * 0.2) + "em";
 	}
