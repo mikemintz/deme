@@ -40,8 +40,29 @@
 
 	            $('a#showhidetrigger').click(function () {
 	                $('#showhidetarget').toggle(400);
-	            });
+				
+					if($.browser.safari)
+					{
+					$("#showhidetarget").html("<p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>");
+					}
+					if($.browser.mozilla)
+					{
+					$("#showhidetarget").html("<p>For Firefox user: Click on the View menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>");
+					}
+					if($.browser.msie)
+					{
+					$("#showhidetarget").html("<p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>");
+						
+					}
+					if(navigator.userAgent.toLowerCase().indexOf('chrome') > -1)
+					{
+					$("#showhidetarget").html("<p>For Chrome users: Click on the Chrome \"wrench\" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>");
+					}
+				});
 	        });
+		</script>
+					
+	         
 	    </script>
     <link href="{% media_url "stylesheets/fg.menu.css" %}" media="screen" rel="stylesheet" type="text/css" />
 	<!-- style exceptions for IE 6 -->
@@ -374,10 +395,8 @@
     <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
 </div>
   <div id="showhidetarget">
-    <p>For Internet Explorer users:
-		Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option 		labeled Full Screen.
-	</p>
-		
+
+    <p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option 		labeled Full Screen.</p>
 	<p>For Chrome users:Click on the Chrome "wrench" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>
 	<p>For Firefox user:Click on the View menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>
 	<p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>
