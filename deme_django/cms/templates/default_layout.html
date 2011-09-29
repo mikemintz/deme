@@ -34,45 +34,45 @@
     <link href="{% media_url "stylesheets/ui.jqgrid.css" %}" media="all" rel="Stylesheet" type="text/css" />
 
     <script type="text/javascript" src="{% media_url "javascripts/fg.menu.js" %}"></script>
-	<script type="text/javascript">
-	        $(document).ready(function () {
-	            $('#showhidetarget').hide();
+    <script type="text/javascript">
+            $(document).ready(function () {
+                $('#showhidetarget').hide();
 
-	            $('a#showhidetrigger').click(function () {
-	                $('#showhidetarget').toggle(400);
-				
-					if($.browser.safari)
-					{
-					$("#showhidetarget").html("<p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>");
-					}
-					if($.browser.mozilla)
-					{
-					$("#showhidetarget").html("<p>For Firefox user: Click on the View menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>");
-					}
-					if($.browser.msie)
-					{
-					$("#showhidetarget").html("<p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>");
-						
-					}
-					if(navigator.userAgent.toLowerCase().indexOf('chrome') > -1)
-					{
-					$("#showhidetarget").html("<p>For Chrome users: Click on the Chrome \"wrench\" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>");
-					}
-					return false;
-				});
-	        });
-		</script>
-					
-	         
-	    </script>
+                $('a#showhidetrigger').click(function () {
+                    $('#showhidetarget').toggle(400);
+                
+                    if($.browser.safari)
+                    {
+                    $("#showhidetarget").html("<p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>");
+                    }
+                    if($.browser.mozilla)
+                    {
+                    $("#showhidetarget").html("<p>For Firefox user: Click on the View menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>");
+                    }
+                    if($.browser.msie)
+                    {
+                    $("#showhidetarget").html("<p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>");
+                        
+                    }
+                    if(navigator.userAgent.toLowerCase().indexOf('chrome') > -1)
+                    {
+                    $("#showhidetarget").html("<p>For Chrome users: Click on the Chrome \"wrench\" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>");
+                    }
+                    return false;
+                });
+            });
+        </script>
+                    
+             
+        </script>
     <link href="{% media_url "stylesheets/fg.menu.css" %}" media="screen" rel="stylesheet" type="text/css" />
-	<!-- style exceptions for IE 6 -->
-	<!--[if IE 6]>
-	<style type="text/css">
-		.fg-menu-ipod .fg-menu li { width: 95%; }
-		.fg-menu-ipod .ui-widget-content { border:0; }
-	</style>
-	<![endif]-->	
+    <!-- style exceptions for IE 6 -->
+    <!--[if IE 6]>
+    <style type="text/css">
+        .fg-menu-ipod .fg-menu li { width: 95%; }
+        .fg-menu-ipod .ui-widget-content { border:0; }
+    </style>
+    <![endif]-->    
     
     {% if item %}
     <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}" />
@@ -96,7 +96,7 @@
             .mousedown(function(){
                     $(this).parents('.fg-buttonset-single:first').find(".fg-button.ui-state-active").removeClass("ui-state-active");
                     if( $(this).is('.ui-state-active.fg-button-toggleable, .fg-buttonset-multi .ui-state-active') ){ $(this).removeClass("ui-state-active"); }
-                    else { $(this).addClass("ui-state-active"); }	
+                    else { $(this).addClass("ui-state-active"); }   
             })
             .mouseup(function(){
                 if(! $(this).is('.fg-button-toggleable, .fg-buttonset-single .fg-button,  .fg-buttonset-multi .fg-button') ){
@@ -135,24 +135,24 @@
         });
     </script> 
     
-	<script type="text/javascript">
+    <script type="text/javascript">
 
-	 function resizeText(multiplier) {
-	  if (document.body.style.fontSize == "") {
-	    document.body.style.fontSize = ".8em";
-	  }
-	  document.body.style.fontSize = parseFloat(document.body.style.fontSize) + (multiplier * 0.2) + "em";
-	}
-	</script>
-	<script type="text/javascript">
-	 function unhide(divID) {
-	 var item = document.getElementById(divID);
-	 if (item) {
-	 item.className=(item.className=='hidden')?'unhidden':'hidden';
-	 }
-	 }
-	 </script>
-	
+     function resizeText(multiplier) {
+      if (document.body.style.fontSize == "") {
+        document.body.style.fontSize = ".8em";
+      }
+      document.body.style.fontSize = parseFloat(document.body.style.fontSize) + (multiplier * 0.2) + "em";
+    }
+    </script>
+    <script type="text/javascript">
+     function unhide(divID) {
+     var item = document.getElementById(divID);
+     if (item) {
+     item.className=(item.className=='hidden')?'unhidden':'hidden';
+     }
+     }
+     </script>
+    
 
 </head>
 
@@ -324,6 +324,12 @@
         <tr>
             <td style="vertical-align: top; width: 15%; padding:0;" id="left_table_column">
                 <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
+                    Recently Viewed
+                </div>
+                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
+                    {% recently_viewed %}
+                </div>
+                <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
                     Navigation
                 </div>
                 <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
@@ -333,20 +339,14 @@
                         <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
                     </ul>
                 </div>
-				<div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
-                    Recently Viewed
-                </div>
-                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
-                    {% recently_viewed %}
-                </div>
-				{% if item %}
-				<div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
+                {% if item %}
+                <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
                     Member Of
                 </div>
                 <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
                     {{ memberOf_box }}
                 </div>
-				{% endif %}
+                {% endif %}
             </td>
             <td style="vertical-align: top; width: 85%; padding:0;" id="center_table_column">
                 <div style="padding: 0 5px 0 5px;">
@@ -371,12 +371,12 @@
         <a href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}?{{ query_string }}">RSS</a>
         {% endifequal %}
         |
-		<a href="#" onclick="resizeText(1); return false;">Increase text size</a>
-		|
-		<a href="#" onclick="resizeText(-1); return false;">Decrease text size</a>
-		|
-		<a href="#" id="showhidetrigger">Fullscreen</a>
-		|
+        <a href="#" onclick="resizeText(1); return false;">Increase text size</a>
+        |
+        <a href="#" onclick="resizeText(-1); return false;">Decrease text size</a>
+        |
+        <a href="#" id="showhidetrigger">Fullscreen</a>
+        |
         <a href="javascript:function Sel(w){var s = '',i=0; try{if (w.getSelection) s = w.getSelection(); else s = w.document.getSelection(); i=w.frames.length; }catch(e){} while (((s == '')||(s == null)) && i--){s=Sel(w.frames[i]);}if (s == null) s='';return ''+s;};function Pop(url,title){win=window.open(url,title,'toolbar=no,width=800,height=600,scrollbars=yes,resizable=yes'); win.focus();};var s=Sel(this);if (s=='') void(s=prompt('Type a word for look up',''));if(s!=null) void(Pop('http://www.wordsmyth.net/?level=3&m=wn&ent='+escape(s), 'w_mini'));" class="wedt"><span>Dictionary/Thesaurus</span></a>
         |
         <a href="#" onclick="$('#google_translate_dialog').dialog({close: function(event, ui) {$('#google_translate_dialog').dialog('destroy')}}); return false;">Translate</a>
@@ -397,10 +397,10 @@
 </div>
   <div id="showhidetarget">
 
-    <p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option 		labeled Full Screen.</p>
-	<p>For Chrome users:Click on the Chrome "wrench" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>
-	<p>For Firefox user:Click on the View menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>
-	<p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>
+    <p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option      labeled Full Screen.</p>
+    <p>For Chrome users:Click on the Chrome "wrench" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>
+    <p>For Firefox user:Click on the View menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>
+    <p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>
   </div>
 </div>
 </div>
