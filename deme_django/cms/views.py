@@ -747,7 +747,7 @@ class ItemViewer(Viewer):
         if clear_history:
             pages = []
             self.request.session['recentlyviewed'] = pages
-        data = pages[:num_pages]
+        data = pages[1:num_pages]
         json_str = simplejson.dumps(data, separators=(',',':'))
         return HttpResponse(json_str, mimetype='application/json')
 

@@ -301,6 +301,12 @@
     <table cellspacing="0">
         <tr>
             <td style="vertical-align: top; width: 15%; padding:0;" id="left_table_column">
+				<div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
+                    Recently Viewed
+                </div>
+                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
+                    {% recently_viewed %}
+                </div>
                 <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
                     Navigation
                 </div>
@@ -310,12 +316,6 @@
                         <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
                         <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
                     </ul>
-                </div>
-				<div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
-                    Recently Viewed
-                </div>
-                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
-                    {% recently_viewed %}
                 </div>
 				{% if item %}
 				<div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
