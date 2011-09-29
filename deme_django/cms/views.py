@@ -312,7 +312,7 @@ class ItemViewer(Viewer):
                             #TODO use .url
                             cell.append('<a href="%s%s">%s</a>' % (escape(settings.MEDIA_URL), escape(data), escape(data)))
                         elif isinstance(field, models.DateTimeField):
-                            cell.append('<span title="%s">%s ago</span>' % (item.created_at.strftime("%Y-%m-%d %H:%M:%S"), timesince(item.created_at)))
+                            cell.append('<span title="%s ago">%s</span>' % (timesince(item.created_at), item.created_at.strftime("%Y-%m-%d %H:%M:%S")))
                         else:
                             truncate_length = 50
                             data = unicode(data)
