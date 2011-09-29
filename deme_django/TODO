@@ -63,7 +63,7 @@ In the email about a located comments we should put in two lines and show the co
 
 Modify privacy settings ability doesn't work on symsys site (boxes just grayed out). (Mike 2011-09-28)
 
-When you edit an item loaded in your browser, the edit button loads the version you have in your browser rather than the most recent version (which might have been created by someone else since you refreshed). You can therefore unwittingly wipe out someone's edits. This can be fixed by specifying the version as the most recent when user clicks Edit. (Todd, 9/28/ 2011)
+Use virtualenv for simpler installation and dependencies (Mike, 2011-09-29)
 
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
