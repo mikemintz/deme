@@ -691,7 +691,7 @@ class CalculateComments(template.Node):
         result.append(u'<div class="comment_box">')
         result.append(u'<div class="comment_box_header">')
         grid_url = u'%s?filter=recursive_comments_as_child.parent.%d' % (reverse('item_type_url', kwargs={'viewer': 'textcomment'}), item.pk)
-        result.append(u'<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-calculator"></span>Grid</a>' % grid_url)
+        result.append(u'<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-calculator"></span>Grid view</a>' % grid_url)
         if agentcan_helper(context, 'comment_on', item):
             result.append(u'<a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Add comment</a>' % item.pk)
             result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
