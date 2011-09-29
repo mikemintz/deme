@@ -40,6 +40,7 @@
 
 	            $('a#showhidetrigger').click(function () {
 	                $('#showhidetarget').toggle(400);
+                    return false;
 	            });
 	        });
 	    </script>
@@ -117,7 +118,7 @@
 
 	 function resizeText(multiplier) {
 	  if (document.body.style.fontSize == "") {
-	    document.body.style.fontSize = "1.0em";
+        document.body.style.fontSize=".8em";
 	  }
 	  document.body.style.fontSize = parseFloat(document.body.style.fontSize) + (multiplier * 0.2) + "em";
 	}
@@ -207,7 +208,7 @@
             <td style="vertical-align: top; text-align: center; padding: 0; padding-left: 5px; padding-right: 5px;">
 
                 {% new_item_menu %}
-
+                <a href="javascript:function Sel(w){var s = '',i=0; try{if (w.getSelection) s = w.getSelection(); else s = w.document.getSelection(); i=w.frames.length; }catch(e){} while (((s == '')||(s == null)) && i--){s=Sel(w.frames[i]);}if (s == null) s='';return ''+s;};function Pop(url,title){win=window.open(url,title,'toolbar=no,width=800,height=600,scrollbars=yes,resizable=yes'); win.focus();};var s=Sel(this);if (s=='') void(s=prompt('Type a word for look up',''));if(s!=null) void(Pop('http://www.wordsmyth.net/?level=3&m=wn&ent='+escape(s), 'w_mini'));" class="fg-button ui-state-default fg-button-icon-left ui-corner-all wedt"><span class="ui-icon ui-icon-note"></span>Look up word(s)</a>
                 <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline;">
                     <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
                     {# TODO add magnifying glass #}
@@ -353,10 +354,8 @@
 		|
 		<a href="#" onclick="resizeText(-1); return false;">Decrease text size</a>
 		|
-		<a href="#" id="showhidetrigger">Fullscreen</a>
+		<a href="#" id="showhidetrigger";  >Fullscreen</a>
 		|
-        <a href="javascript:function Sel(w){var s = '',i=0; try{if (w.getSelection) s = w.getSelection(); else s = w.document.getSelection(); i=w.frames.length; }catch(e){} while (((s == '')||(s == null)) && i--){s=Sel(w.frames[i]);}if (s == null) s='';return ''+s;};function Pop(url,title){win=window.open(url,title,'toolbar=no,width=800,height=600,scrollbars=yes,resizable=yes'); win.focus();};var s=Sel(this);if (s=='') void(s=prompt('Type a word for look up',''));if(s!=null) void(Pop('http://www.wordsmyth.net/?level=3&m=wn&ent='+escape(s), 'w_mini'));" class="wedt"><span>Dictionary/Thesaurus</span></a>
-        |
         <a href="#" onclick="$('#google_translate_dialog').dialog({close: function(event, ui) {$('#google_translate_dialog').dialog('destroy')}}); return false;">Translate</a>
         <div id="google_translate_dialog" title="Translate" style="display: none;">
             <div id="google_translate_element">
