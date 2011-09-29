@@ -193,7 +193,7 @@ class UniversalEditButton(template.Node):
     def render(self, context):
         item = context['item']
         if item and agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
-            edit_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % item.version_number
+            edit_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'edit'}) + ('?version=%s' % item.version_number if context['specific_version'] else '')
             return '<link rel="alternate" type="application/wiki" title="Edit" href="%s" />' % escape(edit_url)
         else:
             return ''
@@ -355,8 +355,8 @@ class ItemToolbar(template.Node):
         result = []
 
         subscribe_url = reverse('item_type_url', kwargs={'viewer': 'subscription', 'action': 'new'}) + '?populate_item=%s' % item.pk
-        edit_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'edit'}) + '?version=%s' % version_number
-        copy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'copy'}) + '?version=%s' % version_number
+        edit_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'edit'}) + ('?version=%s' % version_number if context['specific_version'] else '')
+        copy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'copy'}) + ('?version=%s' % version_number if context['specific_version'] else '')
         deactivate_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'deactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
         reactivate_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'reactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
         destroy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'destroy'})
