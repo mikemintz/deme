@@ -91,6 +91,22 @@ div.container div.implementation{
 </style>
 
 <script type="text/javascript">
+function showDialog(){
+   $("#divId").dialog("open");
+   return false;
+}
+
+$(document).ready(function() {
+   $("#divId").dialog({
+           autoOpen: false,
+           modal: true,
+           height: 500,
+           width: 500
+       });
+});
+</script>
+
+<script type="text/javascript">
 	function toggleImplementation(pk){
 		var button = "#hide" + pk;
 		var implementation = "#" + pk;
@@ -157,6 +173,14 @@ div.container div.implementation{
 		{% endif %}
 		<br>
 		<br>
+		<a href="" class="ui-icon ui-icon-help" onclick="return showDialog()">Show the Dialog</a>
+
+		<div id="divId" title="Aggregation Methods">
+		    <p>Plurality Aggregation: most approvals among all propositions in poll</p>
+			<p>Threshold Participant Aggregation: proposition getting highest approvals from among those getting >=p% of participants</p>
+			<p>Threshold Eligible Aggregation: proposition getting highest approvals from among those getting >= e% of eligibles</p>
+			<p>Unanimous Aggregation: unanimous minus m [where m <= #Poll] </p>
+		</div>
 		<div id="hiddenDecisionButtons" style="display: none; width: 150%;">
 			{% ifagentcanglobal 'create PluralityChooseNDecision' %} 
 			<p><a href="{% url item_type_url viewer='pluralitychoosendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Plurality Aggregation</a></p>
