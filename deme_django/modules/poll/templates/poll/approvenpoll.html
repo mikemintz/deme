@@ -91,6 +91,22 @@ div.container div.implementation{
 </style>
 
 <script type="text/javascript">
+function showDialog(){
+   $("#divId").dialog("open");
+   return false;
+}
+
+$(document).ready(function() {
+   $("#divId").dialog({
+           autoOpen: false,
+           modal: true,
+           height: 500,
+           width: 500
+       });
+});
+</script>
+
+<script type="text/javascript">
 	function toggleImplementation(pk){
 		var button = "#hide" + pk;
 		var implementation = "#" + pk;
@@ -132,6 +148,7 @@ div.container div.implementation{
 	
     
 </script>
+
 <form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
     <input id="removeInput"type="hidden" name="item" value="{{ membership.item.pk }}" />
 </form>
@@ -152,11 +169,18 @@ div.container div.implementation{
 	<div style="float:right;">
 		{% if cur_agent_can_make_a_decision %}
 		<div class="submit_button" id="NewDecision" style="margin-top: .5em; ">
+			
 		    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenDecisionButtons')" style="float: right; width: 110%; font-size: 13px; margin-right:0;">Calculate Result</a>
 		</div>
 		{% endif %}
 		<br>
 		<br>
+
+		<div id="divId" title="Aggregation Methods">
+		    <p>Plurality Aggregation: most approvals among all propositions in poll</p>
+			<p>Threshold Participant Aggregation: proposition getting highest approvals from among those getting >=p% of participants</p>
+			<p>Threshold Eligible Aggregation: proposition getting highest approvals from among those getting >= e% of eligibles</p>
+		</div>
 		<div id="hiddenDecisionButtons" style="display: none; width: 150%;">
 			{% ifagentcanglobal 'create PluralityApproveNDecision' %} 
 			<p><a href="{% url item_type_url viewer='pluralityapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Plurality Aggregation</a></p>
@@ -167,9 +191,11 @@ div.container div.implementation{
 			{% ifagentcanglobal 'create ThresholdEApproveNDecision' %}
 			 <p><a  href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Threshold Eligible Aggregation</a></p>
 			{% endifagentcanglobal %}
+			<a href="" onclick="return showDialog()">What are these?</a>
 		</div>
-	</div>
+	</div>	
 </div>
+
 
 
 <div class='Question' style="width: 50%"> 
