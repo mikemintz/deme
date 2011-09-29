@@ -47,8 +47,6 @@ The viewer for a Collection and the one for Groups both have the same buttons: "
 
 The viewer for a Webpage item should show the URL of the link and provide way to open it in a new window/tab. (Todd, 8/2/2011)
 
-I get "Server Error" when I click on "My account" when logged in as Todd Davies on Deme.Stanford.edu. (Todd, 8/10/2011)
-
 When you deactivate a membership from a collection and try to reactivate it, the membership creator doesn't check to see if a deactivated membership exists and creates a new one. This leads to a server error. (Jimmy 8/19/11)
 
 If you destroy a comment, the subcomments won't appear in the same thread since there is no evidence they are descendents of the destroyed comment's parent. (Mike 2011-09-08)
