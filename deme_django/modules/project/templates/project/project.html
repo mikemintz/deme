@@ -48,9 +48,16 @@ div.start {
 
 <div class="status">
 	{% ifagentcan 'view Project.status' item %}
-	  <p>{{ item.status }}
-	  {% ifequal item.status "Assigned"%} {% if item.Project_handler %} to {{ item.Project_handler.name }} 
-		{% endif %} {% endifequal %} 
+	  <p>
+	  {% ifequal item.status "Not Completed"%} 
+	  	{% if item.Project_handler %} 
+	  		Assigned to {{ item.Project_handler.name }} 
+	  	{% else %}
+	  		Unassigned
+		{% endif %} 
+	   {% else %}
+	   	{{ item.status }}
+	   {% endifequal %} 
       </p> 
    {% else %}
      <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
@@ -128,7 +135,7 @@ div.start {
         <p> Required for this task: <a href="{{ membership.required_Project.get_absolute_url }}">{% viewable_name membership.required_Project %}</a></p>
     {% endfor %}
 {% else %}
-    <p>There are no required tasks for this task</p>
+    <p>There are no required Projects for this Project</p>
 {% endif %}
 
 {% if is_required %}
@@ -136,7 +143,7 @@ div.start {
         <p> Task(s) depending on this task:<a href="{{ membership.dependent_Project.get_absolute_url }}">{% viewable_name membership.dependent_Project %}</a> </p>
     {% endfor %}
 {% else %}
-    <p>There are no tasks depending on this task</p>
+    <p>There are no Projects depending on this Project</p>
 {% endif %}
 
 
@@ -208,10 +215,15 @@ div.start {
 		{% endifagentcan %}
 		</td>
 		<td>
-			{% ifagentcan 'view Project.status' subproject %}
-				{{ subproject.status}} 
-				{% ifequal subproject.status "Assigned" %} 
-					to {{ subproject.Project_handler.name }} 
+			{% ifagentcan 'view Project.status' subproject %} 
+				{% ifequal subproject.status "Not Completed" %} 
+					{% if subproject.Project_handler %}
+						Assigned to {{ subproject.Project_handler.name }} 
+					{% else %}
+						Unassigned
+					{% endif %}
+				{% else %}
+					{{ subproject.status }}
 				{% endifequal %} 
 			{% endifagentcan %}
 		</td>
@@ -235,7 +247,7 @@ div.start {
 
 {% ifagentcan 'modify_membership' item %}
 <div>
-    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;"><img src="{{ "new"|icon_url:16 }}" />Add task</a><br><br>
+    <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;"><img src="{{ "new"|icon_url:16 }}" />Add Subproject</a><br><br>
 </div>
 {% newmemberdialog %}
 {% endifagentcan %}
