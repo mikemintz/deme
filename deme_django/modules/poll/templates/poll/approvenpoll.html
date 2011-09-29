@@ -175,7 +175,6 @@ $(document).ready(function() {
 		{% endif %}
 		<br>
 		<br>
-		<a href="" class="ui-icon ui-icon-help" onclick="return showDialog()">Show the Dialog</a>
 
 		<div id="divId" title="Aggregation Methods">
 		    <p>Plurality Aggregation: most approvals among all propositions in poll</p>
@@ -192,6 +191,7 @@ $(document).ready(function() {
 			{% ifagentcanglobal 'create ThresholdEApproveNDecision' %}
 			 <p><a  href="{% url item_type_url viewer='thresholdeapprovendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Threshold Eligible Aggregation</a></p>
 			{% endifagentcanglobal %}
+			<a href="" onclick="return showDialog()">What are these?</a>
 		</div>
 	</div>	
 </div>
