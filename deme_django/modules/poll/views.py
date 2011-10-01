@@ -192,7 +192,6 @@ class DecisionViewer(ItemViewer):
         
         maxPollTakers = len(Membership.objects.all().filter(collection=self.item.poll.eligibles))
         responses = PropositionResponseChoose.objects.all().filter(poll=self.item.poll.pk).filter(value='chosen')
-        print responses
         mostPopular = None
         topChoices = []
         if responses:
@@ -200,7 +199,6 @@ class DecisionViewer(ItemViewer):
             for response in responses:
                 if response.proposition:
                     response = response.proposition
-                    print response
                     if str(response.pk) in aggResponses:
                         aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
                     else:
@@ -247,7 +245,6 @@ class PluralityChooseNDecisionViewer(DecisionViewer):
             for response in responses:
                 if response.proposition:
                     response = response.proposition
-                    print response
                     if str(response.pk) in aggResponses:
                         aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
                     else:
@@ -296,7 +293,6 @@ class ThresholdChooseNDecisionViewer(DecisionViewer):
             for response in responses:
                 if response.proposition:
                     response = response.proposition
-                    print response
                     if str(response.pk) in aggResponses:
                         aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
                     else:
@@ -348,7 +344,6 @@ class ThresholdEChooseNDecisionViewer(DecisionViewer):
             for response in responses:
                 if response.proposition:
                     response = response.proposition
-                    print response
                     if str(response.pk) in aggResponses:
                         aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
                     else:
@@ -400,7 +395,6 @@ class UnanimousChooseNDecisionViewer(DecisionViewer):
             for response in responses:
                 if response.proposition:
                     response = response.proposition
-                    print response
                     if str(response.pk) in aggResponses:
                         aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
                     else:
@@ -449,7 +443,6 @@ class PluralityApproveNDecisionViewer(DecisionViewer):
             for response in responses:
                 if response.proposition:
                     response = response.proposition
-                    print response
                     if str(response.pk) in aggResponses:
                         aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
                     else:
@@ -500,7 +493,6 @@ class ThresholdApproveNDecisionViewer(DecisionViewer):
             for response in responses:
                 if response.proposition:
                     response = response.proposition
-                    print response
                     if str(response.pk) in aggResponses:
                         aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
                     else:
@@ -554,7 +546,6 @@ class ThresholdEApproveNDecisionViewer(DecisionViewer):
             for response in responses:
                 if response.proposition:
                     response = response.proposition
-                    print response
                     if str(response.pk) in aggResponses:
                         aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
                     else:
