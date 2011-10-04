@@ -65,6 +65,10 @@ Use virtualenv for simpler installation and dependencies (Mike, 2011-09-29)
 
 Recently Viewed widget displays pages looked at recently even after logging out. It should wipe clean after logout. (Todd, 10/3/2011)
 
+Recently Viewed widget should display all pages looked at recently (including list pages), not just items. (Todd, 10/3/2011)
+
+Member Of widget should say "This item is not a member ony Collections" if it has no Memberships. (Todd, 10/3/2011)
+
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
 * make links to Symsys internal pages work in static documents
