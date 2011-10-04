@@ -69,6 +69,8 @@ Recently Viewed widget should display all pages looked at recently (including li
 
 Member Of widget should say "This item is not a member ony Collections" if it has no Memberships. (Todd, 10/3/2011)
 
+I'd like to be able to create a new Item (not subtyped), to attach comments to. (Todd, 10/3/2011)
+
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
 * make links to Symsys internal pages work in static documents
