@@ -63,6 +63,18 @@ Modify privacy settings ability doesn't work on symsys site (boxes just grayed o
 
 Use virtualenv for simpler installation and dependencies (Mike, 2011-09-29)
 
+Recently Viewed widget displays pages looked at recently even after logging out. It should wipe clean after logout. (Todd, 10/3/2011)
+
+Recently Viewed widget should display all pages looked at recently (including list pages), not just items. (Todd, 10/3/2011)
+
+Member Of widget should say "This item is not a member ony Collections" if it has no Memberships. (Todd, 10/3/2011)
+
+I'd like to be able to create a new Item (not subtyped), to attach comments to. (Todd, 10/3/2011)
+
+I switched to raw HTML in TinyMCE while editing an HTMLDocument, and now when I try to create or edit an HTMLDocument, I get a text box with raw HTML and no way to get to the WYSIWYG interface during the same session. (Todd, 10/3/2011)
+
+I get server error when I try to add this HTMLDocument to the Deme Team Blog on Deme.Stanford.edu: http://deme.stanford.edu/viewing/htmldocument/676 (Todd, 10/8/2011)
+
 Other things to do
 * redesign logo so it includes "Symbolic Systems Program"
 * make links to Symsys internal pages work in static documents
