@@ -2281,7 +2281,7 @@ def _action_notice_post_save_handler(sender, **kwargs):
     email_contact_methods = EmailContactMethod.objects.filter(pk__in=subscriptions.values('contact_method').query, active=True)
     pk_to_email_contact_method = dict([(x.pk, x) for x in email_contact_methods])
     # Generate an email for each subscription
-    messages = [action_notice.notification_email(x, pk_to_email_contact_method[x.contact_method_id]) for x in subscriptions]
+    messages = [action_notice.notification_email(x, pk_to_email_contact_method[x.contact_method_id]) for x in subscriptions if x.contact_method_id in pk_to_email_contact_method]
     messages = [x for x in messages if x is not None]
     # Send the emails
     if messages:
