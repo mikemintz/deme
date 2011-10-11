@@ -1238,7 +1238,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
             if not self.request.POST.get('simple_captcha', '') == "abc123":
                 return self.render_error('Invalid Answer', 'Enter the phrase correctly to prove you are not a spammer')
 
-        new_body = self.request.POST.get('body')
+        new_body = self.request.POST.get('comment_body')
         if new_body == '':
             return self.render_error('Invalid Comment', "You must enter in a body for your comment")
         title = self.request.POST.get('title')
