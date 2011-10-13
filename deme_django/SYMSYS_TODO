@@ -1,0 +1,14 @@
+* Symsys homepage
+* Webauth timing issue
+* Certificate transfer?
+* Figure out the group hierarchy to have for Symsys.
+  - We might need an after_modify_permissions callback
+* Make sure there is an interface to create new careers/students/whatever, confer them, and all of the permissions will be set by default here (or somehow in the model).
+* Make an interface to upload a thesis
+
+* AF group gets permission to do things to careers, except confer them (only Bachelor and Minor careers), and they'll have a special declare view that does things automatically without giving them permission to change them later.
+* If a user makes something on their career private, then the AF just can't view it.
+* Everything I wrote above is wrong. AFs are automatically included in the default permissions with do_anything. Actually, nevermind: we can't let them view transcripts.
+
+* User who creates a new person can add ContactMethods and AuthenticationMethods to person's profile, but the person himself cannot do so. Also, the created methods are not created with appropriate permissions for the user unless this is selected separately before creation. (Todd, 6/20/2011)
+
