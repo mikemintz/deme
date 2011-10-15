@@ -12,3 +12,9 @@
 
 * User who creates a new person can add ContactMethods and AuthenticationMethods to person's profile, but the person himself cannot do so. Also, the created methods are not created with appropriate permissions for the user unless this is selected separately before creation. (Todd, 6/20/2011)
 
+* redesign logo so it includes "Symbolic Systems Program"
+* make links to Symsys internal pages work in static documents
+* Create concentration groups for faculty that they can join and leave at will.
+* Calendar with upcoming events to embed on home page
+* Blog-like viewer that views collections of arbitrary items, items can be in multiple collections (like categories)
+  - Advertisements will be displayed in blog viewer, except blog viewer needs to check "expires_at" field
