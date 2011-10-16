@@ -19,6 +19,7 @@ import django.contrib.syndication.views
 from django.views.decorators.http import require_POST
 import re
 import math
+import datetime
 from urlparse import urljoin
 from cms.models import *
 from cms.forms import *
@@ -516,6 +517,9 @@ class ItemViewer(Viewer):
         return HttpResponse(template.render(self.context))
 
     def item_edit_html(self, form=None):
+        edit_lock_response = self._edit_lock_response_pre_edit()
+        if edit_lock_response:
+            return edit_lock_response
         self.context['action_title'] = 'Edit'
         abilities_for_item = self.permission_cache.item_abilities(self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
@@ -537,6 +541,9 @@ class ItemViewer(Viewer):
 
     @require_POST
     def item_update_html(self):
+        edit_lock_response = self._edit_lock_response_pre_update()
+        if edit_lock_response:
+            return edit_lock_response
         abilities_for_item = self.permission_cache.item_abilities(self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         new_item = self.item
@@ -750,6 +757,39 @@ class ItemViewer(Viewer):
         data = pages[1:num_pages+1]
         json_str = simplejson.dumps(data, separators=(',',':'))
         return HttpResponse(json_str, mimetype='application/json')
+    
+    def item_editlockrefresh_json(self):
+        t = datetime.datetime.now()
+        EditLock.objects.filter(item=self.item, editor=self.cur_agent).update(lock_refresh_time=t)
+        return HttpResponse('', mimetype='application/json')
+
+    def item_editlockremove_json(self):
+        edit_locks = EditLock.objects.filter(item=self.item)
+        if not self.cur_agent_can('do_anything', self.item):
+            edit_locks = edit_locks.filter(editor=self.cur_agent)
+        edit_locks.delete()
+        return HttpResponse('', mimetype='application/json')
+
+    def _edit_lock_response_pre_edit(self):
+        t = datetime.datetime.now()
+        min_refresh_time = t - datetime.timedelta(seconds=5)
+        EditLock.objects.filter(item=self.item, lock_refresh_time__lt=min_refresh_time).delete()
+        edit_locks = EditLock.objects.filter(item=self.item)
+        if edit_locks:
+            edit_lock = edit_locks[0]
+            self.context['action_title'] = 'Edit'
+            self.context['edit_lock'] = edit_lock
+            self.context['can_remove_lock'] = self.cur_agent_can('do_anything', self.item) or edit_lock.editor.pk == self.cur_agent.pk
+            template = loader.get_template('item/edit_locked.html')
+            return HttpResponse(template.render(self.context))
+        else:
+            edit_lock = EditLock.objects.create(item=self.item, editor=self.cur_agent, lock_acquire_time=t, lock_refresh_time=t)
+            return None
+
+    def _edit_lock_response_pre_update(self):
+        edit_locks = EditLock.objects.filter(item=self.item)
+        edit_locks.delete()
+        return None
 
 class WebpageViewer(ItemViewer):
     accepted_item_type = Webpage
@@ -1035,6 +1075,9 @@ class TextDocumentViewer(DocumentViewer):
         return HttpResponse(template.render(self.context))
 
     def item_edit_html(self, form=None):
+        edit_lock_response = self._edit_lock_response_pre_edit()
+        if edit_lock_response:
+            return edit_lock_response
         self.context['action_title'] = 'Edit'
         abilities_for_item = self.permission_cache.item_abilities(self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
@@ -1068,6 +1111,9 @@ class TextDocumentViewer(DocumentViewer):
 
     @require_POST
     def item_update_html(self):
+        edit_lock_response = self._edit_lock_response_pre_update()
+        if edit_lock_response:
+            return edit_lock_response
         abilities_for_item = self.permission_cache.item_abilities(self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         new_item = self.item

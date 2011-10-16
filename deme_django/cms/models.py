@@ -24,7 +24,8 @@ __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
         'AnonymousAgent', 'AuthenticationMethod',
         'Collection', 'Comment', 'ContactMethod',
         'CustomUrl', 'DemeSetting',
-        'DjangoTemplateDocument', 'Document', 'EmailContactMethod', 'Excerpt',
+        'DjangoTemplateDocument', 'Document', 'EditLock',
+        'EmailContactMethod', 'Excerpt',
         'FaxContactMethod', 'FileDocument', 'Folio',
         'Group', 'GroupAgent', 'HtmlDocument', 'ImageDocument', 'Item', 'Membership',
         'POSSIBLE_ITEM_ABILITIES', 'POSSIBLE_GLOBAL_ABILITIES',
@@ -2780,6 +2781,21 @@ class RecursiveMembership(models.Model):
         Update the table to reflect that the given collection was deactivated.
         """
         RecursiveMembership.recursive_remove_edge(collection, collection)
+
+
+###############################################################################
+# Edit locking
+###############################################################################
+
+class EditLock(models.Model):
+    """
+    This table contains information on all items currently being edited.
+    This allows us to lock items to prevent simultaneous editing.
+    """
+    item = models.ForeignKey(Item, related_name='edit_locks', verbose_name=_('item'), unique=True)
+    editor = models.ForeignKey(Agent, related_name='edit_locks_as_editor', verbose_name=_('editor'))
+    lock_acquire_time = models.DateTimeField(_('lock acquire time'))
+    lock_refresh_time = models.DateTimeField(_('lock refresh time'))
 
 
 ###############################################################################

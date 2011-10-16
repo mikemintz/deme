@@ -27,6 +27,15 @@ $(document).ready(function () {
 </script>    
 {% endif %}
 
+<script type="text/javascript">
+$(document).ready(function () {
+    var edit_lock_refresh_millis = 2000;
+    setInterval(function() {
+        jQuery.ajax({url: "{% url item_url viewer=viewer_name,noun=item.pk,action="editlockrefresh",format="json" %}"});
+    }, edit_lock_refresh_millis);
+});
+</script>    
+
 <div>
     <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,noun=item.pk,action="update" %}?version={{ item.version_number }}" class="item_form">
         <table cellspacing="0">

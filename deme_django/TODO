@@ -18,6 +18,7 @@ Legitimate bugs
 + When you deactivate a membership from a collection and try to reactivate it, the membership creator doesn't check to see if a deactivated membership exists and creates a new one. This leads to a server error. (Jimmy 8/19/11)
 + Modify privacy settings ability doesn't work on symsys site (boxes just grayed out). (Mike 2011-09-28)
 + Subscription interface is buggy. Logged in as Todd Davies, I was able to subscribe Tim Luo to the Advising Fellows folio on Symsys. He showed up in the dropdown after I typed his first name, and the subscription went through. Typing Clayton Mellina's name (or just "Clayton"), I get no drop down options, and if I type "Clayton Mellina's primary email contact method" into the subscription window, logged in as Todd Davies, I get an error that says I have to choose one of the options in the dropdown menu, even though that is a valid item name and EmailContactMethod. When I try to delete or edit the subscription between Tim Luo and the Advising Fellows folio, I don't get an edit or deactivate button, even though I created the subscription. I get these buttons if I log in as Admin, and can then deactivate the subscription. If I try to destroy it, I get a server error. If I then click on the subscription item in Recent Changes, I also get a server error. (Todd, 8/1/2011)
+* Even if you don't have permission to edit the name, the field still shows up in the edit form (but ultimately you can't change it).
 
 Interface
 ---------
@@ -113,7 +114,6 @@ Distant Future (sorted by approximate order of planned implementation)
 * Allow widgets to specify stylesheet and javascripts to add to the layout.
 * Write PermissionCache.filter_agents_by_permission so we can display which agents have a particular ability w.r.t. an item.
 + Specific-version destroying
-+ Edit locks (merging, or even synchro editing)
 * Implement some sort of SiteAlias so a Site can have more than one hostname
 * Internationalize using ugettext_lazy
 * Add Shortcut (maybe call it Reference) item type, with one subclass like ItemShortcut that just points to another item, and others like URLShortcut that point to webpages
@@ -141,6 +141,7 @@ Distant Future (sorted by approximate order of planned implementation)
 * Add to ImageDocument metadata like width, height, exif, and a pointer to a thumbfile or 2
 * Temporal history viewer that lets you look at the state of the world at a given time (e.g., the roster of a group 1 year ago)
 * In CustomUrl, we should prevent top level names like 'static' and 'item' and 'modules', although not a big deal since it doesn't overwrite
+* Synchro editing
 * later, think about adding back "edit downcast". we'll have to think about
   - what happens when viewer2 inherits from viewer1, and viewer2 item type subclasses viewer1 item type, and viewer2 inherits the edit/update functionality?
   - make it work better when you downcast an item in the editor, with versioning backward, and calling actions that should be called on create

@@ -1,0 +1,32 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+<p>
+    The requested item,
+    <a href="{% url item_url viewer=viewer_name,noun=item.pk,action="show" %}">{% viewable_name item %}</a>,
+    is currently being edited by
+    <a href="{% url item_url viewer=viewer_name,noun=edit_lock.editor.pk,action="show" %}">{% viewable_name edit_lock.editor %}</a>
+    and has been that way for {{ edit_lock.lock_acquire_time|timesince }}.
+</p>
+<p>
+    You may periodically <a href="{{ full_path }}">refresh</a> to see if it becomes available for editing.
+</p>
+{% if can_remove_lock %}
+<script type="text/javascript">
+function unlock_edit() {
+    var ajax_options = {
+        url: "{% url item_url viewer=viewer_name,noun=item.pk,action="editlockremove",format="json" %}",
+        success: function(data) { window.location.reload(); },
+    };
+    jQuery.ajax(ajax_options);
+}
+</script>    
+<p>
+    If you'd like to proceed anyway (this may produce conflicting versions), you may <a href="#" onclick="unlock_edit(); return false;">unlock the item for editing</a>.
+</p>
+{% endif %}
+
+{% endblock content %}
+
+
