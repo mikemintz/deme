@@ -38,7 +38,6 @@ Interface
 * Permissions displayed in Item Data menu should include negative permissions (e.g."As Anonymous you cannot * View body"). (Todd, 7/11/2011)
 * Permission failure message should tell the user why they do not have permission. (Todd, 8/2/2011)
 + If you click away from an HTMLDocument you are editing (e.g. by clicking on Modify Permissions during editing), you can lose your edits. Back clicking goes to a fresh edit page. This should be fixed so that people don't lose their edits. (Todd 2011-09-13)
-* Recently Viewed widget displays pages looked at recently even after logging out. It should wipe clean after logout. (Todd, 10/3/2011)
 * Member Of widget should say "This item is not a member ony Collections" if it has no Memberships. (Todd, 10/3/2011)
 + The viewer for a Webpage item should show the URL of the link and provide way to open it in a new window/tab. (Todd, 8/2/2011)
 + In the email about a located comments we should put in two lines and show the comment for context. (Jimmy 9/10/2011)

@@ -854,6 +854,7 @@ class AuthenticationMethodViewer(ItemViewer):
     def type_logout_html(self):
         if 'cur_agent_id' in self.request.session:
             del self.request.session['cur_agent_id']
+        self.request.session['recentlyviewed'] = []
         redirect = self.request.GET.get('redirect', '')
         full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
         return HttpResponseRedirect(full_redirect)
