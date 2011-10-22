@@ -32,13 +32,15 @@ div.date {
 	margin-left: 0;
 }
 
-#to {
-  float: left;
+
+
+div#to {
   margin-right: .5em;
   margin-left: 0;
   font-size: 16px;
-  height: 1em;
-  margin-top: 4.3%;
+  bottom: 9px; 
+  position: relative;
+  
 }
 
 div.location {
@@ -52,18 +54,6 @@ div.location {
 </style>
 
 
-<body>
-
-	<script>
-	function googleSectionalElementInit() {
-	  new google.translate.SectionalElement({
-	    sectionalNodeClassName: 'goog-trans-section',
-	    controlNodeClassName: 'goog-trans-control',
-	    background: '#f4fa58'
-	  }, 'google_sectional_element');
-	}
-	</script>
-	<script src="//translate.google.com/translate_a/element.js?cb=googleSectionalElementInit&ug=section&hl=en"></script>
 
 {% ifequal event.start_date event.end_date %}
 <div class="date" id="Start_Date">
@@ -141,5 +131,4 @@ div.location {
   <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
 {% endifagentcan %}
 <p id="label"> Description </p>
-</body>
 {% endblock content %}
