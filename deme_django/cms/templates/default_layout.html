@@ -166,110 +166,134 @@
 <body>
 
 {% if item %}
-<div id="fixed_right_pane" style="position: fixed; overflow-y: auto; top: 10px; bottom: 10px; right: 10px; width: 20%;">
+<div id="fixed_right_pane" style="position: fixed; overflow-y: auto; top: 90px; bottom: 10px; right: 10px; width: 0%; display: none;">
     <div class="ui-helper-clearfix" style="font-size: 60%; float: right;">
         <a href="#" id="increasebutton" onclick="increase_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Show"><span class="ui-icon ui-icon-arrowthickstop-1-w"></span> Show</a>
         <a href="#" id="decreasebutton" onclick="decrease_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Hide"><span class="ui-icon ui-icon-arrowthickstop-1-e"></span> Hide</a>
     </div>
     <div style="clear: both;"></div>
-
-    {# TODO links are black because of ui-widget-content to a #}
-    <div id="right_accordion" style="display: none;">
-
-        <h3><a href="#">Item Details</a></h3>
+    <div class="metadata_content metadata_content_item_details" style="display: none;">
+        <h3>Item details</h3>
         <div id="accordion_details">
             {% itemdetails %}
         </div>
-
-        <h3 id="accordion_header_comments"><a href="#">{{ n_comments }} comment{{ n_comments|pluralize }}</a></h3>
+    </div>
+    <div class="metadata_content metadata_content_comments" style="display: none;">
+        <h3 id="accordion_header_comments">{{ n_comments }} comment{{ n_comments|pluralize }}</h3>
         <div style="background: none;">
             {{ comment_box }}
         </div>
-
-        <h3><a href="#">{{ n_action_notices }} action notice{{ n_action_notices|pluralize }}</a></h3>
+    </div>
+    <div class="metadata_content metadata_content_action_notices" style="display: none;">
+        <h3>{{ n_action_notices }} action notice{{ n_action_notices|pluralize }}</h3>
         <div>
             {{ action_notice_box }}
         </div>
-
-        <h3><a href="#">{{ n_versions }} version{{ n_versions|pluralize }}</a></h3>
+    </div>
+    <div class="metadata_content metadata_content_versions" style="display: none;">
+        <h3>{{ n_versions }} version{{ n_versions|pluralize }}</h3>
         <div>
             {{ history_box }}
         </div>
-
-        <h3><a href="#">{{ n_relationships }} related item{{ n_relationships|pluralize }}</a></h3>
+    </div>
+    <div class="metadata_content metadata_content_related_items" style="display: none;">
+        <h3>{{ n_relationships }} related item{{ n_relationships|pluralize }}</h3>
         <div>
             {{ relationships_box }}
         </div>
-
-        <h3><a href="#">Permissions</a></h3>
+    </div>
+    <div class="metadata_content metadata_content_permissions" style="display: none;">
+        <h3>Permissions</h3>
         <div>
             {% permissions_box %}
         </div>
-
-
     </div>
 </div>
 {% endif %}
 
 <div class="site_outer">
-<div class="site_inner" {% if item %}style="width: 77%;"{% endif %}>
+<div class="site_inner" {% if item %}style="width: 97%;"{% endif %}>
 
-<div class="header" style="padding-top: 3px; padding-bottom: 3px;">
+<div style="position: fixed; top: 10px; left: 220px; right: 10px; height: 50px; padding: 10px; background: #fff; border: thin dotted #000;">
 
-    <table style="margin-bottom: 0;">
-        <tr>
+    <div style="float: right;">
+        {% new_item_menu %}
 
-            <td style="vertical-align: top; width: 200px; padding: 0;" rowspan="2">
-                <div class="top_left">
-                    <a href="/"><img src="{% media_url "spacer.gif" %}" alt="Deme Logo" style="height: 100px; width: 200px; border: 1px solid #aaa; background-color: #00c; -moz-border-radius: 8px; -webkit-border-radius: 8px;" /></a>
-                </div>
+        {% if item %}
+            <div style="float: left;">
+                Actions
+                {% actionsmenu %}
+            </div>
+        {% endif %}
 
-            </td>
+        {% if item %}
+        <script type="text/javascript">
+        $(function(){
+            $('#metadata_menu_link').menu({
+                content: $('#metadata_menu_link').next().html(),
+                showSpeed: 50,
+                fixedPosition: true,
+            });
+            var menu = allUIMenus[allUIMenus.length - 1];
+            menu.chooseItem = function(item){
+                var text = $(item).html();
+                menu.kill();
+                $('#metadata_menu_link .metadata_menu_name').text(text);
+                if (text == 'Select') {
+                    hide_fixed_right_pane();
+                } else {
+                    var metadata_menu_name = '';
+                    if (text == 'Item details') {
+                        var metadata_menu_name = 'item_details';
+                    } else if (text == 'Comments') {
+                        var metadata_menu_name = 'comments';
+                    } else if (text == 'Action notices') {
+                        var metadata_menu_name = 'action_notices';
+                    } else if (text == 'Versions') {
+                        var metadata_menu_name = 'versions';
+                    } else if (text == 'Related items') {
+                        var metadata_menu_name = 'related_items';
+                    } else if (text == 'Permissions') {
+                        var metadata_menu_name = 'permissions';
+                    }
+                    $('.metadata_content').hide();
+                    $('.metadata_content_' + metadata_menu_name).show();
+                    if (!$('#fixed_right_pane').is(':visible')) {
+                        $('#fixed_right_pane').show();
+                        increase_fixed_right_pane(38, 10);
+                    }
+                }
+            };
+        });
+        </script>
+        <div style="float: left;">
+            Metadata
+            <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="metadata_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span><span class="metadata_menu_name">Select</span></a>
+            <div style="display: none;">
+                <ul style="font-size: 85%;">
+                    <li><a href="#" onclick="return false;">Select</a></li>
+                    <li><a href="#" onclick="return false;">Item details</a></li>
+                    <li><a href="#" onclick="return false;">Comments</a></li>
+                    <li><a href="#" onclick="return false;">Action notices</a></li>
+                    <li><a href="#" onclick="return false;">Versions</a></li>
+                    <li><a href="#" onclick="return false;">Related items</a></li>
+                    <li><a href="#" onclick="return false;">Permissions</a></li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
 
-            <td style="vertical-align: top; text-align: center; padding: 0; padding-left: 5px; padding-right: 5px;">
+        <div style="float: left;">
+            Account
+            {% login_menu %}
+        </div>
 
-                {% new_item_menu %}
+    </div>
 
-                <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline;">
-                    <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
-                    {# TODO add magnifying glass #}
-                </form>
-            </td>
-
-            <td style="vertical-align: top; text-align: right; padding: 0;">
-                <div style="float: right;">
-                {% login_menu %}
-                </div>
-                <div style="clear: both;">
-                </div>
-            </td>
-
-        </tr>
-        <tr>
-            <td style="vertical-align: bottom; padding: 0; padding-left: 5px;" colspan="2">
-                <div style="clear: both;"></div>
-                {% if item %}
-                <div style="float: right;">
-                    {% itemtoolbar %}
-                </div>
-                {% endif %}
-
-                <div class="crumbs">
-                    {% crumbs %}
-                </div>
-
-                <div class="title">
-                {% block title %}
-                {% if item %}
-                <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
-                {% else %}
-                <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
-                {% endif %}
-                {% endblock title %}
-                </div>
-            </td>
-        </tr>
-    </table>
+    <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline;">
+        <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
+        {# TODO add magnifying glass #}
+    </form>
 
 </div>
 
@@ -286,6 +310,8 @@
         if (new_left_width > min_width_percent && new_right_width > min_width_percent) {
             $('.site_inner')[0].style.width = new_left_width_text;
             $('#fixed_right_pane')[0].style.width = new_right_width_text;
+        } else {
+            hide_fixed_right_pane();
         }
     }
     function increase_column_right() {
@@ -294,6 +320,19 @@
     function decrease_column_right() {
         increase_fixed_right_pane(-3, 10);
     }
+    function hide_fixed_right_pane() {
+        var left_width_text = $('.site_inner')[0].style.width;
+        var right_width_text = $('#fixed_right_pane')[0].style.width;
+        var left_width = parseInt(left_width_text.replace("%", ""), 10);
+        var right_width = parseInt(right_width_text.replace("%", ""), 10);
+        var new_left_width = left_width + right_width;
+        var new_left_width_text = new_left_width + "%";
+        $('#fixed_right_pane').hide();
+        $('.site_inner')[0].style.width = new_left_width_text;
+        $('#fixed_right_pane')[0].style.width = "0%";
+        $('#metadata_menu_link .metadata_menu_name').text('Select');
+    }
+
     function openCommentDialog(name)
     {
         var dialogBox = $('#' + name);
@@ -314,15 +353,12 @@
 
 <div class="content_box">
 
-    {% if layout_permissions_problem %}
-    <div style="color: #a00; padding: 15px; margin: 15px; border: thin dotted #a00; text-align: center;">
-        Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.
-    </div>
-    {% endif %}
-
     <table cellspacing="0">
         <tr>
             <td style="vertical-align: top; width: 15%; padding:0;" id="left_table_column">
+                <div style="margin-bottom: 10px;">
+                    <a href="/"><img src="{% media_url "spacer.gif" %}" alt="Deme Logo" style="height: 100px; width: 200px; border: 1px solid #aaa; background-color: #00c; -moz-border-radius: 8px; -webkit-border-radius: 8px;" /></a>
+                </div>
                 <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
                     Recently Viewed
                 </div>
@@ -349,9 +385,37 @@
                 {% endif %}
             </td>
             <td style="vertical-align: top; width: 85%; padding:0;" id="center_table_column">
-                <div style="padding: 0 5px 0 5px;">
-                    {% block content %}
-                    {% endblock %}
+                <div style="margin-top: 80px;">
+                    {% if layout_permissions_problem %}
+                    <div style="color: #a00; padding: 15px; margin: 15px; border: thin dotted #a00; text-align: center;">
+                        Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.
+                    </div>
+                    {% endif %}
+                    <table style="margin-bottom: 0;">
+                        <tr>
+                            <td style="vertical-align: bottom; padding: 0; padding-left: 5px;" colspan="2">
+                                <div style="clear: both;"></div>
+
+                                <div class="crumbs">
+                                    {% crumbs %}
+                                </div>
+
+                                <div class="title">
+                                {% block title %}
+                                {% if item %}
+                                <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
+                                {% else %}
+                                <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
+                                {% endif %}
+                                {% endblock title %}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="padding: 0 5px 0 5px;">
+                        {% block content %}
+                        {% endblock %}
+                    </div>
                 </div>
             </td>
         </tr>

@@ -39,6 +39,7 @@ function Menu(caller, options){
 	this.menuExists = false;
 	
 	var options = jQuery.extend({
+		fixedPosition: false,
 		content: null,
 		width: 180, // width of menu container, must be set or passed in to calculate widths of child menus
 		maxHeight: 180, // max height of menu (if a drilldown: height does not include breadcrumb)
@@ -466,7 +467,7 @@ Menu.prototype.setPosition = function(widget, caller, options) {
 	var referrer = caller;
 	var dims = {
 		refX: referrer.offset().left,
-		refY: referrer.offset().top,
+		refY: options.fixedPosition ? referrer.position().top + referrer.parent().position().top : referrer.offset().top,
 		refW: referrer.getTotalWidth(),
 		refH: referrer.getTotalHeight()
 	};	
@@ -474,7 +475,7 @@ Menu.prototype.setPosition = function(widget, caller, options) {
 	var xVal, yVal;
 	
 	var helper = $('<div class="positionHelper"></div>');
-	helper.css({ position: 'absolute', left: dims.refX, top: dims.refY, width: dims.refW, height: dims.refH });
+	helper.css({ position: options.fixedPosition ? 'fixed' : 'absolute', left: dims.refX, top: dims.refY, width: dims.refW, height: dims.refH });
 	el.wrap(helper);
 	
 	// get X pos

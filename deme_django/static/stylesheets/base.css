@@ -74,7 +74,12 @@ div.title img {
     vertical-align: middle;
 }
 
-
+div.metadata_content {
+    border: thin solid #888;
+    background: #eee;
+    margin-top: 5px;
+    padding: 10px;
+}
 
 
 
