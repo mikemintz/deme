@@ -214,7 +214,7 @@
 <div class="site_outer">
 <div class="site_inner" {% if item %}style="width: 97%;"{% endif %}>
 
-<div style="position: fixed; top: 0px; left: 215px; right: 10px; height: 50px; padding: 10px; background: #fff; border: thin ridge gray; -moz-box-shadow: 5px 3px 3px #ccc; -webkit-box-shadow: 5px 3px 3px #ccc;box-shadow: 3px 3px 3px #ccc;">
+<div style="position: fixed; top: 0px; left: 215px; right: 10px; height: 50px; padding: 10px; background: #fff; border: thin ridge gray; -moz-box-shadow: 5px 3px 3px #ccc; -webkit-box-shadow: 5px 3px 3px #ccc;box-shadow: px 3px 3px #ccc;">
 
     <div style="float: right;">
         {% new_item_menu %}
@@ -294,12 +294,16 @@
         <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
         {# TODO add magnifying glass #}
     </form>
-    <br>
-    <br>
-
-    <div class="crumbs" style="display: inline">
-        {% crumbs %}
-    </div>
+    <div class="title">
+                                {% block title %}
+                                {% if item %}
+                                <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
+                                {% else %}
+                                <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
+                                {% endif %}
+                                {% endblock title %}
+                                </div>
+    
 
 </div>
 
@@ -401,16 +405,10 @@
                         <tr>
                             <td style="vertical-align: bottom; padding: 0; padding-left: 5px;" colspan="2">
                                 <div style="clear: both;"></div>
+                                <div class="crumbs" >
+                                    {% crumbs %}
+                                 </div>
 
-                                <div class="title">
-                                {% block title %}
-                                {% if item %}
-                                <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
-                                {% else %}
-                                <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
-                                {% endif %}
-                                {% endblock title %}
-                                </div>
                             </td>
                         </tr>
                     </table>
