@@ -152,7 +152,16 @@
      }
      }
      </script>
-    
+     <script type="text/javascript">
+    function toggleNewItemMenu(className){
+        var menu = "#" + className;
+        if ($(menu).is(":hidden")) {
+            $(menu).slideDown("slow");
+        } else {
+            $(menu).slideUp("slow");
+        }
+    };
+    </script>
 
 </head>
 
@@ -220,7 +229,7 @@
 
     <div style="float: right;">
         {% new_item_menu %}
-
+        <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleNewItemMenu('HiddenNewItemMenu')"> New Item </a>
         {% if item %}
             <div style="float: left;">
                 Actions:
@@ -301,6 +310,10 @@
                                 {% endblock title %}
                                 </div>
     
+
+</div>
+
+<div class="HiddenMenu" id="HiddenNewItemMenu" style="position: fixed; top: 73px; left: 220px; right: 20px; height: 50px; padding: 10px; background: #fff; border: thin ridge gray; -moz-box-shadow: 5px 3px 3px #ccc; -webkit-box-shadow: 5px 3px 3px #ccc;box-shadow: px 3px 3px #ccc; display: none;">
 
 </div>
 
