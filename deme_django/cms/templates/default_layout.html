@@ -214,14 +214,14 @@
 <div class="site_outer">
 <div class="site_inner" {% if item %}style="width: 97%;"{% endif %}>
 
-<div style="position: fixed; top: 10px; left: 220px; right: 10px; height: 50px; padding: 10px; background: #fff; border: thin dotted #000;">
+<div style="position: fixed; top: 0px; left: 215px; right: 10px; height: 50px; padding: 10px; background: #fff; border: thin ridge gray; -moz-box-shadow: 5px 3px 3px #ccc; -webkit-box-shadow: 5px 3px 3px #ccc;box-shadow: 3px 3px 3px #ccc;">
 
     <div style="float: right;">
         {% new_item_menu %}
 
         {% if item %}
             <div style="float: left;">
-                Actions
+                Actions:
                 {% actionsmenu %}
             </div>
         {% endif %}
@@ -267,7 +267,7 @@
         });
         </script>
         <div style="float: left;">
-            Metadata
+            Metadata:
             <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="metadata_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span><span class="metadata_menu_name">Select</span></a>
             <div style="display: none;">
                 <ul style="font-size: 85%;">
@@ -284,16 +284,22 @@
         {% endif %}
 
         <div style="float: left;">
-            Account
+            Account:
             {% login_menu %}
         </div>
 
     </div>
 
-    <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline;">
+    <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline; border-bottom: 20px;">
         <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
         {# TODO add magnifying glass #}
     </form>
+    <br>
+    <br>
+
+    <div class="crumbs" style="display: inline">
+        {% crumbs %}
+    </div>
 
 </div>
 
@@ -395,10 +401,6 @@
                         <tr>
                             <td style="vertical-align: bottom; padding: 0; padding-left: 5px;" colspan="2">
                                 <div style="clear: both;"></div>
-
-                                <div class="crumbs">
-                                    {% crumbs %}
-                                </div>
 
                                 <div class="title">
                                 {% block title %}
