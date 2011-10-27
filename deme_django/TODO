@@ -67,7 +67,8 @@ Interface
     - Even simpler, no ajax
   - http://trirand.com/jqgrid/jqgrid.html
     - Most flexible, looks funny though, but currently uses nested set model which we don't use
-* When viewing a Folio and expanding the Accordion the viewer does not adjust width and overlaps the accordion. Might not be an issue since we're getting rid of the accordion.
+* When viewing a Folio and expanding the Accordion the viewer does not adjust width and overlaps the accordion. Might not be an issue since we're getting rid of the accordion. (Jimmy 10/23/11)
+* When viewing all the items (viewing 100 at a time on the item menu) the top banner disappears behind the list viewer. (Jimmy 10/27/11)
 
 Documentation
 -------------
