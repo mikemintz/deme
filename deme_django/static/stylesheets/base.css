@@ -74,6 +74,12 @@ div.title img {
     vertical-align: middle;
 }
 
+div.title a {
+   text-decoration: none;
+   color: black;
+   
+}
+
 div.metadata_content {
     border: thin solid #888;
     background: #eee;

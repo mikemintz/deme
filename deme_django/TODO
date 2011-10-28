@@ -70,7 +70,8 @@ Interface
 * When viewing a Folio and expanding the Accordion the viewer does not adjust width and overlaps the accordion. Might not be an issue since we're getting rid of the accordion. (Jimmy 10/23/11)
 * When viewing all the items (viewing 100 at a time on the item menu) the top banner disappears behind the list viewer. (Jimmy 10/27/11)
 * When creating an html document TinyMCE overlaps with the banner when you scroll. (Jimmy 10/27/11)
-
+* In a long document (I tested a 700 page document to see what would break) the line does not show up for located comments. (Jimmy 10/27/11) 
+* The new edit button does not work and says there is a problem with lock refresh. (Jimmy 10/27/11)
 Documentation
 -------------
 * Document more functions with docstrings more
