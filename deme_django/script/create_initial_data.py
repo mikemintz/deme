@@ -71,7 +71,7 @@ if len(sys.argv) < 2 or sys.argv[1] != 'test':
 
 print 'Test stuff...'
 
-DemeSetting.set("cms.default_create_item_types", "TextDocument,Project,Poll,Group,Event,ImageDocument,FileDocument", admin)
+DemeSetting.set("cms.default_create_item_types", "HtmlDocument,Project,Poll,Group,Event,ImageDocument,FileDocument", admin)
 
 # Set the default layout
 default_layout_code = open(os.path.join(os.path.dirname(__file__), '..', 'cms', 'templates', 'default_layout.html')).read()
