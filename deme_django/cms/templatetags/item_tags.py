@@ -343,134 +343,153 @@ class ActionsMenu(template.Node):
         return "<ActionsMenuNode>"
 
     def render(self, context):
-        item = context['item']
-        item_name = get_viewable_name(context, item)
-        version_number = item.version_number
-        cur_item_type = context['_viewer'].accepted_item_type
-        item_type_inheritance = []
-        while issubclass(cur_item_type, Item):
-            item_type_inheritance.insert(0, cur_item_type)
-            cur_item_type = cur_item_type.__base__
-
         result = []
 
-        subscribe_url = reverse('item_type_url', kwargs={'viewer': 'subscription', 'action': 'new'}) + '?populate_item=%s' % item.pk
-        edit_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'edit'}) + ('?version=%s' % version_number if context['specific_version'] else '')
-        copy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'copy'}) + ('?version=%s' % version_number if context['specific_version'] else '')
-        deactivate_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'deactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
-        reactivate_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'reactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
-        destroy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'destroy'})
-        add_authentication_method_url = reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'new'}) + '?populate_agent=%s' % item.pk
-        add_contact_method_url = reverse('item_type_url', kwargs={'viewer': 'contactmethod', 'action': 'new'}) + '?populate_agent=%s' % item.pk
+        item = context['item']
+        if item:
+            item_name = get_viewable_name(context, item)
+            version_number = item.version_number
 
-        from cms.forms import AjaxModelChoiceField
-        result.append("""
-            <div id="subscribe_dialog" style="display: none;" title="Subscribe to '%s'">
-                <div style="font-size: 9pt;">Subscriptions send emails to the email contact method specified below for every new notification on this item</div>
-                <br>
-                <form method="post" action="%s?redirect=%s"> 
-                    <input type="hidden" name="item" value="%s" />
-                    Contact Method: %s 
-                    <a href="%s" style="float: right; font-size: 9pt;">Advanced</a>
-                    <input type="submit" value="Submit" />
-                </form>
-            </div>
-            """ % (item_name, reverse('item_type_url', kwargs={'viewer':'subscription', 'action':'dialogcreate'}), context['full_path'], item.pk, AjaxModelChoiceField(EmailContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=['add_subscription']).widget.render('email', None, {'id':'memberajaxfield'}), subscribe_url))
+            subscribe_url = reverse('item_type_url', kwargs={'viewer': 'subscription', 'action': 'new'}) + '?populate_item=%s' % item.pk
+            edit_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'edit'}) + ('?version=%s' % version_number if context['specific_version'] else '')
+            copy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'copy'}) + ('?version=%s' % version_number if context['specific_version'] else '')
+            deactivate_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'deactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
+            reactivate_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'reactivate'}) + '?redirect=%s' % urlquote(context['full_path'])
+            destroy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'destroy'})
+            add_authentication_method_url = reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'new'}) + '?populate_agent=%s' % item.pk
+            add_contact_method_url = reverse('item_type_url', kwargs={'viewer': 'contactmethod', 'action': 'new'}) + '?populate_agent=%s' % item.pk
 
-        result.append( """
-        <div style="display: none;" id="additemtocollection%(item.pk)s"> 
-        <form method="post" action="%(create_url)s?redirect=%(full_path)s"> 
-            Collection: %(ajax_field)s 
-            <input type="hidden" name="item" value="%(item.pk)s" /><br><br>
-            <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddtocollection%(item.pk)s'); return false;">Advanced</a>
-            <div style="display: none;" id="advancedaddtocollection%(item.pk)s">
-                Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br>
-                Permission Enabled: <input name="permissionenabled" type="checkbox" />
-                <div style="float: top; font-size: 7pt;">Enable this if you want collection-wide permissions to apply to this child item</div>
-            </div>
-            <input type="submit" value="Submit" />
-        </form>
-        </div>  """ %
-        {
-            'item.pk': item.pk,
-            'full_path': context['full_path'],
-            'create_url': reverse('item_type_url', kwargs={'viewer':'membership', 'action':'itemmembercreate'}),
-            'ajax_field': AjaxModelChoiceField(Collection.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('collection', None, {'id':'memberajaxfield'}),
-         })
+            from cms.forms import AjaxModelChoiceField
+            result.append("""
+                <div id="subscribe_dialog" style="display: none;" title="Subscribe to '%s'">
+                    <div style="font-size: 9pt;">Subscriptions send emails to the email contact method specified below for every new notification on this item</div>
+                    <br>
+                    <form method="post" action="%s?redirect=%s"> 
+                        <input type="hidden" name="item" value="%s" />
+                        Contact Method: %s 
+                        <a href="%s" style="float: right; font-size: 9pt;">Advanced</a>
+                        <input type="submit" value="Submit" />
+                    </form>
+                </div>
+                """ % (item_name, reverse('item_type_url', kwargs={'viewer':'subscription', 'action':'dialogcreate'}), context['full_path'], item.pk, AjaxModelChoiceField(EmailContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=['add_subscription']).widget.render('email', None, {'id':'memberajaxfield'}), subscribe_url))
 
-        
-        result.append("""
-            <script type="text/javascript">
-                $(function() {
-                    $("#deactivate_dialog").dialog({
-                        autoOpen: false,
-                        bgiframe: true,
-                        modal: true,
-                        buttons: {
-                            'Deactivate': function(){$(this).dialog('close'); $('#deactivate_dialog form').submit()},
-                            'Cancel': function(){$(this).dialog('close')}
-                        }
+            result.append( """
+            <div style="display: none;" id="additemtocollection%(item.pk)s"> 
+            <form method="post" action="%(create_url)s?redirect=%(full_path)s"> 
+                Collection: %(ajax_field)s 
+                <input type="hidden" name="item" value="%(item.pk)s" /><br><br>
+                <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddtocollection%(item.pk)s'); return false;">Advanced</a>
+                <div style="display: none;" id="advancedaddtocollection%(item.pk)s">
+                    Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br>
+                    Permission Enabled: <input name="permissionenabled" type="checkbox" />
+                    <div style="float: top; font-size: 7pt;">Enable this if you want collection-wide permissions to apply to this child item</div>
+                </div>
+                <input type="submit" value="Submit" />
+            </form>
+            </div>  """ %
+            {
+                'item.pk': item.pk,
+                'full_path': context['full_path'],
+                'create_url': reverse('item_type_url', kwargs={'viewer':'membership', 'action':'itemmembercreate'}),
+                'ajax_field': AjaxModelChoiceField(Collection.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('collection', None, {'id':'memberajaxfield'}),
+             })
+            
+            result.append("""
+                <script type="text/javascript">
+                    $(function() {
+                        $("#deactivate_dialog").dialog({
+                            autoOpen: false,
+                            bgiframe: true,
+                            modal: true,
+                            buttons: {
+                                'Deactivate': function(){$(this).dialog('close'); $('#deactivate_dialog form').submit()},
+                                'Cancel': function(){$(this).dialog('close')}
+                            }
+                        });
                     });
-                });
-                </script>
-            <div id="deactivate_dialog" title="Deactivate this item?" style="display: none;">
-                <form method="post" action="%s" onsubmit="$('#deactivate_dialog').dialog('close');">
-                <p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>Are you sure you want to deactivate this item?</p>
-                <label for="deactivate_reason">Reason</label>
-                <input type="text" id="deactivate_reason" name="action_summary" />
-                </form>
-            </div>
-        """ % deactivate_url)
-        result.append("""
-            <script type="text/javascript">
-                $(function() {
-                    $("#reactivate_dialog").dialog({
-                        autoOpen: false,
-                        bgiframe: true,
-                        modal: true,
-                        buttons: {
-                            'Reactivate': function(){$(this).dialog('close'); $('#reactivate_dialog form').submit()},
-                            'Cancel': function(){$(this).dialog('close')}
-                        }
+                    </script>
+                <div id="deactivate_dialog" title="Deactivate this item?" style="display: none;">
+                    <form method="post" action="%s" onsubmit="$('#deactivate_dialog').dialog('close');">
+                    <p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>Are you sure you want to deactivate this item?</p>
+                    <label for="deactivate_reason">Reason</label>
+                    <input type="text" id="deactivate_reason" name="action_summary" />
+                    </form>
+                </div>
+            """ % deactivate_url)
+            result.append("""
+                <script type="text/javascript">
+                    $(function() {
+                        $("#reactivate_dialog").dialog({
+                            autoOpen: false,
+                            bgiframe: true,
+                            modal: true,
+                            buttons: {
+                                'Reactivate': function(){$(this).dialog('close'); $('#reactivate_dialog form').submit()},
+                                'Cancel': function(){$(this).dialog('close')}
+                            }
+                        });
                     });
-                });
-                </script>
-            <div id="reactivate_dialog" title="Reactivate this item?" style="display: none;">
-                <form method="post" action="%s" onsubmit="$('#reactivate_dialog').dialog('close');">
-                <p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>Are you sure you want to reactivate this item?</p>
-                <label for="reactivate_reason">Reason</label>
-                <input type="text" id="reactivate_reason" name="action_summary" />
-                </form>
-            </div>
-        """ % reactivate_url)
-        result.append("""
-            <script type="text/javascript">
-                $(function() {
-                    $("#destroy_dialog").dialog({
-                        autoOpen: false,
-                        bgiframe: true,
-                        modal: true,
-                        buttons: {
-                            'Destroy': function(){$(this).dialog('close'); $('#destroy_dialog form').submit()},
-                            'Cancel': function(){$(this).dialog('close')}
-                        }
+                    </script>
+                <div id="reactivate_dialog" title="Reactivate this item?" style="display: none;">
+                    <form method="post" action="%s" onsubmit="$('#reactivate_dialog').dialog('close');">
+                    <p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>Are you sure you want to reactivate this item?</p>
+                    <label for="reactivate_reason">Reason</label>
+                    <input type="text" id="reactivate_reason" name="action_summary" />
+                    </form>
+                </div>
+            """ % reactivate_url)
+            result.append("""
+                <script type="text/javascript">
+                    $(function() {
+                        $("#destroy_dialog").dialog({
+                            autoOpen: false,
+                            bgiframe: true,
+                            modal: true,
+                            buttons: {
+                                'Destroy': function(){$(this).dialog('close'); $('#destroy_dialog form').submit()},
+                                'Cancel': function(){$(this).dialog('close')}
+                            }
+                        });
                     });
-                });
-                </script>
-            <div id="destroy_dialog" title="Destroy this item?" style="display: none;">
-                <form method="post" action="%s" onsubmit="$('#destroy_dialog').dialog('close');">
-                <p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>Are you sure you want to destroy this item?</p>
-                <label for="destroy_reason">Reason</label>
-                <input type="text" id="destroy_reason" name="action_summary" />
-                </form>
-            </div>
-        """ % destroy_url)
-
-
-
-
+                    </script>
+                <div id="destroy_dialog" title="Destroy this item?" style="display: none;">
+                    <form method="post" action="%s" onsubmit="$('#destroy_dialog').dialog('close');">
+                    <p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>Are you sure you want to destroy this item?</p>
+                    <label for="destroy_reason">Reason</label>
+                    <input type="text" id="destroy_reason" name="action_summary" />
+                    </form>
+                </div>
+            """ % destroy_url)
 
         result.append("""
+        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="actions_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>Select...</a>
+        <div style="display: none;">
+            <ul style="font-size: 85%;">
+        """)
+        if item:
+            if agentcan_global_helper(context, 'create Membership'):
+                result.append("""<li><a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add this item to collection</a></li>""" % (item.pk))
+            if isinstance(item, Agent):
+                if agentcan_helper(context, 'add_authentication_method', item):
+                    result.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add authentication method</a></li>' % add_authentication_method_url)
+                if agentcan_helper(context, 'add_contact_method', item):
+                    result.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a></li>' % add_contact_method_url)
+            if not context['cur_agent'].is_anonymous():
+                result.append("""<li><a href="#" onclick="openCommentDialog('subscribe_dialog'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscribe</a></li>""")
+            if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
+                result.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-pencil"></span>Edit</a></li>' % edit_url)
+            if agentcan_global_helper(context, 'create %s' % item.item_type_string):
+                result.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-copy"></span>Copy</a></li>' % copy_url)
+            if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
+                if item.active:
+                    result.append("""<li><a href="#" onclick="$('#deactivate_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Deactivate"><span class="ui-icon ui-icon-trash"></span>Deactivate</a></li>""")
+                else:
+                    result.append("""<li><a href="#" onclick="$('#reactivate_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Reactivate"><span class="ui-icon ui-icon-trash"></span>Reactivate</a></li>""")
+                    result.append("""<li><a href="#" onclick="$('#destroy_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Destroy"><span class="ui-icon ui-icon-trash"></span>Destroy</a></li>""")
+        result.append("""<li><a href="#" onclick="toggleNewItemMenu('HiddenNewItemMenu'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Destroy"><span class="ui-icon ui-icon-circle-plus"></span>Create</a></li>""")
+        result.append("""
+            </ul>
+        </div>
         <script type="text/javascript">
         $(function(){
             $('#actions_menu_link').menu({
@@ -488,36 +507,7 @@ class ActionsMenu(template.Node):
             };
         });
         </script>
-        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="actions_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>Select...</a>
-        <div style="display: none;">
-            <ul style="font-size: 85%;">
         """)
-
-        if agentcan_global_helper(context, 'create Membership'):
-            result.append("""<li><a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add this item to collection</a></li>""" % (item.pk))
-        if isinstance(item, Agent):
-            if agentcan_helper(context, 'add_authentication_method', item):
-                result.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add authentication method</a></li>' % add_authentication_method_url)
-            if agentcan_helper(context, 'add_contact_method', item):
-                result.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a></li>' % add_contact_method_url)
-        if not context['cur_agent'].is_anonymous():
-            result.append("""<li><a href="#" onclick="openCommentDialog('subscribe_dialog'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscribe</a></li>""")
-        if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
-            result.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-pencil"></span>Edit</a></li>' % edit_url)
-        if agentcan_global_helper(context, 'create %s' % item.item_type_string):
-            result.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-copy"></span>Copy</a></li>' % copy_url)
-        if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
-            if item.active:
-                result.append("""<li><a href="#" onclick="$('#deactivate_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Deactivate"><span class="ui-icon ui-icon-trash"></span>Deactivate</a></li>""")
-            else:
-                result.append("""<li><a href="#" onclick="$('#reactivate_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Reactivate"><span class="ui-icon ui-icon-trash"></span>Reactivate</a></li>""")
-                result.append("""<li><a href="#" onclick="$('#destroy_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Destroy"><span class="ui-icon ui-icon-trash"></span>Destroy</a></li>""")
-
-        result.append("""
-            </ul>
-        </div>
-        """)
-
         return '\n'.join(result)
 
 @register.tag
