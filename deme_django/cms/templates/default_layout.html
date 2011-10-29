@@ -228,7 +228,6 @@
 <div style="position: fixed; top: 0px; left: 215px; right: 10px; height: 50px; padding: 10px; background: #fff; border: thin ridge gray; -moz-box-shadow: 5px 3px 3px #ccc; -webkit-box-shadow: 5px 3px 3px #ccc;box-shadow: px 3px 3px #ccc;">
 
     <div style="float: right;">
-        {% new_item_menu %}
         <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleNewItemMenu('HiddenNewItemMenu'); return false;"> Create </a>
         {% if item %}
             <div style="float: left;">
@@ -310,31 +309,14 @@
 </div>
 
 <div class="HiddenMenu" id="HiddenNewItemMenu" style="position: fixed; top: 73px; left: 220px; right: 20px; height: 70px; padding: 10px; background: #fff; border: thin ridge gray; -moz-box-shadow: 5px 3px 3px #ccc; -webkit-box-shadow: 5px 3px 3px #ccc;box-shadow: px 3px 3px #ccc; display: none;">
-    <span style="float:left;">
-        <div class="create_image" id="createDocument" style="float:left; margin-right: 2em;">
-            <a href="#" class="img_link"><img src="{{'TextDocument'|icon_url:64}}" title="Create New Document" /> <p> New Document </p></a>
+    <div style="float:left;">
+        {% defaultcreateitemtypes %}
+        <div class="create_image" style="float: left; margin-right: 2em;">
+            <a href="{% url item_type_url viewer=create_item_viewer_name,action="new"%}" class="img_link"><img src="{{create_item_type|icon_url:64}}" title="Create new {% item_type_verbose_name create_item_type %}" />New {% item_type_verbose_name create_item_type %}</a>
         </div>
-        <div class="create_image" id="createProject" style="float:left; margin-right: 2em;">
-            <a href="#" class="img_link"><img src="{{'Project'|icon_url:64}}" title="Create New Project" /> <p>New Project </p> </a>
-        </div>
-        <div class="create_image" id="createPoll" style="float:left; margin-right: 2em;">
-            <a href="#" class="img_link"><img src="{{'Poll'|icon_url:64}}" title="Create New Poll" /> <p> New Poll </p></a>
-        </div>
-        <div class="create_image" id="createGroup" style="float:left; margin-right: 2em;">
-            <a href="#" class="img_link"><img src="{{'Group'|icon_url:64}}" title="Create New Group" /> <p> New Group </p></a>
-        </div>
-        <div class="create_image" id="createEvent" style="float:left; margin-right: 2em;">
-            <a href="#" class="img_link"><img src="{{'Event'|icon_url:64}}" title="Create New Event" /> <p> New Event</p></a>
-        </div>
-        <div class="create_image" id="createImageDocument" style="float:left; margin-right: 2em;">
-            <a href="#" class="img_link"><img src="{{'ImageDocument'|icon_url:64}}" title="Upload an Image" /> <p> Upload an Image</p></a>
-        </div>
-        <div class="create_image" id="createFileDocument" style="float:left; margin-right: 2em;">
-            <a href="#" class="img_link"><img src="{{'FileDocument'|icon_url:64}}" title="Upload a File" /> <p> Upload a File</p></a>
-        </div>
-        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" style="margin-top: 20px;"> Other </a>
-        
-    </span>
+        {% enddefaultcreateitemtypes %}
+        <a href="{% url item_type_url viewer="item",action="newother"%}" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" style="margin-top: 20px;">Other</a>
+    </div>
 
     <span style="float:right; height: 5px; font-size: 20%;"> 
         <a href="#" id="closebutton" onclick="toggleNewItemMenu('HiddenNewItemMenu'); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Close"><span class="ui-icon ui-icon-close"></span> Close</a>

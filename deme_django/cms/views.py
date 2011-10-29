@@ -347,6 +347,14 @@ class ItemViewer(Viewer):
                 return item.created_at
         return django.contrib.syndication.views.feed(self.request, 'item_list', {'item_list': ItemListFeed})
 
+    def type_newother_html(self):
+        self.context['action_title'] = u'New'
+        sorted_item_types = sorted(all_item_types(), key=lambda x: x._meta.verbose_name_plural.lower())
+        all_item_types_can_create = [{'item_type': x, 'url': reverse('item_type_url', kwargs={'viewer': x.__name__.lower(), 'action': 'new'})} for x in sorted_item_types if self.cur_agent_can_global('create %s' % x.__name__)]
+        self.context['all_item_types_can_create'] = all_item_types_can_create
+        template = loader.get_template('item/newother.html')
+        return HttpResponse(template.render(self.context))
+
     def type_new_html(self, form=None):
         self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
         if not self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__):

@@ -71,6 +71,8 @@ if len(sys.argv) < 2 or sys.argv[1] != 'test':
 
 print 'Test stuff...'
 
+DemeSetting.set("cms.default_create_item_types", "TextDocument,Project,Poll,Group,Event,ImageDocument,FileDocument", admin)
+
 # Set the default layout
 default_layout_code = open(os.path.join(os.path.dirname(__file__), '..', 'cms', 'templates', 'default_layout.html')).read()
 default_layout = DjangoTemplateDocument(override_default_layout=True, name='Deme Layout', body=default_layout_code)

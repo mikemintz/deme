@@ -1,0 +1,12 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+{% for x in all_item_types_can_create %}
+    <div>
+        <a href="{{ x.url }}" class="img_link"><img src="{{x.item_type|icon_url:16}}" />New {% item_type_verbose_name x.item_type %}</a>
+    </div>
+{% endfor %}
+
+{% endblock content %}
+

@@ -2057,8 +2057,6 @@ class DisplayDiff(template.Node):
         result = u''.join(html)
         return mark_safe(result)
 
-
-
 @register.tag
 def displaydiff(parser, token):
     bits = list(token.split_contents())
@@ -2073,4 +2071,38 @@ def displaydiff(parser, token):
     else:
         nodelist_same = template.NodeList()
     return DisplayDiff(bits[1], bits[2], bits[3], nodelist_different, nodelist_same)
+
+
+class DefaultCreateItemTypes(template.Node):
+    def __init__(self, nodelist):
+        self.nodelist = nodelist
+
+    def __repr__(self):
+        return "<DefaultCreateItemTypesNode>"
+        
+    def render(self, context):
+        result = []
+        item_type_names_string = DemeSetting.get("cms.default_create_item_types") or ""
+        item_type_names = item_type_names_string.split(",")
+        item_types = [get_item_type_with_name(x.strip(), case_sensitive=False) for x in item_type_names]
+        item_types = [x for x in item_types if x]
+        item_types = [x for x in item_types if agentcan_global_helper(context, 'create %s' % x.__name__)]
+        for create_item_type in item_types:
+            context.update({
+                'create_item_type': create_item_type,
+                'create_item_viewer_name': create_item_type.__name__.lower()
+            })
+            result.append(self.nodelist.render(context))
+            context.pop()
+        return mark_safe(u'\n'.join(result))
+
+@register.tag
+def defaultcreateitemtypes(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    end_tag = 'end' + bits[0]
+    nodelist = parser.parse((end_tag,))
+    token = parser.next_token()
+    return DefaultCreateItemTypes(nodelist)
 
