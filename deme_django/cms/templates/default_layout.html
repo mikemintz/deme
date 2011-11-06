@@ -246,20 +246,7 @@
                 var text = $(item).html();
                 menu.kill();
                 $('#metadata_menu_link .metadata_menu_name').text(text);
-                var metadata_menu_name = '';
-                if (text == 'Item details') {
-                    var metadata_menu_name = 'item_details';
-                } else if (text == 'Comments') {
-                    var metadata_menu_name = 'comments';
-                } else if (text == 'Action notices') {
-                    var metadata_menu_name = 'action_notices';
-                } else if (text == 'Versions') {
-                    var metadata_menu_name = 'versions';
-                } else if (text == 'Related items') {
-                    var metadata_menu_name = 'related_items';
-                } else if (text == 'Permissions') {
-                    var metadata_menu_name = 'permissions';
-                }
+                var metadata_menu_name = $(item).attr('id').replace('metadata_menu_', '');
                 $('.metadata_content').hide();
                 $('.metadata_content_' + metadata_menu_name).show();
                 if (!$('#fixed_right_pane').is(':visible')) {
@@ -267,6 +254,10 @@
                     increase_fixed_right_pane(38, 10);
                 } 
             };
+            {% if default_metadata_menu_option %}
+                var item = $('#metadata_menu_{{default_metadata_menu_option}}');
+                menu.chooseItem(item);
+            {% endif %}
         });
         </script>
         <div style="float: left;">
@@ -274,12 +265,12 @@
             <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="metadata_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span><span class="metadata_menu_name">Select...</span></a>
             <div style="display: none;">
                 <ul style="font-size: 85%;">
-                    <li><a href="#" onclick="return false;">Item details</a></li>
-                    <li><a href="#" onclick="return false;">Comments</a></li>
-                    <li><a href="#" onclick="return false;">Action notices</a></li>
-                    <li><a href="#" onclick="return false;">Versions</a></li>
-                    <li><a href="#" onclick="return false;">Related items</a></li>
-                    <li><a href="#" onclick="return false;">Permissions</a></li>
+                    <li><a href="#" onclick="return false;" id="metadata_menu_item_details">Item details</a></li>
+                    <li><a href="#" onclick="return false;" id="metadata_menu_comments">Comments</a></li>
+                    <li><a href="#" onclick="return false;" id="metadata_menu_action_notices">Action notices</a></li>
+                    <li><a href="#" onclick="return false;" id="metadata_menu_versions">Versions</a></li>
+                    <li><a href="#" onclick="return false;" id="metadata_menu_related_items">Related items</a></li>
+                    <li><a href="#" onclick="return false;" id="metadata_menu_permissions">Permissions</a></li>
                 </ul>
             </div>
         </div>

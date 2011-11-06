@@ -304,6 +304,7 @@ class Viewer(object):
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
         self.context['_viewer'] = self
+        self.context['default_metadata_menu_option'] = self.default_metadata_menu_option()
         self._set_default_layout()
 
     def init_for_div(self, original_viewer, action, item, query_string):
@@ -437,6 +438,19 @@ class Viewer(object):
                 else:
                     msg += u' (you need the "%s" ability on %s)' % (ability_friendly_name, permission_item_text)
             return self.render_error('Permission Denied', msg)
+
+    ###########################################################################
+    # Overridable functions
+    ###########################################################################
+
+    def default_metadata_menu_option(self):
+        """
+        Return the default metadata menu option to display in the layout when
+        pages are displayed in this viewer. Possible choices are None,
+        'item_details', 'comments', 'action_notices', 'versions', 'related_items',
+        and 'permissions'.
+        """
+        return None
 
     ###########################################################################
     # Helper functions

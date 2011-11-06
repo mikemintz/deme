@@ -30,6 +30,9 @@ class ItemViewer(Viewer):
     accepted_item_type = Item
     viewer_name = 'item'
     
+    def default_metadata_menu_option(self):
+        return 'item_details'
+
     def _type_list_helper(self, offset=None, limit=None, q=None):
         if self.request.GET.get('collection'):
             collection = Item.objects.get(pk=self.request.GET.get('collection')).downcast()
@@ -1170,6 +1173,9 @@ class TextDocumentViewer(DocumentViewer):
 class DjangoTemplateDocumentViewer(TextDocumentViewer):
     accepted_item_type = DjangoTemplateDocument
     viewer_name = 'djangotemplatedocument'
+
+    def default_metadata_menu_option(self):
+        return None
 
     def item_render_html(self):
         self.context['action_title'] = ''
