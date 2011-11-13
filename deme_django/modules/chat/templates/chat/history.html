@@ -1,0 +1,15 @@
+{% extends layout %}
+{% load item_tags %}
+{% block content %}
+
+{% for msg in chat_messages %}
+    <div style="margin-bottom: 0.5em;">
+        <span style="color: #999;">[{{msg.created_at}}]</span>
+        &lt;<a href="{{msg.agent.get_absolute_url}}">{{msg.agent.display_name}}</a>&gt;
+        <span>{{msg.body}}</span>
+    </div>
+{% endfor %}
+
+{% endblock %}
+
+

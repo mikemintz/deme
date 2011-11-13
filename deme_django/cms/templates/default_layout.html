@@ -1,4 +1,5 @@
 {% load item_tags %}
+{% load chat_extras %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 
@@ -400,6 +401,12 @@
                     {{ memberOf_box }}
                 </div>
                 {% endif %}
+                <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
+                    Chat
+                </div>
+                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
+                    {% chat_box %}
+                </div>
             </td>
             <td style="vertical-align: top; width: 85%; padding:0;" id="center_table_column">
                 <div style="margin-top: 80px;">
