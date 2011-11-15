@@ -19,9 +19,11 @@ class ChatBox(template.Node):
             <div>
                 <a href="%(chathistory_url)s">View chat history</a>
             </div>
-            <div id="chat_messages" style="height: 250px; overflow-y: scroll; border-style: solid; border-width: 1px; border-color: #888;">
+            <div style="border-style: solid; border-width: 1px; border-color: #888;">
+                <div id="chat_messages" style="height: 250px; overflow-y: scroll;">
+                </div>
             </div>
-            <form onsubmit="$.ajax({url: '%(createchatmessage_url)s', type: 'POST', data: {'body': this['body'].value}}); this['body'].value = ''; this['body'].focus(); return false;">
+            <form onsubmit="if (this['body'].value) $.ajax({url: '%(createchatmessage_url)s', type: 'POST', data: {'body': this['body'].value}}); this['body'].value = ''; this['body'].focus(); return false;">
                 <input type="text" name="body" style="width:184px; " autocomplete="off" />
                 <input type="submit" style="display: none;" value="Send" />
             </form>
@@ -53,7 +55,7 @@ class ChatBox(template.Node):
                         });
                         window.setTimeout(update_chat_messages_timer, chat_message_poll_interval_millis);
                     }
-                    update_chat_messages_timer()
+                    update_chat_messages_timer();
                 });
             </script>
         """ % {

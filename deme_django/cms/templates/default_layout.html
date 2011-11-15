@@ -168,6 +168,7 @@
         var chat = "#" + className;
         if ($(chat).is(":hidden")) {
             $(chat).slideDown("slow");
+            $("#chat_messages").scrollTop($("#chat_messages")[0].scrollHeight);
             $("#expandChatButton").attr("class", "ui-icon ui-icon-circle-triangle-s");
         } else {
             $(chat).slideUp("slow");
