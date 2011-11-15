@@ -163,6 +163,18 @@
         }
     };
     </script>
+    <script type="text/javascript">
+    function toggleChat(className){
+        var chat = "#" + className;
+        if ($(chat).is(":hidden")) {
+            $(chat).slideDown("slow");
+            $("#expandChatButton").attr("class", "ui-icon ui-icon-circle-triangle-s");
+        } else {
+            $(chat).slideUp("slow");
+            $("#expandChatButton").attr("class", "ui-icon ui-icon-circle-triangle-n");
+        }
+    };
+    </script>
 
 </head>
 
@@ -401,12 +413,7 @@
                     {{ memberOf_box }}
                 </div>
                 {% endif %}
-                <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
-                    Chat
-                </div>
-                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
-                    {% chat_box %}
-                </div>
+                
             </td>
             <td style="vertical-align: top; width: 85%; padding:0;" id="center_table_column">
                 <div style="margin-top: 80px;">
@@ -440,6 +447,18 @@
         </tr>
     </table>
 
+</div>
+<div style="clear: both;"></div>
+<div class ="chat" style="width: 200px; margin: 0; position: fixed; bottom: 0;">
+    <div class="ui-widget-header ui-corner-top ui-helper-clearfix" id="chatHeader" style="padding: 5px;">
+        Chat 
+        <a id="expandChat" onclick="toggleChat('chatBody'); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Expand_Chat" style="float: right; height: 10px;"><span class="ui-icon ui-icon-circle-triangle-n" id="expandChatButton" style= "height: 20px;"></span>Expand Chat</a>
+        
+       
+    </div>
+    <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" id="chatBody" style="padding: 5px; display:none;">
+        {% chat_box %}
+    </div>
 </div>
 
 <div class="footer">

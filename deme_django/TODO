@@ -74,6 +74,7 @@ Interface
 * In a long document (I tested a 700 page document to see what would break) the line does not show up for located comments. (Jimmy 10/27/11) 
 * The new edit button does not work and says there is a problem with lock refresh. (Jimmy 10/27/11)
 * When I uploaded a portion of the TODO file onto demesandbox it wrapped a line that went too long, but on my local installation it did not. (Jimmy 10/27/11)
+* Chat can send empty messages (Jimmy 11/14/11)
 
 Documentation
 -------------

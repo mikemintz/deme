@@ -19,11 +19,11 @@ class ChatBox(template.Node):
             <div>
                 <a href="%(chathistory_url)s">View chat history</a>
             </div>
-            <div id="chat_messages" style="height: 250px; overflow-y: scroll;">
+            <div id="chat_messages" style="height: 250px; overflow-y: scroll; border-style: solid; border-width: 1px; border-color: #888;">
             </div>
             <form onsubmit="$.ajax({url: '%(createchatmessage_url)s', type: 'POST', data: {'body': this['body'].value}}); this['body'].value = ''; this['body'].focus(); return false;">
-                <input type="text" name="body" autocomplete="off" />
-                <input type="submit" value="Send" />
+                <input type="text" name="body" style="width:184px; " autocomplete="off" />
+                <input type="submit" style="display: none;" value="Send" />
             </form>
             <script type="text/javascript">
                 $(function(){
