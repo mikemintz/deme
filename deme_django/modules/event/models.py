@@ -8,7 +8,7 @@ from cms.forms import SelectTimeWidget
 
 __all__ = ['Event', 'Calendar'] 
 
-class Event(HtmlDocument): 
+class Event(HtmlDocument):
 
     #Setup
     introduced_immutable_fields = frozenset()

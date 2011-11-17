@@ -1414,23 +1414,3 @@ class DemeSettingViewer(ItemViewer):
         redirect = self.request.GET.get('redirect', reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'modify'}))
         return HttpResponseRedirect(redirect)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-
-
