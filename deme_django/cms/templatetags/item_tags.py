@@ -288,7 +288,8 @@ def ifagentcanglobal(parser, token):
     return IfAgentCanGlobal(bits[1], nodelist_true, nodelist_false)
 
 # remember this includes inactive comments, which should be displayed differently after calling this
-def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments, nested):
+def comment_dicts_for_item(item, version_number, context, include_recursive_collection_comments):
+    max_nesting_level = int(DemeSetting.get("cms.comment_max_nesting_level") or 99999)
     permission_cache = context['_viewer'].permission_cache
     comment_subclasses = [TextComment]
     comments = []
@@ -323,17 +324,33 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
         transclusions_to_comment = [x for x in transclusions_to if x.to_item_id == comment.pk]
         comment_info = {'comment': comment, 'transclusions_to': transclusions_to_comment, 'subcomments': []}
         pk_to_comment_info[comment.pk] = comment_info
-    comment_dicts = []
+    root_node = {'subcomments': []}
     for comment in comments:
         child = pk_to_comment_info[comment.pk]
-        parent = pk_to_comment_info.get(comment.item_id)
-        if nested and parent:
-            parent['subcomments'].append(child)
-            child['siblings'] = parent['subcomments']
+        parent = pk_to_comment_info.get(comment.item_id) or root_node
+        parent['subcomments'].append(child)
+
+    def set_max_nesting_level(child, parent, nesting_level=1):
+        if nesting_level + 1 > max_nesting_level:
+            parent['subcomments'].extend(child['subcomments'])
+            parent['subcomments'].sort(key=lambda x: x['comment'].created_at)
+            for grandchild in child['subcomments']:
+                set_max_nesting_level(grandchild, parent, nesting_level + 1)
+            child['subcomments'] = []
         else:
-            comment_dicts.append(child)
-            child['siblings'] = comment_dicts
-    return comment_dicts, len(comments)
+            for grandchild in child['subcomments']:
+                set_max_nesting_level(grandchild, child, nesting_level + 1)
+    for child in root_node['subcomments']:
+        set_max_nesting_level(child, root_node)
+
+    def set_siblings(child, parent):
+        child['siblings'] = parent['subcomments']
+        for grandchild in child['subcomments']:
+            set_siblings(grandchild, child)
+    for child in root_node['subcomments']:
+        set_siblings(child, root_node)
+
+    return root_node['subcomments'], len(comments)
 
 class ActionsMenu(template.Node):
     def __init__(self):
@@ -817,7 +834,7 @@ class CalculateComments(template.Node):
             for subcomment in comment_info['subcomments']:
                 add_comment_to_div(subcomment, parents + (comment_info,))
             result.append(u'</div>')
-        comment_dicts, n_comments = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection), True)
+        comment_dicts, n_comments = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection))
         for comment_dict in comment_dicts:
             add_comment_to_div(comment_dict, ())
         result.append("</div>")
