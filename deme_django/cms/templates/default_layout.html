@@ -180,7 +180,10 @@
 </head>
 
 {% if item %}
+    {% if no_side_comment_box %}
+    {% else %}
     {% calculatecomments %}
+    {% endif %}
     {% calculateactionnotices %}
     {% calculatehistory %}
     {% calculaterelationships %}
@@ -203,12 +206,15 @@
             {% itemdetails %}
         </div>
     </div>
+    {% if no_side_comment_box %}
+    {% else %}
     <div class="metadata_content metadata_content_comments" style="display: none;">
         <h3 id="accordion_header_comments">{{ n_comments }} comment{{ n_comments|pluralize }}</h3>
         <div style="background: none;">
             {{ comment_box }}
         </div>
     </div>
+    {% endif %}
     <div class="metadata_content metadata_content_action_notices" style="display: none;">
         <h3>{{ n_action_notices }} action notice{{ n_action_notices|pluralize }}</h3>
         <div>
@@ -282,7 +288,10 @@
             <div style="display: none;">
                 <ul style="font-size: 85%;">
                     <li><a href="#" onclick="return false;" id="metadata_menu_item_details">Item details</a></li>
+                    {% if no_side_comment_box %}
+                    {% else %}
                     <li><a href="#" onclick="return false;" id="metadata_menu_comments">Comments</a></li>
+                    {% endif %}
                     <li><a href="#" onclick="return false;" id="metadata_menu_action_notices">Action notices</a></li>
                     <li><a href="#" onclick="return false;" id="metadata_menu_versions">Versions</a></li>
                     <li><a href="#" onclick="return false;" id="metadata_menu_related_items">Related items</a></li>

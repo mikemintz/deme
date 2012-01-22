@@ -1,6 +1,6 @@
 from django.template import Context, loader
 from django.http import HttpResponse, HttpResponseRedirect
-from cms.views import PersonViewer
+from cms.views import PersonViewer, ItemViewer
 from modules.community_forum.models import *
 
 class CommunityForumParticipantViewer(PersonViewer):
@@ -15,3 +15,13 @@ class CommunityForumParticipantViewer(PersonViewer):
             return HttpResponseRedirect(url)
         else:
             return self.render_error('Not a participant', "You must be a CommunityForumParticipant to access this")
+
+class DiscussionBoardViewer(ItemViewer):
+    accepted_item_type = DiscussionBoard
+    viewer_name = 'discussionboard'
+
+    def item_show_html(self):
+        self.context['action_title'] = ''
+        self.context['no_side_comment_box'] = True
+        template = loader.get_template('discussionboard/show.html')
+        return HttpResponse(template.render(self.context))
