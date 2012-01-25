@@ -179,6 +179,7 @@ class PropositionResponseApprove(PropositionResponse):
         ('approve' , 'Approve' ),
         ('dissaprove', 'Disapprove'),
         ('no vote', 'No Vote'),
+        ('not sure', 'Not Sure')
     )
     value = models.CharField(_('status'), default='Unassigned', max_length=36, choices=value_choices)    
     

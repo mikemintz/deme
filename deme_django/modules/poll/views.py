@@ -139,27 +139,71 @@ class ApproveNPollViewer(PollViewer):
         return HttpResponse(template.render(self.context))
 
     def item_respondtopropositions_html(self):
-        propositions = self.request.POST
+        from cms.forms import AjaxModelChoiceField
+        self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
+        memberships = self.item.child_memberships
+        memberships = memberships.filter(active=True, item__active=True)
+        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
+        memberships = memberships.select_related('item')
+        propositions = Proposition.objects.filter(memberships__in=memberships)
+        proposition_responses = {}
+        for proposition in propositions:
+            proposition_responses[proposition.pk] = self.request.POST[str(proposition.pk)]
+        writein = self.request.POST['optional_writein_comment']
         #verify that the cur agent is in the eligbles
         self.verifyCurAgentIsEligible()
         #verify that it is not before or after the deadline
         
         #verify that there are only n or less responses
-        counter=0
-        for response in propositions:    
-            if propositions[response]=="approve" or propositions[response]=="disapprove":
-                counter=counter+1
-                if counter>self.item.n: #this needs to be changed for chooseN
-                    return self.render_error('Too many votes', "Approve "+str(self.item.n)+" or fewer propositions.")
+        #counter=0
+        #for response in propositionResponses:    
+        #    if propositionResponses[response]=="approve" or propositionResponses[response]=="disapprove":
+        #       counter=counter+1
+        #        if counter>self.item.n: #this needs to be changed for chooseN
+        #            return self.render_error('Too many votes', "Approve "+str(self.item.n)+" or fewer propositions.")
                     
         #delete old response (even if one doesn't exist)
         PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent).delete()
         #make a new response
-        for response in propositions:
-            newResponse = PropositionResponseApprove(poll=self.item, participant= self.cur_agent, proposition = Proposition.objects.get(pk=response), value = propositions[response])
+        for response in proposition_responses:
+            newResponse = PropositionResponseApprove(poll=self.item, participant= self.cur_agent, proposition = Proposition.objects.get(pk=response), value = proposition_responses[response])
             newResponse.save()
-        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
-        return HttpResponseRedirect(redirect)
+        
+        if writein:
+            newComment = TextComment(item=self.item, item_version_number=self.item.version_number, body=writein)
+            newComment.save_versioned(action_agent=self.cur_agent, initial_permissions=[OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)])
+
+        self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
+        self.context['can_view_response_names_and_values'] = self.permission_cache.agent_can('access_proposition_responses', self.item)
+        self.context['cur_agent_in_eligbles'] = self.item.agent_eligible_to_vote(self.cur_agent)
+        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision') 
+        eligible_agent_memberships = self.item.eligibles.child_memberships
+        eligible_agent_memberships = eligible_agent_memberships.filter(active=True, item__active=True)
+        eligible_agent_memberships = self.permission_cache.filter_items('view Membership.item', eligible_agent_memberships)
+        eligible_agent_memberships = eligible_agent_memberships.select_related('item')
+        if eligible_agent_memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in eligible_agent_memberships]))
+        responses = {}
+        for agent_membership in eligible_agent_memberships:
+            responses[agent_membership.item] = PropositionResponseApprove.objects.filter(poll=self.item).filter(participant=agent_membership.item)
+        
+        vote_numbers = []
+        for proposition in propositions:
+            agree = PropositionResponseApprove.objects.filter(poll=self.item, value='approve', proposition=proposition).count()
+            disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
+            no_vote = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
+            vote_numbers.append({'agree': agree, 'disagree': disagree, 'no_vote': no_vote})
+
+        self.context['vote_numbers_list'] = vote_numbers
+        self.context['comments'] = TextComment.objects.filter(item=self.item)
+        
+        #redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        #return HttpResponseRedirect(redirect)
+        template = loader.get_template('poll/ResultsPage.html')
+        return HttpResponse(template.render(self.context))
+
+
 
 
 class PropositionViewer(HtmlDocumentViewer):
@@ -464,6 +508,8 @@ class PluralityApproveNDecisionViewer(DecisionViewer):
         self.context['minResponses'] = int(math.ceil(maxPollTakers * (self.item.quorum/100.0)))
         template = loader.get_template('poll/pluralityapprovendecision.html')
         return HttpResponse(template.render(self.context))
+    
+
 
 class ThresholdApproveNDecisionViewer(DecisionViewer):
     accepted_item_type = ThresholdApproveNDecision
