@@ -1,11 +1,10 @@
 {% extends layout %}
 {% load item_tags %}
+{% load air_extras %}
 {% block content %}
 
-{% subclassfields %}
-
-{% calculatecomments %}
-{{ comment_box }}
+{% communityforum_calculatecomments %}
+{{ communityforum_comment_box }}
 
 {% endblock content %}
 
