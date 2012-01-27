@@ -212,12 +212,14 @@ $(document).ready(function() {
 
     <p><strong> Personal Statements </strong></p>
     {% if comments %}
+    	<table>
 	    {% for comment in comments %}
-	    <div style="float: left; width: 300px;">{{ comment.body|safe }}</div>
-	    <div style="float: right">Posted on {{ comment.created_at }}</div>
-	    <br />
-	    <br />
+	    <tr>
+	    	<td>{{ comment.body|safe }}</td>
+	    	<td>Posted on {{ comment.created_at }}</td>
+	    </tr>
 	    {% endfor %}
+	    </table>
 	{% else %}
 		<p>There have been no personal statements made</p>
 	{% endif %}
