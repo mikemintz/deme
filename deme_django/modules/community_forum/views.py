@@ -43,7 +43,7 @@ class DiscussionBoardViewer(ItemViewer):
     viewer_name = 'discussionboard'
 
     def item_show_html(self):
-        self.context['action_title'] = ''
+        self.context['action_title'] = 'View ongoing discussions'
         self.context['no_side_comment_box'] = True
         template = loader.get_template('discussionboard/show.html')
         return HttpResponse(template.render(self.context))
