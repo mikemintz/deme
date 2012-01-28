@@ -201,7 +201,7 @@ $(document).ready(function() {
     </script>
 
     <strong>Poll Results</strong> 
-    <p>If you would like to comment on these statements, please feel free to start a discussion on the <a>Discussion Board</a><p>
+    <p>If you would like to comment on these statements, please feel free to start a discussion on the <a href="{% url item_type_url viewer="communityforumparticipant" action="gotomydiscussionboard" %}">Discussion Board</a><p>
 
     {% for proposition in propositions %}
 
