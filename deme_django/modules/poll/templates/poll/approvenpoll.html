@@ -153,6 +153,79 @@ $(document).ready(function() {
     
 </script>
 
+{% if cur_agent_has_voted %}
+
+  <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load('visualization', '1', {packages: ['corechart']});
+    </script>
+    <script type="text/javascript">
+     function drawVisualization() {
+     	  {% for vote_numbers_tuple in vote_numbers_list %}
+		  // Create and populate the data table.
+
+		  var data = new google.visualization.DataTable();
+		  var raw_data = [['vote', {{vote_numbers_tuple.agree}}, {{vote_numbers_tuple.disagree}}, {{vote_numbers_tuple.no_vote}}]]
+		  
+		  var responses = ['approve', 'disapprove', 'not sure'];
+		                  
+		  data.addColumn('string', 'responses');
+		  for (var i = 0; i  < raw_data.length; ++i) {
+		    data.addColumn('number', raw_data[i][0]);    
+		  }
+		  
+		  data.addRows(responses.length);
+
+		  for (var j = 0; j < responses.length; ++j) {    
+		    data.setValue(j, 0, responses[j].toString());    
+		  }
+		  for (var i = 0; i  < raw_data.length; ++i) {
+		    for (var j = 1; j  < raw_data[i].length; ++j) {
+		      data.setValue(j-1, i+1, raw_data[i][j]);    
+		    }
+		  }
+  
+		  // Create and draw the visualization.
+		  new google.visualization.BarChart(document.getElementById('visualization{{ forloop.counter }}')).
+		      draw(data,
+		           {title:"",
+		            width:600, height:200,
+		            hAxis: {title: "Votes"}}
+		      );
+		   {% endfor %}
+			}
+       
+      
+
+      google.setOnLoadCallback(drawVisualization);
+    </script>
+
+    <strong>Poll Results</strong> 
+    <p>If you would like to comment on these statements, please feel free to start a discussion on the <a href="{% url item_type_url viewer="communityforumparticipant" action="gotomydiscussionboard" %}">Discussion Board</a><p>
+
+    {% for proposition in propositions %}
+
+    <strong>{{proposition.body|safe}}</strong>
+    <div id="visualization{{ forloop.counter }}" style="width: 600px; height: 200px;"></div>
+
+    {% endfor %}
+
+    <p><strong> Personal Statements </strong></p>
+    {% if comments %}
+    	<table>
+	    {% for comment in comments %}
+	    <tr>
+	    	<td>{{ comment.body|safe }}</td>
+	    	<td>Posted on {{ comment.created_at }}</td>
+	    </tr>
+	    {% endfor %}
+	    </table>
+	{% else %}
+		<p>There have been no personal statements made</p>
+	{% endif %}
+
+{% else %}
+
 <form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
     <input id="removeInput"type="hidden" name="item" value="{{ membership.item.pk }}" />
 </form>
@@ -316,6 +389,7 @@ $(document).ready(function() {
 	       {% endfor %}
     {% endif %}{% endif %}
 </div>
+{% endif %}
 {% endif %}
 
 
