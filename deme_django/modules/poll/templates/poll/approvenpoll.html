@@ -254,6 +254,12 @@ $(document).ready(function() {
 </script>
 
 
+{% if item.question %}
+<div style="font-size: larger; margin-bottom: 1em;">
+<strong>Question:</strong>
+{{ item.question }}
+</div>
+{% endif %}
 
 {% if propositions %}
 <form method="post" enctype="multipart/form-data" 
