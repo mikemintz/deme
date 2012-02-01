@@ -323,6 +323,18 @@ class ThresholdEApproveNDecision(Decision):
     num_decision = models.IntegerField(blank=True, choices=n_choices)
     e_choices = zip( range(0,101), range(0,101) )
     e_decision = models.IntegerField(_('Threshold eligible %'),blank=True, choices=e_choices)
+
+class Survey(Collection):
+
+    # Setup
+    introduced_immutable_fields = frozenset()
+    introduced_abilities = frozenset()
+    introduced_global_abilities = frozenset(['create Survey'])
+    dyadic_relations = {}
+
+    class Meta:
+        verbose_name = _('survey')
+        verbose_name_plural = _('surveys')
     
     
     
