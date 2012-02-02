@@ -167,7 +167,7 @@ $(document).ready(function() {
 		  var data = new google.visualization.DataTable();
 		  var raw_data = [['vote', {{vote_numbers_tuple.agree}}, {{vote_numbers_tuple.disagree}}, {{vote_numbers_tuple.no_vote}}]]
 		  
-		  var responses = ['approve', 'disapprove', 'not sure'];
+		  var responses = ['Choice #1', 'Choice #2', 'Choice #3'];
 		                  
 		  data.addColumn('string', 'responses');
 		  for (var i = 0; i  < raw_data.length; ++i) {
@@ -275,15 +275,17 @@ $(document).ready(function() {
 						{% if cur_agent_in_eligbles %}
 						<select name="{{ proposition.pk }}">
 						<option value="no vote">Vote...</option>
-			        	<option value="not sure">I'm not sure</option>
-						<option value="approve">I approve</option>
-						<option value="disapprove">I disapprove</option>
+			        	<option value="not sure">Choice #1</option>
+						<option value="approve">Choice #2</option>
+						<option value="disapprove">Choice #3</option>
 						</select> 
 						{% endif %}
 					</div>
 			</div>
 				
 	    {% endfor %}
+	    <br>
+	    <br>
 			{% if cur_agent_in_eligbles %}
 			<br />
 			<br />
