@@ -93,9 +93,14 @@ class CommunityForumCalculateComments(template.Node):
                     comment_name = escape(truncate_words(comment.display_name(), 8))
                 else:
                     comment_name = comment.display_name(can_view_name_field=False)
+                if agentcan_helper(context, 'view TextDocument.body', comment):
+                    comment_body = escape(truncate_words(comment.body, 8))
+                else:
+                    comment_body = ''
             else:
                 comment_name = '(Inactive comment)'
-            result.append(u'<a href="#" onclick="$(\'#comment_body%s\').toggle(); return false;">%s</a>' % (comment.pk, comment_name))
+                comment_body = ''
+            result.append(u'<a href="#" onclick="$(\'#comment_body%s\').toggle(); return false;"><b>%s</b></a><span style="color: #888;">%s</span>' % (comment.pk, comment_name, ' - ' + comment_body if comment_body.strip() else ''))
             if agentcan_helper(context, 'view Item.created_at', comment):
                 result.append(comment.created_at.strftime("Posted on %m/%d/%Y"))
             if agentcan_helper(context, 'view Item.creator', comment):
