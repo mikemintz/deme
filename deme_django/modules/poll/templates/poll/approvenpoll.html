@@ -269,29 +269,33 @@ $(document).ready(function() {
 	
 		{% for proposition in propositions %}
 		    <div>
-		           <div style="float: left;"> {{ forloop.counter }}) </div>
-			 	   {{proposition.body|safe}}
+		           <div style="float: left;"> {{ forloop.counter }})  </div>
+		           <div style-"float:left;">{{proposition.body|safe}} </div>
+			 	   
 			 	   {% ifagentcan 'modify_membership' item %}
 				   <button style="float:left" type="button" onclick="removeMember('{{ proposition.pk }}')"><img src="{{ "delete"|icon_url:16 }}" /> Remove</button>
 				   {% endifagentcan %}
 				   <div style="clear: both;"></div>		
 			 	   
 			</div>
-					<div style="float: left">
-						{% if cur_agent_in_eligbles %}
-						<select name="{{ proposition.pk }}">
-						<option value="no vote">Vote...</option>
-			        	<option value="not sure">Choice #1</option>
-						<option value="approve">Choice #2</option>
-						<option value="disapprove">Choice #3</option>
-						</select> 
-						{% endif %}
-					</div>
-			</div>
+			{% if cur_agent_in_eligbles %}
+			<div style="float: left">
 				
+				<select name="{{ proposition.pk }}">
+				<option value="no vote">Vote...</option>
+	        	<option value="not sure">Choice #1</option>
+				<option value="approve">Choice #2</option>
+				<option value="disapprove">Choice #3</option>
+				</select> 
+			</div>
+			{% endif %}
+			
+		<br>	
+		<br>
 	    {% endfor %}
-	    <br>
-	    <br>
+	    </div>
+	    
+	    
 			{% if cur_agent_in_eligbles %}
 			<br />
 			<br />
