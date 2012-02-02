@@ -254,6 +254,12 @@ $(document).ready(function() {
 </script>
 
 
+{% if item.question %}
+<div style="font-size: larger; margin-bottom: 1em;">
+<strong>Question:</strong>
+{{ item.question }}
+</div>
+{% endif %}
 
 {% if propositions %}
 <form method="post" enctype="multipart/form-data" 
@@ -293,7 +299,7 @@ $(document).ready(function() {
 			
 			{% endif %}
 	</div>
-	<p>Enter your own proposition:<p>
+	<p>Enter your own response:<p>
 	<textarea  name="optional_writein_comment" type="text" cols="20" rows="2"></textarea><br />
 			<div style="margin-left:40%; margin-bottom:1em;">
 			    <input type="submit" value="Submit" /><br><br>
