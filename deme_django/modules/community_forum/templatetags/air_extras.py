@@ -32,10 +32,9 @@ class CommunityForumCalculateComments(template.Node):
         result.append(u'<div class="comment_box">')
         result.append(u'<div class="comment_box_header">')
         if agentcan_helper(context, 'comment_on', item):
-            result.append(u'<div style="float: left; font-weight: bold;">Ongoing discussions</div><div style="float: right;"><a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Create a new discussion</a></div><div style="clear: both;"></div>' % item.pk)
+            result.append(u'<div style="float: left; font-weight: bold; font-size: larger;">Ongoing discussions</div><div style="float: right;"><a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Create a new discussion</a></div><div style="clear: both;"></div>' % item.pk)
             result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
-            result.append(u'<p>Label: <select name="label" id="community_forum_discussion_label" onchange="$(\'#community_forum_discussion_subject\')[0].value = $(\'#community_forum_discussion_label\')[0].value + \': \';"><option selected="selected"></option><option>Question for expert 1</option><option>Question for expert 2</option><option>Question for both experts</option><option>Comment to everyone</option></select></p>')
-            result.append(u'<p>Discussion subject: <input name="title" id="community_forum_discussion_subject" type="text" size="35" maxlength="255" /></p><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> ')
+            result.append(u'<p>Discussion subject: <input name="title" type="text" size="35" maxlength="255" /></p><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> ')
             if context['cur_agent'].is_anonymous():
                 result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
             result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'commentajaxfield'})))
@@ -94,9 +93,14 @@ class CommunityForumCalculateComments(template.Node):
                     comment_name = escape(truncate_words(comment.display_name(), 8))
                 else:
                     comment_name = comment.display_name(can_view_name_field=False)
+                if agentcan_helper(context, 'view TextDocument.body', comment):
+                    comment_body = escape(truncate_words(comment.body, 8))
+                else:
+                    comment_body = ''
             else:
                 comment_name = '(Inactive comment)'
-            result.append(u'<a href="#" onclick="$(\'#comment_body%s\').toggle(); return false;">%s</a>' % (comment.pk, comment_name))
+                comment_body = ''
+            result.append(u'<a href="#" onclick="$(\'#comment_body%s\').toggle(); return false;"><b>%s</b></a><span style="color: #888;">%s</span>' % (comment.pk, comment_name, ' - ' + comment_body if comment_body.strip() else ''))
             if agentcan_helper(context, 'view Item.created_at', comment):
                 result.append(comment.created_at.strftime("Posted on %m/%d/%Y"))
             if agentcan_helper(context, 'view Item.creator', comment):
