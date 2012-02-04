@@ -19,7 +19,7 @@
     function encrypt_password() {
         var raw_password = document.forms['password_form']['password'].value;
         var url = '{% url item_type_url viewer="demeaccount",action="getencryptionmethod" %}';
-        jQuery.getJSON(url, {username:document.forms['password_form']['username'].value}, function(json) {
+        jQuery.post(url, {username:document.forms['password_form']['username'].value}, function(json) {
             var algo = json.algo;
             var salt = json.salt;
             var nonce = json.nonce;
@@ -27,7 +27,7 @@
             document.forms['real_password_form']['hashed_password'].value = encrypted_password;
             document.forms['real_password_form']['username'].value = document.forms['password_form']['username'].value;
             document.forms['real_password_form'].submit();
-        });
+        }, "json");
     }
 </script>
 <div style="display: none;" id="login_dialog_password" title="Login">
