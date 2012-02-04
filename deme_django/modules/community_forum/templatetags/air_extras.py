@@ -32,7 +32,7 @@ class CommunityForumCalculateComments(template.Node):
         result.append(u'<div class="comment_box">')
         result.append(u'<div class="comment_box_header">')
         if agentcan_helper(context, 'comment_on', item):
-            result.append(u'<div style="float: left; font-weight: bold; font-size: larger;">Ongoing discussions</div><div style="float: right;"><a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Create a new discussion</a></div><div style="clear: both;"></div>' % item.pk)
+            result.append(u'<div style="font-weight: bold; font-size: larger;">Ongoing discussions</div><div><a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Create a new discussion</a></div>' % item.pk)
             result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
             result.append(u'<p>Discussion subject: <input name="title" type="text" size="35" maxlength="255" /></p><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> ')
             if context['cur_agent'].is_anonymous():
