@@ -179,16 +179,6 @@
 
 </head>
 
-{% if item %}
-    {% if no_side_comment_box %}
-    {% else %}
-    {% calculatecomments %}
-    {% endif %}
-    {% calculateactionnotices %}
-    {% calculatehistory %}
-    {% calculaterelationships %}
-{% endif %}
-
 <body>
 
 {% if item %}
@@ -201,43 +191,19 @@
     </div>
     <div style="clear: both;"></div>
     <div class="metadata_content metadata_content_item_details" style="display: none;">
-        <h3>Item details</h3>
-        <div id="accordion_details">
-            {% itemdetails %}
-        </div>
     </div>
     {% if no_side_comment_box %}
     {% else %}
     <div class="metadata_content metadata_content_comments" style="display: none;">
-        <h3 id="accordion_header_comments">{{ n_comments }} comment{{ n_comments|pluralize }}</h3>
-        <div style="background: none;">
-            {{ comment_box }}
-        </div>
     </div>
     {% endif %}
     <div class="metadata_content metadata_content_action_notices" style="display: none;">
-        <h3>{{ n_action_notices }} action notice{{ n_action_notices|pluralize }}</h3>
-        <div>
-            {{ action_notice_box }}
-        </div>
     </div>
     <div class="metadata_content metadata_content_versions" style="display: none;">
-        <h3>{{ n_versions }} version{{ n_versions|pluralize }}</h3>
-        <div>
-            {{ history_box }}
-        </div>
     </div>
     <div class="metadata_content metadata_content_related_items" style="display: none;">
-        <h3>{{ n_relationships }} related item{{ n_relationships|pluralize }}</h3>
-        <div>
-            {{ relationships_box }}
-        </div>
     </div>
     <div class="metadata_content metadata_content_permissions" style="display: none;">
-        <h3>Permissions</h3>
-        <div>
-            {% permissions_box %}
-        </div>
     </div>
 </div>
 {% endif %}
@@ -257,6 +223,7 @@
         {% if item %}
         <script type="text/javascript">
         $(function(){
+            var already_loaded_metadata_names = {};
             $('#metadata_menu_link').menu({
                 content: $('#metadata_menu_link').next().html(),
                 showSpeed: 50,
@@ -273,7 +240,17 @@
                 if (!$('#fixed_right_pane').is(':visible')) {
                     $('#fixed_right_pane').show();
                     increase_fixed_right_pane(38, 10);
-                } 
+                }
+                if (!(metadata_menu_name in already_loaded_metadata_names)) {
+                    already_loaded_metadata_names[metadata_menu_name] = true;
+                    $('.metadata_content_' + metadata_menu_name).html("Loading...");
+                    jQuery.ajax({
+                        url: "{% url item_url viewer=viewer_name,noun=item.pk,action="metadata" %}?name=" + metadata_menu_name,
+                        success: function(data) {
+                            $('.metadata_content_' + metadata_menu_name).html(data);
+                        }
+                    });
+                }
             };
             {% if default_metadata_menu_option %}
                 var item = $('#metadata_menu_{{default_metadata_menu_option}}');
@@ -418,15 +395,6 @@
                         <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
                     </ul>
                 </div>
-                {% if item %}
-                <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
-                    Member Of
-                </div>
-                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
-                    {{ memberOf_box }}
-                </div>
-                {% endif %}
-                
             </td>
             <td style="vertical-align: top; width: 85%; padding:0;" id="center_table_column">
                 <div style="margin-top: 80px;">

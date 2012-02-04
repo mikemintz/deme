@@ -802,6 +802,14 @@ class ItemViewer(Viewer):
         edit_locks.delete()
         return None
 
+    def item_metadata_html(self):
+        metadata_menu_name = self.request.GET['name']
+        template_text = """{%% load item_tags %%}{%% metadata_%s %%}""" % metadata_menu_name
+        template = django.template.Template(template_text)
+        return HttpResponse(template.render(self.context))
+
+
+
 class WebpageViewer(ItemViewer):
     accepted_item_type = Webpage
     viewer_name = 'webpage'
