@@ -1,6 +1,6 @@
 {% load item_tags %}
-{% if cur_agent.is_anonymous %}
 
+{% if cur_agent.is_anonymous %}
 <li>
 <script type="text/javascript" src="{% media_url "javascripts/sha1.js" %}"></script>
 <script type="text/javascript" src="{% media_url "javascripts/mysql_pre41_password.js" %}"></script>
@@ -53,21 +53,9 @@
     });
 </script>
 </li>
-
-<li class="loginmenuitem"><a href="#" onclick="$('#login_dialog_password').dialog('open'); return false;">Deme account</a></li>
-
+<li class="loginmenuitem"><a href="#" onclick="$('#login_dialog_password').dialog('open'); return false;">Login</a></li>
 {% else %}
-
-    {% if one_or_more %}
-        {% if two_or_more %}
-        {% for account in auth_methods %} 
-        <li class="loginmenuitem"><a href="{% url item_url viewer="demeaccount",action="edit",noun=account.pk %}">Change password for {% viewable_name account %}</a></li>
-        {% endfor %}
-        {% else %}
-        {% for account in auth_methods %} 
-        <li class="loginmenuitem"><a href="{% url item_url viewer="demeaccount",action="edit",noun=account.pk %}">Change password</a></li>
-        {% endfor %}
-        {% endif %}
-    {% endif %}    
-
+<li class="loginmenuitem"><a href="#" onclick="document.forms['logout_form'].submit(); return false;">Logout</a></li>
+<li><form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="logout" %}?redirect={{ redirect|urlencode }}"></form></li>
 {% endif %}
+

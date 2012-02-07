@@ -546,6 +546,8 @@ class ItemDetails(template.Node):
         item = context['item']
         result = []
 
+        result.append('<h3>Item details</h3>')
+        result.append('<div>')
         result.append('<table class="twocol" cellspacing="0" style="font-size: 85%;">')
 
         if agentcan_helper(context, 'view Item.name', item) and item.name:
@@ -617,11 +619,12 @@ class ItemDetails(template.Node):
                 result.append('</tr>')
 
         result.append('</table>')
+        result.append('</div>')
 
         return '\n'.join(result)
 
 @register.tag
-def itemdetails(parser, token):
+def metadata_item_details(parser, token):
     bits = list(token.split_contents())
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes zero arguments" % bits[0]
@@ -722,22 +725,6 @@ class CalculateComments(template.Node):
         except ObjectDoesNotExist:
             default_from_contact_method_pk = None
         result = []
-        result.append(u'<div class="comment_box">')
-        result.append(u'<div class="comment_box_header">')
-        grid_url = u'%s?filter=recursive_comments_as_child.parent.%d' % (reverse('item_type_url', kwargs={'viewer': 'textcomment'}), item.pk)
-        result.append(u'<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-calculator"></span>Grid view</a>' % grid_url)
-        if agentcan_helper(context, 'comment_on', item):
-            result.append(u'<a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Add comment</a>' % item.pk)
-            result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
-            result.append(u'<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> ')
-            if context['cur_agent'].is_anonymous():
-                result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
-            result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'commentajaxfield'})))
-            result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (item.pk, item.version_number))
-            result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (item.pk))
-            result.append(u'</form></div>')
-        result.append(u'<div style="clear: both;"></div>')
-        result.append(u'</div>')
         def add_comment_to_div(comment_info, parents):
             comment = comment_info['comment']
             transclusions_to = []
@@ -835,15 +822,30 @@ class CalculateComments(template.Node):
                 add_comment_to_div(subcomment, parents + (comment_info,))
             result.append(u'</div>')
         comment_dicts, n_comments = comment_dicts_for_item(item, version_number, context, isinstance(item, Collection))
+        result.append("<h3>%d comment%s</h3>" % (n_comments, '' if n_comments == 1 else 's'))
+        result.append(u'<div class="comment_box">')
+        result.append(u'<div class="comment_box_header">')
+        grid_url = u'%s?filter=recursive_comments_as_child.parent.%d' % (reverse('item_type_url', kwargs={'viewer': 'textcomment'}), item.pk)
+        result.append(u'<a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-calculator"></span>Grid view</a>' % grid_url)
+        if agentcan_helper(context, 'comment_on', item):
+            result.append(u'<a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Add comment</a>' % item.pk)
+            result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
+            result.append(u'<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> ')
+            if context['cur_agent'].is_anonymous():
+                result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
+            result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'commentajaxfield'})))
+            result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (item.pk, item.version_number))
+            result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (item.pk))
+            result.append(u'</form></div>')
+        result.append(u'<div style="clear: both;"></div>')
+        result.append(u'</div>')
         for comment_dict in comment_dicts:
             add_comment_to_div(comment_dict, ())
         result.append("</div>")
-        context['comment_box'] = mark_safe('\n'.join(result))
-        context['n_comments'] = n_comments
-        return ''
+        return '\n'.join(result)
 
 @register.tag
-def calculatecomments(parser, token):
+def metadata_comments(parser, token):
     bits = list(token.split_contents())
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
@@ -864,6 +866,8 @@ class PermissionsBox(template.Node):
         abilities = permission_cache.item_abilities(item)
 
         result = []
+        result.append("<h3>Permissions</h3>")
+        result.append("<div>")
         if agentcan_helper(context, 'view_permissions', item):
             if agentcan_helper(context, 'do_anything', item):
                 item_permissions_name = 'Modify permissions'
@@ -881,16 +885,17 @@ class PermissionsBox(template.Node):
         if agentcan_helper(context, 'modify_privacy_settings', item) and not agentcan_helper(context, 'do_anything', item):
             modify_privacy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'privacy'})
             result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify privacy</a></div>""" % modify_privacy_url)
-        result.append("<div>As user %s, you can:</div>" % get_item_link_tag(context, cur_agent))
+        result.append('<div style="clear: both;">As user %s, you can:</div>' % get_item_link_tag(context, cur_agent))
         result.append("<ul>")
         friendly_names = [x[1] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if x[0] in abilities]
         for friendly_name in friendly_names:
             result.append("<li>%s</li>" % escape(capfirst(friendly_name)))
         result.append("</ul>")
+        result.append("</div>")
         return '\n'.join(result)
 
 @register.tag
-def permissions_box(parser, token):
+def metadata_permissions(parser, token):
     bits = list(token.split_contents())
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
@@ -928,10 +933,6 @@ class CalculateRelationships(template.Node):
             viewable_items = manager.filter(active=True)
             if viewable_items.count() == 0:
                 continue
-            if viewable_items.count() > 500:
-                context['relationships_box'] = 'Too many related items to render'
-                context['n_relationships'] = viewable_items.count()
-                return ''
             viewable_items = permission_cache.filter_items('view %s.%s' % (field.model.__name__, field.field.name), viewable_items, cache_results=False)
             if field.field.name in field.model.dyadic_relations:
                 target_field_name, relation_name = field.model.dyadic_relations[field.field.name]
@@ -948,8 +949,11 @@ class CalculateRelationships(template.Node):
             relationship_sets.append(relationship_set)
 
         permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=all_pks))
+        n_relationships = sum(len(x['items']) for x in relationship_sets)
         result = []
         memberOf = []
+        result.append("<h3>%d related item%s</h3>" % (n_relationships, '' if n_relationships == 1 else 's'))
+        result.append("<div>")
         for relationship_set in relationship_sets:
             friendly_name = capfirst(relationship_set['name']).replace('_', ' ')
             field = relationship_set['field']
@@ -959,13 +963,12 @@ class CalculateRelationships(template.Node):
                 result.append('<div>%s</div>' % get_item_link_tag(context, related_item))
                 if friendly_name == "Member of":
                     memberOf.append('<div>%s</div>' % get_item_link_tag(context, related_item))             
-        context['relationships_box'] = mark_safe('\n'.join(result))
+        result.append("</div>")
         context['memberOf_box'] = mark_safe('\n'.join(memberOf))
-        context['n_relationships'] = sum(len(x['items']) for x in relationship_sets)
-        return ''
+        return '\n'.join(result)
 
 @register.tag
-def calculaterelationships(parser, token):
+def metadata_related_items(parser, token):
     bits = list(token.split_contents())
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
@@ -984,7 +987,10 @@ class CalculateHistory(template.Node):
 
         result = []
         versions = item.versions.all()
+        n_versions = len(versions) + 1 if versions.exists() else 0
+        result.append("<h3>%d version%s</h3>" % (n_versions, '' if n_versions == 1 else 's'))
         if versions.exists():
+            result.append(u'<div>')
             edit_action_notices = EditActionNotice.objects.filter(action_item=item)
             create_action_notices = CreateActionNotice.objects.filter(action_item=item)
             action_notices = itertools.chain(edit_action_notices, create_action_notices)
@@ -1008,16 +1014,12 @@ class CalculateHistory(template.Node):
                 if agentcan_helper(context, 'view Item.creator', item):
                     result.append(agent_text)
                 result.append(u'</div>')
-            context['history_box'] = mark_safe(u'\n'.join(result))
-            context['n_versions'] = len(versions) + 1
-        else:
-            context['history_box'] = u''
-            context['n_versions'] = 0
-        return ''
+            result.append(u'</div>')
+        return '\n'.join(result)
 
 
 @register.tag
-def calculatehistory(parser, token):
+def metadata_versions(parser, token):
     bits = list(token.split_contents())
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
@@ -1034,15 +1036,12 @@ class CalculateActionNotices(template.Node):
     def render(self, context):
         item = context['item']
 
-        context['n_action_notices'] = 0
+        n_action_notices = 0
         result = []
+        result.append('<div>')
         if agentcan_helper(context, 'view Item.action_notices', item):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
             action_notices = ActionNotice.objects.filter(Q(action_item=item) | Q(action_agent=item)).order_by('action_time')
-            if action_notices.count() > 500:
-                context['n_action_notices'] = action_notices.count()
-                context['action_notice_box'] = 'Too many action notices to render'
-                return ''
             action_notice_pk_to_object_map = {}
             for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
                 select_related_fields = ['action_agent__name', 'action_item__name']
@@ -1106,15 +1105,13 @@ class CalculateActionNotices(template.Node):
                 result.append(action_sentence)
                 result.append(action_summary_text)
                 result.append(u'</div>')
-                context['n_action_notices'] += 1
-        else:
-            action_notices = []
-
-        context['action_notice_box'] = mark_safe(u'\n'.join(result))
-        return ''
+                n_action_notices += 1
+        result.append('</div>')
+        result.insert(0, "<h3>%d action notice%s</h3>" % (n_action_notices, '' if n_action_notices == 1 else 's'))
+        return u'\n'.join(result)
 
 @register.tag
-def calculateactionnotices(parser, token):
+def metadata_action_notices(parser, token):
     bits = list(token.split_contents())
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]

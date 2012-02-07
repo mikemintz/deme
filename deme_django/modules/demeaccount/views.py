@@ -38,7 +38,7 @@ class DemeAccountViewer(AuthenticationMethodViewer):
     def type_getencryptionmethod_html(self):
         # Return a JSON response with the details about the DemeAccount
         # necessary for JavaScript to encrypt the password.
-        username = self.request.GET['username']
+        username = self.request.POST['username']
         nonce = DemeAccount.get_random_hash()[:5]
         self.request.session['login_nonce'] = nonce
         try:

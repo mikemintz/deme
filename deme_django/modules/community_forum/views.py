@@ -37,6 +37,11 @@ class CommunityForumParticipantViewer(PersonViewer):
         my_poll = my_polls[0]
         return HttpResponseRedirect(my_poll.get_absolute_url())
 
+    def type_loginmenuitem_html(self):
+        self.context['redirect'] = self.request.GET.get('redirect', '')
+        template = loader.get_template('communityforumparticipant/loginmenuitem.html')
+        return HttpResponse(template.render(self.context))
+
 
 class DiscussionBoardViewer(ItemViewer):
     accepted_item_type = DiscussionBoard
