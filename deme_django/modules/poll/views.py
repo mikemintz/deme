@@ -101,6 +101,9 @@ class ChooseNPollViewer(PollViewer):
             newResponse.save()
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
+
+    
+
         
 
 class ApproveNPollViewer(PollViewer):
@@ -215,7 +218,14 @@ class ApproveNPollViewer(PollViewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
-
+    def item_addawritein_html(self):
+        writein = self.request.POST['optional_writein_comment']
+        if writein:
+            newComment = TextComment(item=self.item, item_version_number=self.item.version_number, body=writein)
+            newComment.save_versioned(action_agent=self.cur_agent, initial_permissions=[OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)])
+        self.context['comments'] = TextComment.objects.filter(item=self.item)
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
 
 
 class PropositionViewer(HtmlDocumentViewer):
