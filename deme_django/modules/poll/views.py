@@ -101,6 +101,9 @@ class ChooseNPollViewer(PollViewer):
             newResponse.save()
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
+
+    
+
         
 
 class ApproveNPollViewer(PollViewer):
@@ -139,12 +142,16 @@ class ApproveNPollViewer(PollViewer):
         self.context['cur_agent_has_voted'] = cur_agent_has_voted
         vote_numbers = []
         propositions = Proposition.objects.filter(memberships__in=memberships)
+        maxNumber = 0
         for proposition in propositions:
             agree = PropositionResponseApprove.objects.filter(poll=self.item, value='approve', proposition=proposition).count()
             disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
             no_vote = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
+            maxTemp = max([agree, disagree, no_vote])
+            if(maxTemp > maxNumber): maxNumber = maxTemp
             vote_numbers.append({'agree': agree, 'disagree': disagree, 'no_vote': no_vote})
-
+        
+        self.context['maxVal'] = maxNumber
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
         template = loader.get_template('poll/approvenpoll.html')
@@ -203,19 +210,31 @@ class ApproveNPollViewer(PollViewer):
             responses[agent_membership.item] = PropositionResponseApprove.objects.filter(poll=self.item).filter(participant=agent_membership.item)
         
         vote_numbers = []
+        maxNumber = 0
         for proposition in propositions:
             agree = PropositionResponseApprove.objects.filter(poll=self.item, value='approve', proposition=proposition).count()
             disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
             no_vote = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
+            maxTemp = max([agree, disagree, no_vote])
+            if(maxTemp > maxNumber): maxNumber = maxTemp
             vote_numbers.append({'agree': agree, 'disagree': disagree, 'no_vote': no_vote})
 
+        self.context['maxVal'] = maxNumber
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
         
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
+    def item_addawritein_html(self):
 
+        writein = self.request.POST['optional_writein_comment']
+        if writein:
+            newComment = TextComment(item=self.item, item_version_number=self.item.version_number, body=writein)
+            newComment.save_versioned(action_agent=self.cur_agent, initial_permissions=[OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)])
+        self.context['comments'] = TextComment.objects.filter(item=self.item)
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
 
 
 class PropositionViewer(HtmlDocumentViewer):
