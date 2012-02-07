@@ -1,0 +1,61 @@
+{% load item_tags %}
+
+{% if cur_agent.is_anonymous %}
+<li>
+<script type="text/javascript" src="{% media_url "javascripts/sha1.js" %}"></script>
+<script type="text/javascript" src="{% media_url "javascripts/mysql_pre41_password.js" %}"></script>
+<script type="text/javascript">
+    function get_encrypted_password(raw_password, algo, salt, nonce) {
+        var original_hashed_password;
+        if (algo == 'sha1') {
+            original_hashed_password = SHA1(salt + raw_password);
+        } else if (algo == 'mysql_pre41_password') {
+            original_hashed_password = mysql_pre41_password(raw_password);
+        } else {
+            return 'unknown algo: ' + algo;
+        }
+        return SHA1(nonce + original_hashed_password);
+    }
+    function encrypt_password() {
+        var raw_password = document.forms['password_form']['password'].value;
+        var url = '{% url item_type_url viewer="demeaccount",action="getencryptionmethod" %}';
+        jQuery.post(url, {username:document.forms['password_form']['username'].value}, function(json) {
+            var algo = json.algo;
+            var salt = json.salt;
+            var nonce = json.nonce;
+            var encrypted_password = get_encrypted_password(raw_password, algo, salt, nonce);
+            document.forms['real_password_form']['hashed_password'].value = encrypted_password;
+            document.forms['real_password_form']['username'].value = document.forms['password_form']['username'].value;
+            document.forms['real_password_form'].submit();
+        }, "json");
+    }
+</script>
+<div style="display: none;" id="login_dialog_password" title="Login">
+    <form name="password_form" onsubmit="$('#login_dialog_password').dialog('hide'); encrypt_password(); return false;">
+        <div>Username:</div>
+        <div><input type="text" name="username" /></div>
+        <div>Password:</div>
+        <div><input type="password" name="password" /></div>
+    </form>
+    <form name="real_password_form" action="{% url item_type_url viewer="demeaccount",action="login" %}?redirect={{ redirect|urlencode }}" method="post">
+        <input type="hidden" name="username" />
+        <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
+    </form>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#login_dialog_password').dialog({
+            autoOpen: false,
+            buttons: {"Login": function(){$(this).dialog('close'); document.forms['password_form'].onsubmit()}, "Cancel": function(){$(this).dialog("close")} },
+            modal: true,
+            bgiframe: true,
+        });
+    });
+</script>
+</li>
+<li class="loginmenuitem"><a href="#" onclick="$('#login_dialog_password').dialog('open'); return false;">Login</a></li>
+{% else %}
+<li class="loginmenuitem"><a href="#" onclick="document.forms['logout_form'].submit(); return false;">Logout</a></li>
+<li><form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="logout" %}?redirect={{ redirect|urlencode }}"></form></li>
+{% endif %}
+

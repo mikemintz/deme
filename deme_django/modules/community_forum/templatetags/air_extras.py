@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import truncate_words
 from django.utils.safestring import mark_safe
 from cms.templatetags.item_tags import *
+from modules.community_forum.views import CommunityForumParticipantViewer
 
 register = template.Library()
 
@@ -157,4 +158,62 @@ def communityforum_calculatecomments(parser, token):
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
     return CommunityForumCalculateComments()
+
+
+class SimpleLoginMenu(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<SimpleLoginMenu>"
+
+    def render(self, context):
+        viewer = context['_viewer']
+        result = []
+
+        if viewer.cur_agent.is_anonymous():
+            login_menu_text = 'Login'
+        else:
+            login_menu_text = u'%s [Logout]' % get_viewable_name(context, viewer.cur_agent)
+
+        result.append("""
+        <script type="text/javascript">
+        $(function(){
+            var menuContent = '<ul style="font-size: 85%%;">';
+            $.each($('#login_menu_link').next().children().filter('li.loginmenuitem'), function(i, val){
+                menuContent += '<li>' + $(val).html() + '</li>';
+            });
+            menuContent += '</ul>'
+            $('#login_menu_link').menu({
+                content: menuContent,
+                showSpeed: 50,
+                fixedPosition: true,
+            });
+            $('#login_menu_link').click(function(){
+                $("#simple_login_menu_ul a").trigger('click');
+                return false;
+            });
+        });
+        </script>
+        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="login_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>%s</a>
+        <ul id="simple_login_menu_ul" style="display: none;">
+        """ % login_menu_text)
+        for viewer_class in [CommunityForumParticipantViewer]:
+            viewer2 = viewer_class()
+            if viewer.request.method == 'GET':
+                query_string = 'redirect=%s' % urlquote(viewer.context['full_path'])
+            else:
+                query_string = ''
+            viewer2.init_for_div(viewer, 'loginmenuitem', None, query_string)
+            html = viewer2.dispatch().content
+            result.append(html)
+        result.append("</ul>")
+        return '\n'.join(result)
+
+@register.tag
+def simple_login_menu(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return SimpleLoginMenu()
 
