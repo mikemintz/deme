@@ -299,8 +299,6 @@ $(document).ready(function() {
 		  new google.visualization.BarChart(document.getElementById('visualization{{ forloop.counter }}')).
 		      draw(data,
 		           {title:"",
-		           chxt:x , 
-		           chxr:0,0,{{ maxVal }},1 ,
 		            width:600, height:200,
 		            hAxis: {title: "Votes"}}
 		      );
