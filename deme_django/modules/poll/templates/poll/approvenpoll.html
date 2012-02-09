@@ -228,7 +228,7 @@ $(document).ready(function() {
 	    
 	{% if cur_agent_in_eligbles %}
 	</div>
-	<p>You also have the option of writing in your own statement that you think better captures your opinions. We ask that you still vote for each response above and then write your own statement here:<p>
+	<p><strong>You also have the option of writing in your own statement that you think better captures your opinions. We ask that you still vote for each response above and then write your own statement here:</strong><p>
 	<textarea  name="optional_writein_comment" type="text" cols="20" rows="2"></textarea><br />
 			<div style="margin-left:40%; margin-bottom:1em;">
 			    <input type="submit" value="Submit" /><br><br>
@@ -299,8 +299,9 @@ $(document).ready(function() {
 		  new google.visualization.BarChart(document.getElementById('visualization{{ forloop.counter }}')).
 		      draw(data,
 		           {title:"",
-		            width:600, height:200,
-		            hAxis: {title: "Votes"}}
+		            width:600, height:150,
+		            hAxis: { title: "Votes"}
+		        	}
 		      );
 		   {% endfor %}
 			}
@@ -314,16 +315,16 @@ $(document).ready(function() {
     	<h3>----------Results Page for Participants----------</h3>
     	<br>
     {% endif %}
-    <strong>Poll Results</strong> 
+    <p id="PollResultsTitle" style="font-size:2em; margin-bottom:1em; margin-top:.5em;"><strong>Poll Results</strong> </p>
 
     {% for proposition in propositions %}
 
-    <strong>{{proposition.body|safe}}</strong>
-    <div id="visualization{{ forloop.counter }}" style="width: 600px; height: 200px;"></div>
+    <p style="margin-bottom:0em;"><strong>{{proposition.body|safe}}</strong></p>
+    <div id="visualization{{ forloop.counter }}" style="width: 600px; height: 200px; margin-top:0em; margin-bottom 1em;"></div>
 
     {% endfor %}
 
-    <p><strong> Personal Statements </strong></p>
+    <div style="background-color:#b0c4de"><p><strong> Personal Statements </strong></p>
     {% if comments %}
     	<table>
 	    {% for comment in comments %}
@@ -336,9 +337,10 @@ $(document).ready(function() {
 	{% else %}
 		<p>There have been no personal statements made</p>
 	{% endif %}
+	</div>
 
 	{% if cur_agent_in_eligbles %}
-	<p>You also have the option of writing in your own statement that you think better captures your opinions. We ask that you still vote for each response above and then write your own statement here:<p>
+	<p><strong>Add another personal statement:</strong><p>
 	<form method="post" enctype="multipart/form-data" 
 	action="{% url item_url viewer=viewer_name,action="addawritein",noun=item.pk %}?redirect={{ full_path|urlencode }}">
 	<textarea  name="optional_writein_comment" type="text" cols="20" rows="2"></textarea><br />
