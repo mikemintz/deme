@@ -68,7 +68,7 @@ class CommunityForumCalculateComments(template.Node):
             result.append(u'<div style="position: relative;">')
             result.append(u'<div style="position: absolute; top: 10px; left: 0; width: 20px; border-top: 2px dotted #bbb;"></div>')
             if comment_info['subcomments']:
-                result.append(u'<div style="position: absolute; top: 1px; left: -10px; border: 2px solid #bbb; background: #fff; width: 15px; height: 15px; text-align: center; vertical-align: middle; font-size: 12px; font-weight: bold; cursor: pointer;" onclick="$(\'#comment_children%s\').toggle(); if ($(this).text() == \'+\') { $(this).text(\'-\') } else { $(this).text(\'+\') }">+</div>' % comment.pk)
+                result.append(u'<div style="position: absolute; top: 1px; left: -10px; border: 2px solid #bbb; background: #fff; width: 15px; height: 15px; text-align: center; vertical-align: middle; font-size: 12px; font-weight: bold;"></div>')
             result.append(u'</div>')
             result.append(u'<div class="comment_header" id="right_pane_comment_%d">' % comment.pk)
             result.append(u'<div style="position: relative;"><div style="position: absolute; top: 0; left: 0;">')
@@ -105,7 +105,7 @@ class CommunityForumCalculateComments(template.Node):
             if agentcan_helper(context, 'view Item.created_at', comment):
                 result.append(comment.created_at.strftime("Posted on %m/%d/%Y"))
             if agentcan_helper(context, 'view Item.creator', comment):
-                result.append('By %s' % get_item_link_tag(context, comment.creator))
+                result.append('By %s' % get_viewable_name(context, comment.creator))
             if comment.version_number > 1:
                 result.append(' (updated)')
             result.append(u'</div>')
@@ -139,7 +139,7 @@ class CommunityForumCalculateComments(template.Node):
             result.append(u'<div style="clear: both;"></div>')
             result.append(u'</div>')
             result.append(u'</div>')
-            result.append(u'<div id="comment_children%s" style="display: none;">' % comment.pk)
+            result.append(u'<div id="comment_children%s">' % comment.pk)
             for subcomment in comment_info['subcomments']:
                 add_comment_to_div(subcomment, parents + (comment_info,))
             result.append(u'</div>')
