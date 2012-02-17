@@ -719,7 +719,7 @@ class CalculateComments(template.Node):
         from cms.forms import AjaxModelChoiceField
         item = context['item']
         version_number = item.version_number
-        full_path = context['full_path']
+        full_path = context['original_full_path']
         try:
             default_from_contact_method_pk = EmailContactMethod.objects.filter(agent=context['cur_agent'])[:1].get().pk
         except ObjectDoesNotExist:
@@ -739,7 +739,7 @@ class CalculateComments(template.Node):
                     result.append(u'<div class="subcomments">')
             original_comment = parents[0]['comment'] if parents else comment
             result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
-            result.append(u'<input name="title" type="hidden" value="Re: %s" /><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> </p> ' % (comment.name))
+            result.append(u'<p>Comment Title: <input name="title" value="Re: %s" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> </p> ' % (comment.name))
             if context['cur_agent'].is_anonymous():
                 result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
             result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk)))

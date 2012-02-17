@@ -804,6 +804,7 @@ class ItemViewer(Viewer):
 
     def item_metadata_html(self):
         metadata_menu_name = self.request.GET['name']
+        self.context['original_full_path'] = self.request.GET['original_full_path']
         template_text = """{%% load item_tags %%}{%% metadata_%s %%}""" % metadata_menu_name
         template = django.template.Template(template_text)
         return HttpResponse(template.render(self.context))
