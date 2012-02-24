@@ -673,6 +673,119 @@ class ThresholdEApproveNDecisionViewer(DecisionViewer):
 #         self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
 #         template = loader.get_template('poll/writein.html')
 #         return HttpResponse(template.render(self.context))
+class ODPSurveyViewer(PollViewer):
+    accepted_item_type = ApproveNPoll
+    viewer_name = 'odpsurvey'
 
+    def item_show_html(self):
+        from cms.forms import AjaxModelChoiceField
+        self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
+        memberships = self.item.child_memberships
+        memberships = memberships.filter(active=True, item__active=True)
+        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
+        memberships = memberships.select_related('item')
+        if memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
+        self.context['responses'] = PropositionResponseApprove.objects.filter(poll=self.item)
+        eligible_agent_memberships = self.item.eligibles.child_memberships
+        eligible_agent_memberships = eligible_agent_memberships.filter(active=True, item__active=True)
+        eligible_agent_memberships = self.permission_cache.filter_items('view Membership.item', eligible_agent_memberships)
+        eligible_agent_memberships = eligible_agent_memberships.select_related('item')
+        if eligible_agent_memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in eligible_agent_memberships]))
+        responses = {}
+        for agent_membership in eligible_agent_memberships:
+            responses[agent_membership.item] = PropositionResponseApprove.objects.filter(poll=self.item).filter(participant=agent_membership.item)
+        self.context['responses'] = responses
+        self.context['decisions'] = Decision.objects.filter(poll=self.item)
+        self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
+        self.context['can_view_response_names'] = self.item.visibility != 'closed' or self.permission_cache.agent_can('access_proposition_responses', self.item)
+        self.context['can_view_response_names_and_values'] = self.item.visibility == 'responses visible' or self.permission_cache.agent_can('access_proposition_responses', self.item)
+        self.context['cur_agent_in_eligbles'] = self.item.agent_eligible_to_vote(self.cur_agent)
+        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision') 
+        cur_agent_has_voted = PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent)
+        self.context['cur_agent_has_voted'] = cur_agent_has_voted
+        vote_numbers = []
+        propositions = Proposition.objects.filter(memberships__in=memberships)
+        maxNumber = 0
+        for proposition in propositions:
+            agree = PropositionResponseApprove.objects.filter(poll=self.item, value='approve', proposition=proposition).count()
+            disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
+            no_vote = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
+            maxTemp = max([agree, disagree, no_vote])
+            if(maxTemp > maxNumber): maxNumber = maxTemp
+            vote_numbers.append({'agree': agree, 'disagree': disagree, 'no_vote': no_vote})
+        
+        self.context['maxVal'] = maxNumber
+        self.context['vote_numbers_list'] = vote_numbers
+        self.context['comments'] = TextComment.objects.filter(item=self.item)
+        template = loader.get_template('poll/odpSurvey.html')
+        return HttpResponse(template.render(self.context))
+
+    def item_respondtopropositions_html(self):
+        cur_agent_has_voted = PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent)
+        if cur_agent_has_voted: return self.render_error('Duplicate Voting', "You have already voted in this poll")
+        from cms.forms import AjaxModelChoiceField
+        self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
+        memberships = self.item.child_memberships
+        memberships = memberships.filter(active=True, item__active=True)
+        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
+        memberships = memberships.select_related('item')
+        propositions = Proposition.objects.filter(memberships__in=memberships)
+        proposition_responses = {}
+        for proposition in propositions:
+            proposition_responses[proposition.pk] = self.request.POST[str(proposition.pk)]
+        #verify that the cur agent is in the eligbles
+        self.verifyCurAgentIsEligible()
+        #verify that it is not before or after the deadline
+        
+        #verify that there are only n or less responses
+        #counter=0
+        #for response in propositionResponses:    
+        #    if propositionResponses[response]=="approve" or propositionResponses[response]=="disapprove":
+        #       counter=counter+1
+        #        if counter>self.item.n: #this needs to be changed for chooseN
+        #            return self.render_error('Too many votes', "Approve "+str(self.item.n)+" or fewer propositions.")
+                    
+        #delete old response (even if one doesn't exist)
+        #PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent).delete()
+        #make a new response
+        for response in proposition_responses:
+            newResponse = PropositionResponseApprove(poll=self.item, participant= self.cur_agent, proposition = Proposition.objects.get(pk=response), value = proposition_responses[response])
+            newResponse.save()
+        
+        self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
+        self.context['can_view_response_names_and_values'] = self.permission_cache.agent_can('access_proposition_responses', self.item)
+        self.context['cur_agent_in_eligbles'] = self.item.agent_eligible_to_vote(self.cur_agent)
+        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision') 
+        eligible_agent_memberships = self.item.eligibles.child_memberships
+        eligible_agent_memberships = eligible_agent_memberships.filter(active=True, item__active=True)
+        eligible_agent_memberships = self.permission_cache.filter_items('view Membership.item', eligible_agent_memberships)
+        eligible_agent_memberships = eligible_agent_memberships.select_related('item')
+        if eligible_agent_memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in eligible_agent_memberships]))
+        responses = {}
+        for agent_membership in eligible_agent_memberships:
+            responses[agent_membership.item] = PropositionResponseApprove.objects.filter(poll=self.item).filter(participant=agent_membership.item)
+        
+        vote_numbers = []
+        maxNumber = 0
+        for proposition in propositions:
+            disagreeStrong = PropositionResponseApprove.objects.filter(poll=self.item, value='no vote', proposition=proposition).count()
+            agree = PropositionResponseApprove.objects.filter(poll=self.item, value='approve', proposition=proposition).count()
+            agreeStrong = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
+            disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
+            maxTemp = max([agree, disagree, no_vote])
+            if(maxTemp > maxNumber): maxNumber = maxTemp
+            vote_numbers.append({'agree': agree, 'disagree': disagree, 'agreeStrong': agreeStrong, "disagreeStrong": disagreeStrong})
+
+        self.context['maxVal'] = maxNumber
+        self.context['vote_numbers_list'] = vote_numbers
+        self.context['comments'] = TextComment.objects.filter(item=self.item)
+        
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
 
 

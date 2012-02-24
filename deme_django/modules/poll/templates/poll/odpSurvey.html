@@ -183,13 +183,9 @@ $(document).ready(function() {
     }   =me
 </script>
 
-
-{% if item.question %}
-<div style="font-size: larger; margin-bottom: 1em;">
-<strong>Issue:</strong>
-{{ item.question }}
-</div>
-{% endif %}
+<p> Community Forum Deliberative Experience Survey </p>
+<p>Please answer the questions in this survey about your experience in the
+deliberative session.</p>
 
 {% if propositions %}
 <form method="post" enctype="multipart/form-data" 
@@ -212,10 +208,10 @@ $(document).ready(function() {
 			<div style="float: left">
 				
 				<select name="{{ proposition.pk }}">
-				<option value="no vote">Vote...</option>
-	        	<option value="not sure">Choice #1</option>
-				<option value="approve">Choice #2</option>
-				<option value="disapprove">Choice #3</option>
+				<option value="no vote">Disagree Strongly</option>
+	        	<option value="not sure">Disagree</option>
+				<option value="approve">Agree</option>
+				<option value="disapprove">Agree Strongly</option>
 				</select> 
 			</div>
 			{% endif %}
@@ -226,14 +222,6 @@ $(document).ready(function() {
 	    </div>
 	    
 	    
-	{% if cur_agent_in_eligbles %}
-	</div>
-	<p><strong>You also have the option of writing in your own statement that you think better captures your opinions. We ask that you still vote for each response above and then write your own statement here:</strong><p>
-	<textarea  name="optional_writein_comment" type="text" cols="20" rows="2"></textarea><br />
-			<div style="margin-left:40%; margin-bottom:1em;">
-			    <input type="submit" value="Submit" /><br><br>
-			</div>
-	{% endif %}
 </form>
 {% else %}
     No propositions in this poll
@@ -264,7 +252,14 @@ $(document).ready(function() {
 {% endif %}
 
 {% if cur_agent_has_voted or can_view_response_names_and_values %}
-
+	{% if can_view_response_names_and_values %}
+    	<br>
+    	<h3>----------Results Page for Participants----------</h3>
+    	<br>
+    {% endif %}
+<p>Thank you for your responses</p>
+{% endif %}
+{% if can_view_response_names_and_values %}
   <script type="text/javascript" src="http://www.google.com/jsapi"></script>
     <script type="text/javascript">
       google.load('visualization', '1', {packages: ['corechart']});
@@ -275,9 +270,9 @@ $(document).ready(function() {
 		  // Create and populate the data table.
 
 		  var data = new google.visualization.DataTable();
-		  var raw_data = [['vote', {{vote_numbers_tuple.agree}}, {{vote_numbers_tuple.disagree}}, {{vote_numbers_tuple.no_vote}}]]
+		  var raw_data = [['vote', {{vote_numbers_tuple.disagreeStrong}}, {{vote_numbers_tuple.disagree}}, {{vote_numbers_tuple.agree}}, {{vote_numbers_tuple.agreeStrong}}]]
 		  
-		  var responses = ['Choice #1', 'Choice #2', 'Choice #3'];
+		  var responses = ['Disagree Strongly', 'Disagree', 'Agree', 'Agree Strongly'];
 		                  
 		  data.addColumn('string', 'responses');
 		  for (var i = 0; i  < raw_data.length; ++i) {
@@ -310,11 +305,13 @@ $(document).ready(function() {
 
       google.setOnLoadCallback(drawVisualization);
     </script>
-    {% if can_view_response_names_and_values %}
-    	<br>
-    	<h3>----------Results Page for Participants----------</h3>
-    	<br>
-    {% endif %}
+    
+
+	
+
+    
+    <h3>-------Admin View--------</h3>
+
     <p id="PollResultsTitle" style="font-size:2em; margin-bottom:1em; margin-top:.5em;"><strong>Poll Results</strong> </p>
 
     {% for proposition in propositions %}
@@ -324,20 +321,6 @@ $(document).ready(function() {
 
     {% endfor %}
 
-    <div style="background-color:#b0c4de"><p><strong> Personal Statements </strong></p>
-    {% if comments %}
-    	<table>
-	    {% for comment in comments %}
-	    <tr>
-	    	<td>{{ comment.body|safe }}</td>
-	    	<td>Posted on {{ comment.created_at }}</td>
-	    </tr>
-	    {% endfor %}
-	    </table>
-	{% else %}
-		<p>There have been no personal statements made</p>
-	{% endif %}
-	</div>
 
 	{% if cur_agent_in_eligbles %}
 	<p><strong>Add another personal statement:</strong><p>
@@ -348,12 +331,6 @@ $(document).ready(function() {
 			    <input type="submit" value="Submit" /><br><br>
 			</div>
 	</form>
-	{% endif %}
-
-    {% if can_view_response_names_and_values %}
-    <h3>-------Admin View--------</h3>
-
-
 <p style="font-size:16px;">Responses:</p>
 {# make this a bulleted list with hidden divs #}
 <div class="container responses" id="Propcontainer" style="width: 60%; margin-left: 0;">
@@ -369,15 +346,18 @@ $(document).ready(function() {
                	<div id="responses{{ key.pk }}" style="display: none">
                 {% for response in value %}
                      <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
-                     {% viewable_name response.proposition %}</a>: 
-                     	{%ifequal response.value "not sure" %}
-	                     	Choice #1
+                     {% viewable_name response.proposition %}</a>:
+                     	{%ifequal response.value "no vote" %}
+	                     	Disagree Strongly
+	                     {% endifequal %}
+	                     {%ifequal response.value "not sure" %}
+	                     	Disagree
 	                     {% endifequal %}
 	                     {%ifequal response.value "approve" %}
-	                     	Choice #2
+	                     	Agree
 	                     {% endifequal %}
 	                     {%ifequal response.value "disapprove" %}
-	                     	Choice #3
+	                     	Agree Strongly
 	                     {% endifequal %}
 	                     </p>
                 {% endfor %}
@@ -422,14 +402,17 @@ $(document).ready(function() {
 	                     <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
 	                     {% viewable_name response.proposition %}</a>: 
 
+	                     {%ifequal response.value "no vote" %}
+	                     	Disagree Strongly
+	                     {% endifequal %}
 	                     {%ifequal response.value "not sure" %}
-	                     	Choice #1
+	                     	Disagree
 	                     {% endifequal %}
 	                     {%ifequal response.value approve %}
-	                     	Choice #2
+	                     	Agree
 	                     {% endifequal %}
 	                     {%ifequal response.value "disapprove" %}
-	                     	Choice #3
+	                     	Agree Strongly
 	                     {% endifequal %}
 	                     </p>
 	                {% endfor %}
