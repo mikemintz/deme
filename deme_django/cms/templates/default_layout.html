@@ -245,7 +245,7 @@
                     already_loaded_metadata_names[metadata_menu_name] = true;
                     $('.metadata_content_' + metadata_menu_name).html("Loading...");
                     jQuery.ajax({
-                        url: "{% url item_url viewer=viewer_name,noun=item.pk,action="metadata" %}?name=" + metadata_menu_name,
+                        url: "{% url item_url viewer=viewer_name,noun=item.pk,action="metadata" %}?name=" + metadata_menu_name + '&amp;original_full_path={{ full_path|escapejs }}',
                         success: function(data) {
                             $('.metadata_content_' + metadata_menu_name).html(data);
                         }

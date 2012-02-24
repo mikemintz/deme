@@ -15,12 +15,15 @@ Legitimate bugs
 * Diff functionality can break on complicated formatting changes of HTML documents
 + All links need to use default_viewer, not item_type.lower()
 + I get server error when I try to add this HTMLDocument to the Deme Team Blog on Deme.Stanford.edu: http://deme.stanford.edu/viewing/htmldocument/676 (Todd, 10/8/2011)
-+ When you deactivate a membership from a collection and try to reactivate it, the membership creator doesn't check to see if a deactivated membership exists and creates a new one. This leads to a server error. (Jimmy 8/19/11)
++ When you destroy a membership from a collection and try to reactivate it, the membership creator doesn't check to see if a deactivated membership exists and creates a new one. This leads to a server error. (Jimmy 8/19/11)
++ If you destroy an item that is a member of a collection, it gives an error in viewing the collection because the membership of the destroyed item in the collection is not destroyed. Memberships involving a destroyed item should be deactivated or destroyed. (Todd, 2/15/2012)
 + Modify privacy settings ability doesn't work on symsys site (boxes just grayed out). (Mike 2011-09-28)
 + Subscription interface is buggy. Logged in as Todd Davies, I was able to subscribe Tim Luo to the Advising Fellows folio on Symsys. He showed up in the dropdown after I typed his first name, and the subscription went through. Typing Clayton Mellina's name (or just "Clayton"), I get no drop down options, and if I type "Clayton Mellina's primary email contact method" into the subscription window, logged in as Todd Davies, I get an error that says I have to choose one of the options in the dropdown menu, even though that is a valid item name and EmailContactMethod. When I try to delete or edit the subscription between Tim Luo and the Advising Fellows folio, I don't get an edit or deactivate button, even though I created the subscription. I get these buttons if I log in as Admin, and can then deactivate the subscription. If I try to destroy it, I get a server error. If I then click on the subscription item in Recent Changes, I also get a server error. (Todd, 8/1/2011)
 * Even if you don't have permission to edit the name, the field still shows up in the edit form (but ultimately you can't change it).
 + Recently viewed should not include pages with method!=GET
 * EmailContactMethod.email should be unique
++ Clicking on an Item in a search result does not bring up the default viewer that has been defined for the Item, but rather for the item type
++ Creator of a Membership does not get permission to deactivate/destroy that Membership. I think this is a bug. (Todd 2/18/2012)
 
 Interface
 ---------

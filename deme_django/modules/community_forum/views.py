@@ -12,7 +12,8 @@ class CommunityForumParticipantViewer(PersonViewer):
         participant = self.cur_agent.downcast()
         if isinstance(participant, CommunityForumParticipant):
             webex_id = participant.webex_id
-            url = 'https://air-min.webex.com/p.php?AT=LI&WID=%s' % webex_id
+            #url = 'https://air-min.webex.com/p.php?AT=LI&WID=%s' % webex_id
+            url = webex_id
             return HttpResponseRedirect(url)
         else:
             return self.render_error('Not a participant', "You must be a CommunityForumParticipant to access this")

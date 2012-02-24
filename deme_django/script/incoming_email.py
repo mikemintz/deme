@@ -45,7 +45,7 @@ def handle_email(msg, email_username):
         body = msg.get_payload()
     from_email = get_from_email(msg)
     try:
-        email_contact_method = EmailContactMethod.objects.filter(email=from_email)[:1].get()
+        email_contact_method = EmailContactMethod.objects.filter(email__iexact=from_email)[:1].get()
     except ObjectDoesNotExist:
         raise UserException('Error: Your comment could not be created because there is no agent with email address %s' % from_email)
     try:
