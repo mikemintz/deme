@@ -220,7 +220,11 @@ deliberative session.</p>
 		<br>
 	    {% endfor %}
 	    </div>
-	    
+	    {%if cur_agent_in_eligibles %}
+	    <div style="margin-left:40%; margin-bottom:1em;">
+			    <input type="submit" value="Submit" /><br><br>
+			</div>
+		{% endif %}
 	    
 </form>
 {% else %}
@@ -322,15 +326,6 @@ deliberative session.</p>
     {% endfor %}
 
 
-	{% if cur_agent_in_eligbles %}
-	<p><strong>Add another personal statement:</strong><p>
-	<form method="post" enctype="multipart/form-data" 
-	action="{% url item_url viewer=viewer_name,action="addawritein",noun=item.pk %}?redirect={{ full_path|urlencode }}">
-	<textarea  name="optional_writein_comment" type="text" cols="20" rows="2"></textarea><br />
-			<div style="margin-left:40%; margin-bottom:1em;">
-			    <input type="submit" value="Submit" /><br><br>
-			</div>
-	</form>
 <p style="font-size:16px;">Responses:</p>
 {# make this a bulleted list with hidden divs #}
 <div class="container responses" id="Propcontainer" style="width: 60%; margin-left: 0;">
@@ -434,15 +429,6 @@ deliberative session.</p>
 
 
 
-
-
-
-
-
-
-
-
-{% endif %}
 
 
 

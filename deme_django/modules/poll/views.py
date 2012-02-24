@@ -710,12 +710,11 @@ class ODPSurveyViewer(PollViewer):
         propositions = Proposition.objects.filter(memberships__in=memberships)
         maxNumber = 0
         for proposition in propositions:
+            disagreeStrong = PropositionResponseApprove.objects.filter(poll=self.item, value='no vote', proposition=proposition).count()
             agree = PropositionResponseApprove.objects.filter(poll=self.item, value='approve', proposition=proposition).count()
-            disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
-            no_vote = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
-            maxTemp = max([agree, disagree, no_vote])
-            if(maxTemp > maxNumber): maxNumber = maxTemp
-            vote_numbers.append({'agree': agree, 'disagree': disagree, 'no_vote': no_vote})
+            agreeStrong = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
+            disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
+            vote_numbers.append({'agree': agree, 'disagree': disagree, 'agreeStrong': agreeStrong, "disagreeStrong": disagreeStrong})
         
         self.context['maxVal'] = maxNumber
         self.context['vote_numbers_list'] = vote_numbers
@@ -777,11 +776,8 @@ class ODPSurveyViewer(PollViewer):
             agree = PropositionResponseApprove.objects.filter(poll=self.item, value='approve', proposition=proposition).count()
             agreeStrong = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
             disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
-            maxTemp = max([agree, disagree, no_vote])
-            if(maxTemp > maxNumber): maxNumber = maxTemp
             vote_numbers.append({'agree': agree, 'disagree': disagree, 'agreeStrong': agreeStrong, "disagreeStrong": disagreeStrong})
 
-        self.context['maxVal'] = maxNumber
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
         
