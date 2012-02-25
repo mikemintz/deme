@@ -54,7 +54,7 @@ class AjaxModelChoiceWidget(forms.Widget):
         $(function() {
             var search_input = $("#%(id)s")
             var hidden_input = $(search_input).prev();
-            var cache = {}
+            var cache = {};
             var last_xhr;
             search_input.autocomplete({
                 minLength: 0,
