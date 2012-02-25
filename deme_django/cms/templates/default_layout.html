@@ -214,10 +214,19 @@
 <div style="position: fixed; top: 0px; left: 215px; right: 10px; height: 50px; padding: 10px; background: #fff; border: thin ridge gray; -moz-box-shadow: 5px 3px 3px #ccc; -webkit-box-shadow: 5px 3px 3px #ccc;box-shadow: px 3px 3px #ccc;">
 
     <div style="float: right;">
-        <div style="float: left;">
+        <div style="float: left;" id="actions_wrapper">
             <span style="text-size: larger; font-weight: bold;">Actions:</span>
             <br />
+            <div id="actions_menu_wrapper">
             {% actionsmenu %}
+            </div>
+            <script type="text/javascript">
+            $(function(){
+                if ($.trim($('#actions_menu_wrapper').text()) == '') {
+                    $('#actions_wrapper').hide();
+                }
+            });
+            </script>
         </div>
 
         {% if item %}

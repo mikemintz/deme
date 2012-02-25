@@ -376,6 +376,34 @@ class ActionsMenu(template.Node):
             add_authentication_method_url = reverse('item_type_url', kwargs={'viewer': 'authenticationmethod', 'action': 'new'}) + '?populate_agent=%s' % item.pk
             add_contact_method_url = reverse('item_type_url', kwargs={'viewer': 'contactmethod', 'action': 'new'}) + '?populate_agent=%s' % item.pk
 
+        list_items = []
+        if item:
+            if agentcan_global_helper(context, 'create Membership'):
+                list_items.append("""<li><a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add this item to collection</a></li>""" % (item.pk))
+            if isinstance(item, Agent):
+                if agentcan_helper(context, 'add_authentication_method', item):
+                    list_items.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add authentication method</a></li>' % add_authentication_method_url)
+                if agentcan_helper(context, 'add_contact_method', item):
+                    list_items.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a></li>' % add_contact_method_url)
+            if not context['cur_agent'].is_anonymous():
+                list_items.append("""<li><a href="#" onclick="openCommentDialog('subscribe_dialog'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscribe</a></li>""")
+            if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
+                list_items.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-pencil"></span>Edit</a></li>' % edit_url)
+            if agentcan_global_helper(context, 'create %s' % item.item_type_string):
+                list_items.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-copy"></span>Copy</a></li>' % copy_url)
+            if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
+                if item.active:
+                    list_items.append("""<li><a href="#" onclick="$('#deactivate_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Deactivate"><span class="ui-icon ui-icon-trash"></span>Deactivate</a></li>""")
+                else:
+                    list_items.append("""<li><a href="#" onclick="$('#reactivate_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Reactivate"><span class="ui-icon ui-icon-trash"></span>Reactivate</a></li>""")
+                    list_items.append("""<li><a href="#" onclick="$('#destroy_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Destroy"><span class="ui-icon ui-icon-trash"></span>Destroy</a></li>""")
+        if agentcan_global_helper(context, 'create', wildcard_suffix=True):
+            list_items.append("""<li><a href="#" onclick="toggleNewItemMenu('HiddenNewItemMenu'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Create"><span class="ui-icon ui-icon-circle-plus"></span>Create</a></li>""")
+
+        if not list_items:
+            return ''
+
+        if item:
             from cms.forms import AjaxModelChoiceField
             result.append("""
                 <div id="subscribe_dialog" style="display: none;" title="Subscribe to '%s'">
@@ -483,27 +511,7 @@ class ActionsMenu(template.Node):
         <div style="display: none;">
             <ul style="font-size: 85%;">
         """)
-        if item:
-            if agentcan_global_helper(context, 'create Membership'):
-                result.append("""<li><a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add this item to collection</a></li>""" % (item.pk))
-            if isinstance(item, Agent):
-                if agentcan_helper(context, 'add_authentication_method', item):
-                    result.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add authentication method</a></li>' % add_authentication_method_url)
-                if agentcan_helper(context, 'add_contact_method', item):
-                    result.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a></li>' % add_contact_method_url)
-            if not context['cur_agent'].is_anonymous():
-                result.append("""<li><a href="#" onclick="openCommentDialog('subscribe_dialog'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscribe</a></li>""")
-            if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
-                result.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-pencil"></span>Edit</a></li>' % edit_url)
-            if agentcan_global_helper(context, 'create %s' % item.item_type_string):
-                result.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-copy"></span>Copy</a></li>' % copy_url)
-            if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
-                if item.active:
-                    result.append("""<li><a href="#" onclick="$('#deactivate_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Deactivate"><span class="ui-icon ui-icon-trash"></span>Deactivate</a></li>""")
-                else:
-                    result.append("""<li><a href="#" onclick="$('#reactivate_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Reactivate"><span class="ui-icon ui-icon-trash"></span>Reactivate</a></li>""")
-                    result.append("""<li><a href="#" onclick="$('#destroy_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Destroy"><span class="ui-icon ui-icon-trash"></span>Destroy</a></li>""")
-        result.append("""<li><a href="#" onclick="toggleNewItemMenu('HiddenNewItemMenu'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Destroy"><span class="ui-icon ui-icon-circle-plus"></span>Create</a></li>""")
+        result.extend(list_items)
         result.append("""
             </ul>
         </div>
