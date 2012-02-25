@@ -215,7 +215,7 @@
 
     <div style="float: right;">
         <div style="float: left;">
-            Actions:
+            <span style="text-size: larger; font-weight: bold;">Actions:</span>
             <br />
             {% actionsmenu %}
         </div>
@@ -259,9 +259,9 @@
         });
         </script>
         <div style="float: left;">
-            Metadata:
+            <span style="text-size: larger; font-weight: bold;">Metadata:</span>
             <br />
-            <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="metadata_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span><span class="metadata_menu_name">Select...</span></a>
+            <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="metadata_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span><span class="metadata_menu_name">&nbsp;</span></a>
             <div style="display: none;">
                 <ul style="font-size: 85%;">
                     <li><a href="#" onclick="return false;" id="metadata_menu_item_details">Item details</a></li>
@@ -279,7 +279,7 @@
         {% endif %}
 
         <div style="float: left;">
-            Account:
+            <span style="text-size: larger; font-weight: bold;">Account:</span>
             <br />
             {% login_menu %}
         </div>
@@ -350,7 +350,7 @@
         $('#fixed_right_pane').hide();
         $('.site_inner')[0].style.width = new_left_width_text;
         $('#fixed_right_pane')[0].style.width = "0%";
-        $('#metadata_menu_link .metadata_menu_name').text('Select...');
+        $('#metadata_menu_link .metadata_menu_name').('&nbsp;');
     }
 
     function openCommentDialog(name)
