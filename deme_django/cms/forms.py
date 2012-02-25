@@ -50,23 +50,6 @@ class AjaxModelChoiceWidget(forms.Widget):
         result = """
         <input type="hidden" name="%(name)s" value="%(value)s" />
         <input id="%(id)s" name="%(name)s_search" value="%(initial_search)s" />
-        <style>
-        .ui-autocomplete {
-            max-height: 200px;
-            overflow-y: auto;
-            /* prevent horizontal scrollbar */
-            overflow-x: hidden;
-            /* add padding to account for vertical scrollbar */
-            padding-right: 20px;
-        }
-        /* IE 6 doesn't support max-height
-         * we use height instead, but this forces the menu to always be this tall
-         */
-        * html .ui-autocomplete {
-            height: 200px;
-        }
-        .ui-autocomplete-loading { background: white url('%(loading_gif)s') right center no-repeat; }
-        </style>
         <script type="text/javascript">
         $(function() {
             var search_input = $("#%(id)s")
@@ -98,7 +81,7 @@ class AjaxModelChoiceWidget(forms.Widget):
             });
         });
         </script>
-        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search, 'loading_gif': urljoin(settings.MEDIA_URL, "ui-anim_basic_16x16.gif")}
+        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search}
         return result
 
 
