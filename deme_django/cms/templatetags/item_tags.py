@@ -507,7 +507,7 @@ class ActionsMenu(template.Node):
             """ % destroy_url)
 
         result.append("""
-        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="actions_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>&nbsp;</a>
+        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="actions_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>------</a>
         <div style="display: none;">
             <ul style="font-size: 85%;">
         """)
