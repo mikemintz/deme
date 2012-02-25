@@ -517,7 +517,7 @@ class ActionsMenu(template.Node):
         </div>
         <script type="text/javascript">
         $(function(){
-            $('#actions_menu_link').menu({
+            $('#actions_menu_link').fgmenu({
                 content: $('#actions_menu_link').next().html(),
                 showSpeed: 50,
                 fixedPosition: true,
@@ -1768,7 +1768,7 @@ class NewItemMenu(template.Node):
         result.append("""
         <script type="text/javascript">
         $(function(){
-            $('#new_item_menu_link').menu({
+            $('#new_item_menu_link').fgmenu({
                 content: $('#new_item_menu_link').next().html(),
                 width: 240,
                 maxHeight: 445,
@@ -1904,7 +1904,7 @@ class LoginMenu(template.Node):
                 menuContent += '<li>' + $(val).html() + '</li>';
             });
             menuContent += '</ul>'
-            $('#login_menu_link').menu({
+            $('#login_menu_link').fgmenu({
                 content: menuContent,
                 showSpeed: 50,
                 fixedPosition: true,
