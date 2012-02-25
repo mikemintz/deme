@@ -7,6 +7,8 @@ from django.forms.fields import CharField, MultiValueField
 from django.forms.widgets import TextInput, MultiWidget, HiddenInput
 import hashlib
 import random
+from urlparse import urljoin
+from django.conf import settings
 
 class JustTextNoInputWidget(forms.Widget):
     """A form widget that just displays text without any sort of input."""
@@ -47,51 +49,56 @@ class AjaxModelChoiceWidget(forms.Widget):
         ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'}) + '?' + ajax_query_string
         result = """
         <input type="hidden" name="%(name)s" value="%(value)s" />
-        <input class="ajax_choice_field" type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" autocomplete="off" />
-        <div class="ajax_choice_results" style="display: none;"></div>
+        <input id="%(id)s" name="%(name)s_search" value="%(initial_search)s" />
+        <style>
+        .ui-autocomplete {
+            max-height: 200px;
+            overflow-y: auto;
+            /* prevent horizontal scrollbar */
+            overflow-x: hidden;
+            /* add padding to account for vertical scrollbar */
+            padding-right: 20px;
+        }
+        /* IE 6 doesn't support max-height
+         * we use height instead, but this forces the menu to always be this tall
+         */
+        * html .ui-autocomplete {
+            height: 200px;
+        }
+        .ui-autocomplete-loading { background: white url('%(loading_gif)s') right center no-repeat; }
+        </style>
         <script type="text/javascript">
-        fn = function(){
-          var search_onchange = function(e) {
-            if (e.value === e.last_value) return;
-            e.last_value = e.value;
-            var hidden_input = $(e).prev()[0];
-            var results_div = $(e).next()[0];
-            if (e.value == '') {
-              $(results_div.childNodes).remove();
-              $(results_div).hide();
-              hidden_input.value = '';
-              return;
-            }
-            jQuery.getJSON('%(ajax_url)s', {q:e.value}, function(json) {
-              json.splice(0, 0, ['[NULL]', '']);
-              $(results_div.childNodes).remove();
-              $.each(json, function(i, datum){
-                var option = document.createElement('div');
-                option.className = 'ajax_choice_option';
-                option.innerHTML = datum[0];
-                $(option).bind('click', function(event){
-                  window.clearInterval(e.ajax_timer);
-                  e.value = datum[0];
-                  e.last_value = datum[0];
-                  e.ajax_timer = window.setInterval(function(){search_onchange(e)}, 250); //TODO use bind on search_onchange?
-                  hidden_input.value = datum[1];
-                  $(results_div.childNodes).remove();
-                  $(results_div).hide();
-                });
-                x = results_div;
-                results_div.appendChild(option);
-              });
-              $(results_div).show();
+        $(function() {
+            var search_input = $("#%(id)s")
+            var hidden_input = $(search_input).prev();
+            var cache = {}
+            var last_xhr;
+            search_input.autocomplete({
+                minLength: 0,
+                select: function(event, ui) {
+                    search_input[0].value = ui.item.value;
+                    hidden_input[0].value = ui.item.id;
+                    return false;
+                },
+                source: function(request, response) {
+                    var term = request.term;
+                    if (term in cache) {
+                        response(cache[term]);
+                        return;
+                    }
+                    last_xhr = $.getJSON('%(ajax_url)s', {q:term}, function(data, status, xhr) {
+                        var normalized_data = $.map(data, function(x){ return {value: x[0], id: x[1]} });
+                        normalized_data.splice(0, 0, {value: "[None]", id: ""});
+                        cache[term] = normalized_data;
+                        if (xhr !== last_xhr) {
+                            response(normalized_data);
+                        }
+                    });
+                },
             });
-          };
-          $('.ajax_choice_field:not(.ajax_choice_field_activated)').addClass('ajax_choice_field_activated').each(function(i, input){
-            input.last_value = input.value;
-            input.ajax_timer = window.setInterval(function(){search_onchange(input)}, 250); //TODO use bind on search_onchange?
-          });
-        };
-        fn();
+        });
         </script>
-        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search}
+        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search, 'loading_gif': urljoin(settings.MEDIA_URL, "ui-anim_basic_16x16.gif")}
         return result
 
 
