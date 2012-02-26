@@ -160,20 +160,6 @@ class ViewerMetaClass(type):
         return result
 
 
-def get_viewer_class_by_name(viewer_name):
-    """
-    Return the viewer class with the given name. If no such class exists,
-    return None.
-    """
-    result = ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
-    return result
-
-
-def all_viewer_classes():
-    "Return a list of all viewer classes defined."
-    return ViewerMetaClass.viewer_name_dict.values()
-
-
 ###############################################################################
 # The Viewer class
 ###############################################################################
@@ -740,7 +726,34 @@ class Viewer(object):
         return self.context['layout%s' % django_template_document.pk]
 
 
-# Import viewers from modules so they get registered with ViewerMetaClass
-for module_name in settings.MODULE_NAMES:
-    __import__('modules.%s.views' % module_name)
+###############################################################################
+# Viewer importing stuff (must come last)
+###############################################################################
+
+_all_views_imported = False
+def import_all_views():
+    """
+    Import viewers from modules so they get registered with ViewerMetaClass
+    """
+    global _all_views_imported
+    if not _all_views_imported:
+        _all_views_imported = True
+        import cms.views
+        for module_name in settings.MODULE_NAMES:
+            __import__('modules.%s.views' % module_name)
+
+def get_viewer_class_by_name(viewer_name):
+    """
+    Return the viewer class with the given name. If no such class exists,
+    return None.
+    """
+    import_all_views()
+    result = ViewerMetaClass.viewer_name_dict.get(viewer_name, None)
+    return result
+
+
+def all_viewer_classes():
+    "Return a list of all viewer classes defined."
+    import_all_views()
+    return ViewerMetaClass.viewer_name_dict.values()
 
