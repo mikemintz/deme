@@ -739,3 +739,8 @@ class Viewer(object):
             cur_node = next_node
         return self.context['layout%s' % django_template_document.pk]
 
+
+# Import viewers from modules so they get registered with ViewerMetaClass
+for module_name in settings.MODULE_NAMES:
+    __import__('modules.%s.views' % module_name)
+

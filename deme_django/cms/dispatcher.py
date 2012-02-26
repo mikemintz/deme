@@ -12,10 +12,6 @@ from cms.views import ItemViewer
 from cms.base_viewer import get_viewer_class_by_name, get_current_site, all_viewer_classes
 from django.conf import settings
 
-# Import viewers from modules so they get registered with ViewerMetaClass
-for module_name in settings.MODULE_NAMES:
-    __import__('modules.%s.views' % module_name)
-
 # Check that all default viewers have been defined properly
 for item_type in all_item_types():
     viewer_name = item_type.__name__.lower()
