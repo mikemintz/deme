@@ -283,7 +283,7 @@ class Item(models.Model):
         from cms.base_viewer import get_viewer_class_by_name
         viewer_name = self.default_viewer
         viewer = get_viewer_class_by_name(viewer_name)
-        if not (viewer and isinstance(self, viewer.accepted_item_type)):
+        if not (viewer and issubclass(self.actual_item_type(), viewer.accepted_item_type)):
             viewer_name = self.item_type_string.lower()
         return viewer_name
 
