@@ -49,13 +49,12 @@ def item_view(request, *args, **kwargs):
         viewer.init_for_http(request, action, noun, format)
         response = viewer.dispatch()
         if response is None:
-            return viewer.render_error("Action Not Found", "We could not find any action matching your URL.", HttpResponseNotFound)
-        else:
-            return response
+            response = viewer.render_error("Action Not Found", "We could not find any action matching your URL.", HttpResponseNotFound)
     else:
         viewer = ItemViewer()
         viewer.init_for_http(request, action, noun, format)
-        return viewer.render_error("Viewer Not Found", "We could not find any viewer matching your URL.", HttpResponseNotFound)
+        response = viewer.render_error("Viewer Not Found", "We could not find any viewer matching your URL.", HttpResponseNotFound)
+    return response
 
 
 def alias_view(request, *args, **kwargs):
