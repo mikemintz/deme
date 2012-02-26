@@ -22,7 +22,6 @@ Legitimate bugs
 * Even if you don't have permission to edit the name, the field still shows up in the edit form (but ultimately you can't change it).
 + Recently viewed should not include pages with method!=GET
 * EmailContactMethod.email should be unique
-+ Clicking on an Item in a search result does not bring up the default viewer that has been defined for the Item, but rather for the item type
 + Creator of a Membership does not get permission to deactivate/destroy that Membership. I think this is a bug. (Todd 2/18/2012)
 
 Interface
