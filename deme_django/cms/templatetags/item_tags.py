@@ -416,7 +416,7 @@ class ActionsMenu(template.Node):
                         <input type="submit" value="Submit" />
                     </form>
                 </div>
-                """ % (item_name, reverse('item_type_url', kwargs={'viewer':'subscription', 'action':'dialogcreate'}), context['full_path'], item.pk, AjaxModelChoiceField(EmailContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=['add_subscription']).widget.render('email', None, {'id':'memberajaxfield'}), subscribe_url))
+                """ % (item_name, reverse('item_type_url', kwargs={'viewer':'subscription', 'action':'dialogcreate'}), context['full_path'], item.pk, AjaxModelChoiceField(EmailContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=['add_subscription']).widget.render('email', None, {'id':'subscribe_email_field'}), subscribe_url))
 
             result.append( """
             <div style="display: none;" id="additemtocollection%(item.pk)s"> 
@@ -436,7 +436,7 @@ class ActionsMenu(template.Node):
                 'item.pk': item.pk,
                 'full_path': context['full_path'],
                 'create_url': reverse('item_type_url', kwargs={'viewer':'membership', 'action':'itemmembercreate'}),
-                'ajax_field': AjaxModelChoiceField(Collection.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('collection', None, {'id':'memberajaxfield'}),
+                'ajax_field': AjaxModelChoiceField(Collection.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('collection', None, {'id':'add_item_to_collection_collection_field'}),
              })
             
             result.append("""
@@ -710,7 +710,7 @@ class NewMemberDialog(template.Node):
                 'item.pk': item.pk,
                 'full_path': full_path,
                 'create_url': reverse('item_type_url', kwargs={'viewer':'membership', 'action':'collectioncreate'}),
-                'ajax_field': AjaxModelChoiceField(Item.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('item', None, {'id':'memberajaxfield'}),
+                'ajax_field': AjaxModelChoiceField(Item.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('item', None, {'id':'add_item_to_collection_item_field'}),
              })
 
         return mark_safe('\n'.join(result))
