@@ -78,6 +78,7 @@ Interface
 * The new edit button does not work and says there is a problem with lock refresh. (Jimmy 10/27/11)
 * When I uploaded a portion of the TODO file onto demesandbox it wrapped a line that went too long, but on my local installation it did not. (Jimmy 10/27/11)
 * Chat can send empty messages (Jimmy 11/14/11)
+* Action drop-down menu should display action when in progress (e.g. when in Edit view, Action menu should display "Edit" (Todd 2/27/2012)
 
 Documentation
 -------------
