@@ -184,7 +184,7 @@ class SimpleLoginMenu(template.Node):
                 menuContent += '<li>' + $(val).html() + '</li>';
             });
             menuContent += '</ul>'
-            $('#login_menu_link').menu({
+            $('#login_menu_link').fgmenu({
                 content: menuContent,
                 showSpeed: 50,
                 fixedPosition: true,
