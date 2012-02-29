@@ -5,6 +5,7 @@ from django import template
 from django.db.models import Q
 from django.db import models
 from cms.models import *
+from cms.forms import AjaxModelChoiceField
 from cms.permissions import all_possible_item_abilities, all_possible_item_and_global_abilities
 from cms.base_viewer import all_viewer_classes
 from django.utils.http import urlquote
@@ -404,7 +405,6 @@ class ActionsMenu(template.Node):
             return ''
 
         if item:
-            from cms.forms import AjaxModelChoiceField
             result.append("""
                 <div id="subscribe_dialog" style="display: none;" title="Subscribe to '%s'">
                     <div style="font-size: 9pt;">Subscriptions send emails to the email contact method specified below for every new notification on this item</div>
@@ -687,7 +687,6 @@ class NewMemberDialog(template.Node):
         return "<NewMemberDialogNode>"
 
     def render(self, context):
-        from cms.forms import AjaxModelChoiceField
         item = context['item']
         full_path = context['full_path']
         result = []
@@ -724,7 +723,6 @@ class CalculateComments(template.Node):
 
     def render(self, context):
         from cms.forms import CaptchaField 
-        from cms.forms import AjaxModelChoiceField
         item = context['item']
         version_number = item.version_number
         full_path = context['original_full_path']
@@ -750,7 +748,7 @@ class CalculateComments(template.Node):
             result.append(u'<p>Comment Title: <input name="title" value="Re: %s" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> </p> ' % (comment.name))
             if context['cur_agent'].is_anonymous():
                 result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
-            result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk)))
+            result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'comment_reply_from_contact_method_field'})))
             result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (comment.pk, comment.version_number))
             result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (comment.pk))
             result.append(u'</form></div>')
@@ -1430,9 +1428,8 @@ class PermissionEditor(template.Node):
         existing_permission_data.append(datum)
         existing_permission_data.sort(key=lambda x: (x['permission_type'], x['name']))
 
-        from cms.forms import AjaxModelChoiceField
-        new_agent_select_widget = AjaxModelChoiceField(Agent.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None)
-        new_collection_select_widget = AjaxModelChoiceField(Collection.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None)
+        new_agent_select_widget = AjaxModelChoiceField(Agent.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None, {'id':'permission_new_agent'})
+        new_collection_select_widget = AjaxModelChoiceField(Collection.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None, {'id':'permission_new_collection'})
         #TODO the widgets get centered-alignment in the dialog, which looks bad
 
         result = """
@@ -1608,8 +1605,8 @@ class PermissionEditor(template.Node):
         'new_img_url': icon_url('new', 16),
         'agent_img_url': icon_url('Agent', 16),
         'collection_img_url': icon_url('Collection', 16),
-        'new_agent_select_widget': AjaxModelChoiceField(Agent.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None),
-        'new_collection_select_widget': AjaxModelChoiceField(Collection.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None),
+        'new_agent_select_widget': new_agent_select_widget,
+        'new_collection_select_widget': new_collection_select_widget,
         'permissions_help_url': reverse('item_type_url', kwargs={'viewer': 'item', 'action':'permissionshelp'}),
         }
         return result
