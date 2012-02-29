@@ -1,6 +1,7 @@
 from django.template import Context, loader
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpRequest, HttpResponseRedirect
+from django.core.servers.basehttp import FileWrapper
 from cms.views import HtmlDocumentViewer, CollectionViewer, ItemViewer
 from cms.models import *
 from django.db.models import Q
@@ -10,6 +11,8 @@ from datetime import date, datetime, timedelta, tzinfo
 import calendar
 import time
 import math
+import csv
+import cStringIO as StringIO
 
 
 class PollViewer(CollectionViewer):
@@ -783,5 +786,47 @@ class ODPSurveyViewer(PollViewer):
         
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
+
+    def item_createcsv_html(self):
+        response = HttpResponse(mimetype='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=SurveyResults.csv'
+        
+        eligible_agent_memberships = self.item.eligibles.child_memberships
+        eligible_agent_memberships = eligible_agent_memberships.filter(active=True, item__active=True)
+        eligible_agent_memberships = self.permission_cache.filter_items('view Membership.item', eligible_agent_memberships)
+        eligible_agent_memberships = eligible_agent_memberships.select_related('item')
+        if eligible_agent_memberships:
+            self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in eligible_agent_memberships]))
+        responses = {}
+        for agent_membership in eligible_agent_memberships:
+            responses[agent_membership.item] = PropositionResponseApprove.objects.filter(poll=self.item).filter(participant=agent_membership.item)
+        memberships = self.item.child_memberships
+        memberships = memberships.filter(active=True, item__active=True)
+        memberships = self.permission_cache.filter_items('view Membership.item', memberships)
+        memberships = memberships.select_related('item')
+        propositions = Proposition.objects.filter(memberships__in=memberships)
+
+        propList = ['Propositions']
+        for proposition in propositions:
+            propList.append(proposition.name)
+
+        writer = csv.writer(response)
+        writer.writerow(propList)
+
+        for key,value in responses.items():
+            chunk = []
+            chunk.append(key.name)
+            for resp in value:
+                if resp.value=="no vote": answer = "Disagree Strongly"
+                if resp.value=="not sure": answer = "Disagree"
+                if resp.value=="approve": answer = "Agree"
+                if resp.value=="disapprove": answer = "Agree Strongly"
+                chunk.append(answer)
+            print chunk
+            writer.writerow(chunk)
+
+        
+    
+        return response
 
 

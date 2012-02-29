@@ -325,6 +325,11 @@ deliberative session.</p>
 
     {% endfor %}
 
+    <form method="post" enctype="multipart/form-data" 
+	action="{% url item_url viewer=viewer_name,action="createcsv",noun=item.pk %}?redirect={{ full_path|urlencode }}">
+		<input type="submit" value="Create CSV Document" />
+	</form>
+
 
 <p style="font-size:16px;">Responses:</p>
 {# make this a bulleted list with hidden divs #}
