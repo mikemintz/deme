@@ -82,6 +82,7 @@ class AjaxModelChoiceWidget(forms.Widget):
         });
         </script>
         """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search}
+        #TODO fail in more obvious way if attrs['id'] is not set
         return result
 
 

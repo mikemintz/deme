@@ -967,7 +967,6 @@ class CollectionViewer(ItemViewer):
     viewer_name = 'collection'
 
     def item_show_html(self):
-        from cms.forms import AjaxModelChoiceField
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
         self.context['cur_agent_in_collection'] = self.item.child_memberships.filter(active=True, item=self.cur_agent).exists()
