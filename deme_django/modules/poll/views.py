@@ -705,7 +705,7 @@ class ODPSurveyViewer(PollViewer):
         self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
         self.context['can_view_response_names'] = self.item.visibility != 'closed' or self.permission_cache.agent_can('access_proposition_responses', self.item)
         self.context['can_view_response_names_and_values'] = self.item.visibility == 'responses visible' or self.permission_cache.agent_can('access_proposition_responses', self.item)
-        self.context['cur_agent_in_eligbles'] = self.item.agent_eligible_to_vote(self.cur_agent)
+        self.context['cur_agent_in_eligibles'] = self.item.agent_eligible_to_vote(self.cur_agent)
         self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision') 
         cur_agent_has_voted = PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent)
         self.context['cur_agent_has_voted'] = cur_agent_has_voted
