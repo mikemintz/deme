@@ -1,0 +1,14 @@
+{% extends layout %}
+{% load item_tags %}
+{% load air_extras %}
+{% block content %}
+
+<div><a href="{% url item_url viewer="discussionboard",action="show",noun=item.pk %}" style="text-decoration: underline;">Back to discussion board</a></div>
+
+<div style="font-size: 200%; font-weight: bold;">{{ top_level_comment.name }}</div>
+
+{% communityforum_calculatecomments %}
+
+{% endblock content %}
+
+

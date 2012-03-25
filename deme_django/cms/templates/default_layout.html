@@ -207,11 +207,8 @@
     <div style="clear: both;"></div>
     <div class="metadata_content metadata_content_item_details" style="display: none;">
     </div>
-    {% if no_side_comment_box %}
-    {% else %}
     <div class="metadata_content metadata_content_comments" style="display: none;">
     </div>
-    {% endif %}
     <div class="metadata_content metadata_content_action_notices" style="display: none;">
     </div>
     <div class="metadata_content metadata_content_versions" style="display: none;">
@@ -289,10 +286,7 @@
             <div style="display: none;">
                 <ul style="font-size: 85%;">
                     <li><a href="#" onclick="return false;" id="metadata_menu_item_details">Item details</a></li>
-                    {% if no_side_comment_box %}
-                    {% else %}
                     <li><a href="#" onclick="return false;" id="metadata_menu_comments">Comments</a></li>
-                    {% endif %}
                     <li><a href="#" onclick="return false;" id="metadata_menu_action_notices">Action notices</a></li>
                     <li><a href="#" onclick="return false;" id="metadata_menu_versions">Versions</a></li>
                     <li><a href="#" onclick="return false;" id="metadata_menu_related_items">Related items</a></li>

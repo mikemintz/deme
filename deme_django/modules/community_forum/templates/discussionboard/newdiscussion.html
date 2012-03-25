@@ -1,0 +1,42 @@
+{% extends layout %}
+{% load item_tags %}
+{% load air_extras %}
+{% block content %}
+
+<script type="text/javascript">
+    function validate_new_discussion_form() {
+        var form = document.forms['new_discussion_form'];
+        if (!form['name'].value.trim() && !form['body'].value.trim()) {
+            alert("You must specify a topic and a body");
+            return false;
+        } else if (!form['name'].value.trim()) {
+            alert("You must specify a topic");
+            return false;
+        } else if (!form['body'].value.trim()) {
+            alert("You must specify a body");
+            return false;
+        }
+        return true;
+    }
+</script>
+
+<form name="new_discussion_form" method="post" action="{% url item_url viewer="discussionboard",action="creatediscussion",noun=item.pk %}" onsubmit="return validate_new_discussion_form();">
+    <div style="margin-bottom: 0.5em; font-weight: bold;">
+        Topic
+    </div>
+    <div style="margin-bottom: 1.5em;">
+        <input type="text" name="name" />
+    </div>
+    <div style="margin-bottom: 0.5em; font-weight: bold;">
+        Body
+    </div>
+    <div style="margin-bottom: 1.5em;">
+        <textarea name="body"></textarea>
+    </div>
+    <div>
+        <input type="submit" value="Post discussion topic" />
+    </div>
+</form>
+
+{% endblock content %}
+

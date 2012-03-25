@@ -3,8 +3,39 @@
 {% load air_extras %}
 {% block content %}
 
-{% communityforum_calculatecomments %}
-{{ communityforum_comment_box }}
+<div style="font-weight: bold; font-size: larger;">Ongoing discussions</div>
+{% ifagentcan 'comment_on' item %}
+    <div><a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" style="text-decoration: underline;">Create a new discussion</a></div>
+{% endifagentcan %}
+
+<table style="border: 2px solid #000;">
+    <tr>
+        <td style="background-color: #ccc; font-weight: bold; border-right: 2px solid #000;">Discussion Topics</td>
+        <td style="background-color: #ccc; font-weight: bold; border-right: 2px solid #000;">Replies</td>
+        <td style="background-color: #ccc; font-weight: bold;">Last Post</td></tr>
+    </tr>
+    {% for discussion in discussions %}
+    <tr>
+        <td style="background-color: #{% cycle 'eee' 'fff' as rowcolor %}; border-right: 2px solid #000;">
+            <a href="{% url item_url viewer="discussionboard",action="viewdiscussion",noun=item.pk %}?discussion={{ discussion.comment.pk }}">{{ discussion.comment.name|truncatewords:10 }}</a>
+            <br />
+            <nobr>By {% viewable_name discussion.comment.creator %}</nobr>
+        </td>
+        <td style="background-color: #{{rowcolor}}; border-right: 2px solid #000;">
+            {{ discussion.num_replies }}
+        </td>
+        <td style="background-color: #{{rowcolor}};">
+            {% if discussion.last_post %}
+                <nobr>By {% viewable_name discussion.last_post.creator %}</nobr>
+                <br />
+                <nobr>{{ discussion.last_post.created_at }}</nobr>
+            {% else %}
+                N/A
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
 
 {% endblock content %}
 
