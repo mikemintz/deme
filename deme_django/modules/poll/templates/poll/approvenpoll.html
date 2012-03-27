@@ -267,48 +267,32 @@ $(document).ready(function() {
 
   <script type="text/javascript" src="http://www.google.com/jsapi"></script>
     <script type="text/javascript">
-      google.load('visualization', '1', {packages: ['corechart']});
-    </script>
-    <script type="text/javascript">
+   	 google.load('visualization', '1', {packages: ['table']});
      function drawVisualization() {
      	  {% for vote_numbers_tuple in vote_numbers_list %}
 		  // Create and populate the data table.
-
-		  var data = new google.visualization.DataTable();
-		  var raw_data = [['vote', {{vote_numbers_tuple.agree}}, {{vote_numbers_tuple.disagree}}, {{vote_numbers_tuple.no_vote}}]]
-		  
-		  var responses = ['Choice #1', 'Choice #2', 'Choice #3'];
-		                  
-		  data.addColumn('string', 'responses');
-		  for (var i = 0; i  < raw_data.length; ++i) {
-		    data.addColumn('number', raw_data[i][0]);    
-		  }
-		  
-		  data.addRows(responses.length);
-
-		  for (var j = 0; j < responses.length; ++j) {    
-		    data.setValue(j, 0, responses[j].toString());    
-		  }
-		  for (var i = 0; i  < raw_data.length; ++i) {
-		    for (var j = 1; j  < raw_data[i].length; ++j) {
-		      data.setValue(j-1, i+1, raw_data[i][j]);    
-		    }
-		  }
-  
-		  // Create and draw the visualization.
-		  new google.visualization.BarChart(document.getElementById('visualization{{ forloop.counter }}')).
-		      draw(data,
-		           {title:"",
-		            width:600, height:150,
-		            hAxis: { title: "Votes"}
-		        	}
-		      );
-		   {% endfor %}
-			}
-       
-      
-
-      google.setOnLoadCallback(drawVisualization);
+	      var data = new google.visualization.DataTable();
+	      data.addColumn('string', 'Choice');
+	      data.addColumn('number', 'Results');
+	      data.addRows(3);
+	      data.setCell(0, 0, 'Choice #1');
+	      data.setCell(0, 1, {{vote_numbers_tuple.no_vote}});
+	      data.setCell(1, 0, 'Choice #2');
+	      data.setCell(1, 1, {{vote_numbers_tuple.agree}});
+	      data.setCell(2, 0, 'Choice #3');
+	      data.setCell(2, 1, {{vote_numbers_tuple.disagree}});
+    
+      // Create and draw the visualization.
+      var table = new google.visualization.Table(document.getElementById('visualization{{ forloop.counter }}'));
+        
+      var formatter = new google.visualization.BarFormat({min:0 , width: 420});
+      formatter.format(data, 1); // Apply formatter to second column
+        
+      table.draw(data, {allowHtml: true});
+      {% endfor %}
+    }
+    
+    google.setOnLoadCallback(drawVisualization);
     </script>
     {% if can_view_response_names_and_values %}
     	<br>
