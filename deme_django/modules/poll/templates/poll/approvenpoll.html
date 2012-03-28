@@ -210,13 +210,9 @@ $(document).ready(function() {
 			</div>
 			{% if cur_agent_in_eligbles %}
 			<div style="float: left">
-				
-				<select name="{{ proposition.pk }}">
-				<option value="no vote">Vote...</option>
-	        	<option value="not sure">Choice #1</option>
-				<option value="approve">Choice #2</option>
-				<option value="disapprove">Choice #3</option>
-				</select> 
+	        	<input type="radio" name="{{ proposition.pk }}"value="not sure" />Choice #1 
+				<input type="radio" name="{{ proposition.pk }}"value="approve" />Choice #2 
+				<input type="radio" name="{{ proposition.pk }}" value="disapprove" />Choice #3<br />
 			</div>
 			{% endif %}
 			
@@ -273,7 +269,7 @@ $(document).ready(function() {
 		  // Create and populate the data table.
 	      var data = new google.visualization.DataTable();
 	      data.addColumn('string', 'Choice');
-	      data.addColumn('number', 'Results');
+	      data.addColumn('number', 'Votes');
 	      data.addRows(3);
 	      data.setCell(0, 0, 'Choice #1');
 	      data.setCell(0, 1, {{vote_numbers_tuple.no_vote}});
