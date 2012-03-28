@@ -178,6 +178,15 @@ class ApproveNPollViewer(PollViewer):
         #verify that the cur agent is in the eligbles
         self.verifyCurAgentIsEligible()
         #verify that it is not before or after the deadline
+
+        #verify no duplicate rankings
+        usedVals = []
+        for value in proposition_responses.values():
+            if value in usedVals:
+                return self.render_error('Invalid Ranking', "You cannot have duplicate rankings.")
+            else:
+                usedVals.append(value)
+
         
         #verify that there are only n or less responses
         #counter=0
