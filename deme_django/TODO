@@ -81,6 +81,7 @@ Interface
 * Action drop-down menu should display action when in progress (e.g. when in Edit view, Action menu should display "Edit" (Todd 2/27/2012)
 * Webpage viewer should provide a link to visit the page externally, in a new target. (Todd, 2/29/12)
 * List viewer should have a Submit button to make it easier for users to see how to filter item types. (Todd, 2/29/12)
+* When you edit a Subscription, you can't change the subscribed-to item or the Contact Method. I don't see why these should be uneditable. (Todd, 4/5/12)
 
 Documentation
 -------------
