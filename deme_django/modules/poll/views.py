@@ -831,7 +831,6 @@ class ODPSurveyViewer(PollViewer):
                 if resp.value=="approve": answer = "Agree"
                 if resp.value=="disapprove": answer = "Agree Strongly"
                 chunk.append(answer)
-            print chunk
             writer.writerow(chunk)
 
         
