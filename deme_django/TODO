@@ -23,6 +23,7 @@ Legitimate bugs
 + Recently viewed should not include pages with method!=GET
 * EmailContactMethod.email should be unique
 + Creator of a Membership does not get permission to deactivate/destroy that Membership. I think this is a bug. (Todd 2/18/2012)
++ Layout does not render properly in IE8. Must scroll down to see the page. This needs to be fixed asap. (Todd 5/7/2012)
 
 Interface
 ---------
