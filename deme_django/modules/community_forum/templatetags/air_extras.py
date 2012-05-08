@@ -122,3 +122,20 @@ def simple_login_menu(parser, token):
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
     return SimpleLoginMenu()
 
+class InitialFontSize(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<InitialFontSize>"
+
+    def render(self, context):
+        viewer = context['_viewer']
+        return viewer.request.session.get('communityforumfontsize', "75%")
+
+@register.tag
+def initial_font_size(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return InitialFontSize()

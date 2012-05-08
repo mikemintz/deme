@@ -43,6 +43,11 @@ class CommunityForumParticipantViewer(PersonViewer):
         template = loader.get_template('communityforumparticipant/loginmenuitem.html')
         return HttpResponse(template.render(self.context))
 
+    def type_rememberfontsize_json(self):
+        font_size = self.request.REQUEST['font_size']
+        self.request.session['communityforumfontsize'] = font_size
+        return HttpResponse('')
+
 
 class DiscussionBoardViewer(ItemViewer):
     accepted_item_type = DiscussionBoard
