@@ -64,13 +64,6 @@ class DiscussionBoardViewer(ItemViewer):
         self.context['discussions'] = [{'comment':x, 'last_post':last_posts.get(x), 'num_replies':num_replies[x]} for x in top_level_comments]
         return HttpResponse(template.render(self.context))
 
-    def item_viewdiscussion_html(self):
-        self.context['action_title'] = 'View ongoing discussions'
-        template = loader.get_template('discussionboard/viewdiscussion.html')
-        top_level_comment = TextComment.objects.get(pk=self.request.GET['discussion'])
-        self.context['top_level_comment'] = top_level_comment
-        return HttpResponse(template.render(self.context))
-
     def item_newdiscussion_html(self):
         self.require_global_ability('create TextComment')
         self.require_ability('comment_on', self.item)
@@ -102,3 +95,16 @@ class DiscussionBoardViewer(ItemViewer):
         new_item.save_versioned(action_agent=self.cur_agent)
         redirect = self.request.GET['redirect']
         return HttpResponseRedirect(redirect)
+
+
+class DiscussionBoardCommentViewer(ItemViewer):
+    accepted_item_type = Comment
+    viewer_name = 'discussionboardcomment'
+
+    def item_show_html(self):
+        self.context['action_title'] = ''
+        template = loader.get_template('discussionboard/viewdiscussion.html')
+        discussion_board = DiscussionBoard.objects.get(pk=self.request.GET['discussion_board'])
+        self.context['discussion_board'] = discussion_board
+        return HttpResponse(template.render(self.context))
+

@@ -20,7 +20,7 @@ class CommunityForumCalculateComments(template.Node):
         return "<CalculateCommentsNode>"
 
     def render(self, context):
-        item = context['top_level_comment']
+        item = context['item']
         version_number = item.version_number
         full_path = context['full_path']
         result = []
@@ -35,7 +35,7 @@ class CommunityForumCalculateComments(template.Node):
                 result.append('<div style="font-weight: bold;">%s</div>' % get_viewable_name(context, comment.creator))
             result.append(u'<div>%s</div>' % comment_body)
             result.append(u'</div>')
-            result.append(u'<div id="comment%s" style="display: none;"><form onsubmit="if (this[\'body\'].value.trim() == \'\') { alert(\'You must fill out a body for your reply\'); return false; } return true;" method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_url', kwargs={'viewer': 'discussionboard', 'noun': context['item'].pk, 'action': 'createreply'}), urlquote(full_path)))
+            result.append(u'<div id="comment%s" style="display: none;"><form onsubmit="if (this[\'body\'].value.trim() == \'\') { alert(\'You must fill out a body for your reply\'); return false; } return true;" method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_url', kwargs={'viewer': 'discussionboard', 'noun': context['discussion_board'].pk, 'action': 'createreply'}), urlquote(full_path)))
             result.append(u'<input name="name" type="hidden" value="Re: %s" /><div><textarea name="body" style="height: 100px; width: 100%%;"></textarea></div>' % (comment.name))
             result.append(u'<div><input type="submit" value="Submit reply" /></div><input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" />' % (comment.pk, comment.version_number))
             result.append(u'</form></div>')
