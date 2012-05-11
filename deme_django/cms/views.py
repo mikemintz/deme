@@ -757,7 +757,7 @@ class ItemViewer(Viewer):
         new_url = self.request.REQUEST.get('new_url')
         new_title = self.request.REQUEST.get('new_title')
         clear_history = self.request.REQUEST.get('clear_history')
-        if new_url and new_title:
+        if new_url and new_title and self.request.method == 'GET':
             pages = [x for x in pages if x[0] != new_url]
             pages.insert(0, (new_url, new_title))
             pages = pages[:100]
