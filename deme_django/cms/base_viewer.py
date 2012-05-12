@@ -597,6 +597,7 @@ class Viewer(object):
             result = []
     
             for name, field in form.fields.items():
+                if not field: continue
                 bf = BoundField(form, field, name)
                 bf_errors = form.error_class([conditional_escape(error) for error in bf.errors]) # Escape and cache in local variable.
                 if bf.label:
