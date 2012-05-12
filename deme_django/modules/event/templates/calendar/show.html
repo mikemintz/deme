@@ -98,7 +98,7 @@
                         {% if event.is_starting_date %}
                                 {{ event.start_time|time:"P" }}
                         {% endif %}
-                        <a href="#" onclick="openDialog('{{ event.pk }}-{{ days_events.day.day }}', '{{ event.edit_url }}'); return false;">{{ event.name }}</a>
+                        <a href="{{ event.url }}" onclick="openDialog('{{ event.pk }}-{{ days_events.day.day }}', '{{ event.edit_url }}'); return false;">{{ event.name }}</a>
                         <div id="{{ event.pk }}-{{ days_events.day.day }}" title="<a href='{{ event.url }}'>{{ event.name }}</a>" style="display: none;">
                                 Start Time: {{ event.start_time|time:"P" }}
                                 <p>Start Date: {{ event.start_date|date:"M d, Y" }}</p>
@@ -106,7 +106,7 @@
                                 <p>End Date: {{ event.end_date|date:"M d, Y" }}</p>
                                 Location: {{ event.location }}
                                 <p>Description: {{ event.body|safe|truncatewords_html:50 }}</p>
-                                <a href={{ event.url }} style="color: blue;">View the full event</a> 
+                                <a href="{{ event.url }}" style="color: blue;">View the full event</a> 
                             </div>
                     </div>
                     {% endfor %}
