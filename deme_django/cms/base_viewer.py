@@ -584,7 +584,7 @@ class Viewer(object):
 
         # Create an action_summary field
         if 'action_summary' not in exclude:
-            attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("(Advanced) Reason for %s this item" % ('creating' if is_new else 'editing')), widget=forms.TextInput, required=False)
+            attrs['action_summary'] = forms.CharField(label=_("Action summary"), help_text=_("%sReason for %s this item" % ('(Advanced) ' if is_new else '', 'creating' if is_new else 'editing')), widget=forms.TextInput, required=False)
 
         # Method that converts a form to a table that replaces as_table() in django.forms.forms
         # This method automatically hides all fields that have help_texts that begin with "(Advanced)"
