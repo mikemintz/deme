@@ -161,7 +161,7 @@ class CalendarViewer(CollectionViewer):
             newEvent.add('description', member.body)
             cal.add_component(newEvent)
 
-        response = HttpResponse(cal.as_string(), mimetype='text/calendar')
+        response = HttpResponse(cal.to_ical(), mimetype='text/calendar')
         response['Content-Disposition'] = 'attachment; filename=demeCalendar.ics'
         return response
 
