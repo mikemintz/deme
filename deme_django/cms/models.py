@@ -752,7 +752,8 @@ class Item(models.Model):
             choices = [x for x in default_viewer_field.choices if issubclass(item_type, get_viewer_class_by_name(x[0]).accepted_item_type)]
             attrs['default_viewer'] = default_viewer_field.formfield(initial=item_type.__name__.lower(), choices=choices)
 
-        attrs['name'] = forms.CharField(label=_(item_type.__name__ + " name"), help_text=_('The name used to refer to this ' + item_type.__name__.lower()), required=False)
+        if 'name' in attrs:
+            attrs['name'] = forms.CharField(label=_(item_type.__name__ + " name"), help_text=_('The name used to refer to this ' + item_type.__name__.lower()), required=False)
         from cms.forms import CaptchaField 
         attrs['captcha'] = CaptchaField(label=("Security Question"))
 
