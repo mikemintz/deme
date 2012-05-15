@@ -131,7 +131,7 @@ class InitialFontSize(template.Node):
 
     def render(self, context):
         viewer = context['_viewer']
-        return viewer.request.session.get('communityforumfontsize', "75%")
+        return viewer.request.session.get('communityforumfontsize', "85%")
 
 @register.tag
 def initial_font_size(parser, token):
