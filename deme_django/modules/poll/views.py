@@ -149,12 +149,25 @@ class ApproveNPollViewer(PollViewer):
         for proposition in propositions:
             agree = PropositionResponseApprove.objects.filter(poll=self.item, value='approve', proposition=proposition).count()
             disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
-            no_vote = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
-            maxTemp = max([agree, disagree, no_vote])
-            if(maxTemp > maxNumber): maxNumber = maxTemp
-            vote_numbers.append({'agree': agree, 'disagree': disagree, 'no_vote': no_vote})
+            #no_vote = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
+            #maxTemp = max([agree, disagree, no_vote])
+            totalVotes = agree + disagree + 0.0
+            if totalVotes == 0:
+                totalVotes = 1.0
+            agreeProp = 100.0*agree/totalVotes
+            agreeProp = int(agreeProp * 1000)/1000.0
+            disagreeProp = 100.0 - agreeProp
+            if totalVotes == 0:
+                agreeProp, disagreeProp = 0
+            totalPixels = 505.0
+            agreeProp = agreeProp*500.0/totalPixels
+            disagreeProp = disagreeProp *500.0/totalPixels
+            agreeProp = int(agreeProp * 1000)/1000.0
+            disagreeProp = int(disagreeProp * 1000)/1000.0
+            #if(maxTemp > maxNumber): maxNumber = maxTemp
+            vote_numbers.append({'agree': agree, 'disagree': disagree, 'agreeProp': agreeProp, 'disagreeProp': disagreeProp, 'proposition': proposition})
         
-        self.context['maxVal'] = maxNumber
+        #self.context['maxVal'] = maxNumber
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
         template = loader.get_template('poll/approvenpoll.html')
@@ -180,12 +193,12 @@ class ApproveNPollViewer(PollViewer):
         #verify that it is not before or after the deadline
 
         #verify no duplicate rankings
-        usedVals = []
-        for value in proposition_responses.values():
-            if value in usedVals:
-                return self.render_error('Invalid Ranking', "You cannot have duplicate rankings.")
-            else:
-                usedVals.append(value)
+        #usedVals = []
+        #for value in proposition_responses.values():
+        #    if value in usedVals:
+        #        return self.render_error('Invalid Ranking', "You cannot have duplicate rankings.")
+        #    else:
+        #        usedVals.append(value)
 
         
         #verify that there are only n or less responses
@@ -226,12 +239,16 @@ class ApproveNPollViewer(PollViewer):
         for proposition in propositions:
             agree = PropositionResponseApprove.objects.filter(poll=self.item, value='approve', proposition=proposition).count()
             disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
-            no_vote = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
-            maxTemp = max([agree, disagree, no_vote])
-            if(maxTemp > maxNumber): maxNumber = maxTemp
-            vote_numbers.append({'agree': agree, 'disagree': disagree, 'no_vote': no_vote})
+            #no_vote = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
+            #maxTemp = max([agree, disagree, no_vote])
+            #if(maxTemp > maxNumber): maxNumber = maxTemp
+            totalVotes = agree + disagree + 0.0
+            agreeProp = 100.0*float(agree)/float(totalVotes)
+            disagreeProp = 100.0 - agreeProp
+            #if(maxTemp > maxNumber): maxNumber = maxTemp
+            vote_numbers.append({'agree': agree, 'disagree': disagree, 'agreeProp': agreeProp, 'disagreeProp': disagreeProp, 'proposition': proposition})
 
-        self.context['maxVal'] = maxNumber
+        #self.context['maxVal'] = maxNumber
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
         

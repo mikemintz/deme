@@ -209,10 +209,9 @@ $(document).ready(function() {
 			 	   
 			</div>
 			{% if cur_agent_in_eligbles %}
-			<div style="float: left">
-	        	<input type="radio" name="{{ proposition.pk }}"value="not sure" />Choice #1 
-				<input type="radio" name="{{ proposition.pk }}"value="approve" />Choice #2 
-				<input type="radio" name="{{ proposition.pk }}" value="disapprove" />Choice #3<br />
+			<div style="float: left"> 
+				<input type="radio" name="{{ proposition.pk }}"value="approve" />Agree
+				<input type="radio" name="{{ proposition.pk }}" value="disapprove" />Disagree<br />
 			</div>
 			{% endif %}
 			
@@ -270,12 +269,10 @@ $(document).ready(function() {
 	      var data = new google.visualization.DataTable();
 	      data.addColumn('string', 'Choice');
 	      data.addColumn('number', 'Votes');
-	      data.addRows(3);
-	      data.setCell(0, 0, 'Choice #1');
-	      data.setCell(0, 1, {{vote_numbers_tuple.no_vote}});
-	      data.setCell(1, 0, 'Choice #2');
+	      data.addRows(2);
+	      data.setCell(1, 0, 'Agree');
 	      data.setCell(1, 1, {{vote_numbers_tuple.agree}});
-	      data.setCell(2, 0, 'Choice #3');
+	      data.setCell(2, 0, 'Disagree');
 	      data.setCell(2, 1, {{vote_numbers_tuple.disagree}});
     
       // Create and draw the visualization.
@@ -297,14 +294,22 @@ $(document).ready(function() {
     {% endif %}
     <p id="PollResultsTitle" style="font-size:2em; margin-bottom:1em; margin-top:.5em;"><strong>Poll Results</strong> </p>
 
-    {% for proposition in propositions %}
+    {% for dict in vote_numbers_list %}
+    <div>
+	    <p style="margin-bottom:0em;"><strong>{{dict.proposition.body|safe}}</strong></p>
+	    <div style= "width:505px">
+		    <div style="height:1em; width: {{dict.agreeProp}}%; background-color: green; float:left; margin:0px"></div>
+		    <div style="height:1em; margin-right:0px margin-left:5px; width: {{dict.disagreeProp}}%; background-color:gray; float:right;"></div>
+		</div>
+	    <span>{{dict.agree}}</span>  agree,  <span>{{dict.disagree}} </span>  disagree 
 
-    <p style="margin-bottom:0em;"><strong>{{proposition.body|safe}}</strong></p>
-    <div id="visualization{{ forloop.counter }}" style="width: 600px; height: 200px; margin-top:0em; margin-bottom 1em;"></div>
+	</div>
+	<br>
+	<br>
 
     {% endfor %}
 
-    <div style="background-color:#b0c4de"><p><strong> Personal Statements </strong></p>
+    <div style="background-color:#b0c4de "><p><strong> Personal Statements </strong></p>
     {% if comments %}
     	<table>
 	    {% for comment in comments %}
@@ -350,14 +355,11 @@ $(document).ready(function() {
                 {% for response in value %}
                      <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
                      {% viewable_name response.proposition %}</a>: 
-                     	{%ifequal response.value "not sure" %}
-	                     	Choice #1
-	                     {% endifequal %}
 	                     {%ifequal response.value "approve" %}
-	                     	Choice #2
+	                     	Agree
 	                     {% endifequal %}
 	                     {%ifequal response.value "disapprove" %}
-	                     	Choice #3
+	                     	Disagree
 	                     {% endifequal %}
 	                     </p>
                 {% endfor %}
@@ -402,14 +404,11 @@ $(document).ready(function() {
 	                     <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
 	                     {% viewable_name response.proposition %}</a>: 
 
-	                     {%ifequal response.value "not sure" %}
-	                     	Choice #1
-	                     {% endifequal %}
 	                     {%ifequal response.value approve %}
-	                     	Choice #2
+	                     	Agree
 	                     {% endifequal %}
 	                     {%ifequal response.value "disapprove" %}
-	                     	Choice #3
+	                     	Disagree
 	                     {% endifequal %}
 	                     </p>
 	                {% endfor %}
