@@ -296,12 +296,50 @@ $(document).ready(function() {
 
     {% for dict in vote_numbers_list %}
     <div>
-	    <p style="margin-bottom:0em;"><strong>{{dict.proposition.body|safe}}</strong></p>
-	    <div style= "width:505px">
-		    <div style="height:1em; width: {{dict.agreeProp}}%; background-color: green; float:left; margin:0px"></div>
-		    <div style="height:1em; margin-right:0px margin-left:5px; width: {{dict.disagreeProp}}%; background-color:gray; float:right;"></div>
-		</div>
-	    <span>{{dict.agree}}</span>  agree,  <span>{{dict.disagree}} </span>  disagree 
+	    <p style="margin-bottom:0em;">Statement {{ forloop.counter }}: <strong>{{dict.proposition.body|safe}}</strong></p>
+	    <table border="0"  >
+			  <tr>
+			    <th width = "150px">Statement Responses</th>
+			    <th width = "5px"></th>
+			    <th width = "20px" style="padding-left:0">0</th>
+			    <th width = "20px" style="padding-left:0">1</th>
+			    <th width = "20px" style="padding-left:0">2</th>
+			    <th width = "20px" style="padding-left:0">3</th>
+			    <th width = "20px" style="padding-left:0">4</th>
+			    <th width = "20px" style="padding-left:0">5</th>
+			    <th width = "20px" style="padding-left:0">6</th>
+			    <th width = "20px" style="padding-left:0">7</th>
+			    <th width = "20px" style="padding-left:0">8</th>
+			    <th width = "20px" style="padding-left:0">9</th>
+			    <th width = "20px" style="padding-left:0">10</th>
+			    <th width = "20px" style="padding-left:0">11</th>
+			    <th width = "20px" style="padding-left:0">12</th>
+			    <th>responses</th>
+			  </tr>
+			  <tr>
+			    <td width = "70px" align="right">{{dict.agree}} Agree</td>
+			    <td></td>
+			    {% for i in dict.agreeList %}
+			    <td bgcolor="blue"></td>
+			    {% endfor %}
+			  </tr>
+			  <tr height = "5px"></tr>
+			  <tr>
+			    <td align="right">{{dict.disagree}} Disagree</td>
+			    <td></td>
+			    {% for i in dict.disagreeList %}
+			    <td  bgcolor="blue"></td>
+			    {% endfor %}
+			  </tr>
+			  <tr height = "5px"></tr>
+			  <tr>
+			    <td align="right">{{dict.no_vote}} Haven't Voted</td>
+			    <td></td>
+			    {% for i in dict.no_voteList %}
+			    <td  bgcolor="blue"></td>
+			    {% endfor %}
+			  </tr>
+			</table>
 
 	</div>
 	<br>

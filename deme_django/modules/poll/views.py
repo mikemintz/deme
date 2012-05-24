@@ -151,21 +151,9 @@ class ApproveNPollViewer(PollViewer):
             disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
             #no_vote = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
             #maxTemp = max([agree, disagree, no_vote])
-            totalVotes = agree + disagree + 0.0
-            if totalVotes == 0:
-                totalVotes = 1.0
-            agreeProp = 100.0*agree/totalVotes
-            agreeProp = int(agreeProp * 1000)/1000.0
-            disagreeProp = 100.0 - agreeProp
-            if totalVotes == 0:
-                agreeProp, disagreeProp = 0
-            totalPixels = 505.0
-            agreeProp = agreeProp*500.0/totalPixels
-            disagreeProp = disagreeProp *500.0/totalPixels
-            agreeProp = int(agreeProp * 1000)/1000.0
-            disagreeProp = int(disagreeProp * 1000)/1000.0
+            no_vote = 12-agree-disagree
             #if(maxTemp > maxNumber): maxNumber = maxTemp
-            vote_numbers.append({'agree': agree, 'disagree': disagree, 'agreeProp': agreeProp, 'disagreeProp': disagreeProp, 'proposition': proposition})
+            vote_numbers.append({'agree': agree, 'agreeList': range(agree), 'disagree': disagree, 'disagreeList': range(disagree), 'no_vote':no_vote, 'no_voteList':range(no_vote), 'proposition': proposition})
         
         #self.context['maxVal'] = maxNumber
         self.context['vote_numbers_list'] = vote_numbers
@@ -208,7 +196,8 @@ class ApproveNPollViewer(PollViewer):
         #       counter=counter+1
         #        if counter>self.item.n: #this needs to be changed for chooseN
         #            return self.render_error('Too many votes', "Approve "+str(self.item.n)+" or fewer propositions.")
-                    
+        if len(propositionResponses) != 3:
+            return self.render_error('Not all statements responded to.', "Please agree or disagree with each statement")            
         #delete old response (even if one doesn't exist)
         #PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent).delete()
         #make a new response
@@ -242,11 +231,9 @@ class ApproveNPollViewer(PollViewer):
             #no_vote = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
             #maxTemp = max([agree, disagree, no_vote])
             #if(maxTemp > maxNumber): maxNumber = maxTemp
-            totalVotes = agree + disagree + 0.0
-            agreeProp = 100.0*float(agree)/float(totalVotes)
-            disagreeProp = 100.0 - agreeProp
+            no_vote = 12-agree-disagree
             #if(maxTemp > maxNumber): maxNumber = maxTemp
-            vote_numbers.append({'agree': agree, 'disagree': disagree, 'agreeProp': agreeProp, 'disagreeProp': disagreeProp, 'proposition': proposition})
+            vote_numbers.append({'agree': agree, 'agreeList': range(agree), 'disagree': disagree, 'disagreeList': range(disagree), 'no_vote':no_vote, 'no_voteList':range(no_vote), 'proposition': proposition})
 
         #self.context['maxVal'] = maxNumber
         self.context['vote_numbers_list'] = vote_numbers
