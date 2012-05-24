@@ -174,7 +174,10 @@ class ApproveNPollViewer(PollViewer):
         propositions = Proposition.objects.filter(memberships__in=memberships)
         proposition_responses = {}
         for proposition in propositions:
-            proposition_responses[proposition.pk] = self.request.POST[str(proposition.pk)]
+            if self.request.POST.has_key(str(proposition.pk)):
+                proposition_responses[proposition.pk] = self.request.POST[str(proposition.pk)]
+            else:
+                return self.render_error('Not all statements responded to.', "Please agree or disagree with each statement")
         writein = self.request.POST['optional_writein_comment']
         #verify that the cur agent is in the eligbles
         self.verifyCurAgentIsEligible()
@@ -196,8 +199,6 @@ class ApproveNPollViewer(PollViewer):
         #       counter=counter+1
         #        if counter>self.item.n: #this needs to be changed for chooseN
         #            return self.render_error('Too many votes', "Approve "+str(self.item.n)+" or fewer propositions.")
-        if len(propositionResponses) != 3:
-            return self.render_error('Not all statements responded to.', "Please agree or disagree with each statement")            
         #delete old response (even if one doesn't exist)
         #PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent).delete()
         #make a new response
