@@ -92,6 +92,10 @@ div.container div.implementation{
 	rows 2
 }
 
+table.Poll{
+
+}
+
 </style>
 
 <script type="text/javascript">
@@ -297,46 +301,56 @@ $(document).ready(function() {
     {% for dict in vote_numbers_list %}
     <div>
 	    <p style="margin-bottom:0em;">Statement {{ forloop.counter }}: <strong>{{dict.proposition.body|safe}}</strong></p>
-	    <table border="0"  >
-			  <tr>
-			    <th width = "150px">Statement Responses</th>
-			    <th width = "5px"></th>
-			    <th width = "20px" style="padding-left:0">0</th>
-			    <th width = "20px" style="padding-left:0">1</th>
-			    <th width = "20px" style="padding-left:0">2</th>
-			    <th width = "20px" style="padding-left:0">3</th>
-			    <th width = "20px" style="padding-left:0">4</th>
-			    <th width = "20px" style="padding-left:0">5</th>
-			    <th width = "20px" style="padding-left:0">6</th>
-			    <th width = "20px" style="padding-left:0">7</th>
-			    <th width = "20px" style="padding-left:0">8</th>
-			    <th width = "20px" style="padding-left:0">9</th>
-			    <th width = "20px" style="padding-left:0">10</th>
-			    <th width = "20px" style="padding-left:0">11</th>
-			    <th width = "20px" style="padding-left:0">12</th>
-			    <th>responses</th>
-			  </tr>
+	    <table class="Poll" border="0"  >
+			  
 			  <tr>
 			    <td width = "70px" align="right">{{dict.agree}} Agree</td>
 			    <td></td>
-			    {% for i in dict.agreeList %}
-			    <td bgcolor="blue"></td>
+			    {% for i in dict.n %}
+			    	{% if i < dict.agree %}
+			    		<td bgcolor="blue" width="{{ proportion }}px" style="padding:0"></td>
+			    		<td bgcolor="blue" width="{{ proportion }}px" style="padding:0"></td>
+			    	{% endif %}
 			    {% endfor %}
 			  </tr>
 			  <tr height = "5px"></tr>
 			  <tr>
 			    <td align="right">{{dict.disagree}} Disagree</td>
 			    <td></td>
-			    {% for i in dict.disagreeList %}
-			    <td  bgcolor="blue"></td>
+			    {% for i in dict.n %}
+			    	{% if i < dict.disagree %}
+			    		<td bgcolor="blue" width="{{ proportion }}px" style="padding:0"></td>
+			    		<td bgcolor="blue" width="{{ proportion }}px" style="padding:0"></td>
+			    	{% else %}
+			    		<td  width="{{ proportion }}px" style="padding:0"></td>
+			    		<td  width="{{ proportion }}px" style="padding:0"></td>
+			    	{% endif %}
 			    {% endfor %}
 			  </tr>
 			  <tr height = "5px"></tr>
 			  <tr>
-			    <td align="right">{{dict.no_vote}} Haven't Voted</td>
+			    <td align="right">{{dict.no_vote}} Haven't Voted {{ proportion }}</td>
 			    <td></td>
-			    {% for i in dict.no_voteList %}
-			    <td  bgcolor="blue"></td>
+			    {% for i in dict.n %}
+			    	{% if i < dict.no_vote %}
+			    		<td bgcolor="blue" width="{{ proportion }}px" style="padding:0"></td>
+			    		<td bgcolor="blue" width="{{ proportion }}px" style="padding:0"></td>
+			    	{% endif %}
+			    {% endfor %}
+			  </tr>
+			  <tr margin='0' style="padding:0" height="1em">
+			  	<td style="padding:0; margin:0;" height="1em"></td>
+			  	<td style="padding:0; margin:0;" height="1em"></td>
+			  	{% for i in rangeN %}
+			  		<td style="padding:0; margin:0;" height="1em" border-right:"1">|</td>
+			  		<td style="padding:0; margin:0;" height="1em"></td>
+			  	{% endfor %}
+			  </tr>
+			  <tr margin='0' style="padding:0" height="1em">
+			    <th width = "150px">Responses</th>
+			    <th width = "5px"></th>
+			    {% for i in rangeN %}
+			    	<th width = "{{ 2proportion }}"colspan="2" height="1em" style="padding-left:0">{{i}}</th>
 			    {% endfor %}
 			  </tr>
 			</table>
