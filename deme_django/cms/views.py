@@ -880,6 +880,9 @@ class AuthenticationMethodViewer(ItemViewer):
         return HttpResponseRedirect(full_redirect)
 
     def type_loggedinorout_html(self):
+        force_redirect_path = DemeSetting.get('cms.login_force_redirect_path')
+        if force_redirect_path:
+            return HttpResponseRedirect(force_redirect_path)
         if self.cur_agent.is_anonymous():
             self.context['action_title'] = 'Logged out'
         else:
