@@ -146,16 +146,20 @@ class ApproveNPollViewer(PollViewer):
         vote_numbers = []
         propositions = Proposition.objects.filter(memberships__in=memberships)
         maxNumber = 0
+        n = 12.0
         for proposition in propositions:
             agree = PropositionResponseApprove.objects.filter(poll=self.item, value='approve', proposition=proposition).count()
             disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
             #no_vote = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
             #maxTemp = max([agree, disagree, no_vote])
-            no_vote = 12-agree-disagree
+            no_vote = n-agree-disagree
             #if(maxTemp > maxNumber): maxNumber = maxTemp
-            vote_numbers.append({'agree': agree, 'agreeList': range(agree), 'disagree': disagree, 'disagreeList': range(disagree), 'no_vote':no_vote, 'no_voteList':range(no_vote), 'proposition': proposition})
+            vote_numbers.append({'agree': int(agree), 'n':range(n), 'agreeList':range(agree), 'disagree': int(disagree), 'disagreeList': range(disagree), 'no_vote':int(no_vote), 'no_voteList':range(no_vote), 'proposition': proposition})
         
         #self.context['maxVal'] = maxNumber
+        self.context['rangeN'] = range(n+1)
+        self.context['proportion'] = int(12.0*15.0/n)
+        self.context['2proportion'] = 2*int(12.0*15.0/n)
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
         template = loader.get_template('poll/approvenpoll.html')
