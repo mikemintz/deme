@@ -139,3 +139,39 @@ def initial_font_size(parser, token):
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
     return InitialFontSize()
+
+
+class IfAirGroup(template.Node):
+    def __init__(self, ids, nodelist_in, nodelist_out):
+        self.ids = [template.Variable(x) for x in ids]
+        self.nodelist_in, self.nodelist_out = nodelist_in, nodelist_out
+
+    def __repr__(self):
+        return "<IfAirGroup>"
+
+    def render(self, context):
+        try:
+            ids = [x.resolve(context) for x in self.ids]
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve ids variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+        viewer = context['_viewer']
+        print ids
+        in_group = RecursiveMembership.objects.filter(parent__in=ids, child=viewer.cur_agent).exists()
+        nodelist = self.nodelist_in if in_group else self.nodelist_out
+        return nodelist.render(context)
+
+@register.tag
+def ifairgroup(parser, token):
+    bits = list(token.split_contents())
+    end_tag = 'end' + bits[0]
+    nodelist_in = parser.parse(('else', end_tag))
+    token = parser.next_token()
+    if token.contents == 'else':
+        nodelist_out = parser.parse((end_tag,))
+        parser.delete_first_token()
+    else:
+        nodelist_out = template.NodeList()
+    return IfAirGroup(bits[1:], nodelist_in, nodelist_out)
