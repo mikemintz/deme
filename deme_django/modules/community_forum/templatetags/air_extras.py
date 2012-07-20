@@ -79,7 +79,7 @@ class SimpleLoginMenu(template.Node):
         if viewer.cur_agent.is_anonymous():
             login_menu_text = 'Login'
         else:
-            login_menu_text = u'%s [Logout]' % get_viewable_name(context, viewer.cur_agent)
+            login_menu_text = u'Click here to log out [%s]' % get_viewable_name(context, viewer.cur_agent)
 
         result.append("""
         <script type="text/javascript">
