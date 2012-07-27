@@ -5,7 +5,7 @@
 
 <div style="font-weight: bold; font-size: larger;">Ongoing discussions</div>
 {% ifagentcan 'comment_on' item %}
-    <div><a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" style="text-decoration: underline;">Create a new discussion</a></div>
+    <div><a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" class="fg-button ui-widget ui-state-default ui-corner-all">Create a new discussion</a></div>
 {% endifagentcan %}
 
 <table style="border: 2px solid #000;">

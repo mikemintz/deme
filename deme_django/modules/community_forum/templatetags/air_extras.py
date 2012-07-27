@@ -100,7 +100,7 @@ class SimpleLoginMenu(template.Node):
             });
         });
         </script>
-        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="login_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>%s</a>
+        <a href="#" class="fg-button ui-widget ui-state-default ui-corner-all" id="login_menu_link">%s</a>
         <ul id="simple_login_menu_ul" style="display: none;">
         """ % login_menu_text)
         for viewer_class in [CommunityForumParticipantViewer]:
