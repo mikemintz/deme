@@ -39,6 +39,7 @@
 
 {% ifagentcan 'comment_on' item %}
     <div><a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" class="fg-button ui-widget ui-state-default ui-corner-all">Create a new discussion</a></div>
+    <div style="clear: both;"></div>
 {% endifagentcan %}
 
 {% endblock content %}
