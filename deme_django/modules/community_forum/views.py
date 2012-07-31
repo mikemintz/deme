@@ -54,7 +54,7 @@ class DiscussionBoardViewer(ItemViewer):
     viewer_name = 'discussionboard'
 
     def item_show_html(self):
-        self.context['action_title'] = 'View ongoing discussions'
+        self.context['action_title'] = ''
         template = loader.get_template('discussionboard/show.html')
         top_level_comments = list(TextComment.objects.filter(item=self.item))
         last_posts = {}
