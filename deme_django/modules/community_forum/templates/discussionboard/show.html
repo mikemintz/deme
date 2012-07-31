@@ -4,7 +4,13 @@
 {% block content %}
 
 {% ifagentcan 'comment_on' item %}
-    <div><a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" class="fg-button ui-widget ui-state-default ui-corner-all">Create a new discussion</a></div>
+    <div style="border-bottom: thin solid #000; padding-bottom: 1em; margin-bottom: 1em;">
+        <div style="float: right;">
+            <a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" class="fg-button ui-widget ui-state-default ui-corner-all">Create a new discussion</a></div>
+            <div style="clear: both;"></div>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
 {% endifagentcan %}
 
 <table style="border: 2px solid #000;">
