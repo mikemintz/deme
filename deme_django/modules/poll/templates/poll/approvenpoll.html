@@ -227,8 +227,11 @@ $(document).ready(function() {
 	    
 	{% if cur_agent_in_eligbles %}
 	</div>
+    <!--
 	<p><strong>You also have the option of writing in your own statement that you think better captures your opinions. We ask that you still vote for each response above and then write your own statement here:</strong><p>
 	<textarea  name="optional_writein_comment" type="text" cols="20" rows="2"></textarea><br />
+    -->
+    <input type="hidden" name="optional_writein_comment" value="" />
 			<div style="margin-left:40%; margin-bottom:1em;">
                 <button type="submit" class="fg-button ui-widget ui-state-default ui-corner-all" style="background: #ffcc99;">Submit</button><br><br>
 			</div>
@@ -377,7 +380,7 @@ $(document).ready(function() {
 	</div>
 
 	{% if cur_agent_in_eligbles %}
-	<p><strong>Add another personal statement:</strong><p>
+	<p><strong>Add a personal statement:</strong><p>
 	<form method="post" enctype="multipart/form-data" 
 	action="{% url item_url viewer=viewer_name,action="addawritein",noun=item.pk %}?redirect={{ full_path|urlencode }}">
 	<textarea  name="optional_writein_comment" type="text" cols="20" rows="2"></textarea><br />
