@@ -154,7 +154,7 @@ class ApproveNPollViewer(PollViewer):
             #maxTemp = max([agree, disagree, no_vote])
             no_vote = n-agree-disagree
             #if(maxTemp > maxNumber): maxNumber = maxTemp
-            vote_numbers.append({'agree': int(agree), 'n':range(int(n)), 'agreeList':range(agree), 'disagree': int(disagree), 'disagreeList': range(disagree), 'no_vote':int(no_vote), 'no_voteList':range(no_vote), 'proposition': proposition})
+            vote_numbers.append({'agree': int(agree), 'n':range(int(n)), 'agreeList':range(int(agree)), 'disagree': int(disagree), 'disagreeList': range(int(disagree)), 'no_vote':int(no_vote), 'no_voteList':range(int(no_vote)), 'proposition': proposition})
         
         #self.context['maxVal'] = maxNumber
         self.context['rangeN'] = range(int(n)+1)
@@ -238,7 +238,7 @@ class ApproveNPollViewer(PollViewer):
             #if(maxTemp > maxNumber): maxNumber = maxTemp
             no_vote = 12-agree-disagree
             #if(maxTemp > maxNumber): maxNumber = maxTemp
-            vote_numbers.append({'agree': agree, 'agreeList': range(agree), 'disagree': disagree, 'disagreeList': range(disagree), 'no_vote':no_vote, 'no_voteList':range(no_vote), 'proposition': proposition})
+            vote_numbers.append({'agree': agree, 'agreeList': range(int(agree)), 'disagree': disagree, 'disagreeList': range(int(disagree)), 'no_vote':no_vote, 'no_voteList':range(int(no_vote)), 'proposition': proposition})
 
         #self.context['maxVal'] = maxNumber
         self.context['vote_numbers_list'] = vote_numbers
