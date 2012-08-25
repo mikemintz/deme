@@ -5,6 +5,9 @@ from cms.models import *
 from modules.symsys.models import *
 from django.db.models import Q
 from django.core.urlresolvers import reverse
+import re
+import urllib
+
 
 #class SymsysFacultyGroupViewer(SymsysGroupViewer):
  #   accepted_item_type = Collection
@@ -409,4 +412,68 @@ class SymsysInternshipViewer(HtmlDocumentViewer, AdvertisementViewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'htmladvertisement', 'noun': new_ad.pk}))
         return HttpResponseRedirect(redirect)
 
+#NEW MATERIAL 7/31
+class SymsysCourseListViewer(TextDocumentViewer):
+#To be used for core class listing, concentration listings, and any other course listings
+    accepted_item_type = HtmlDocument
+    viewer_name = 'symsyscourselist'
+
+    def item_show_html(self):
+        from functools import partial
+        #Next lines taken from cms/views.py, class TextDocumentViewer, item_show_html
+        self.context['action_title'] = ''
+        self.context['in_textdocument_show'] = True
+        self.context['highlighted_transclusion_id'] = self.request.GET.get('highlighted_transclusion')
+        self.context['highlighted_comment_id'] = self.request.GET.get('highlighted_comment')
+        self.require_ability('view ', self.item, wildcard_suffix=True)
+        #Replace basic markup with clickable markup for each class listed
+            #depts list is alphabetized!
+        depts = ['ANTHRO', '(?<!N)(?<!HUM)BIO', 'BIOE', 'BIOMEDIN', 'CEE', 'CME', 'COMM', 'CS', 'ECON', 'EDUC', '(?<!C)EE', 'ENGR', 'ETHICSOC', 'GENE', 'HRP', 'HUMBIO', 'IHUM', 'IPS', 'LAW', 'LINGUIST', 'MATH', '(?<!C)ME', 'MED', 'MS&amp;E', 'MUSIC', 'NBIO', 'NENS', 'PHIL', 'POLISCI', 'PSYCH', 'PUBLPOL', 'SLE', '(?<!ETHIC)SOC', 'STATS', 'STS', 'SYMSYS', 'URBANST']
+        regex = '(%s [0-9]+[A-Z]*[^</]+)' #troublesome characters: /
+        #index must be a list because integers are not mutable (see its use in replFunc for more info)
+        index = [0]
+
+        def replFunc(index, dept, matchobj):
+            #index and temp used to create a unique id for the div that will hold course info for each course
+            index[0] += 1
+            temp = "a"+str(index[0])
+            classEx = '(%s [0-9]+[A-Z]*)' % dept
+            className = re.search(classEx, matchobj.group(0)).group(0) 
+            #Click '+' or 'show/hide info'
+            return replace % (matchobj.group(1), className, temp, re.sub(' ', '', className), temp)
+            #Click whole course name etc.
+            #return replace % (className, temp, matchobj.group(1), re.sub(' ', '', className), temp)
+
+        #Highlight '+'   
+        #replace = '%s <a href="#" title="Click to see course info including schedule and description." onclick="courseLink(\'%s\', \'%s\'); return false;"> + </a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px;"></div>'
+        #Highlight whole course name
+        #replace = '<a href="#" title="Click to see course info including schedule and description." onclick="courseLink(\'%s\', \'%s\'); return false;">%s</a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px;"></div>'
+        #Highlight 'show/hide info'
+        replace = '%s <a href="#" title="Click to see course info including schedule and description." style="font-weight:normal;" onclick="courseLink(\'%s\', \'%s\'); return false;"> show/hide info </a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px; font-weight:normal;"></div>'
+       
+        new_body = self.item.body
+        for dept in depts:
+            pattern = regex % dept
+            new_body = re.sub(pattern, partial(replFunc, index, dept), new_body)
+        self.context['body'] = new_body
+        template = loader.get_template('symsyscourselist/show.html')
+        self.context['is_html'] = True
+        return HttpResponse(template.render(self.context))
+
+    def type_show_ajax(self):
+        #Formulate url based on query, make ajax call, return xml doc
+        query = self.request.GET['query']
+        #if(' ' in query):
+            #query = query.upper().replace(' ', '')
+        #Replace call below handles MS&E
+        #if('&' in query):
+            #query = query.replace('&', '%26')
+        query = query.upper().replace(' ', '').replace('&', '%26')
+        url = 'http://explorecourses.stanford.edu/CourseSearch/search?view=xml-20120105&q=%s'
+        url = url % query
+        #Make ajax call for url data
+        opener = urllib.FancyURLopener({})
+        f = opener.open(url)
+        return HttpResponse(f)
+        
 

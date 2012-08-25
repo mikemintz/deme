@@ -1,0 +1,197 @@
+{% extends layout %}
+{% load item_tags %} 
+
+{% block title %} {% endblock %}
+
+{% block content %}
+
+<script type="text/javascript">
+//NEW SCRIPT FOR SYMSYSCOURSELIST
+
+function courseLink(query, elementId) {
+    //Facilitates opening/closing of course info boxes
+    if (document.getElementById(elementId).style.display=='block') {
+        //Close course info div if it is currently open
+        hideSingleCourse(elementId);
+    } else {
+        //Get relevant information and open div
+        showSingleCourse(query, elementId);
+    }   
+}
+
+function showSingleCourse(query, elementId) {
+    //Initialize course info box
+    if(document.getElementById(elementId).style.display=='none') {
+        document.getElementById(elementId).innerHTML='<p>Loading...</p>';
+        courseInfoAjax(query, elementId);
+        document.getElementById(elementId).style.display='block'; //display options: 'block' or 'inline'
+
+    }   
+}
+
+function hideSingleCourse(elementId) {
+    //Close course info div for the course box with id 'elementId'
+    document.getElementById(elementId).style.display='none';
+}
+
+function showAllCourseInfo () {
+    //Temporarily hide "hide all" button to allow ajax calls to complete
+    document.getElementById('hideAllCourses').style.display='none';
+    document.getElementById('hideLoading').style.display='block';
+    setTimeout(function() {
+        document.getElementById('hideLoading').style.display='none';
+        document.getElementById('hideAllCourses').style.display='block';
+    }, 10000);
+    var courseElems = document.getElementsByClassName('courselink');
+    for(i=0; i<courseElems.length; i++) {
+        var courseElemClasses = courseElems[i].className;
+        courseName = courseElemClasses.split(" ");
+        courseName = courseName[1];
+        courseId = courseElems[i].id;
+        showSingleCourse(courseName, courseId);
+    }
+}
+
+function hideAllCourseInfo() {
+    var courseElems = document.getElementsByClassName('courselink');
+    for(i=0; i<courseElems.length; i++) {
+        courseElems[i].style.display='none';
+    }
+}
+
+function courseInfoAjax(query, elementId) {
+    if(document.getElementById(elementId).style.display=='none') {
+        //Handle ampersand character in MS&E courses
+        //if(query.indexOf("&")!= -1) {
+        query = query.replace("&", "%26");
+        //}
+        //Make Ajax call to explore courses and fill in relevant info for course that was clicked
+        var xmlDoc = $.ajax({
+            url: "/viewing/symsyscourselist/show.ajax?query="+query,
+            dataType: "html text xml"
+        });
+        xmlDoc.done(successFn);
+        xmlDoc.fail(failFn);
+    }
+    
+    function successFn(data, code, object) {
+        //Traverse xml doc and gather relevant information
+        if(query.indexOf("%26")!= -1) {
+            //Replace call handles MS&E
+            query = query.replace("%26", "&");
+        }
+        if(query.indexOf(" ")!= -1) {
+            queryArr = query.split(" ");
+            var subj = queryArr[0];
+            var index = queryArr[1];
+        } else {
+            //For "show all classes" button, no whitespace in 'query' so regexp needed to get class name and number
+            var subjExp = /[A-Z&]+/i; //Must include '&' to account for MS&E
+            var indexExp = /[0-9]+[A-Z]*/i;
+            var subj = subjExp.exec(query);
+            var index = indexExp.exec(query);
+        }
+        //Initialize relevant fields to display
+        var title = "";
+        var description = "";
+        var gers = "";
+        var grade = "";
+        var units = "";
+        var quarter = "";
+        var professor = "";     
+        //Find the proper course in the xml doc, handle errors
+        $(data).find("course").each(function() {
+            //Note: 'if' statement MUST use eq() notation because tag names "subject" and "code" are not unique
+            if($(this).find("subject").eq(0).text()==subj && $(this).find("code").eq(0).text()==index) {
+                title = getTitle($(this));
+                description = getDescription($(this));
+                gers = getGers($(this));
+                grade = getGrade($(this));
+                units = getUnits($(this));
+                quarter = getQuarter($(this));
+            } 
+        });
+        //Handle courses no longer offered or not offered during the current year
+        if(quarter=="") {
+            if(description=="" && gers=="" && units=="") {
+                description = "Course no longer offered."
+            } else {
+                quarter = "Not offered this year";
+            }
+        }
+        var exploreText = "For more info: visit ";
+        subj = subj.toString();
+        if (subj.indexOf("&")!= -1) subj = subj.replace("&", "%26");
+        var exploreLink = "http://explorecourses.stanford.edu/CourseSearch/search?view=catalog&q=" + subj + index;
+        //Initialize html markup for course info
+        var titleHtml = '<p><span style="font-weight:bold; text-decoration:underline;">Title: </span>';
+        var descriptionHtml = '<p><span style="font-weight:bold; text-decoration:underline;">Description: </span>';
+        var gersHtml = '<p><span style="font-weight:bold; text-decoration:underline;">GERs: </span>';
+        var unitsHtml = '<p><span style="font-weight:bold; text-decoration:underline;">Units: </span>';
+        var gradeHtml = '<p><span style="font-weight:bold; text-decoration:underline;">Grading basis: </span>';
+        var quarterHtml = '<p><span style="font-weight:bold; text-decoration:underline;">Quarters offered: </span>';
+        //Fill in appropriate data gathered above and insert it into query div
+        var courseInfo = titleHtml+title+'</p>'+descriptionHtml+description+'</p>'+gersHtml+gers+'</p>'+unitsHtml+units+'</p>'+gradeHtml+grade+'</p>'+quarterHtml+quarter+'</p><p>'+exploreText+'<a href='+exploreLink+'>'+exploreLink+'</a></p>';
+        document.getElementById(elementId).innerHTML=courseInfo;
+    }
+    
+    function failFn() {
+        //alert("Sorry, unable to connect to explore courses. Try again later!");
+        hideSingleCourse(elementId);
+    }
+
+    //AJAX functions for retrieving course info
+    function getTitle(current) {
+        return current.find("title").text();
+    }
+    function getDescription(current) {
+        return current.find("description").text();
+    }
+    function getGers(current) {
+        return current.find("gers").text();
+    }
+    function getGrade(current) {
+        return current.find("grading").text();
+    }
+    function getUnits(current) {
+        return current.find("unitsMax").text();
+    }
+    function getQuarter(current) {
+        var quarter = "";
+        current.find("section").each(function() {
+            if($(this).find("component").text()=="LEC" || $(this).find("component").text()=="SEM") {
+                var tempQuarter = $(this).find("term").text();
+                if(quarter.search(tempQuarter)== -1) {
+                    quarter += '<p>&nbsp;&nbsp;&nbsp;&nbsp;'+tempQuarter;
+                    quarter += "; ";
+                    $(this).find("schedule").each(function() {
+                        quarter += $(this).find("days").text();
+                        quarter += $(this).find("startTime").text() + '-' + $(this).find("endTime").text();
+                    });
+                    quarter += "<br/>&nbsp;&nbsp;&nbsp;&nbsp;Professor(s): ";
+                    $(this).find("instructor").each(function() {
+                        var tempProf = $(this).find("name").text();
+                        if(tempProf != "") {
+                            quarter += tempProf + "; ";
+                        }
+                    });
+                    quarter += '</p>';
+                }
+            }
+        });
+        return quarter;
+    }
+}
+
+</script>
+
+{% ifagentcan 'view TextDocument.body' item %}
+    <button id="showAllCourses" title="Click to see course info including schedule and description for all courses below (allow some time for loading)" onclick="showAllCourseInfo(); return false;" href="#">Click to see course info for all courses below</button>
+    <br/>
+    <div id="hideLoading" style="display:none;">Loading ExploreCourses info...</div>
+    <button id="hideAllCourses" title="Click to hide course info for all courses below" onclick="hideAllCourseInfo(); return false;" href="#">Click to hide course info for all courses below</button>
+    
+    <div id="docbody" style="padding: 10px;">{{ body|safe }}</div>
+{% endifagentcan %}
+
+{% endblock content %}
