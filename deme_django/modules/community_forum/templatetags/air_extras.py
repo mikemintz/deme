@@ -40,7 +40,7 @@ class CommunityForumCalculateComments(template.Node):
             result.append(u'<div><input type="submit" value="Submit reply" /></div><input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" />' % (comment.pk, comment.version_number))
             result.append(u'</form></div>')
             result.append(u'<div style="margin-bottom: 10px;">')
-            result.append(u'<div style="float: right; font-size: smaller;"><a href="#" onclick="$(\'#comment%s\').show(); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-comment"></span>Reply</a></div>' % comment.pk)
+            result.append(u'<div style="float: right;"><a href="#" onclick="$(\'#comment%s\').show(); return false;" class="fg-button ui-widget ui-state-default fg-button-icon-left ui-corner-all" style="background: #ffcc99;"><span class="ui-icon ui-icon-comment"></span>Reply</a></div>' % comment.pk)
             if agentcan_helper(context, 'view Item.created_at', comment):
                 result.append('<div style="font-style: italic;">%s</div>' % comment.created_at.strftime("%a %b %d %Y %I:%M %p"))
             result.append(u'<div style="clear: both;"></div>')
@@ -79,7 +79,7 @@ class SimpleLoginMenu(template.Node):
         if viewer.cur_agent.is_anonymous():
             login_menu_text = 'Login'
         else:
-            login_menu_text = u'%s [Logout]' % get_viewable_name(context, viewer.cur_agent)
+            login_menu_text = u'Click here to log out <!-- %s -->' % get_viewable_name(context, viewer.cur_agent)
 
         result.append("""
         <script type="text/javascript">
@@ -100,7 +100,7 @@ class SimpleLoginMenu(template.Node):
             });
         });
         </script>
-        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="login_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>%s</a>
+        <a href="#" class="fg-button ui-widget ui-state-default ui-corner-all" id="login_menu_link">%s</a>
         <ul id="simple_login_menu_ul" style="display: none;">
         """ % login_menu_text)
         for viewer_class in [CommunityForumParticipantViewer]:
@@ -139,3 +139,39 @@ def initial_font_size(parser, token):
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
     return InitialFontSize()
+
+
+class IfAirGroup(template.Node):
+    def __init__(self, ids, nodelist_in, nodelist_out):
+        self.ids = [template.Variable(x) for x in ids]
+        self.nodelist_in, self.nodelist_out = nodelist_in, nodelist_out
+
+    def __repr__(self):
+        return "<IfAirGroup>"
+
+    def render(self, context):
+        try:
+            ids = [x.resolve(context) for x in self.ids]
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve ids variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+        viewer = context['_viewer']
+        print ids
+        in_group = RecursiveMembership.objects.filter(parent__in=ids, child=viewer.cur_agent).exists()
+        nodelist = self.nodelist_in if in_group else self.nodelist_out
+        return nodelist.render(context)
+
+@register.tag
+def ifairgroup(parser, token):
+    bits = list(token.split_contents())
+    end_tag = 'end' + bits[0]
+    nodelist_in = parser.parse(('else', end_tag))
+    token = parser.next_token()
+    if token.contents == 'else':
+        nodelist_out = parser.parse((end_tag,))
+        parser.delete_first_token()
+    else:
+        nodelist_out = template.NodeList()
+    return IfAirGroup(bits[1:], nodelist_in, nodelist_out)

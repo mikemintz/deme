@@ -38,7 +38,7 @@ $(document).ready(function () {
   $("#jqgrid_list_collection_{{ item.pk }}").jqGrid({
     url: '{% url item_type_url viewer="item",action="grid",format="json" %}',
     postData: {
-      fields: ['name'],
+      fields: 'name',
       filter: 'memberships.collection.{{ item.pk }}',
     },
     datatype: "json",
