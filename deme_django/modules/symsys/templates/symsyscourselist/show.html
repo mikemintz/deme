@@ -195,7 +195,7 @@ function courseInfoAjax(query, elementId) {
 
 {% ifagentcan 'view TextDocument.body' item %}
     <button id="showAllCourses" title="Click to see course info including schedule and description for all courses below (allow some time for loading)" onclick="showAllCourseInfo(); return false;" href="#">Show all course info</button>
-    <div id="hideLoading" style="display:none;">Loading ExploreCourses data...</div>
+    <div id="hideLoading" style="display:none;">Loading ExploreCourses data...Allow 15 seconds please.</div>
     <button id="hideAllCourses" style="display:none;" title="Click to hide course info for all courses below" onclick="hideAllCourseInfo(); return false;" href="#">Hide all course info </button>
     
     <div id="docbody" style="padding: 10px;">{{ body|safe }}</div>
