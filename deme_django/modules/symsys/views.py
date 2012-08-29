@@ -429,7 +429,7 @@ class SymsysCourseListViewer(TextDocumentViewer):
         #Replace basic markup with clickable markup for each class listed
             #depts list is alphabetized!
         depts = ['ANTHRO', '(?<!N)(?<!HUM)BIO', 'BIOE', 'BIOMEDIN', 'CEE', 'CME', 'COMM', 'CS', 'ECON', 'EDUC', '(?<!C)EE', 'ENGR', 'ETHICSOC', 'GENE', 'HRP', 'HUMBIO', 'IHUM', 'IPS', 'LAW', 'LINGUIST', 'MATH', '(?<!C)ME', 'MED', 'MS&amp;E', 'MUSIC', 'NBIO', 'NENS', 'PHIL', 'POLISCI', 'PSYCH', 'PUBLPOL', 'SLE', '(?<!ETHIC)SOC', 'STATS', 'STS', 'SYMSYS', 'URBANST']
-        regex = '(%s [0-9]+[A-Z]*[^</*]+)' #troublesome characters: /
+        regex = '(%s [0-9]+[A-Z]*\.[^</*]+)' #troublesome characters: /
         #index must be a list because integers are not mutable (see its use in replFunc for more info)
         index = [0]
 
