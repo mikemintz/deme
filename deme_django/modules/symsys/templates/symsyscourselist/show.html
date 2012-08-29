@@ -124,14 +124,16 @@ function courseInfoAjax(query, elementId) {
                 quarter = "Not offered this year";
             }
         }
+        //Initialize title markup before converting '&' to '%26' for hyperlink in info box
         var exploreText = "For more info: visit ";
         subj = subj.toString();
+        var boldSpan = '<p><span style="font-weight:bold; text-decoration:underline;">';
+        var endSpan = '</span><span style="font-weight:normal;">';
+        var titleHtml = boldSpan+subj+' '+index+' '+endSpan;
+        //Change '&' in MS&E to '%26' for use in explore courses hyperlink (exploreLink)
         if (subj.indexOf("&")!= -1) subj = subj.replace("&", "%26");
         var exploreLink = "http://explorecourses.stanford.edu/CourseSearch/search?view=catalog&q=" + subj + index;
         //Initialize html markup for course info
-        var boldSpan = '<p><span style="font-weight:bold; text-decoration:underline;">';
-        var endSpan = '</span><span style="font-weight:normal;">';
-        var titleHtml = boldSpan+'Title: '+endSpan;
         var descriptionHtml = boldSpan+'Description: '+endSpan;
         var gersHtml = boldSpan+'GERs: '+endSpan;
         var unitsHtml = boldSpan+'Units: '+endSpan;
