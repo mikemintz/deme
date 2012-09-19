@@ -169,7 +169,7 @@ function courseInfoAjax(query, elementId) {
     function getQuarter(current) {
         var quarter = "";
         current.find("section").each(function() {
-            if($(this).find("component").text()=="LEC" || $(this).find("component").text()=="SEM") {
+            if($(this).find("component").text()=="LEC" || $(this).find("component").text()=="SEM" || $(this).find("component").text()=="RES") {
                 var tempQuarter = $(this).find("term").text();
                 if(quarter.search(tempQuarter)== -1) {
                     quarter += '<p>&nbsp;&nbsp;&nbsp;&nbsp;'+tempQuarter;
