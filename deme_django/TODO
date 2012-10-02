@@ -67,6 +67,7 @@ Interface
 * Action drop-down menu should display action when in progress (e.g. when in Edit view, Action menu should display "Edit" (Todd 2/27/2012)
 * List viewer should have a Submit button to make it easier for users to see how to filter item types. (Todd, 2/29/12)
 + Search should include an option to include Deactivated items. Right not it is very hard to find and reactivate a membership, for example. (Todd, 9/27/12)
++ Redo group viewer with nice UI
 
 Documentation
 -------------
