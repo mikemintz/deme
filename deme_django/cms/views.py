@@ -1050,13 +1050,18 @@ class MembershipViewer(ItemViewer):
         item = Item.objects.get(pk=item_pk)
         collection = Collection.objects.get(pk=self.request.POST['collection'])
 
-        new_member = Membership(collection=collection, item=item) 
+        try:
+            membership = Membership.objects.get(collection=collection, item=item)
+            if not membership.active:
+                membership.reactivate(action_agent=self.cur_agent)
+        except ObjectDoesNotExist:
+            membership = Membership(collection=collection, item=item)
         if self.request.POST.get('permissionenabled', '') == 'on':
-            new_member.permission_enabled = True
+            membership.permission_enabled = True
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
-        new_member.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
+        membership.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
         
-        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_member.pk}))
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': membership.pk}))
         return HttpResponseRedirect(redirect)
 
     def type_itemmembercreate_html(self):
@@ -1068,13 +1073,18 @@ class MembershipViewer(ItemViewer):
         collection = Collection.objects.get(pk=collection_pk)
         item = Item.objects.get(pk=self.request.POST['item'])
 
-        new_member = Membership(collection=collection, item=item) 
+        try:
+            membership = Membership.objects.get(collection=collection, item=item)
+            if not membership.active:
+                membership.reactivate(action_agent=self.cur_agent)
+        except ObjectDoesNotExist:
+            membership = Membership(collection=collection, item=item)
         if self.request.POST.get('permissionenabled', '') == 'on':
-            new_member.permission_enabled = True
+            membership.permission_enabled = True
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
-        new_member.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
+        membership.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
         
-        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_member.pk}))
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': membership.pk}))
         return HttpResponseRedirect(redirect)
 
 
