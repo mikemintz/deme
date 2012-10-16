@@ -429,7 +429,7 @@ class SymsysCourseListViewer(TextDocumentViewer):
         #Replace basic markup with clickable markup for each class listed
             #depts list is alphabetized!
         depts = ['ANTHRO', '(?<!N)(?<!HUM)BIO', 'BIOE', 'BIOMEDIN', 'CEE', 'CME', 'COMM', 'CS', 'ECON', 'EDUC', '(?<!C)EE', 'ENGR', 'ETHICSOC', 'GENE', 'HRP', 'HUMBIO', 'IHUM', 'IPS', 'LAW', 'LINGUIST', 'MATH', '(?<!C)ME', 'MED', 'MS&amp;E', 'MUSIC', 'NBIO', 'NENS', 'PHIL', 'POLISCI', 'PSYCH', 'PUBLPOL', 'SLE', '(?<!ETHIC)SOC', 'STATS', 'STS', 'SYMSYS', 'URBANST']
-        regex = '(%s [0-9]+[A-Z]*[^</]+)' #troublesome characters: /
+        regex = '(%s [0-9]+[A-Z]*\.[^</*]+)' 
         #index must be a list because integers are not mutable (see its use in replFunc for more info)
         index = [0]
 
@@ -440,16 +440,16 @@ class SymsysCourseListViewer(TextDocumentViewer):
             classEx = '(%s [0-9]+[A-Z]*)' % dept
             className = re.search(classEx, matchobj.group(0)).group(0) 
             #Click '+' or 'show/hide info'
-            return replace % (matchobj.group(1), className, temp, re.sub(' ', '', className), temp)
+            #return replace % (matchobj.group(1), className, temp, re.sub(' ', '', className), temp)
             #Click whole course name etc.
-            #return replace % (className, temp, matchobj.group(1), re.sub(' ', '', className), temp)
+            return replace % (className, temp, matchobj.group(1), re.sub(' ', '', className), temp)
 
         #Highlight '+'   
         #replace = '%s <a href="#" title="Click to see course info including schedule and description." onclick="courseLink(\'%s\', \'%s\'); return false;"> + </a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px;"></div>'
         #Highlight whole course name
-        #replace = '<a href="#" title="Click to see course info including schedule and description." onclick="courseLink(\'%s\', \'%s\'); return false;">%s</a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px;"></div>'
+        replace = '<a href="#" title="Click to see course info including schedule and description." onclick="courseLink(\'%s\', \'%s\'); return false;">%s</a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px;"></div>'
         #Highlight 'show/hide info'
-        replace = '%s <a href="#" title="Click to see course info including schedule and description." style="font-weight:normal;" onclick="courseLink(\'%s\', \'%s\'); return false;"> show/hide info </a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px; font-weight:normal;"></div>'
+        #replace = '%s <a href="#" title="Click to see course info including schedule and description." style="font-weight:normal;" onclick="courseLink(\'%s\', \'%s\'); return false;"> show/hide info </a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px; font-weight:normal;"></div>'
        
         new_body = self.item.body
         for dept in depts:
@@ -463,11 +463,7 @@ class SymsysCourseListViewer(TextDocumentViewer):
     def type_show_ajax(self):
         #Formulate url based on query, make ajax call, return xml doc
         query = self.request.GET['query']
-        #if(' ' in query):
-            #query = query.upper().replace(' ', '')
         #Replace call below handles MS&E
-        #if('&' in query):
-            #query = query.replace('&', '%26')
         query = query.upper().replace(' ', '').replace('&', '%26')
         url = 'http://explorecourses.stanford.edu/CourseSearch/search?view=xml-20120105&q=%s'
         url = url % query
@@ -476,4 +472,3 @@ class SymsysCourseListViewer(TextDocumentViewer):
         f = opener.open(url)
         return HttpResponse(f)
         
-

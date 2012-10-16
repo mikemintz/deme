@@ -21,6 +21,7 @@ Legitimate bugs
 + Fix bug with grid view occluding metadata window. When viewing all the items (viewing 100 at a time on the item menu) the top banner disappears behind the list viewer. When creating an html document TinyMCE overlaps with the banner and metadata window when you scroll. (Jimmy 10/27/11; Todd 5/11/12)
 * Cannot edit FileDocuments by uploading new version (Todd, 5/11/11
 * Destroying items may cause an error because the outgoing email code will try to access created_at which is now None.
++ Pulldown selector does not reliably autocomplete - often requires multiple backspacings and other fiddling, and sometimes does not work at all (Todd, 9/27/12)
 
 Interface
 ---------
@@ -65,6 +66,8 @@ Interface
 * In a long document (I tested a 700 page document to see what would break) the line does not show up for located comments. (Jimmy 10/27/11) 
 * Action drop-down menu should display action when in progress (e.g. when in Edit view, Action menu should display "Edit" (Todd 2/27/2012)
 * List viewer should have a Submit button to make it easier for users to see how to filter item types. (Todd, 2/29/12)
++ Search should include an option to include Deactivated items. Right not it is very hard to find and reactivate a membership, for example. (Todd, 9/27/12)
++ Redo group viewer with nice UI
 
 Documentation
 -------------

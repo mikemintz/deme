@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load item_tags %} 
 
-{% block title %} {% endblock %}
+{% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
 
 {% block content %}
 
@@ -20,6 +20,7 @@ function courseLink(query, elementId) {
 }
 
 function showSingleCourse(query, elementId) {
+    //document.getElementById('hideAllCourses').style.display='block';
     //Initialize course info box
     if(document.getElementById(elementId).style.display=='none') {
         document.getElementById(elementId).innerHTML='<p>Loading...</p>';
@@ -32,16 +33,18 @@ function showSingleCourse(query, elementId) {
 function hideSingleCourse(elementId) {
     //Close course info div for the course box with id 'elementId'
     document.getElementById(elementId).style.display='none';
+    document.getElementById('showAllCourses').style.display='inline';
 }
 
 function showAllCourseInfo () {
     //Temporarily hide "hide all" button to allow ajax calls to complete
     document.getElementById('hideAllCourses').style.display='none';
-    document.getElementById('hideLoading').style.display='block';
+    document.getElementById('showAllCourses').style.display='none';
+    document.getElementById('hideLoading').style.display='inline';
     setTimeout(function() {
+        document.getElementById('hideAllCourses').style.display='inline';
         document.getElementById('hideLoading').style.display='none';
-        document.getElementById('hideAllCourses').style.display='block';
-    }, 10000);
+    }, 15000);
     var courseElems = document.getElementsByClassName('courselink');
     for(i=0; i<courseElems.length; i++) {
         var courseElemClasses = courseElems[i].className;
@@ -53,6 +56,8 @@ function showAllCourseInfo () {
 }
 
 function hideAllCourseInfo() {
+    document.getElementById('showAllCourses').style.display='inline';
+    document.getElementById('hideAllCourses').style.display='none';
     var courseElems = document.getElementsByClassName('courselink');
     for(i=0; i<courseElems.length; i++) {
         courseElems[i].style.display='none';
@@ -119,19 +124,24 @@ function courseInfoAjax(query, elementId) {
                 quarter = "Not offered this year";
             }
         }
+        //Initialize title markup before converting '&' to '%26' for hyperlink in info box
         var exploreText = "For more info: visit ";
         subj = subj.toString();
+        var boldSpan = '<p><span style="font-weight:bold; text-decoration:underline;">';
+        var endSpan = '</span><span style="font-weight:normal;">';
+        var titleHtml = boldSpan+subj+' '+index+' '+endSpan;
+        //Change '&' in MS&E to '%26' for use in explore courses hyperlink (exploreLink)
         if (subj.indexOf("&")!= -1) subj = subj.replace("&", "%26");
         var exploreLink = "http://explorecourses.stanford.edu/CourseSearch/search?view=catalog&q=" + subj + index;
         //Initialize html markup for course info
-        var titleHtml = '<p><span style="font-weight:bold; text-decoration:underline;">Title: </span>';
-        var descriptionHtml = '<p><span style="font-weight:bold; text-decoration:underline;">Description: </span>';
-        var gersHtml = '<p><span style="font-weight:bold; text-decoration:underline;">GERs: </span>';
-        var unitsHtml = '<p><span style="font-weight:bold; text-decoration:underline;">Units: </span>';
-        var gradeHtml = '<p><span style="font-weight:bold; text-decoration:underline;">Grading basis: </span>';
-        var quarterHtml = '<p><span style="font-weight:bold; text-decoration:underline;">Quarters offered: </span>';
+        var descriptionHtml = boldSpan+'Description: '+endSpan;
+        var gersHtml = boldSpan+'GERs: '+endSpan;
+        var unitsHtml = boldSpan+'Units: '+endSpan;
+        var gradeHtml = boldSpan+'Grading basis: '+endSpan;
+        var quarterHtml = boldSpan+'Quarters offered: '+endSpan;
+        var endLineMarkup = '</span></p>'
         //Fill in appropriate data gathered above and insert it into query div
-        var courseInfo = titleHtml+title+'</p>'+descriptionHtml+description+'</p>'+gersHtml+gers+'</p>'+unitsHtml+units+'</p>'+gradeHtml+grade+'</p>'+quarterHtml+quarter+'</p><p>'+exploreText+'<a href='+exploreLink+'>'+exploreLink+'</a></p>';
+        var courseInfo = titleHtml+title+endLineMarkup+descriptionHtml+description+endLineMarkup+gersHtml+gers+endLineMarkup+unitsHtml+units+endLineMarkup+gradeHtml+grade+endLineMarkup+quarterHtml+quarter+endLineMarkup+'<p><span style="font-weight:normal;">'+exploreText+'<a href='+exploreLink+'>'+exploreLink+'</a>'+endLineMarkup;
         document.getElementById(elementId).innerHTML=courseInfo;
     }
     
@@ -159,7 +169,7 @@ function courseInfoAjax(query, elementId) {
     function getQuarter(current) {
         var quarter = "";
         current.find("section").each(function() {
-            if($(this).find("component").text()=="LEC" || $(this).find("component").text()=="SEM") {
+            if($(this).find("component").text()=="LEC" || $(this).find("component").text()=="SEM" || $(this).find("component").text()=="RES") {
                 var tempQuarter = $(this).find("term").text();
                 if(quarter.search(tempQuarter)== -1) {
                     quarter += '<p>&nbsp;&nbsp;&nbsp;&nbsp;'+tempQuarter;
@@ -186,11 +196,11 @@ function courseInfoAjax(query, elementId) {
 </script>
 
 {% ifagentcan 'view TextDocument.body' item %}
-    <button id="showAllCourses" title="Click to see course info including schedule and description for all courses below (allow some time for loading)" onclick="showAllCourseInfo(); return false;" href="#">Click to see course info for all courses below</button>
-    <br/>
-    <div id="hideLoading" style="display:none;">Loading ExploreCourses info...</div>
-    <button id="hideAllCourses" title="Click to hide course info for all courses below" onclick="hideAllCourseInfo(); return false;" href="#">Click to hide course info for all courses below</button>
-    
+    <div id="buttons" style="margin-top:20px; margin-left:10px;">
+    <button id="showAllCourses" title="Click to see course info including schedule and description for all courses below (allow some time for loading)" onclick="showAllCourseInfo(); return false;" href="#">Show all course info</button>
+    <div id="hideLoading" style="display:none;">Loading ExploreCourses data...</div>
+    <button id="hideAllCourses" style="display:none;" title="Click to hide course info for all courses below" onclick="hideAllCourseInfo(); return false;" href="#">Hide all course info </button>
+    </div>
     <div id="docbody" style="padding: 10px;">{{ body|safe }}</div>
 {% endifagentcan %}
 
