@@ -32,11 +32,15 @@
     {% endifagentcan %}
 
     {% if item.original_photo %}
+    {% if item.original_photo.active %}
     {% ifagentcan 'view SymsysCareer.original_photo' item %}
+    {% ifagentcan 'view FileDocument.datafile' item.original_photo %}
     <li class="outerlist">
         <a href="{{ item.original_photo.get_absolute_url }}"><img src="{{ item.original_photo.datafile.url }}" style="border: thick solid #000; max-width: 150px; max-height: 150px;" /></a>
     </li>
     {% endifagentcan %}
+    {% endifagentcan %}
+    {% endif %}
     {% endif %}
 
     {% if item.thesis %}
