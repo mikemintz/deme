@@ -38,18 +38,20 @@ $(document).ready(function () {
   $("#jqgrid_list_collection_{{ item.pk }}").jqGrid({
     url: '{% url item_type_url viewer="item",action="grid",format="json" %}',
     postData: {
-      fields: 'name,creator',
+      fields: 'name,creator,created_at',
       filter: 'memberships.collection.{{ item.pk }}',
     },
     datatype: "json",
     colNames: [
       'Item name',
       'Creator',
+      'Created at',
       'Actions',
     ],
     colModel: [
       {name: 'name', index: 'name'},
       {name: 'creator', index: 'creator'},
+      {name: 'created_at', index: 'created_at'},
       {name: 'actions', index: 'actions', sortable: false},
     ],
     rowNum: 50,
