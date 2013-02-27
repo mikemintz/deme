@@ -95,7 +95,7 @@ class NewsRollViewer(ItemViewer):
         else:
             visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-        members = collection.all_contained_collection_members(recursive_filter).order_by('-created_at')
+        members = collection.all_contained_collection_members(recursive_filter).filter(active=True).order_by('-created_at')
 
         p = Paginator(members, 10)
 
