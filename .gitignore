@@ -5,3 +5,5 @@ settings.py
 venv/
 deme_django/static/crystal_project/
 deme_django/static/javascripts/tinymce/
+deme_django/rundev.sh
+deme_django/script/reset_db_mh.sh
