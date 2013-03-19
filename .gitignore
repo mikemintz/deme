@@ -2,3 +2,6 @@
 settings.py
 .*.swp
 .DS_Store
+venv/
+deme_django/static/crystal_project/
+deme_django/static/javascripts/tinymce/
