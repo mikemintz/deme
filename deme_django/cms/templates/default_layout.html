@@ -12,7 +12,7 @@
     <title>Deme{% if action_title %} &raquo; {{ action_title }}{% endif %}</title>
     {% endif %}
 
-    
+
     <link rel="shortcut icon" href="{% block favicon %}{% if item %}{{ item.actual_item_type|icon_url:24 }}{% else %}{{ accepted_item_type|icon_url:24 }}{% endif %}{% endblock favicon %}" type="image/x-icon" />
     <!--<link rel="shortcut icon" href="{% media_url "favicon.ico" %}" type="image/x-icon" />-->
 
@@ -41,7 +41,7 @@
 
                 $('a#showhidetrigger').click(function () {
                     $('#showhidetarget').toggle(400);
-                
+
                     if($.browser.safari)
                     {
                     $("#showhidetarget").html("<p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>");
@@ -53,7 +53,7 @@
                     if($.browser.msie)
                     {
                     $("#showhidetarget").html("<p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>");
-                        
+
                     }
                     if(navigator.userAgent.toLowerCase().indexOf('chrome') > -1)
                     {
@@ -63,8 +63,8 @@
                 });
             });
         </script>
-                    
-             
+
+
         </script>
     <link href="{% media_url "stylesheets/fg.menu.css" %}" media="screen" rel="stylesheet" type="text/css" />
     <!-- style exceptions for IE 6 -->
@@ -73,8 +73,8 @@
         .fg-menu-ipod .fg-menu li { width: 95%; }
         .fg-menu-ipod .ui-widget-content { border:0; }
     </style>
-    <![endif]-->    
-    
+    <![endif]-->
+
     {% if item %}
     <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}" />
     {% endif %}
@@ -87,17 +87,17 @@
             //all hover and click logic for buttons
             $(".fg-button:not(.ui-state-disabled)")
             .hover(
-                function(){ 
-                    $(this).addClass("ui-state-hover"); 
+                function(){
+                    $(this).addClass("ui-state-hover");
                 },
-                function(){ 
-                    $(this).removeClass("ui-state-hover"); 
+                function(){
+                    $(this).removeClass("ui-state-hover");
                 }
             )
             .mousedown(function(){
                     $(this).parents('.fg-buttonset-single:first').find(".fg-button.ui-state-active").removeClass("ui-state-active");
                     if( $(this).is('.ui-state-active.fg-button-toggleable, .fg-buttonset-multi .ui-state-active') ){ $(this).removeClass("ui-state-active"); }
-                    else { $(this).addClass("ui-state-active"); }   
+                    else { $(this).addClass("ui-state-active"); }
             })
             .mouseup(function(){
                 if(! $(this).is('.fg-button-toggleable, .fg-buttonset-single .fg-button,  .fg-buttonset-multi .fg-button') ){
@@ -149,8 +149,8 @@
                 },
             });
         });
-    </script> 
-    
+    </script>
+
     <script type="text/javascript">
 
      function resizeText(multiplier) {
@@ -197,9 +197,9 @@
 <body>
 
 {% if item %}
-<div id="fixed_right_pane" style="position: fixed; overflow-y: auto; top: 90px; bottom: 10px; right: 10px; width: 0%; display: none;">
+<div id="fixed_right_pane" style="position: fixed; overflow-y: auto; top: 90px; bottom: 10px; right: 10px; width: 0%; display: none; z-index: 999;">
     <div class="ui-helper-clearfix" style="font-size: 60%; float: right;">
-        
+
         <a href="#" id="increasebutton" onclick="increase_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Show"><span class="ui-icon ui-icon-arrowthickstop-1-w"></span> Show</a>
         <a href="#" id="decreasebutton" onclick="decrease_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Hide"><span class="ui-icon ui-icon-arrowthickstop-1-e"></span> Hide</a>
         <a href="#" id="closebutton" onclick="hide_fixed_right_pane(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Close"><span class="ui-icon ui-icon-circle-close"></span> Close</a>
@@ -313,12 +313,12 @@
     <div class="bs" >
         {% crumbs %}
      </div>
-    
+
 
 </div>
 
 <div class="HiddenMenu" id="HiddenNewItemMenu" style="position: fixed; top: 73px; left: 220px; right: 20px; padding: 10px; background: #fff; border: thin ridge gray; -moz-box-shadow: 5px 3px 3px #ccc; -webkit-box-shadow: 5px 3px 3px #ccc;box-shadow: px 3px 3px #ccc; display: none;">
-    <div style="float:right; height: 5px; font-size: 20%;"> 
+    <div style="float:right; height: 5px; font-size: 20%;">
         <a href="#" id="closebutton" onclick="toggleNewItemMenu('HiddenNewItemMenu'); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Close"><span class="ui-icon ui-icon-close"></span> Close</a>
     </div>
     <div style="float:left;">
@@ -331,7 +331,7 @@
         <div style="clear: both;"></div>
     </div>
 
-    
+
     <div style="clear: both;"></div>
 </div>
 
@@ -426,7 +426,7 @@
                             <td style="vertical-align: bottom; padding: 0; padding-left: 5px;" colspan="2">
                                 <div style="clear: both;"></div>
                                 <div class="title">
-                                    {% block title %} 
+                                    {% block title %}
                                     {% if item %}
                                     <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
                                     {% else %}
@@ -450,10 +450,10 @@
 <div style="clear: both;"></div>
 <div class ="chat" style="width: 200px; margin: 0; position: fixed; bottom: 0;">
     <div class="ui-widget-header ui-corner-top ui-helper-clearfix" id="chatHeader" style="padding: 5px;">
-        Chat 
+        Chat
         <a id="expandChat" onclick="toggleChat('chatBody'); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Expand_Chat" style="float: right; height: 10px;"><span class="ui-icon ui-icon-circle-triangle-n" id="expandChatButton" style= "height: 20px;"></span>Expand Chat</a>
-        
-       
+
+
     </div>
     <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" id="chatBody" style="padding: 5px; display:none;">
         {% chat_box %}
