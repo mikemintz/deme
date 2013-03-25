@@ -13,7 +13,7 @@
     </div>
 {% endifagentcan %}
 
-<table style="border: 2px solid #000;">
+<table style="border: 2px solid #000; table-layout: fixed;">
     <tr>
         <td style="background-color: #ccc; font-weight: bold; border-right: 2px solid #000;">Discussion Topics</td>
         <td style="background-color: #ccc; font-weight: bold; border-right: 2px solid #000;">Replies</td>
@@ -21,7 +21,7 @@
     </tr>
     {% for discussion in discussions %}
     <tr>
-        <td style="background-color: #{% cycle 'eee' 'fff' as rowcolor %}; border-right: 2px solid #000;">
+        <td style="background-color: #{% cycle 'eee' 'fff' as rowcolor %}; border-right: 2px solid #000; text-overflow: ellipsis; overflow: hidden;">
             <a href="{% url item_url viewer="discussionboardcomment",action="show",noun=discussion.comment.pk %}?discussion_board={{ item.pk }}">{{ discussion.comment.name|truncatewords:10 }}</a>
             <br />
             <nobr>By {% viewable_name discussion.comment.creator %}</nobr>
