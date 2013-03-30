@@ -77,7 +77,7 @@ div.title img {
 div.title a {
    text-decoration: none;
    color: black;
-   
+
 }
 
 div.metadata_content {
@@ -108,11 +108,11 @@ button.fg-button { width:auto; overflow:visible; }
 .fg-button-icon-left .ui-icon { right: auto; left: .2em; margin-left: 0; }
 .fg-button-icon-right .ui-icon { left: auto; right: .2em; margin-left: 0; }
 
-.fg-button-icon-solo { display:block; width:8px; text-indent: -9999px; }	 /* solo icon buttons must have block properties for the text-indent to work */	
+.fg-button-icon-solo { display:block; width:8px; text-indent: -9999px; }	 /* solo icon buttons must have block properties for the text-indent to work */
 
 .fg-buttonset { float:left; }
 .fg-buttonset .fg-button { float: left; }
-.fg-buttonset-single .fg-button, 
+.fg-buttonset-single .fg-button,
 .fg-buttonset-multi .fg-button { margin-right: -1px;}
 
 .fg-toolbar { padding: .5em; margin: 0;  }
@@ -204,6 +204,15 @@ table.twocol tr th {
 }
 table.twocol tr td {
     padding: 3px;
+}
+
+table.search-items .item-type-container span {
+  white-space: nowrap;
+  background: #fcfcfc;
+  border-radius: 5px;
+  padding: .1em .75em;
+  margin: 0 0 .25em .25em;
+  display: inline-block;
 }
 
 form.item_form table tr {

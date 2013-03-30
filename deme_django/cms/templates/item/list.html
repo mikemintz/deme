@@ -4,20 +4,20 @@
 
 <div style="border: thin solid #aaa; background: #eee; padding: 10px; margin-bottom: 10px;">
 <form method="get" name="list_filter_form">
-<table cellspacing="0" class="twocol">
+<table cellspacing="0" class="twocol search-items">
     <tr>
         <th>
             Item Type Filter:
         </th>
-        <td>
+        <td class="item-type-container">
             {% for item_type in item_types %}
-            <span>[
+            <span>
             {% ifequal item_type.item_type accepted_item_type %}
             <b>{{ item_type.name_plural|capfirst }}</b>
             {% else %}
             <a href="{% url item_type_url viewer=item_type.viewer %}">{{ item_type.name_plural|capfirst }}</a>
             {% endifequal %}
-            ]</span>
+            </span>
             {% endfor %}
         </td>
     </tr>
