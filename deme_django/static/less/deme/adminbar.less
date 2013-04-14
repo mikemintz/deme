@@ -1,22 +1,23 @@
 .adminbar {
   #gradient .vertical(@adminbar-top, @adminbar-bottom);
   border-radius: 0;
-  //color: @white;
-  //position: fixed; top: 0px; left: 215px; right: 10px; height: 50px; padding: 10px; background: #fff; border: thin ridge gray; -moz-box-shadow: 5px 3px 3px #ccc; -webkit-box-shadow: 5px 3px 3px #ccc;box-shadow: px 3px 3px #ccc;
+  padding: 0;
   .nav {
     > li > a {
-      color: @grayLighter;
-      text-shadow: 0 -1px fade(@black, 50%);
+      text-shadow: 0 -1px fade(@black, 25%);
       font-size: 18px;
-      &:hover {
-        //color: #ff9;
+      border-right: 1px solid fade(@black, 15%);
+      border-left:  1px solid fade(@white, 15%);
+      &:hover, &:active {
+        //#gradient .vertical(@adminbar-top-active, @adminbar-bottom-active);
       }
     }
-    .dropdown-wrap {
-      position: relative;
-      .caret {
-        border-top-color: @grayLighter;
-        margin-top: 10px;
+    .dropdown-menu {
+      .demeicon, .glyphicon {
+        padding-right: 5px;
+      }
+      a {
+        white-space: nowrap;
       }
     }
   }
