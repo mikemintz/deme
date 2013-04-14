@@ -1,11 +1,23 @@
 .adminbar {
   #gradient .vertical(@adminbar-top, @adminbar-bottom);
   border-radius: 0;
-  color: @white;
+  //color: @white;
   //position: fixed; top: 0px; left: 215px; right: 10px; height: 50px; padding: 10px; background: #fff; border: thin ridge gray; -moz-box-shadow: 5px 3px 3px #ccc; -webkit-box-shadow: 5px 3px 3px #ccc;box-shadow: px 3px 3px #ccc;
   .nav {
     > li > a {
-      color: @white;
+      color: @grayLighter;
+      text-shadow: 0 -1px fade(@black, 50%);
+      font-size: 18px;
+      &:hover {
+        //color: #ff9;
+      }
+    }
+    .dropdown-wrap {
+      position: relative;
+      .caret {
+        border-top-color: @grayLighter;
+        margin-top: 10px;
+      }
     }
   }
 }
