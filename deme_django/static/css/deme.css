@@ -4844,7 +4844,7 @@ you can use the generic selector below, but it's slower:
   text-align: left;
   background: none;
   font-size: 12px;
-  padding: 5px 10px;
+  padding: 2px 10px;
 }
 #metabar .section > button.header .icon {
   font-size: 9px;
@@ -4866,11 +4866,17 @@ you can use the generic selector below, but it's slower:
   transform: rotate(0deg);
 }
 #metabar .section > .collapse {
-  margin: 0 10px;
+  margin: 0;
+}
+#metabar .section > .collapse .content {
+  margin: 10px;
 }
 #metabar .section > .collapse h3 {
   font-size: 1em;
   line-height: 1;
   margin: 0;
   font-weight: bold;
+}
+#metabar .section > .collapse#metadata_content_item_details h3:first-child {
+  display: none;
 }

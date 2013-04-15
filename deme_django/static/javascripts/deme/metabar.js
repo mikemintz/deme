@@ -68,11 +68,11 @@ $(function(){
       var target = $this.attr('data-target');
       var name = target.replace('#metadata_content_', '');
       var url = metabar_ajax_url(name);
-      $this.next('.collapse').html('Loading&hellip;');
+      $this.next('.collapse').find('.content').html('Loading&hellip;');
       $.ajax({
         url: url,
         success: function(data) {
-          $this.next('.collapse').html(data);
+          $this.next('.collapse').find('.content').html(data);
         }
       })
       $this.addClass('ajax-loaded');
