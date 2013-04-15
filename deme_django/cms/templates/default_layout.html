@@ -198,156 +198,139 @@
     {% endblock %}
 </head>
 
-<body>
+  <body>
+    <div id="overall-wrap">
+      <div id="overall">
 
-{% include "adminbar/bar.html" %}
+        {% include "includes/adminbar.html" %}
 
-{% if item %}
-<div id="fixed_right_pane" style="position: fixed; overflow-y: auto; top: 90px; bottom: 10px; right: 10px; width: 0%; display: none; z-index: 1;">
-    <div class="ui-helper-clearfix" style="font-size: 60%; float: right;">
+        <div class="site_outer">
+        <div class="site_inner" {% if item %}style="width: 97%;"{% endif %}>
 
-        <a href="#" id="increasebutton" onclick="increase_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Show"><span class="ui-icon ui-icon-arrowthickstop-1-w"></span> Show</a>
-        <a href="#" id="decreasebutton" onclick="decrease_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Hide"><span class="ui-icon ui-icon-arrowthickstop-1-e"></span> Hide</a>
-        <a href="#" id="closebutton" onclick="hide_fixed_right_pane(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Close"><span class="ui-icon ui-icon-circle-close"></span> Close</a>
-    </div>
-    <div style="clear: both;"></div>
-    <div class="metadata_content metadata_content_item_details" style="display: none;">
-    </div>
-    <div class="metadata_content metadata_content_comments" style="display: none;">
-    </div>
-    <div class="metadata_content metadata_content_action_notices" style="display: none;">
-    </div>
-    <div class="metadata_content metadata_content_versions" style="display: none;">
-    </div>
-    <div class="metadata_content metadata_content_related_items" style="display: none;">
-    </div>
-    <div class="metadata_content metadata_content_permissions" style="display: none;">
-    </div>
-</div>
-{% endif %}
+        <div class="content_box">
 
-<div class="site_outer">
-<div class="site_inner" {% if item %}style="width: 97%;"{% endif %}>
+            <table cellspacing="0">
+                <tr>
+                    <td style="vertical-align: top; width: 15%; padding:0;" id="left_table_column">
+                        <div style="margin-bottom: 10px;">
+                            <a href="/"><img src="{% media_url "spacer.gif" %}" alt="Deme Logo" style="height: 100px; width: 200px; border: 1px solid #aaa; background-color: #00c; -moz-border-radius: 8px; -webkit-border-radius: 8px;" /></a>
+                        </div>
+                        <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
+                            Recently Viewed
+                        </div>
+                        <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
+                            {% recently_viewed %}
+                        </div>
+                        <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
+                            Navigation
+                        </div>
+                        <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
+                            <ul style="list-style-type: none; margin: 0; padding: 0;">
+                                <li{% ifequal full_path "/"%} style="font-weight: bold;"{% endifequal %}><a href="/">Home</a></li>
+                                <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
+                                <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                    <td style="vertical-align: top; width: 85%; padding:0;" id="center_table_column">
+                        <div style="margin-top: 80px;">
+                            {% if layout_permissions_problem %}
+                            <div style="color: #a00; padding: 15px; margin: 15px; border: thin dotted #a00; text-align: center;">
+                                Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.
+                            </div>
+                            {% endif %}
+                            <table style="margin-bottom: 0;">
+                                <tr>
+                                    <td style="vertical-align: bottom; padding: 0; padding-left: 5px;" colspan="2">
+                                        <div style="clear: both;"></div>
+                                        <div class="title">
+                                            {% block title %}
+                                            {% if item %}
+                                            <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
+                                            {% else %}
+                                            <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
+                                            {% endif %}
+                                            {% endblock title %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <div style="padding: 0 5px 0 5px;">
+                                {% block content %}
+                                {% endblock %}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
 
-<div class="content_box">
-
-    <table cellspacing="0">
-        <tr>
-            <td style="vertical-align: top; width: 15%; padding:0;" id="left_table_column">
-                <div style="margin-bottom: 10px;">
-                    <a href="/"><img src="{% media_url "spacer.gif" %}" alt="Deme Logo" style="height: 100px; width: 200px; border: 1px solid #aaa; background-color: #00c; -moz-border-radius: 8px; -webkit-border-radius: 8px;" /></a>
-                </div>
-                <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
-                    Recently Viewed
-                </div>
-                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
-                    {% recently_viewed %}
-                </div>
-                <div class="ui-widget-header ui-corner-top ui-helper-clearfix" style="padding: 5px;">
-                    Navigation
-                </div>
-                <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" style="padding: 5px; margin-bottom: 10px;">
-                    <ul style="list-style-type: none; margin: 0; padding: 0;">
-                        <li{% ifequal full_path "/"%} style="font-weight: bold;"{% endifequal %}><a href="/">Home</a></li>
-                        <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
-                        <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
-                    </ul>
-                </div>
-            </td>
-            <td style="vertical-align: top; width: 85%; padding:0;" id="center_table_column">
-                <div style="margin-top: 80px;">
-                    {% if layout_permissions_problem %}
-                    <div style="color: #a00; padding: 15px; margin: 15px; border: thin dotted #a00; text-align: center;">
-                        Permissions Error: You are not authorized to view the layout, so this page is being displayed in the default layout.
-                    </div>
-                    {% endif %}
-                    <table style="margin-bottom: 0;">
-                        <tr>
-                            <td style="vertical-align: bottom; padding: 0; padding-left: 5px;" colspan="2">
-                                <div style="clear: both;"></div>
-                                <div class="title">
-                                    {% block title %}
-                                    {% if item %}
-                                    <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
-                                    {% else %}
-                                    <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
-                                    {% endif %}
-                                    {% endblock title %}
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                    <div style="padding: 0 5px 0 5px;">
-                        {% block content %}
-                        {% endblock %}
-                    </div>
-                </div>
-            </td>
-        </tr>
-    </table>
-
-</div>
-<div style="clear: both;"></div>
-<div class ="chat" style="width: 200px; margin: 0; position: fixed; bottom: 0;">
-    <div class="ui-widget-header ui-corner-top ui-helper-clearfix" id="chatHeader" style="padding: 5px;">
-        Chat
-        <a id="expandChat" onclick="toggleChat('chatBody'); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Expand_Chat" style="float: right; height: 10px;"><span class="ui-icon ui-icon-circle-triangle-n" id="expandChatButton" style= "height: 20px;"></span>Expand Chat</a>
+        </div>
+        <div style="clear: both;"></div>
+        <div class ="chat" style="width: 200px; margin: 0; position: fixed; bottom: 0;">
+            <div class="ui-widget-header ui-corner-top ui-helper-clearfix" id="chatHeader" style="padding: 5px;">
+                Chat
+                <a id="expandChat" onclick="toggleChat('chatBody'); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Expand_Chat" style="float: right; height: 10px;"><span class="ui-icon ui-icon-circle-triangle-n" id="expandChatButton" style= "height: 20px;"></span>Expand Chat</a>
 
 
-    </div>
-    <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" id="chatBody" style="padding: 5px; display:none;">
-        {% chat_box %}
-    </div>
-</div>
-
-<div class="footer">
-    <p>
-        <b>Desktop Browser</b>
-        {% if item %}
-        |
-        <a href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}">RSS</a>
-        {% endif %}
-        {% ifequal action 'list' %}
-        |
-        <a href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}?{{ query_string }}">RSS</a>
-        {% endifequal %}
-        |
-        <a href="#" onclick="resizeText(1); return false;">Increase text size</a>
-        |
-        <a href="#" onclick="resizeText(-1); return false;">Decrease text size</a>
-        |
-        <a href="#" id="showhidetrigger">Fullscreen</a>
-        |
-        <a href="javascript:function Sel(w){var s = '',i=0; try{if (w.getSelection) s = w.getSelection(); else s = w.document.getSelection(); i=w.frames.length; }catch(e){} while (((s == '')||(s == null)) && i--){s=Sel(w.frames[i]);}if (s == null) s='';return ''+s;};function Pop(url,title){win=window.open(url,title,'toolbar=no,width=800,height=600,scrollbars=yes,resizable=yes'); win.focus();};var s=Sel(this);if (s=='') void(s=prompt('Type a word for look up',''));if(s!=null) void(Pop('http://www.wordsmyth.net/?level=3&m=wn&ent='+escape(s), 'w_mini'));" class="wedt"><span>Dictionary/Thesaurus</span></a>
-        |
-        <a href="#" onclick="$('#google_translate_dialog').dialog({close: function(event, ui) {$('#google_translate_dialog').dialog('destroy')}}); return false;">Translate</a>
-        <div id="google_translate_dialog" title="Translate" style="display: none;">
-            <div id="google_translate_element">
+            </div>
+            <div class="ui-widget-content ui-corner-bottom ui-helper-clearfix" id="chatBody" style="padding: 5px; display:none;">
+                {% chat_box %}
             </div>
         </div>
-        <script>
-        function googleTranslateElementInit() {
-          new google.translate.TranslateElement({
-            pageLanguage: 'en',
-            layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-          }, 'google_translate_element');
-        }
-        </script><script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-    </p>
-    <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
-</div>
-  <div id="showhidetarget">
 
-    <p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option      labeled Full Screen.</p>
-    <p>For Chrome users:Click on the Chrome "wrench" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>
-    <p>For Firefox user:Click on the View menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>
-    <p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>
-  </div>
-</div>
-</div>
+        <div class="footer">
+            <p>
+                <b>Desktop Browser</b>
+                {% if item %}
+                |
+                <a href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}">RSS</a>
+                {% endif %}
+                {% ifequal action 'list' %}
+                |
+                <a href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}?{{ query_string }}">RSS</a>
+                {% endifequal %}
+                |
+                <a href="#" onclick="resizeText(1); return false;">Increase text size</a>
+                |
+                <a href="#" onclick="resizeText(-1); return false;">Decrease text size</a>
+                |
+                <a href="#" id="showhidetrigger">Fullscreen</a>
+                |
+                <a href="javascript:function Sel(w){var s = '',i=0; try{if (w.getSelection) s = w.getSelection(); else s = w.document.getSelection(); i=w.frames.length; }catch(e){} while (((s == '')||(s == null)) && i--){s=Sel(w.frames[i]);}if (s == null) s='';return ''+s;};function Pop(url,title){win=window.open(url,title,'toolbar=no,width=800,height=600,scrollbars=yes,resizable=yes'); win.focus();};var s=Sel(this);if (s=='') void(s=prompt('Type a word for look up',''));if(s!=null) void(Pop('http://www.wordsmyth.net/?level=3&m=wn&ent='+escape(s), 'w_mini'));" class="wedt"><span>Dictionary/Thesaurus</span></a>
+                |
+                <a href="#" onclick="$('#google_translate_dialog').dialog({close: function(event, ui) {$('#google_translate_dialog').dialog('destroy')}}); return false;">Translate</a>
+                <div id="google_translate_dialog" title="Translate" style="display: none;">
+                    <div id="google_translate_element">
+                    </div>
+                </div>
+                <script>
+                function googleTranslateElementInit() {
+                  new google.translate.TranslateElement({
+                    pageLanguage: 'en',
+                    layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+                  }, 'google_translate_element');
+                }
+                </script><script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+            </p>
+            <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
+        </div>
+          <div id="showhidetarget">
 
+            <p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option      labeled Full Screen.</p>
+            <p>For Chrome users:Click on the Chrome "wrench" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>
+            <p>For Firefox user:Click on the View menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>
+            <p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>
+          </div>
+        </div>
+        </div>
 
-</body>
+      </div><!-- /#overall -->
 
+      {% if item %}
+        {% include "includes/metabar.html" %}
+      {% endif %}
+
+    </div><!-- /#overall-wrap -->
+  </body>
 </html>
 
