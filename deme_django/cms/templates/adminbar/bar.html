@@ -1,14 +1,16 @@
 {% load item_tags %}
 {% load chat_extras %}
 <div class="adminbar navbar navbar-inverse">
-  <ul class="nav pull-left">
-    <li><a href="#"><i class="demeicon demeicon-text-size"></i></a></li>
-    <li><a href="#"><i class="glyphicon glyphicon-search"></i></a></li>
-  </ul>
+  <div class="left-wrap">
+    <ul class="nav pull-left search">
+      <li><a href="#"><i class="demeicon demeicon-text-size"></i></a></li>
+      <li><a href="#"><i class="glyphicon glyphicon-search"></i></a></li>
+    </ul>
 
-  <ul class="nav pull-left breadcrumbs">
-    {% crumbs %}
-  </ul>
+    <ul class="nav pull-left breadcrumbs">
+      {% crumbs %}
+    </ul>
+  </div>
 
   <ul class="nav pull-right actions-wrap">
     <li class="dropdown">
@@ -118,12 +120,6 @@
         <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
         {# TODO add magnifying glass #}
     </form>
-    <br>
-    <br>
-    <div class="bs" >
-        {% crumbs %}
-     </div>
-
 
 </div>
 

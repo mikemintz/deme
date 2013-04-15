@@ -4675,12 +4675,22 @@ you can use the generic selector below, but it's slower:
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
   border-radius: 0;
   padding: 0;
+  height: 41px;
+}
+.adminbar .left-wrap {
+  position: absolute;
+  left: 0;
+}
+.adminbar .nav {
+  white-space: nowrap;
 }
 .adminbar .nav > li > a {
   text-shadow: 0 -1px rgba(0, 0, 0, 0.25);
-  font-size: 18px;
+  font-size: 16px;
   border-right: 1px solid rgba(0, 0, 0, 0.15);
   border-left: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 .adminbar .nav .dropdown-menu .demeicon,
 .adminbar .nav .dropdown-menu .glyphicon {
@@ -4691,6 +4701,16 @@ you can use the generic selector below, but it's slower:
 }
 .adminbar .nav.actions-wrap {
   border-left: 1px solid rgba(0, 0, 0, 0.15);
+  position: absolute;
+  right: 0;
+  background-color: #29687e;
+  background-image: -moz-linear-gradient(top, #68a7bd, #29687e);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#68a7bd), to(#29687e));
+  background-image: -webkit-linear-gradient(top, #68a7bd, #29687e);
+  background-image: -o-linear-gradient(top, #68a7bd, #29687e);
+  background-image: linear-gradient(to bottom, #68a7bd, #29687e);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
 }
 .adminbar .nav.breadcrumbs {
   border-left: 1px solid rgba(255, 255, 255, 0.15);

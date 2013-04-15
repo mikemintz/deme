@@ -2,12 +2,20 @@
   #gradient .vertical(@adminbar-top, @adminbar-bottom);
   border-radius: 0;
   padding: 0;
+  height: 41px;
+  .left-wrap {
+    position: absolute;
+    left: 0;
+  }
   .nav {
+    white-space: nowrap;
     > li > a {
       text-shadow: 0 -1px fade(@black, 25%);
-      font-size: 18px;
+      font-size: 16px;
       border-right: 1px solid fade(@black, 15%);
       border-left:  1px solid fade(@white, 15%);
+      padding-top: 10px;
+      padding-bottom: 10px;
       &:hover, &:active {
         //#gradient .vertical(@adminbar-top-active, @adminbar-bottom-active);
       }
@@ -22,6 +30,9 @@
     }
     &.actions-wrap {
       border-left: 1px solid fade(@black, 15%);
+      position: absolute;
+      right: 0;
+      #gradient .vertical(@adminbar-top, @adminbar-bottom);
     }
     &.breadcrumbs {
       border-left: 1px solid fade(@white, 15%);
