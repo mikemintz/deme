@@ -95,12 +95,12 @@ def is_method_defined_and_not_inherited_in_class(method_name, class_object):
 def icon_url(item_type, size=32):
     """
     Return a URL for an icon for the item type, size x size pixels.
-    
+
     The item_type can either be a string for the name of the item type, or it
     can be a class. If nothing matches, return the generic Item icon.
-    
+
     Special strings, such as "error" and "history", are set to specific icons.
-    
+
     Not all sizes are available (look at static/crystal_project).
     """
     item_type_to_icon = {
@@ -314,7 +314,7 @@ def comment_dicts_for_item(item, version_number, context, include_recursive_coll
             if include_recursive_collection_comments:
                 related_fields.extend(['item'])
             #TODO the following line breaks on Django 1.2.5 due to https://code.djangoproject.com/ticket/13781 . Uncomment it when fixed, for improved performance of displaying comments
-            #new_comments = new_comments.select_related(*related_fields) 
+            #new_comments = new_comments.select_related(*related_fields)
             comments.extend(new_comments)
     comments.sort(key=lambda x: x.created_at)
     transclusions_to = Transclusion.objects.filter(to_item__in=[x.pk for x in comments])
@@ -409,9 +409,9 @@ class ActionsMenu(template.Node):
                 <div id="subscribe_dialog" style="display: none;" title="Subscribe to '%s'">
                     <div style="font-size: 9pt;">Subscriptions send emails to the email contact method specified below for every new notification on this item</div>
                     <br>
-                    <form method="post" action="%s?redirect=%s"> 
+                    <form method="post" action="%s?redirect=%s">
                         <input type="hidden" name="item" value="%s" />
-                        Contact Method: %s 
+                        Contact Method: %s
                         <a href="%s" style="float: right; font-size: 9pt;">Advanced</a>
                         <input type="submit" value="Submit" />
                     </form>
@@ -419,9 +419,9 @@ class ActionsMenu(template.Node):
                 """ % (item_name, reverse('item_type_url', kwargs={'viewer':'subscription', 'action':'dialogcreate'}), context['full_path'], item.pk, AjaxModelChoiceField(EmailContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=['add_subscription']).widget.render('email', None, {'id':'subscribe_email_field'}), subscribe_url))
 
             result.append( """
-            <div style="display: none;" id="additemtocollection%(item.pk)s"> 
-            <form method="post" action="%(create_url)s?redirect=%(full_path)s"> 
-                Collection: %(ajax_field)s 
+            <div style="display: none;" id="additemtocollection%(item.pk)s">
+            <form method="post" action="%(create_url)s?redirect=%(full_path)s">
+                Collection: %(ajax_field)s
                 <input type="hidden" name="item" value="%(item.pk)s" /><br><br>
                 <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddtocollection%(item.pk)s'); return false;">Advanced</a>
                 <div style="display: none;" id="advancedaddtocollection%(item.pk)s">
@@ -438,7 +438,7 @@ class ActionsMenu(template.Node):
                 'create_url': reverse('item_type_url', kwargs={'viewer':'membership', 'action':'itemmembercreate'}),
                 'ajax_field': AjaxModelChoiceField(Collection.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('collection', None, {'id':'add_item_to_collection_collection_field'}),
              })
-            
+
             result.append("""
                 <script type="text/javascript">
                     $(function() {
@@ -692,9 +692,9 @@ class NewMemberDialog(template.Node):
         result = []
 
         result.append( """
-            <div style="display: none;" id="addmember%(item.pk)s"> 
-            <form method="post" action="%(create_url)s?redirect=%(full_path)s"> 
-                Item: %(ajax_field)s 
+            <div style="display: none;" id="addmember%(item.pk)s">
+            <form method="post" action="%(create_url)s?redirect=%(full_path)s">
+                Item: %(ajax_field)s
                 <input type="hidden" name="collection" value="%(item.pk)s" /><br><br>
                 <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedaddmember%(item.pk)s'); return false;">Advanced</a>
                 <div style="display: none;" id="advancedaddmember%(item.pk)s">
@@ -722,7 +722,7 @@ class CalculateComments(template.Node):
         return "<CalculateCommentsNode>"
 
     def render(self, context):
-        from cms.forms import CaptchaField 
+        from cms.forms import CaptchaField
         item = context['item']
         version_number = item.version_number
         full_path = context['original_full_path']
@@ -968,7 +968,7 @@ class CalculateRelationships(template.Node):
             for related_item in relationship_set['items']:
                 result.append('<div>%s</div>' % get_item_link_tag(context, related_item))
                 if friendly_name == "Member of":
-                    memberOf.append('<div>%s</div>' % get_item_link_tag(context, related_item))             
+                    memberOf.append('<div>%s</div>' % get_item_link_tag(context, related_item))
         result.append("</div>")
         context['memberOf_box'] = mark_safe('\n'.join(memberOf))
         return '\n'.join(result)
@@ -1397,7 +1397,7 @@ class PermissionEditor(template.Node):
                 can_edit_permissions = True
             else:
                 can_edit_permissions = agentcan_helper(context, 'do_anything', target)
-        
+
         agents = Agent.objects.filter(pk__in=set(x.source_id for x in agent_permissions))
         collections = Collection.objects.filter(pk__in=set(x.source_id for x in collection_permissions))
 
@@ -1671,9 +1671,9 @@ class Crumbs(template.Node):
         if not filter_parameter:
             top_level_item_type_url = reverse('item_type_url', kwargs={'viewer': 'item'})
             item_type_url = reverse('item_type_url', kwargs={'viewer': item_type.__name__.lower()})
-            result.append(u'<a href="%s">%s</a>' % (top_level_item_type_url, capfirst(Item._meta.verbose_name_plural)))
+            result.append(u'<li><a href="%s">%s</a></li>' % (top_level_item_type_url, capfirst(Item._meta.verbose_name_plural)))
             if item_type != Item:
-                result.append(u' &raquo; <a href="%s">%s</a>' % (item_type_url, capfirst(item_type._meta.verbose_name_plural)))
+                result.append(u'<li><a href="%s">%s</a></li>' % (item_type_url, capfirst(item_type._meta.verbose_name_plural)))
         else:
             filter_string = str(filter_parameter) # Unicode doesn't work here
             parts = filter_string.split('.')
@@ -1727,17 +1727,17 @@ class Crumbs(template.Node):
                     field_name = field.verbose_name + u's'
                 else:
                     field_name = field.related_name
-                result.append(u' &raquo; <a href="%s">' % subfilter_url)
+                result.append(u'<li><a href="%s"></li>' % subfilter_url)
                 result.append(capfirst(field_name.replace('_', ' ')))
                 result.append('</a>')
         action_title = context['action_title']
         if viewer.item:
-            result.append(u' &raquo; %s' % get_item_link_tag(context, viewer.item))
+            result.append(u'<li>%s</li>' % get_item_link_tag(context, viewer.item))
             if context['specific_version']:
                 version_url = '%s?version=%d' % (viewer.item.get_absolute_url(), viewer.item.version_number)
-                result.append(u' &raquo; <a href="%s">v%d</a>' % (version_url, viewer.item.version_number))
+                result.append(u'<li><a href="%s">v%d</a></li>' % (version_url, viewer.item.version_number))
         if action_title:
-            result.append(u' &raquo; %s' % action_title)
+            result.append(u'<li>%s</li>' % action_title)
         return ''.join(result)
 
 @register.tag
@@ -1941,7 +1941,7 @@ class DisplayDiff(template.Node):
 
     def __repr__(self):
         return "<DisplayDiffNode>"
-        
+
     def render(self, context):
         try:
             item = self.item.resolve(context)
@@ -2017,7 +2017,7 @@ class DisplayDiff(template.Node):
             reference_html = value_to_html(reference_value)
             new_html = value_to_html(new_value)
             return mark_safe(u'<del style="background:#ffe6e6;">%s</del> <ins style="background: #e6ffe6;">%s</ins>' % (reference_html, new_html))
-        
+
     def text_field_difference(self, context, reference_value, new_value, is_html):
         import diff_match_patch
         if not is_html:
@@ -2088,7 +2088,7 @@ class DefaultCreateItemTypes(template.Node):
 
     def __repr__(self):
         return "<DefaultCreateItemTypesNode>"
-        
+
     def render(self, context):
         result = []
         item_type_names_string = DemeSetting.get("cms.default_create_item_types") or ""

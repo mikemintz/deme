@@ -4689,3 +4689,37 @@ you can use the generic selector below, but it's slower:
 .adminbar .nav .dropdown-menu a {
   white-space: nowrap;
 }
+.adminbar .nav.actions-wrap {
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+}
+.adminbar .nav.breadcrumbs {
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+.adminbar .nav.breadcrumbs > li {
+  background-color: #49869c;
+  background-image: -moz-linear-gradient(top, #8ac9df, #49869c);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#8ac9df), to(#49869c));
+  background-image: -webkit-linear-gradient(top, #8ac9df, #49869c);
+  background-image: -o-linear-gradient(top, #8ac9df, #49869c);
+  background-image: linear-gradient(to bottom, #8ac9df, #49869c);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff8ac9df', endColorstr='#ff49869c', GradientType=0);
+}
+.adminbar .nav.breadcrumbs > li:first-child {
+  margin-left: 5px;
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+}
+.adminbar .nav.breadcrumbs > li:first-child > a {
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+}
+.adminbar .nav.breadcrumbs > li > a {
+  background-image: url('../img/breadcrumb-right.png');
+  background-repeat: no-repeat;
+  background-position: right center;
+  border: 0;
+}
+.adminbar .nav.breadcrumbs > li:last-child > a {
+  background-image: none;
+  border-right: 1px solid rgba(0, 0, 0, 0.15);
+}

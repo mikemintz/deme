@@ -5,7 +5,12 @@
     <li><a href="#"><i class="demeicon demeicon-text-size"></i></a></li>
     <li><a href="#"><i class="glyphicon glyphicon-search"></i></a></li>
   </ul>
-  <ul class="nav pull-right">
+
+  <ul class="nav pull-left breadcrumbs">
+    {% crumbs %}
+  </ul>
+
+  <ul class="nav pull-right actions-wrap">
     <li class="dropdown">
       <a href="#" class="dropdown-toggle" data-toggle="dropdown">Actions <span class="caret"></span>
       </a>
@@ -27,6 +32,8 @@
   </ul>
 </div>
 
+
+<!-- start old stuff -->
 <div>
     <div style="float: right;">
         <div style="float: left;" id="actions_wrapper">
