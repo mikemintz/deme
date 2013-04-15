@@ -15,8 +15,47 @@ $(function(){
     start: function() {
       $metabar.addClass('noanim');
     },
-    stop: function() {
+    stop: function(ev, ui) {
       $metabar.removeClass('noanim');
+      var width = ui.size.width;
+      // save cookie
+      $.cookie('METABAR_WIDTH', width);
     }
   });
+
+  var past_width = $.cookie('METABAR_WIDTH');
+  if (past_width) {
+    $metabar.css('width', past_width);
+  }
+
+  // show/hide meta bar
+  function toggleMetabar(dir) {
+    if (typeof(dir) == 'undefined') {
+      $metabar.toggleClass('closed');
+    } else if (dir == 'close') {
+      $metabar.addClass('closed');
+    } else {
+      $metabar.removeClass('closed');
+    }
+    if ($metabar.hasClass('closed')) {
+      $('a.metabar-toggle').removeClass('active');
+      $.removeCookie('METABAR_VISIBLE');
+    } else {
+      $('a.metabar-toggle').addClass('active');
+      $.cookie('METABAR_VISIBLE', true);
+    }
+  }
+  // attach event to adminbar
+  $('.metabar-toggle').click(function(e){
+    e.preventDefault();
+    toggleMetabar();
+  });
+
+  // TODO: base open/close state on cookie
+  if ($.cookie('METABAR_VISIBLE')) {
+    toggleMetabar('open');
+  } else {
+    toggleMetabar('close');
+  }
+
 });

@@ -4691,6 +4691,16 @@ you can use the generic selector below, but it's slower:
   border-left: 1px solid rgba(255, 255, 255, 0.15);
   padding: 10px;
 }
+.adminbar .nav > li > a.active {
+  background-color: #17475b;
+  background-image: -moz-linear-gradient(top, #5c95ad, #17475b);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#5c95ad), to(#17475b));
+  background-image: -webkit-linear-gradient(top, #5c95ad, #17475b);
+  background-image: -o-linear-gradient(top, #5c95ad, #17475b);
+  background-image: linear-gradient(to bottom, #5c95ad, #17475b);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5c95ad', endColorstr='#ff17475b', GradientType=0);
+}
 .adminbar .nav .dropdown-menu .demeicon,
 .adminbar .nav .dropdown-menu .glyphicon {
   padding-right: 5px;
@@ -4792,6 +4802,33 @@ you can use the generic selector below, but it's slower:
   transition: none;
 }
 #metabar.closed {
-  width: 0px;
+  width: 0px !important;
   display: block;
+  overflow: hidden;
+}
+#metabar .title {
+  height: 41px;
+  white-space: nowrap;
+  background-color: #49869c;
+  background-image: -moz-linear-gradient(top, #8ac9df, #49869c);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#8ac9df), to(#49869c));
+  background-image: -webkit-linear-gradient(top, #8ac9df, #49869c);
+  background-image: -o-linear-gradient(top, #8ac9df, #49869c);
+  background-image: linear-gradient(to bottom, #8ac9df, #49869c);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff8ac9df', endColorstr='#ff49869c', GradientType=0);
+  text-align: center;
+  line-height: 41px;
+  font-size: 16px;
+  color: #ffffff;
+  text-shadow: 0 -1px rgba(0, 0, 0, 0.25);
+  font-weight: normal;
+}
+#metabar .title .close {
+  position: absolute;
+  right: 0;
+  padding: 10px;
+}
+#metabar .title .close:hover {
+  background: transparent;
 }
