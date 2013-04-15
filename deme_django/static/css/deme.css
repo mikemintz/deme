@@ -4689,8 +4689,7 @@ you can use the generic selector below, but it's slower:
   font-size: 16px;
   border-right: 1px solid rgba(0, 0, 0, 0.15);
   border-left: 1px solid rgba(255, 255, 255, 0.15);
-  padding-top: 10px;
-  padding-bottom: 10px;
+  padding: 10px;
 }
 .adminbar .nav .dropdown-menu .demeicon,
 .adminbar .nav .dropdown-menu .glyphicon {
@@ -4776,6 +4775,23 @@ you can use the generic selector below, but it's slower:
 
   flex: 1;
 }
-#fixed_right_pane {
+#metabar {
   width: 200px;
+  -webkit-transition: width 0.5s;
+  -moz-transition: width 0.5s;
+  -o-transition: width 0.5s;
+  transition: width 0.5s;
+  background: #eefafe;
+  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.15) inset;
+  left: 0 !important;
+}
+#metabar.noanim {
+  -webkit-transition: none;
+  -moz-transition: none;
+  -o-transition: none;
+  transition: none;
+}
+#metabar.closed {
+  width: 0px;
+  display: block;
 }

@@ -15,7 +15,18 @@
   flex: 1;
 }
 
-#fixed_right_pane {
+#metabar {
   // position: fixed; overflow-y: auto; top: 90px; bottom: 10px; right: 10px; width: 0%; display: none; z-index: 1;
   width: 200px;
+  .transition(width .5s);
+  background: @metabar-background;
+  box-shadow: 3px 0 5px fade(@black, 15%) inset;
+  left: 0 !important;
+  &.noanim {
+    .transition(none);
+  }
+  &.closed {
+    width: 0px;
+    display: block;
+  }
 }
