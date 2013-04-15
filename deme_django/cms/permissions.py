@@ -258,14 +258,22 @@ class PermissionCache(object):
                     cur_abilities_yes.add(ability)
                 else:
                     cur_abilities_no.add(ability)
-            # If "do_anything" is in the yes abilities at this level, grant all
-            # other item abilities.
+            # If "do_anything", "view_anything", or "edit_anything" is in the
+            # yes abilities at this level, grant all relevant item abilities.
+            # If there are in the no abilities at this level, deny all relevant
+            # item abilities.
             if 'do_anything' in cur_abilities_yes:
                 cur_abilities_yes = possible_abilities
-            # If "do_anything" is in the no abilities at this level, deny all other
-            # item abilities.
             if 'do_anything' in cur_abilities_no:
                 cur_abilities_no = possible_abilities
+            if 'view_anything' in cur_abilities_yes:
+                cur_abilities_yes |= set(x for x in possible_abilities if x.startswith('view '))
+            if 'view_anything' in cur_abilities_no:
+                cur_abilities_no |= set(x for x in possible_abilities if x.startswith('view '))
+            if 'edit_anything' in cur_abilities_yes:
+                cur_abilities_yes |= set(x for x in possible_abilities if x.startswith('edit '))
+            if 'edit_anything' in cur_abilities_no:
+                cur_abilities_no |= set(x for x in possible_abilities if x.startswith('edit '))
             # For each ability specified at this level, add it to the all-level
             # ability sets if it's not already there. "No" takes precedence over
             # "yes".
@@ -306,6 +314,10 @@ class PermissionCache(object):
                 # Generate a Q object for this particular permission and is_allowed
                 args = {}
                 args['ability__in'] = [ability, 'do_anything']
+                if ability.startswith('view '):
+                    args['ability__in'].append('view_anything')
+                if ability.startswith('edit '):
+                    args['ability__in'].append('edit_anything')
                 args['is_allowed'] = is_allowed
                 if hasattr(permission_class, 'source'):
                     source_field = permission_class.source.field

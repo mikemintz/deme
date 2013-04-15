@@ -38,7 +38,7 @@ DemeSetting.set('cms.default_site', default_site.pk, admin)
 print 'Creating defaults for the permission framework'
 for item_type in all_item_types():
     for ability in item_type.introduced_abilities:
-        if ability == 'do_anything':
+        if ability.endswith('_anything'):
             continue # We don't want any default permission here
         elif issubclass(item_type, (DemeSetting, AuthenticationMethod)):
             is_allowed = False
