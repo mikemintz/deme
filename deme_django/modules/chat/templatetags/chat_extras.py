@@ -53,7 +53,7 @@ class ChatBox(template.Node):
                                 chat_messages_div.scrollTop(chat_messages_div[0].scrollHeight);
                             }
                         });
-                        window.setTimeout(update_chat_messages_timer, chat_message_poll_interval_millis);
+                        //window.setTimeout(update_chat_messages_timer, chat_message_poll_interval_millis);
                     }
                     update_chat_messages_timer();
                 });

@@ -8,7 +8,7 @@ $(function(){
   $(window).resize(function(){ metabar_sizing(); });
   metabar_sizing();
 
-  // attach resizable
+  // attach resizable to entire metabar
   $metabar.resizable({
     minWidth: 200,
     handles: 'w',
@@ -51,11 +51,31 @@ $(function(){
     toggleMetabar();
   });
 
-  // TODO: base open/close state on cookie
+  // set open/close state on cookie
   if ($.cookie('METABAR_VISIBLE')) {
     toggleMetabar('open');
   } else {
     toggleMetabar('close');
   }
 
+  // attach opening/closing of metadata sections
+  $metabar.on('click', '.section button.header', function(){
+    metabar_load_section($(this));
+  });
+
+  function metabar_load_section($this) {
+    if (!$this.hasClass('ajax-loaded')) {
+      var target = $this.attr('data-target');
+      var name = target.replace('#metadata_content_', '');
+      var url = metabar_ajax_url(name);
+      $this.next('.collapse').html('Loading&hellip;');
+      $.ajax({
+        url: url,
+        success: function(data) {
+          $this.next('.collapse').html(data);
+        }
+      })
+      $this.addClass('ajax-loaded');
+    }
+  }
 });

@@ -1,29 +1,48 @@
 {% load item_tags %}
 {% load chat_extras %}
-<div id="metabar">
+{% if item %}
+  <script type="text/javascript">
+  function metabar_ajax_url(metadata_menu_name) {
+    return "{% url item_url viewer=viewer_name,noun=item.pk,action="metadata" %}?name=" + metadata_menu_name + '&amp;original_full_path={{ full_path|escapejs }}';
+  }
+
+  {% if default_metadata_menu_option %}
+  $(function(){
+    var btn = $('button[data-target="#metadata_content_{{default_metadata_menu_option}}]');
+    metabar_load_section(btn);
+  });
+  {% endif %}
+
+  </script>
+
+  <div id="metabar">
     <div class="title">
       Metadata
       <button class="close metabar-toggle">&times;</button>
     </div>
-    <!--div class="ui-helper-clearfix" style="font-size: 60%; float: right;">
 
-        <a href="#" id="increasebutton" onclick="increase_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Show"><span class="ui-icon ui-icon-arrowthickstop-1-w"></span> Show</a>
-        <a href="#" id="decreasebutton" onclick="decrease_column_right(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Hide"><span class="ui-icon ui-icon-arrowthickstop-1-e"></span> Hide</a>
-        <a href="#" id="closebutton" onclick="hide_fixed_right_pane(); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Close"><span class="ui-icon ui-icon-circle-close"></span> Close</a>
-    </div>
-    <div style="clear: both;"></div-->
+    {% with "metadata_content_item_details" as id %}{% with "Item details" as title %}
+    {% include 'includes/metabar_section.html' %}
+    {% endwith %}{% endwith %}
 
+    {% with "metadata_content_comments" as id %}{% with "Comments" as title %}
+    {% include 'includes/metabar_section.html' %}
+    {% endwith %}{% endwith %}
 
-    <div class="metadata_content metadata_content_item_details" style="display: none;">
-    </div>
-    <div class="metadata_content metadata_content_comments" style="display: none;">
-    </div>
-    <div class="metadata_content metadata_content_action_notices" style="display: none;">
-    </div>
-    <div class="metadata_content metadata_content_versions" style="display: none;">
-    </div>
-    <div class="metadata_content metadata_content_related_items" style="display: none;">
-    </div>
-    <div class="metadata_content metadata_content_permissions" style="display: none;">
-    </div>
-</div>
+    {% with "metadata_content_action_notices" as id %}{% with "Action notices" as title %}
+    {% include 'includes/metabar_section.html' %}
+    {% endwith %}{% endwith %}
+
+    {% with "metadata_content_versions" as id %}{% with "Versions" as title %}
+    {% include 'includes/metabar_section.html' %}
+    {% endwith %}{% endwith %}
+
+    {% with "metadata_content_related_items" as id %}{% with "Related items" as title %}
+    {% include 'includes/metabar_section.html' %}
+    {% endwith %}{% endwith %}
+
+    {% with "metadata_content_permissions" as id %}{% with "Permissions" as title %}
+    {% include 'includes/metabar_section.html' %}
+    {% endwith %}{% endwith %}
+  </div>
+{% endif %}

@@ -49,4 +49,44 @@
       }
     }
   }
+  .section {
+    border-top: 1px solid lighten(@grayLight,5%); //@grayLight;
+    &:first-child {
+      border-top: 0;
+    }
+    > button.header {
+      border: 0;
+      width: 100%;
+      text-align: left;
+      background: none;
+      font-size: 12px;
+      padding: 5px 10px;
+      .icon {
+        //margin-top: 8px;
+        font-size: 9px;
+        .rotate(90deg);
+        display: block;
+        float: left;
+        margin-right: 4px;
+        opacity: .8;
+      }
+      &.collapsed {
+        .icon {
+          .rotate(0deg)
+        }
+      }
+    }
+    > .collapse {
+      margin: 0 10px;
+      h3 {
+        font-size: 1em;
+        line-height: 1;
+        margin: 0;
+        font-weight: bold;
+      }
+      h3:first-child {
+        //display: none; // removing header from being displayed as opposed to changing code
+      }
+    }
+  }
 }

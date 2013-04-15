@@ -30,7 +30,9 @@
     <li><a href="#"><i class="glyphicon glyphicon-edit"></i></a></li>
     <li><a href="#"><i class="glyphicon glyphicon-comment"></i></a></li>
     <li><a href="#"><i class="glyphicon glyphicon-user"></i></a></li>
+    {% if item %}
     <li><a href="#" title="Toggle Metadata" class="metabar-toggle"><i class="glyphicon glyphicon-info-sign"></i></a></li>
+    {% endif %}
   </ul>
 </div>
 
@@ -52,61 +54,6 @@
             });
             </script>
         </div>
-
-        {% if item %}
-        <script type="text/javascript">
-        $(function(){
-            var already_loaded_metadata_names = {};
-            $('#metadata_menu_link').fgmenu({
-                content: $('#metadata_menu_link').next().html(),
-                showSpeed: 50,
-                fixedPosition: true,
-            });
-            var menu = allUIMenus[allUIMenus.length - 1];
-            menu.chooseItem = function(item){
-                var text = $(item).html();
-                menu.kill();
-                $('#metadata_menu_link .metadata_menu_name').text(text);
-                var metadata_menu_name = $(item).attr('id').replace('metadata_menu_', '');
-                $('.metadata_content').hide();
-                $('.metadata_content_' + metadata_menu_name).show();
-                if (!$('#fixed_right_pane').is(':visible')) {
-                    $('#fixed_right_pane').show();
-                    increase_fixed_right_pane(38, 10);
-                }
-                if (!(metadata_menu_name in already_loaded_metadata_names)) {
-                    already_loaded_metadata_names[metadata_menu_name] = true;
-                    $('.metadata_content_' + metadata_menu_name).html("Loading...");
-                    jQuery.ajax({
-                        url: "{% url item_url viewer=viewer_name,noun=item.pk,action="metadata" %}?name=" + metadata_menu_name + '&amp;original_full_path={{ full_path|escapejs }}',
-                        success: function(data) {
-                            $('.metadata_content_' + metadata_menu_name).html(data);
-                        }
-                    });
-                }
-            };
-            {% if default_metadata_menu_option %}
-                var item = $('#metadata_menu_{{default_metadata_menu_option}}');
-                menu.chooseItem(item);
-            {% endif %}
-        });
-        </script>
-        <div style="float: left;">
-            <span style="text-size: larger; font-weight: bold;">Metadata:</span>
-            <br />
-            <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="metadata_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span><span class="metadata_menu_name">------</span></a>
-            <div style="display: none;">
-                <ul style="font-size: 85%;">
-                    <li><a href="#" onclick="return false;" id="metadata_menu_item_details">Item details</a></li>
-                    <li><a href="#" onclick="return false;" id="metadata_menu_comments">Comments</a></li>
-                    <li><a href="#" onclick="return false;" id="metadata_menu_action_notices">Action notices</a></li>
-                    <li><a href="#" onclick="return false;" id="metadata_menu_versions">Versions</a></li>
-                    <li><a href="#" onclick="return false;" id="metadata_menu_related_items">Related items</a></li>
-                    <li><a href="#" onclick="return false;" id="metadata_menu_permissions">Permissions</a></li>
-                </ul>
-            </div>
-        </div>
-        {% endif %}
 
         <div style="float: left;">
             <span style="text-size: larger; font-weight: bold;">Account:</span>
@@ -142,40 +89,6 @@
 </div>
 
 <script type="text/javascript">
-    function increase_fixed_right_pane(percent_incr, min_width_percent) {
-        var left_width_text = $('.site_inner')[0].style.width;
-        var right_width_text = $('#fixed_right_pane')[0].style.width;
-        var left_width = parseInt(left_width_text.replace("%", ""), 10);
-        var right_width = parseInt(right_width_text.replace("%", ""), 10);
-        var new_left_width = left_width - percent_incr;
-        var new_right_width = right_width + percent_incr;
-        var new_left_width_text = new_left_width + "%";
-        var new_right_width_text = new_right_width + "%";
-        if (new_left_width > min_width_percent && new_right_width > min_width_percent) {
-            $('.site_inner')[0].style.width = new_left_width_text;
-            $('#fixed_right_pane')[0].style.width = new_right_width_text;
-        } else {
-            hide_fixed_right_pane();
-        }
-    }
-    function increase_column_right() {
-        increase_fixed_right_pane(3, 10);
-    }
-    function decrease_column_right() {
-        increase_fixed_right_pane(-3, 10);
-    }
-    function hide_fixed_right_pane() {
-        var left_width_text = $('.site_inner')[0].style.width;
-        var right_width_text = $('#fixed_right_pane')[0].style.width;
-        var left_width = parseInt(left_width_text.replace("%", ""), 10);
-        var right_width = parseInt(right_width_text.replace("%", ""), 10);
-        var new_left_width = left_width + right_width;
-        var new_left_width_text = new_left_width + "%";
-        $('#fixed_right_pane').hide();
-        $('.site_inner')[0].style.width = new_left_width_text;
-        $('#fixed_right_pane')[0].style.width = "0%";
-        $('#metadata_menu_link .metadata_menu_name').html('------');
-    }
 
     function openCommentDialog(name)
     {

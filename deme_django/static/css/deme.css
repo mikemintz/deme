@@ -4832,3 +4832,45 @@ you can use the generic selector below, but it's slower:
 #metabar .title .close:hover {
   background: transparent;
 }
+#metabar .section {
+  border-top: 1px solid #a6a6a6;
+}
+#metabar .section:first-child {
+  border-top: 0;
+}
+#metabar .section > button.header {
+  border: 0;
+  width: 100%;
+  text-align: left;
+  background: none;
+  font-size: 12px;
+  padding: 5px 10px;
+}
+#metabar .section > button.header .icon {
+  font-size: 9px;
+  -webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+  transform: rotate(90deg);
+  display: block;
+  float: left;
+  margin-right: 4px;
+  opacity: .8;
+}
+#metabar .section > button.header.collapsed .icon {
+  -webkit-transform: rotate(0deg);
+  -moz-transform: rotate(0deg);
+  -ms-transform: rotate(0deg);
+  -o-transform: rotate(0deg);
+  transform: rotate(0deg);
+}
+#metabar .section > .collapse {
+  margin: 0 10px;
+}
+#metabar .section > .collapse h3 {
+  font-size: 1em;
+  line-height: 1;
+  margin: 0;
+  font-weight: bold;
+}
