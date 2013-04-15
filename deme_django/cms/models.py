@@ -229,8 +229,8 @@ class Item(models.Model):
     # Setup
     __metaclass__ = ItemMetaClass
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['do_anything', 'modify_privacy_settings', 'view_permissions', 'comment_on', 'delete', 'view Item.action_notices', 'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at', 'view Item.default_viewer', 'view Item.email_list_address', 'view Item.email_sets_reply_to_all_subscribers', 'edit Item.name', 'edit Item.description', 'edit Item.default_viewer', 'edit Item.email_list_address', 'edit Item.email_sets_reply_to_all_subscribers'])
-    introduced_global_abilities = frozenset(['do_anything'])
+    introduced_abilities = frozenset(['do_anything', 'view_anything', 'edit_anything', 'modify_privacy_settings', 'view_permissions', 'comment_on', 'delete', 'view Item.action_notices', 'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at', 'view Item.default_viewer', 'view Item.email_list_address', 'view Item.email_sets_reply_to_all_subscribers', 'edit Item.name', 'edit Item.description', 'edit Item.default_viewer', 'edit Item.email_list_address', 'edit Item.email_sets_reply_to_all_subscribers'])
+    introduced_global_abilities = frozenset(['do_anything', 'view_anything', 'edit_anything'])
     dyadic_relations = {}
     class Meta:
         verbose_name = _('item')

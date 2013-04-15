@@ -296,6 +296,8 @@ Below is a list of all possible global abilities:
 * ``create TextDocumentExcerpt``
 * ``create Transclusion``
 * ``do_anything`` (Agents with this ability automatically have every single global ability and every item ability with respect to every item. If an agent has this global ability in the final calculation, this overrides any item abilities at any level. As a specific unusual example, if an agent has the global ``do_anything`` ability from an EveryonePermission, then giving him any item ability with is_allowed=False will have no effect.)
+* ``view_anything`` (Similar to ``do_anything``, except it expands only to abilities that start with ``'view '``.)
+* ``edit_anything`` (Similar to ``do_anything``, except it expands only to abilities that start with ``'edit '``.)
 
 Below is a list of item types and the item abilities they introduce:
 
@@ -303,6 +305,8 @@ Below is a list of item types and the item abilities they introduce:
 * Item
 
   * ``do_anything`` (Agents this ability with respect to an item automatically have every item ability for that item.)
+  * ``view_anything`` (Similar to ``do_anything``, except it expands only to abilities that start with ``'view '``.)
+  * ``edit_anything`` (Similar to ``do_anything``, except it expands only to abilities that start with ``'edit '``.)
   * ``comment_on`` (With this ability you can create comments *directly* on the item. There is no way to restrict agents from leaving *indirect* comments on an item, apart from ensuring that they don't have the ability to comment on any of the item's existing comments.)
   * ``delete`` (With this ability you can deactivate, reativate, or destroy the item.)
   * ``view Item.name``
