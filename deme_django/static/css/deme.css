@@ -4723,15 +4723,6 @@ button.fg-button {
 /***************************/
 /********** ELEMENTS *******/
 /***************************/
-a,
-a:visited {
-  color: #4183C4;
-  text-decoration: none;
-}
-a:hover,
-a:active {
-  text-decoration: underline;
-}
 .img_link:hover,
 .img_link:active {
   text-decoration: none;
@@ -5280,4 +5271,11 @@ you can use the generic selector below, but it's slower:
 .page-layout div.title a {
   text-decoration: none;
   color: black;
+}
+.page-layout .table {
+  table-layout: fixed;
+}
+.page-layout .table td {
+  text-overflow: ellipsis;
+  overflow: hidden;
 }

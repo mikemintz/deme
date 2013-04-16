@@ -4,32 +4,26 @@
 {% block content %}
 
 {% ifagentcan 'comment_on' item %}
-    <div style="margin-bottom: 2em;">
-        <div style="float: right;">
-            <a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" class="fg-button ui-widget ui-state-default ui-corner-all" style="background: #ffcc99;">Create a new discussion</a></div>
-            <div style="clear: both;"></div>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
+<p><a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" class="btn">Create a new discussion</a></p>
 {% endifagentcan %}
 
-<table style="border: 2px solid #000; table-layout: fixed;">
+<table class="table table-striped">
     <tr>
-        <td style="background-color: #ccc; font-weight: bold; border-right: 2px solid #000;">Discussion Topics</td>
-        <td style="background-color: #ccc; font-weight: bold; border-right: 2px solid #000;">Replies</td>
-        <td style="background-color: #ccc; font-weight: bold;">Last Post</td></tr>
+        <th>Discussion Topics</td>
+        <th>Replies</td>
+        <th>Last Post</td></tr>
     </tr>
     {% for discussion in discussions %}
     <tr>
-        <td style="background-color: #{% cycle 'eee' 'fff' as rowcolor %}; border-right: 2px solid #000; text-overflow: ellipsis; overflow: hidden;">
+        <td>
             <a href="{% url item_url viewer="discussionboardcomment",action="show",noun=discussion.comment.pk %}?discussion_board={{ item.pk }}">{{ discussion.comment.name|truncatewords:10 }}</a>
             <br />
             <nobr>By {% viewable_name discussion.comment.creator %}</nobr>
         </td>
-        <td style="background-color: #{{rowcolor}}; border-right: 2px solid #000;">
+        <td>
             {{ discussion.num_replies }}
         </td>
-        <td style="background-color: #{{rowcolor}};">
+        <td>
             {% if discussion.last_post %}
                 <nobr>By {% viewable_name discussion.last_post.creator %}</nobr>
                 <br />
@@ -43,9 +37,7 @@
 </table>
 
 {% ifagentcan 'comment_on' item %}
-    <div><a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" class="fg-button ui-widget ui-state-default ui-corner-all" style="background: #ffcc99;">Create a new discussion</a></div>
-    <div style="clear: both;"></div>
+<p><a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" class="btn">Create a new discussion</a></p>
 {% endifagentcan %}
 
 {% endblock content %}
-
