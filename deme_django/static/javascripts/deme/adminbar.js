@@ -41,7 +41,7 @@ $(function(){
 
   // set up create, edit, and comment buttons based on existing markup elsewhere
   function linkOrRemove(dependent, target) {
-    if (target) {
+    if (target.length > 0) {
       dependent.click(function(e){
         e.preventDefault();
         if (target.attr('href') == '#') {
@@ -49,13 +49,12 @@ $(function(){
         } else {
           window.location = target.attr('href');
         }
-
       });
     } else {
       dependent.remove();
     }
   }
-  linkOrRemove($('.actions-wrap > li > a[title="Create"]'), $('.actions-menu a[title="Create"]'));
-  linkOrRemove($('.actions-wrap > li > a[title="Edit"]'), $('.actions-menu a[title="Edit"]'));
+  linkOrRemove($('.actions-wrap > li > a.create'), $('.actions-menu a.create'));
+  linkOrRemove($('.actions-wrap > li > a.edit'), $('.actions-menu a.edit'));
 
 });

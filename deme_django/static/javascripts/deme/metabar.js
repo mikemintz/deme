@@ -108,4 +108,13 @@ $(function(){
       collapse.addClass('ajax-loaded');
     }
   }
+
+
+  // set up comment button
+  $('.actions-wrap > li > a.comment').click(function(){
+    // open metadata menu
+    toggleMetabar('open');
+    // load and open comments in metadata
+    metabar_show_section($("#metadata_content_comments"));
+  });
 });

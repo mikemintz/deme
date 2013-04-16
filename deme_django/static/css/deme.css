@@ -4758,10 +4758,12 @@ you can use the generic selector below, but it's slower:
   background-repeat: no-repeat;
   background-position: right center;
   border: 0;
+  padding-right: 20px;
 }
 .adminbar .nav.breadcrumbs > li:last-child > a,
 .adminbar .nav.breadcrumbs > li:last-child > span {
   background-image: none;
+  padding-right: 10px;
   border-right: 1px solid rgba(0, 0, 0, 0.15);
 }
 .adminbar .login-menu .current-user {
