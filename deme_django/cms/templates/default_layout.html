@@ -190,7 +190,7 @@
     </script>
     {% block head_append %}
     {% endblock %}
-</head>
+  </head>
 
   <body>
     <div id="overall-wrap">
@@ -198,10 +198,83 @@
 
         {% include "includes/adminbar.html" %}
 
+        {% block page-layout %}
+        <div class="container page-layout">
+          <div class="row">
+            <div class="col-span-3 logo-section">
+              {% block logo-section %}
+              <a href="/" class="logo"><h1>Deme</h1></a>
+              {% endblock logo-section %}
+            </div>
+            <div class="col-span-9 banner-section">
+              {% block banner-section %}
+              {% endblock banner-section %}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-span-3" class="sidebar-section">
+              {% block sidebar-section %}
+              <div class="panel">
+                <div class="panel-heading">
+                  Recently Viewed
+                </div>
+                {% recently_viewed %}
+              </div>
+              <div class="panel">
+                <div class="panel-heading">
+                  Navigation
+                </div>
+                <ul>
+                    <li{% ifequal full_path "/" %} style="font-weight: bold;"{% endifequal %}><a href="/">Home</a></li>
+                    <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
+                    <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
+                </ul>
+              </div>
+              {% endblock sidebar-section %}
+            </div>
+            <div class="col-span-9" class="main-section">
+              {% block main-section %}
+              <div class="tabs-section">
+                {% block tabs-section %}
+                {% endblock tabs-section %}
+              </div>
+              <div class="item-view-section">
+                {% block item-view-section %}
+                  {% if layout_permissions_problem %}
+                  <div class="alert alert-block">
+                      <h4>Permissions Error</h4>
+                      <p>You are not authorized to view the layout, so this page is being displayed in the default layout.</p>
+                  </div>
+                  {% endif %}
+
+                  <div class="title">
+                    {% block title %}
+                    {% if item %}
+                    <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
+                    {% else %}
+                    <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
+                    {% endif %}
+                    {% endblock title %}
+                  </div>
+
+                  <div class="content">
+                  {% block content %}
+                  {% endblock %}
+                  </div>
+                {% endblock item-view-section %}
+              </div>
+              {% endblock main-section %}
+            </div>
+          </div>
+        </div>
+        {% endblock page-layout %}
+
+        <!-- OLD STUFF -->
+
         <div class="site_outer">
         <div class="site_inner" {% if item %}style="width: 97%;"{% endif %}>
 
-        <div class="content_box">
+        {% comment %}<div class="content_box">
 
             <table cellspacing="0">
                 <tr>
@@ -258,8 +331,9 @@
                 </tr>
             </table>
 
-        </div>
-        <div style="clear: both;"></div>
+        </div>{% endcomment %}
+
+        {% block chat %}
         <div class ="chat" style="width: 200px; margin: 0; position: fixed; bottom: 0;">
             <div class="ui-widget-header ui-corner-top ui-helper-clearfix" id="chatHeader" style="padding: 5px;">
                 Chat
@@ -271,8 +345,10 @@
                 {% chat_box %}
             </div>
         </div>
+        {% endblock %}
 
         <div class="footer">
+          {% block footer %}
             <p>
                 <b>Desktop Browser</b>
                 {% if item %}
@@ -307,7 +383,8 @@
                 </script><script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
             </p>
             <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
-        </div>
+            {% endblock footer %}
+        </div><!-- /.footer -->
           <div id="showhidetarget">
 
             <p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option      labeled Full Screen.</p>
