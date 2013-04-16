@@ -378,28 +378,37 @@ class ActionsMenu(template.Node):
             add_contact_method_url = reverse('item_type_url', kwargs={'viewer': 'contactmethod', 'action': 'new'}) + '?populate_agent=%s' % item.pk
 
         list_items = []
+        if agentcan_global_helper(context, 'create', wildcard_suffix=True):
+            list_items.append("""<li><a href="#" onclick="toggleNewItemMenu('HiddenNewItemMenu'); return false;" tabindex="-1" title="Create" class="create"><i class="glyphicon glyphicon-plus-sign"></i> Create</a></li>""")
+
         if item:
-            if agentcan_global_helper(context, 'create Membership'):
-                list_items.append("""<li><a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" tabindex="-1" title="Add to collection" class="add-to-collection"><i class="demeicon  demeicon-add-collection"></i> Add to collection</a></li>""" % (item.pk))
+            if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
+                list_items.append('<li><a href="%s" tabindex="-1" title="Edit" class="edit"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>' % edit_url)
+
+        list_items.append("""<li><a href="#" tabindex="-1" title="Comment" class="comment"><i class="glyphicon glyphicon-comment"></i> Comment</a></li>""")
+
+        if item:
             if isinstance(item, Agent):
                 if agentcan_helper(context, 'add_authentication_method', item):
                     list_items.append('<li><a href="%s" tabindex="-1" class="add-authentication-method"><span class="ui-icon ui-icon-circle-plus"></span>Add authentication method</a></li>' % add_authentication_method_url)
                 if agentcan_helper(context, 'add_contact_method', item):
                     list_items.append('<li><a href="%s" tabindex="-1" class="add-contact-method"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a></li>' % add_contact_method_url)
+
             if not context['cur_agent'].is_anonymous():
                 list_items.append("""<li><a href="#" onclick="openCommentDialog('subscribe_dialog'); return false;" tabindex="-1" class="subscribe"><i class="glyphicon glyphicon-envelope"></i> Subscribe</a></li>""")
-            if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
-                list_items.append('<li><a href="%s" tabindex="-1" title="Edit" class="edit"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>' % edit_url)
+
+            if agentcan_global_helper(context, 'create Membership'):
+                list_items.append("""<li><a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" tabindex="-1" title="Add to collection" class="add-to-collection"><i class="demeicon  demeicon-add-collection"></i> Add to collection</a></li>""" % (item.pk))
+
             if agentcan_global_helper(context, 'create %s' % item.item_type_string):
                 list_items.append('<li><a href="%s" tabindex="-1" title="Copy" class="copy"><i class="demeicon  demeicon-copy"></i> Copy</a></li>' % copy_url)
+
             if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
                 if item.active:
                     list_items.append("""<li><a href="#" onclick="$('#deactivate_dialog').dialog('open'); return false;" tabindex="-1" title="Deactivate" class="deactivate"><i class="glyphicon glyphicon-trash"></i> Deactivate</a></li>""")
                 else:
                     list_items.append("""<li><a href="#" onclick="$('#reactivate_dialog').dialog('open'); return false;" tabindex="-1" title="Reactivate" class="reactivate"><i class="glyphicon glyphicon-trash"></i> Reactivate</a></li>""")
                     list_items.append("""<li><a href="#" onclick="$('#destroy_dialog').dialog('open'); return false;" tabindex="-1" title="Destroy" class="destroy"><i class="glyphicon glyphicon-trash"></i> Destroy</a></li>""")
-        if agentcan_global_helper(context, 'create', wildcard_suffix=True):
-            list_items.append("""<li><a href="#" onclick="toggleNewItemMenu('HiddenNewItemMenu'); return false;" tabindex="-1" title="Create" class="create"><i class="glyphicon glyphicon-plus-sign"></i> Create</a></li>""")
 
         if not list_items:
             return ''

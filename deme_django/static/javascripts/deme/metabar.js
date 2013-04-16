@@ -111,7 +111,7 @@ $(function(){
 
 
   // set up comment button
-  $('.actions-wrap > li > a.comment').click(function(){
+  $('.actions-wrap > li > a.comment, .actions-menu a.comment').click(function(){
     // open metadata menu
     toggleMetabar('open');
     // load and open comments in metadata
