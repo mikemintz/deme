@@ -4705,6 +4705,10 @@ you can use the generic selector below, but it's slower:
 .adminbar .nav .dropdown-menu .glyphicon {
   padding-right: 5px;
 }
+.adminbar .nav .dropdown-menu .ui-icon {
+  float: left;
+  margin-right: 5px;
+}
 .adminbar .nav .dropdown-menu a {
   white-space: nowrap;
 }

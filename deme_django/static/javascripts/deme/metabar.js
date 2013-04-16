@@ -78,13 +78,18 @@ $(function(){
   $metabar.find('.section .collapse').each(function(){
     var name = $(this).attr('id').replace('metadata_content_', '');
     if ($.cookie('METABAR_SECTION_' + name)) {
-      metabar_load_section($(this), function(collapse){
-        collapse.collapse('show');
-        // manually remove "collapsed" from link
-        collapse.closest('.section').find('.header').removeClass('collapsed');
-      });
+      metabar_show_section($(this))
     }
   });
+
+  function metabar_show_section(collapse) {
+    metabar_load_section(collapse, function(collapse){
+      collapse.collapse('show');
+      // manually remove "collapsed" from link
+      collapse.closest('.section').find('.header').removeClass('collapsed');
+    });
+  }
+  window.metabar_show_section = metabar_show_section;
 
   function metabar_load_section(collapse, cb) {
     if (!collapse.hasClass('ajax-loaded')) {
