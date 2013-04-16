@@ -380,26 +380,26 @@ class ActionsMenu(template.Node):
         list_items = []
         if item:
             if agentcan_global_helper(context, 'create Membership'):
-                list_items.append("""<li><a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add this item to collection</a></li>""" % (item.pk))
+                list_items.append("""<li><a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" tabindex="-1" title="Add to collection"><i class="demeicon  demeicon-add-collection"></i> Add to collection</a></li>""" % (item.pk))
             if isinstance(item, Agent):
                 if agentcan_helper(context, 'add_authentication_method', item):
-                    list_items.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add authentication method</a></li>' % add_authentication_method_url)
+                    list_items.append('<li><a href="%s" tabindex="-1"><span class="ui-icon ui-icon-circle-plus"></span>Add authentication method</a></li>' % add_authentication_method_url)
                 if agentcan_helper(context, 'add_contact_method', item):
-                    list_items.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a></li>' % add_contact_method_url)
+                    list_items.append('<li><a href="%s" tabindex="-1"><span class="ui-icon ui-icon-circle-plus"></span>Add contact method</a></li>' % add_contact_method_url)
             if not context['cur_agent'].is_anonymous():
-                list_items.append("""<li><a href="#" onclick="openCommentDialog('subscribe_dialog'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-mail-closed"></span>Subscribe</a></li>""")
+                list_items.append("""<li><a href="#" onclick="openCommentDialog('subscribe_dialog'); return false;" tabindex="-1"><i class="glyphicon glyphicon-envelope"></i> Subscribe</a></li>""")
             if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
-                list_items.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-pencil"></span>Edit</a></li>' % edit_url)
+                list_items.append('<li><a href="%s" tabindex="-1"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>' % edit_url)
             if agentcan_global_helper(context, 'create %s' % item.item_type_string):
-                list_items.append('<li><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-copy"></span>Copy</a></li>' % copy_url)
+                list_items.append('<li><a href="%s" tabindex="-1"><i class="demeicon  demeicon-copy"></i> Copy</a></li>' % copy_url)
             if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
                 if item.active:
-                    list_items.append("""<li><a href="#" onclick="$('#deactivate_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Deactivate"><span class="ui-icon ui-icon-trash"></span>Deactivate</a></li>""")
+                    list_items.append("""<li><a href="#" onclick="$('#deactivate_dialog').dialog('open'); return false;" tabindex="-1" title="Deactivate"><i class="glyphicon glyphicon-trash"></i> Deactivate</a></li>""")
                 else:
-                    list_items.append("""<li><a href="#" onclick="$('#reactivate_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Reactivate"><span class="ui-icon ui-icon-trash"></span>Reactivate</a></li>""")
-                    list_items.append("""<li><a href="#" onclick="$('#destroy_dialog').dialog('open'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Destroy"><span class="ui-icon ui-icon-trash"></span>Destroy</a></li>""")
+                    list_items.append("""<li><a href="#" onclick="$('#reactivate_dialog').dialog('open'); return false;" tabindex="-1" title="Reactivate"><i class="glyphicon glyphicon-trash"></i> Reactivate</a></li>""")
+                    list_items.append("""<li><a href="#" onclick="$('#destroy_dialog').dialog('open'); return false;" tabindex="-1" title="Destroy"><i class="glyphicon glyphicon-trash"></i> Destroy</a></li>""")
         if agentcan_global_helper(context, 'create', wildcard_suffix=True):
-            list_items.append("""<li><a href="#" onclick="toggleNewItemMenu('HiddenNewItemMenu'); return false;" class="fg-button ui-state-default fg-button-icon-left ui-corner-all" title="Create"><span class="ui-icon ui-icon-circle-plus"></span>Create</a></li>""")
+            list_items.append("""<li><a href="#" onclick="toggleNewItemMenu('HiddenNewItemMenu'); return false;" tabindex="-1" title="Create"><i class="glyphicon glyphicon-plus-sign"></i> Create</a></li>""")
 
         if not list_items:
             return ''
@@ -506,15 +506,8 @@ class ActionsMenu(template.Node):
                 </div>
             """ % destroy_url)
 
-        result.append("""
-        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="actions_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>------</a>
-        <div style="display: none;">
-            <ul style="font-size: 85%;">
-        """)
         result.extend(list_items)
         result.append("""
-            </ul>
-        </div>
         <script type="text/javascript">
         $(function(){
             $('#actions_menu_link').fgmenu({
@@ -1727,9 +1720,9 @@ class Crumbs(template.Node):
                     field_name = field.verbose_name + u's'
                 else:
                     field_name = field.related_name
-                result.append(u'<li><a href="%s"></li>' % subfilter_url)
+                result.append(u'<li><a href="%s">' % subfilter_url)
                 result.append(capfirst(field_name.replace('_', ' ')))
-                result.append('</a>')
+                result.append('</a></li>')
         action_title = context['action_title']
         if viewer.item:
             result.append(u'<li>%s</li>' % get_item_link_tag(context, viewer.item))
@@ -1737,7 +1730,7 @@ class Crumbs(template.Node):
                 version_url = '%s?version=%d' % (viewer.item.get_absolute_url(), viewer.item.version_number)
                 result.append(u'<li><a href="%s">v%d</a></li>' % (version_url, viewer.item.version_number))
         if action_title:
-            result.append(u'<li>%s</li>' % action_title)
+            result.append(u'<li><span>%s</span></li>' % action_title)
         return ''.join(result)
 
 @register.tag

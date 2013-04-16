@@ -17,13 +17,14 @@
       <a href="#" class="dropdown-toggle" data-toggle="dropdown">Actions <span class="caret"></span>
       </a>
       <ul class="dropdown-menu">
-        <li><a href="#" tabindex="-1"><i class="glyphicon glyphicon-plus-sign"></i> Create</a></li>
+        {% actionsmenu %}
+        <!--li><a href="#" tabindex="-1"><i class="glyphicon glyphicon-plus-sign"></i> Create</a></li>
         <li><a href="#" tabindex="-1"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>
         <li><a href="#" tabindex="-1"><i class="glyphicon glyphicon-comment"></i> Comment</a></li>
         <li><a href="#" tabindex="-1"><i class="glyphicon glyphicon-envelope"></i> Subscribe</a></li>
         <li><a href="#" tabindex="-1"><i class="demeicon  demeicon-add-collection"></i> Add to collection</a></li>
         <li><a href="#" tabindex="-1"><i class="demeicon  demeicon-copy"></i> Copy</a></li>
-        <li><a href="#" tabindex="-1"><i class="glyphicon glyphicon-trash"></i> Deactivate</a></li>
+        <li><a href="#" tabindex="-1"><i class="glyphicon glyphicon-trash"></i> Deactivate</a></li-->
       </ul>
     </li>
     <li><a href="#"><i class="glyphicon glyphicon-plus-sign"></i></a></li>
@@ -41,11 +42,6 @@
 <div>
     <div style="float: right;">
         <div style="float: left;" id="actions_wrapper">
-            <span style="text-size: larger; font-weight: bold;">Actions:</span>
-            <br />
-            <div id="actions_menu_wrapper">
-            {% actionsmenu %}
-            </div>
             <script type="text/javascript">
             $(function(){
                 if ($.trim($('#actions_menu_wrapper').text()) == '') {

@@ -4739,16 +4739,24 @@ you can use the generic selector below, but it's slower:
   margin-left: 5px;
   border-left: 1px solid rgba(0, 0, 0, 0.15);
 }
-.adminbar .nav.breadcrumbs > li:first-child > a {
+.adminbar .nav.breadcrumbs > li:first-child > a,
+.adminbar .nav.breadcrumbs > li:first-child > span {
   border-left: 1px solid rgba(255, 255, 255, 0.15);
 }
-.adminbar .nav.breadcrumbs > li > a {
+.adminbar .nav.breadcrumbs > li > span {
+  display: block;
+  padding: 10px;
+  color: #eeeeee;
+}
+.adminbar .nav.breadcrumbs > li > a,
+.adminbar .nav.breadcrumbs > li > span {
   background-image: url('../img/breadcrumb-right.png');
   background-repeat: no-repeat;
   background-position: right center;
   border: 0;
 }
-.adminbar .nav.breadcrumbs > li:last-child > a {
+.adminbar .nav.breadcrumbs > li:last-child > a,
+.adminbar .nav.breadcrumbs > li:last-child > span {
   background-image: none;
   border-right: 1px solid rgba(0, 0, 0, 0.15);
 }
@@ -4832,11 +4840,8 @@ you can use the generic selector below, but it's slower:
 #metabar .title .close:hover {
   background: transparent;
 }
-#metabar .section {
+#metabar .section ~ .section {
   border-top: 1px solid #a6a6a6;
-}
-#metabar .section:first-child {
-  border-top: 0;
 }
 #metabar .section > button.header {
   border: 0;
@@ -4879,4 +4884,7 @@ you can use the generic selector below, but it's slower:
 }
 #metabar .section > .collapse#metadata_content_item_details h3:first-child {
   display: none;
+}
+.HiddenMenu {
+  z-index: 1;
 }

@@ -50,9 +50,8 @@
     }
   }
   .section {
-    border-top: 1px solid lighten(@grayLight,5%); //@grayLight;
-    &:first-child {
-      border-top: 0;
+    ~ .section {
+      border-top: 1px solid lighten(@grayLight,5%); //@grayLight;
     }
     > button.header {
       border: 0;
