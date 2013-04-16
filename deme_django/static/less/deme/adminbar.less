@@ -40,7 +40,10 @@
     &.breadcrumbs {
       border-left: 1px solid fade(@white, 15%);
       border-right: 1px solid fade(@white, 15%);
+      max-width: 90%;
       > li{
+        display: inline-block;
+        float: none;
         #gradient .vertical(@adminbar-top-light, @adminbar-bottom-light);
         &:first-child {
           margin-left: 5px;
@@ -55,6 +58,8 @@
           color: @grayLighter;
         }
         > a, > span {
+          text-overflow: ellipsis;
+          overflow: hidden;
           background-image: url('../img/breadcrumb-right.png');
           background-repeat: no-repeat;
           background-position: right center;

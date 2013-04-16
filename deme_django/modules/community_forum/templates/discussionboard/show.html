@@ -7,11 +7,11 @@
 <p><a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" class="btn">Create a new discussion</a></p>
 {% endifagentcan %}
 
-<table class="table table-striped">
+<table class="table table-striped table-discussion">
     <tr>
-        <th>Discussion Topics</td>
-        <th>Replies</td>
-        <th>Last Post</td></tr>
+        <th class="topics">Discussion Topics</td>
+        <th class="replies">Replies</td>
+        <th class="last-post">Last Post</td></tr>
     </tr>
     {% for discussion in discussions %}
     <tr>

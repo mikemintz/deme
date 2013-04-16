@@ -5002,8 +5002,11 @@ you can use the generic selector below, but it's slower:
 .adminbar .nav.breadcrumbs {
   border-left: 1px solid rgba(255, 255, 255, 0.15);
   border-right: 1px solid rgba(255, 255, 255, 0.15);
+  max-width: 90%;
 }
 .adminbar .nav.breadcrumbs > li {
+  display: inline-block;
+  float: none;
   background-color: #49869c;
   background-image: -moz-linear-gradient(top, #8ac9df, #49869c);
   background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#8ac9df), to(#49869c));
@@ -5028,6 +5031,8 @@ you can use the generic selector below, but it's slower:
 }
 .adminbar .nav.breadcrumbs > li > a,
 .adminbar .nav.breadcrumbs > li > span {
+  text-overflow: ellipsis;
+  overflow: hidden;
   background-image: url('../img/breadcrumb-right.png');
   background-repeat: no-repeat;
   background-position: right center;
@@ -5244,6 +5249,9 @@ you can use the generic selector below, but it's slower:
 .page-layout {
   margin-top: 10px;
 }
+.page-layout * {
+  word-wrap: break-word;
+}
 .page-layout .logo-section {
   margin-bottom: 10px;
 }
@@ -5263,6 +5271,7 @@ you can use the generic selector below, but it's slower:
   text-align: left;
   font-weight: bold;
   font-size: 175%;
+  line-height: 1.2;
   margin-bottom: 10px;
 }
 .page-layout div.title img {
@@ -5272,10 +5281,16 @@ you can use the generic selector below, but it's slower:
   text-decoration: none;
   color: black;
 }
-.page-layout .table {
+.page-layout .table-discussion {
   table-layout: fixed;
 }
-.page-layout .table td {
+.page-layout .table-discussion th.replies {
+  width: 10%;
+}
+.page-layout .table-discussion th.last-post {
+  width: 20%;
+}
+.page-layout .table-discussion td {
   text-overflow: ellipsis;
   overflow: hidden;
 }

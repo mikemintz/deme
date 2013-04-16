@@ -1,5 +1,8 @@
 .page-layout {
   margin-top: 10px;
+  * {
+    word-wrap: break-word;
+  }
   .logo-section {
     margin-bottom: 10px;
     a.logo {
@@ -19,6 +22,7 @@
     text-align: left;
     font-weight: bold;
     font-size: 175%;
+    line-height: 1.2;
     margin-bottom: 10px;
     img {
       vertical-align: middle;
@@ -28,8 +32,17 @@
       color: black;
     }
   }
-  .table {
+  .table-discussion {
     table-layout: fixed;
+    th.topics {
+
+    }
+    th.replies {
+      width: 10%;
+    }
+    th.last-post {
+      width: 20%;
+    }
     td {
       text-overflow: ellipsis;
       overflow: hidden;

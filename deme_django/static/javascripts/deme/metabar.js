@@ -2,6 +2,7 @@ $.cookie.defaults.path = '/';
 
 $(function(){
   var $metabar = $('#metabar');
+  var metabar_width = 200;
 
   // sets metabar sizing styles based on window dimensions
   function metabar_sizing(){
@@ -12,7 +13,7 @@ $(function(){
 
   // attach resizable to entire metabar
   $metabar.resizable({
-    minWidth: 200,
+    minWidth: metabar_width,
     handles: 'w',
     start: function() {
       $metabar.addClass('noanim');
@@ -20,13 +21,16 @@ $(function(){
     stop: function(ev, ui) {
       $metabar.removeClass('noanim');
       var width = ui.size.width;
+      metabar_width = width;
       // save cookie
       $.cookie('METABAR_WIDTH', width);
+      metabarWidthAdjust(metabar_width);
     }
   });
 
   var past_width = $.cookie('METABAR_WIDTH');
   if (past_width) {
+    metabar_width = past_width;
     $metabar.css('width', past_width);
   }
 
@@ -46,7 +50,19 @@ $(function(){
       $('a.metabar-toggle').addClass('active');
       $.cookie('METABAR_VISIBLE', true);
     }
+    metabarWidthAdjust(metabar_width);
   }
+
+  // adjust width of container to take into account metadata width
+  function metabarWidthAdjust(metabar_width) {
+    var width = '';
+    // if visible, then calculate
+    if (!$metabar.hasClass('closed')) {
+      width = $(window).width() - metabar_width - 10 + 'px'; // buffer
+    }
+    $('.page-layout').css('max-width',width)
+  }
+
   // attach event to adminbar
   $('.metabar-toggle').click(function(e){
     e.preventDefault();
