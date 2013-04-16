@@ -1886,24 +1886,7 @@ class LoginMenu(template.Node):
         else:
             login_menu_text = u'%s' % get_viewable_name(context, viewer.cur_agent)
 
-        result.append("""
-        <script type="text/javascript">
-        $(function(){
-            var menuContent = '<ul style="font-size: 85%%;">';
-            $.each($('#login_menu_link').next().children().filter('li.loginmenuitem'), function(i, val){
-                menuContent += '<li>' + $(val).html() + '</li>';
-            });
-            menuContent += '</ul>'
-            $('#login_menu_link').fgmenu({
-                content: menuContent,
-                showSpeed: 50,
-                fixedPosition: true,
-            });
-        });
-        </script>
-        <a href="#" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" id="login_menu_link"><span class="ui-icon ui-icon-triangle-1-s"></span>%s</a>
-        <ul style="display: none;">
-        """ % login_menu_text)
+        result.append("<li><span class='current-user'>%s</span></li>" % login_menu_text)
         for viewer_class in authentication_method_viewer_classes_with_loginmenuitem:
             viewer2 = viewer_class()
             if viewer.request.method == 'GET':

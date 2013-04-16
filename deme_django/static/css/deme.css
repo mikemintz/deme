@@ -4760,6 +4760,10 @@ you can use the generic selector below, but it's slower:
   background-image: none;
   border-right: 1px solid rgba(0, 0, 0, 0.15);
 }
+.adminbar .login-menu .current-user {
+  padding: 3px 20px;
+  font-weight: bold;
+}
 #overall-wrap {
   display: -webkit-box;
   /* OLD - iOS 6-, Safari 3.1-6 */
