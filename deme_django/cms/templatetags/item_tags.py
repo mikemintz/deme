@@ -389,9 +389,9 @@ class ActionsMenu(template.Node):
             if not context['cur_agent'].is_anonymous():
                 list_items.append("""<li><a href="#" onclick="openCommentDialog('subscribe_dialog'); return false;" tabindex="-1"><i class="glyphicon glyphicon-envelope"></i> Subscribe</a></li>""")
             if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
-                list_items.append('<li><a href="%s" tabindex="-1"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>' % edit_url)
+                list_items.append('<li><a href="%s" tabindex="-1" title="Edit"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>' % edit_url)
             if agentcan_global_helper(context, 'create %s' % item.item_type_string):
-                list_items.append('<li><a href="%s" tabindex="-1"><i class="demeicon  demeicon-copy"></i> Copy</a></li>' % copy_url)
+                list_items.append('<li><a href="%s" tabindex="-1" title="Copy"><i class="demeicon  demeicon-copy"></i> Copy</a></li>' % copy_url)
             if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
                 if item.active:
                     list_items.append("""<li><a href="#" onclick="$('#deactivate_dialog').dialog('open'); return false;" tabindex="-1" title="Deactivate"><i class="glyphicon glyphicon-trash"></i> Deactivate</a></li>""")

@@ -39,4 +39,23 @@ $(function(){
     resizeText(delta);
   });
 
+  // set up create, edit, and comment buttons based on existing markup elsewhere
+  function linkOrRemove(dependent, target) {
+    if (target) {
+      dependent.click(function(e){
+        e.preventDefault();
+        if (target.attr('href') == '#') {
+          target.click();
+        } else {
+          window.location = target.attr('href');
+        }
+
+      });
+    } else {
+      dependent.remove();
+    }
+  }
+  linkOrRemove($('.actions-wrap > li > a[title="Create"]'), $('.actions-menu a[title="Create"]'));
+  linkOrRemove($('.actions-wrap > li > a[title="Edit"]'), $('.actions-menu a[title="Edit"]'));
+
 });
