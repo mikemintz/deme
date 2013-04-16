@@ -4768,6 +4768,12 @@ you can use the generic selector below, but it's slower:
   padding: 3px 20px;
   font-weight: bold;
 }
+.adminbar #search-btn .dropdown-menu {
+  padding: 5px;
+}
+.adminbar #search-btn #search_box {
+  box-sizing: border-box;
+}
 #overall-wrap {
   display: -webkit-box;
   /* OLD - iOS 6-, Safari 3.1-6 */

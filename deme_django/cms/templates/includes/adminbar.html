@@ -4,7 +4,15 @@
   <div class="left-wrap">
     <ul class="nav pull-left search">
       <li><a href="#"><i class="demeicon demeicon-text-size"></i></a></li>
-      <li><a href="#"><i class="glyphicon glyphicon-search"></i></a></li>
+      <li class="dropdown" id="search-btn">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Search"><i class="glyphicon glyphicon-search"></i></a>
+        <div class="dropdown-menu">
+          <form method="get" action="{% url item_type_url viewer="item" %}">
+              <input type="search" id="search_box" name="q" placeholder="Search" value="{{ search_query }}">
+              {# TODO add magnifying glass #}
+          </form>
+        </div>
+      </li>
     </ul>
 
     <ul class="nav pull-left breadcrumbs">
@@ -13,18 +21,11 @@
   </div>
 
   <ul class="nav pull-right actions-wrap">
-    <li class="dropdown">
+    <li class="dropdown" id="actions-btn">
       <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Actions">Actions <span class="caret"></span>
       </a>
-      <ul class="dropdown-menu">
+      <ul class="dropdown-menu actions-menu">
         {% actionsmenu %}
-        <!--li><a href="#" tabindex="-1"><i class="glyphicon glyphicon-plus-sign"></i> Create</a></li>
-        <li><a href="#" tabindex="-1"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>
-        <li><a href="#" tabindex="-1"><i class="glyphicon glyphicon-comment"></i> Comment</a></li>
-        <li><a href="#" tabindex="-1"><i class="glyphicon glyphicon-envelope"></i> Subscribe</a></li>
-        <li><a href="#" tabindex="-1"><i class="demeicon  demeicon-add-collection"></i> Add to collection</a></li>
-        <li><a href="#" tabindex="-1"><i class="demeicon  demeicon-copy"></i> Copy</a></li>
-        <li><a href="#" tabindex="-1"><i class="glyphicon glyphicon-trash"></i> Deactivate</a></li-->
       </ul>
     </li>
     <li><a href="#"><i class="glyphicon glyphicon-plus-sign"></i></a></li>
@@ -44,26 +45,6 @@
 
 
 <!-- start old stuff -->
-<div>
-    <div style="float: right;">
-        <div style="float: left;" id="actions_wrapper">
-            <script type="text/javascript">
-            $(function(){
-                if ($.trim($('#actions_menu_wrapper').text()) == '') {
-                    $('#actions_wrapper').hide();
-                }
-            });
-            </script>
-        </div>
-
-    </div>
-
-    <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline; border-bottom: 20px;">
-        <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
-        {# TODO add magnifying glass #}
-    </form>
-
-</div>
 
 <div class="HiddenMenu" id="HiddenNewItemMenu" style="position: fixed; top: 73px; left: 220px; right: 20px; padding: 10px; background: #fff; border: thin ridge gray; -moz-box-shadow: 5px 3px 3px #ccc; -webkit-box-shadow: 5px 3px 3px #ccc;box-shadow: px 3px 3px #ccc; display: none;">
     <div style="float:right; height: 5px; font-size: 20%;">
