@@ -5071,6 +5071,57 @@ you can use the generic selector below, but it's slower:
 .adminbar #textsize-btn .bigger {
   font-size: 171.42857142857142%;
 }
+@media (max-width: 767px) {
+  .adminbar {
+    height: auto;
+  }
+  .adminbar .left-wrap {
+    position: relative;
+  }
+  .adminbar .left-wrap .pull-left {
+    float: none;
+  }
+  .adminbar .nav {
+    margin-top: 0;
+  }
+  .adminbar .nav > li {
+    float: left;
+  }
+  .adminbar .nav.breadcrumbs {
+    border: 0;
+  }
+  .adminbar .nav.breadcrumbs > li {
+    background: none;
+    display: inline;
+  }
+  .adminbar .nav.breadcrumbs > li > a,
+  .adminbar .nav.breadcrumbs > li > span {
+    background: none;
+    display: inline;
+    padding: 0 3px 0 0;
+    border: 0 !important;
+  }
+  .adminbar .nav.breadcrumbs > li > a:after,
+  .adminbar .nav.breadcrumbs > li > span:after {
+    content: " » ";
+  }
+  .adminbar .nav.breadcrumbs > li:last-child > a:after,
+  .adminbar .nav.breadcrumbs > li:last-child > span:after {
+    content: '';
+  }
+  .adminbar .nav.breadcrumbs > li:first-child {
+    margin-left: 0;
+    border-left: 0;
+  }
+  .adminbar .nav.actions-wrap {
+    position: relative;
+    float: none;
+  }
+  .adminbar .nav.actions-wrap > li > .dropdown-menu {
+    left: 0;
+    right: auto;
+  }
+}
 #overall-wrap {
   display: -webkit-box;
   /* OLD - iOS 6-, Safari 3.1-6 */

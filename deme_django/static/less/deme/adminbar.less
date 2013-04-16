@@ -97,3 +97,58 @@
     }
   }
 }
+
+// Phones only
+@media (max-width: 767px) {
+  .adminbar {
+    height: auto;
+    .left-wrap {
+      position: relative;
+      .pull-left {
+        float: none;
+      }
+    }
+    .nav {
+      margin-top: 0;
+      > li {
+        float: left;
+        > a {
+          //display: inline-block;
+        }
+      }
+      &.breadcrumbs {
+        border: 0;
+        > li {
+          background: none;
+          display: inline;
+          > a, > span {
+            background: none;
+            display: inline;
+            padding: 0 3px 0 0;
+            &:after {
+              content: " » ";
+            }
+            border: 0 !important;
+          }
+          &:last-child {
+            > a:after, > span:after {
+              content: '';
+            }
+          }
+        }
+        > li:first-child {
+          margin-left: 0;
+          border-left: 0;
+        }
+      }
+      &.actions-wrap {
+        position: relative;
+        float: none;
+        > li > .dropdown-menu {
+          left: 0;
+          right: auto;
+        }
+      }
+    }
+  }
+}
