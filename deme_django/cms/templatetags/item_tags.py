@@ -1896,7 +1896,6 @@ class LoginMenu(template.Node):
             viewer2.init_for_div(viewer, 'loginmenuitem', None, query_string)
             html = viewer2.dispatch().content
             result.append(html)
-        result.append("</ul>")
         return '\n'.join(result)
 
 @register.tag
