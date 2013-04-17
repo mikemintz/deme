@@ -1856,7 +1856,7 @@ class RecentlyViewed(template.Node):
                     var title = datum[1];
                     outer_div.append('<div><a href="' + url + '">' + title + '</a></div>');
                 });
-                outer_div.append('<div><a href="#" onclick="num_recently_viewed_pages += 10; display_recently_viewed_pages(false, false); return false;">[More]</a> <a href="#" onclick="num_recently_viewed_pages += 10; display_recently_viewed_pages(false, true); return false;">[Clear]</a></div>');
+                outer_div.append('<div><a href="#" onclick="num_recently_viewed_pages += 10; display_recently_viewed_pages(false, false); return false;" class="btn">More</a> <a href="#" onclick="num_recently_viewed_pages += 10; display_recently_viewed_pages(false, true); return false;" class="btn">Clear</a></div>');
             });
         }
         $(function(){

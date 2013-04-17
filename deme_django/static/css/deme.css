@@ -4786,13 +4786,17 @@ table.twocol tr th {
 table.twocol tr td {
   padding: 3px;
 }
-table.search-items .item-type-container span {
+table.search-items .item-type-container span a,
+table.search-items .item-type-container span b {
   white-space: nowrap;
   background: #fcfcfc;
   border-radius: 5px;
   padding: .1em .75em;
   margin: 0 0 .25em .25em;
   display: inline-block;
+}
+table.search-items .item-type-container span b {
+  background: #ccc;
 }
 form.item_form table tr th {
   text-align: right;
@@ -5243,6 +5247,9 @@ you can use the generic selector below, but it's slower:
 #metabar .section > .collapse#metadata_content_item_details h3:first-child {
   display: none;
 }
+.approvenpoll .propositions {
+  margin-bottom: 15px;
+}
 .HiddenMenu {
   z-index: 1;
 }
@@ -5267,19 +5274,11 @@ you can use the generic selector below, but it's slower:
   text-decoration: none;
   background: #49869c;
 }
-.page-layout div.title {
-  text-align: left;
-  font-weight: bold;
-  font-size: 175%;
-  line-height: 1.2;
-  margin-bottom: 10px;
-}
-.page-layout div.title img {
+.page-layout h1.title img {
   vertical-align: middle;
 }
-.page-layout div.title a {
+.page-layout h1.title a {
   text-decoration: none;
-  color: black;
 }
 .page-layout .table-discussion {
   table-layout: fixed;
@@ -5293,4 +5292,10 @@ you can use the generic selector below, but it's slower:
 .page-layout .table-discussion td {
   text-overflow: ellipsis;
   overflow: hidden;
+}
+.sidebar-section .recently-viewed div {
+  padding-bottom: 10px;
+}
+.ui-jqgrid td a {
+  display: block;
 }

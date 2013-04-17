@@ -1,103 +1,6 @@
 {% extends layout %}
 {% load item_tags %}
 {% block content %}
-<style>
-div {
- margin-right: 5px;
-}
-
-div p {
-  font-size: 14px;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-#label {
-  font-size: 12px;
-  font-weight: bold;
-  margin: 0;
-}
-
-div.Question {
-  margin-right: 6em;
-}
-
-div.Deadline p{
-	font-size: 20px;
-}
-
-div.Instructions p{
-	font-size: 12px;
-}
-
-#No_Permission {
-	font-size: 12px;
-}
-
-div.submit_button a.poll {
-}
-
-div #Results {
-    width: 20%;
-	padding: 0;
-	margin: .2em;
-	margin-left: .5em;
-	float: right;
-}
-
-div.container.propositions div.row.odd span{
-	background-color: #CCF;
-}
-
-div.container.propositions div.row.even span{
-	background-color: #F0F0F0;
-}
-
-div.container div.row.even{
-	background-color: #F0F0F0;
-	height: 3em;
-	border: 1px solid gray
-}
-
-div.container div.row.odd{
-	background-color: #CCF;
-	height: 3em;
-	border: 1px solid gray
-}
-
-
-div.container.propositions a{
-	margin-right: 2em;
-}
-
-div.container span span{
-	float: right;
-	margin-left: 1em;
-}
-
-div.container div.implementation{
-	height: 16em;
-	width: 30%;
-	overflow-y: hidden;
-	overflow-x: hidden;
-	margin: 0em;
-	display: none;
-}
-
-#hiddenDecisionButtons p{
-	font-size: 10px;
-}
-
-#writeinComment {
-	rows 2
-}
-
-table.Poll{
-
-}
-
-</style>
-
 <script type="text/javascript">
 function showDialog(){
    $("#divId").dialog("open");
@@ -113,7 +16,6 @@ $(document).ready(function() {
        });
 });
 </script>
-
 <script type="text/javascript">
 	function toggleImplementation(pk){
 		var button = "#hide" + pk;
@@ -139,7 +41,7 @@ $(document).ready(function() {
 			$(button).val("Show Responses");
 		}
 	};
-	
+
 	function toggleButtons(className){
 		var buttons = "#" + className;
 		if ($(buttons).is(":hidden")) {
@@ -148,164 +50,154 @@ $(document).ready(function() {
 			$(buttons).slideUp("slow");
 		}
 	};
-	
+
 	function removeMember(pk){
 		$("#removeInput").val(pk);
 		$("#removemember").submit();
 	};
-	
-    
 </script>
 
-{% if can_view_response_names_and_values or not cur_agent_has_voted %}
+<div class="approvenpoll">
+  {% if can_view_response_names_and_values or not cur_agent_has_voted %}
 
-
-<form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
-    <input id="removeInput"type="hidden" name="item" value="{{ membership.item.pk }}" />
-</form>
-
-
-
-
-
-
-
-
-
-
-<script type="text/javascript">
-    function openDialog(name)
-    {
-        var dialogBox = $("#" + name);
-        dialogBox.dialog({
-            autoOpen: false,
-            bgiframe: true,
-            modal: true,
-            close: function(event, ui) {dialogBox.dialog('destroy')}
-        });
-        dialogBox.dialog('open');
-    }   =me
-</script>
-
-
-{% if item.question %}
-<div style="font-size: larger; margin-bottom: 1em;">
-<strong>Issue:</strong>
-{{ item.question }}
-</div>
-{% endif %}
-
-{% if propositions %}
-<form method="post" enctype="multipart/form-data" 
-	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
-	<div class="container propositions" id="Propcontainer" style="width: 78%; margin-left: 3em; ">
-    
-	
-		{% for proposition in propositions %}
-		    <div>
-		           <div style="float: left;"> {{ forloop.counter }})  </div>
-		           <div style-"float:left;">{{proposition.body|safe}} </div>
-			 	   
-			 	   {% ifagentcan 'modify_membership' item %}
-				   <button style="float:left" type="button" onclick="removeMember('{{ proposition.pk }}')"><img src="{{ "delete"|icon_url:16 }}" /> Remove</button>
-				   {% endifagentcan %}
-				   <div style="clear: both;"></div>		
-			 	   
-			</div>
-			{% if cur_agent_in_eligbles %}
-			<div style="float: left"> 
-				<input type="radio" name="{{ proposition.pk }}"value="approve" />Agree
-				<input type="radio" name="{{ proposition.pk }}" value="disapprove" />Disagree<br />
-			</div>
-			{% endif %}
-			
-		<br>	
-		<br>
-	    {% endfor %}
-	    </div>
-	    
-	    
-	{% if cur_agent_in_eligbles %}
-	</div>
-    <!--
-	<p><strong>You also have the option of writing in your own statement that you think better captures your opinions. We ask that you still vote for each response above and then write your own statement here:</strong><p>
-	<textarea  name="optional_writein_comment" type="text" cols="20" rows="2"></textarea><br />
-    -->
-    <input type="hidden" name="optional_writein_comment" value="" />
-			<div style="margin-left:40%; margin-bottom:1em;">
-                <button type="submit" class="fg-button ui-widget ui-state-default ui-corner-all" style="background: #ffcc99;">Submit</button><br><br>
-			</div>
-	{% endif %}
-</form>
-{% else %}
-    No propositions in this poll
-{% endif %}
-
-			
-
-
-{% ifagentcan 'modify_membership' item %}
-<div class="submit_button">  
-	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Add a Proposition</a>
-</div>
-{% endifagentcan %}
-<br>
-<br>
-<div id="hiddenPropositionButtons" style="margin: 4px; height 2em; display:none;">
-	{% ifagentcanglobal 'create Proposition' %}
-	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Proposition</a>
-	{% endifagentcanglobal %}
-	{% ifagentcan 'modify_membership' item %}
-	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a>
-	{% endifagentcan %}
-	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Cancel</a><br><br>
-</div>
-<br>
-<br>
-
-{% endif %}
-
-{% if cur_agent_has_voted or can_view_response_names_and_values %}
-
-  <script type="text/javascript" src="http://www.google.com/jsapi"></script>
     <script type="text/javascript">
-   	 google.load('visualization', '1', {packages: ['table']});
-     function drawVisualization() {
-     	  {% for vote_numbers_tuple in vote_numbers_list %}
-		  // Create and populate the data table.
-	      var data = new google.visualization.DataTable();
-	      data.addColumn('string', 'Choice');
-	      data.addColumn('number', 'Votes');
-	      data.addRows(2);
-	      data.setCell(1, 0, 'Agree');
-	      data.setCell(1, 1, {{vote_numbers_tuple.agree}});
-	      data.setCell(2, 0, 'Disagree');
-	      data.setCell(2, 1, {{vote_numbers_tuple.disagree}});
-    
-      // Create and draw the visualization.
-      var table = new google.visualization.Table(document.getElementById('visualization{{ forloop.counter }}'));
-        
-      var formatter = new google.visualization.BarFormat({min:0 , width: 420});
-      formatter.format(data, 1); // Apply formatter to second column
-        
-      table.draw(data, {allowHtml: true});
-      {% endfor %}
-    }
-    
-    google.setOnLoadCallback(drawVisualization);
+        function openDialog(name)
+        {
+            var dialogBox = $("#" + name);
+            dialogBox.dialog({
+                autoOpen: false,
+                bgiframe: true,
+                modal: true,
+                close: function(event, ui) {dialogBox.dialog('destroy')}
+            });
+            dialogBox.dialog('open');
+        }
     </script>
-    {% if can_view_response_names_and_values %}
-    	<br>
-    	<h3>----------Results Page for Participants----------</h3>
-    	<br>
-    {% endif %}
-    <p id="PollResultsTitle" style="font-size:2em; margin-bottom:1em; margin-top:.5em;"><strong>Poll Results</strong> </p>
+    <form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+      <input id="removeInput"type="hidden" name="item" value="{{ membership.item.pk }}" />
+    </form>
 
-    {% for dict in vote_numbers_list %}
-    <div>
-	    <p style="margin-bottom:0em;">Statement {{ forloop.counter }}: <strong>{{dict.proposition.body|safe}}</strong></p>
-	    <table class="Poll" border="0"  >
-			  
+    {% if item.question %}
+    <p class="issue">
+    <strong>Issue:</strong>
+    {{ item.question }}
+    </p>
+    {% endif %}
+
+    <div class="row">
+
+      <!-- Start Propositions -->
+      {% ifagentcan 'modify_membership' item %}
+      <!-- admin -->
+      <div class="col-span-6 propositions-container">
+      <h3>Propositions</h3>
+      {% endifagentcan %}
+
+      {% if propositions %}
+        <form method="post" enctype="multipart/form-data"
+            	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
+        	<div class="propositions list-group" id="Propcontainer">
+      		{% for proposition in propositions %}
+    		    <div class="proposition list-group-item">
+    		      <h4>{% firstof proposition.name forloop.counter %}</h4>
+    		      <p>{{proposition.body|safe}}</p>
+
+     		 	    {% ifagentcan 'modify_membership' item %}
+    	 	      <!-- admin -->
+        			<button class="btn btn-small" type="button" onclick="removeMember('{{ proposition.pk }}')"><i class="glyphicon glyphicon-trash"></i> Remove</button>
+        		  {% endifagentcan %}
+
+        			{% if cur_agent_in_eligbles %}
+        			<label class="radio-inline">
+        				<input type="radio" name="{{ proposition.pk }}" value="approve"> Agree
+        			</label>
+        			<label class="radio-inline">
+        				<input type="radio" name="{{ proposition.pk }}" value="disapprove"> Disagree
+        			</label>
+        			{% endif %}
+      			</div>
+
+    	    {% endfor %}
+          </div><!-- /#Propcontainer -->
+
+        	{% if cur_agent_in_eligbles %}
+            <!--
+        	<p><strong>You also have the option of writing in your own statement that you think better captures your opinions. We ask that you still vote for each response above and then write your own statement here:</strong><p>
+        	<textarea  name="optional_writein_comment" type="text" cols="20" rows="2"></textarea><br />
+            -->
+            <input type="hidden" name="optional_writein_comment" value="" />
+
+            <p>
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </p>
+
+        	{% endif %}
+
+        </form>
+        {% else %}
+        <div class="alert">No propositions in this poll</div>
+      {% endif %}<!--(propositions)-->
+
+      {% ifagentcan 'modify_membership' item %}
+      <!-- admin -->
+      <p>
+        {% ifagentcanglobal 'create Proposition' %}
+      	<a class="btn" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Add a Proposition</a>
+      	{% endifagentcanglobal %}
+      	{% ifagentcan 'modify_membership' item %}
+      	<!--a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a-->
+      	{% endifagentcan %}
+      </p>
+      </div><!-- /.col-span-6 -->
+      {% endifagentcan %}
+      <!-- End Propositions -->
+
+      {% if can_view_response_names_and_values %}
+      <div class="col-span-6 responses-container">
+        {% for key, value in responses.items %}
+        	<div class="response">
+        	  <a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+        	  {% if value %}
+            	has responded
+
+              <input type="button" style="float:right;"
+                value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
+
+              <div id="responses{{ key.pk }}" style="display: none">
+                {% for response in value %}
+                     <p><a href="{{ response.proposition.get_absolute_url }}">
+                     {% viewable_name response.proposition %}</a>:
+	                     {%ifequal response.value "approve" %}
+	                     	Agree
+	                     {% endifequal %}
+	                     {%ifequal response.value "disapprove" %}
+	                     	Disagree
+	                     {% endifequal %}
+	                   </p>
+                {% endfor %}
+              </div>
+        	  {% else %}
+            	has not responded
+          	{% endif %}
+        	</div>
+        {% endfor %}
+      </div>
+      {% endif %}<!--(can_view_response_names_and_values)-->
+
+    </div><!-- .row -->
+  {% endif %}<!--(can_view_response_names_and_values or not cur_agent_has_voted)-->
+
+  {% if cur_agent_has_voted or can_view_response_names_and_values %}
+  <div class="row">
+    <div class="panel">
+      <h3 class="panel-heading">Poll Results</h3>
+      {% for dict in vote_numbers_list %}
+      {% with dict.proposition as proposition %}
+      <div class="proposition proposition-result">
+        <h4>{% firstof proposition.name forloop.counter %}</h4>
+	      <p>{{proposition.body|safe}}</p>
+	      <table class="Poll" border="0"  >
+
 			  <tr>
 			    <td width = "70px" align="right">{{dict.agree}} Agree</td>
 			    <td></td>
@@ -357,31 +249,61 @@ $(document).ready(function() {
 			    {% endfor %}
 			  </tr>
 			</table>
+      </div>
+      {% endwith %}
+      {% endfor %}
 
-	</div>
-	<br>
-	<br>
+      <hr>
 
-    {% endfor %}
+      <div class="personal-statements">
+        <h4>Personal Statements</h4>
+        {% if comments %}
+        	<table>
+    	    {% for comment in comments %}
+    	    <tr>
+    	    	<td>{{ comment.body|safe }}</td>
+    	    	<td>Posted on {{ comment.created_at }}</td>
+    	    </tr>
+    	    {% endfor %}
+    	    </table>
+      	{% else %}
+      		<p>There have been no personal statements made</p>
+      	{% endif %}
+      </div>
 
-    <div style="background-color:#b0c4de "><p><strong> Personal Statements </strong></p>
-    {% if comments %}
-    	<table>
-	    {% for comment in comments %}
-	    <tr>
-	    	<td>{{ comment.body|safe }}</td>
-	    	<td>Posted on {{ comment.created_at }}</td>
-	    </tr>
-	    {% endfor %}
-	    </table>
-	{% else %}
-		<p>There have been no personal statements made</p>
-	{% endif %}
-	</div>
+      {% if cur_agent_in_eligbles %}
+      <div class="panel">
+      	<h5 class="panel-heading">Add a personal statement:</h5>
+      	<form method="post" enctype="multipart/form-data"
+      	action="{% url item_url viewer=viewer_name,action="addawritein",noun=item.pk %}?redirect={{ full_path|urlencode }}">
+      	  <p><textarea name="optional_writein_comment" type="text" cols="20" rows="2"></textarea></p>
+      	  <p><input type="submit" value="Comment" class="btn btn-primary"></p>
+      	</form>
+      </div>
+    	{% endif %}
+
+    </div><!--/.panel-->
+  </div><!--/.row-->
+  {% endif %}<!--(cur_agent_has_voted or can_view_response_names_and_values)-->
+</div><!--/.approvenpoll-->
+
+
+
+
+
+{% endblock content %}
+
+
+<!------------------------------------------------------------------------>
+
+
+{% if cur_agent_has_voted or can_view_response_names_and_values %}
+
+
 
 	{% if cur_agent_in_eligbles %}
 	<p><strong>Add a personal statement:</strong><p>
-	<form method="post" enctype="multipart/form-data" 
+	<form method="post" enctype="multipart/form-data"
 	action="{% url item_url viewer=viewer_name,action="addawritein",noun=item.pk %}?redirect={{ full_path|urlencode }}">
 	<textarea  name="optional_writein_comment" type="text" cols="20" rows="2"></textarea><br />
 			<div style="margin-left:40%; margin-bottom:1em;">
@@ -402,14 +324,15 @@ $(document).ready(function() {
         	<div class="{% cycle 'even' 'odd' %} row " >
         	<span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
      		{% if value %}
-            	has responded 
+            	has responded
                 <input type="button" style="float:right;"
                 value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
 				</div>
+
                	<div id="responses{{ key.pk }}" style="display: none">
                 {% for response in value %}
                      <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
-                     {% viewable_name response.proposition %}</a>: 
+                     {% viewable_name response.proposition %}</a>:
 	                     {%ifequal response.value "approve" %}
 	                     	Agree
 	                     {% endifequal %}
@@ -429,10 +352,11 @@ $(document).ready(function() {
     <div class="{% cycle 'even' 'odd' %} row " >
     <span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
     {% if value %} has responded {% else %} has not responded {% endif %}
-	{% ifequal cur_agent key %} 
+	{% ifequal cur_agent key %}
 		<input type="button" style="float:right;"
         value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
 		</div>
+
        	<div id="responses{{ key.pk }}" style="display: none">
         {% for response in value %}
              <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
@@ -445,19 +369,19 @@ $(document).ready(function() {
 		Responses are not visible
 		<p>Your response:</p>
 		 {% for key,value in responses.items %}
-			
+
 			{% ifequal cur_agent.pk key.pk %}
 	        	<div class="{% cycle 'even' 'odd' %} row " >
 	        	<span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
 	     		{% if value %}
-	            	has responded 
+	            	has responded
 	                <input type="button" style="float:right;"
 	                value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
 					</div>
 	               	<div id="responses{{ key.pk }}" style="display: none">
 	                {% for response in value %}
 	                     <p><a href="{{ response.proposition.get_absolute_url }}" style="margin-left:1em;">
-	                     {% viewable_name response.proposition %}</a>: 
+	                     {% viewable_name response.proposition %}</a>:
 
 	                     {%ifequal response.value approve %}
 	                     	Agree
@@ -476,28 +400,10 @@ $(document).ready(function() {
     {% endif %}{% endif %}
 </div>
 
-    
+
 	{% endif %}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 {% endif %}
 
-
-
-
-
-{% endblock content %}
+</div>
 

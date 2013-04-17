@@ -8,7 +8,7 @@ $(function(){
   function metabar_sizing(){
     $metabar.css('min-height', $(window).height());
   }
-  $(window).resize(function(){ metabar_sizing(); });
+  $(window).resize(function(){ metabar_sizing(); metabarWidthAdjust(); });
   metabar_sizing();
 
   // attach resizable to entire metabar
@@ -56,6 +56,9 @@ $(function(){
   // adjust width of container to take into account metadata width
   function metabarWidthAdjust(metabar_width) {
     var width = '';
+    if (typeof(metabar_width) == 'undefined') {
+      metabar_width = $metabar.width();
+    }
     // if visible, then calculate
     if (!$metabar.hasClass('closed')) {
       width = $(window).width() - metabar_width - 10 + 'px'; // buffer

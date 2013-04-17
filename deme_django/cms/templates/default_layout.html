@@ -211,9 +211,9 @@
             </div>
           </div>
           <div class="row">
-            <div class="col-span-3" class="sidebar-section">
+            <div class="col-span-3 sidebar-section">
               {% block sidebar-section %}
-              <div class="panel">
+              <div class="panel recently-viewed">
                 <div class="panel-heading">
                   Recently Viewed
                 </div>
@@ -246,15 +246,16 @@
                   </div>
                   {% endif %}
 
-                  <div class="title">
-                    {% block title %}
+
+                  {% block title %}
+                    <h1 class="title">
                     {% if item %}
                     <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
                     {% else %}
                     <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
                     {% endif %}
-                    {% endblock title %}
-                  </div>
+                    </h1>
+                  {% endblock title %}
 
                   <div class="content">
                   {% block content %}
