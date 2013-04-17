@@ -87,12 +87,7 @@ $(document).ready(function() {
     <div class="row">
 
       <!-- Start Propositions -->
-      {% ifagentcan 'modify_membership' item %}
-      <!-- admin -->
-      <div class="col-span-6 propositions-container">
-      <h3>Propositions</h3>
-      {% endifagentcan %}
-
+      <div class="col-span-12 propositions-container">
       {% if propositions %}
         <form method="post" enctype="multipart/form-data"
             	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
@@ -148,47 +143,14 @@ $(document).ready(function() {
       	<!--a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a-->
       	{% endifagentcan %}
       </p>
-      </div><!-- /.col-span-6 -->
       {% endifagentcan %}
+      </div><!-- /.col-span-12 -->
       <!-- End Propositions -->
-
-      {% if can_view_response_names_and_values %}
-      <div class="col-span-6 responses-container">
-        {% for key, value in responses.items %}
-        	<div class="response">
-        	  <a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
-        	  {% if value %}
-            	has responded
-
-              <input type="button" style="float:right;"
-                value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
-
-              <div id="responses{{ key.pk }}" style="display: none">
-                {% for response in value %}
-                     <p><a href="{{ response.proposition.get_absolute_url }}">
-                     {% viewable_name response.proposition %}</a>:
-	                     {%ifequal response.value "approve" %}
-	                     	Agree
-	                     {% endifequal %}
-	                     {%ifequal response.value "disapprove" %}
-	                     	Disagree
-	                     {% endifequal %}
-	                   </p>
-                {% endfor %}
-              </div>
-        	  {% else %}
-            	has not responded
-          	{% endif %}
-        	</div>
-        {% endfor %}
-      </div>
-      {% endif %}<!--(can_view_response_names_and_values)-->
 
     </div><!-- .row -->
   {% endif %}<!--(can_view_response_names_and_values or not cur_agent_has_voted)-->
 
   {% if cur_agent_has_voted or can_view_response_names_and_values %}
-  <div class="row">
     <div class="panel">
       <h3 class="panel-heading">Poll Results</h3>
       {% for dict in vote_numbers_list %}
@@ -283,8 +245,60 @@ $(document).ready(function() {
     	{% endif %}
 
     </div><!--/.panel-->
-  </div><!--/.row-->
   {% endif %}<!--(cur_agent_has_voted or can_view_response_names_and_values)-->
+
+  {% if can_view_response_names %}
+  <h3>Participants</h3>
+  <div class="responses-container list-group">
+    {% for key, value in responses.items %}
+    	<div class="response list-group-item">
+    	  <a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+    	  {% if value %}
+        	has responded
+        	{% if can_view_response_names_and_values %}
+          <input type="button" class="pull-right btn btn-small"
+            value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
+          <ul id="responses{{ key.pk }}" style="display: none">
+            {% for response in value %}
+                 <li><a href="{{ response.proposition.get_absolute_url }}">
+                 {% viewable_name response.proposition %}</a>:
+                   {%ifequal response.value "approve" %}
+                   	Agree
+                   {% endifequal %}
+                   {%ifequal response.value "disapprove" %}
+                   	Disagree
+                   {% endifequal %}
+                 </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+    	  {% else %}
+        	has not responded
+      	{% endif %}
+    	</div>
+    {% endfor %}
+  </div>
+  {% endif %}<!--(can_view_response_names_and_values)-->
+
+  {% for key, value in responses.items %}
+    {% if cur_agent.pk == key.pk %}
+    <h3>Your Responses</h3>
+    <ul>
+      {% for response in value %}
+           <li><a href="{{ response.proposition.get_absolute_url }}">
+           {% viewable_name response.proposition %}</a>:
+             {%ifequal response.value "approve" %}
+             	Agree
+             {% endifequal %}
+             {%ifequal response.value "disapprove" %}
+             	Disagree
+             {% endifequal %}
+           </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  {% endfor %}
+
 </div><!--/.approvenpoll-->
 
 

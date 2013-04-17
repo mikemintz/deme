@@ -5173,6 +5173,7 @@ you can use the generic selector below, but it's slower:
 }
 #metabar.closed {
   width: 0px !important;
+  height: 0px !important;
   display: block;
   overflow: hidden;
 }
