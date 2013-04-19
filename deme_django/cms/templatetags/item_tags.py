@@ -18,6 +18,7 @@ from django.utils.timesince import timesince
 from django.utils.text import capfirst, truncate_words
 from django.utils import simplejson
 from django.utils.safestring import mark_safe
+from django.template import Context
 from urlparse import urljoin
 import os
 import itertools
@@ -1434,184 +1435,22 @@ class PermissionEditor(template.Node):
         new_collection_select_widget = AjaxModelChoiceField(Collection.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None, {'id':'permission_new_collection'})
         #TODO the widgets get centered-alignment in the dialog, which looks bad
 
-        result = """
-        <script>
-            var permission_counter = 1;
-            var possible_abilities = %(possible_ability_javascript_array)s;
-            var can_edit_permissions = %(can_edit_permissions)s;
-            function add_permission_fields(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
-                if (can_edit_permissions) {
-                    var remove_button = $('<a href="#" class="img_link"><img src="%(delete_img_url)s" /></a>');
-                    remove_button.bind('click', function(e){wrapper.remove(); return false;});
-                    wrapper.append(remove_button);
-                }
-                var is_allowed_checkbox = $('<input type="checkbox" id="newpermission' + permission_counter + '_is_allowed" name="newpermission' + permission_counter + '_is_allowed" value="on">');
-                is_allowed_checkbox.attr('checked', is_allowed);
-                is_allowed_checkbox.attr('defaultChecked', is_allowed);
-                if (!can_edit_permissions) {
-                    is_allowed_checkbox.attr('disabled', true);
-                    is_allowed_checkbox.attr('readonly', true);
-                }
-                wrapper.append(is_allowed_checkbox);
-                if (ability == '') {
-                    var ability_select = $('<select name="newpermission' + permission_counter + '_ability">');
-                    for (var i in possible_abilities) {
-                        var is_selected = (possible_abilities[i][0] == ability);
-                        ability_select[0].options[i] = new Option(possible_abilities[i][1], possible_abilities[i][0], is_selected, is_selected);
-                    }
-                    wrapper.append(ability_select);
-                } else {
-                    var friendly_name = ability;
-                    for (var i in possible_abilities) {
-                        if (possible_abilities[i][0] == ability) {
-                            friendly_name = possible_abilities[i][1];
-                            break;
-                        }
-                    }
-                    wrapper.append('<label for="newpermission' + permission_counter + '_is_allowed">' + friendly_name + '</label>');
-                    wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_ability" value="' + ability + '" />');
-                }
-                wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_permission_type" value="' + permission_type + '" />');
-                wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_agent_or_collection_id" value="' + agent_or_collection_id + '" />');
-                permission_counter += 1;
-            }
-
-            function add_permission_div(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
-                var permission_div = $('<div>');
-                add_permission_fields(permission_div, permission_type, agent_or_collection_id, is_allowed, ability);
-                wrapper.append(permission_div);
-            }
-
-            function add_agent_or_collection_row(permission_type, agent_or_collection_id, name) {
-                var row = $('<tr style="border: 2px solid #aaa">');
-                if (permission_type == 'agent') {
-                    var name_url = '%(sample_agent_url)s'.replace('1', agent_or_collection_id);
-                    row.append('<td><a href="' + name_url + '">' + name + '</a></td>');
-                } else if (permission_type == 'collection') {
-                    var name_url = '%(sample_collection_url)s'.replace('1', agent_or_collection_id);
-                    row.append('<td><a href="' + name_url + '">' + name + '</a></td>');
-                } else if (permission_type == 'everyone') {
-                    row.append('<td>' + name + '</td>');
-                }
-                var permissions_cell = $('<td>');
-                permissions_cell.addClass('permissions_cell');
-                if (can_edit_permissions) {
-                    var add_button = $('<a href="#" class="img_link">');
-                    add_button.append('<img src="%(new_img_url)s" /> New Permission');
-                    add_button.bind('click', function(e){
-                        var permission_div = $('<div>');
-                        add_permission_fields(permission_div, permission_type, agent_or_collection_id, true, '');
-                        permissions_cell.append(permission_div);
-                        return false;
-                    });
-                    permissions_cell.append(add_button);
-                }
-                row.append(permissions_cell);
-                return row;
-            }
-
-            function setup_permission_editor() {
-                var existing_permission_data = %(existing_permission_data_javascript_array)s;
-                rows = [];
-                for (var i in existing_permission_data) {
-                    var datum = existing_permission_data[i];
-                    var row = add_agent_or_collection_row(datum.permission_type, datum.agent_or_collection_id, datum.name);
-                    var permissions_cell = row.children('td.permissions_cell');
-                    for (var j in datum.permissions) {
-                        var permission = datum.permissions[j];
-                        add_permission_div(permissions_cell, datum.permission_type, datum.agent_or_collection_id, permission.is_allowed, permission.ability);
-                    }
-                    rows.push(row);
-                }
-                for (var i in rows) {
-                    $('#permission_table tbody').append(rows[i]);
-                }
-
-                $('#new_agent_dialog').dialog({
-                    autoOpen: false,
-                    close: function(event, ui){
-                        $('input[name="new_agent"]').val('');
-                        $('input[name="new_agent_search"]').val('');
-                    },
-                    buttons: {
-                        'Add Agent': function(){
-                            var row = add_agent_or_collection_row('agent', $('input[name="new_agent"]').val(), $('input[name="new_agent_search"]').val());
-                            $('#permission_table tbody').append(row);
-                            $(this).dialog("close");
-                        },
-                        'Cancel': function(){
-                            $(this).dialog("close");
-                        }
-                    },
-                });
-
-                $('#new_collection_dialog').dialog({
-                    autoOpen: false,
-                    close: function(event, ui){
-                        $('input[name="new_collection"]').val('');
-                        $('input[name="new_collection_search"]').val('');
-                    },
-                    buttons: {
-                        'Add Collection': function(){
-                            var row = add_agent_or_collection_row('collection', $('input[name="new_collection"]').val(), $('input[name="new_collection_search"]').val());
-                            $('#permission_table tbody').append(row);
-                            $(this).dialog("close");
-                        },
-                        'Cancel': function(){
-                            $(this).dialog("close");
-                        }
-                    },
-                });
-
-                if (can_edit_permissions) {
-                    $('#agent_and_collection_select_div').show();
-                }
-            }
-
-            $(document).ready(function(){
-                setup_permission_editor();
-            });
-        </script>
-
-        <table id="permission_table" class="list" cellspacing="0">
-            <tbody>
-                <tr>
-                    <th>Name</th>
-                    <th>Permissions</th>
-                </tr>
-            </tbody>
-        </table>
-
-        <div id="new_agent_dialog" style="display: none;">
-            Name of the user: %(new_agent_select_widget)s
-        </div>
-
-        <div id="new_collection_dialog" style="display: none;">
-            Name of the group: %(new_collection_select_widget)s
-        </div>
-
-        <div style="display: none;" id="agent_and_collection_select_div">
-            <a href="#" class="img_link" onclick="$('#new_agent_dialog').dialog('open'); return false;"><img src="%(agent_img_url)s" /> <span>Assign a Permission to a User</span></a>
-            <a href="#" class="img_link" onclick="$('#new_collection_dialog').dialog('open'); return false;"><img src="%(collection_img_url)s" /> <span>Assign a Permission to a Group of Users</span></a>
-        </div>
-        <div style="margin-top: 10px;">
-            Having trouble with permissions? Try reading the <a href="%(permissions_help_url)s">guide to using Permissions</a>
-        </div>
-""" % {
-        'can_edit_permissions': simplejson.dumps(can_edit_permissions),
-        'possible_ability_javascript_array': simplejson.dumps(possible_abilities, separators=(',',':')),
-        'existing_permission_data_javascript_array': simplejson.dumps(existing_permission_data, separators=(',',':')),
-        'sample_agent_url': reverse('item_url', kwargs={'viewer': 'agent', 'noun': '1'}),
-        'sample_collection_url': reverse('item_url', kwargs={'viewer': 'collection', 'noun': '1'}),
-        'delete_img_url': icon_url('delete', 16),
-        'new_img_url': icon_url('new', 16),
-        'agent_img_url': icon_url('Agent', 16),
-        'collection_img_url': icon_url('Collection', 16),
-        'new_agent_select_widget': new_agent_select_widget,
-        'new_collection_select_widget': new_collection_select_widget,
-        'permissions_help_url': reverse('item_type_url', kwargs={'viewer': 'item', 'action':'permissionshelp'}),
+        data = {
+          'can_edit_permissions': simplejson.dumps(can_edit_permissions),
+          'possible_ability_javascript_array': simplejson.dumps(possible_abilities, separators=(',',':')),
+          'existing_permission_data_javascript_array': simplejson.dumps(existing_permission_data, separators=(',',':')),
+          'sample_agent_url': reverse('item_url', kwargs={'viewer': 'agent', 'noun': '1'}),
+          'sample_collection_url': reverse('item_url', kwargs={'viewer': 'collection', 'noun': '1'}),
+          'delete_img_url': icon_url('delete', 16),
+          'new_img_url': icon_url('new', 16),
+          'agent_img_url': icon_url('Agent', 16),
+          'collection_img_url': icon_url('Collection', 16),
+          'new_agent_select_widget': new_agent_select_widget,
+          'new_collection_select_widget': new_collection_select_widget,
+          'permissions_help_url': reverse('item_type_url', kwargs={'viewer': 'item', 'action':'permissionshelp'}),
         }
-        return result
+        t = template.loader.get_template('templatetags/privacy_editor.html')
+        return t.render(Context(data, autoescape=False))
 
 @register.tag
 def privacy_editor(parser, token):
