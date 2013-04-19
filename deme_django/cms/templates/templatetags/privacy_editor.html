@@ -2,27 +2,90 @@
     var permission_counter = 1;
     var possible_abilities = {{possible_ability_javascript_array}};
     var can_edit_permissions = {{can_edit_permissions}};
+
+    function change_permission_field_wrapper(wrapper, state) {
+      // reset button state
+      $(wrapper).find('.btn').removeClass('active');
+
+      if (state == 'neither') {
+        $(wrapper).find('input').attr('disabled', true);
+      } else {
+        $(wrapper).find('input').attr('disabled', false);
+
+        // set value
+        if (state == 'allow') {
+          $(wrapper).find('input.is_allowed').val("on");
+          $(wrapper).find('.btn.plus').addClass('active');
+        } else {
+          $(wrapper).find('input.is_allowed').val("");
+          $(wrapper).find('.btn.minus').addClass('active');
+        }
+      }
+    }
+
     function add_permission_fields(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
         if (can_edit_permissions) {
-            var remove_button = $('<a href="#" class="img_link"><img src="{{delete_img_url}}" /></a>');
+            /*var remove_button = $('<a href="#" class="img_link"><img src="{{delete_img_url}}" /></a>');
             remove_button.bind('click', function(e){wrapper.remove(); return false;});
-            wrapper.append(remove_button);
+            wrapper.append(remove_button);*/
+
+            is_allowed_value ='';
+            if (is_allowed) {
+              is_allowed_value = "on";
+            }
+
+            // turning checkbox into hidden
+            var is_allowed_checkbox = $('<input type="hidden" id="newpermission' + permission_counter + '_is_allowed" name="newpermission' + permission_counter + '_is_allowed" class="is_allowed" value="' + is_allowed_value + '">');
+            //is_allowed_checkbox.attr('checked', is_allowed);
+            //is_allowed_checkbox.attr('defaultChecked', is_allowed);
+            wrapper.append(is_allowed_checkbox);
+
+            var plus = $('<button class="btn plus" title="Allow"><i class="glyphicon glyphicon-plus"></i></button>');
+            var minus = $('<button class="btn minus" title="Disallow"><i class="glyphicon glyphicon-minus"></i></button>');
+            var btnwrap = $('<div class="btn-group">').append(plus).append(minus);
+            wrapper.append(btnwrap);
+
+
+            if (is_allowed) {
+              plus.addClass('active');
+            } else {
+              minus.addClass('active');
+            }
+
+            // bind events
+            plus.bind('click', function(e){
+              e.preventDefault();
+              if ($(this).hasClass('active')) {
+                change_permission_field_wrapper(wrapper, 'neither');
+              } else {
+                change_permission_field_wrapper(wrapper, 'allow');
+              }
+            });
+            minus.bind('click', function(e){
+              e.preventDefault();
+              if ($(this).hasClass('active')) {
+                change_permission_field_wrapper(wrapper, 'neither');
+              } else {
+                change_permission_field_wrapper(wrapper, 'disallow');
+              }
+            });
+
         }
-        var is_allowed_checkbox = $('<input type="checkbox" id="newpermission' + permission_counter + '_is_allowed" name="newpermission' + permission_counter + '_is_allowed" value="on">');
-        is_allowed_checkbox.attr('checked', is_allowed);
-        is_allowed_checkbox.attr('defaultChecked', is_allowed);
         if (!can_edit_permissions) {
-            is_allowed_checkbox.attr('disabled', true);
-            is_allowed_checkbox.attr('readonly', true);
+          // TODO: no permission display
+          //  is_allowed_checkbox.attr('disabled', true);
+          //  is_allowed_checkbox.attr('readonly', true);
         }
-        wrapper.append(is_allowed_checkbox);
+
         if (ability == '') {
             var ability_select = $('<select name="newpermission' + permission_counter + '_ability">');
             for (var i in possible_abilities) {
                 var is_selected = (possible_abilities[i][0] == ability);
                 ability_select[0].options[i] = new Option(possible_abilities[i][1], possible_abilities[i][0], is_selected, is_selected);
             }
-            wrapper.append(ability_select);
+            var ability_wrap = $('<div class="newpermission-wrap">');
+            ability_wrap.append(ability_select);
+            wrapper.append(ability_wrap);
         } else {
             var friendly_name = ability;
             for (var i in possible_abilities) {
@@ -40,7 +103,7 @@
     }
 
     function add_permission_div(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
-        var permission_div = $('<div>');
+        var permission_div = $('<div class="permission">');
         add_permission_fields(permission_div, permission_type, agent_or_collection_id, is_allowed, ability);
         wrapper.append(permission_div);
     }
@@ -60,9 +123,9 @@
         permissions_cell.addClass('permissions_cell');
         if (can_edit_permissions) {
             var add_button = $('<a href="#" class="img_link">');
-            add_button.append('<img src="{{new_img_url}}" /> New Permission');
+            add_button.append('<i class="glyphicon glyphicon-edit"></i> New Permission');
             add_button.bind('click', function(e){
-                var permission_div = $('<div>');
+                var permission_div = $('<div class="permission permission-new">');
                 add_permission_fields(permission_div, permission_type, agent_or_collection_id, true, '');
                 permissions_cell.append(permission_div);
                 return false;

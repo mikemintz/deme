@@ -29,7 +29,7 @@ from cms.permissions import all_possible_item_abilities, all_possible_item_and_g
 class ItemViewer(Viewer):
     accepted_item_type = Item
     viewer_name = 'item'
-    
+
     def default_metadata_menu_option(self):
         return 'item_details'
 
@@ -389,7 +389,7 @@ class ItemViewer(Viewer):
             if 'add_to_collection' in self.request.GET:
                 new_membership = Membership(item=new_item, collection=Collection.objects.get(pk=self.request.GET['add_to_collection']))
                 membership_permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
-                new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions) 
+                new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions)
             redirect = self.request.GET.get('redirect', new_item.get_absolute_url())
             return HttpResponseRedirect(redirect)
         else:
@@ -397,10 +397,10 @@ class ItemViewer(Viewer):
 
     def type_recentchanges_html(self):
         self.context['action_title'] = 'Recent Changes'
-        template = loader.get_template('item/recentchanges.html')    
+        template = loader.get_template('item/recentchanges.html')
         viewable_items = self.permission_cache.filter_items('view Item.action_notices', Item.objects)
         viewable_action_notices = ActionNotice.objects.filter(action_item__in=viewable_items.values("pk").query).order_by('-action_time')
-        
+
         action_notice_pk_to_object_map = {}
         for action_notice_subclass in [DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, EditActionNotice, CreateActionNotice]:
             specific_action_notices = action_notice_subclass.objects.filter(pk__in=viewable_action_notices.values('pk').query)
@@ -410,7 +410,7 @@ class ItemViewer(Viewer):
         action_notice_details = []
         for action_notice in viewable_action_notices:
             if action_notice.pk in action_notice_pk_to_object_map:
-                specific_action_notice = action_notice_pk_to_object_map[action_notice.pk]           
+                specific_action_notice = action_notice_pk_to_object_map[action_notice.pk]
                 details = {}
                 details["type"] = type(specific_action_notice).__name__
                 details["action_notice"] = action_notice
@@ -423,7 +423,7 @@ class ItemViewer(Viewer):
         except ValueError:
             page = 1
 
-        try: 
+        try:
             newPage = paginator.page(page)
         except (EmptyPage, InvalidPage):
             newPage = paginator.page(paginator.num_pages)
@@ -437,7 +437,7 @@ class ItemViewer(Viewer):
         self.context['action_notices'] = newPage
         self.context['count'] = paginator.count
         self.context['page_range'] = displayed_page_range
-           
+
         return HttpResponse(template.render(self.context))
 
     def item_show_html(self):
@@ -621,46 +621,50 @@ class ItemViewer(Viewer):
             ability = permission_datum['ability']
             if ability not in possible_abilities:
                 return self.render_error('Form Error', "Invalid ability")
-            is_allowed = (permission_datum.get('is_allowed') == 'on')
-            permission_type = permission_datum['permission_type']
-            agent_or_collection_id = permission_datum['agent_or_collection_id']
-            if permission_type == 'agent':
-                agent = Agent.objects.get(pk=agent_or_collection_id)
-                if target_level == 'one':
-                    permission = OneToOnePermission(source=agent)
-                elif target_level == 'some':
-                    permission = OneToSomePermission(source=agent)
-                elif target_level == 'all':
-                    permission = OneToAllPermission(source=agent)
+            try:
+                is_allowed = (permission_datum.get('is_allowed') == 'on')
+                permission_type = permission_datum['permission_type']
+                agent_or_collection_id = permission_datum['agent_or_collection_id']
+                if permission_type == 'agent':
+                    agent = Agent.objects.get(pk=agent_or_collection_id)
+                    if target_level == 'one':
+                        permission = OneToOnePermission(source=agent)
+                    elif target_level == 'some':
+                        permission = OneToSomePermission(source=agent)
+                    elif target_level == 'all':
+                        permission = OneToAllPermission(source=agent)
+                    else:
+                        assert False
+                elif permission_type == 'collection':
+                    collection = Collection.objects.get(pk=agent_or_collection_id)
+                    if target_level == 'one':
+                        permission = SomeToOnePermission(source=collection)
+                    elif target_level == 'some':
+                        permission = SomeToSomePermission(source=collection)
+                    elif target_level == 'all':
+                        permission = SomeToAllPermission(source=collection)
+                    else:
+                        assert False
+                elif permission_type == 'everyone':
+                    if target_level == 'one':
+                        permission = AllToOnePermission()
+                    elif target_level == 'some':
+                        permission = AllToSomePermission()
+                    elif target_level == 'all':
+                        permission = AllToAllPermission()
+                    else:
+                        assert False
                 else:
-                    assert False
-            elif permission_type == 'collection':
-                collection = Collection.objects.get(pk=agent_or_collection_id)
-                if target_level == 'one':
-                    permission = SomeToOnePermission(source=collection)
-                elif target_level == 'some':
-                    permission = SomeToSomePermission(source=collection)
-                elif target_level == 'all':
-                    permission = SomeToAllPermission(source=collection)
-                else:
-                    assert False
-            elif permission_type == 'everyone':
-                if target_level == 'one':
-                    permission = AllToOnePermission()
-                elif target_level == 'some':
-                    permission = AllToSomePermission()
-                elif target_level == 'all':
-                    permission = AllToAllPermission()
-                else:
-                    assert False
-            else:
-                return self.render_error('Form Error', "Invalid permission_type")
-            permission.ability = ability
-            permission.is_allowed = is_allowed
-            # Make sure we don't add duplicates
-            permission_key_fn = lambda x: (type(x), x.ability, getattr(x, 'source', None))
-            if not any(permission_key_fn(x) == permission_key_fn(permission) for x in result):
-                result.append(permission)
+                    return self.render_error('Form Error', "Invalid permission_type")
+                permission.ability = ability
+                permission.is_allowed = is_allowed
+                # Make sure we don't add duplicates
+                permission_key_fn = lambda x: (type(x), x.ability, getattr(x, 'source', None))
+                if not any(permission_key_fn(x) == permission_key_fn(permission) for x in result):
+                    result.append(permission)
+            except KeyError:
+                # malformed data, just pass instead of dying
+                pass
         return result
 
     @require_POST
@@ -768,7 +772,7 @@ class ItemViewer(Viewer):
         data = pages[1:num_pages+1]
         json_str = simplejson.dumps(data, separators=(',',':'))
         return HttpResponse(json_str, mimetype='application/json')
-    
+
     def item_editlockrefresh_json(self):
         t = datetime.datetime.now()
         EditLock.objects.filter(item=self.item, editor=self.cur_agent).update(lock_refresh_time=t)
@@ -869,7 +873,7 @@ class AuthenticationMethodViewer(ItemViewer):
                     self.request.session['cur_agent_id'] = new_agent.pk
                     full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
                     return HttpResponseRedirect(full_redirect)
-   
+
     @require_POST
     def type_logout_html(self):
         if 'cur_agent_id' in self.request.session:
@@ -890,7 +894,7 @@ class AuthenticationMethodViewer(ItemViewer):
         self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('authenticationmethod/loggedinorout.html')
         return HttpResponse(template.render(self.context))
-    
+
     def type_loginmenuitem_html(self):
         self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('authenticationmethod/loginmenuitem.html')
@@ -901,7 +905,7 @@ class AuthenticationMethodViewer(ItemViewer):
             can_login_as_anyone = False
         self.context['can_login_as_anyone'] = can_login_as_anyone
         return HttpResponse(template.render(self.context))
- 
+
 
 class PersonViewer(AgentViewer):
     accepted_item_type = Person
@@ -957,7 +961,7 @@ class SubscriptionViewer(ItemViewer):
         email = EmailContactMethod.objects.get(pk=self.request.POST.get('email'))
         self.require_ability('add_subscription', email)
 
-        new_subscription = Subscription(contact_method=email, item=item) 
+        new_subscription = Subscription(contact_method=email, item=item)
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
         new_subscription.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
 
@@ -1045,7 +1049,7 @@ class MembershipViewer(ItemViewer):
         item_pk = self.request.POST.get('item')
         if item_pk == '':
             return self.render_error('Invalid Membership', "You must specify which item to add to the collection")
-        
+
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         item = Item.objects.get(pk=item_pk)
         collection = Collection.objects.get(pk=self.request.POST['collection'])
@@ -1060,7 +1064,7 @@ class MembershipViewer(ItemViewer):
             membership.permission_enabled = True
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
         membership.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
-        
+
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': membership.pk}))
         return HttpResponseRedirect(redirect)
 
@@ -1068,7 +1072,7 @@ class MembershipViewer(ItemViewer):
         collection_pk = self.request.POST.get('collection')
         if collection_pk == '':
             return self.render_error('Invalid Membership', "You must specify which collection to add this item to")
-        
+
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         collection = Collection.objects.get(pk=collection_pk)
         item = Item.objects.get(pk=self.request.POST['item'])
@@ -1083,7 +1087,7 @@ class MembershipViewer(ItemViewer):
             membership.permission_enabled = True
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
         membership.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
-        
+
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': membership.pk}))
         return HttpResponseRedirect(redirect)
 
@@ -1170,7 +1174,7 @@ class TextDocumentViewer(DocumentViewer):
                 new_item.body, n_subs = re.subn(transclusion_re, repl, new_item.body, 1)
                 if n_subs == 0:
                     break
-            
+
             new_item.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'])
 
             for index, to_item_id in new_transclusions:
@@ -1300,7 +1304,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
             if 'add_to_collection' in self.request.GET:
                 new_membership = Membership(item=comment, collection=Collection.objects.get(pk=self.request.GET['add_to_collection']))
-                new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions) 
+                new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
 
             redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': comment.pk}))
             return HttpResponseRedirect(redirect)
@@ -1326,18 +1330,18 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
         title = self.request.POST.get('title')
         if title == '':
             return self.render_error('Invalid Comment', "You must enter in a title for your comment")
-        
+
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         item = Item.objects.get(pk=self.request.POST.get('item'))
         self.require_ability('comment_on', item)
 
-        new_comment = TextComment(body=new_body, item=item, item_version_number=self.request.POST.get('item_version_number')) 
+        new_comment = TextComment(body=new_body, item=item, item_version_number=self.request.POST.get('item_version_number'))
         new_comment.name = title
         if self.request.POST.get('new_from_contact_method'):
             new_comment.from_contact_method = ContactMethod.objects.get(pk=self.request.POST.get('new_from_contact_method'))
         permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
         new_comment.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
-        
+
         if self.request.GET.get('populate_item_index'):
             transclusion = Transclusion(from_item=item.downcast(), from_item_version_number=self.request.POST.get('item_version_number'), from_item_index=self.request.GET.get('populate_item_index'), to_item=new_comment)
             transclusion_permissions = [OneToOnePermission(source=self.cur_agent, ability='do anything', is_allowed=True)]

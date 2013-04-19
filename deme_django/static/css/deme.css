@@ -5303,3 +5303,40 @@ you can use the generic selector below, but it's slower:
 .ui-jqgrid td a {
   display: block;
 }
+#permission_table {
+  width: 100%;
+}
+#permission_table th {
+  text-align: left;
+}
+#permission_table .permission {
+  position: relative;
+  margin-top: 5px;
+}
+#permission_table .permission.permission-new .btn-group {
+  float: left;
+}
+#permission_table .permission .newpermission-wrap {
+  margin-left: 90px;
+}
+#permission_table .permission .btn-group {
+  margin-right: 10px;
+}
+#permission_table .permission .btn {
+  background-color: #ffffff;
+  color: #555555;
+  /*&.active.minus {
+        //#gradient .vertical(@adminbar-bottom, @adminbar-top);
+        background-color: red;
+        color: @white;
+        //background-color: @adminbar-top-light; //darken(@grayLighter,10%);
+      }
+      &.active.plus {
+        background-color: green;
+        color: @white;
+      }*/
+
+}
+#permission_table .permission .btn.active {
+  background: #d5d5d5;
+}

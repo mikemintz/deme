@@ -1,0 +1,39 @@
+#permission_table {
+  width: 100%;
+  th {
+    text-align: left;
+  }
+
+  .permission {
+    position: relative;
+    margin-top: 5px;
+    &.permission-new {
+      .btn-group {
+        float: left;
+      }
+    }
+    .newpermission-wrap {
+      margin-left: 90px;
+    }
+    .btn-group {
+      margin-right: 10px;
+    }
+    .btn {
+      background-color: @white;
+      color: @gray;
+      &.active {
+        background: darken(@grayLighter,10%);
+      }
+      /*&.active.minus {
+        //#gradient .vertical(@adminbar-bottom, @adminbar-top);
+        background-color: red;
+        color: @white;
+        //background-color: @adminbar-top-light; //darken(@grayLighter,10%);
+      }
+      &.active.plus {
+        background-color: green;
+        color: @white;
+      }*/
+    }
+  }
+}
