@@ -30,7 +30,7 @@
             wrapper.append(remove_button);*/
 
             is_allowed_value ='';
-            if (is_allowed) {
+            if (is_allowed===true) {
               is_allowed_value = "on";
             }
 
@@ -44,13 +44,6 @@
             var minus = $('<button class="btn minus" title="Disallow"><i class="glyphicon glyphicon-minus"></i></button>');
             var btnwrap = $('<div class="btn-group">').append(plus).append(minus);
             wrapper.append(btnwrap);
-
-
-            if (is_allowed) {
-              plus.addClass('active');
-            } else {
-              minus.addClass('active');
-            }
 
             // bind events
             plus.bind('click', function(e){
@@ -78,7 +71,7 @@
         }
 
         if (ability == '') {
-            var ability_select = $('<select name="newpermission' + permission_counter + '_ability">');
+            var ability_select = $('<select name="newpermission' + permission_counter + '_ability" class="ability">');
             for (var i in possible_abilities) {
                 var is_selected = (possible_abilities[i][0] == ability);
                 ability_select[0].options[i] = new Option(possible_abilities[i][1], possible_abilities[i][0], is_selected, is_selected);
@@ -95,10 +88,20 @@
                 }
             }
             wrapper.append('<label for="newpermission' + permission_counter + '_is_allowed">' + friendly_name + '</label>');
-            wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_ability" value="' + ability + '" />');
+            wrapper.append('<input type="hidden" class="ability" name="newpermission' + permission_counter + '_ability" value="' + ability + '" />');
         }
         wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_permission_type" value="' + permission_type + '" />');
         wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_agent_or_collection_id" value="' + agent_or_collection_id + '" />');
+
+        if (can_edit_permissions) {
+            if (is_allowed===true) {
+              plus.addClass('active');
+            } else if (is_allowed===false) {
+              minus.addClass('active');
+            } else {
+              $(wrapper).find('input').attr('disabled', true);
+            }
+        }
         permission_counter += 1;
     }
 
@@ -122,6 +125,7 @@
         var permissions_cell = $('<td>');
         permissions_cell.addClass('permissions_cell');
         if (can_edit_permissions) {
+            // add permission button
             var add_button = $('<a href="#" class="img_link">');
             add_button.append('<i class="glyphicon glyphicon-edit"></i> New Permission');
             add_button.bind('click', function(e){
@@ -131,6 +135,26 @@
                 return false;
             });
             permissions_cell.append(add_button);
+
+            // show all permissions button
+            var show_button = $('<a href="#" class="img_link">');
+            show_button.append('<i class="glyphicon glyphicon-th-list"></i> Show All');
+            show_button.bind('click', function(e){
+                e.preventDefault();
+                // loop through all permissions.
+                for (var i in possible_abilities) {
+                    var ability = (possible_abilities[i][0]);
+                    // look for existing in this div
+                    var permission = permissions_cell.find('.ability[value="'+ability+'"]');
+                    if (permission.length == 0) {
+                      var permission_div = $('<div class="permission permission-mass">');
+                      add_permission_fields(permission_div, permission_type, agent_or_collection_id, null, ability);
+                      permissions_cell.append(permission_div);
+                    }
+                }
+                $(this).remove(); // kill button
+            });
+            permissions_cell.append(show_button);
         }
         row.append(permissions_cell);
         return row;
