@@ -64,36 +64,47 @@
             });
 
         }
+
+        var friendly_name = ability;
+        for (var i in possible_abilities) {
+            if (possible_abilities[i][0] == ability) {
+                friendly_name = possible_abilities[i][1];
+                break;
+            }
+        }
+
         if (!can_edit_permissions) {
           // TODO: no permission display
           //  is_allowed_checkbox.attr('disabled', true);
           //  is_allowed_checkbox.attr('readonly', true);
+          var ability_wrap = $('<div class="ability-display">');
+          if (is_allowed === true) {
+            ability_wrap.append('<i class="glyphicon glyphicon-plus"></i>');
+          }
+          if (is_allowed === false) {
+            ability_wrap.append('<i class="glyphicon glyphicon-minus"></i>');
+          }
+          ability_wrap.append('<b>' + friendly_name + '</b>');
+          $(wrapper).append(ability_wrap);
         }
-
-        if (ability == '') {
-            var ability_select = $('<select name="newpermission' + permission_counter + '_ability" class="ability">');
-            for (var i in possible_abilities) {
-                var is_selected = (possible_abilities[i][0] == ability);
-                ability_select[0].options[i] = new Option(possible_abilities[i][1], possible_abilities[i][0], is_selected, is_selected);
-            }
-            var ability_wrap = $('<div class="newpermission-wrap">');
-            ability_wrap.append(ability_select);
-            wrapper.append(ability_wrap);
-        } else {
-            var friendly_name = ability;
-            for (var i in possible_abilities) {
-                if (possible_abilities[i][0] == ability) {
-                    friendly_name = possible_abilities[i][1];
-                    break;
-                }
-            }
-            wrapper.append('<label for="newpermission' + permission_counter + '_is_allowed">' + friendly_name + '</label>');
-            wrapper.append('<input type="hidden" class="ability" name="newpermission' + permission_counter + '_ability" value="' + ability + '" />');
-        }
-        wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_permission_type" value="' + permission_type + '" />');
-        wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_agent_or_collection_id" value="' + agent_or_collection_id + '" />');
 
         if (can_edit_permissions) {
+            if (ability == '') {
+                var ability_select = $('<select name="newpermission' + permission_counter + '_ability" class="ability">');
+                for (var i in possible_abilities) {
+                    var is_selected = (possible_abilities[i][0] == ability);
+                    ability_select[0].options[i] = new Option(possible_abilities[i][1], possible_abilities[i][0], is_selected, is_selected);
+                }
+                var ability_wrap = $('<div class="newpermission-wrap">');
+                ability_wrap.append(ability_select);
+                wrapper.append(ability_wrap);
+            } else {
+                wrapper.append('<label for="newpermission' + permission_counter + '_is_allowed">' + friendly_name + '</label>');
+                wrapper.append('<input type="hidden" class="ability" name="newpermission' + permission_counter + '_ability" value="' + ability + '" />');
+            }
+            wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_permission_type" value="' + permission_type + '" />');
+            wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_agent_or_collection_id" value="' + agent_or_collection_id + '" />');
+
             if (is_allowed===true) {
               plus.addClass('active');
             } else if (is_allowed===false) {
