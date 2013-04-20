@@ -5263,8 +5263,10 @@ you can use the generic selector below, but it's slower:
 }
 .proposition-result .proposition_graph .position {
   margin-bottom: 10px;
+  white-space: nowrap;
 }
 .proposition-result .proposition_graph .title {
+  white-space: normal;
   width: 60px;
   left: -70px;
   position: absolute;
