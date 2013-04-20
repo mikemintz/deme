@@ -214,7 +214,7 @@
 
 
 {% ifagentcan 'view TextDocument.body' item %}
-    <div id="docbody"><pre>{% display_body_with_inline_transclusions item is_html %}</pre></div>
+    <div id="docbody" class="well">{% display_body_with_inline_transclusions item is_html %}</div>
 {% endifagentcan %}
 
 <script type="text/javascript">

@@ -3,11 +3,13 @@
   <head>
     <meta charset="utf-8">
 
+    {% block title %}
     {% if item %}
     <title>Deme &raquo; {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}</title>
     {% else %}
     <title>Deme{% if action_title %} &raquo; {{ action_title }}{% endif %}</title>
     {% endif %}
+    {% endblock title %}
 
 
     <link rel="shortcut icon" href="{% block favicon %}{% if item %}{{ item.actual_item_type|icon_url:24 }}{% else %}{{ accepted_item_type|icon_url:24 }}{% endif %}{% endblock favicon %}" type="image/x-icon" />
@@ -200,70 +202,70 @@
         {% block page-layout %}
         <div class="container page-layout">
           <div class="row">
-            <div class="col-span-3 logo-section">
+            <div class="col-span-3">
               {% block logo-section %}
-              <a href="/" class="logo"><h1>Deme</h1></a>
-              {% endblock logo-section %}
-            </div>
-            <div class="col-span-9 banner-section">
-              {% block banner-section %}
-              {% endblock banner-section %}
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-span-3 sidebar-section">
-              {% block sidebar-section %}
-              <div class="panel recently-viewed">
-                <div class="panel-heading">
-                  Recently Viewed
-                </div>
-                {% recently_viewed %}
+              <div class="logo-section">
+                <a href="/" class="logo"><h1>Deme</h1></a>
               </div>
-              <div class="panel">
-                <div class="panel-heading">
-                  Navigation
+              {% endblock logo-section %}
+              {% block sidebar-section %}
+              <div class="sidebar-section">
+                <div class="panel recently-viewed">
+                  <div class="panel-heading">
+                    Recently Viewed
+                  </div>
+                  {% recently_viewed %}
                 </div>
-                <ul>
-                    <li{% ifequal full_path "/" %} style="font-weight: bold;"{% endifequal %}><a href="/">Home</a></li>
-                    <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
-                    <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
-                </ul>
+                <div class="panel">
+                  <div class="panel-heading">
+                    Navigation
+                  </div>
+                  <ul>
+                      <li{% ifequal full_path "/" %} style="font-weight: bold;"{% endifequal %}><a href="/">Home</a></li>
+                      <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
+                      <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
+                  </ul>
+                </div>
               </div>
               {% endblock sidebar-section %}
             </div>
             <div class="col-span-9" class="main-section">
-              {% block main-section %}
+
+              {% block banner-section %}
+              <div class="banner-section">
+              </div>
+              {% endblock banner-section %}
+
+              {% block tabs-section %}
               <div class="tabs-section">
-                {% block tabs-section %}
-                {% endblock tabs-section %}
               </div>
+              {% endblock tabs-section %}
+
+              {% block item-view-section %}
               <div class="item-view-section">
-                {% block item-view-section %}
-                  {% if layout_permissions_problem %}
-                  <div class="alert alert-block">
-                      <h4>Permissions Error</h4>
-                      <p>You are not authorized to view the layout, so this page is being displayed in the default layout.</p>
-                  </div>
+                {% if layout_permissions_problem %}
+                <div class="alert alert-block">
+                    <h4>Permissions Error</h4>
+                    <p>You are not authorized to view the layout, so this page is being displayed in the default layout.</p>
+                </div>
+                {% endif %}
+
+                {% block title-section %}
+                  <h1 class="title">
+                  {% if item %}
+                  <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
+                  {% else %}
+                  <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
                   {% endif %}
+                  </h1>
+                {% endblock title-section %}
 
-
-                  {% block title %}
-                    <h1 class="title">
-                    {% if item %}
-                    <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
-                    {% else %}
-                    <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
-                    {% endif %}
-                    </h1>
-                  {% endblock title %}
-
-                  <div class="content">
-                  {% block content %}
-                  {% endblock %}
-                  </div>
-                {% endblock item-view-section %}
+                <div class="content">
+                {% block content %}
+                {% endblock %}
+                </div>
               </div>
-              {% endblock main-section %}
+              {% endblock item-view-section %}
             </div>
           </div>
         </div>
