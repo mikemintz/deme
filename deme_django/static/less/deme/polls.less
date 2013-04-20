@@ -1,7 +1,70 @@
 .approvenpoll {
   .propositions {
     margin-bottom: 15px;
-    .proposition {
+  }
+}
+.proposition-result {
+  .proposition_graph {
+    position: relative;
+    margin: 0 70px 60px;
+    background: @grayLighter;
+    border-bottom: 1px solid @black;
+    padding: 20px 0 10px;
+    .position {
+      margin-bottom: 10px;
+    }
+    .title {
+      width: 60px;
+      left: -70px;
+      position: absolute;
+    }
+    .bar {
+      #gradient .vertical(@adminbar-top-active, @adminbar-bottom-active);
+      height: 40px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .stats {
+      font-weight: bold;
+      .percent {
+        font-weight: normal;
+      }
+    }
+    .mark0,.mark25,.mark50,.mark75,.mark100 {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      line-height: 1;
+      .mark {
+        border-left: 1px solid @black;
+        height: 10px;
+        display: block;
+        margin-bottom: 3px;
+      }
+    }
+    .mark25, .mark75 {
+      left: 25%;
+      .mark {
+        height: 5px;
+      }
+    }
+    .mark50 {
+      left: 50%;
+      .num {
+        margin-left: -12px;
+      }
+    }
+    .mark75 { left: 75%; }
+    .mark100 {
+      right: 0;
+      text-align: right;
+      .mark {
+        border-right: 1px solid @black;
+        border-left: 0;
+      }
+      .count {
+        display: block;
+      }
     }
   }
 }

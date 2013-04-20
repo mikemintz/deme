@@ -29,6 +29,14 @@ register = template.Library()
 # Helper functions
 ###############################################################################
 
+@register.filter
+def as_percentage_of(part, whole):
+    try:
+        return "{:.2%}".format(float(part) / whole)
+    except (ValueError, ZeroDivisionError):
+        return ""
+
+
 def agentcan_global_helper(context, ability, wildcard_suffix=False):
     """
     Return a boolean for whether the logged in agent has the specified global

@@ -5254,6 +5254,88 @@ you can use the generic selector below, but it's slower:
 .approvenpoll .propositions {
   margin-bottom: 15px;
 }
+.proposition-result .proposition_graph {
+  position: relative;
+  margin: 0 70px 60px;
+  background: #eeeeee;
+  border-bottom: 1px solid #000000;
+  padding: 20px 0 10px;
+}
+.proposition-result .proposition_graph .position {
+  margin-bottom: 10px;
+}
+.proposition-result .proposition_graph .title {
+  width: 60px;
+  left: -70px;
+  position: absolute;
+}
+.proposition-result .proposition_graph .bar {
+  background-color: #17475b;
+  background-image: -moz-linear-gradient(top, #5c95ad, #17475b);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#5c95ad), to(#17475b));
+  background-image: -webkit-linear-gradient(top, #5c95ad, #17475b);
+  background-image: -o-linear-gradient(top, #5c95ad, #17475b);
+  background-image: linear-gradient(to bottom, #5c95ad, #17475b);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5c95ad', endColorstr='#ff17475b', GradientType=0);
+  height: 40px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.proposition-result .proposition_graph .stats {
+  font-weight: bold;
+}
+.proposition-result .proposition_graph .stats .percent {
+  font-weight: normal;
+}
+.proposition-result .proposition_graph .mark0,
+.proposition-result .proposition_graph .mark25,
+.proposition-result .proposition_graph .mark50,
+.proposition-result .proposition_graph .mark75,
+.proposition-result .proposition_graph .mark100 {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  line-height: 1;
+}
+.proposition-result .proposition_graph .mark0 .mark,
+.proposition-result .proposition_graph .mark25 .mark,
+.proposition-result .proposition_graph .mark50 .mark,
+.proposition-result .proposition_graph .mark75 .mark,
+.proposition-result .proposition_graph .mark100 .mark {
+  border-left: 1px solid #000000;
+  height: 10px;
+  display: block;
+  margin-bottom: 3px;
+}
+.proposition-result .proposition_graph .mark25,
+.proposition-result .proposition_graph .mark75 {
+  left: 25%;
+}
+.proposition-result .proposition_graph .mark25 .mark,
+.proposition-result .proposition_graph .mark75 .mark {
+  height: 5px;
+}
+.proposition-result .proposition_graph .mark50 {
+  left: 50%;
+}
+.proposition-result .proposition_graph .mark50 .num {
+  margin-left: -12px;
+}
+.proposition-result .proposition_graph .mark75 {
+  left: 75%;
+}
+.proposition-result .proposition_graph .mark100 {
+  right: 0;
+  text-align: right;
+}
+.proposition-result .proposition_graph .mark100 .mark {
+  border-right: 1px solid #000000;
+  border-left: 0;
+}
+.proposition-result .proposition_graph .mark100 .count {
+  display: block;
+}
 .HiddenMenu {
   z-index: 1;
 }

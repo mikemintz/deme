@@ -17,16 +17,16 @@ import cStringIO as StringIO
 
 class PollViewer(CollectionViewer):
     accepted_item_type = Poll
-    viewer_name = 'poll' 
+    viewer_name = 'poll'
 
 
     def item_show_html(self):
         dependencies = PropositionResponse.objects.all()
-        
+
         self.context['responses'] = dependencies.filter(poll=self.item.pk)
-        
+
         self.context['maxPollTakers'] = len(Membership.objects.all().filter(collection=self.item.eligibles))
-        
+
         from cms.forms import AjaxModelChoiceField
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
@@ -41,15 +41,15 @@ class PollViewer(CollectionViewer):
         self.context['cur_agent_in_collection'] = bool(self.item.child_memberships.filter(active=True, item=self.cur_agent))
         template = loader.get_template('poll/poll.html')
         return HttpResponse(template.render(self.context))
-    
+
     def verifyCurAgentIsEligible(self):
         if not self.item.agent_eligible_to_vote(self.cur_agent):
             return self.render_error('Not an eligible agent', "You are not permitted to vote on this poll")
-     
-            
+
+
 class ChooseNPollViewer(PollViewer):
     accepted_item_type = ChooseNPoll
-    viewer_name = 'choosenpoll' 
+    viewer_name = 'choosenpoll'
 
 
     def item_show_html(self):
@@ -81,7 +81,7 @@ class ChooseNPollViewer(PollViewer):
         self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdChooseNDecision') or self.permission_cache.agent_can_global('create ThresholdEChooseNDecision')  or self.permission_cache.agent_can_global('create PluralityChooseNDecision') or self.permission_cache.agent_can_global('create UnanimousChooseNDecision')
         template = loader.get_template('poll/choosenpoll.html')
         return HttpResponse(template.render(self.context))
-    
+
     def item_respondtopropositions_html(self):
         propositions = self.request.POST
         #verify that the cur agent is in the eligbles
@@ -90,7 +90,7 @@ class ChooseNPollViewer(PollViewer):
 
         #verify that there are only n or less responses
         counter=0
-        for response in propositions:    
+        for response in propositions:
             if propositions[response]=="chosen":
                 counter=counter+1
         if counter!=self.item.n: #this needs to be changed for chooseN
@@ -105,13 +105,13 @@ class ChooseNPollViewer(PollViewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
-    
 
-        
+
+
 
 class ApproveNPollViewer(PollViewer):
     accepted_item_type = ApproveNPoll
-    viewer_name = 'approvenpoll' 
+    viewer_name = 'approvenpoll'
 
 
     def item_show_html(self):
@@ -140,13 +140,13 @@ class ApproveNPollViewer(PollViewer):
         self.context['can_view_response_names'] = self.item.visibility != 'closed' or self.permission_cache.agent_can('access_proposition_responses', self.item)
         self.context['can_view_response_names_and_values'] = self.item.visibility == 'responses visible' or self.permission_cache.agent_can('access_proposition_responses', self.item)
         self.context['cur_agent_in_eligbles'] = self.item.agent_eligible_to_vote(self.cur_agent)
-        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision') 
+        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision')
         cur_agent_has_voted = PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent)
         self.context['cur_agent_has_voted'] = cur_agent_has_voted
         vote_numbers = []
         propositions = Proposition.objects.filter(memberships__in=memberships)
         maxNumber = 0
-        n = 12.0
+        n = len(eligible_agent_memberships)#12.0
         for proposition in propositions:
             agree = PropositionResponseApprove.objects.filter(poll=self.item, value='approve', proposition=proposition).count()
             disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
@@ -154,8 +154,8 @@ class ApproveNPollViewer(PollViewer):
             #maxTemp = max([agree, disagree, no_vote])
             no_vote = n-agree-disagree
             #if(maxTemp > maxNumber): maxNumber = maxTemp
-            vote_numbers.append({'agree': int(agree), 'n':range(int(n)), 'agreeList':range(int(agree)), 'disagree': int(disagree), 'disagreeList': range(int(disagree)), 'no_vote':int(no_vote), 'no_voteList':range(int(no_vote)), 'proposition': proposition})
-        
+            vote_numbers.append({'agree': int(agree), 'count':int(n), 'n':range(int(n)), 'agreeList':range(int(agree)), 'disagree': int(disagree), 'disagreeList': range(int(disagree)), 'no_vote':int(no_vote), 'no_voteList':range(int(no_vote)), 'proposition': proposition})
+
         #self.context['maxVal'] = maxNumber
         self.context['rangeN'] = range(int(n)+1)
         self.context['proportion'] = int(12.0*15.0/n)
@@ -195,10 +195,10 @@ class ApproveNPollViewer(PollViewer):
         #    else:
         #        usedVals.append(value)
 
-        
+
         #verify that there are only n or less responses
         #counter=0
-        #for response in propositionResponses:    
+        #for response in propositionResponses:
         #    if propositionResponses[response]=="approve" or propositionResponses[response]=="disapprove":
         #       counter=counter+1
         #        if counter>self.item.n: #this needs to be changed for chooseN
@@ -209,7 +209,7 @@ class ApproveNPollViewer(PollViewer):
         for response in proposition_responses:
             newResponse = PropositionResponseApprove(poll=self.item, participant= self.cur_agent, proposition = Proposition.objects.get(pk=response), value = proposition_responses[response])
             newResponse.save()
-        
+
         if writein:
             newComment = TextComment(item=self.item, item_version_number=self.item.version_number, body=writein)
             newComment.save_versioned(action_agent=self.cur_agent, initial_permissions=[OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)])
@@ -217,7 +217,7 @@ class ApproveNPollViewer(PollViewer):
         self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
         self.context['can_view_response_names_and_values'] = self.permission_cache.agent_can('access_proposition_responses', self.item)
         self.context['cur_agent_in_eligbles'] = self.item.agent_eligible_to_vote(self.cur_agent)
-        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision') 
+        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision')
         eligible_agent_memberships = self.item.eligibles.child_memberships
         eligible_agent_memberships = eligible_agent_memberships.filter(active=True, item__active=True)
         eligible_agent_memberships = self.permission_cache.filter_items('view Membership.item', eligible_agent_memberships)
@@ -227,7 +227,7 @@ class ApproveNPollViewer(PollViewer):
         responses = {}
         for agent_membership in eligible_agent_memberships:
             responses[agent_membership.item] = PropositionResponseApprove.objects.filter(poll=self.item).filter(participant=agent_membership.item)
-        
+
         vote_numbers = []
         maxNumber = 0
         for proposition in propositions:
@@ -243,7 +243,7 @@ class ApproveNPollViewer(PollViewer):
         #self.context['maxVal'] = maxNumber
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
-        
+
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
@@ -260,7 +260,7 @@ class ApproveNPollViewer(PollViewer):
 
 class PropositionViewer(HtmlDocumentViewer):
     accepted_item_type = Proposition
-    viewer_name = 'proposition' 
+    viewer_name = 'proposition'
 
     def item_show_html(self):
         self.context['action_title'] = 'Show'
@@ -270,22 +270,22 @@ class PropositionViewer(HtmlDocumentViewer):
 
 class DecisionViewer(ItemViewer):
     accepted_item_type = Decision
-    viewer_name = 'decision' 
-    
-    
-    
+    viewer_name = 'decision'
+
+
+
 
     def item_show_html(self):
         self.context['action_title'] = 'Show'
         self.context['item'] = self.item
-        
+
         if issubclass(self.item.poll.actual_item_type(), ChooseNPoll):
             self.context['type'] = 'ChooseNPoll'
-        
+
         if issubclass(self.item.poll.actual_item_type(), ApproveNPoll):
             self.context['type'] = 'ApproveNPoll'
-        
-        
+
+
         maxPollTakers = len(Membership.objects.all().filter(collection=self.item.poll.eligibles))
         responses = PropositionResponseChoose.objects.all().filter(poll=self.item.poll.pk).filter(value='chosen')
         mostPopular = None
@@ -296,7 +296,7 @@ class DecisionViewer(ItemViewer):
                 if response.proposition:
                     response = response.proposition
                     if str(response.pk) in aggResponses:
-                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
+                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1
                     else:
                         aggResponses[str(response.pk)] = 1
                         maxNum = 0;
@@ -308,7 +308,7 @@ class DecisionViewer(ItemViewer):
                 topChoices.append(mostPopular)
                 aggResponses[mostPopular] = -1
                 maxNum = 0
-                
+
         if mostPopular:
             self.context['mostPopular'] = Proposition.objects.all().filter(pk__in=topChoices)
         self.context['maxPollTakers'] = maxPollTakers
@@ -316,11 +316,11 @@ class DecisionViewer(ItemViewer):
         self.context['minResponses'] = int(math.ceil(maxPollTakers * (self.item.quorum/100.0)))
         template = loader.get_template('poll/decision.html')
         return HttpResponse(template.render(self.context))
-        
+
 
 class PluralityChooseNDecisionViewer(DecisionViewer):
     accepted_item_type = PluralityChooseNDecision
-    viewer_name = 'pluralitychoosendecision' 
+    viewer_name = 'pluralitychoosendecision'
 
     def item_show_html(self):
         self.context['action_title'] = 'Show'
@@ -342,7 +342,7 @@ class PluralityChooseNDecisionViewer(DecisionViewer):
                 if response.proposition:
                     response = response.proposition
                     if str(response.pk) in aggResponses:
-                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
+                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1
                     else:
                         aggResponses[str(response.pk)] = 1
                         maxNum = 0;
@@ -365,7 +365,7 @@ class PluralityChooseNDecisionViewer(DecisionViewer):
 
 class ThresholdChooseNDecisionViewer(DecisionViewer):
     accepted_item_type = ThresholdChooseNDecision
-    viewer_name = 'thresholdchoosendecision' 
+    viewer_name = 'thresholdchoosendecision'
 
     def item_show_html(self):
         self.context['action_title'] = 'Show'
@@ -390,7 +390,7 @@ class ThresholdChooseNDecisionViewer(DecisionViewer):
                 if response.proposition:
                     response = response.proposition
                     if str(response.pk) in aggResponses:
-                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
+                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1
                     else:
                         aggResponses[str(response.pk)] = 1
                         maxNum = 0;
@@ -416,7 +416,7 @@ class ThresholdChooseNDecisionViewer(DecisionViewer):
 
 class ThresholdEChooseNDecisionViewer(DecisionViewer):
     accepted_item_type = ThresholdEChooseNDecision
-    viewer_name = 'thresholdechoosendecision' 
+    viewer_name = 'thresholdechoosendecision'
 
     def item_show_html(self):
         self.context['action_title'] = 'Show'
@@ -428,7 +428,7 @@ class ThresholdEChooseNDecisionViewer(DecisionViewer):
         if memberships:
             self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
         self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
-            
+
         pollTakers = Membership.objects.all().filter(collection=self.item.poll.eligibles)
         minForDecision = int(math.ceil(len(pollTakers) * (self.item.e_decision/100.0)))
         maxPollTakers = len(pollTakers)
@@ -441,7 +441,7 @@ class ThresholdEChooseNDecisionViewer(DecisionViewer):
                 if response.proposition:
                     response = response.proposition
                     if str(response.pk) in aggResponses:
-                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
+                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1
                     else:
                         aggResponses[str(response.pk)] = 1
                         maxNum = 0;
@@ -462,13 +462,13 @@ class ThresholdEChooseNDecisionViewer(DecisionViewer):
         self.context['people'] = int(math.ceil(maxPollTakers * (self.item.e_decision/100.0)))
         self.context['minpeoplefordecision'] = minForDecision
         self.context['participants'] = Agent.objects.filter(poll_participant__poll=self.item.poll)
-        
+
         template = loader.get_template('poll/thresholdechoosendecision.html')
         return HttpResponse(template.render(self.context))
 
 class UnanimousChooseNDecisionViewer(DecisionViewer):
     accepted_item_type = UnanimousChooseNDecision
-    viewer_name = 'unanimouschoosendecision' 
+    viewer_name = 'unanimouschoosendecision'
 
     def item_show_html(self):
         self.context['action_title'] = 'Show'
@@ -492,7 +492,7 @@ class UnanimousChooseNDecisionViewer(DecisionViewer):
                 if response.proposition:
                     response = response.proposition
                     if str(response.pk) in aggResponses:
-                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
+                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1
                     else:
                         aggResponses[str(response.pk)] = 1
                         maxNum = 0;
@@ -512,13 +512,13 @@ class UnanimousChooseNDecisionViewer(DecisionViewer):
         self.context['minResponses'] = minForDecision
         self.context['minpeoplefordecision'] = minForDecision
         self.context['participants'] = Agent.objects.filter(poll_participant__poll=self.item.poll)
-        
+
         template = loader.get_template('poll/unanimouschoosendecision.html')
         return HttpResponse(template.render(self.context))
 
 class PluralityApproveNDecisionViewer(DecisionViewer):
     accepted_item_type = PluralityApproveNDecision
-    viewer_name = 'pluralityapprovendecision' 
+    viewer_name = 'pluralityapprovendecision'
 
     def item_show_html(self):
         self.context['action_title'] = 'Show'
@@ -540,7 +540,7 @@ class PluralityApproveNDecisionViewer(DecisionViewer):
                 if response.proposition:
                     response = response.proposition
                     if str(response.pk) in aggResponses:
-                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
+                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1
                     else:
                         aggResponses[str(response.pk)] = 1
                         maxNum = 0;
@@ -560,12 +560,12 @@ class PluralityApproveNDecisionViewer(DecisionViewer):
         self.context['minResponses'] = int(math.ceil(maxPollTakers * (self.item.quorum/100.0)))
         template = loader.get_template('poll/pluralityapprovendecision.html')
         return HttpResponse(template.render(self.context))
-    
+
 
 
 class ThresholdApproveNDecisionViewer(DecisionViewer):
     accepted_item_type = ThresholdApproveNDecision
-    viewer_name = 'thresholdapprovendecision' 
+    viewer_name = 'thresholdapprovendecision'
 
     def item_show_html(self):
         self.context['action_title'] = 'Show'
@@ -592,7 +592,7 @@ class ThresholdApproveNDecisionViewer(DecisionViewer):
                 if response.proposition:
                     response = response.proposition
                     if str(response.pk) in aggResponses:
-                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
+                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1
                     else:
                         aggResponses[str(response.pk)] = 1
                         maxNum = 0;
@@ -611,15 +611,15 @@ class ThresholdApproveNDecisionViewer(DecisionViewer):
         self.context['numResponses'] = len(responses)
         self.context['minResponses'] = int(math.ceil(maxPollTakers * (self.item.quorum/100.0)))
         self.context['people'] = int(math.ceil(maxPollTakers * (self.item.p_decision/100.0)))
-        self.context['participants'] = participants 
+        self.context['participants'] = participants
         self.context['minpeoplefordecision'] = minForDecision
         template = loader.get_template('poll/thresholdapprovendecision.html')
         return HttpResponse(template.render(self.context))
-        
+
 
 class ThresholdEApproveNDecisionViewer(DecisionViewer):
     accepted_item_type = ThresholdEApproveNDecision
-    viewer_name = 'thresholdeapprovendecision' 
+    viewer_name = 'thresholdeapprovendecision'
 
     def item_show_html(self):
         self.context['action_title'] = 'Show'
@@ -645,7 +645,7 @@ class ThresholdEApproveNDecisionViewer(DecisionViewer):
                 if response.proposition:
                     response = response.proposition
                     if str(response.pk) in aggResponses:
-                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1 
+                        aggResponses[str(response.pk)] = aggResponses[str(response.pk)] + 1
                     else:
                         aggResponses[str(response.pk)] = 1
                         maxNum = 0;
@@ -666,20 +666,20 @@ class ThresholdEApproveNDecisionViewer(DecisionViewer):
         self.context['people'] = int(math.ceil(maxPollTakers * (self.item.e_decision/100.0)))
         self.context['minpeoplefordecision'] = minForDecision
         self.context['participants'] = Agent.objects.filter(poll_participant__poll=self.item.poll)
-        
+
         template = loader.get_template('poll/thresholdeapprovendecision.html')
         return HttpResponse(template.render(self.context))
 
 # class WriteInPropositionsViewer(CollectionViewer):
-#     accepted_item_type = WriteInPropositions 
-#     viewer_name = 'writeinpropositions' 
-# 
-# 
+#     accepted_item_type = WriteInPropositions
+#     viewer_name = 'writeinpropositions'
+#
+#
 #     def item_show_html(self):
 #         dependencies = PropositionResponse.objects.all()
-# 
+#
 #         self.context['responses'] = dependencies.filter(poll=self.item.pk)
-# 
+#
 #         from cms.forms import AjaxModelChoiceField
 #         self.context['action_title'] = ''
 #         self.require_ability('view ', self.item, wildcard_suffix=True)
@@ -724,7 +724,7 @@ class ODPSurveyViewer(PollViewer):
         self.context['can_view_response_names'] = self.item.visibility != 'closed' or self.permission_cache.agent_can('access_proposition_responses', self.item)
         self.context['can_view_response_names_and_values'] = self.item.visibility == 'responses visible' or self.permission_cache.agent_can('access_proposition_responses', self.item)
         self.context['cur_agent_in_eligibles'] = self.item.agent_eligible_to_vote(self.cur_agent)
-        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision') 
+        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision')
         cur_agent_has_voted = PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent)
         self.context['cur_agent_has_voted'] = cur_agent_has_voted
         vote_numbers = []
@@ -736,7 +736,7 @@ class ODPSurveyViewer(PollViewer):
             agreeStrong = PropositionResponseApprove.objects.filter(poll=self.item, value='disapprove', proposition=proposition).count()
             disagree = PropositionResponseApprove.objects.filter(poll=self.item, value='not sure', proposition=proposition).count()
             vote_numbers.append({'agree': agree, 'disagree': disagree, 'agreeStrong': agreeStrong, "disagreeStrong": disagreeStrong})
-        
+
         self.context['maxVal'] = maxNumber
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
@@ -760,26 +760,26 @@ class ODPSurveyViewer(PollViewer):
         #verify that the cur agent is in the eligbles
         self.verifyCurAgentIsEligible()
         #verify that it is not before or after the deadline
-        
+
         #verify that there are only n or less responses
         #counter=0
-        #for response in propositionResponses:    
+        #for response in propositionResponses:
         #    if propositionResponses[response]=="approve" or propositionResponses[response]=="disapprove":
         #       counter=counter+1
         #        if counter>self.item.n: #this needs to be changed for chooseN
         #            return self.render_error('Too many votes', "Approve "+str(self.item.n)+" or fewer propositions.")
-                    
+
         #delete old response (even if one doesn't exist)
         #PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent).delete()
         #make a new response
         for response in proposition_responses:
             newResponse = PropositionResponseApprove(poll=self.item, participant= self.cur_agent, proposition = Proposition.objects.get(pk=response), value = proposition_responses[response])
             newResponse.save()
-        
+
         self.context['propositions'] = Proposition.objects.filter(memberships__in=memberships)
         self.context['can_view_response_names_and_values'] = self.permission_cache.agent_can('access_proposition_responses', self.item)
         self.context['cur_agent_in_eligbles'] = self.item.agent_eligible_to_vote(self.cur_agent)
-        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision') 
+        self.context['cur_agent_can_make_a_decision'] = self.permission_cache.agent_can_global('create ThresholdApproveNDecision') or self.permission_cache.agent_can_global('create ThresholdEApproveNDecision')  or self.permission_cache.agent_can_global('create PluralityApproveNDecision')
         eligible_agent_memberships = self.item.eligibles.child_memberships
         eligible_agent_memberships = eligible_agent_memberships.filter(active=True, item__active=True)
         eligible_agent_memberships = self.permission_cache.filter_items('view Membership.item', eligible_agent_memberships)
@@ -789,7 +789,7 @@ class ODPSurveyViewer(PollViewer):
         responses = {}
         for agent_membership in eligible_agent_memberships:
             responses[agent_membership.item] = PropositionResponseApprove.objects.filter(poll=self.item).filter(participant=agent_membership.item)
-        
+
         vote_numbers = []
         maxNumber = 0
         for proposition in propositions:
@@ -801,14 +801,14 @@ class ODPSurveyViewer(PollViewer):
 
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
-        
+
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
     def item_createcsv_html(self):
         response = HttpResponse(mimetype='text/csv')
         response['Content-Disposition'] = 'attachment; filename=SurveyResults.csv'
-        
+
         eligible_agent_memberships = self.item.eligibles.child_memberships
         eligible_agent_memberships = eligible_agent_memberships.filter(active=True, item__active=True)
         eligible_agent_memberships = self.permission_cache.filter_items('view Membership.item', eligible_agent_memberships)
@@ -842,8 +842,8 @@ class ODPSurveyViewer(PollViewer):
                 chunk.append(answer)
             writer.writerow(chunk)
 
-        
-    
+
+
         return response
 
 

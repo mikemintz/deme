@@ -158,7 +158,51 @@ $(document).ready(function() {
       <div class="proposition proposition-result">
         <h4>{% firstof proposition.name forloop.counter %}</h4>
 	      <p>{{proposition.body|safe}}</p>
-	      <table class="Poll" border="0"  >
+	      <div class="proposition_graph">
+	        <div class="position">
+	          <b class="title">
+	            Agree
+	          </b>
+	          <span class="bar" style="width:{{dict.agree|as_percentage_of:dict.count}}"></span>
+	          <span class="stats">
+	           {{dict.agree}} <span class="percent">({{dict.agree|as_percentage_of:dict.count}})</span>
+	          </span>
+	        </div>
+	        <div class="position">
+	          <b class="title">
+	            Disagree
+	          </b>
+	          <span class="bar" style="width:{{dict.disagree|as_percentage_of:dict.count}}"></span>
+	          <span class="stats">
+	           {{dict.disagree}} <span class="percent">({{dict.disagree|as_percentage_of:dict.count}})</span>
+	          </span>
+	        </div>
+	        <div class="position">
+	          <b class="title">
+	            Haven't Voted
+	          </b>
+	          <span class="bar" style="width:{{dict.no_vote|as_percentage_of:dict.count}}"></span>
+	          <span class="stats">
+	           {{dict.no_vote}} <span class="percent">({{dict.no_vote|as_percentage_of:dict.count}})</span>
+	          </span>
+	        </div>
+	        <div class="scale">
+	          <div class="mark0"><span class="mark"></span>
+	          0%
+	          </div>
+	          <div class="mark25"><span class="mark"></span>
+	          </div>
+	          <div class="mark50"><span class="mark"></span>
+	          <span class="num">50%</span>
+	          </div>
+	          <div class="mark75"><span class="mark"></span>
+	          </div>
+	          <div class="mark100"><span class="mark"></span>
+	          100% <span class="count">({{dict.count}})</span>
+	          </div>
+	        </div>
+	      </div>
+	      <!--table class="Poll" border="0"  >
 
 			  <tr>
 			    <td width = "70px" align="right">{{dict.agree}} Agree</td>
@@ -210,7 +254,7 @@ $(document).ready(function() {
 			    	<th width = "{{ 2proportion }}"colspan="2" height="1em" style="padding-left:0">{{i}}</th>
 			    {% endfor %}
 			  </tr>
-			</table>
+			</table-->
       </div>
       {% endwith %}
       {% endfor %}
