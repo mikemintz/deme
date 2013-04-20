@@ -23,7 +23,7 @@
       }
     }
 
-    function add_permission_fields(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
+    function add_permission_fields(wrapper, permission_type, agent_or_collection_id, is_allowed, ability, permissions_cell) {
         if (can_edit_permissions) {
             /*var remove_button = $('<a href="#" class="img_link"><img src="{{delete_img_url}}" /></a>');
             remove_button.bind('click', function(e){wrapper.remove(); return false;});
@@ -92,8 +92,20 @@
             if (ability == '') {
                 var ability_select = $('<select name="newpermission' + permission_counter + '_ability" class="ability">');
                 for (var i in possible_abilities) {
+                    // check to see if already is on page
+                    var already_set = false;
+                    if (typeof(permissions_cell) !== 'undefined') {
+                        var existing_permission = permissions_cell.find('.ability[value="'+possible_abilities[i][0]+'"]');
+                        if (existing_permission.length != 0) {
+                            already_set = true;
+                        }
+                    }
                     var is_selected = (possible_abilities[i][0] == ability);
-                    ability_select[0].options[i] = new Option(possible_abilities[i][1], possible_abilities[i][0], is_selected, is_selected);
+                    var option = new Option(possible_abilities[i][1], possible_abilities[i][0], is_selected, is_selected);
+                    if (already_set) {
+                      option.disabled = true;
+                    }
+                    ability_select[0].options[i] = option;
                 }
                 var ability_wrap = $('<div class="newpermission-wrap">');
                 ability_wrap.append(ability_select);
@@ -141,7 +153,7 @@
             add_button.append('<i class="glyphicon glyphicon-edit"></i> New Permission');
             add_button.bind('click', function(e){
                 var permission_div = $('<div class="permission permission-new">');
-                add_permission_fields(permission_div, permission_type, agent_or_collection_id, true, '');
+                add_permission_fields(permission_div, permission_type, agent_or_collection_id, null, '', permissions_cell);
                 permissions_cell.append(permission_div);
                 return false;
             });
@@ -155,29 +167,29 @@
                 // loop through all permissions.
                 for (var i in possible_abilities) {
                     var ability = (possible_abilities[i][0]);
+                    var default_permission = null;
+
+                    // check to see if currently is manifested as a dropdown, if so kill dropdown and take value as default permission setting
+                    var possible_select = permissions_cell.find('select.ability').each(function(){
+                      //console.log($(this).val() + ' ' + ability);
+                      if ($(this).val() == ability) {
+                        // TODO: check to see if it's enabled, disabled or neither
+                        var permission_div = $(this).closest('.permission');
+                        if (permission_div.find('.btn.plus').hasClass('active')) {
+                          default_permission = true;
+                        }
+                        if (permission_div.find('.btn.minus').hasClass('active')) {
+                          default_permission = false;
+                        }
+                        // remove this permission div since we're about to add it
+                        permission_div.remove();
+                      }
+                    });
+
                     // look for existing in this div
                     var permission = permissions_cell.find('.ability[value="'+ability+'"]');
-
                     if (permission.length == 0) {
                       var permission_div = $('<div class="permission permission-mass">');
-
-                      var default_permission = null;
-
-                      // check to see if currently is manifested as a dropdown, if so kill dropdown and bake in as setting
-                      var possible_select = permissions_cell.find('select.ability').each(function(){
-                        if ($(this).val() == ability) {
-                          // TODO: check to see if it's enabled, disabled or neither
-                          var permission_div = $(this).closest('.permission');
-                          if (permission_div.find('.btn.plus').hasClass('active')) {
-                            default_permission = true;
-                          }
-                          if (permission_div.find('.btn.minus').hasClass('active')) {
-                            default_permission = false;
-                          }
-                          // remove this permission div since we're about to add it
-                          permission_div.remove();
-                        }
-                      });
 
                       add_permission_fields(permission_div, permission_type, agent_or_collection_id, default_permission, ability);
                       permissions_cell.append(permission_div);

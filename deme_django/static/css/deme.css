@@ -5329,7 +5329,7 @@ you can use the generic selector below, but it's slower:
   margin-right: 10px;
 }
 #permission_table .permission .btn {
-  background-color: #ffffff;
+  background-color: #fbfbfb;
   color: #555555;
   /*&.active.minus {
         //#gradient .vertical(@adminbar-bottom, @adminbar-top);
