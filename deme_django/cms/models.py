@@ -931,7 +931,7 @@ class Agent(Item):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['add_contact_method', 'add_authentication_method', 'login_as', 'view Agent.last_online_at'])
+    introduced_abilities = frozenset(['add_contact_method', 'add_authentication_method', 'login_as', 'view Agent.last_online_at', 'view Agent.photo', 'edit Agent.photo'])
     introduced_global_abilities = frozenset(['create Agent'])
     dyadic_relations = {}
     class Meta:
@@ -940,6 +940,7 @@ class Agent(Item):
 
     # Fields
     last_online_at = models.DateTimeField(_('last online at'), null=True, blank=True, default=None, editable=False)
+    photo = FixedForeignKey('ImageDocument', related_name='agents_with_photo', null=True, blank=True, default=None, verbose_name=_('photo'))
 
     def can_be_deleted(self):
         # Don't delete the admin agent
