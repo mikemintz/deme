@@ -56,7 +56,7 @@ class Poll(Collection):
         (u'UTC-10', u'Alaska/Hawaii Standard Time (UTC -10)'),
     )
     time_zone  = models.CharField(_('time zone'), max_length=255, choices=time_zones, default=settings.TIME_ZONE)
-    eligibles = FixedForeignKey(Group, related_name='poll_participant', null=True, blank=True, default=None)
+    eligibles = FixedForeignKey(Group, related_name='poll_participant', null=True, blank=True, default=None, help_text=_('Which group is this poll for'))
     visibility_choices = (
         ('responses visible' , 'responses visible - each eligible that has responded is visible' ),
         ('who responded visible', 'who responded visible - who has responded is visible, but not how they responded'),
