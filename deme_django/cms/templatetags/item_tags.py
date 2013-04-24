@@ -1402,6 +1402,12 @@ class PermissionEditor(template.Node):
             if self.is_new_item:
                 # Creator has do_anything ability when creating a new item
                 assert target is None
+                if issubclass(viewer.accepted_item_type, Comment):
+                    parent = Item.objects.get(pk=viewer.request.REQUEST.get('item') or viewer.request.REQUEST.get('populate_item'))
+                    is_inheritable_permission = lambda x: (x.ability.startswith('view') or x.ability == 'comment_on') and x.ability in possible_abilities
+                    agent_permissions = [OneToOnePermission(source=x.source, ability=x.ability, is_allowed=x.is_allowed) for x in parent.one_to_one_permissions_as_target.all() if is_inheritable_permission(x)]
+                    collection_permissions = [SomeToOnePermission(source=x.source, ability=x.ability, is_allowed=x.is_allowed) for x in parent.some_to_one_permissions_as_target.all() if is_inheritable_permission(x)]
+                    everyone_permissions = [AllToOnePermission(ability=x.ability, is_allowed=x.is_allowed) for x in parent.all_to_one_permissions_as_target.all() if is_inheritable_permission(x)]
                 creator = Agent.objects.get(pk=context['cur_agent'].pk)
                 creator_permission = OneToOnePermission(source=creator, ability='do_anything', is_allowed=True)
                 agent_permissions = [x for x in agent_permissions if not (x.source == creator and x.ability == 'do_anything')]
