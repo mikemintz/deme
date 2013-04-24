@@ -36,7 +36,8 @@ class CalculateComments(template.Node):
             result.append(u'<div><input type="submit" value="Submit reply" /></div><input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" />' % (comment.pk, comment.version_number))
             result.append(u'</form></div>')
             result.append(u'<div style="margin-bottom: 10px;">')
-            result.append(u'<div style="float: right;"><a href="#" onclick="$(\'#comment%s\').show(); return false;" class="fg-button ui-widget ui-state-default fg-button-icon-left ui-corner-all" style="background: #ffcc99;"><span class="ui-icon ui-icon-comment"></span>Reply</a></div>' % comment.pk)
+            if agentcan_helper(context, 'comment_on', comment):
+                result.append(u'<div style="float: right;"><a href="#" onclick="$(\'#comment%s\').show(); return false;" class="fg-button ui-widget ui-state-default fg-button-icon-left ui-corner-all" style="background: #ffcc99;"><span class="ui-icon ui-icon-comment"></span>Reply</a></div>' % comment.pk)
             if agentcan_helper(context, 'view Item.created_at', comment):
                 result.append('<div style="font-style: italic;">%s</div>' % comment.created_at.strftime("%a %b %d %Y %I:%M %p"))
             result.append(u'<div style="clear: both;"></div>')

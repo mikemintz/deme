@@ -16,7 +16,13 @@
     {% for discussion in discussions %}
     <tr>
         <td>
-            <a href="{% url item_url viewer="discussioncomment",action="show",noun=discussion.comment.pk %}?discussion_board={{ item.pk }}">{{ discussion.comment.name|truncatewords:10 }}</a>
+            <a href="{% url item_url viewer="discussioncomment",action="show",noun=discussion.comment.pk %}?discussion_board={{ item.pk }}">
+                {% ifagentcan 'view Item.name' discussion.comment %}
+                    {{ discussion.comment.name|truncatewords:10 }}
+                {% else %}
+                    Comment {{ discussion.comment.pk }}
+                {% endifagentcan %}
+            </a>
             <br />
             <nobr>By {% viewable_name discussion.comment.creator %}</nobr>
         </td>
@@ -25,13 +31,21 @@
         </td>
         <td>
             {% if discussion.last_post %}
-                <nobr>By {% viewable_name discussion.last_post.creator %}</nobr>
-                <br />
-                <nobr>{{ discussion.last_post.created_at }}</nobr>
+                {% ifagentcan 'view Item.creator' discussion.last_post %}
+                    <nobr>By {% viewable_name discussion.last_post.creator %}</nobr>
+                {% endifagentcan %}
+                {% ifagentcan 'view Item.created_at' discussion.last_post %}
+                    <br />
+                    <nobr>{{ discussion.last_post.created_at }}</nobr>
+                {% endifagentcan %}
             {% else %}
-                <nobr>By {% viewable_name discussion.comment.creator %}</nobr>
-                <br />
-                <nobr>{{ discussion.comment.created_at }}</nobr>
+                {% ifagentcan 'view Item.creator' discussion.comment %}
+                    <nobr>By {% viewable_name discussion.comment.creator %}</nobr>
+                {% endifagentcan %}
+                {% ifagentcan 'view Item.created_at' discussion.comment %}
+                    <br />
+                    <nobr>{{ discussion.comment.created_at }}</nobr>
+                {% endifagentcan %}
             {% endif %}
         </td>
     </tr>
