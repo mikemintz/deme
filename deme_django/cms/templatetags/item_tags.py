@@ -1375,7 +1375,7 @@ class PermissionEditor(template.Node):
             possible_abilities = all_possible_item_and_global_abilities()
         if self.privacy_only:
             possible_abilities = set([x for x in possible_abilities if x.startswith('view ')])
-        possible_abilities = list((ability, capfirst(friendly_name)) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
+        possible_abilities_and_names = list((ability, capfirst(friendly_name)) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
 
 
         if self.target_level == 'all':
@@ -1445,7 +1445,7 @@ class PermissionEditor(template.Node):
 
         data = {
           'can_edit_permissions': simplejson.dumps(can_edit_permissions),
-          'possible_ability_javascript_array': simplejson.dumps(possible_abilities, separators=(',',':')),
+          'possible_ability_javascript_array': simplejson.dumps(possible_abilities_and_names, separators=(',',':')),
           'existing_permission_data_javascript_array': simplejson.dumps(existing_permission_data, separators=(',',':')),
           'sample_agent_url': reverse('item_url', kwargs={'viewer': 'agent', 'noun': '1'}),
           'sample_collection_url': reverse('item_url', kwargs={'viewer': 'collection', 'noun': '1'}),
