@@ -3,7 +3,7 @@
 {% load air_extras %}
 {% block content %}
 
-<p><a href="{% url item_url viewer="discussionboard",action="show",noun=discussion_board.pk %}" style="text-decoration: underline;">Back to discussion board</a></p>
+<p><a href="{% url item_url viewer="discussion",action="show",noun=discussion_board.pk %}" style="text-decoration: underline;">Back to discussion board</a></p>
 
 {% communityforum_calculatecomments %}
 

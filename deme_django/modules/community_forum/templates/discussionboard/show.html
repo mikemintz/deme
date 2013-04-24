@@ -4,7 +4,7 @@
 {% block content %}
 
 {% ifagentcan 'comment_on' item %}
-<p><a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" class="btn">Create a new discussion</a></p>
+<p><a href="{% url item_url viewer="discussion",action="newdiscussion",noun=item.pk %}" class="btn">Create a new discussion</a></p>
 {% endifagentcan %}
 
 <table class="table table-striped table-discussion">
@@ -16,7 +16,7 @@
     {% for discussion in discussions %}
     <tr>
         <td>
-            <a href="{% url item_url viewer="discussionboardcomment",action="show",noun=discussion.comment.pk %}?discussion_board={{ item.pk }}">{{ discussion.comment.name|truncatewords:10 }}</a>
+            <a href="{% url item_url viewer="discussioncomment",action="show",noun=discussion.comment.pk %}?discussion_board={{ item.pk }}">{{ discussion.comment.name|truncatewords:10 }}</a>
             <br />
             <nobr>By {% viewable_name discussion.comment.creator %}</nobr>
         </td>
@@ -39,7 +39,7 @@
 </table>
 
 {% ifagentcan 'comment_on' item %}
-<p><a href="{% url item_url viewer="discussionboard",action="newdiscussion",noun=item.pk %}" class="btn">Create a new discussion</a></p>
+<p><a href="{% url item_url viewer="discussion",action="newdiscussion",noun=item.pk %}" class="btn">Create a new discussion</a></p>
 {% endifagentcan %}
 
 {% endblock content %}

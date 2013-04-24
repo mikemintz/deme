@@ -49,9 +49,9 @@ class CommunityForumParticipantViewer(PersonViewer):
         return HttpResponse('')
 
 
-class DiscussionBoardViewer(ItemViewer):
-    accepted_item_type = DiscussionBoard
-    viewer_name = 'discussionboard'
+class DiscussionViewer(ItemViewer):
+    accepted_item_type = Item
+    viewer_name = 'discussion'
 
     def item_show_html(self):
         self.context['action_title'] = ''
@@ -102,14 +102,19 @@ class DiscussionBoardViewer(ItemViewer):
         return HttpResponseRedirect(redirect)
 
 
-class DiscussionBoardCommentViewer(ItemViewer):
+class DiscussionBoardViewer(DiscussionViewer):
+    accepted_item_type = DiscussionBoard
+    viewer_name = 'discussionboard'
+
+
+class DiscussionCommentViewer(ItemViewer):
     accepted_item_type = Comment
-    viewer_name = 'discussionboardcomment'
+    viewer_name = 'discussioncomment'
 
     def item_show_html(self):
         self.context['action_title'] = ''
         template = loader.get_template('discussionboard/viewdiscussion.html')
-        discussion_board = DiscussionBoard.objects.get(pk=self.request.GET['discussion_board'])
+        discussion_board = Item.objects.get(pk=self.request.GET['discussion_board'])
         self.context['discussion_board'] = discussion_board
         return HttpResponse(template.render(self.context))
 
