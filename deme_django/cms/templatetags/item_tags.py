@@ -759,7 +759,9 @@ class CalculateComments(template.Node):
             result.append(u'<p>Comment Title: <input name="title" value="Re: %s" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> </p> ' % (comment.name))
             if context['cur_agent'].is_anonymous():
                 result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
-            result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'comment_reply_from_contact_method_field'})))
+            result.append(u'<div id="advancedcomment%s" style="display: none;">' % comment.pk)
+            result.append(u'<div>Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div>' % AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'comment_reply_from_contact_method_field'}))
+            result.append(u'</div><br> ')
             result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (comment.pk, comment.version_number))
             result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (comment.pk))
             result.append(u'</form></div>')
