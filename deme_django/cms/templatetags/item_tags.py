@@ -1401,6 +1401,7 @@ class PermissionEditor(template.Node):
                     assert False
             if self.is_new_item:
                 # Creator has do_anything ability when creating a new item
+                assert target is None
                 creator = Agent.objects.get(pk=context['cur_agent'].pk)
                 creator_permission = OneToOnePermission(source=creator, ability='do_anything', is_allowed=True)
                 agent_permissions = [x for x in agent_permissions if not (x.source == creator and x.ability == 'do_anything')]
