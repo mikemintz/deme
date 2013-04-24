@@ -29,7 +29,9 @@
                 <br />
                 <nobr>{{ discussion.last_post.created_at }}</nobr>
             {% else %}
-                N/A
+                <nobr>By {% viewable_name discussion.comment.creator %}</nobr>
+                <br />
+                <nobr>{{ discussion.comment.created_at }}</nobr>
             {% endif %}
         </td>
     </tr>
