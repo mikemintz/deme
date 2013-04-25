@@ -1,0 +1,59 @@
+{% extends layout %}
+{% load item_tags %}
+{% load discussion_extras %}
+{% block content %}
+
+{% ifagentcan 'comment_on' item %}
+<p><a href="{% url item_url viewer="discussion",action="newdiscussion",noun=item.pk %}" class="btn">Create a new discussion</a></p>
+{% endifagentcan %}
+
+<table class="table table-striped table-discussion">
+    <tr>
+        <th class="topics">Discussion Topics</td>
+        <th class="replies">Replies</td>
+        <th class="last-post">Last Post</td></tr>
+    </tr>
+    {% for discussion in discussions %}
+    <tr>
+        <td>
+            <a href="{% url item_url viewer="discussioncomment",action="show",noun=discussion.comment.pk %}?discussion_board={{ item.pk }}">
+                {% ifagentcan 'view Item.name' discussion.comment %}
+                    {{ discussion.comment.name|truncatewords:10 }}
+                {% else %}
+                    Comment {{ discussion.comment.pk }}
+                {% endifagentcan %}
+            </a>
+            <br />
+            <nobr>By {% viewable_name discussion.comment.creator %}</nobr>
+        </td>
+        <td>
+            {{ discussion.num_replies }}
+        </td>
+        <td>
+            {% if discussion.last_post %}
+                {% ifagentcan 'view Item.creator' discussion.last_post %}
+                    <nobr>By {% viewable_name discussion.last_post.creator %}</nobr>
+                {% endifagentcan %}
+                {% ifagentcan 'view Item.created_at' discussion.last_post %}
+                    <br />
+                    <nobr>{{ discussion.last_post.created_at }}</nobr>
+                {% endifagentcan %}
+            {% else %}
+                {% ifagentcan 'view Item.creator' discussion.comment %}
+                    <nobr>By {% viewable_name discussion.comment.creator %}</nobr>
+                {% endifagentcan %}
+                {% ifagentcan 'view Item.created_at' discussion.comment %}
+                    <br />
+                    <nobr>{{ discussion.comment.created_at }}</nobr>
+                {% endifagentcan %}
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% ifagentcan 'comment_on' item %}
+<p><a href="{% url item_url viewer="discussion",action="newdiscussion",noun=item.pk %}" class="btn">Create a new discussion</a></p>
+{% endifagentcan %}
+
+{% endblock content %}

@@ -9,36 +9,46 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding model 'DiscussionBoard'
-        db.create_table('community_forum_discussionboard', (
+        db.create_table('discussionboard_discussionboard', (
             ('item_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['cms.Item'], unique=True, primary_key=True)),
         ))
-        db.send_create_signal('community_forum', ['DiscussionBoard'])
+        db.send_create_signal('discussionboard', ['DiscussionBoard'])
 
         # Adding model 'DiscussionBoardVersion'
-        db.create_table('community_forum_discussionboardversion', (
+        db.create_table('discussionboard_discussionboardversion', (
             ('itemversion_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['cms.ItemVersion'], unique=True, primary_key=True)),
         ))
-        db.send_create_signal('community_forum', ['DiscussionBoardVersion'])
+        db.send_create_signal('discussionboard', ['DiscussionBoardVersion'])
 
 
     def backwards(self, orm):
         
         # Deleting model 'DiscussionBoard'
-        db.delete_table('community_forum_discussionboard')
+        db.delete_table('discussionboard_discussionboard')
 
         # Deleting model 'DiscussionBoardVersion'
-        db.delete_table('community_forum_discussionboardversion')
+        db.delete_table('discussionboard_discussionboardversion')
 
 
     models = {
         'cms.agent': {
             'Meta': {'object_name': 'Agent', '_ormbases': ['cms.Item']},
             'item_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['cms.Item']", 'unique': 'True', 'primary_key': 'True'}),
-            'last_online_at': ('django.db.models.fields.DateTimeField', [], {'default': 'None', 'null': 'True', 'blank': 'True'})
+            'last_online_at': ('django.db.models.fields.DateTimeField', [], {'default': 'None', 'null': 'True', 'blank': 'True'}),
+            'photo': ('django.db.models.ForeignKey', [], {'default': 'None', 'related_name': "'agents_with_photo'", 'null': 'True', 'blank': 'True', 'to': "orm['cms.ImageDocument']"})
         },
-        'cms.agentversion': {
-            'Meta': {'ordering': "['version_number']", 'object_name': 'AgentVersion', '_ormbases': ['cms.ItemVersion']},
-            'itemversion_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['cms.ItemVersion']", 'unique': 'True', 'primary_key': 'True'})
+        'cms.document': {
+            'Meta': {'object_name': 'Document', '_ormbases': ['cms.Item']},
+            'item_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['cms.Item']", 'unique': 'True', 'primary_key': 'True'})
+        },
+        'cms.filedocument': {
+            'Meta': {'object_name': 'FileDocument', '_ormbases': ['cms.Document']},
+            'datafile': ('django.db.models.fields.files.FileField', [], {'default': "''", 'max_length': '255', 'null': 'True'}),
+            'document_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['cms.Document']", 'unique': 'True', 'primary_key': 'True'})
+        },
+        'cms.imagedocument': {
+            'Meta': {'object_name': 'ImageDocument', '_ormbases': ['cms.FileDocument']},
+            'filedocument_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['cms.FileDocument']", 'unique': 'True', 'primary_key': 'True'})
         },
         'cms.item': {
             'Meta': {'object_name': 'Item'},
@@ -66,40 +76,14 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'version_number': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'})
         },
-        'cms.person': {
-            'Meta': {'object_name': 'Person', '_ormbases': ['cms.Agent']},
-            'agent_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['cms.Agent']", 'unique': 'True', 'primary_key': 'True'}),
-            'first_name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'last_name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'middle_names': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'suffix': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'})
-        },
-        'cms.personversion': {
-            'Meta': {'ordering': "['version_number']", 'object_name': 'PersonVersion', '_ormbases': ['cms.AgentVersion']},
-            'agentversion_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['cms.AgentVersion']", 'unique': 'True', 'primary_key': 'True'}),
-            'first_name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'last_name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'middle_names': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'suffix': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True', 'blank': 'True'})
-        },
-        'community_forum.communityforumparticipant': {
-            'Meta': {'object_name': 'CommunityForumParticipant', '_ormbases': ['cms.Person']},
-            'person_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['cms.Person']", 'unique': 'True', 'primary_key': 'True'}),
-            'webex_id': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True'})
-        },
-        'community_forum.communityforumparticipantversion': {
-            'Meta': {'ordering': "['version_number']", 'object_name': 'CommunityForumParticipantVersion', '_ormbases': ['cms.PersonVersion']},
-            'personversion_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['cms.PersonVersion']", 'unique': 'True', 'primary_key': 'True'}),
-            'webex_id': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'null': 'True'})
-        },
-        'community_forum.discussionboard': {
+        'discussionboard.discussionboard': {
             'Meta': {'object_name': 'DiscussionBoard', '_ormbases': ['cms.Item']},
             'item_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['cms.Item']", 'unique': 'True', 'primary_key': 'True'})
         },
-        'community_forum.discussionboardversion': {
+        'discussionboard.discussionboardversion': {
             'Meta': {'ordering': "['version_number']", 'object_name': 'DiscussionBoardVersion', '_ormbases': ['cms.ItemVersion']},
             'itemversion_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['cms.ItemVersion']", 'unique': 'True', 'primary_key': 'True'})
         }
     }
 
-    complete_apps = ['community_forum']
+    complete_apps = ['discussionboard']

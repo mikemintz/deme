@@ -1,6 +1,6 @@
 {% extends layout %}
 {% load item_tags %}
-{% load air_extras %}
+{% load discussion_extras %}
 {% block content %}
 
 <script type="text/javascript">
@@ -20,7 +20,7 @@
     }
 </script>
 
-<form name="new_discussion_form" method="post" action="{% url item_url viewer="discussionboard",action="creatediscussion",noun=item.pk %}" onsubmit="return validate_new_discussion_form();">
+<form name="new_discussion_form" method="post" action="{% url item_url viewer="discussion",action="creatediscussion",noun=item.pk %}" onsubmit="return validate_new_discussion_form();">
     <div style="margin-bottom: 0.5em; font-weight: bold;">
         Topic
     </div>

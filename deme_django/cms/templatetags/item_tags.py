@@ -759,7 +759,9 @@ class CalculateComments(template.Node):
             result.append(u'<p>Comment Title: <input name="title" value="Re: %s" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> </p> ' % (comment.name))
             if context['cur_agent'].is_anonymous():
                 result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
-            result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (comment.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'comment_reply_from_contact_method_field'})))
+            result.append(u'<div id="advancedcomment%s" style="display: none;">' % comment.pk)
+            result.append(u'<div>Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div>' % AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'comment_reply_from_contact_method_field'}))
+            result.append(u'</div><br> ')
             result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (comment.pk, comment.version_number))
             result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (comment.pk))
             result.append(u'</form></div>')
@@ -1375,7 +1377,7 @@ class PermissionEditor(template.Node):
             possible_abilities = all_possible_item_and_global_abilities()
         if self.privacy_only:
             possible_abilities = set([x for x in possible_abilities if x.startswith('view ')])
-        possible_abilities = list((ability, capfirst(friendly_name)) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
+        possible_abilities_and_names = list((ability, capfirst(friendly_name)) for (ability, friendly_name) in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if ability in possible_abilities)
 
 
         if self.target_level == 'all':
@@ -1401,6 +1403,13 @@ class PermissionEditor(template.Node):
                     assert False
             if self.is_new_item:
                 # Creator has do_anything ability when creating a new item
+                assert target is None
+                if issubclass(viewer.accepted_item_type, Comment):
+                    parent = Item.objects.get(pk=viewer.request.REQUEST.get('item') or viewer.request.REQUEST.get('populate_item'))
+                    is_inheritable_permission = lambda x: (x.ability.startswith('view') or x.ability == 'comment_on') and x.ability in possible_abilities
+                    agent_permissions = [OneToOnePermission(source=x.source, ability=x.ability, is_allowed=x.is_allowed) for x in parent.one_to_one_permissions_as_target.all() if is_inheritable_permission(x)]
+                    collection_permissions = [SomeToOnePermission(source=x.source, ability=x.ability, is_allowed=x.is_allowed) for x in parent.some_to_one_permissions_as_target.all() if is_inheritable_permission(x)]
+                    everyone_permissions = [AllToOnePermission(ability=x.ability, is_allowed=x.is_allowed) for x in parent.all_to_one_permissions_as_target.all() if is_inheritable_permission(x)]
                 creator = Agent.objects.get(pk=context['cur_agent'].pk)
                 creator_permission = OneToOnePermission(source=creator, ability='do_anything', is_allowed=True)
                 agent_permissions = [x for x in agent_permissions if not (x.source == creator and x.ability == 'do_anything')]
@@ -1445,7 +1454,7 @@ class PermissionEditor(template.Node):
 
         data = {
           'can_edit_permissions': simplejson.dumps(can_edit_permissions),
-          'possible_ability_javascript_array': simplejson.dumps(possible_abilities, separators=(',',':')),
+          'possible_ability_javascript_array': simplejson.dumps(possible_abilities_and_names, separators=(',',':')),
           'existing_permission_data_javascript_array': simplejson.dumps(existing_permission_data, separators=(',',':')),
           'sample_agent_url': reverse('item_url', kwargs={'viewer': 'agent', 'noun': '1'}),
           'sample_collection_url': reverse('item_url', kwargs={'viewer': 'collection', 'noun': '1'}),

@@ -1246,7 +1246,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
     def type_new_html(self, form=None):
         self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
         try:
-            item = Item.objects.get(pk=self.request.REQUEST.get('populate_item'))
+            item = Item.objects.get(pk=self.request.REQUEST.get('populate_item' if form is None else 'item'))
         except:
             return self.render_error('Invalid URL', "You must specify the item you are commenting on")
         if not self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__):

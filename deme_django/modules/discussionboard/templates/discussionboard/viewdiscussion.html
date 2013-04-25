@@ -1,0 +1,10 @@
+{% extends layout %}
+{% load item_tags %}
+{% load discussion_extras %}
+{% block content %}
+
+<p><a href="{% url item_url viewer="discussion",action="show",noun=discussion_board.pk %}" style="text-decoration: underline;">Back to discussion board</a></p>
+
+{% calculatecomments %}
+
+{% endblock content %}
