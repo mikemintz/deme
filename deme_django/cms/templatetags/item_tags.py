@@ -1559,7 +1559,7 @@ class Crumbs(template.Node):
                 reverse_fields.append(reverse_field)
 
             result = []
-            result.append(get_item_link_tag(context, target))
+            result.append(u'<li>%s</li>' % get_item_link_tag(context, target))
             for i, field in enumerate(reverse_fields):
                 subfilter = []
                 subfilter_fields = fields[len(fields)-i-1:]
