@@ -1,4 +1,25 @@
 .ui-jqgrid {
+  * {
+    word-wrap: normal;
+    box-sizing: content-box;
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+  }
+  /*
+  select, textarea, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"] {
+    min-height: 0;
+    line-height: normal;
+    padding: 1px;
+  }
+  */
+  input.ui-pg-input,
+  select.ui-pg-selbox {
+    width: auto;
+    padding: 0px;
+    margin: 0px;
+    line-height: normal;
+    min-height: 0;
+  }
   td {
     a {
       display: block;

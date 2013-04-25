@@ -5384,6 +5384,30 @@ you can use the generic selector below, but it's slower:
 .sidebar-section .recently-viewed div {
   padding-bottom: 10px;
 }
+.ui-jqgrid {
+  /*
+  select, textarea, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"] {
+    min-height: 0;
+    line-height: normal;
+    padding: 1px;
+  }
+  */
+
+}
+.ui-jqgrid * {
+  word-wrap: normal;
+  box-sizing: content-box;
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+}
+.ui-jqgrid input.ui-pg-input,
+.ui-jqgrid select.ui-pg-selbox {
+  width: auto;
+  padding: 0px;
+  margin: 0px;
+  line-height: normal;
+  min-height: 0;
+}
 .ui-jqgrid td a {
   display: block;
 }
