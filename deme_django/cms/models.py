@@ -1940,7 +1940,7 @@ class Site(ViewerRequest):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view Site.hostname', 'edit Site.hostname', 'view Site.default_layout', 'edit Site.default_layout'])
+    introduced_abilities = frozenset(['view Site.hostname', 'edit Site.hostname', 'view Site.default_layout', 'edit Site.default_layout', 'advanced_layout'])
     introduced_global_abilities = frozenset(['create Site'])
     dyadic_relations = {}
     class Meta:

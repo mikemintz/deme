@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.template import Context, loader
 from django.http import HttpResponse, HttpResponseRedirect
 from cms.views import ItemViewer
@@ -40,7 +41,7 @@ class DiscussionViewer(ItemViewer):
         new_item.item = self.item
         new_item.item_version_number = self.item.version_number
         new_item.save_versioned(action_agent=self.cur_agent)
-        redirect = self.item.get_absolute_url()
+        redirect = reverse('item_url', kwargs={'viewer': 'discussion', 'action': 'show', 'noun': self.item.pk})
         return HttpResponseRedirect(redirect)
 
     def item_createreply_html(self):
