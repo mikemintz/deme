@@ -5181,7 +5181,7 @@ you can use the generic selector below, but it's slower:
   overflow: hidden;
 }
 #metabar .title {
-  height: 41px;
+  padding: 0 10px;
   white-space: nowrap;
   background-color: #49869c;
   background-image: -moz-linear-gradient(top, #8ac9df, #49869c);
@@ -5191,19 +5191,20 @@ you can use the generic selector below, but it's slower:
   background-image: linear-gradient(to bottom, #8ac9df, #49869c);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff8ac9df', endColorstr='#ff49869c', GradientType=0);
-  text-align: center;
-  line-height: 41px;
+  text-align: left;
+  line-height: 30px;
   font-size: 16px;
   color: #ffffff;
   text-shadow: 0 -1px rgba(0, 0, 0, 0.25);
   font-weight: normal;
 }
-#metabar .title .close {
-  position: absolute;
-  right: 0;
-  padding: 10px;
+#metabar .title .resize {
+  line-height: 25px;
+  color: #ffffff;
+  border: 0;
+  background: transparent;
 }
-#metabar .title .close:hover {
+#metabar .title .resize:hover {
   background: transparent;
 }
 #metabar .section ~ .section {

@@ -32,19 +32,20 @@
     overflow: hidden;
   }
   .title {
-    height: 41px;
+    padding: 0 10px;
     white-space: nowrap;
     #gradient .vertical(@adminbar-top-light, @adminbar-bottom-light);
-    text-align: center;
-    line-height: 41px;
+    text-align: left;
+    line-height: 30px;
     font-size: 16px;
     color: @white;
     text-shadow: 0 -1px fade(@black, 25%);
     font-weight: normal;
-    .close {
-      position: absolute;
-      right: 0;
-      padding: 10px;
+    .resize {
+      line-height: 25px;
+      color: @white;
+      border: 0;
+      background: transparent;
       &:hover {
         background: transparent;
       }
