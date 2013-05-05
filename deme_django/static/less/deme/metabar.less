@@ -39,17 +39,24 @@
     white-space: nowrap;
     #gradient .vertical(@adminbar-top-light, @adminbar-bottom-light);
     text-align: left;
-    line-height: 30px;
-    font-size: 16px;
+    line-height: 30 / @font-size-base-int;
+    font-size: 16 / @font-size-base-int * 100%;
     color: @white;
     text-shadow: 0 -1px fade(@black, 25%);
     font-weight: normal;
+    .pull-right {
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
     .resize {
-      line-height: 25px;
+      line-height: 25 / @font-size-base-int;
       color: @white;
+      opacity: .5;
       border: 0;
       background: transparent;
       &:hover {
+        opacity: 1;
         background: transparent;
       }
     }
@@ -63,11 +70,11 @@
       width: 100%;
       text-align: left;
       background: none;
-      font-size: 12px;
+      font-size: 12 / @font-size-base-int * 100%;
       padding: 2px 10px;
       .icon {
         //margin-top: 8px;
-        font-size: 9px;
+        font-size: 9 / @font-size-base-int * 100%;
         .rotate(90deg);
         display: block;
         float: left;
