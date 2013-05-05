@@ -125,6 +125,10 @@ $(function(){
         }
       })
       collapse.addClass('ajax-loaded');
+    } else {
+      if (typeof(cb) == 'function') {
+        cb(collapse);
+      }
     }
   }
 
@@ -135,5 +139,13 @@ $(function(){
     toggleMetabar('open');
     // load and open comments in metadata
     metabar_show_section($("#metadata_content_comments"));
+  });
+
+  // set up permissions button
+  $('.actions-wrap > li > a.permissions, .actions-menu a.permissions').click(function(){
+    // open metadata menu
+    toggleMetabar('open');
+    // load and open comments in metadata
+    metabar_show_section($("#metadata_content_permissions"));
   });
 });

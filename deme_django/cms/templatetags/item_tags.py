@@ -394,7 +394,9 @@ class ActionsMenu(template.Node):
             if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
                 list_items.append('<li><a href="%s" tabindex="-1" title="Edit" class="edit"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>' % edit_url)
 
-        list_items.append("""<li><a href="#" tabindex="-1" title="Comment" class="comment"><i class="glyphicon glyphicon-comment"></i> Comment</a></li>""")
+        if item:
+            if agentcan_helper(context, 'comment', item, wildcard_suffix=True):
+                list_items.append("""<li><a href="#" tabindex="-1" title="Comment" class="comment"><i class="glyphicon glyphicon-comment"></i> Comment</a></li>""")
 
         if item:
             if isinstance(item, Agent):
@@ -411,6 +413,9 @@ class ActionsMenu(template.Node):
 
             if agentcan_global_helper(context, 'create %s' % item.item_type_string):
                 list_items.append('<li><a href="%s" tabindex="-1" title="Copy" class="copy"><i class="demeicon  demeicon-copy"></i> Copy</a></li>' % copy_url)
+
+            if item:
+                list_items.append("""<li><a href="#" tabindex="-1" title="Modify Permissions" class="permissions"><i class="glyphicon glyphicon-ban-circle"></i> Modify Permissions</a></li>""")
 
             if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
                 if item.active:
