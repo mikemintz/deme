@@ -5,7 +5,7 @@
 {% block title-section %}{% endblock %}
 
 {% block content %}
-<div class="person-profile container">
+<div class="agent-profile container">
   <div class="row">
     {% if item.photo %}
       {% ifagentcan 'view FileDocument.datafile' item.photo %}
@@ -17,9 +17,8 @@
     <div class="col-span-9">
       <h1 title="title">{% viewable_name item %}</h1>
       <ul>
-        {% for contactmethod in item.contact_methods.all %}
-          <!-- TODO: Check for permission to view! -->
-          <li>{{ contactmethod }}</li>
+        {% for contact_method in contact_methods %}
+        <li>{{ contact_method }}</li>
         {% endfor %}
       </ul>
     </div>

@@ -5338,7 +5338,7 @@ you can use the generic selector below, but it's slower:
 .proposition-result .proposition_graph .mark100 .count {
   display: block;
 }
-.person-profile .thumb {
+.agent-profile .thumb {
   margin-top: 20px;
   height: 200px;
   background-size: cover;
@@ -5348,10 +5348,10 @@ you can use the generic selector below, but it's slower:
   border: 1px solid #eee;
   display: block;
 }
-.person-profile .thumb img {
+.agent-profile .thumb img {
   display: none;
 }
-.person-profile .activity-inner h3 {
+.agent-profile .activity-inner h3 {
   display: none;
 }
 .HiddenMenu {
