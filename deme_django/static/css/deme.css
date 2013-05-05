@@ -5062,8 +5062,16 @@ you can use the generic selector below, but it's slower:
 .adminbar #search-btn #search_box {
   box-sizing: border-box;
 }
-.adminbar #textsize-btn .col-span-6 {
+.adminbar #textsize-btn .col-span-6,
+.adminbar #textsize-btn .col-span-12 {
   padding: 0 5px;
+}
+.adminbar #textsize-btn .reset-wrap {
+  display: none;
+}
+.adminbar #textsize-btn.resized .reset-wrap {
+  display: block;
+  padding-top: 5px;
 }
 .adminbar #textsize-btn .smaller,
 .adminbar #textsize-btn .bigger {
