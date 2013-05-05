@@ -1935,7 +1935,8 @@ class DefaultCreateItemTypes(template.Node):
         item_type_names_string = DemeSetting.get("cms.default_create_item_types") or ""
         item_type_names = item_type_names_string.split(",")
         item_types = [get_item_type_with_name(x.strip(), case_sensitive=False) for x in item_type_names]
-        item_types = [x for x in item_types if x]
+        item_types = [x for x in item_types if x and x != context['_viewer'].accepted_item_type]
+        item_types.insert(0, context['_viewer'].accepted_item_type)
         item_types = [x for x in item_types if agentcan_global_helper(context, 'create %s' % x.__name__)]
         for create_item_type in item_types:
             context.update({
