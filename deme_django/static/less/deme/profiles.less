@@ -9,9 +9,7 @@
     box-shadow: 0 2px 3px fade(@black, 20);
     border: 1px solid #eee;
     display: block;
-    img {
-      display: none;
-    }
+    background-image: url('../img/empty-profile-pic.jpg');
   }
   .activity-inner {
     h3 {
@@ -21,9 +19,16 @@
 }
 
 .group-profile {
-  .member {
+  .header {
     .thumb {
-      background-image: url('../img/empty-profile-pic.jpg');
+      height: 150px;
     }
+  }
+  .name {
+    text-align: center;
+    margin-top: 10px;
+  }
+  .pagination {
+    text-align: center;
   }
 }

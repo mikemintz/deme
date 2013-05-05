@@ -1075,7 +1075,8 @@ class GroupViewer(CollectionViewer):
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         collection_members = self.item.all_contained_collection_members(recursive_filter).order_by("name")
 
-        p = Paginator(collection_members, 10)
+        members_per_page = 12
+        p = Paginator(collection_members, members_per_page)
 
         try:
             page = int(self.request.GET.get('page','1'))
@@ -1103,7 +1104,7 @@ class GroupViewer(CollectionViewer):
         page_ranges = p.page_range
         displayed_page_range = []
         for possible_page in page_ranges:
-            if (possible_page < page + 10) and (possible_page > page-10):
+            if (possible_page < page + members_per_page) and (possible_page > page-members_per_page):
                 displayed_page_range.append(possible_page)
 
         self.context['members'] = members

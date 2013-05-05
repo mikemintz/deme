@@ -5348,17 +5348,21 @@ you can use the generic selector below, but it's slower:
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
   border: 1px solid #eee;
   display: block;
-}
-.agent-profile .thumb img,
-.group-profile .thumb img {
-  display: none;
+  background-image: url('../img/empty-profile-pic.jpg');
 }
 .agent-profile .activity-inner h3,
 .group-profile .activity-inner h3 {
   display: none;
 }
-.group-profile .member .thumb {
-  background-image: url('../img/empty-profile-pic.jpg');
+.group-profile .header .thumb {
+  height: 150px;
+}
+.group-profile .name {
+  text-align: center;
+  margin-top: 10px;
+}
+.group-profile .pagination {
+  text-align: center;
 }
 .HiddenMenu {
   z-index: 1;

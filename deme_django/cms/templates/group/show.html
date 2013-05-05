@@ -4,14 +4,14 @@
 
 {% block content %}
 <div class="group-profile container">
-  <div class="row">
-    <div class="col-span-3 thumb" style="background-image:url('{% if item.image %}
+  <div class="header row">
+    <div class="col-span-2 thumb" style="background-image:url('{% if item.image %}
   	{% ifagentcan 'view Group.image' item %}
   	{% ifagentcan 'view FileDocument.datafile' item.image %}{{ item.image.datafile.url }}{% endifagentcan %}
   	{% endifagentcan %}
   	{% else %}{{ item.actual_item_type|icon_url:128 }}{% endif %}')">
   	</div>
-  	<div class="col-span-9">
+  	<div class="col-span-10">
   	 <h1 class="title">{% viewable_name item %}</h1>
   	 {% ifagentcan 'view Item.description' item %}
    	 <p>{{ item.description }}</p>
@@ -22,30 +22,36 @@
   <div class="members row">
   {% for member in members %}
     <div id="member{{ member.item.pk }}" class="member col-span-3">
+      <a href="{{ member.item.get_absolute_url }}">
       <div class="thumb profile-pic"
         {% if member.photo %} style="background-image: url('{{ member.photo.datafile.url }}')"{% endif %}
       ></div>
+      </a>
       <p class="name"><a href="{{ member.item.get_absolute_url }}">{% viewable_name member.item %}</a></p>
     </div>
   {% endfor %}
   </div>
 
   <div class="pagination row">
-  {% if members.has_previous %}
-  <a href="?page={{ members.previous_page_number }}">Prev |</a>
-  {% endif %}
-      {% for page in page_range %}
-          {% ifequal page members.number %}
-              {{ members.number }}
-          {% endifequal %}
+    <div class="col-span-12">
+    {% if members.has_previous %}
+    <a href="?page={{ members.previous_page_number }}">Prev |</a>
+    {% endif %}
+    {% if page_range|length > 1 %}
+        {% for page in page_range %}
+            {% ifequal page members.number %}
+                {{ members.number }}
+            {% endifequal %}
 
-          {% ifnotequal page members.number %}
-              <a href="?page={{ page }}">{{ page }}</a>
-          {% endifnotequal %}
-      {% endfor %}
-  {% if members.has_next %}
-  <a href="?page={{ members.next_page_number }}">| Next</a>
-  {% endif %}
+            {% ifnotequal page members.number %}
+                <a href="?page={{ page }}">{{ page }}</a>
+            {% endifnotequal %}
+        {% endfor %}
+    {% endif %}
+    {% if members.has_next %}
+    <a href="?page={{ members.next_page_number }}">| Next</a>
+    {% endif %}
+    </div>
   </div>
 
   <div class="collection-view">
