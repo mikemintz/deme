@@ -5,7 +5,7 @@ from django.core.servers.basehttp import FileWrapper
 from cms.views import HtmlDocumentViewer, CollectionViewer, ItemViewer
 from cms.models import *
 from django.db.models import Q
-from modules.poll.models import Poll, Proposition, PropositionResponse, Decision, PropositionResponseChoose, PropositionResponseApprove, ChooseNPoll, ApproveNPoll, UnanimousChooseNDecision
+from modules.poll.models import Poll, Proposition, PropositionResponse, Decision, PropositionResponseChoose, PropositionResponseApprove, ChooseNPoll, AgreeDisagreePoll, UnanimousChooseNDecision
 from modules.poll.models import PluralityChooseNDecision, ThresholdChooseNDecision, ThresholdEChooseNDecision, PluralityApproveNDecision, ThresholdApproveNDecision, ThresholdEApproveNDecision
 from datetime import date, datetime, timedelta, tzinfo
 import calendar
@@ -109,9 +109,9 @@ class ChooseNPollViewer(PollViewer):
 
 
 
-class ApproveNPollViewer(PollViewer):
-    accepted_item_type = ApproveNPoll
-    viewer_name = 'approvenpoll'
+class AgreeDisagreePollViewer(PollViewer):
+    accepted_item_type = AgreeDisagreePoll
+    viewer_name = 'agreedisagreepoll'
 
 
     def item_show_html(self):
@@ -162,7 +162,7 @@ class ApproveNPollViewer(PollViewer):
         self.context['2proportion'] = 2*int(12.0*15.0/n)
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
-        template = loader.get_template('poll/approvenpoll.html')
+        template = loader.get_template('poll/agreedisagreepoll.html')
         return HttpResponse(template.render(self.context))
 
     def item_respondtopropositions_html(self):
@@ -282,8 +282,8 @@ class DecisionViewer(ItemViewer):
         if issubclass(self.item.poll.actual_item_type(), ChooseNPoll):
             self.context['type'] = 'ChooseNPoll'
 
-        if issubclass(self.item.poll.actual_item_type(), ApproveNPoll):
-            self.context['type'] = 'ApproveNPoll'
+        if issubclass(self.item.poll.actual_item_type(), AgreeDisagreePoll):
+            self.context['type'] = 'AgreeDisagreePoll'
 
 
         maxPollTakers = len(Membership.objects.all().filter(collection=self.item.poll.eligibles))
@@ -695,7 +695,7 @@ class ThresholdEApproveNDecisionViewer(DecisionViewer):
 #         template = loader.get_template('poll/writein.html')
 #         return HttpResponse(template.render(self.context))
 class ODPSurveyViewer(PollViewer):
-    accepted_item_type = ApproveNPoll
+    accepted_item_type = AgreeDisagreePoll
     viewer_name = 'odpsurvey'
 
     def item_show_html(self):
