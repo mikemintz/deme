@@ -262,7 +262,9 @@
                 {% endblock title-section %}
 
                 <div class="content">
-                {% block content %}
+                {% block content-wrap %}
+                  {% block content %}
+                  {% endblock %}
                 {% endblock %}
                 </div>
               </div>

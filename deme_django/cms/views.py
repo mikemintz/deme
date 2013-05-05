@@ -911,6 +911,13 @@ class PersonViewer(AgentViewer):
     accepted_item_type = Person
     viewer_name = 'person'
 
+    def item_show_html(self):
+        self.context['action_title'] = ''
+        self.require_ability('view ', self.item, wildcard_suffix=True)
+
+        template = loader.get_template('person/show.html')
+        return HttpResponse(template.render(self.context))
+
 
 class ContactMethodViewer(ItemViewer):
     accepted_item_type = ContactMethod

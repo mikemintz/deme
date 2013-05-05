@@ -1,0 +1,47 @@
+{% extends layout %}
+{% load item_tags %}
+
+
+{% block title-section %}{% endblock %}
+
+{% block content %}
+<div class="person-profile container">
+  <div class="row">
+    {% if item.photo %}
+      {% ifagentcan 'view FileDocument.datafile' item.photo %}
+      <div class="col-span-3 thumb" style="background-image:url('{{ item.photo.datafile.url }}')">
+        <img src="{{ item.photo.datafile.url }}" alt="">
+      </div>
+      {% endifagentcan %}
+    {% endif %}
+    <div class="col-span-9">
+      <h1 title="title">{% viewable_name item %}</h1>
+      <ul>
+        {% for contactmethod in item.contact_methods.all %}
+          <!-- TODO: Check for permission to view! -->
+          <li>{{ contactmethod }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-span-12 groups">
+      <h3>Groups</h3>
+      <ul>
+        {% for membership in item.memberships.all %}
+          <!-- TODO: Check for permission to view! -->
+          <li><a href="{{ membership.collection.get_absolute_url }}">{{ membership.collection.name }}</a></li>
+        {% endfor %}
+      </ul>
+
+    </div>
+    <div class="col-span-12 activity">
+      <h3>Recent Activity</h3>
+      <div class="activity-inner">
+      {% metadata_action_notices %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+

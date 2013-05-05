@@ -5338,6 +5338,22 @@ you can use the generic selector below, but it's slower:
 .proposition-result .proposition_graph .mark100 .count {
   display: block;
 }
+.person-profile .thumb {
+  margin-top: 20px;
+  height: 200px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+  border: 1px solid #eee;
+  display: block;
+}
+.person-profile .thumb img {
+  display: none;
+}
+.person-profile .activity-inner h3 {
+  display: none;
+}
 .HiddenMenu {
   z-index: 1;
 }
