@@ -22,10 +22,26 @@
       }
     }
     .newpermission-wrap {
-      margin-left: 90px;
+      margin-left: 120px;
     }
     .btn-group {
       margin-right: 10px;
+    }
+    .remove {
+      padding-top: 8px;
+      color: @grayLight;
+      display: block;
+      float: left;
+      &:hover {
+        color: @gray;
+        text-decoration: none;
+      }
+    }
+    &.unset {
+      .remove {
+        visibility: hidden;
+        cursor: default;
+      }
     }
     .btn {
       background-color: lighten(@grayLighter,5%);
@@ -33,16 +49,17 @@
       &.active {
         background: darken(@grayLighter,10%);
       }
-      /*&.active.minus {
-        //#gradient .vertical(@adminbar-bottom, @adminbar-top);
-        background-color: red;
+      &.active.minus {
+        #gradient .vertical(darken(#ff0000, 10%), #ff0000);
+        //background-color: #ff0000; //red;
         color: @white;
         //background-color: @adminbar-top-light; //darken(@grayLighter,10%);
       }
       &.active.plus {
-        background-color: green;
+        #gradient .vertical(darken(#008000, 5%), #008000);
+        //background-color: #008000;//green;
         color: @white;
-      }*/
+      }
     }
   }
 }

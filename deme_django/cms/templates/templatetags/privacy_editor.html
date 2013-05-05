@@ -8,8 +8,10 @@
       $(wrapper).find('.btn').removeClass('active');
 
       if (state == 'neither') {
+        $(wrapper).addClass('unset');
         $(wrapper).find('input').attr('disabled', true);
       } else {
+        $(wrapper).removeClass('unset');
         $(wrapper).find('input').attr('disabled', false);
 
         // set value
@@ -25,9 +27,13 @@
 
     function add_permission_fields(wrapper, permission_type, agent_or_collection_id, is_allowed, ability, permissions_cell) {
         if (can_edit_permissions) {
-            /*var remove_button = $('<a href="#" class="img_link"><img src="{{delete_img_url}}" /></a>');
-            remove_button.bind('click', function(e){wrapper.remove(); return false;});
-            wrapper.append(remove_button);*/
+            var remove_button = $('<a href="#" class="remove"><i class="glyphicon glyphicon-trash"></i></a>');
+            wrapper.append(remove_button);
+            remove_button.bind('click', function(e){
+              //wrapper.remove(); return false;
+              e.preventDefault();
+              change_permission_field_wrapper(wrapper, 'neither');
+            });
 
             is_allowed_value ='';
             if (is_allowed===true) {
@@ -123,6 +129,7 @@
               minus.addClass('active');
             } else {
               $(wrapper).find('input').attr('disabled', true);
+              $(wrapper).addClass('unset');
             }
         }
         permission_counter += 1;
@@ -153,7 +160,7 @@
             add_button.append('<i class="glyphicon glyphicon-edit"></i> New Permission');
             add_button.bind('click', function(e){
                 var permission_div = $('<div class="permission permission-new">');
-                add_permission_fields(permission_div, permission_type, agent_or_collection_id, null, '', permissions_cell);
+                add_permission_fields(permission_div, permission_type, agent_or_collection_id, true, '', permissions_cell);
                 permissions_cell.append(permission_div);
                 return false;
             });

@@ -421,7 +421,7 @@ class ActionsMenu(template.Node):
                     else:
                         item_permissions_name = 'View permissions'
                     item_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'itempermissions'})
-                    list_items.append("""<li><a href="%s" tabindex="-1" title="Permissions" class="permissions"><i class="ui-icon ui-icon-locked"></i> %s</a></li>""" % (item_permissions_url, item_permissions_name))
+                    list_items.append("""<li><a href="%s" tabindex="-1" title="Permissions" class="permissions"><i class="glyphicon glyphicon-lock"></i> %s</a></li>""" % (item_permissions_url, item_permissions_name))
 
                     if issubclass(item.actual_item_type(), Collection):
                         if agentcan_helper(context, 'do_anything', item):
@@ -429,7 +429,7 @@ class ActionsMenu(template.Node):
                         else:
                             collection_permissions_name = 'View collection permissions'
                         collection_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'collectionpermissions'})
-                        list_items.append("""<li><a href="%s" tabindex="-1" title="Modify Permissions" class="permissions"><i class="ui-icon ui-icon-locked"></i> %s</a></li>""" % (collection_permissions_url, collection_permissions_name))
+                        list_items.append("""<li><a href="%s" tabindex="-1" title="Modify Permissions" class="permissions"><i class="glyphicon glyphicon-lock"></i> %s</a></li>""" % (collection_permissions_url, collection_permissions_name))
 
             if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
                 if item.active:
