@@ -1,39 +1,68 @@
 {% extends layout %}
 {% load item_tags %}
+{% block title-section %}{% endblock %}
+
 {% block content %}
+<div class="group-profile container">
+  <div class="row">
+    <div class="col-span-3 thumb" style="background-image:url('{% if item.image %}
+  	{% ifagentcan 'view Group.image' item %}
+  	{% ifagentcan 'view FileDocument.datafile' item.image %}{{ item.image.datafile.url }}{% endifagentcan %}
+  	{% endifagentcan %}
+  	{% else %}{{ item.actual_item_type|icon_url:128 }}{% endif %}')">
+  	</div>
+  	<div class="col-span-9">
+  	 <h1 class="title">{% viewable_name item %}</h1>
+  	 {% ifagentcan 'view Item.description' item %}
+   	 <p>{{ item.description }}</p>
+  	 {% endifagentcan %}
+  	</div>
+  </div>
 
+  <div class="members row">
+  {% for member in members %}
+    <div id="member{{ member.item.pk }}" class="member col-span-3">
+      <div class="thumb profile-pic"
+        {% if member.photo %} style="background-image: url('{{ member.photo.datafile.url }}')"{% endif %}
+      ></div>
+      <p class="name"><a href="{{ member.item.get_absolute_url }}">{% viewable_name member.item %}</a></p>
+    </div>
+  {% endfor %}
+  </div>
 
-<div style="font-size: larger; margin-left: 55% ">Members</div>
+  <div class="pagination row">
+  {% if members.has_previous %}
+  <a href="?page={{ members.previous_page_number }}">Prev |</a>
+  {% endif %}
+      {% for page in page_range %}
+          {% ifequal page members.number %}
+              {{ members.number }}
+          {% endifequal %}
 
-<div style = "float: left; width: 50%;">
-	{% if item.image %}
-	{% ifagentcan 'view Group.image' item %}
-	{% ifagentcan 'view FileDocument.datafile' item.image %}
-	<img src="{{ item.image.datafile.url }}" style="max-width: 200px; max-height: 200px;" />
-	{% endifagentcan %}
-	{% endifagentcan %}
-	{% else %}
-	<img src="{{ item.actual_item_type|icon_url:128 }}" style="max-width: 200px; max-height: 200px;" />
-	{% endif %}
-	<p style="font-weight: bold; margin-top:.5em;"> Group Image </p>
-	{% ifagentcan 'view Item.description' item %}
-	<p style="font-size: 15px; margin-bottom:.5em;">{{ item.description }}</p>
-	{% else %}
-	<p style="font-size: 15px; margin-bottom:.5em;">YOU CANNOT VIEW THIS FIELD</p>
-	{% endifagentcan %}
-	<p style="font-weight: bold; margin-top:.5em;"> Group Description </p>
-</div>
-<div style="padding: 10px; border: 2px solid #aaa; max-width:50%; margin-left: 55%">
-    {% embed 'collection' item %}
-</div>
-<div style="font-size: larger; margin-left: 58% "><a>All</a><a style="margin-left:1em">Individuals</a> <a style="margin-left:1em;">Subgroups </a></div>
+          {% ifnotequal page members.number %}
+              <a href="?page={{ page }}">{{ page }}</a>
+          {% endifnotequal %}
+      {% endfor %}
+  {% if members.has_next %}
+  <a href="?page={{ members.next_page_number }}">| Next</a>
+  {% endif %}
+  </div>
 
-{% if folio %}
-<div style="font-size: larger; margin: 10px 0 10px 0;"><a href="{{ folio.get_absolute_url }}">Folio for this group</a></div>
-<div style="padding: 10px; border: 2px solid #aaa;">
+  <div class="collection-view">
+      {% embed 'collection' item %}
+  </div>
+
+  <!--
+  <div style="font-size: larger; margin-left: 58% "><a>All</a><a style="margin-left:1em">Individuals</a> <a style="margin-left:1em;">Subgroups </a></div>
+  -->
+
+  {% if folio %}
+  <div class="folio">
+    <p><a href="{{ folio.get_absolute_url }}">Group Folio</a></p>
     {% embed 'folio' folio %}
-</div>
-{% endif %}
+  </div>
+  {% endif %}
 
+</div>
 {% endblock content %}
 

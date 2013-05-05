@@ -1064,8 +1064,51 @@ class GroupViewer(CollectionViewer):
     viewer_name = 'group'
 
     def item_show_html(self):
+        from django.core.paginator import Paginator, InvalidPage, EmptyPage
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
+
+        if self.cur_agent_can_global('do_anything'):
+            recursive_filter = None
+        else:
+            visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
+            recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
+        collection_members = self.item.all_contained_collection_members(recursive_filter).order_by("name")
+
+        p = Paginator(collection_members, 10)
+
+        try:
+            page = int(self.request.GET.get('page','1'))
+        except ValueError:
+            page = 1
+
+        try:
+            entries = p.page(page)
+        except (EmptyPage, InvalidPage):
+            entries = p.page(p.num_pages)
+
+        members = []
+
+        for member in entries.object_list:
+            if issubclass(member.actual_item_type(), Agent):
+                member = member.downcast()
+                member_details = {}
+                member_details['item'] = member
+                if member.photo:
+                    if self.cur_agent_can('view Agent.photo', member):
+                        member_details['photo'] = member.photo
+
+                members.append(member_details)
+
+        page_ranges = p.page_range
+        displayed_page_range = []
+        for possible_page in page_ranges:
+            if (possible_page < page + 10) and (possible_page > page-10):
+                displayed_page_range.append(possible_page)
+
+        self.context['members'] = members
+        self.context['page_range'] = displayed_page_range
+
         try:
             folio = self.item.folios.get()
             if not self.permission_cache.agent_can('view Folio.group', folio):

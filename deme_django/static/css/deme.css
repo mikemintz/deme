@@ -5338,7 +5338,8 @@ you can use the generic selector below, but it's slower:
 .proposition-result .proposition_graph .mark100 .count {
   display: block;
 }
-.agent-profile .thumb {
+.agent-profile .thumb,
+.group-profile .thumb {
   margin-top: 20px;
   height: 200px;
   background-size: cover;
@@ -5348,11 +5349,16 @@ you can use the generic selector below, but it's slower:
   border: 1px solid #eee;
   display: block;
 }
-.agent-profile .thumb img {
+.agent-profile .thumb img,
+.group-profile .thumb img {
   display: none;
 }
-.agent-profile .activity-inner h3 {
+.agent-profile .activity-inner h3,
+.group-profile .activity-inner h3 {
   display: none;
+}
+.group-profile .member .thumb {
+  background-image: url('../img/empty-profile-pic.jpg');
 }
 .HiddenMenu {
   z-index: 1;
