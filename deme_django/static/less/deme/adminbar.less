@@ -39,17 +39,30 @@ body {
   .nav {
     white-space: nowrap;
     > li > a {
+      color: @gray-lighter;
       text-shadow: 0 -1px fade(@black, 25%);
       font-size: 16 / @font-size-base-int * 100%;
       border-right: 1px solid fade(@black, 15%);
       border-left:  1px solid fade(@white, 15%);
       padding: .6em;
       line-height: 20 / @font-size-base-int;
-      &.active {
+      &:active, &.active {
+        #gradient .vertical(@adminbar-top-active, @adminbar-bottom-active);
+      }
+      &:hover, &:focus {
+        color: @white;
+        background: transparent;
+      }
+    }
+    .dropdown.open {
+      > a {
         #gradient .vertical(@adminbar-top-active, @adminbar-bottom-active);
       }
     }
     .dropdown-menu {
+      .divider {
+        margin: 3px 0;
+      }
       .demeicon, .glyphicon {
         padding-right: 5px;
       }
@@ -123,8 +136,8 @@ body {
     }
   }
   .textsize-btn {
-    .col-span-6,
-    .col-span-12 {
+    .col-lg-6,
+    .col-lg-12 {
       padding: 0 5px;
     }
     .reset-wrap {

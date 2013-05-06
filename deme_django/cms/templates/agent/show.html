@@ -7,14 +7,14 @@
 {% block content %}
 <div class="agent-profile container">
   <div class="row">
-    <div class="col-span-3 thumb"
+    <div class="col col-lg-3 thumb"
     {% if item.photo %}
       {% ifagentcan 'view FileDocument.datafile' item.photo %} style="background-image:url('{{ item.photo.datafile.url }}')
       {% endifagentcan %}
     {% endif %}">
     </div>
 
-    <div class="col-span-9">
+    <div class="col col-lg-9">
       <h1 title="title">{% viewable_name item %}</h1>
       <ul>
         {% for contact_method in contact_methods %}
@@ -24,7 +24,7 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-span-12 groups">
+    <div class="col col-lg-12 groups">
       <h3>Groups</h3>
       <ul>
         {% for membership in item.memberships.all %}
@@ -34,7 +34,7 @@
       </ul>
 
     </div>
-    <div class="col-span-12 activity">
+    <div class="col col-lg-12 activity">
       <h3>Recent Activity</h3>
       <div class="activity-inner">
       {% metadata_action_notices %}

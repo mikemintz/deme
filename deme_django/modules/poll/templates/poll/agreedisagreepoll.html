@@ -87,7 +87,7 @@ $(document).ready(function() {
     <div class="row">
 
       <!-- Start Propositions -->
-      <div class="col-span-12 propositions-container">
+      <div class="col col-lg-12 propositions-container">
       {% if propositions %}
         <form method="post" enctype="multipart/form-data"
             	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
@@ -144,7 +144,7 @@ $(document).ready(function() {
       	{% endifagentcan %}
       </p>
       {% endifagentcan %}
-      </div><!-- /.col-span-12 -->
+      </div><!-- /.col-lg-12 -->
       <!-- End Propositions -->
 
     </div><!-- .row -->
