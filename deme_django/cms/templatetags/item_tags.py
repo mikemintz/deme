@@ -592,7 +592,7 @@ class ItemDetails(template.Node):
             result.append('<tr>')
             result.append('<th>Item Name:</th>')
             result.append('<td>')
-            result.append(escape(item.name))
+            result.append(get_item_link_tag(context, item))
             result.append('</td>')
             result.append('</tr>')
 
@@ -607,7 +607,12 @@ class ItemDetails(template.Node):
         result.append('<tr>')
         result.append('<th>Item type:</th>')
         result.append('<td>')
-        result.append(u'%s' % capfirst(item.actual_item_type()._meta.verbose_name))
+        item_type = item.actual_item_type()
+        item_type_url = reverse('item_type_url', kwargs={'viewer': item_type.__name__.lower()})
+        result.append(u'<a href="%s">%s</a>' % (
+          item_type_url,
+          capfirst(item.actual_item_type()._meta.verbose_name))
+        )
         result.append('</td>')
         result.append('</tr>')
 
