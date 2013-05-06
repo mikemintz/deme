@@ -178,4 +178,9 @@ $(function(){
     // load and open comments in metadata
     metabar_show_section($("#metadata_content_permissions"));
   });
+
+  setTimeout(function(){
+    // don't animate initial stuff
+    $metabar.removeClass('noanim');
+  }, 100);
 });
