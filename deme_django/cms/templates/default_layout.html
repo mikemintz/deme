@@ -177,7 +177,7 @@
     {% endblock %}
   </head>
 
-  <body>
+  <body class="nonadmin">
     {% include "includes/nonadminbar.html" %}
     {% ifagentcan 'advanced_layout' cur_site %}
       {% include "includes/adminbar.html" %}

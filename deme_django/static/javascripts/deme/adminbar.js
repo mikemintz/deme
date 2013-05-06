@@ -70,11 +70,13 @@ $(function(){
   // show/hide advanced adminbar
   function setAdminbar(visible) {
     if (visible) {
-      $('body').addClass('admin');
+      $('body').removeClass('nonadmin');
+      $.cookie('ADMINBAR_VISIBLE', true);
     } else {
-      $('body').removeClass('admin');
+      $('body').addClass('nonadmin');
+      $.removeCookie('ADMINBAR_VISIBLE');
+      $('.page-layout').css('max-width', '');
     }
-    $.cookie('ADMINBAR_VISIBLE', visible);
   }
   var visible = $.cookie('ADMINBAR_VISIBLE');
   if (visible) {

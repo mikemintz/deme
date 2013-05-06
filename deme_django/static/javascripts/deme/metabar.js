@@ -82,11 +82,11 @@ $(function(){
       metabar_width = $metabar.width();
     }
     // if visible, then calculate
-    if (!$metabar.hasClass('closed')) {
+    if (!$('body').hasClass('nonadmin') && !$metabar.hasClass('closed')) {
       page_layout_width = $(window).width() - metabar_width - 10 + 'px'; // buffer
     }
     $metabar.css('width', metabar_width);
-    $('.page-layout').css('max-width', page_layout_width)
+    $('.page-layout').css('max-width', page_layout_width);
   }
 
   // attach event to adminbar
@@ -95,12 +95,16 @@ $(function(){
     toggleMetabar();
   });
 
-  // set open/close state on cookie
-  if ($.cookie('METABAR_VISIBLE')) {
-    toggleMetabar('open');
-  } else {
-    toggleMetabar('close');
+  function loadMetabarVisibility() {
+    // set open/close state on cookie
+    if ($.cookie('METABAR_VISIBLE')) {
+      toggleMetabar('open');
+    } else {
+      toggleMetabar('close');
+    }
   }
+  loadMetabarVisibility();
+
 
   // attach opening/closing of metadata sections
   $metabar.on('show', '.section .collapse', function(){

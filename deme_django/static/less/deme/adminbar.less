@@ -1,29 +1,17 @@
 // classes for showing/hiding advanced adminbar
 body {
-  .adminbar {
-    display: none;
-  }
   .nonadminbar {
-    display: block;
-  }
-  #metabar {
     display: none;
   }
-  #overall .page-layout {
-    max-width: none !important;
-  }
-  &.admin {
+  &.nonadmin {
     .adminbar {
-      display: block;
-    }
-    .nonadminbar {
       display: none;
     }
-    #metabar {
+    .nonadminbar {
       display: block;
     }
-    #overall .page-layout {
-      max-width: inherit;
+    #metabar {
+      display: none;
     }
   }
 }
