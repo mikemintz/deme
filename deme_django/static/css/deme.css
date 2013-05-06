@@ -5032,6 +5032,7 @@ body.nonadmin #metabar {
   border-left: 1px solid rgba(255, 255, 255, 0.15);
   border-right: 1px solid rgba(255, 255, 255, 0.15);
   max-width: 90%;
+  padding-bottom: 2px;
 }
 .adminbar .nav.breadcrumbs > li {
   display: inline-block;
@@ -5112,7 +5113,7 @@ body.nonadmin #metabar {
     position: relative;
   }
   .adminbar .left-wrap .pull-left {
-    float: none;
+    float: left;
   }
   .adminbar .nav {
     margin-top: 0;
@@ -5120,7 +5121,27 @@ body.nonadmin #metabar {
   .adminbar .nav > li {
     float: left;
   }
+  .adminbar .nav.search {
+    background-color: #29687e;
+    background-image: -moz-linear-gradient(top, #68a7bd, #29687e);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#68a7bd), to(#29687e));
+    background-image: -webkit-linear-gradient(top, #68a7bd, #29687e);
+    background-image: -o-linear-gradient(top, #68a7bd, #29687e);
+    background-image: linear-gradient(to bottom, #68a7bd, #29687e);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
+  }
   .adminbar .nav.breadcrumbs {
+    max-width: 100%;
+    padding: 0;
+    background-color: #29687e;
+    background-image: -moz-linear-gradient(top, #68a7bd, #29687e);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#68a7bd), to(#29687e));
+    background-image: -webkit-linear-gradient(top, #68a7bd, #29687e);
+    background-image: -o-linear-gradient(top, #68a7bd, #29687e);
+    background-image: linear-gradient(to bottom, #68a7bd, #29687e);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
     border: 0;
   }
   .adminbar .nav.breadcrumbs > li {
@@ -5130,13 +5151,14 @@ body.nonadmin #metabar {
   .adminbar .nav.breadcrumbs > li > a,
   .adminbar .nav.breadcrumbs > li > span {
     background: none;
-    display: inline;
-    padding: 0 3px 0 0;
-    border: 0 !important;
-  }
-  .adminbar .nav.breadcrumbs > li > a:after,
-  .adminbar .nav.breadcrumbs > li > span:after {
-    content: " » ";
+    display: inline-block;
+    padding: 8px 10px;
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    border-right: 1px solid rgba(0, 0, 0, 0.15);
+    /*&:after {
+                content: " » ";
+              }*/
+  
   }
   .adminbar .nav.breadcrumbs > li:last-child > a:after,
   .adminbar .nav.breadcrumbs > li:last-child > span:after {
@@ -5148,7 +5170,7 @@ body.nonadmin #metabar {
   }
   .adminbar .nav.actions-wrap {
     position: relative;
-    float: none;
+    float: left;
   }
   .adminbar .nav.actions-wrap > li > .dropdown-menu {
     left: 0;

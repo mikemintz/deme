@@ -72,10 +72,12 @@ $(function(){
     if (visible) {
       $('body').removeClass('nonadmin');
       $.cookie('ADMINBAR_VISIBLE', true);
+      $('.adminbar a.advanced').addClass('active');
     } else {
       $('body').addClass('nonadmin');
       $.removeCookie('ADMINBAR_VISIBLE');
       $('.page-layout').css('max-width', '');
+      $('.adminbar a.advanced').removeClass('active');
     }
   }
   var visible = $.cookie('ADMINBAR_VISIBLE');

@@ -73,6 +73,7 @@ body {
       border-left: 1px solid fade(@white, 15%);
       border-right: 1px solid fade(@white, 15%);
       max-width: 90%;
+      padding-bottom: 2px;
       > li{
         display: inline-block;
         float: none;
@@ -152,7 +153,7 @@ body {
     .left-wrap {
       position: relative;
       .pull-left {
-        float: none;
+        float: left;
       }
     }
     .nav {
@@ -163,19 +164,27 @@ body {
           //display: inline-block;
         }
       }
+      &.search {
+        #gradient .vertical(@adminbar-top, @adminbar-bottom);
+      }
       &.breadcrumbs {
+        max-width: 100%;
+        padding: 0;
+        #gradient .vertical(@adminbar-top, @adminbar-bottom);
         border: 0;
         > li {
           background: none;
           display: inline;
           > a, > span {
             background: none;
-            display: inline;
-            padding: 0 3px 0 0;
-            &:after {
+            display: inline-block;
+            padding: 8px 10px;
+            border-left: 1px solid fade(@white, 15%);
+            border-right: 1px solid fade(@black, 15%);
+
+            /*&:after {
               content: " » ";
-            }
-            border: 0 !important;
+            }*/
           }
           &:last-child {
             > a:after, > span:after {
@@ -190,7 +199,7 @@ body {
       }
       &.actions-wrap {
         position: relative;
-        float: none;
+        float: left;
         > li > .dropdown-menu {
           left: 0;
           right: auto;
