@@ -114,29 +114,12 @@
             });
         });
 
-        // To give the gray "Search" text in the search box
+        // Attach autocomplete to search boxes
         $(document).ready(function () {
-            var search_box_changed = {% if search_query %}true{% else %}false{% endif %};
-            var search_box = document.getElementById('search_box');
-            search_box.onfocus = function(e){
-                if (!search_box_changed) {
-                    search_box_changed = true;
-                    search_box.value = '';
-                    search_box.style.color = 'inherit';
-                }
-            };
-            search_box.onblur = function(e){
-                if (search_box.value == '') {
-                    search_box_changed = false;
-                    search_box.value = 'Search';
-                    search_box.style.color = '#777';
-                }
-            };
-            search_box.onblur();
 
             var cache = {};
             var last_xhr;
-            $(search_box).autocomplete({
+            $('.search_box').autocomplete({
                 minLength: 0,
                 select: function(event, ui) {
                     window.location.href = ui.item.url;
@@ -195,7 +178,11 @@
   </head>
 
   <body>
-    {% include "includes/adminbar.html" %}
+    {% include "includes/nonadminbar.html" %}
+    {% ifagentcan 'advanced_layout' cur_site %}
+      {% include "includes/adminbar.html" %}
+    {% endifagentcan %}
+
     <div id="overall-wrap">
       <div id="overall">
         {% block page-layout %}
@@ -336,7 +323,9 @@
       </div><!-- /#overall -->
 
       {% if item %}
+      {% ifagentcan 'advanced_layout' cur_site %}
         {% include "includes/metabar.html" %}
+      {% endifagentcan %}
       {% endif %}
 
     </div><!-- /#overall-wrap -->

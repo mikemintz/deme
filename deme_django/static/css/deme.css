@@ -4942,6 +4942,30 @@ you can use the generic selector below, but it's slower:
 .demeicon-text-size:before {
   content: "\e003";
 }
+body .adminbar {
+  display: none;
+}
+body .nonadminbar {
+  display: block;
+}
+body #metabar {
+  display: none;
+}
+body #overall .page-layout {
+  max-width: none !important;
+}
+body.admin .adminbar {
+  display: block;
+}
+body.admin .nonadminbar {
+  display: none;
+}
+body.admin #metabar {
+  display: block;
+}
+body.admin #overall .page-layout {
+  max-width: inherit;
+}
 .adminbar {
   background-color: #29687e;
   background-image: -moz-linear-gradient(top, #68a7bd, #29687e);

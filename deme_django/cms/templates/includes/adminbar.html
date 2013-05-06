@@ -3,30 +3,9 @@
 <div class="adminbar navbar navbar-inverse">
   <div class="left-wrap">
     <ul class="nav pull-left search">
-      <li class="dropdown textsize-btn">
-        <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Text size"><i class="demeicon demeicon-text-size"></i></a>
-        <div class="dropdown-menu">
-          <div class="row">
-            <div class="col-span-6">
-              <button class="btn btn-block smaller">A</button>
-            </div>
-            <div class="col-span-6">
-              <button class="btn btn-block bigger">A</button>
-            </div>
-            <div class="col-span-12 reset-wrap">
-              <button class="btn btn-block reset">Reset to default</button>
-            </div>
-          </div>
-        </div>
-      </li>
-      <li class="dropdown search-btn">
-        <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Search"><i class="glyphicon glyphicon-search"></i></a>
-        <div class="dropdown-menu">
-          <form method="get" action="{% url item_type_url viewer="item" %}">
-              <input type="search" class="search_box" name="q" placeholder="Search" value="{{ search_query }}">
-          </form>
-        </div>
-      </li>
+      <li><a href="#" class="advanced" title="Hide advanced tools and actions"><i class="glyphicon glyphicon-cog"></i></a></li>
+      {% include 'includes/adminbar_widgets/text-resize.html' %}
+      {% include 'includes/adminbar_widgets/search.html' %}
     </ul>
 
     <ul class="nav pull-left breadcrumbs">
@@ -45,12 +24,7 @@
     <li><a href="#" title="Create" class="create"><i class="glyphicon glyphicon-plus-sign"></i></a></li>
     <li><a href="#" title="Edit" class="edit"><i class="glyphicon glyphicon-edit"></i></a></li>
     <li><a href="#" title="Comment" class="comment"><i class="glyphicon glyphicon-comment"></i></a></li>
-    <li class="dropdown">
-      <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Account"><i class="glyphicon glyphicon-user"></i></a>
-      <ul class="dropdown-menu login-menu">
-        {% login_menu %}
-      </ul>
-    </li>
+    {% include 'includes/adminbar_widgets/account.html' %}
     {% if item %}
     <li><a href="#" title="Toggle Metadata" class="metabar-toggle"><i class="glyphicon glyphicon-info-sign"></i></a></li>
     {% endif %}

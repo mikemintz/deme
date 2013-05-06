@@ -1,3 +1,33 @@
+// classes for showing/hiding advanced adminbar
+body {
+  .adminbar {
+    display: none;
+  }
+  .nonadminbar {
+    display: block;
+  }
+  #metabar {
+    display: none;
+  }
+  #overall .page-layout {
+    max-width: none !important;
+  }
+  &.admin {
+    .adminbar {
+      display: block;
+    }
+    .nonadminbar {
+      display: none;
+    }
+    #metabar {
+      display: block;
+    }
+    #overall .page-layout {
+      max-width: inherit;
+    }
+  }
+}
+
 .adminbar {
   #gradient .vertical(@adminbar-top, @adminbar-bottom);
   border-radius: 0;

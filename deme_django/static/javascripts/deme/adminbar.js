@@ -67,6 +67,28 @@ $(function(){
     resizeTextDelta(delta);
   });
 
+  // show/hide advanced adminbar
+  function setAdminbar(visible) {
+    if (visible) {
+      $('body').addClass('admin');
+    } else {
+      $('body').removeClass('admin');
+    }
+    $.cookie('ADMINBAR_VISIBLE', visible);
+  }
+  var visible = $.cookie('ADMINBAR_VISIBLE');
+  if (visible) {
+    setAdminbar(visible);
+  }
+  $('.adminbar a.advanced').click(function(e){
+    e.preventDefault();
+    if ($(this).closest('.nonadminbar').length) {
+      setAdminbar(true);
+    } else {
+      setAdminbar(false);
+    }
+  });
+
   // set up create, edit, and comment buttons based on existing markup elsewhere
   function linkOrRemove(dependent, target) {
     if (target.length > 0) {
