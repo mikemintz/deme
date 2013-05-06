@@ -5096,7 +5096,6 @@ body.nonadmin #metabar {
     float: left;
   }
   .adminbar .nav {
-    overflow-x: scroll;
     margin-top: 0;
   }
   .adminbar .nav > li {
@@ -5114,6 +5113,7 @@ body.nonadmin #metabar {
   .adminbar .nav.breadcrumbs {
     max-width: 100%;
     padding: 0;
+    overflow-x: scroll;
     background-color: #29687e;
     background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#68a7bd), to(#29687e));
     background-image: -webkit-linear-gradient(top, #68a7bd, #29687e);

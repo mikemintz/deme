@@ -3,7 +3,7 @@ $.cookie.defaults.path = '/';
 $(function(){
   var METABAR_RESIZE_STEP = 50;
   var $metabar = $('#metabar');
-  var metabar_width = min_metabar_width = 200; // minimum/default width
+  var metabar_width = min_metabar_width = 150; // minimum/default width
   var max_metabar_width = 800;
 
   // sets metabar sizing styles based on window dimensions
@@ -30,10 +30,16 @@ $(function(){
 
   // setter for width
   function setMetabarWidth(width) {
+    var max_width = max_metabar_width;
+    var window_width = $(window).width() *.75; // can't be wider than 75% of screen
+    if (window_width < max_width) {
+      max_width = window_width;
+    }
     if (width < min_metabar_width) {
       width = min_metabar_width;
-    } else if (width > max_metabar_width) {
-      width = max_metabar_width;
+    }
+    if (width > max_width) {
+      width = max_width;
     }
     // save cookie
     $.cookie('METABAR_WIDTH', width);
