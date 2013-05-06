@@ -46,12 +46,12 @@ body {
       border-left:  1px solid fade(@white, 15%);
       padding: .6em;
       line-height: 20 / @font-size-base-int;
-      &:active, &.active {
-        #gradient .vertical(@adminbar-top-active, @adminbar-bottom-active);
-      }
       &:hover, &:focus {
         color: @white;
         background: transparent;
+      }
+      &:active, &.active, &:hover.active {
+        #gradient .vertical(@adminbar-top-active, @adminbar-bottom-active);
       }
     }
     .dropdown.open {
@@ -163,6 +163,7 @@ body {
 // Phones only
 @media (max-width: 767px) {
   .adminbar {
+    margin-bottom: 0;
     height: auto;
     .left-wrap {
       position: relative;
@@ -171,6 +172,7 @@ body {
       }
     }
     .nav {
+      overflow-x: scroll;
       margin-top: 0;
       > li {
         float: left;

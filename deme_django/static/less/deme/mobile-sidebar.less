@@ -1,0 +1,56 @@
+// Phones only
+@media (max-width: 767px) {
+  .page-layout {
+    margin-top: 0;
+    .logo-section {
+      margin-bottom: 0;
+      a.logo {
+        margin: 0;
+        border-radius: 0;
+        h1 {
+          font-size: 120%;
+        }
+      }
+    }
+  }
+  .sidebar-wrap {
+    padding: 0;
+    position: relative;
+    .panel {
+      border-radius: 0;
+      margin-bottom: 0;
+    }
+  }
+  .sidebar-toggle-wrap {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 50%;
+    a {
+      text-align: right;
+      color: @adminbar-top-active;
+      padding: 10px 15px;
+      //background: fade(@black, 5%);
+      display: block;
+      &:hover, &:active {
+        text-decoration: none;
+      }
+    }
+  }
+  .item-view-section {
+    h1 {
+      margin: 10px 0;
+      font-size: 150%;
+    }
+  }
+  body.nomobilesidebar {
+    .sidebar-section {
+      display: none;
+    }
+    .sidebar-toggle-wrap {
+      a {
+        color: @white;
+      }
+    }
+  }
+}

@@ -31,7 +31,6 @@
   </ul>
 </div>
 
-
 <div class="modal" id="newItemMenu">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -53,32 +52,11 @@
         <a href="{% url item_type_url viewer="item",action="newother"%}" class="btn btn-primary">Other Items</a>
         <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Close</a>
       </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dalog -->
+    </div>
+  </div>
 </div><!-- /.modal -->
 
-<!-- start old stuff>
-
-<div class="HiddenMenu" id="HiddenNewItemMenu" style="position: fixed; top: 73px; left: 220px; right: 20px; padding: 10px; background: #fff; border: thin ridge gray; -moz-box-shadow: 5px 3px 3px #ccc; -webkit-box-shadow: 5px 3px 3px #ccc;box-shadow: px 3px 3px #ccc; display: none;">
-    <div style="float:right; height: 5px; font-size: 20%;">
-        <a href="#" id="closebutton" onclick="toggleNewItemMenu('HiddenNewItemMenu'); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Close"><span class="ui-icon ui-icon-close"></span> Close</a>
-    </div>
-    <div style="float:left;">
-        {% defaultcreateitemtypes %}
-        <div class="create_image" style="float: left; margin-right: 2em;">
-            <a href="{% url item_type_url viewer=create_item_viewer_name,action="new"%}" class="img_link"><img src="{{create_item_type|icon_url:64}}" title="Create new {% item_type_verbose_name create_item_type %}" />New {% item_type_verbose_name create_item_type %}</a>
-        </div>
-        {% enddefaultcreateitemtypes %}
-        <a href="{% url item_type_url viewer="item",action="newother"%}" class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" style="margin-top: 20px;">Other</a>
-        <div style="clear: both;"></div>
-    </div>
-
-
-    <div style="clear: both;"></div>
-</div>
--->
 <script type="text/javascript">
-
     function openCommentDialog(name)
     {
         var dialogBox = $('#' + name);

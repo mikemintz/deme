@@ -4954,8 +4954,14 @@ body.nonadmin #metabar {
   padding: .6em;
   line-height: 1.4285714285714286;
 }
+.adminbar .nav > li > a:hover,
+.adminbar .nav > li > a:focus {
+  color: #ffffff;
+  background: transparent;
+}
 .adminbar .nav > li > a:active,
-.adminbar .nav > li > a.active {
+.adminbar .nav > li > a.active,
+.adminbar .nav > li > a:hover.active {
   background-color: #17475b;
   background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#5c95ad), to(#17475b));
   background-image: -webkit-linear-gradient(top, #5c95ad, #17475b);
@@ -4963,11 +4969,6 @@ body.nonadmin #metabar {
   background-image: linear-gradient(to bottom, #5c95ad, #17475b);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5c95ad', endColorstr='#ff17475b', GradientType=0);
-}
-.adminbar .nav > li > a:hover,
-.adminbar .nav > li > a:focus {
-  color: #ffffff;
-  background: transparent;
 }
 .adminbar .nav .dropdown.open > a {
   background-color: #17475b;
@@ -5085,6 +5086,7 @@ body.nonadmin #metabar {
 }
 @media (max-width: 767px) {
   .adminbar {
+    margin-bottom: 0;
     height: auto;
   }
   .adminbar .left-wrap {
@@ -5094,6 +5096,7 @@ body.nonadmin #metabar {
     float: left;
   }
   .adminbar .nav {
+    overflow-x: scroll;
     margin-top: 0;
   }
   .adminbar .nav > li {
@@ -5556,4 +5559,53 @@ h6,
 .h5,
 .h6 {
   line-height: 1.25;
+}
+@media (max-width: 767px) {
+  .page-layout {
+    margin-top: 0;
+  }
+  .page-layout .logo-section {
+    margin-bottom: 0;
+  }
+  .page-layout .logo-section a.logo {
+    margin: 0;
+    border-radius: 0;
+  }
+  .page-layout .logo-section a.logo h1 {
+    font-size: 120%;
+  }
+  .sidebar-wrap {
+    padding: 0;
+    position: relative;
+  }
+  .sidebar-wrap .panel {
+    border-radius: 0;
+    margin-bottom: 0;
+  }
+  .sidebar-toggle-wrap {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 50%;
+  }
+  .sidebar-toggle-wrap a {
+    text-align: right;
+    color: #5c95ad;
+    padding: 10px 15px;
+    display: block;
+  }
+  .sidebar-toggle-wrap a:hover,
+  .sidebar-toggle-wrap a:active {
+    text-decoration: none;
+  }
+  .item-view-section h1 {
+    margin: 10px 0;
+    font-size: 150%;
+  }
+  body.nomobilesidebar .sidebar-section {
+    display: none;
+  }
+  body.nomobilesidebar .sidebar-toggle-wrap a {
+    color: #ffffff;
+  }
 }
