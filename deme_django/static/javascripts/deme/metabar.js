@@ -145,13 +145,14 @@ $(function(){
       $.ajax({
         url: url,
         success: function(data) {
+          collapse.addClass('ajax-loaded');
           collapse.find('.content').html(data);
+          collapse.css('height', 'auto');
           if (typeof(cb) == 'function') {
             cb(collapse);
           }
         }
       })
-      collapse.addClass('ajax-loaded');
     } else {
       if (typeof(cb) == 'function') {
         cb(collapse);
