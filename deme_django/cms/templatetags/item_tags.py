@@ -425,9 +425,9 @@ class ActionsMenu(template.Node):
 
                     if issubclass(item.actual_item_type(), Collection):
                         if agentcan_helper(context, 'do_anything', item):
-                            collection_permissions_name = 'Modify collection permissions'
+                            collection_permissions_name = 'Modify permissions of members'
                         else:
-                            collection_permissions_name = 'View collection permissions'
+                            collection_permissions_name = 'View permissions of members'
                         collection_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'collectionpermissions'})
                         list_items.append("""<li><a href="%s" tabindex="-1" title="Modify Permissions" class="permissions"><i class="glyphicon glyphicon-lock"></i> %s</a></li>""" % (collection_permissions_url, collection_permissions_name))
 
@@ -915,9 +915,9 @@ class PermissionsBox(template.Node):
             result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>%s</a></div>""" % (item_permissions_url, item_permissions_name))
             if issubclass(item.actual_item_type(), Collection):
                 if agentcan_helper(context, 'do_anything', item):
-                    collection_permissions_name = 'Modify collection permissions'
+                    collection_permissions_name = 'Modify permissions of members'
                 else:
-                    collection_permissions_name = 'View collection permissions'
+                    collection_permissions_name = 'View permissions of members'
                 collection_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'collectionpermissions'})
                 result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>%s</a></div>""" % (collection_permissions_url, collection_permissions_name))
         if agentcan_helper(context, 'modify_privacy_settings', item) and not agentcan_helper(context, 'do_anything', item):
