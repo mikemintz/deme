@@ -246,7 +246,7 @@ html {
 }
 body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 14px;
+  font-size: 100%;
   line-height: 1.4285714285714286em;
   color: #333333;
   background-color: #ffffff;
@@ -290,7 +290,7 @@ p {
 }
 .lead {
   margin-bottom: 1.4285714285714286em;
-  font-size: 21px;
+  font-size: 150%;
   font-weight: 200;
   line-height: 1.4;
 }
@@ -393,43 +393,43 @@ h6 {
 }
 h1,
 .h1 {
-  font-size: 38.5px;
+  font-size: 275%;
 }
 h2,
 .h2 {
-  font-size: 31.5px;
+  font-size: 225%;
 }
 h3,
 .h3 {
-  font-size: 24.5px;
+  font-size: 175%;
 }
 h4,
 .h4 {
-  font-size: 17.5px;
+  font-size: 125%;
 }
 h5,
 .h5 {
-  font-size: 14px;
+  font-size: 100%;
 }
 h6,
 .h6 {
-  font-size: 11.9px;
+  font-size: 85%;
 }
 h1 small,
 .h1 small {
-  font-size: 24.5px;
+  font-size: 175%;
 }
 h2 small,
 .h2 small {
-  font-size: 17.5px;
+  font-size: 125%;
 }
 h3 small,
 .h3 small {
-  font-size: 14px;
+  font-size: 100%;
 }
 h4 small,
 .h4 small {
-  font-size: 14px;
+  font-size: 100%;
 }
 .page-header {
   padding-bottom: -0.2857142857142857em;
@@ -535,7 +535,7 @@ blockquote {
 }
 blockquote p {
   margin-bottom: 0;
-  font-size: 17.5px;
+  font-size: 125%;
   font-weight: 300;
   line-height: 1.25;
 }
@@ -580,7 +580,7 @@ code,
 pre {
   padding: 0 3px 2px;
   font-family: Monaco, Menlo, Consolas, "Courier New", monospace;
-  font-size: 12px;
+  font-size: 98%;
   color: #333333;
   border-radius: 4px;
 }
@@ -595,7 +595,7 @@ pre {
   display: block;
   padding: 0.2142857142857143em;
   margin: 0 0 0.7142857142857143em;
-  font-size: 13px;
+  font-size: 99%;
   line-height: 1.4285714285714286em;
   word-break: break-all;
   word-wrap: break-word;
@@ -1058,7 +1058,7 @@ legend {
   width: 100%;
   padding: 0;
   margin-bottom: 1.4285714285714286em;
-  font-size: 21px;
+  font-size: 150%;
   line-height: 2.857142857142857em;
   color: #333333;
   border: 0;
@@ -1088,7 +1088,7 @@ input[type="color"] {
   display: inline-block;
   min-height: 15.428571428571429em;
   padding: 6px 9px;
-  font-size: 14px;
+  font-size: 100%;
   line-height: 1.4285714285714286em;
   color: #555555;
   vertical-align: middle;
@@ -1244,7 +1244,7 @@ input[type="search"].input-large,
 input[type="tel"].input-large,
 input[type="color"].input-large {
   padding: 11px 14px;
-  font-size: 17.5px;
+  font-size: 125%;
   border-radius: 6px;
 }
 select.input-small,
@@ -1265,7 +1265,7 @@ input[type="tel"].input-small,
 input[type="color"].input-small {
   min-height: 7.428571428571429em;
   padding: 2px 10px;
-  font-size: 11.9px;
+  font-size: 85%;
   border-radius: 3px;
 }
 input[class*="span"],
@@ -1441,7 +1441,7 @@ select:focus:invalid:focus {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   padding: 6px 8px;
-  font-size: 14px;
+  font-size: 100%;
   font-weight: normal;
   line-height: 1.4285714285714286em;
   text-align: center;
@@ -1451,11 +1451,11 @@ select:focus:invalid:focus {
 }
 .input-group-addon.input-small {
   padding: 2px 10px;
-  font-size: 11.9px;
+  font-size: 85%;
 }
 .input-group-addon.input-large {
   padding: 11px 14px;
-  font-size: 17.5px;
+  font-size: 125%;
 }
 .input-group input:first-child,
 .input-group-addon:first-child {
@@ -1590,7 +1590,7 @@ select:focus:invalid:focus {
   display: inline-block;
   padding: 6px 12px;
   margin-bottom: 0;
-  font-size: 14px;
+  font-size: 100%;
   font-weight: 500;
   line-height: 1.4285714285714286em;
   text-align: center;
@@ -1629,17 +1629,17 @@ fieldset[disabled] .btn {
 }
 .btn-large {
   padding: 11px 14px;
-  font-size: 17.5px;
+  font-size: 125%;
   border-radius: 6px;
 }
 .btn-small {
   padding: 2px 10px;
-  font-size: 11.9px;
+  font-size: 85%;
   border-radius: 3px;
 }
 .btn-mini {
   padding: 0 6px;
-  font-size: 10.5px;
+  font-size: 75%;
   border-radius: 3px;
 }
 .btn-block {
@@ -2619,7 +2619,7 @@ a.list-group-item.active .list-group-item-text {
 .panel-heading {
   margin: -15px -15px 15px;
   padding: 10px 15px;
-  font-size: 17.5px;
+  font-size: 125%;
   font-weight: 500;
   background-color: #f5f5f5;
   border-bottom: 1px solid #dddddd;
@@ -3549,7 +3549,7 @@ button.close {
 .pagination-large > li > a,
 .pagination-large > li > span {
   padding: 11px 14px;
-  font-size: 17.5px;
+  font-size: 125%;
 }
 .pagination-large > li:first-child > a,
 .pagination-large > li:first-child > span {
@@ -3578,12 +3578,12 @@ button.close {
 .pagination-small > li > a,
 .pagination-small > li > span {
   padding: 2px 10px;
-  font-size: 11.9px;
+  font-size: 85%;
 }
 .pagination-mini > li > a,
 .pagination-mini > li > span {
   padding: 0 6px;
-  font-size: 10.5px;
+  font-size: 75%;
 }
 .pager {
   margin: 1.4285714285714286em 0;
@@ -4964,6 +4964,7 @@ body.nonadmin #metabar {
   display: none;
 }
 .adminbar {
+  z-index: 1;
   background-color: #29687e;
   background-image: -moz-linear-gradient(top, #68a7bd, #29687e);
   background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#68a7bd), to(#29687e));
@@ -5450,6 +5451,9 @@ body.nonadmin #metabar {
 .page-layout .logo-section a.logo:hover {
   text-decoration: none;
   background: #49869c;
+}
+.page-layout .logo-section a.logo h1 {
+  margin: 0;
 }
 .page-layout h1.title img {
   vertical-align: middle;
