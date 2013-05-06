@@ -7,9 +7,10 @@ $(function(){
   }
 
   // attach focus to search button
-  $('#search-btn a').click(function(){
+  $('.search-btn a').click(function(){
+    $dropdown = $(this).closest('.dropdown');
     setTimeout(function(){
-      $('#search_box').focus();
+      $dropdown.find('input.search_box').focus();
     }, 1);
   });
 
@@ -41,9 +42,9 @@ $(function(){
   }
 
   function resizeText(size) {
-    $('#textsize-btn').addClass('resized');
+    $('.textsize-btn').addClass('resized');
     if (parseFloat(size) == defaultFontSize) {
-      $('#textsize-btn').removeClass('resized');
+      $('.textsize-btn').removeClass('resized');
     }
     document.body.style.fontSize = size;
   }
@@ -54,7 +55,7 @@ $(function(){
   if (size) {
     resizeText(size);
   }
-  $('#textsize-btn .btn').click(function(e){
+  $('.textsize-btn .btn').click(function(e){
     e.preventDefault();
     e.stopPropagation();
     var delta = 0;

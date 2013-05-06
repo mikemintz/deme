@@ -3,7 +3,7 @@
 <div class="adminbar navbar navbar-inverse">
   <div class="left-wrap">
     <ul class="nav pull-left search">
-      <li class="dropdown" id="textsize-btn">
+      <li class="dropdown textsize-btn">
         <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Text size"><i class="demeicon demeicon-text-size"></i></a>
         <div class="dropdown-menu">
           <div class="row">
@@ -19,12 +19,11 @@
           </div>
         </div>
       </li>
-      <li class="dropdown" id="search-btn">
+      <li class="dropdown search-btn">
         <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Search"><i class="glyphicon glyphicon-search"></i></a>
         <div class="dropdown-menu">
           <form method="get" action="{% url item_type_url viewer="item" %}">
-              <input type="search" id="search_box" name="q" placeholder="Search" value="{{ search_query }}">
-              {# TODO add magnifying glass #}
+              <input type="search" class="search_box" name="q" placeholder="Search" value="{{ search_query }}">
           </form>
         </div>
       </li>
