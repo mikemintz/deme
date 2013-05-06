@@ -4942,6 +4942,15 @@ you can use the generic selector below, but it's slower:
 .demeicon-text-size:before {
   content: "\e003";
 }
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+.modal {
+  pointer-events: none;
+}
+.modal .modal-dialog {
+  pointer-events: all;
+}
 body .nonadminbar {
   display: none;
 }

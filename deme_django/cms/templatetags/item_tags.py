@@ -388,7 +388,7 @@ class ActionsMenu(template.Node):
 
         list_items = []
         if agentcan_global_helper(context, 'create', wildcard_suffix=True):
-            list_items.append("""<li><a href="#" onclick="toggleNewItemMenu('HiddenNewItemMenu'); return false;" tabindex="-1" title="Create" class="create"><i class="glyphicon glyphicon-plus-sign"></i> Create</a></li>""")
+            list_items.append("""<li><a href="#" onclick="$('#newItemMenu').modal('show'); return false;" tabindex="-1" title="Create" class="create"><i class="glyphicon glyphicon-plus-sign"></i> Create</a></li>""")
 
         if item:
             if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
