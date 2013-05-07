@@ -24,7 +24,7 @@ $(document).ready(function () {
         convert_urls : false,
     });
 });
-</script>    
+</script>
 {% endif %}
 
 <script type="text/javascript">
@@ -34,10 +34,10 @@ $(document).ready(function () {
         jQuery.ajax({url: "{% url item_url viewer=viewer_name,noun=item.pk,action="editlockrefresh",format="json" %}"});
     }, edit_lock_refresh_millis);
 });
-</script>    
+</script>
 
 <div>
-    <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,noun=item.pk,action="update" %}?version={{ item.version_number }}" class="item_form">
+    <form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,noun=item.pk,action="update" %}?version={{ item.version_number }}{% if redirect %}&redirect={{ redirect|urlencode }}{% endif %}" class="item_form">
         <table cellspacing="0">
             {{ form.as_table }}
         </table>
