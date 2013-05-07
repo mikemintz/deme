@@ -198,12 +198,6 @@
               {% endblock logo-section %}
               {% block sidebar-section %}
               <div class="sidebar-section">
-                <div class="panel recently-viewed">
-                  <div class="panel-heading">
-                    Recently Viewed
-                  </div>
-                  {% recently_viewed %}
-                </div>
                 <div class="panel">
                   <div class="panel-heading">
                     Navigation
@@ -213,6 +207,12 @@
                       <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
                       <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
                   </ul>
+                </div>
+                <div class="panel recently-viewed">
+                  <div class="panel-heading">
+                    Recently Viewed
+                  </div>
+                  {% recently_viewed %}
                 </div>
               </div>
               {% endblock sidebar-section %}
