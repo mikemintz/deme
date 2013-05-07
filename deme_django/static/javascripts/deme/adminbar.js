@@ -55,6 +55,7 @@ $(function(){
   if (size) {
     resizeText(size);
   }
+
   $('.textsize-btn .btn').click(function(e){
     e.preventDefault();
     e.stopPropagation();

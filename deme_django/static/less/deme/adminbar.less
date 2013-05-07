@@ -32,6 +32,7 @@ body {
   border-radius: 0;
   padding: 0;
   height: 41 / @font-size-base-int * 1em;
+  margin: 0;
   .left-wrap {
     position: absolute;
     left: 0;
@@ -168,7 +169,7 @@ body {
     .left-wrap {
       position: relative;
       .pull-left {
-        float: left;
+        float: none;
       }
     }
     .nav {
@@ -178,6 +179,8 @@ body {
         > a {
           //display: inline-block;
         }
+      }
+      .dropdown-menu {
       }
       &.search {
         #gradient .vertical(@adminbar-top, @adminbar-bottom);
@@ -215,7 +218,7 @@ body {
       }
       &.actions-wrap {
         position: relative;
-        float: left;
+        float: none;
         > li > .dropdown-menu {
           left: 0;
           right: auto;

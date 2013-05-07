@@ -4937,6 +4937,7 @@ body.nonadmin #metabar {
   border-radius: 0;
   padding: 0;
   height: 2.9285714285714284em;
+  margin: 0;
 }
 .adminbar .left-wrap {
   position: absolute;
@@ -5093,7 +5094,7 @@ body.nonadmin #metabar {
     position: relative;
   }
   .adminbar .left-wrap .pull-left {
-    float: left;
+    float: none;
   }
   .adminbar .nav {
     margin-top: 0;
@@ -5149,7 +5150,7 @@ body.nonadmin #metabar {
   }
   .adminbar .nav.actions-wrap {
     position: relative;
-    float: left;
+    float: none;
   }
   .adminbar .nav.actions-wrap > li > .dropdown-menu {
     left: 0;
@@ -5407,6 +5408,9 @@ body.nonadmin #metabar {
 .HiddenMenu {
   z-index: 1;
 }
+body {
+  font-size: 14px;
+}
 .page-layout {
   margin-top: 10px;
 }
@@ -5563,6 +5567,7 @@ h6,
 @media (max-width: 767px) {
   .page-layout {
     margin-top: 0;
+    max-width: none !important;
   }
   .page-layout .logo-section {
     margin-bottom: 0;
