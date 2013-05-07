@@ -21,7 +21,7 @@
 
   <div class="members row">
   {% for member in members %}
-    <div id="member{{ member.item.pk }}" class="member col-lg-3">
+    <div id="member{{ member.item.pk }}" class="member col col-lg-3">
       <a href="{{ member.item.get_absolute_url }}">
       <div class="thumb profile-pic"
         {% if member.photo %} style="background-image: url('{{ member.photo.datafile.url }}')"{% endif %}
@@ -54,8 +54,12 @@
     </div>
   </div>
 
-  <div class="collection-view">
+  <a href="#" class="viewall">View as Collection</a>
+  <div class="collection-view hide">
+    <div class="panel">
+      <h3 class="panel-heading">Collection View</h3>
       {% embed 'collection' item %}
+    </div>
   </div>
 
   <!--
@@ -70,5 +74,14 @@
   {% endif %}
 
 </div>
+<script>
+$(function(){
+  $('.viewall').click(function(e){
+    e.preventDefault();
+    $('.collection-view').removeClass('hide');
+    $(this).remove();
+  });
+});
+</script>
 {% endblock content %}
 
