@@ -1,18 +1,54 @@
 $.cookie.defaults.path = '/';
 
+// check user agent
+var ua = navigator.userAgent;
+var checker = {
+  iphone: ua.match(/(iPhone|iPod)/),
+  ipad: ua.match(/(iPad)/),
+  blackberry: ua.match(/BlackBerry/),
+  android: ua.match(/Android/),
+  ie: ua.match(/MSIE/)
+};
+
 $(function(){
   // if actions menu is empty, remove it
   if ($.trim($('#actions-btn .actions-menu').text()) == '') {
     $('#actions-btn').remove();
   }
 
+  $('.textsize-btn a').click(function(e){
+    e.preventDefault();
+    hideAdminbarIfMobile(this);
+  });
+
   // attach focus to search button
-  $('.search-btn a').click(function(){
+  $('.search-btn a').click(function(e){
+    e.preventDefault();
+    hideAdminbarIfMobile(this);
     $dropdown = $(this).closest('.dropdown');
     setTimeout(function(){
       $dropdown.find('input.search_box').focus();
     }, 1);
   });
+
+  function hideAdminbarIfMobile(elem) {
+    if(checker.iphone || checker.ipad) {
+      setAdminbar(false);
+      setTimeout(function(){
+        // we are swtiching dom structurs so we need to find out what dropdown to show on the new navbar
+        var classes = $(elem).closest('.dropdown').attr('class').split(' ');
+        var classSelector = '';
+        var ignoreList = ['open'];
+        for (var i = 0; i < classes.length; i++) {
+          var testClass = classes[i];
+          if ($.inArray(testClass, ignoreList) === -1) {
+            classSelector += '.' + testClass;
+          }
+        }
+        $(classSelector).addClass('open');
+      }, 1);
+    }
+  }
 
   var defaultFontSize = 14;
   var validFontSizes = [8,9,10,12,14,16,18,20,24,30];

@@ -5094,7 +5094,7 @@ body.nonadmin #metabar {
     position: relative;
   }
   .adminbar .left-wrap .pull-left {
-    float: none;
+    float: left;
   }
   .adminbar .nav {
     margin-top: 0;
@@ -5150,7 +5150,7 @@ body.nonadmin #metabar {
   }
   .adminbar .nav.actions-wrap {
     position: relative;
-    float: none;
+    float: left;
   }
   .adminbar .nav.actions-wrap > li > .dropdown-menu {
     left: 0;
