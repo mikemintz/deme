@@ -58,7 +58,13 @@ $(document).ready(function() {
 </script>
 
 <div class="approvenpoll">
-  {% if can_view_response_names_and_values or not cur_agent_has_voted %}
+  {% if item.question %}
+  <p class="issue">
+  <strong>Issue:</strong>
+  {{ item.question }}
+  </p>
+  {% endif %}
+  {% if cur_agent_can_view_survey %}
 
     <script type="text/javascript">
         function openDialog(name)
@@ -77,12 +83,6 @@ $(document).ready(function() {
       <input id="removeInput"type="hidden" name="item" value="{{ membership.item.pk }}" />
     </form>
 
-    {% if item.question %}
-    <p class="issue">
-    <strong>Issue:</strong>
-    {{ item.question }}
-    </p>
-    {% endif %}
 
     <div class="row">
       <!-- Start Propositions -->
@@ -207,7 +207,7 @@ $(document).ready(function() {
       <div class="personal-statements">
         <h4>Personal Statements</h4>
         {% if comments %}
-        	<table>
+        	<table class="table">
     	    {% for comment in comments %}
     	    <tr>
     	    	<td>{{ comment.body|safe }}</td>

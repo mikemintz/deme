@@ -163,6 +163,7 @@ class AgreeDisagreePollViewer(PollViewer):
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
         self.context['cur_agent_can_view_results'] = self.context['cur_agent_has_voted'] or (self.context['can_view_response_names_and_values'] and not (self.context['cur_agent_in_eligbles']))
+        self.context['cur_agent_can_view_survey'] = not self.context['cur_agent_has_voted'] or (self.context['can_view_response_names_and_values'] and not (self.context['cur_agent_in_eligbles']))
         template = loader.get_template('poll/agreedisagreepoll.html')
         return HttpResponse(template.render(self.context))
 
