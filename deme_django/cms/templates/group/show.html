@@ -5,11 +5,7 @@
 {% block content %}
 <div class="group-profile container">
   <div class="header row">
-    <div class="col col-lg-2 thumb" style="background-image:url('{% if item.image %}
-  	{% ifagentcan 'view Group.image' item %}
-  	{% ifagentcan 'view FileDocument.datafile' item.image %}{{ item.image.datafile.url }}{% endifagentcan %}
-  	{% endifagentcan %}
-  	{% else %}{{ item.actual_item_type|icon_url:128 }}{% endif %}')">
+    <div class="col col-lg-2 thumb" style="background-image:url('{% if item.image %}{% ifagentcan 'view Group.image' item %}{% ifagentcan 'view FileDocument.datafile' item.image %}{{ item.image.datafile.url }}{% endifagentcan %}{% endifagentcan %}{% else %}{{ item.actual_item_type|icon_url:128 }}{% endif %}')">
   	</div>
   	<div class="col col-lg-10">
   	 <h1 class="title">{% viewable_name item %}</h1>
