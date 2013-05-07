@@ -85,7 +85,6 @@ $(document).ready(function() {
     {% endif %}
 
     <div class="row">
-
       <!-- Start Propositions -->
       <div class="col col-lg-12 propositions-container">
       {% if propositions %}
@@ -97,11 +96,11 @@ $(document).ready(function() {
     		      <h4>{% firstof proposition.name forloop.counter %}</h4>
     		      <p>{{proposition.body|safe}}</p>
 
-
-    		      <a href="{% url item_url viewer='proposition',action='edit',noun=proposition.pk %}?redirect={{ full_path|urlencode }}" class="btn btn-small"><i class="glyphicon glyphicon-edit"></i> Edit</a>
-    		      {% ifagentcan 'edit' proposition %}{% endifagentcan %}
-     		 	    {% ifagentcan 'modify_membership' item %}
     	 	      <!-- admin -->
+     		 	    {% ifagentcan 'modify_membership' item %}
+                {% ifagentcanglobal 'create Proposition' %}
+          			<a href="{% url item_url viewer='proposition',action='edit',noun=proposition.pk %}?redirect={{ full_path|urlencode }}" class="btn btn-small"><i class="glyphicon glyphicon-edit"></i> Edit</a>
+                {% endifagentcanglobal %}
         			<button class="btn btn-small" type="button" onclick="removeMember('{{ proposition.pk }}')"><i class="glyphicon glyphicon-trash"></i> Remove</button>
         		  {% endifagentcan %}
 
@@ -114,7 +113,6 @@ $(document).ready(function() {
         			</label>
         			{% endif %}
       			</div>
-
     	    {% endfor %}
           </div><!-- /#Propcontainer -->
 
@@ -123,16 +121,12 @@ $(document).ready(function() {
         	<p><strong>You also have the option of writing in your own statement that you think better captures your opinions. We ask that you still vote for each response above and then write your own statement here:</strong><p>
         	<textarea  name="optional_writein_comment" type="text" cols="20" rows="2"></textarea><br />
             -->
-            <input type="hidden" name="optional_writein_comment" value="" />
-
-            <p>
-              <button type="submit" class="btn btn-primary">Submit</button>
-            </p>
-
+            <h5>Personal statement (optional):</h5>
+            <p><textarea name="optional_writein_comment"></textarea></p>
+            <p><button type="submit" class="btn btn-primary">Submit</button></p>
         	{% endif %}
-
         </form>
-        {% else %}
+      {% else %}
         <div class="alert">No propositions in this poll</div>
       {% endif %}<!--(propositions)-->
 
@@ -152,8 +146,7 @@ $(document).ready(function() {
 
     </div><!-- .row -->
   {% endif %}<!--(can_view_response_names_and_values or not cur_agent_has_voted)-->
-
-  {% if cur_agent_has_voted or can_view_response_names_and_values %}
+  {% if cur_agent_can_view_results %}
     <div class="panel">
       <h3 class="panel-heading">Poll Results</h3>
       {% for dict in vote_numbers_list %}
@@ -205,61 +198,6 @@ $(document).ready(function() {
 	          </div>
 	        </div>
 	      </div>
-	      {% comment %}
-	      <!--table class="Poll" border="0"  >
-
-			  <tr>
-			    <td width = "70px" align="right">{{dict.agree}} Agree</td>
-			    <td></td>
-			    {% for i in dict.n %}
-			    	{% if i < dict.agree %}
-			    		<td bgcolor="blue" width="{{ proportion }}px" style="padding:0"></td>
-			    		<td bgcolor="blue" width="{{ proportion }}px" style="padding:0"></td>
-			    	{% endif %}
-			    {% endfor %}
-			  </tr>
-			  <tr height = "5px"></tr>
-			  <tr>
-			    <td align="right">{{dict.disagree}} Disagree</td>
-			    <td></td>
-			    {% for i in dict.n %}
-			    	{% if i < dict.disagree %}
-			    		<td bgcolor="blue" width="{{ proportion }}px" style="padding:0"></td>
-			    		<td bgcolor="blue" width="{{ proportion }}px" style="padding:0"></td>
-			    	{% else %}
-			    		<td  width="{{ proportion }}px" style="padding:0"></td>
-			    		<td  width="{{ proportion }}px" style="padding:0"></td>
-			    	{% endif %}
-			    {% endfor %}
-			  </tr>
-			  <tr height = "5px"></tr>
-			  <tr>
-			    <td align="right">{{dict.no_vote}} Haven't Voted</td>
-			    <td></td>
-			    {% for i in dict.n %}
-			    	{% if i < dict.no_vote %}
-			    		<td bgcolor="blue" width="{{ proportion }}px" style="padding:0"></td>
-			    		<td bgcolor="blue" width="{{ proportion }}px" style="padding:0"></td>
-			    	{% endif %}
-			    {% endfor %}
-			  </tr>
-			  <tr margin='0' style="padding:0" height="1em">
-			  	<td style="padding:0; margin:0;" height="1em"></td>
-			  	<td style="padding:0; margin:0;" height="1em"></td>
-			  	{% for i in rangeN %}
-			  		<td style="padding:0; margin:0;" height="1em" border-right:"1">|</td>
-			  		<td style="padding:0; margin:0;" height="1em"></td>
-			  	{% endfor %}
-			  </tr>
-			  <tr margin='0' style="padding:0" height="1em">
-			    <th width = "150px">Responses</th>
-			    <th width = "5px"></th>
-			    {% for i in rangeN %}
-			    	<th width = "{{ 2proportion }}"colspan="2" height="1em" style="padding-left:0">{{i}}</th>
-			    {% endfor %}
-			  </tr>
-			</table-->
-			{% endcomment %}
       </div>
       {% endwith %}
       {% endfor %}

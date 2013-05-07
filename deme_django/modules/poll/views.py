@@ -162,6 +162,7 @@ class AgreeDisagreePollViewer(PollViewer):
         self.context['2proportion'] = 2*int(12.0*15.0/n)
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
+        self.context['cur_agent_can_view_results'] = self.context['cur_agent_has_voted'] or (self.context['can_view_response_names_and_values'] and not (self.context['cur_agent_in_eligbles']))
         template = loader.get_template('poll/agreedisagreepoll.html')
         return HttpResponse(template.render(self.context))
 
@@ -243,7 +244,6 @@ class AgreeDisagreePollViewer(PollViewer):
         #self.context['maxVal'] = maxNumber
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
-
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
