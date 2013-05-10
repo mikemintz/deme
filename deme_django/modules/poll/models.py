@@ -63,6 +63,7 @@ class Poll(Collection):
         ('closed' , 'closed - neither who has responded nor how they have responded is visible'),
     )
     visibility = models.CharField(_('visibility'), default='Unassigned', max_length=36, choices=visibility_choices)
+    allow_editing_responses = FixedBooleanField(_('allow editing responses'), default=False, help_text=_("If enabled, poll participants can go back and edit their responses after their initial submission"))
 
     def agent_eligible_to_vote(self, agent):
         return RecursiveMembership.objects.filter(parent=self.eligibles, child=agent).exists()
