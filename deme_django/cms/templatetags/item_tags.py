@@ -1474,8 +1474,8 @@ class PermissionEditor(template.Node):
         existing_permission_data.append(datum)
         existing_permission_data.sort(key=lambda x: (x['permission_type'], x['name']))
 
-        new_agent_select_widget = AjaxModelChoiceField(Agent.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None, {'id':'permission_new_agent'})
-        new_collection_select_widget = AjaxModelChoiceField(Collection.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None, {'id':'permission_new_collection'})
+        new_agent_select_widget = AjaxModelChoiceField(Agent.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_agent', None, {'id':'permission_new_agent_%s' % permission_editor_counter})
+        new_collection_select_widget = AjaxModelChoiceField(Collection.objects, permission_cache=viewer.permission_cache, required_abilities=[]).widget.render('new_collection', None, {'id':'permission_new_collection_%s' % permission_editor_counter})
         #TODO the widgets get centered-alignment in the dialog, which looks bad
 
         data = {
