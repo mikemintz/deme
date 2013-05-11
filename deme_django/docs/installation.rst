@@ -20,7 +20,7 @@ Required Dependencies
 
 Python
 ^^^^^^
-We require Python 2.5 (although 2.6 and 2.7 will probably work, but 3.x will not).
+We require Python 2.5, 2.6, or 2.7. Python 3 will not work.
 
 * On Ubuntu: ``sudo apt-get install python``
 * On Mac OS X: You probably have it already, but if you don't, try http://python.org/ftp/python/2.6.2/python-2.6.2-macosx2009-04-16.dmg
