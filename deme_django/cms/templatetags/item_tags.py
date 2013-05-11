@@ -1391,6 +1391,8 @@ class PermissionEditor(template.Node):
                 else:
                     return '' # Fail silently for invalid variables.
         viewer = context['_viewer']
+        permission_editor_counter = context.get('permission_editor_counter', 0) + 1
+        context['permission_editor_counter'] = permission_editor_counter
 
         if self.target_level == 'one':
             if target is None:
@@ -1477,6 +1479,7 @@ class PermissionEditor(template.Node):
         #TODO the widgets get centered-alignment in the dialog, which looks bad
 
         data = {
+          'permission_editor_counter': permission_editor_counter,
           'can_edit_permissions': simplejson.dumps(can_edit_permissions),
           'possible_ability_javascript_array': simplejson.dumps(possible_abilities_and_names, separators=(',',':')),
           'existing_permission_data_javascript_array': simplejson.dumps(existing_permission_data, separators=(',',':')),
