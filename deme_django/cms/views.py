@@ -1229,6 +1229,7 @@ class TextDocumentViewer(DocumentViewer):
         template = loader.get_template('item/edit.html')
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
+        self.context['redirect'] = self.request.GET.get('redirect');
         return HttpResponse(template.render(self.context))
 
     @require_POST
@@ -1274,8 +1275,8 @@ class TextDocumentViewer(DocumentViewer):
                     transclusion.from_item_version_number = new_item.version_number
                     transclusion.to_item = to_item
                     transclusion.save_versioned(action_agent=self.cur_agent, action_summary=form.cleaned_data['action_summary'])
-
-            return HttpResponseRedirect(reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
+            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': new_item.pk}))
+            return HttpResponseRedirect(redirect)
         else:
             return self.item_edit_html(form)
 
