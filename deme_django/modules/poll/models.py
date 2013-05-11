@@ -26,7 +26,7 @@ class Poll(Collection):
         verbose_name_plural = _('polls')
 
     #fields:
-    question = models.TextField(_('question'), blank=True)
+    question = models.TextField(_('question'), blank=True, help_text=_('Explain to poll participants what the poll is about'))
     begins = models.DateTimeField(_('begins'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     deadline = models.DateTimeField(_('deadline'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     time_zones = (
