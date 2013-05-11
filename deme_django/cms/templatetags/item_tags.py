@@ -22,6 +22,7 @@ from django.template import Context
 from urlparse import urljoin
 import os
 import itertools
+import random
 
 register = template.Library()
 
@@ -785,6 +786,9 @@ class CalculateComments(template.Node):
                 result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
             result.append(u'<div id="advancedcomment%s" style="display: none;">' % comment.pk)
             result.append(u'<div>Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div>' % AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'comment_reply_from_contact_method_field'}))
+            result.append(u'<div><button type="button" onclick="$(\'#permission_editor%s\').toggle();"><img src="%s" /> <span>Permissions</span></button></div>' % (comment.pk, icon_url("permissions", 16)))
+            permission_editor_html = PermissionEditor(None, target_level='one', privacy_only=False, is_new_item=True, accordion_comment_parent=comment).render(context)
+            result.append(u'<div id="permission_editor%s" style="display: none;">%s</div>' % (comment.pk, permission_editor_html))
             result.append(u'</div><br> ')
             result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (comment.pk, comment.version_number))
             result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (comment.pk))
@@ -876,7 +880,12 @@ class CalculateComments(template.Node):
             result.append(u'<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> ')
             if context['cur_agent'].is_anonymous():
                 result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
-            result.append(u'<div id="advancedcomment%s" style="display: none;">Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s</div><br> ' % (item.pk, AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'commentajaxfield'})))
+            result.append(u'<div id="advancedcomment%s" style="display: none;">' % item.pk)
+            result.append(u'Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br> From Contact Method: %s' % AjaxModelChoiceField(ContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('new_from_contact_method', default_from_contact_method_pk, {'id':'commentajaxfield'}))
+            result.append(u'<div><button type="button" onclick="$(\'#permission_editor%s\').toggle();"><img src="%s" /> <span>Permissions</span></button></div>' % (item.pk, icon_url("permissions", 16)))
+            permission_editor_html = PermissionEditor(None, target_level='one', privacy_only=False, is_new_item=True, accordion_comment_parent=item).render(context)
+            result.append(u'<div id="permission_editor%s" style="display: none;">%s</div>' % (item.pk, permission_editor_html))
+            result.append(u'</div><br> ')
             result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (item.pk, item.version_number))
             result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (item.pk))
             result.append(u'</form></div>')
@@ -1367,7 +1376,7 @@ def viewable_name(parser, token):
 
 
 class PermissionEditor(template.Node):
-    def __init__(self, target, target_level, privacy_only, is_new_item):
+    def __init__(self, target, target_level, privacy_only, is_new_item, accordion_comment_parent=None):
         if target is None:
             self.target = None
         else:
@@ -1375,6 +1384,7 @@ class PermissionEditor(template.Node):
         self.target_level = target_level
         self.privacy_only = privacy_only
         self.is_new_item = is_new_item
+        self.accordion_comment_parent = accordion_comment_parent
 
     def __repr__(self):
         return "<PermissionEditor>"
@@ -1391,14 +1401,17 @@ class PermissionEditor(template.Node):
                 else:
                     return '' # Fail silently for invalid variables.
         viewer = context['_viewer']
-        permission_editor_counter = context.get('permission_editor_counter', 0) + 1
+        permission_editor_counter = context.get('permission_editor_counter', random.randrange(1e12)) + 1
         context['permission_editor_counter'] = permission_editor_counter
 
         if self.target_level == 'one':
-            if target is None:
-                possible_abilities = all_possible_item_abilities(viewer.accepted_item_type)
+            if self.accordion_comment_parent:
+                item_type = TextComment
+            elif target is None:
+                item_type = viewer.accepted_item_type
             else:
-                possible_abilities = all_possible_item_abilities(target.actual_item_type())
+                item_type = target.actual_item_type()
+            possible_abilities = all_possible_item_abilities(item_type)
         else:
             possible_abilities = all_possible_item_and_global_abilities()
         if self.privacy_only:
@@ -1430,8 +1443,8 @@ class PermissionEditor(template.Node):
             if self.is_new_item:
                 # Creator has do_anything ability when creating a new item
                 assert target is None
-                if issubclass(viewer.accepted_item_type, Comment):
-                    parent = Item.objects.get(pk=viewer.request.REQUEST.get('item') or viewer.request.REQUEST.get('populate_item'))
+                if self.accordion_comment_parent or issubclass(viewer.accepted_item_type, Comment):
+                    parent = self.accordion_comment_parent or Item.objects.get(pk=viewer.request.REQUEST.get('item') or viewer.request.REQUEST.get('populate_item'))
                     is_inheritable_permission = lambda x: (x.ability.startswith('view') or x.ability == 'comment_on') and x.ability in possible_abilities
                     agent_permissions = [OneToOnePermission(source=x.source, ability=x.ability, is_allowed=x.is_allowed) for x in parent.one_to_one_permissions_as_target.all() if is_inheritable_permission(x)]
                     collection_permissions = [SomeToOnePermission(source=x.source, ability=x.ability, is_allowed=x.is_allowed) for x in parent.some_to_one_permissions_as_target.all() if is_inheritable_permission(x)]
