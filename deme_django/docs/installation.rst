@@ -18,6 +18,30 @@ To checkout Deme, type::
 Required Dependencies
 ---------------------
 
+PostgreSQL
+^^^^^^^^^^
+We develop against PostgreSQL from versions 8.3 to 9.2 as our database, although other database engines may be supported. To install PostgreSQL:
+
+* On Ubuntu: ``sudo apt-get install postgresql``
+* On Mac OS X: Download http://www.enterprisedb.com/getfile.jsp?fileid=484
+* Other OS: Download the database at http://www.postgresql.org/download/
+
+You'll also need the Python plugin to PostgreSQL:
+
+* On Ubuntu: ``sudo apt-get install python-psycopg2``
+* On Mac OS X: I think ``sudo easy_install psycopg2`` should work
+* Other OS: You'll want postgresql_psycopg2. The publisher is at http://initd.org/pub/software/psycopg/
+
+You'll also need to configure a user that Django can use to authenticate. If you don't know how to set up users in PostgreSQL, search Google for setting up PostgreSQL and Django on your OS of choice, and find a tutorial.
+
+But here is what I did for reference::
+
+  $ sudo -u postgres psql template1
+  template1=# ALTER USER postgres WITH ENCRYPTED PASSWORD 'MYPASSWORD';
+  template1=# \q
+
+I then opened ``/etc/postgresql/8.4/main/pg_hba.conf`` in a text editor as root. I found the line that said ``local all postgres ident``, commented it out, and added a new line underneath that said ``local all postgres md5``. I also found the line that said ``local all all ident``, commented it out, and added a new line underneath that said ``local all all md5``. I also made a ``.pgpass`` file in my home directory that said ``localhost:*:*:postgres:MYPASSWORD`` and ran ``chmod 600 .pgpass``
+
 Python
 ^^^^^^
 We require Python 2.5, 2.6, or 2.7. Python 3 will not work.
@@ -43,30 +67,6 @@ We use South 0.7 for database migrations.
 * On Ubuntu: ``sudo easy_install South``
 * On Mac OS X: ``sudo easy_install South``
 * Other OS: Download at http://south.aeracode.org/wiki/Download
-
-PostgreSQL
-^^^^^^^^^^
-We develop against PostgreSQL from versions 8.3 to 9.2 as our database, although other database engines may be supported. To install PostgreSQL:
-
-* On Ubuntu: ``sudo apt-get install postgresql``
-* On Mac OS X: Download http://www.enterprisedb.com/getfile.jsp?fileid=484
-* Other OS: Download the database at http://www.postgresql.org/download/
-
-You'll also need the Python plugin to PostgreSQL:
-
-* On Ubuntu: ``sudo apt-get install python-psycopg2``
-* On Mac OS X: I think ``sudo easy_install psycopg2`` should work
-* Other OS: You'll want postgresql_psycopg2. The publisher is at http://initd.org/pub/software/psycopg/
-
-You'll also need to configure a user that Django can use to authenticate. If you don't know how to set up users in PostgreSQL, search Google for setting up PostgreSQL and Django on your OS of choice, and find a tutorial.
-
-But here is what I did for reference::
-
-  $ sudo -u postgres psql template1
-  template1=# ALTER USER postgres WITH ENCRYPTED PASSWORD 'MYPASSWORD';
-  template1=# \q
-
-I then opened ``/etc/postgresql/8.4/main/pg_hba.conf`` in a text editor as root. I found the line that said ``local all postgres ident``, commented it out, and added a new line underneath that said ``local all postgres md5``. I also found the line that said ``local all all ident``, commented it out, and added a new line underneath that said ``local all all md5``. I also made a ``.pgpass`` file in my home directory that said ``localhost:*:*:postgres:MYPASSWORD`` and ran ``chmod 600 .pgpass``
 
 TinyMCE
 ^^^^^^^
