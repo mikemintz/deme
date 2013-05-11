@@ -225,7 +225,7 @@
             rows.push(row);
         }
         for (var i in rows) {
-            $('#permission_table tbody').append(rows[i]);
+            $('#permission_table_{{permission_editor_counter}} tbody').append(rows[i]);
         }
 
         $('#new_agent_dialog_{{permission_editor_counter}}').dialog({
@@ -237,7 +237,7 @@
             buttons: {
                 'Add Agent': function(){
                     var row = add_agent_or_collection_row('agent', $('input[name="new_agent"]').val(), $('input[name="new_agent_search"]').val());
-                    $('#permission_table tbody').append(row);
+                    $('#permission_table_{{permission_editor_counter}} tbody').append(row);
                     $(this).dialog("close");
                 },
                 'Cancel': function(){
@@ -255,7 +255,7 @@
             buttons: {
                 'Add Collection': function(){
                     var row = add_agent_or_collection_row('collection', $('input[name="new_collection"]').val(), $('input[name="new_collection_search"]').val());
-                    $('#permission_table tbody').append(row);
+                    $('#permission_table_{{permission_editor_counter}} tbody').append(row);
                     $(this).dialog("close");
                 },
                 'Cancel': function(){
@@ -274,7 +274,7 @@
     });
 </script>
 
-<table id="permission_table" class="list" cellspacing="0">
+<table id="permission_table_{{permission_editor_counter}}" class="permission_table list" cellspacing="0">
     <tbody>
         <tr>
             <th>Name</th>

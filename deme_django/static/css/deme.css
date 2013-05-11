@@ -5484,53 +5484,53 @@ body {
 .ui-jqgrid td a {
   display: block;
 }
-#permission_table {
+.permission_table {
   width: 100%;
 }
-#permission_table th {
+.permission_table th {
   text-align: left;
 }
-#permission_table .ability-display .glyphicon {
+.permission_table .ability-display .glyphicon {
   padding-right: 10px;
 }
-#permission_table .permissions_cell a {
+.permission_table .permissions_cell a {
   padding-right: 15px;
 }
-#permission_table .permission {
+.permission_table .permission {
   position: relative;
   margin-top: 5px;
 }
-#permission_table .permission.permission-new .btn-group {
+.permission_table .permission.permission-new .btn-group {
   float: left;
 }
-#permission_table .permission .newpermission-wrap {
+.permission_table .permission .newpermission-wrap {
   margin-left: 120px;
 }
-#permission_table .permission .btn-group {
+.permission_table .permission .btn-group {
   margin-right: 10px;
 }
-#permission_table .permission .remove {
+.permission_table .permission .remove {
   padding-top: 8px;
   color: #999999;
   display: block;
   float: left;
 }
-#permission_table .permission .remove:hover {
+.permission_table .permission .remove:hover {
   color: #555555;
   text-decoration: none;
 }
-#permission_table .permission.unset .remove {
+.permission_table .permission.unset .remove {
   visibility: hidden;
   cursor: default;
 }
-#permission_table .permission .btn {
+.permission_table .permission .btn {
   background-color: #fbfbfb;
   color: #555555;
 }
-#permission_table .permission .btn.active {
+.permission_table .permission .btn.active {
   background: #d5d5d5;
 }
-#permission_table .permission .btn.active.minus {
+.permission_table .permission .btn.active.minus {
   background-color: #ff0000;
   background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#cc0000), to(#ff0000));
   background-image: -webkit-linear-gradient(top, #cc0000, #ff0000);
@@ -5540,7 +5540,7 @@ body {
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffcc0000', endColorstr='#ffff0000', GradientType=0);
   color: #ffffff;
 }
-#permission_table .permission .btn.active.plus {
+.permission_table .permission .btn.active.plus {
   background-color: #008000;
   background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#006700), to(#008000));
   background-image: -webkit-linear-gradient(top, #006700, #008000);
