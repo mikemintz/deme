@@ -46,7 +46,7 @@ We use South 0.7 for database migrations.
 
 PostgreSQL
 ^^^^^^^^^^
-We develop against PostgreSQL 8.3 or 8.4 as our database, although other database engines may be supported. To install PostgreSQL:
+We develop against PostgreSQL from versions 8.3 to 9.2 as our database, although other database engines may be supported. To install PostgreSQL:
 
 * On Ubuntu: ``sudo apt-get install postgresql``
 * On Mac OS X: Download http://www.enterprisedb.com/getfile.jsp?fileid=484
