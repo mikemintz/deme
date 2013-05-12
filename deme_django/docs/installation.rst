@@ -22,15 +22,9 @@ PostgreSQL
 ^^^^^^^^^^
 We develop against PostgreSQL from versions 8.3 to 9.2 as our database, although other database engines may be supported. To install PostgreSQL:
 
-* On Ubuntu: ``sudo apt-get install postgresql``
+* On Ubuntu: ``sudo apt-get install postgresql libpq-dev``
 * On Mac OS X: Download http://www.enterprisedb.com/getfile.jsp?fileid=484
 * Other OS: Download the database at http://www.postgresql.org/download/
-
-You'll also need the Python plugin to PostgreSQL:
-
-* On Ubuntu: ``sudo apt-get install python-psycopg2``
-* On Mac OS X: I think ``sudo easy_install psycopg2`` should work
-* Other OS: You'll want postgresql_psycopg2. The publisher is at http://initd.org/pub/software/psycopg/
 
 You'll also need to configure a user that Django can use to authenticate. If you don't know how to set up users in PostgreSQL, search Google for setting up PostgreSQL and Django on your OS of choice, and find a tutorial.
 
@@ -46,27 +40,28 @@ Python
 ^^^^^^
 We require Python 2.5, 2.6, or 2.7. Python 3 will not work.
 
-* On Ubuntu: ``sudo apt-get install python``
+* On Ubuntu: ``sudo apt-get install python python-dev``
 * On Mac OS X: You probably have it already, but if you don't, try http://python.org/ftp/python/2.6.2/python-2.6.2-macosx2009-04-16.dmg
 * Other OS: Find out at http://python.org/download/
 
-Django
-^^^^^^
-We currently run with Django 1.2.5. You can download it from http://www.djangoproject.com/download/
+Virtualenv
+^^^^^^^^^^
+We use virtualenv to manage Python libraries.
 
-We often update the version of Django we run to an SVN version, so it may be easier to keep up with development by checking out the SVN version at http://code.djangoproject.com/svn/django/tags/releases/1.2.5
+* On Ubuntu: ``sudo apt-get install python-virtualenv``
+* On Mac OS X: ``sudo easy_install virtualenv``
+* Other OS: Find out at http://www.virtualenv.org/
 
-If you download Django from SVN, you will want to add it to your path of Python modules. I added the following line to my ``.profile`` (although ``.bashrc`` or ``.bash_profile`` should work as well)::
+Once you've installed virtualenv, you can install the python dependencies as follows::
 
-  export PYTHONPATH="/path/to/django_src"
-
-South
-^^^^^
-We use South 0.7 for database migrations.
-
-* On Ubuntu: ``sudo easy_install South``
-* On Mac OS X: ``sudo easy_install South``
-* Other OS: Download at http://south.aeracode.org/wiki/Download
+  $ cd /var/www/deme # or wherever you checked it out
+  $ cd deme_django
+  $ mkdir venv
+  $ virtualenv venv
+  $ source venv/bin/activate
+  $ pip install Django==1.2.5
+  $ pip install South==0.7
+  $ pip install psycopg2
 
 TinyMCE
 ^^^^^^^
@@ -138,8 +133,6 @@ If you want to run Deme in the background all the time (instead of using ``./man
 First, install Apache and mod_wsgi, and make sure mod_wsgi is enabled.
 
 Make sure ``DJANGO_SERVES_STATIC_FILES`` is false in settings.py to let Apache serve static files.
-
-I put the Django SVN checkout as a sibling directory to deme_django called ``django_src``. So I have ``/var/www/deme/deme_django`` and ``/var/www/deme/django_src``
 
 Here's what I have in my apache ``/etc/apache2/sites-available/deme`` config file::
 
