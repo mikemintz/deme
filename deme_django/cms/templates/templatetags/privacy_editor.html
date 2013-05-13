@@ -211,7 +211,7 @@
         return row;
     }
 
-    function setup_permission_editor() {
+    $(document).ready(function(){
         var existing_permission_data = {{existing_permission_data_javascript_array}};
         rows = [];
         for (var i in existing_permission_data) {
@@ -267,10 +267,6 @@
         if (can_edit_permissions) {
             $('#agent_and_collection_select_div_{{permission_editor_counter}}').show();
         }
-    }
-
-    $(document).ready(function(){
-        setup_permission_editor();
     });
 </script>
 
