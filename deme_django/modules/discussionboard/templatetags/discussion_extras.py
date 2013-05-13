@@ -33,6 +33,8 @@ class CalculateComments(template.Node):
             result.append(u'</div>')
             result.append(u'<div id="comment%s" style="display: none;"><form onsubmit="if (this[\'body\'].value.trim() == \'\') { alert(\'You must fill out a body for your reply\'); return false; } return true;" method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_url', kwargs={'viewer': 'discussion', 'noun': context['discussion_board'].pk, 'action': 'createreply'}), urlquote(full_path)))
             result.append(u'<input name="name" type="hidden" value="Re: %s" /><div><textarea name="body" style="height: 100px; width: 100%%;"></textarea></div>' % (comment.name))
+            permission_editor_html = PermissionEditor(None, target_level='one', privacy_only=False, is_new_item=True, accordion_comment_parent=comment).render(context)
+            result.append(u'<div style="display: none;">%s</div>' % permission_editor_html)
             result.append(u'<div><input type="submit" value="Submit reply" /></div><input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" />' % (comment.pk, comment.version_number))
             result.append(u'</form></div>')
             result.append(u'<div style="margin-bottom: 10px;">')
@@ -60,3 +62,23 @@ def calculatecomments(parser, token):
     if len(bits) != 1:
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
     return CalculateComments()
+
+
+class NewDiscussionPermissions(template.Node):
+    def __init__(self):
+        pass
+
+    def __repr__(self):
+        return "<NewDiscussionPermissionsNode>"
+
+    def render(self, context):
+        permission_editor_html = PermissionEditor(None, target_level='one', privacy_only=False, is_new_item=True, accordion_comment_parent=context['item']).render(context)
+        return mark_safe(permission_editor_html)
+
+@register.tag
+def new_discussion_permission_editor(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 1:
+        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
+    return NewDiscussionPermissions()
+
