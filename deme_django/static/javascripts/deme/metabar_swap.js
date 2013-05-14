@@ -111,30 +111,6 @@ $(function(){
   }
   loadMetabarVisibility();
 
-  /*
-  // attach opening/closing of metadata sections
-  $metabar.on('show', '.section .collapse', function(){
-    metabar_load_section($(this));
-    // set cookie to remember this particular section was open
-    var name = $(this).attr('id').replace('metadata_content_', '');
-    $.cookie('METABAR_SECTION_' + name, true);
-  });
-
-  $metabar.on('hide', '.section .collapse', function(){
-    // unset cookie to open this section
-    var name = $(this).attr('id').replace('metadata_content_', '');
-    $.removeCookie('METABAR_SECTION_' + name);
-  });
-
-  // on load, open up all visible sections if is set
-  $metabar.find('.section .collapse').each(function(){
-    var name = $(this).attr('id').replace('metadata_content_', '');
-    if ($.cookie('METABAR_SECTION_' + name)) {
-      metabar_show_section($(this))
-    }
-  });
-  */
-
   // click on buttons to get to different sections
   $('#metadata_content_item_details button.btn-section').click(function(e){
     e.preventDefault();
@@ -172,6 +148,7 @@ $(function(){
   }
 
   function metabar_load_section(collapse, cb) {
+    if (collapse.length == 0) return;
     if (!collapse.hasClass('ajax-loaded')) {
       var name = collapse.attr('id').replace('metadata_content_', '');
       var url = metabar_ajax_url(name);
