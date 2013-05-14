@@ -17,7 +17,7 @@ class Poll(Collection):
     introduced_abilities = frozenset(['edit Poll.visibility', 'view Poll.visibility', 'edit Poll.question', 'view Poll.question',
                                       'edit Poll.begins', 'view Poll.begins', 'edit Poll.deadline', 'view Poll.deadline', 
                                       'edit Poll.eligibles', 'view Poll.time_zone', 'edit Poll.time_zone', 'view Poll.eligibles', 
-                                      'access_proposition_responses'])
+                                      'access_proposition_responses', 'view Poll.allow_editing_responses', 'edit Poll.allow_editing_responses'])
     introduced_global_abilities = frozenset(['create Poll'])
     dyadic_relations = {}
 
