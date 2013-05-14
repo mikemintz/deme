@@ -2,8 +2,6 @@
 {% load item_tags %}
 
 
-{% block title-section %}{% endblock %}
-
 {% block content %}
 <div class="agent-profile container">
   <div class="row">
@@ -15,7 +13,7 @@
     </div>
 
     <div class="col col-lg-9">
-      <h1 title="title">{% viewable_name item %}</h1>
+      <!--h1 title="title">{% viewable_name item %}</h1-->
       <ul>
         {% for contact_method in contact_methods %}
         <li>{{ contact_method }}</li>
