@@ -1,4 +1,4 @@
-#permission_table {
+.permission_table {
   width: 100%;
   th {
     text-align: left;
@@ -56,7 +56,8 @@
         //background-color: @adminbar-top-light; //darken(@grayLighter,10%);
       }
       &.active.plus {
-        #gradient .vertical(darken(#008000, 5%), #008000);
+        @green: #48ba1b;
+        #gradient .vertical(darken(@green, 5%), @green);
         //background-color: #008000;//green;
         color: @white;
       }
