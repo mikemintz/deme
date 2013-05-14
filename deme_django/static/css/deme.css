@@ -5311,9 +5311,14 @@ body.nonadmin #metabar {
 }
 .proposition-result .proposition_graph .title {
   white-space: normal;
-  width: 60px;
   left: -70px;
   position: absolute;
+}
+.proposition-result .proposition_graph .title b {
+  vertical-align: middle;
+  display: table-cell;
+  width: 60px;
+  height: 40px;
 }
 .proposition-result .proposition_graph .bar {
   background-color: #17475b;

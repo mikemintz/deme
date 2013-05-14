@@ -156,27 +156,27 @@ $(document).ready(function() {
 	      <p>{{proposition.body|safe}}</p>
 	      <div class="proposition_graph">
 	        <div class="position">
-	          <b class="title">
-	            Agree
-	          </b>
+	          <div class="title">
+	            <b>Agree</b>
+	          </div>
 	          <span class="bar" style="width:{{dict.agree|as_percentage_of:dict.count}}"></span>
 	          <span class="stats">
 	           {{dict.agree}} <span class="percent">({{dict.agree|as_percentage_of:dict.count}})</span>
 	          </span>
 	        </div>
 	        <div class="position">
-	          <b class="title">
-	            Disagree
-	          </b>
+	          <div class="title">
+	            <b>Disagree</b>
+	          </div>
 	          <span class="bar" style="width:{{dict.disagree|as_percentage_of:dict.count}}"></span>
 	          <span class="stats">
 	           {{dict.disagree}} <span class="percent">({{dict.disagree|as_percentage_of:dict.count}})</span>
 	          </span>
 	        </div>
 	        <div class="position">
-	          <b class="title">
-	            Haven't Voted
-	          </b>
+	          <div class="title">
+	            <b>Haven't Voted</b>
+	          </div>
 	          <span class="bar" style="width:{{dict.no_vote|as_percentage_of:dict.count}}"></span>
 	          <span class="stats">
 	           {{dict.no_vote}} <span class="percent">({{dict.no_vote|as_percentage_of:dict.count}})</span>
