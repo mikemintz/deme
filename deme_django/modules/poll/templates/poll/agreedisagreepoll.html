@@ -64,7 +64,9 @@ $(document).ready(function() {
   {{ item.question }}
   </p>
   {% endif %}
-  {% if cur_agent_can_view_survey %}
+  {% if cur_agent_can_view_survey or item.allow_editing_responses %}
+  {% if cur_agent_has_voted and item.allow_editing_responses %}<p><button class="btn" onclick="$(this).parent().remove(); $('.take-survey-wrap').removeClass('hide'); $('.result-wrap').hide(); ">Retake survey</button></p>{% endif %}
+  <div class="take-survey-wrap{% if cur_agent_has_voted and item.allow_editing_responses %} hide{% endif %}">
 
     <script type="text/javascript">
         function openDialog(name)
@@ -145,9 +147,10 @@ $(document).ready(function() {
       <!-- End Propositions -->
 
     </div><!-- .row -->
-  {% endif %}<!--(can_view_response_names_and_values or not cur_agent_has_voted)-->
+  </div>
+  {% endif %}<!--(cur_agent_can_view_survey or item.allow_editing_responses)-->
   {% if cur_agent_can_view_results %}
-    <div class="panel">
+    <div class="panel result-wrap">
       <h3 class="panel-heading">Poll Results</h3>
       {% for dict in vote_numbers_list %}
       {% with dict.proposition as proposition %}

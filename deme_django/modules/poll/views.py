@@ -169,7 +169,8 @@ class AgreeDisagreePollViewer(PollViewer):
 
     def item_respondtopropositions_html(self):
         cur_agent_has_voted = PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent)
-        if cur_agent_has_voted: return self.render_error('Duplicate Voting', "You have already voted in this poll")
+        if cur_agent_has_voted and not self.item.allow_editing_responses:
+          return self.render_error('Duplicate Voting', "You have already voted in this poll")
         from cms.forms import AjaxModelChoiceField
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
@@ -205,11 +206,12 @@ class AgreeDisagreePollViewer(PollViewer):
         #       counter=counter+1
         #        if counter>self.item.n: #this needs to be changed for chooseN
         #            return self.render_error('Too many votes', "Approve "+str(self.item.n)+" or fewer propositions.")
+
         #delete old response (even if one doesn't exist)
-        #PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent).delete()
+        PropositionResponseApprove.objects.filter(poll=self.item, participant=self.cur_agent).delete()
         #make a new response
         for response in proposition_responses:
-            newResponse = PropositionResponseApprove(poll=self.item, participant= self.cur_agent, proposition = Proposition.objects.get(pk=response), value = proposition_responses[response])
+            newResponse = PropositionResponseApprove(poll=self.item, participant=self.cur_agent, proposition = Proposition.objects.get(pk=response), value = proposition_responses[response])
             newResponse.save()
 
         if writein:
