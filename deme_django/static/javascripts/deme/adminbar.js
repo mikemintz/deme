@@ -34,19 +34,23 @@ $(function(){
   function hideAdminbarIfMobile(elem) {
     if(checker.iphone || checker.ipad) {
       setAdminbar(false);
-      setTimeout(function(){
-        // we are swtiching dom structurs so we need to find out what dropdown to show on the new navbar
-        var classes = $(elem).closest('.dropdown').attr('class').split(' ');
-        var classSelector = '';
-        var ignoreList = ['open'];
-        for (var i = 0; i < classes.length; i++) {
-          var testClass = classes[i];
-          if ($.inArray(testClass, ignoreList) === -1) {
-            classSelector += '.' + testClass;
+      if ($(elem).closest('.dropdown').hasClass('open')) {
+
+      } else {
+        setTimeout(function(){
+          // we are swtiching dom structurs so we need to find out what dropdown to show on the new navbar
+          var classes = $(elem).closest('.dropdown').attr('class').split(' ');
+          var classSelector = '';
+          var ignoreList = ['open'];
+          for (var i = 0; i < classes.length; i++) {
+            var testClass = classes[i];
+            if ($.inArray(testClass, ignoreList) === -1) {
+              classSelector += '.' + testClass;
+            }
           }
-        }
-        $(classSelector).addClass('open');
-      }, 1);
+          $(classSelector).addClass('open');
+        }, 1);
+      }
     }
   }
 
