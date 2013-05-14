@@ -106,20 +106,28 @@ $(function(){
 
   // show/hide advanced adminbar
   function setAdminbar(visible) {
-    if (visible) {
-      $('body').removeClass('nonadmin');
-      $.cookie('ADMINBAR_VISIBLE', true);
-      $('.adminbar a.advanced').addClass('active');
-    } else {
+    // check to make sure there is an admin bar
+    var adminbar = $('.adminbar:not(.nonadminbar)');
+    if (adminbar.length == 0) {
       $('body').addClass('nonadmin');
-      $.removeCookie('ADMINBAR_VISIBLE');
-      $('.page-layout').css('max-width', '');
-      $('.adminbar a.advanced').removeClass('active');
+    } else {
+      if (visible) {
+        $('body').removeClass('nonadmin');
+        $.cookie('ADMINBAR_VISIBLE', true);
+        $('.adminbar a.advanced').addClass('active');
+      } else {
+        $('body').addClass('nonadmin');
+        $.removeCookie('ADMINBAR_VISIBLE');
+        $('.page-layout').css('max-width', '');
+        $('.adminbar a.advanced').removeClass('active');
+      }
     }
   }
   var visible = $.cookie('ADMINBAR_VISIBLE');
   if (visible) {
     setAdminbar(visible);
+  } else {
+    setAdminbar(false);
   }
   $('.adminbar a.advanced').click(function(e){
     e.preventDefault();
