@@ -4,6 +4,6 @@
 {% if cur_agent.is_anonymous %}
 {% else %}
 <li class="loginmenuitem"><a href="{{ cur_agent.get_absolute_url }}"><i class="glyphicon glyphicon-cog"></i> My account</a></li>
-<li class="loginmenuitem"><a href="#" onclick="document.forms['logout_form'].submit(); return false;"><i class="glyphicon glyphicon-off"></i> Logout</a></li>
+<li class="loginmenuitem"><a href="#" onclick="$('form[name=logout_form]').submit(); return false;"><i class="glyphicon glyphicon-off"></i> Logout</a></li>
 <li><form name="logout_form" style="display: inline;" method="post" action="{% url item_type_url viewer="authenticationmethod",action="logout" %}?redirect={{ redirect|urlencode }}"></form></li>
 {% endif %}
