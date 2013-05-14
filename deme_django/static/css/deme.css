@@ -5034,11 +5034,6 @@ body.nonadmin #metabar {
 .adminbar .nav.breadcrumbs > li:first-child > span {
   border-left: 1px solid rgba(255, 255, 255, 0.15);
 }
-.adminbar .nav.breadcrumbs > li > span {
-  display: block;
-  padding: 10px;
-  color: #eeeeee;
-}
 .adminbar .nav.breadcrumbs > li > a,
 .adminbar .nav.breadcrumbs > li > span {
   text-overflow: ellipsis;
@@ -5047,7 +5042,15 @@ body.nonadmin #metabar {
   background-repeat: no-repeat;
   background-position: right center;
   border: 0;
+  font-size: 114.28571428571428%;
+  padding: .6em;
   padding-right: 20px;
+}
+.adminbar .nav.breadcrumbs > li > span {
+  padding: .65em;
+  padding-right: 20px;
+  display: inline-block;
+  color: #eeeeee;
 }
 .adminbar .nav.breadcrumbs > li:last-child > a,
 .adminbar .nav.breadcrumbs > li:last-child > span {

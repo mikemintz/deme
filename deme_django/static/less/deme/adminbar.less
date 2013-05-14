@@ -100,11 +100,6 @@ body {
             border-left:  1px solid fade(@white, 15%);
           }
         }
-        > span {
-          display: block;
-          padding: 10px;
-          color: @grayLighter;
-        }
         > a, > span {
           text-overflow: ellipsis;
           overflow: hidden;
@@ -112,7 +107,15 @@ body {
           background-repeat: no-repeat;
           background-position: right center;
           border: 0;
+          font-size: 16 / @font-size-base-int * 100%;
+          padding: .6em;
           padding-right: 20px;
+        }
+        > span {
+          padding: .65em;
+          padding-right: 20px;
+          display: inline-block;
+          color: @grayLighter;
         }
         &:last-child > a, &:last-child > span {
           background-image: none;
