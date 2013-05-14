@@ -261,7 +261,7 @@
         </div>
         {% endblock page-layout %}
 
-        {% block chat %}
+        {% block chat %}{% comment %}
         <div class ="chat" style="width: 200px; margin: 0; position: fixed; bottom: 0;">
             <div class="ui-widget-header ui-corner-top ui-helper-clearfix" id="chatHeader" style="padding: 5px;">
                 Chat
@@ -273,7 +273,7 @@
                 {% chat_box %}
             </div>
         </div>
-        {% endblock %}
+        {% endcomment %}{% endblock %}
 
         <div class="footer">
           {% block footer %}
