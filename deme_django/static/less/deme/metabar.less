@@ -19,11 +19,13 @@
   // position: fixed; overflow-y: auto; top: 90px; bottom: 10px; right: 10px; width: 0%; display: none; z-index: 1;
   width: 200px;
   .transition(width .5s);
-  background: @metabar-background;
-  box-shadow: 3px 0 5px fade(@black, 15%) inset;
+  background: lighten(@metabar-background, 1%);
+  box-shadow: 3px 0 5px fade(@black, 5%) inset;
   left: 0 !important;
+  border-left: 1px solid @gray-light;
   .ui-resizable-w {
     cursor: col-resize;
+    width: 9px;
   }
   &.noanim {
     .transition(none);

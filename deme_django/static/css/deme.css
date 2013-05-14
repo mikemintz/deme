@@ -5196,12 +5196,14 @@ body.nonadmin #metabar {
   -moz-transition: width 0.5s;
   -o-transition: width 0.5s;
   transition: width 0.5s;
-  background: #eefafe;
-  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.15) inset;
+  background: #f3fbfe;
+  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.05) inset;
   left: 0 !important;
+  border-left: 1px solid #999999;
 }
 #metabar .ui-resizable-w {
   cursor: col-resize;
+  width: 9px;
 }
 #metabar.noanim {
   -webkit-transition: none;
