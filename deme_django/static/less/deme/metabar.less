@@ -36,8 +36,9 @@
     display: block;
     overflow: hidden;
   }
-  .title {
+  > .title {
     padding: 0 10px;
+    height: 2em;
     white-space: nowrap;
     #gradient .vertical(@adminbar-top-light, @adminbar-bottom-light);
     text-align: left;
@@ -61,6 +62,30 @@
         opacity: 1;
         background: transparent;
       }
+    }
+    .btn-metadata {
+      margin-bottom: 8px;
+      #gradient .vertical(@adminbar-bottom-light, @adminbar-top-light);
+    }
+  }
+  .block {
+    .title {
+      text-align: center;
+      margin: 5px;
+    }
+    .content {
+      margin: 10px;
+    }
+    &.ajax-loaded {
+      h3:first-child {
+        //display: none; // removing header from being displayed as opposed to changing code
+        font-size: 100%;
+        text-align: center;
+        margin-top: 10px;
+      }
+    }
+    .button-wrap {
+      padding: 0 5px;
     }
   }
   .section {

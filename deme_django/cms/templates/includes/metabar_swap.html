@@ -1,0 +1,77 @@
+{% load item_tags %}
+{% load chat_extras %}
+{% if item %}
+  <script type="text/javascript">
+  function metabar_ajax_url(metadata_menu_name) {
+    return "{% url item_url viewer=viewer_name,noun=item.pk,action="metadata" %}?name=" + metadata_menu_name + '&amp;original_full_path={{ full_path|escapejs }}';
+  }
+
+  {% if default_metadata_menu_option %}
+  $(function(){
+    var collapse = $('#metadata_content_{{default_metadata_menu_option}}');
+    metabar_show_section(collapse);
+  });
+  {% endif %}
+
+  </script>
+
+  <div id="metabar" class="noanim">
+    <div class="title">
+      <div class="btn-wrap">
+        <button class="btn btn-small btn-metadata btn-primary hide">Metadata</button>
+      </div>
+      <div class="pull-right">
+        <button class="resize resize-left"><i class="glyphicon glyphicon-step-backward"></i></button>
+        <button class="resize resize-right"><i class="glyphicon glyphicon-step-forward"></i></button>
+      </div>
+    </div>
+
+    <div class="block" id="metadata_content_item_details">
+      <!--div class="title">Metadata</div-->
+      <div class="content"></div>
+      <div class="button-wrap">
+      {% with "metadata_content_comments" as id %}{% with "Comments" as title %}
+      {% include 'includes/metabar_section_button.html' %}
+      {% endwith %}{% endwith %}
+
+      {% with "metadata_content_action_notices" as id %}{% with "Action notices" as title %}
+      {% include 'includes/metabar_section_button.html' %}
+      {% endwith %}{% endwith %}
+
+      {% with "metadata_content_versions" as id %}{% with "Versions" as title %}
+      {% include 'includes/metabar_section_button.html' %}
+      {% endwith %}{% endwith %}
+
+      {% with "metadata_content_related_items" as id %}{% with "Related items" as title %}
+      {% include 'includes/metabar_section_button.html' %}
+      {% endwith %}{% endwith %}
+
+      {% with "metadata_content_permissions" as id %}{% with "Permissions" as title %}
+      {% include 'includes/metabar_section_button.html' %}
+      {% endwith %}{% endwith %}
+      </div>
+    </div>
+
+    {% with "metadata_content_comments" as id %}{% with "Comments" as title %}
+    {% include 'includes/metabar_section_swap.html' %}
+    {% endwith %}{% endwith %}
+
+    {% with "metadata_content_action_notices" as id %}{% with "Action notices" as title %}
+    {% include 'includes/metabar_section_swap.html' %}
+    {% endwith %}{% endwith %}
+
+    {% with "metadata_content_versions" as id %}{% with "Versions" as title %}
+    {% include 'includes/metabar_section_swap.html' %}
+    {% endwith %}{% endwith %}
+
+    {% with "metadata_content_related_items" as id %}{% with "Related items" as title %}
+    {% include 'includes/metabar_section_swap.html' %}
+    {% endwith %}{% endwith %}
+
+    {% with "metadata_content_permissions" as id %}{% with "Permissions" as title %}
+    {% include 'includes/metabar_section_swap.html' %}
+    {% endwith %}{% endwith %}
+
+
+  </div>
+{% endif %}

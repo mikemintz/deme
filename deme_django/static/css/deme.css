@@ -5217,8 +5217,9 @@ body.nonadmin #metabar {
   display: block;
   overflow: hidden;
 }
-#metabar .title {
+#metabar > .title {
   padding: 0 10px;
+  height: 2em;
   white-space: nowrap;
   background-color: #49869c;
   background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#8ac9df), to(#49869c));
@@ -5234,21 +5235,46 @@ body.nonadmin #metabar {
   text-shadow: 0 -1px rgba(0, 0, 0, 0.25);
   font-weight: normal;
 }
-#metabar .title .pull-right {
+#metabar > .title .pull-right {
   position: absolute;
   right: 0;
   top: 0;
 }
-#metabar .title .resize {
+#metabar > .title .resize {
   line-height: 1.7857142857142858;
   color: #ffffff;
   opacity: .5;
   border: 0;
   background: transparent;
 }
-#metabar .title .resize:hover {
+#metabar > .title .resize:hover {
   opacity: 1;
   background: transparent;
+}
+#metabar > .title .btn-metadata {
+  margin-bottom: 8px;
+  background-color: #8ac9df;
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#49869c), to(#8ac9df));
+  background-image: -webkit-linear-gradient(top, #49869c, #8ac9df);
+  background-image: -moz-linear-gradient(top, #49869c, #8ac9df);
+  background-image: linear-gradient(to bottom, #49869c, #8ac9df);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff49869c', endColorstr='#ff8ac9df', GradientType=0);
+}
+#metabar .block .title {
+  text-align: center;
+  margin: 5px;
+}
+#metabar .block .content {
+  margin: 10px;
+}
+#metabar .block.ajax-loaded h3:first-child {
+  font-size: 100%;
+  text-align: center;
+  margin-top: 10px;
+}
+#metabar .block .button-wrap {
+  padding: 0 5px;
 }
 #metabar .section ~ .section {
   border-top: 1px solid #a6a6a6;

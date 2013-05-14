@@ -40,7 +40,8 @@
     <script type="text/javascript" src="{% media_url "javascripts/fg.menu.js" %}"></script>
 
     <script type="text/javascript" src="{% media_url "javascripts/deme/adminbar.js" %}"></script>
-    <script type="text/javascript" src="{% media_url "javascripts/deme/metabar.js" %}"></script>
+    <!--script type="text/javascript" src="{% media_url "javascripts/deme/metabar.js" %}"></script-->
+    <script type="text/javascript" src="{% media_url "javascripts/deme/metabar_swap.js" %}"></script>
     <script type="text/javascript" src="{% media_url "javascripts/deme/sidebar.js" %}"></script>
     <script type="text/javascript" src="{% media_url "javascripts/deme/jqgrid-helpers.js" %}"></script>
 
@@ -326,7 +327,7 @@
 
       {% if item %}
       {% ifagentcan 'advanced_layout' cur_site %}
-        {% include "includes/metabar.html" %}
+        {% include "includes/metabar_swap.html" %}
       {% endifagentcan %}
       {% endif %}
 
