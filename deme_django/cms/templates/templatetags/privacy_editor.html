@@ -1,5 +1,5 @@
 <script>
-    var permission_counter = Math.floor(Math.random() * 100000); // in case there are multiple permission editors
+    var permission_counter = 0;
     var possible_abilities = {{possible_ability_javascript_array}};
     var can_edit_permissions = {{can_edit_permissions}};
 
@@ -41,7 +41,7 @@
             }
 
             // turning checkbox into hidden
-            var is_allowed_checkbox = $('<input type="hidden" id="newpermission' + permission_counter + '_is_allowed" name="newpermission' + permission_counter + '_is_allowed" class="is_allowed" value="' + is_allowed_value + '">');
+            var is_allowed_checkbox = $('<input type="hidden" id="newpermission{{ permission_editor_counter }}-' + permission_counter + '_is_allowed" name="newpermission{{ permission_editor_counter }}-' + permission_counter + '_is_allowed" class="is_allowed" value="' + is_allowed_value + '">');
             //is_allowed_checkbox.attr('checked', is_allowed);
             //is_allowed_checkbox.attr('defaultChecked', is_allowed);
             wrapper.append(is_allowed_checkbox);
@@ -96,7 +96,7 @@
 
         if (can_edit_permissions) {
             if (ability == '') {
-                var ability_select = $('<select name="newpermission' + permission_counter + '_ability" class="ability">');
+                var ability_select = $('<select name="newpermission{{ permission_editor_counter }}-' + permission_counter + '_ability" class="ability">');
                 for (var i in possible_abilities) {
                     // check to see if already is on page
                     var already_set = false;
@@ -117,11 +117,11 @@
                 ability_wrap.append(ability_select);
                 wrapper.append(ability_wrap);
             } else {
-                wrapper.append('<label for="newpermission' + permission_counter + '_is_allowed">' + friendly_name + '</label>');
-                wrapper.append('<input type="hidden" class="ability" name="newpermission' + permission_counter + '_ability" value="' + ability + '" />');
+                wrapper.append('<label for="newpermission{{ permission_editor_counter }}-' + permission_counter + '_is_allowed">' + friendly_name + '</label>');
+                wrapper.append('<input type="hidden" class="ability" name="newpermission{{ permission_editor_counter }}-' + permission_counter + '_ability" value="' + ability + '" />');
             }
-            wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_permission_type" value="' + permission_type + '" />');
-            wrapper.append('<input type="hidden" name="newpermission' + permission_counter + '_agent_or_collection_id" value="' + agent_or_collection_id + '" />');
+            wrapper.append('<input type="hidden" name="newpermission{{ permission_editor_counter }}-' + permission_counter + '_permission_type" value="' + permission_type + '" />');
+            wrapper.append('<input type="hidden" name="newpermission{{ permission_editor_counter }}-' + permission_counter + '_agent_or_collection_id" value="' + agent_or_collection_id + '" />');
 
             if (is_allowed===true) {
               plus.addClass('active');
@@ -211,7 +211,7 @@
         return row;
     }
 
-    function setup_permission_editor() {
+    $(document).ready(function(){
         var existing_permission_data = {{existing_permission_data_javascript_array}};
         rows = [];
         for (var i in existing_permission_data) {
@@ -225,10 +225,10 @@
             rows.push(row);
         }
         for (var i in rows) {
-            $('#permission_table tbody').append(rows[i]);
+            $('#permission_table_{{permission_editor_counter}} tbody').append(rows[i]);
         }
 
-        $('#new_agent_dialog').dialog({
+        $('#new_agent_dialog_{{permission_editor_counter}}').dialog({
             autoOpen: false,
             close: function(event, ui){
                 $('input[name="new_agent"]').val('');
@@ -237,7 +237,7 @@
             buttons: {
                 'Add Agent': function(){
                     var row = add_agent_or_collection_row('agent', $('input[name="new_agent"]').val(), $('input[name="new_agent_search"]').val());
-                    $('#permission_table tbody').append(row);
+                    $('#permission_table_{{permission_editor_counter}} tbody').append(row);
                     $(this).dialog("close");
                 },
                 'Cancel': function(){
@@ -246,7 +246,7 @@
             },
         });
 
-        $('#new_collection_dialog').dialog({
+        $('#new_collection_dialog_{{permission_editor_counter}}').dialog({
             autoOpen: false,
             close: function(event, ui){
                 $('input[name="new_collection"]').val('');
@@ -255,7 +255,7 @@
             buttons: {
                 'Add Collection': function(){
                     var row = add_agent_or_collection_row('collection', $('input[name="new_collection"]').val(), $('input[name="new_collection_search"]').val());
-                    $('#permission_table tbody').append(row);
+                    $('#permission_table_{{permission_editor_counter}} tbody').append(row);
                     $(this).dialog("close");
                 },
                 'Cancel': function(){
@@ -265,16 +265,12 @@
         });
 
         if (can_edit_permissions) {
-            $('#agent_and_collection_select_div').show();
+            $('#agent_and_collection_select_div_{{permission_editor_counter}}').show();
         }
-    }
-
-    $(document).ready(function(){
-        setup_permission_editor();
     });
 </script>
 
-<table id="permission_table" class="list" cellspacing="0">
+<table id="permission_table_{{permission_editor_counter}}" class="permission_table list" cellspacing="0">
     <tbody>
         <tr>
             <th>Name</th>
@@ -283,17 +279,17 @@
     </tbody>
 </table>
 
-<div id="new_agent_dialog" style="display: none;">
+<div id="new_agent_dialog_{{permission_editor_counter}}" style="display: none;">
     Name of the user: {{new_agent_select_widget}}
 </div>
 
-<div id="new_collection_dialog" style="display: none;">
+<div id="new_collection_dialog_{{permission_editor_counter}}" style="display: none;">
     Name of the group: {{new_collection_select_widget}}
 </div>
 
-<div style="display: none;" id="agent_and_collection_select_div">
-    <a href="#" class="img_link" onclick="$('#new_agent_dialog').dialog('open'); return false;"><img src="{{agent_img_url}}" /> <span>Assign a Permission to a User</span></a>
-    <a href="#" class="img_link" onclick="$('#new_collection_dialog').dialog('open'); return false;"><img src="{{collection_img_url}}" /> <span>Assign a Permission to a Group of Users</span></a>
+<div style="display: none;" id="agent_and_collection_select_div_{{permission_editor_counter}}">
+    <a href="#" class="img_link" onclick="$('#new_agent_dialog_{{permission_editor_counter}}').dialog('open'); return false;"><img src="{{agent_img_url}}" /> <span>Assign a Permission to a User</span></a>
+    <a href="#" class="img_link" onclick="$('#new_collection_dialog_{{permission_editor_counter}}').dialog('open'); return false;"><img src="{{collection_img_url}}" /> <span>Assign a Permission to a Group of Users</span></a>
 </div>
 <div style="margin-top: 10px;">
     Having trouble with permissions? Try reading the <a href="{{permissions_help_url}}">guide to using Permissions</a>

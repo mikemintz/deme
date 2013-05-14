@@ -40,7 +40,8 @@ class DiscussionViewer(ItemViewer):
         new_item.body = self.request.POST['body']
         new_item.item = self.item
         new_item.item_version_number = self.item.version_number
-        new_item.save_versioned(action_agent=self.cur_agent)
+        permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
+        new_item.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
         redirect = reverse('item_url', kwargs={'viewer': 'discussion', 'action': 'show', 'noun': self.item.pk})
         return HttpResponseRedirect(redirect)
 
@@ -53,7 +54,8 @@ class DiscussionViewer(ItemViewer):
         new_item.body = self.request.POST['body']
         new_item.item = parent
         new_item.item_version_number = self.request.POST['item_version_number']
-        new_item.save_versioned(action_agent=self.cur_agent)
+        permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
+        new_item.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
         redirect = self.request.GET['redirect']
         return HttpResponseRedirect(redirect)
 
