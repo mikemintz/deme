@@ -8,27 +8,27 @@ from cms.forms import SelectTimeWidget
 from django.forms.extras.widgets import SelectDateWidget
 from django.core.validators import  MaxLengthValidator
 
-__all__ = ['Poll'] 
+__all__ = ['Poll']
 
 class Poll(Collection):
 
     #Setup
     introduced_immutable_fields = frozenset()
     introduced_abilities = frozenset(['edit Poll.visibility', 'view Poll.visibility', 'edit Poll.question', 'view Poll.question',
-                                      'edit Poll.begins', 'view Poll.begins', 'edit Poll.deadline', 'view Poll.deadline', 
-                                      'edit Poll.eligibles', 'view Poll.time_zone', 'edit Poll.time_zone', 'view Poll.eligibles', 
+                                      'edit Poll.begins', 'view Poll.begins', 'edit Poll.deadline', 'view Poll.deadline',
+                                      'edit Poll.eligibles', 'view Poll.time_zone', 'edit Poll.time_zone', 'view Poll.eligibles',
                                       'access_proposition_responses', 'view Poll.allow_editing_responses', 'edit Poll.allow_editing_responses'])
     introduced_global_abilities = frozenset(['create Poll'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('poll')
         verbose_name_plural = _('polls')
 
     #fields:
     question = models.TextField(_('question'), blank=True, help_text=_('Explain to poll participants what the poll is about'))
-    begins = models.DateTimeField(_('begins'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
-    deadline = models.DateTimeField(_('deadline'), null=True, blank=True, default=None, help_text=_('Dates must be entered in the format "MM/DD/YY"'))
+    begins = models.DateTimeField(_('begins'), null=True, blank=True, default=None, help_text=_('(Advanced) Dates must be entered in the format "MM/DD/YY"'))
+    deadline = models.DateTimeField(_('deadline'), null=True, blank=True, default=None, help_text=_('(Advanced) Dates must be entered in the format "MM/DD/YY"'))
     time_zones = (
         (settings.TIME_ZONE, u'(default) ' + settings.TIME_ZONE),
         (u'UTC-8', u'Pacific Standard Time (UTC -8)'),
@@ -55,7 +55,7 @@ class Poll(Collection):
         (u'UTC-9', u'Yukon Standard Time (UTC -9)'),
         (u'UTC-10', u'Alaska/Hawaii Standard Time (UTC -10)'),
     )
-    time_zone  = models.CharField(_('time zone'), max_length=255, choices=time_zones, default=settings.TIME_ZONE)
+    time_zone  = models.CharField(_('time zone'), max_length=255, choices=time_zones, default=settings.TIME_ZONE, help_text=_("(Advanced) What time zone are dates in?"))
     eligibles = FixedForeignKey(Group, related_name='poll_participant', null=True, blank=True, default=None, help_text=_('Which group is this poll for'))
     visibility_choices = (
         ('responses visible' , 'responses visible - each eligible that has responded is visible' ),
@@ -77,14 +77,14 @@ class ChooseNPoll(Poll):
     introduced_global_abilities = frozenset(['create ChooseNPoll'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('choose n poll')
         verbose_name_plural = _('choose n polls')
-    
+
     #fields:
     n_choices = zip( range(0,101), range(0,101) )
     n = models.IntegerField(blank=True, choices=n_choices)
-    
+
 
 class AgreeDisagreePoll(Poll):
 
@@ -94,17 +94,17 @@ class AgreeDisagreePoll(Poll):
     introduced_global_abilities = frozenset(['create AgreeDisagreePoll'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('agree disagree poll')
         verbose_name_plural = _('agree disagree polls')
 
     #fields:
     n_choices = zip( range(0,101), range(0,101) )
-    n = models.IntegerField(blank=True, choices=n_choices, verbose_name=_('maximum allowed approvals'))
+    n = models.IntegerField(blank=True, choices=n_choices, verbose_name=_('maximum allowed approvals'), help_text=_("(Advanced)"))
 
-    
-   
-    
+
+
+
 class Proposition(HtmlDocument):
 
     #Setup
@@ -113,7 +113,7 @@ class Proposition(HtmlDocument):
     introduced_global_abilities = frozenset(['create Proposition'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('proposition')
         verbose_name_plural = _('propositions')
 
@@ -130,7 +130,7 @@ class PropositionResponse(models.Model):
     introduced_global_abilities = frozenset(['create PropositionResponse'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('propositionresponse')
         verbose_name_plural = _('propositionresponses')
 
@@ -143,13 +143,13 @@ class PropositionResponseChoose(PropositionResponse):
 
     #Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view PropositionResponseChoose.poll', 'edit PropositionResponseChoose.poll', 'view PropositionResponseChoose.participant', 
+    introduced_abilities = frozenset(['view PropositionResponseChoose.poll', 'edit PropositionResponseChoose.poll', 'view PropositionResponseChoose.participant',
                                     'edit PropositionResponseChoose.participant','view PropositionResponseChoose.proposition', 'edit PropositionResponseChoose.proposition',
                                     'edit PropositionResponseChoose.value', 'view PropositionResponseChoose.value'])
     introduced_global_abilities = frozenset(['create PropositionResponseChoose'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('propositionresponsechoose')
         verbose_name_plural = _('propositionresponsechooses')
 
@@ -159,19 +159,19 @@ class PropositionResponseChoose(PropositionResponse):
         ('not chosen', 'Not Chosen'),
     )
     value = models.CharField(_('status'), default='Unassigned', max_length=36, choices=value_choices)
-    
+
 
 class PropositionResponseApprove(PropositionResponse):
 
     #Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view PropositionResponseApprove.poll', 'edit PropositionResponseApprove.poll', 'view PropositionResponseApprove.participant', 
+    introduced_abilities = frozenset(['view PropositionResponseApprove.poll', 'edit PropositionResponseApprove.poll', 'view PropositionResponseApprove.participant',
                                     'edit PropositionResponseApprove.participant','view PropositionResponseApprove.proposition', 'edit PropositionResponseApprove.proposition',
                                     'edit PropositionResponseApprove.value', 'view PropositionResponseApprove.value'])
     introduced_global_abilities = frozenset(['create PropositionResponseApprove'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('propositionresponseapprove')
         verbose_name_plural = _('propositionresponseapprove')
 
@@ -182,8 +182,8 @@ class PropositionResponseApprove(PropositionResponse):
         ('no vote', 'No Vote'),
         ('not sure', 'Not Sure')
     )
-    value = models.CharField(_('status'), default='Unassigned', max_length=36, choices=value_choices)    
-    
+    value = models.CharField(_('status'), default='Unassigned', max_length=36, choices=value_choices)
+
 class Decision(Item):
     #Setup
     introduced_immutable_fields = frozenset()
@@ -191,17 +191,17 @@ class Decision(Item):
     introduced_global_abilities = frozenset(['create Decision'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('decision')
         verbose_name_plural = _('decisions')
 
     #fields:
-    
+
     #TODO: find out how to set max value in integer field
     quorum_choices = zip( range(0,101), range(0,101) )
     quorum = models.IntegerField(_('Quorum %'),blank=True, choices=quorum_choices)
     poll = FixedForeignKey(Poll, related_name='polls_decision', null=True, blank=True, default=None)
-    
+
 
 class PluralityChooseNDecision(Decision):
     #Setup
@@ -211,10 +211,10 @@ class PluralityChooseNDecision(Decision):
     introduced_global_abilities = frozenset(['create PluralityChooseNDecision'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('Choose Plurality Decision')
         verbose_name_plural = _('Choose Plurality Decisions')
-    
+
     #fields
     n_choices = zip( range(0,101), range(0,101) )
     num_decision = models.IntegerField(blank=True, choices=n_choices)
@@ -227,7 +227,7 @@ class ThresholdChooseNDecision(Decision):
     introduced_global_abilities = frozenset(['create ThresholdChooseNDecision'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('Choose Threshold Participants Decision')
         verbose_name_plural = _('Choose Threshold Participants Decisions')
 
@@ -245,7 +245,7 @@ class ThresholdEChooseNDecision(Decision):
     introduced_global_abilities = frozenset(['create ThresholdEChooseNDecision'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('Choose Threshold Eligibles Decision')
         verbose_name_plural = _('Choose Threshold Eligibles Decisions')
 
@@ -263,7 +263,7 @@ class UnanimousChooseNDecision(Decision):
     introduced_global_abilities = frozenset(['create UnanimousChooseNDecision'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('Choose Unanimous Decision')
         verbose_name_plural = _('Choose Unanimous Decisions')
 
@@ -281,13 +281,13 @@ class PluralityApproveNDecision(Decision):
     introduced_global_abilities = frozenset(['create PluralityApproveNDecision'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _(' Approve Plurality Decision')
         verbose_name_plural = _('Approve Plurality Decisions')
 
     #fields
     n_choices = zip( range(0,101), range(0,101) )
-    num_decision = models.IntegerField(blank=True, choices=n_choices)  
+    num_decision = models.IntegerField(blank=True, choices=n_choices)
 
 class ThresholdApproveNDecision(Decision):
     #Setup
@@ -297,7 +297,7 @@ class ThresholdApproveNDecision(Decision):
     introduced_global_abilities = frozenset(['create ThresholdApproveNDecision'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('Approve Threshold Decision')
         verbose_name_plural = _('Approve Threshold Decisions')
 
@@ -315,7 +315,7 @@ class ThresholdEApproveNDecision(Decision):
     introduced_global_abilities = frozenset(['create ThresholdEApproveNDecision'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('Approve Threshold Eligible Decision')
         verbose_name_plural = _('Approve Threshold Eligible Decisions')
 
@@ -337,6 +337,6 @@ class ThresholdEApproveNDecision(Decision):
   #  class Meta:
    #     verbose_name = _('survey')
     #    verbose_name_plural = _('surveys')
-    
-    
-    
+
+
+

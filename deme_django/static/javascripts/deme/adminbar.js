@@ -10,6 +10,10 @@ var checker = {
   ie: ua.match(/MSIE/)
 };
 
+if (checker.android) {
+  $('html').addClass('ua-android');
+}
+
 $(function(){
   // if actions menu is empty, remove it
   if ($.trim($('#actions-btn .actions-menu').text()) == '') {
