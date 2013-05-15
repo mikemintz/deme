@@ -96,7 +96,10 @@ $(document).ready(function() {
       		{% for proposition in propositions %}
     		    <div class="proposition list-group-item">
     		      <h4>{% firstof proposition.name forloop.counter %}</h4>
-    		      <p>{{proposition.body|safe}}</p>
+    		      <p>{{proposition.summary_text|safe}}</p>
+    		      {% if proposition.body %}
+      		      <button onclick="$(this).next().removeClass('hide');$(this).remove()" class="btn btn-small">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
+    		      {% endif %}
 
     	 	      <!-- admin -->
      		 	    {% ifagentcan 'modify_membership' item %}
@@ -156,7 +159,10 @@ $(document).ready(function() {
       {% with dict.proposition as proposition %}
       <div class="proposition proposition-result">
         <h4>{% firstof proposition.name forloop.counter %}</h4>
-	      <p>{{proposition.body|safe}}</p>
+	      <p>{{proposition.summary_text|safe}}</p>
+	      {% if proposition.body %}
+		      <button onclick="$(this).next().removeClass('hide');$(this).remove()" class="btn btn-small">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
+	      {% endif %}
 	      <div class="proposition_graph">
 	        <div class="position">
 	          <div class="title">

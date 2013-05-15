@@ -114,7 +114,7 @@ class Proposition(HtmlDocument):
         verbose_name_plural = _('propositions')
 
     #fields:
-    summary_text = models.CharField(_('summary text'), blank=True, max_length=40)
+    summary_text = models.CharField(_('summary text'), blank=True, max_length=140)
 
 
 class PropositionResponse(models.Model):
