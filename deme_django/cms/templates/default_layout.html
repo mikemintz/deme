@@ -122,7 +122,7 @@
             var cache = {};
             var last_xhr;
             $('.search_box').autocomplete({
-                minLength: 0,
+                minLength: 1,
                 select: function(event, ui) {
                     window.location.href = ui.item.url;
                 },
@@ -135,9 +135,7 @@
                     last_xhr = $.getJSON('{% url item_type_url viewer="item",action="grid",format="json" %}', {rows:10, page:1, sidx:"name", sord:"asc", fields:"name", searchOper:"cn", searchField:"name", searchString:term}, function(data, status, xhr) {
                         var normalized_data = $.map(data["rows"], function(x){ var cell = $(x["cell"][0]); return {value: cell.text(), url: cell[0].href} });
                         cache[term] = normalized_data;
-                        if (xhr !== last_xhr) {
-                            response(normalized_data);
-                        }
+                        response(normalized_data);
                     });
                 },
             });
