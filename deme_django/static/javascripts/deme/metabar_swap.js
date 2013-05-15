@@ -112,16 +112,11 @@ $(function(){
   loadMetabarVisibility();
 
   // click on buttons to get to different sections
-  $('#metadata_content_item_details button.btn-section').click(function(e){
+  $('.btn-section').click(function(e){
     e.preventDefault();
     var id = $(this).attr('data-target');
     metabar_show_section($('#' + id));
   })
-
-  $metabar.find('.btn-metadata').click(function(e){
-    e.preventDefault();
-    metabar_show_section($('#metadata_content_item_details'));
-  });
 
   function metabar_show_section(collapse) {
     $metabar.find('.block').addClass('hide');

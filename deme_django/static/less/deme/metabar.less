@@ -67,6 +67,14 @@
       margin-bottom: 8px;
       #gradient .vertical(@adminbar-bottom-light, @adminbar-top-light);
     }
+    > li > a {
+      padding: .33em 0;
+      color: @gray-lighter;
+      &:hover, &:focus {
+        color: @white;
+        background: transparent;
+      }
+    }
   }
   .block {
     .title {

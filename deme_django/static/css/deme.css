@@ -5264,6 +5264,15 @@ body.nonadmin #metabar {
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff49869c', endColorstr='#ff8ac9df', GradientType=0);
 }
+#metabar > .title > li > a {
+  padding: .33em 0;
+  color: #eeeeee;
+}
+#metabar > .title > li > a:hover,
+#metabar > .title > li > a:focus {
+  color: #ffffff;
+  background: transparent;
+}
 #metabar .block .title {
   text-align: center;
   margin: 5px;
