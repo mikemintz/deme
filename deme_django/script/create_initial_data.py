@@ -79,6 +79,11 @@ default_layout_code = open(os.path.join(os.path.dirname(__file__), '..', 'cms', 
 default_layout = DjangoTemplateDocument(override_default_layout=True, name='Deme Layout', body=default_layout_code)
 default_layout.save_versioned(action_agent=admin)
 
+# Set the sample layout
+sample_layout_code = open(os.path.join(os.path.dirname(__file__), '..', 'cms', 'templates', 'sample_layout.html')).read()
+sample_layout = DjangoTemplateDocument(override_default_layout=True, name='Sample Layout', body=sample_layout_code)
+sample_layout.save_versioned(action_agent=admin)
+
 git_log = subprocess.Popen(["git", "log"], stdout=subprocess.PIPE).communicate()[0]
 git_commit = re.search(r'commit (.+)\nAuthor:', git_log).group(1)
 git_date = re.search(r'Date:\s*(.*) (-|\+)\d+', git_log).group(1)
