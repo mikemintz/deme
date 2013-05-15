@@ -90,17 +90,13 @@ class AgreeDisagreePoll(Poll):
 
     #Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view AgreeDisagreePoll.n', 'edit AgreeDisagreePoll.n'])
+    introduced_abilities = frozenset([])
     introduced_global_abilities = frozenset(['create AgreeDisagreePoll'])
     dyadic_relations = {}
 
     class Meta:
         verbose_name = _('agree disagree poll')
         verbose_name_plural = _('agree disagree polls')
-
-    #fields:
-    n_choices = zip( range(0,101), range(0,101) )
-    n = models.IntegerField(blank=True, choices=n_choices, verbose_name=_('maximum allowed approvals'), help_text=_("(Advanced)"))
 
 
 
