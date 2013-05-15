@@ -86,7 +86,7 @@ class FixedForeignKey(models.ForeignKey):
     def __init__(self, *args, **kwargs):
         self.required_abilities = kwargs.pop('required_abilities', [])
         super(FixedForeignKey, self).__init__(*args, **kwargs)
-        
+
     def south_field_triple(self):
         "Returns a suitable description of this field for South."
         # We'll just introspect ourselves, since we inherit.
@@ -204,14 +204,14 @@ email_local_address_re2 = re.compile(r"^(?!(item|comment)-[0-9]+$)", re.IGNORECA
 class Item(models.Model):
     """
     Superclass of all item types.
-    
+
     Since everything is an item, this item type provides a unique id across
     all items. This item type also defines some important common structure to
     all items, such as name, description, and details about its creation and
     last update.
-    
+
     Every subclass should define the following attributes:
-    
+
     * introduced_immutable_fields: a frozenset of strings representing the names
       of fields which may not be modified after creation (this differs from
       editable=False in that introduced_immutable_fields may be customized by a
@@ -255,11 +255,11 @@ class Item(models.Model):
     def display_name(self, can_view_name_field=True):
         """
         Return a friendly display name for the item.
-        
+
         If the item has a blank name field, return a string of the form
         "ItemType id" (like Agent 1).  Otherwise, just return the value of the
         name field.
-        
+
         If can_view_name_field is False, only return the "ItemType id" form.
         """
         if self.name and can_view_name_field:
@@ -270,7 +270,7 @@ class Item(models.Model):
     def actual_item_type(self):
         """
         Return the actual item type for this item as a class (not a string).
-        
+
         For example, Item.objects.get(pk=1).actual_item_type() == Agent
         """
         return get_item_type_with_name(self.item_type_string)
@@ -294,10 +294,10 @@ class Item(models.Model):
     def downcast(self):
         """
         Return this item as an instance of the actual item type.
-        
+
         For example, if the current item is an Agent, this will return an
         Agent, even though self is an Item.
-        
+
         When the type of self is the actual item type, this returns self (not a
         copy); otherwise, this makes a single database query and returns an
         instance of the actual item type.
@@ -336,9 +336,9 @@ class Item(models.Model):
     def ancestor_collections(self, recursive_filter=None):
         """
         Return all active Collections containing self directly or indirectly.
-        
+
         A Collection does not indirectly contain itself by default.
-        
+
         If a recursive_filter is specified, use it to filter which
         RecursiveMemberships can be used to infer self's membership in a
         collection. Often, one will use a permission filter so that only those
@@ -363,7 +363,7 @@ class Item(models.Model):
         the grandparent, so on up to (and including) the original item. If self
         is not a Comment, this should only self (unless
         include_parent_collections is True as explained below).
-        
+
         If include_parent_collections=True, also include all Collections
         containing self or parents in this thread, either through direct or
         indirect membership. If a recursive_filter is specified, use it to
@@ -387,7 +387,7 @@ class Item(models.Model):
         """
         Return the original item that was commented on in this thread. If this
         is not a Comment, just return self.
-        
+
         For example, if this is a reply to a reply to a comment on X, this
         method will return X. This method uses the RecursiveComment table.
         """
@@ -425,7 +425,7 @@ class Item(models.Model):
         """
         Sets the fields of the itemversion from self's fields. This method
         does not make any database writes.
-        
+
         This method may use self.version_number to calculate a delta
         (although it does not currently).
         """
@@ -550,22 +550,22 @@ class Item(models.Model):
         """
         Save the current item (the specified agent was responsible with the
         given summary at the given time), making sure to keep track of versions.
-        
+
         Use this method instead of save() because it will keep things
         consistent with versions and special fields. This will set
         created_at to the current time (or action_time parameter) if this is a
         creation.
-        
+
         If first_agent=True, then this method assumes you are creating the
         first item (which should be an Agent). It is necessary to save the
         first item as an Agent in this way so that every Item has a valid
         creator pointer.
-        
+
         If the initial_permissions parameter is given, it should be a list of
         unsaved Permissions. After successfully saving self, this method
         will save these permissions (setting permission.target = self) before
         calling any callbacks.
-        
+
         This will call _after_create or _after_edit, depending on whether the
         item already existed.
         """
@@ -645,7 +645,7 @@ class Item(models.Model):
         This method returns False for special items that should never be
         deleted, such as the AnonymousAgent; and it returns True for ordinary
         items.
-        
+
         Item types that want to define special items should override this
         method.
         """
@@ -732,10 +732,10 @@ class Item(models.Model):
         False if the form is updating an existing item. The attrs parameter is
         the list of class attrs that are about to be passed into the
         forms.models.ModelFormMetaclass constructor.
-        
+
         This function should modify the attrs dictionary in order to configure
         the form.
-        
+
         Item types that want to configure the default Django form in a special
         way should override this method, making sure to put a call superclasses
         at the top, like:
@@ -754,7 +754,7 @@ class Item(models.Model):
 
         if 'name' in attrs:
             attrs['name'] = forms.CharField(label=_(item_type.__name__ + " name"), help_text=_('The name used to refer to this ' + item_type.__name__.lower()), required=False)
-        from cms.forms import CaptchaField 
+        from cms.forms import CaptchaField
         attrs['captcha'] = CaptchaField(label=("Security Question"))
 
     @classmethod
@@ -765,7 +765,7 @@ class Item(models.Model):
         given that the subscribed item is X, we might want to set the name of
         the subscription to "Subscription to X". This is used when presenting
         a user with a form.
-        
+
         Item types that want to automatically populate field names based on
         other fields should override this method, making sure to put a call
         superclasses at the top, like:
@@ -777,7 +777,7 @@ class Item(models.Model):
         """
         This method gets called before the first version of an item is
         created via save_versioned().
-        
+
         Item types that want to trigger an action before creation should
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._before_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
@@ -789,7 +789,7 @@ class Item(models.Model):
         """
         This method gets called after the first version of an item is
         created via save_versioned().
-        
+
         Item types that want to trigger an action after creation should
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._after_create(action_agent, action_summary, action_time, multi_agent_permission_cache)
@@ -801,7 +801,7 @@ class Item(models.Model):
         """
         This method gets called before an existing item is edited via
         save_versioned().
-        
+
         Item types that want to trigger an action before creation should
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._before_edit(action_agent, action_summary, action_time, multi_agent_permission_cache)
@@ -813,7 +813,7 @@ class Item(models.Model):
         """
         This method gets called after an existing item is edited via
         save_versioned().
-        
+
         Item types that want to trigger an action after creation should
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._after_edit(action_agent, action_summary, action_time, multi_agent_permission_cache)
@@ -824,7 +824,7 @@ class Item(models.Model):
     def _before_deactivate(self, action_agent, action_summary, action_time):
         """
         This method gets called before an item is deactivated.
-        
+
         Item types that want to trigger an action before deactivation should
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._before_deactivate(action_agent, action_summary, action_time)
@@ -835,7 +835,7 @@ class Item(models.Model):
     def _after_deactivate(self, action_agent, action_summary, action_time):
         """
         This method gets called after an item is deactivated.
-        
+
         Item types that want to trigger an action after deactivation should
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._after_deactivate(action_agent, action_summary, action_time)
@@ -846,7 +846,7 @@ class Item(models.Model):
     def _before_reactivate(self, action_agent, action_summary, action_time):
         """
         This method gets called before an item is reactivated.
-        
+
         Item types that want to trigger an action before reactivation should
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._before_reactivate(action_agent, action_summary, action_time)
@@ -857,7 +857,7 @@ class Item(models.Model):
     def _after_reactivate(self, action_agent, action_summary, action_time):
         """
         This method gets called after an item is reactivated.
-        
+
         Item types that want to trigger an action after reactivation should
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._after_reactivate(action_agent, action_summary, action_time)
@@ -868,7 +868,7 @@ class Item(models.Model):
     def _before_destroy(self, action_agent, action_summary, action_time):
         """
         This method gets called before an item is destroyed.
-        
+
         Item types that want to trigger an action before destroy should
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._before_destroy(action_agent, action_summary, action_time)
@@ -879,7 +879,7 @@ class Item(models.Model):
     def _after_destroy(self, action_agent, action_summary, action_time):
         """
         This method gets called after an item is destroyed.
-        
+
         Item types that want to trigger an action after destroy should
         override this method, making sure to put a call to super at the top,
         like super(Group, self)._after_destroy(action_agent, action_summary, action_time)
@@ -919,9 +919,9 @@ class Agent(Item):
     This item type represents an agent that can "do" things. Often this will
     be a person (see the Person subclass), but actions can also be performed by
     other agents, such as bots and anonymous agents.
-    
+
     Agents are unique in the following ways:
-    
+
     * Agents can be assigned permissions
     * Agents show up in the creator fields of other items
     * Agents can authenticate with Deme using AuthenticationMethods
@@ -955,13 +955,13 @@ class Agent(Item):
 class AnonymousAgent(Agent):
     """
     This item type is the agent that users of Deme authenticate as by default.
-    
+
     Because every action must be associated with a responsible Agent (e.g.,
     updating an item), we require that users are authenticated as some Agent
     at all times. So if a user never bothers logging in at the website, they
     will automatically be logged in as an AnonymousAgent, even if the website
     says "not logged in".
-    
+
     There should be exactly one AnonymousAgent at all times.
     """
 
@@ -986,7 +986,7 @@ class GroupAgent(Agent):
     by being associated with a group, the actions taken by the group agent are
     seen as collective action of the group members. In general, permission to
     login_as the group agent will be limited to powerful members of the group.
-    
+
     There should be exactly one GroupAgent for every group.
     """
 
@@ -1016,7 +1016,7 @@ class GroupAgent(Agent):
 class AuthenticationMethod(Item):
     """
     This item type represents an Agent's credentials to login.
-    
+
     For example, there might be a AuthenticationMethod representing my Facebook
     account, a AuthenticationMethod representing my WebAuth account, and a
     AuthenticationMethod representing my OpenID account. Rather than storing
@@ -1224,11 +1224,11 @@ class Subscription(Item):
     A Subscription is a relationship between an Item and a ContactMethod,
     indicating that all action notices on the item should be sent to the contact
     method as notifications.
-    
+
     If deep=True and the item is a Collection, then action notices on all items
     in the collection (direct or indirect) will be sent in addition to comments
     on the collection itself.
-    
+
     The subscribe_edit, subscribe_delete, subscribe_comments, and
     subscribe_relations fields determine what action notices will trigger this
     subscription.
@@ -1308,16 +1308,16 @@ class Subscription(Item):
 class Collection(Item):
     """
     A Collection is an Item that represents an unordered set of other items.
-    
+
     Collections just use pointers from Memberships to represent their contents,
     so multiple Collections can point to the same contained items.
-    
+
     Collections "directly" contain items via Memberships, but they also
     "indirectly" contain items via chained Memberships (see the
     RecursiveMembership model). If Collection 1 directly contains Collection 2
     which directly contains Item 3, then Collection 1 indirectly contains
     Item 3.
-    
+
     It is possible for there to be circular memberships. Collection 1 might
     contain Collection 2 and Collection 2 might contain Collection 1. This
     will not cause any errors: it simply means that Collection 1 indirectly
@@ -1364,7 +1364,7 @@ class Collection(Item):
 class Group(Collection):
     """
     A group is a collection of Agents.
-    
+
     A group has a folio that is used for collaboration among members.
     """
 
@@ -1526,7 +1526,7 @@ class Membership(Item):
 class Document(Item):
     """
     A Document is an Item that is meant can be a unit of collaborative work.
-    
+
     Document is meant to be abstract, so developers should always create
     subclasses rather than creating raw Documents.
     """
@@ -1612,7 +1612,7 @@ class FileDocument(Document):
     an MP3 or a Microsoft Word Document). It is intended for all binary data,
     which does not belong in a TextDocument (even though it is technically
     possible).
-    
+
     Subclasses of FileDocument may be able to understand various
     file formats and add metadata and extra functionality.
     """
@@ -1641,7 +1641,7 @@ class FileDocument(Document):
 class ImageDocument(FileDocument):
     """
     An ImageDocument is a FileDocument that stores an image.
-    
+
     Right now, the only difference is that viewers know the file can be
     displayed as an image. In the future, this may add metadata like EXIF data
     and thumbnails.
@@ -1712,11 +1712,11 @@ class Transclusion(Item):
 class Comment(Item):
     """
     A Comment is a unit of discussion about an Item.
-    
+
     Each comment specifies the commented item and version number. Like
     Document, Comment is meant to be abstract, so developers should always
     create subclasses rather than creating raw Comments.
-    
+
     Currently, users can only create TextComments.
     """
 
@@ -1767,7 +1767,7 @@ class Comment(Item):
         Return the original comment at the top of this thread. If this already
         the topmost comment (i.e. it is a comment on a non-comment item), just
         return self.
-        
+
         For example, imagine self is comment A, and A is a reply to comment B,
         and B is a reply to non-comment item C. This method would return B.
         This method uses the RecursiveComment table.
@@ -1810,7 +1810,7 @@ class Excerpt(Item):
     """
     An Excerpt is an Item that refers to a portion of another Item (or an
     external resource, such as a webpage).
-    
+
     Excerpt is meant to be abstract, so developers should always create
     subclasses rather than creating raw Excerpts.
     """
@@ -1829,7 +1829,7 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
     """
     A TextDocumentExcerpt refers to a contiguous region of text in a version of
     another TextDocument in Deme.
-    
+
     The body field contains the excerpted region, and the start_index and
     length identify the character position of this region within the specified
     TextDocument.
@@ -1840,7 +1840,7 @@ class TextDocumentExcerpt(Excerpt, TextDocument):
     introduced_abilities = frozenset(['view TextDocumentExcerpt.text_document', 'view TextDocumentExcerpt.text_document_version_number',
                                       'view TextDocumentExcerpt.start_index', 'view TextDocumentExcerpt.length',
                                       'edit TextDocumentExcerpt.text_document_version_number', 'edit TextDocumentExcerpt.start_index',
-                                      'edit TextDocumentExcerpt.length']) 
+                                      'edit TextDocumentExcerpt.length'])
     introduced_global_abilities = frozenset(['create TextDocumentExcerpt'])
     dyadic_relations = {}
     class Meta:
@@ -1883,7 +1883,7 @@ class ViewerRequest(Item):
     or "edit"), an item that is referred to (or null for collection-wide
     actions), a query_string if you want to pass parameters to the viewer, and
     a format.
-    
+
     A ViewerRequest is supposed to be abstract, so users can only create
     Sites and CustomUrls.
     """
@@ -1930,7 +1930,7 @@ class ViewerRequest(Item):
 class Site(ViewerRequest):
     """
     A Site is a ViewerRequest that represents a logical website with URLs.
-    
+
     Multiple Sites on the same Deme installation share the same Items with the
     same unique ids, but they resolve URLs differently so each Site can have a
     different page for /mike. If you go to the base URL of a site (like
@@ -1970,7 +1970,7 @@ class Site(ViewerRequest):
 class CustomUrl(ViewerRequest):
     """
     A CustomUrl is a ViewerRequest that represents a specific path.
-    
+
     Each CustomUrl has a parent ViewerRequest (it will be the Site if this
     CustomUrl is the first path component) and a string for the path component.
     So when a user visits http://example.com/abc/def/ghi, Deme looks for a
@@ -2010,7 +2010,7 @@ class CustomUrl(ViewerRequest):
 class DemeSetting(Item):
     """
     This item type stores global settings for the Deme installation.
-    
+
     Each DemeSetting has a unique key and an arbitrary value. Since values are
     strings of limited size, settings that involve a lot of text (e.g., a
     default layout) should have a value pointing to an item that contains the
@@ -2272,7 +2272,7 @@ def _action_notice_post_save_handler(sender, **kwargs):
     """
     This handler should get triggered when an ActionNotice is created. It takes
     care of asynchronously sending out notifications.
-    
+
     Signals do not propagate to subclasses, this signal must be specified for
     every concrete subclass of ActionNotice.
     """
@@ -2288,8 +2288,11 @@ def _action_notice_post_save_handler(sender, **kwargs):
     messages = [x for x in messages if x is not None]
     # Send the emails
     if messages:
-        smtp_connection = SMTPConnection()
-        smtp_connection.send_messages(messages)
+        try:
+            smtp_connection = SMTPConnection()
+            smtp_connection.send_messages(messages)
+        except:
+            pass
 
 
 class RelationActionNotice(ActionNotice):
@@ -2298,7 +2301,7 @@ class RelationActionNotice(ActionNotice):
     "from item") is created or modified so that one of its foreign-key fields
     now points to the item (when it didn't before) or no longer points to the
     item (when it did before).
-    
+
     If relation_added is true, it means that the from item did not point before
     but now does; and if relation_added is false, it means that from item did
     point before but no longer does.
@@ -2330,7 +2333,7 @@ class RelationActionNotice(ActionNotice):
         """
         In RelationActionNotices, when someone replies to a notification, it
         should be turned into a comment on from_item, not item.
-        
+
         For example, if we have a RelationActionNotice with from_item=membership
         and item=agent, the reply comment should go to membership, not agent.
         """
@@ -2342,7 +2345,7 @@ class RelationActionNotice(ActionNotice):
         This method should be called whenever an item is created, edited,
         deactivated, or reactivated. It generates all relevant
         RelationActionNotices relevant to the action.
-        
+
         The flags existed_before and existed_after are used to indicate what
         the action did to the item.  If the item was reactivated or created,
         existed_before would be false, otherwise it would be true. If the item
@@ -2445,7 +2448,7 @@ class PossibleItemAbilitiesIterable(object):
     Instantiated objects from this class are dynamic iterables, in that each
     time you iterate through them, you get the latest set of item abilities
     (according to the current state of introduced_abilities in the item types).
-    
+
     Each ability is of the form (ability_name, friendly_name).
     """
     def __iter__(self):
@@ -2477,7 +2480,7 @@ class PossibleGlobalAbilitiesIterable(object):
     time you iterate through them, you get the latest set of global abilities
     (according to the current state of introduced_global_abilities in the item
     types).
-    
+
     Each ability is of the form (ability_name, friendly_name).
     """
     def __iter__(self):
@@ -2503,7 +2506,7 @@ class PossibleItemAndGlobalAbilitiesIterable(object):
     time you iterate through them, you get the latest set of item abilities and
     global abilities (according to the current state of introduced_abilities
     and introduced_global_abilities in the item types).
-    
+
     Each ability is of the form (ability_name, friendly_name).
     """
     def __iter__(self):
@@ -2611,7 +2614,7 @@ class RecursiveComment(models.Model):
     """
     This table contains all pairs (item, comment) such that comment is
     directly or indirectly a comment on item.
-    
+
     For example if A is an Item, B is a Comment on A, and C is a comment on B,
     then this table will contain (A,B) (B,C) and (A,C).
     """
@@ -2648,25 +2651,25 @@ class RecursiveMembership(models.Model):
     """
     This table contains all pairs (collection, item) such that item is directly
     or indirectly a member of collection.
-    
+
     Each RecursiveMembership row also contains a many-to-many set of
     Memberships (child_memberships) such that there exists an path of
     memberships from the child to the parent where the first membership in the
     path is in child_memberships.
-    
+
     When Collections or Memberships are deactivated, this table is updated as
     if the Collection or Membership did not exist.
-    
+
     For example if A is a Collection, and B is a Collection (which is a member
     of A), and C is an Item (which is a member of B), and D is an Item (which
     is a member of A and B), then the table will contain:
-    
+
     (A,B) child_memberships={(A,B)}
     (B,C) child_memberships={(B,C)}
     (A,C) child_memberships={(B,C)}
     (A,D) child_memberships={(A,D),(B,D))}
     (B,D) child_memberships={(B,D)}
-    
+
     The permission_enabled field is set to True if there exists at least one
     path of Memberships from parent to child, such that each membership in the
     path has permission_enabled=True.
@@ -2743,7 +2746,7 @@ class RecursiveMembership(models.Model):
                 recursive_membership = RecursiveMembership(parent=parent, child=descendant_recursive_membership.child)
                 recursive_membership.permission_enabled = membership.permission_enabled and descendant_recursive_membership.permission_enabled
                 recursive_membership.save()
-        
+
             for child_membership in child_memberships:
                 recursive_membership.child_memberships.add(child_membership)
 

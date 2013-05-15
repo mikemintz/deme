@@ -164,4 +164,12 @@ $(function(){
   linkOrRemove($('.actions-wrap > li > a.create'), $('.actions-menu a.create'));
   linkOrRemove($('.actions-wrap > li > a.edit'), $('.actions-menu a.edit'));
 
+  // check to see if collection dialog is available
+  $('a.insert-item').each(function(){
+    var id = $(this).attr('data-target');
+    if ($('#' + id).length == 0) {
+      $(this).remove();
+    }
+  });
+
 });

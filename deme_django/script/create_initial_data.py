@@ -71,7 +71,7 @@ if len(sys.argv) < 2 or sys.argv[1] != 'test':
 
 print 'Test stuff...'
 
-DemeSetting.set("cms.default_create_item_types", "HtmlDocument,Project,Poll,Group,Event,ImageDocument,FileDocument", admin)
+DemeSetting.set("cms.default_create_item_types", "HtmlDocument,Project,AgreeDisagreePoll,Group,Event,ImageDocument,FileDocument", admin)
 DemeSetting.set("cms.comment_max_nesting_level", "99999", admin)
 
 # Set the default layout
@@ -94,7 +94,7 @@ This site is running a working copy of Deme <a href="http://github.com/mikemintz
 View the slides from our presentation at Silicon Valley Code Camp 2008 at <a href="http://www.stanford.edu/~davies/tdavies-presentations.html">http://www.stanford.edu/~davies/tdavies-presentations.html</a> (scroll down).
 <br /><br />
 Read our paper on Deme's architecture for IWWOST 2009 at <a href="http://www.stanford.edu/~davies/IWWOST09-Davies-Mintz-websiteversion.pdf">http://www.stanford.edu/~davies/IWWOST09-Davies-Mintz-websiteversion.pdf</a>
-{%% endblock content %%} 
+{%% endblock content %%}
 """ % (git_commit, git_commit, formatted_git_date) )
 home_page.save_versioned(action_agent=admin)
 default_site.viewer = 'djangotemplatedocument'

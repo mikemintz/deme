@@ -410,27 +410,31 @@ class ActionsMenu(template.Node):
                 list_items.append("""<li><a href="#" onclick="openCommentDialog('subscribe_dialog'); return false;" tabindex="-1" class="subscribe"><i class="glyphicon glyphicon-envelope"></i> Subscribe</a></li>""")
 
             if agentcan_global_helper(context, 'create Membership'):
-                list_items.append("""<li><a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" tabindex="-1" title="Add to collection" class="add-to-collection"><i class="demeicon  demeicon-add-collection"></i> Add to collection</a></li>""" % (item.pk))
+                list_items.append("""<li><a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" tabindex="-1" title="Add to a collection" class="add-to-collection"><i class="demeicon  demeicon-add-collection"></i> Add to collection</a></li>""" % (item.pk))
+
+            # add an item to this collection
+            if isinstance(item, Collection) and agentcan_helper(context, 'modify_membership', item):
+                list_items.append("""<li><a href="#" onclick="openDialog('addmember%(id)s'); return false;" tabindex="-1" title="Insert an item" class="insert-item" data-target="addmember%(id)s"><i class="glyphicon glyphicon-plus-sign"></i> Insert an item</a></li>""" % {'id': item.pk})
 
             if agentcan_global_helper(context, 'create %s' % item.item_type_string):
                 list_items.append('<li><a href="%s" tabindex="-1" title="Copy" class="copy"><i class="demeicon  demeicon-copy"></i> Copy</a></li>' % copy_url)
 
-            if item:
-                if agentcan_helper(context, 'view_permissions', item):
-                    if agentcan_helper(context, 'do_anything', item):
-                        item_permissions_name = 'Modify permissions'
-                    else:
-                        item_permissions_name = 'View permissions'
-                    item_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'itempermissions'})
-                    list_items.append("""<li><a href="%s" tabindex="-1" title="Permissions" class="permissions"><i class="glyphicon glyphicon-lock"></i> %s</a></li>""" % (item_permissions_url, item_permissions_name))
 
-                    if issubclass(item.actual_item_type(), Collection):
-                        if agentcan_helper(context, 'do_anything', item):
-                            collection_permissions_name = 'Modify permissions of members'
-                        else:
-                            collection_permissions_name = 'View permissions of members'
-                        collection_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'collectionpermissions'})
-                        list_items.append("""<li><a href="%s" tabindex="-1" title="Modify Permissions" class="permissions"><i class="glyphicon glyphicon-lock"></i> %s</a></li>""" % (collection_permissions_url, collection_permissions_name))
+            if agentcan_helper(context, 'view_permissions', item):
+                if agentcan_helper(context, 'do_anything', item):
+                    item_permissions_name = 'Modify permissions'
+                else:
+                    item_permissions_name = 'View permissions'
+                item_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'itempermissions'})
+                list_items.append("""<li><a href="%s" tabindex="-1" title="Permissions" class="permissions"><i class="glyphicon glyphicon-lock"></i> %s</a></li>""" % (item_permissions_url, item_permissions_name))
+
+                if issubclass(item.actual_item_type(), Collection):
+                    if agentcan_helper(context, 'do_anything', item):
+                        collection_permissions_name = 'Modify permissions of members'
+                    else:
+                        collection_permissions_name = 'View permissions of members'
+                    collection_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'collectionpermissions'})
+                    list_items.append("""<li><a href="%s" tabindex="-1" title="Modify Permissions" class="permissions"><i class="glyphicon glyphicon-lock"></i> %s</a></li>""" % (collection_permissions_url, collection_permissions_name))
 
             if item.can_be_deleted() and agentcan_helper(context, 'delete', item):
                 if item.active:
@@ -456,6 +460,7 @@ class ActionsMenu(template.Node):
                 </div>
                 """ % (item_name, reverse('item_type_url', kwargs={'viewer':'subscription', 'action':'dialogcreate'}), context['full_path'], item.pk, AjaxModelChoiceField(EmailContactMethod.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=['add_subscription']).widget.render('email', None, {'id':'subscribe_email_field'}), subscribe_url))
 
+            # add this item to another collection
             result.append( """
             <div style="display: none;" id="additemtocollection%(item.pk)s">
             <form method="post" action="%(create_url)s?redirect=%(full_path)s">
@@ -475,7 +480,7 @@ class ActionsMenu(template.Node):
                 'full_path': context['full_path'],
                 'create_url': reverse('item_type_url', kwargs={'viewer':'membership', 'action':'itemmembercreate'}),
                 'ajax_field': AjaxModelChoiceField(Collection.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('collection', None, {'id':'add_item_to_collection_collection_field'}),
-             })
+            })
 
             result.append("""
                 <script type="text/javascript">

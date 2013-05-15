@@ -2,17 +2,28 @@
 
 {% block banner-section %}
 <div class="banner-section">
-  <h3>Community Forum</h3>
+  <h3>Generic website banner text</h3>
 </div>
 {% endblock banner-section %}
 
 {% block tabs-section %}
-<ul class="nav nav-pills">
-  <li><a href="#">Welcome</a></li>
-  <li><a href="#">Meet the Experts</a></li>
-  <li><a href="#">Discussion Board</a></li>
-  <li><a href="#">Take the Poll</a></li>
-  <li><a href="#">Help</a></li>
+<style>
+.xyz123 {
+border-bottom: thick solid #ccc;
+margin-bottom: 0;
+}
+.xyz123 li {
+border: thin solid #ccc; border-radius: 10px 10px 0 0; background: #eee; font-family: Georgia; font-weight: bold; font-size: larger;
+}
+.xyz123 li a {
+color: #444;
+}
+.xyz123 li a.xyzhighlighted {
+background: #def;
+}</style>
+<ul class="nav nav-pills xyz123">
+  <li><a href="/" {% ifequal full_path "/" %}class="xyzhighlighted"{% endifequal %}>Welcome</a></li>
+  <li><a href="/viewing/discussion/25" {% ifequal full_path "/viewing/discussion/25" %}class="xyzhighlighted"{% endifequal %}>Discussion</a></li>
+  <li><a href="/viewing/agreedisagreepoll" {% ifequal full_path "/viewing/agreedisagreepoll" %}class="xyzhighlighted"{% endifequal %}>Polls</a></li>
 </ul>
 {% endblock tabs-section %}
-
