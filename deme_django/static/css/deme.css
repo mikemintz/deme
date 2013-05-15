@@ -5480,6 +5480,9 @@ body {
 .page-layout .logo-section a.logo h1 {
   margin: 0;
 }
+.page-layout h1.title {
+  font-size: 2em;
+}
 .page-layout h1.title img {
   vertical-align: middle;
 }
