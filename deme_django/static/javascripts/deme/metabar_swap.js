@@ -173,6 +173,11 @@ $(function(){
   $('.actions-wrap > li > a.comment, .actions-menu a.comment').click(function(){
     // open metadata menu
     toggleMetabar('open');
+    // if is navbar button and toolbar already on correct section, open new comment
+    var $comments = $('#metadata_content_comments');
+    if ($comments.hasClass('ajax-loaded') && !$comments.hasClass('hide')) {
+      openCommentDialog('comment3');
+    }
     // load and open comments in metadata
     metabar_show_section($("#metadata_content_comments"));
   });
