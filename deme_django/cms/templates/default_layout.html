@@ -260,8 +260,8 @@
         </div>
         {% endblock page-layout %}
 
-        {% block chat %}{% comment %}
-        <div class ="chat" style="width: 200px; margin: 0; position: fixed; bottom: 0;">
+        {% block chat %}
+        <div class="chat" style="width: 200px; margin: 0; position: fixed; bottom: 0;">
             <div class="ui-widget-header ui-corner-top ui-helper-clearfix" id="chatHeader" style="padding: 5px;">
                 Chat
                 <a id="expandChat" onclick="toggleChat('chatBody'); return false;" class="fg-button ui-state-default fg-button-icon-solo ui-corner-all" title="Expand_Chat" style="float: right; height: 10px;"><span class="ui-icon ui-icon-circle-triangle-n" id="expandChatButton" style= "height: 20px;"></span>Expand Chat</a>
@@ -272,7 +272,7 @@
                 {% chat_box %}
             </div>
         </div>
-        {% endcomment %}{% endblock %}
+        {% endblock %}
 
         <div class="footer">
           {% block footer %}
