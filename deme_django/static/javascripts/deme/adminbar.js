@@ -164,6 +164,12 @@ $(function(){
   linkOrRemove($('.actions-wrap > li > a.create'), $('.actions-menu a.create'));
   linkOrRemove($('.actions-wrap > li > a.edit'), $('.actions-menu a.edit'));
 
+  // check to see if we are editing, if so then remove the edit button
+  if ($('h1.title').text().indexOf('» Edit') !== -1) {
+    $('.actions-wrap > li > a.edit').remove();
+    $('.actions-menu a.edit').remove();
+  }
+
   // check to see if collection dialog is available
   $('a.insert-item').each(function(){
     var id = $(this).attr('data-target');
