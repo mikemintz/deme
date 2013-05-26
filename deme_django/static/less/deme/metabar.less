@@ -4,6 +4,7 @@
   //display: -ms-flexbox;      /* TWEENER - IE 10 */
   //display: -webkit-flex;     /* NEW - Chrome */
   //display: flex;
+  position: relative;
 }
 
 #overall {
@@ -41,6 +42,7 @@
     overflow: hidden;
   }
   > .title {
+    margin-top: 0;
     padding: 0 10px;
     height: 2em;
     white-space: nowrap;
@@ -49,8 +51,10 @@
     line-height: 30 / @font-size-base-int;
     font-size: 16 / @font-size-base-int * 100%;
     color: @white;
-    text-shadow: 0 -1px fade(@black, 25%);
     font-weight: normal;
+    .dropdown-toggle {
+      text-shadow: 0 -1px fade(@black, 25%);
+    }
     .pull-right {
       position: absolute;
       right: 0;

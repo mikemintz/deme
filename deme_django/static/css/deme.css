@@ -5159,6 +5159,9 @@ body.nonadmin #metabar {
     right: auto;
   }
 }
+#overall-wrap {
+  position: relative;
+}
 #overall {
   padding: 0 15px;
 }
@@ -5193,6 +5196,7 @@ body.nonadmin #metabar {
   overflow: hidden;
 }
 #metabar > .title {
+  margin-top: 0;
   padding: 0 10px;
   height: 2em;
   white-space: nowrap;
@@ -5207,8 +5211,10 @@ body.nonadmin #metabar {
   line-height: 2.142857142857143;
   font-size: 114.28571428571428%;
   color: #ffffff;
-  text-shadow: 0 -1px rgba(0, 0, 0, 0.25);
   font-weight: normal;
+}
+#metabar > .title .dropdown-toggle {
+  text-shadow: 0 -1px rgba(0, 0, 0, 0.25);
 }
 #metabar > .title .pull-right {
   position: absolute;
@@ -5427,9 +5433,6 @@ body.nonadmin #metabar {
 }
 body {
   font-size: 14px;
-}
-.page-layout {
-  margin-top: 10px;
 }
 .page-layout * {
   word-wrap: break-word;

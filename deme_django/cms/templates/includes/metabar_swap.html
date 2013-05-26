@@ -1,5 +1,6 @@
 {% load item_tags %}
 {% load chat_extras %}
+<div id="metabar" class="noanim navbar-inverse">
 {% if item %}
   <script type="text/javascript">
   function metabar_ajax_url(metadata_menu_name) {
@@ -15,88 +16,89 @@
 
   </script>
 
-  <div id="metabar" class="noanim navbar-inverse">
-    <ul class="title nav navbar-nav">
-      <li class="dropdown">
-        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Metadata <span class="caret"></span></a>
-        <ul class="dropdown-menu">
-          {% with "metadata_content_item_details" as id %}{% with "Item Details" as title %}
-          {% include 'includes/metabar_section_list.html' %}
-          {% endwith %}{% endwith %}
+  <ul class="title nav navbar-nav">
+    <li class="dropdown">
+      <a class="dropdown-toggle" data-toggle="dropdown" href="#">Metadata <span class="caret"></span></a>
+      <ul class="dropdown-menu">
+        {% with "metadata_content_item_details" as id %}{% with "Item Details" as title %}
+        {% include 'includes/metabar_section_list.html' %}
+        {% endwith %}{% endwith %}
 
-          {% with "metadata_content_comments" as id %}{% with "Comments" as title %}
-          {% include 'includes/metabar_section_list.html' %}
-          {% endwith %}{% endwith %}
+        {% with "metadata_content_comments" as id %}{% with "Comments" as title %}
+        {% include 'includes/metabar_section_list.html' %}
+        {% endwith %}{% endwith %}
 
-          {% with "metadata_content_action_notices" as id %}{% with "Action notices" as title %}
-          {% include 'includes/metabar_section_list.html' %}
-          {% endwith %}{% endwith %}
+        {% with "metadata_content_action_notices" as id %}{% with "Action notices" as title %}
+        {% include 'includes/metabar_section_list.html' %}
+        {% endwith %}{% endwith %}
 
-          {% with "metadata_content_versions" as id %}{% with "Versions" as title %}
-          {% include 'includes/metabar_section_list.html' %}
-          {% endwith %}{% endwith %}
+        {% with "metadata_content_versions" as id %}{% with "Versions" as title %}
+        {% include 'includes/metabar_section_list.html' %}
+        {% endwith %}{% endwith %}
 
-          {% with "metadata_content_related_items" as id %}{% with "Related items" as title %}
-          {% include 'includes/metabar_section_list.html' %}
-          {% endwith %}{% endwith %}
+        {% with "metadata_content_related_items" as id %}{% with "Related items" as title %}
+        {% include 'includes/metabar_section_list.html' %}
+        {% endwith %}{% endwith %}
 
-          {% with "metadata_content_permissions" as id %}{% with "Permissions" as title %}
-          {% include 'includes/metabar_section_list.html' %}
-          {% endwith %}{% endwith %}
-        </ul>
-      </li>
-      <li class="pull-right">
-        <button class="resize resize-left"><i class="glyphicon glyphicon-step-backward"></i></button>
-        <button class="resize resize-right"><i class="glyphicon glyphicon-step-forward"></i></button>
-      </li>
-    </ul>
+        {% with "metadata_content_permissions" as id %}{% with "Permissions" as title %}
+        {% include 'includes/metabar_section_list.html' %}
+        {% endwith %}{% endwith %}
+      </ul>
+    </li>
+    <li class="pull-right">
+      <button class="resize resize-left"><i class="glyphicon glyphicon-step-backward"></i></button>
+      <button class="resize resize-right"><i class="glyphicon glyphicon-step-forward"></i></button>
+    </li>
+  </ul>
 
-    <div class="block" id="metadata_content_item_details">
-      <!--div class="title">Metadata</div-->
-      <div class="content"></div>
-      <div class="button-wrap">
-      {% with "metadata_content_comments" as id %}{% with "Comments" as title %}
-      {% include 'includes/metabar_section_button.html' %}
-      {% endwith %}{% endwith %}
-
-      {% with "metadata_content_action_notices" as id %}{% with "Action notices" as title %}
-      {% include 'includes/metabar_section_button.html' %}
-      {% endwith %}{% endwith %}
-
-      {% with "metadata_content_versions" as id %}{% with "Versions" as title %}
-      {% include 'includes/metabar_section_button.html' %}
-      {% endwith %}{% endwith %}
-
-      {% with "metadata_content_related_items" as id %}{% with "Related items" as title %}
-      {% include 'includes/metabar_section_button.html' %}
-      {% endwith %}{% endwith %}
-
-      {% with "metadata_content_permissions" as id %}{% with "Permissions" as title %}
-      {% include 'includes/metabar_section_button.html' %}
-      {% endwith %}{% endwith %}
-      </div>
-    </div>
-
+  <div class="block" id="metadata_content_item_details">
+    <!--div class="title">Metadata</div-->
+    <div class="content"></div>
+    <div class="button-wrap">
     {% with "metadata_content_comments" as id %}{% with "Comments" as title %}
-    {% include 'includes/metabar_section_swap.html' %}
+    {% include 'includes/metabar_section_button.html' %}
     {% endwith %}{% endwith %}
 
     {% with "metadata_content_action_notices" as id %}{% with "Action notices" as title %}
-    {% include 'includes/metabar_section_swap.html' %}
+    {% include 'includes/metabar_section_button.html' %}
     {% endwith %}{% endwith %}
 
     {% with "metadata_content_versions" as id %}{% with "Versions" as title %}
-    {% include 'includes/metabar_section_swap.html' %}
+    {% include 'includes/metabar_section_button.html' %}
     {% endwith %}{% endwith %}
 
     {% with "metadata_content_related_items" as id %}{% with "Related items" as title %}
-    {% include 'includes/metabar_section_swap.html' %}
+    {% include 'includes/metabar_section_button.html' %}
     {% endwith %}{% endwith %}
 
     {% with "metadata_content_permissions" as id %}{% with "Permissions" as title %}
-    {% include 'includes/metabar_section_swap.html' %}
+    {% include 'includes/metabar_section_button.html' %}
     {% endwith %}{% endwith %}
-
-
+    </div>
   </div>
+
+  {% with "metadata_content_comments" as id %}{% with "Comments" as title %}
+  {% include 'includes/metabar_section_swap.html' %}
+  {% endwith %}{% endwith %}
+
+  {% with "metadata_content_action_notices" as id %}{% with "Action notices" as title %}
+  {% include 'includes/metabar_section_swap.html' %}
+  {% endwith %}{% endwith %}
+
+  {% with "metadata_content_versions" as id %}{% with "Versions" as title %}
+  {% include 'includes/metabar_section_swap.html' %}
+  {% endwith %}{% endwith %}
+
+  {% with "metadata_content_related_items" as id %}{% with "Related items" as title %}
+  {% include 'includes/metabar_section_swap.html' %}
+  {% endwith %}{% endwith %}
+
+  {% with "metadata_content_permissions" as id %}{% with "Permissions" as title %}
+  {% include 'includes/metabar_section_swap.html' %}
+  {% endwith %}{% endwith %}
+
+{% else %}
+  {{ metabar_contents }}
 {% endif %}
+
+</div>
