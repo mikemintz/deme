@@ -1,27 +1,31 @@
 #overall-wrap {
-  display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
-  display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
-  display: -ms-flexbox;      /* TWEENER - IE 10 */
-  display: -webkit-flex;     /* NEW - Chrome */
-  display: flex;
+  //display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
+  //display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
+  //display: -ms-flexbox;      /* TWEENER - IE 10 */
+  //display: -webkit-flex;     /* NEW - Chrome */
+  //display: flex;
 }
 
 #overall {
-  -webkit-box-flex: 1;      /* OLD - iOS 6-, Safari 3.1-6 */
-  -moz-box-flex: 1;         /* OLD - Firefox 19- */
-  width: 90%;               /* For old syntax, otherwise collapses. */
-  -webkit-flex: 1;          /* Chrome */
-  -ms-flex: 1;              /* IE 10 */
-  flex: 1;
+  //-webkit-box-flex: 1;      /* OLD - iOS 6-, Safari 3.1-6 */
+  //-moz-box-flex: 1;         /* OLD - Firefox 19- */
+  //width: 90%;               /* For old syntax, otherwise collapses. */
+  //-webkit-flex: 1;          /* Chrome */
+  //-ms-flex: 1;              /* IE 10 */
+  //flex: 1;
+  padding: 0 15px;
 }
 
 #metabar {
+  position: absolute;
+  top: 0;
+  right: 0 !important;
+  left: auto !important;
   // position: fixed; overflow-y: auto; top: 90px; bottom: 10px; right: 10px; width: 0%; display: none; z-index: 1;
   width: 200px;
   .transition(width .5s);
   background: lighten(@metabar-background, 1%);
   box-shadow: 3px 0 5px fade(@black, 5%) inset;
-  left: 0 !important;
   border-left: 1px solid @gray-light;
   .ui-resizable-w {
     cursor: col-resize;

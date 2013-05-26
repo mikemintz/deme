@@ -126,7 +126,7 @@ $(function(){
       } else {
         $('body').addClass('nonadmin');
         $.removeCookie('ADMINBAR_VISIBLE');
-        $('.page-layout').css('max-width', '');
+        $('#overall').css('max-width', '');
         $('.adminbar a.advanced').removeClass('active');
       }
     }

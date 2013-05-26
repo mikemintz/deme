@@ -89,10 +89,10 @@ $(function(){
     }
     // if visible, then calculate
     if (!$('body').hasClass('nonadmin') && !$metabar.hasClass('closed')) {
-      page_layout_width = $(window).width() - metabar_width - 10 + 'px'; // buffer
+      page_layout_width = $(window).width() - metabar_width + 'px';
     }
     $metabar.css('width', metabar_width);
-    $('.page-layout').css('max-width', page_layout_width);
+    $('#overall').css('max-width', page_layout_width);
   }
 
   // attach event to adminbar
