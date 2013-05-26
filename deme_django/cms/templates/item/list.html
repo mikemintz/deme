@@ -55,11 +55,9 @@
 </div>
 
 {% ifagentcanglobal item_create_ability %}
-<div class="ui-helper-clearfix" style="margin-bottom: 1em;">
-    <div class="fg-buttonset ui-helper-clearfix">
-        <a class="fg-button fg-button-icon-left ui-widget ui-state-default ui-corner-all" href="{% url item_type_url viewer=item_type_lower,action="new" %}"><span class="ui-icon ui-icon-circle-plus"></span>Create a new {{ item_type_lower }}</a>
-    </div>
-</div>
+<p>
+  <a class="btn btn-primary btn-large" href="{% url item_type_url viewer=item_type_lower,action="new" %}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_lower }}</a>
+</p>
 {% endifagentcanglobal %}
 
 {% listgridbox accepted_item_type %}
