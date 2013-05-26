@@ -1,8 +1,6 @@
 {% load item_tags %}{% load chat_extras %}<!DOCTYPE html>
 <html lang="en-us">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% block title %}
     {% if item %}
     <title>Deme &raquo; {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}</title>
@@ -10,35 +8,26 @@
     <title>Deme{% if action_title %} &raquo; {{ action_title }}{% endif %}</title>
     {% endif %}
     {% endblock title %}
-
-
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="{% block favicon %}{% if item %}{{ item.actual_item_type|icon_url:24 }}{% else %}{{ accepted_item_type|icon_url:24 }}{% endif %}{% endblock favicon %}" type="image/x-icon" />
-    <!--<link rel="shortcut icon" href="{% media_url "favicon.ico" %}" type="image/x-icon" />-->
-
     {% universal_edit_button %}
-
-    <!--link rel="stylesheet" href="{% media_url "stylesheets/blueprint/screen.css" %}" type="text/css" media="screen, projection" />
-    <link rel="stylesheet" href="{% media_url "stylesheets/blueprint/print.css" %}" type="text/css" media="print" /-->
-
-    <!--[if IE]>
-        <!--link rel="stylesheet" href="{% media_url "stylesheets/blueprint/ie.css" %}" type="text/css" media="screen, projection" /-->
-    <![endif]-->
     <link href="{% media_url "css/deme.css" %}" rel="stylesheet">
+    <!--[if lte IE 8]>
+        <link rel="stylesheet" href="{% media_url "css/deme-ie8.css" %}" type="text/css">
+    <![endif]-->
 
+    <script type="text/javascript" src="{% media_url "javascripts/respond.min.js" %}"></script>
     <script type="text/javascript" src="{% media_url "javascripts/jquery-1.7.2.min.js" %}"></script>
-
     <script type="text/javascript" src="{% media_url "javascripts/jquery.cookie.js" %}"></script>
-
     <script type="text/javascript" src="{% media_url "javascripts/jquery-ui-1.8.21.custom.min.js" %}"></script>
     <script type="text/javascript" src="{% media_url "javascripts/bootstrap.min.js" %}"></script>
     <link href="{% media_url "stylesheets/smoothness/jquery-ui-1.8.21.custom.css" %}" media="all" rel="Stylesheet" type="text/css" />
-
     <script type="text/javascript" src="{% media_url "javascripts/grid.locale-en.js" %}"></script>
     <script type="text/javascript" src="{% media_url "javascripts/jquery.jqGrid.min.js" %}"></script>
     <link href="{% media_url "stylesheets/ui.jqgrid.css" %}" media="all" rel="Stylesheet" type="text/css" />
-
     <script type="text/javascript" src="{% media_url "javascripts/fg.menu.js" %}"></script>
-
     <script type="text/javascript" src="{% media_url "javascripts/deme/adminbar.js" %}"></script>
     <!--script type="text/javascript" src="{% media_url "javascripts/deme/metabar.js" %}"></script-->
     <script type="text/javascript" src="{% media_url "javascripts/deme/metabar_swap.js" %}"></script>
