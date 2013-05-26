@@ -98,6 +98,12 @@
   {% endwith %}{% endwith %}
 
 {% else %}
+  <ul class="title nav navbar-nav">
+    <li class="pull-right">
+      <button class="resize resize-left"><i class="glyphicon glyphicon-step-backward"></i></button>
+      <button class="resize resize-right"><i class="glyphicon glyphicon-step-forward"></i></button>
+    </li>
+  </ul>
   <div class="content">
   {% if metabar_contents %}
     {{ metabar_contents }}
