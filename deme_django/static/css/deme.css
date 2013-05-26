@@ -5251,12 +5251,12 @@ body.nonadmin #metabar {
   color: #ffffff;
   background: transparent;
 }
+#metabar .content {
+  margin: 10px;
+}
 #metabar .block .title {
   text-align: center;
   margin: 5px;
-}
-#metabar .block .content {
-  margin: 10px;
 }
 #metabar .block.ajax-loaded h3:first-child {
   font-size: 100%;

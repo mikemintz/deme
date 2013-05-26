@@ -98,7 +98,13 @@
   {% endwith %}{% endwith %}
 
 {% else %}
-  {{ metabar_contents }}
+  <div class="content">
+  {% if metabar_contents %}
+    {{ metabar_contents }}
+  {% else %}
+    <small><i>No data</i></small>
+  {% endif %}
+  </div>
 {% endif %}
 
 </div>

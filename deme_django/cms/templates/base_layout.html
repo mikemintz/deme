@@ -312,11 +312,9 @@
 
       </div><!-- /#overall -->
 
-      {% if item %}
       {% ifagentcan 'advanced_layout' cur_site %}
         {% include "includes/metabar_swap.html" %}
       {% endifagentcan %}
-      {% endif %}
 
     </div><!-- /#overall-wrap -->
   {% endblock body_wrap %}
