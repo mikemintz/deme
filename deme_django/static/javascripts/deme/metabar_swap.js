@@ -94,6 +94,7 @@ $(function(){
     $metabar.css('width', metabar_width);
     $('#overall').css('max-width', page_layout_width);
   }
+  window.metabarWidthAdjust = metabarWidthAdjust;
 
   // attach event to adminbar
   $('.metabar-toggle').click(function(e){

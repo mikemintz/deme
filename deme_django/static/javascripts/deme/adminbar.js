@@ -122,6 +122,9 @@ $(function(){
       if (visible) {
         $('body').removeClass('nonadmin');
         $.cookie('ADMINBAR_VISIBLE', true);
+        if (typeof(window.metabarWidthAdjust) == 'function') {
+          metabarWidthAdjust();
+        }
         $('.adminbar a.advanced').addClass('active');
       } else {
         $('body').addClass('nonadmin');
