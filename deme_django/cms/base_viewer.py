@@ -31,7 +31,7 @@ def get_logged_in_agent(request):
     Return the currently logged in Agent (based on the cur_agent_id parameter
     in request.session), or return the AnonymousAgent if the cur_agent_id is
     missing or invalid.
-    
+
     Also update last_online_at for the resulting Agent to the current time.
     """
     cur_agent_id = request.session.get('cur_agent_id', None)
@@ -92,7 +92,7 @@ class VirtualRequest(HttpRequest):
     embedding viewers within other viewers. VirtualRequest requires an
     `original_request` HttpRequest that is used to keep track of where it is
     being embedded.
-    
+
     VirtualRequest only supports the GET method.
     """
 
@@ -168,12 +168,12 @@ class Viewer(object):
     """
     Superclass of all viewers. Implements all of the common functionality
     like dispatching and convenience methods, but does not define any views.
-    
+
     Although most viewers will want to inherit from ItemViewer, since it
     defines the basic views (like list, show, edit), some viewers may want to
     inherit from this abstract Viewer so they can ensure no views will be
     inherited.
-    
+
     Subclasses must define the following fields:
     * `accepted_item_type`: The item type that this viewer is defined over. For
       example, if accepted_item_type == Agent, this viewer can be used to view
@@ -183,7 +183,7 @@ class Viewer(object):
     * `viewer_name`: The name of the viewer, which shows up in the URL. This
       should only consist of lowercase letters, in accordance with the Deme URL
       scheme.
-    
+
     There are two types of views subclasses can define: item-specific views,
     and type-wide views. Item-specific views expect an item in the URL (the noun),
     while type-wide views do not expect a particular item.
@@ -197,12 +197,12 @@ class Viewer(object):
       `type_method_format`. For example, the method type_new_html(self) in an
       agent viewer represents the type-wide view with action="new" and
       format="html", and would respond to the URL `/viewing/agent/new.html`.
-    
+
     View methods take no parameters (except self), since all of the details of
     the request are defined as instance variables in the viewer before
     dispatch. They must return an HttpResponse. They should take advantage of
     self.context, which is defined before the view is called.
-        
+
     The following instance variables are defined on the viewer:
     * self.item (the requested Item, or None if there is no noun)
     * self.context (the Context object used to render templates)
@@ -219,7 +219,7 @@ class Viewer(object):
     * self.item (the downcasted requested item if there's a noun in the request)
       - If there is a `version` parameter in the query string, the item's fields
         will be populated with data from the requested version
-    
+
     The following context variables are defined:
     * self.context['action'] (the action part of the URL)
     * self.context['item'] (the requested Item, or None if there is no noun)
@@ -237,7 +237,7 @@ class Viewer(object):
     * self.context['_viewer'] (the viewer itself, only for custom tags/filters)
     * self.context['layout'] (the layout that the template should inherit from)
 
-        
+
     """
     __metaclass__ = ViewerMetaClass
 
@@ -324,7 +324,7 @@ class Viewer(object):
         self.context['accepted_item_type'] = self.accepted_item_type
         self.context['accepted_item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['accepted_item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
-        self.context['full_path'] = original_viewer.context['full_path'] 
+        self.context['full_path'] = original_viewer.context['full_path']
         self.context['query_string'] = ''
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
@@ -503,8 +503,8 @@ class Viewer(object):
         {%% extends layout %%}
         {%% load item_tags %%}
         {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
-        {%% block title %%}<img src="{{ "error"|icon_url:24 }}" /> %s{%% endblock %%}
-        {%% block content %%}%s{%% endblock content %%}
+        {%% block title %%}%s{%% endblock %%}
+        {%% block content %%}<img src="{{ "error"|icon_url:24 }}" /> %s{%% endblock content %%}
         """ % (title, body))
         return request_class(template.render(self.context))
 
@@ -535,7 +535,7 @@ class Viewer(object):
         will be customized for editing existing items. If fields is a list,
         the form fields will be limited to only the fields in that list (but if
         it's None, the default form fields will be used).
-        
+
         This function wraps around Django's modelforms.
         """
         viewer = self
@@ -595,7 +595,7 @@ class Viewer(object):
 
             "Returns this form rendered as HTML <tr>s -- excluding the <table></table>."
             result = []
-    
+
             for name, field in form.fields.items():
                 if not field: continue
                 bf = BoundField(form, field, name)
@@ -628,7 +628,7 @@ class Viewer(object):
         # Allow the item type to do its own specialized form configuration
         item_type.do_specialized_form_configuration(item_type, is_new, attrs)
         if not self.cur_agent.is_anonymous():
-            del attrs['captcha'] 
+            del attrs['captcha']
 
         # Construct the form class
         class_name = item_type.__name__ + 'Form'

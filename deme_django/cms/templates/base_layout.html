@@ -1,13 +1,13 @@
 {% load item_tags %}{% load chat_extras %}<!DOCTYPE html>
 <html lang="en-us">
   <head>
+    <title>
     {% block title %}
-    {% if item %}
-    <title>Deme &raquo; {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}</title>
-    {% else %}
-    <title>Deme{% if action_title %} &raquo; {{ action_title }}{% endif %}</title>
+    {% if item %}Deme &raquo; {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
+    {% else %}Deme{% if action_title %} &raquo; {{ action_title }}{% endif %}
     {% endif %}
     {% endblock title %}
+    </title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
