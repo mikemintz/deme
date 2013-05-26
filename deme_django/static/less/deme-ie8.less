@@ -1,0 +1,25 @@
+.adminbar {
+  filter: none;
+  .nav {
+    > li > a {
+      border-right: 1px solid #3b7285; //fade(@black, 15%);
+      border-left:  1px solid #6aa0b2; //fade(@white, 15%);
+      &:active, &.active, &:hover.active {
+        filter: none;
+      }
+    }
+    .dropdown.open {
+      > a {
+        filter: none;
+      }
+    }
+    &.breadcrumbs {
+      > li {
+        filter: none;
+      }
+    }
+    &.actions-wrap {
+      filter: none;
+    }
+  }
+}

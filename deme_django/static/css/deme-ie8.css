@@ -1,0 +1,21 @@
+.adminbar {
+  filter: none;
+}
+.adminbar .nav > li > a {
+  border-right: 1px solid #3b7285;
+  border-left: 1px solid #6aa0b2;
+}
+.adminbar .nav > li > a:active,
+.adminbar .nav > li > a.active,
+.adminbar .nav > li > a:hover.active {
+  filter: none;
+}
+.adminbar .nav .dropdown.open > a {
+  filter: none;
+}
+.adminbar .nav.breadcrumbs > li {
+  filter: none;
+}
+.adminbar .nav.actions-wrap {
+  filter: none;
+}
