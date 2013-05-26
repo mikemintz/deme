@@ -21,8 +21,7 @@ Edit "Default Site" (or any other Site that you want to override the layout for)
   </div>
 {% endblock banner-section %}
 
-{% block tabs-section %}
-  <style>
+{% block custom_css %}
   .xyz123 {
   border-bottom: thick solid #ccc;
   margin-bottom: 0;
@@ -35,7 +34,10 @@ Edit "Default Site" (or any other Site that you want to override the layout for)
   }
   .xyz123 li a.xyzhighlighted {
   background: #def;
-  }</style>
+  }
+{% endblock %}
+
+{% block tabs-section %}
   <ul class="nav nav-pills xyz123">
     <li><a href="/" {% ifequal full_path "/" %}class="xyzhighlighted"{% endifequal %}>Welcome</a></li>
     <li><a href="/viewing/discussion/25" {% ifequal full_path "/viewing/discussion/25" %}class="xyzhighlighted"{% endifequal %}>Discussion</a></li>
