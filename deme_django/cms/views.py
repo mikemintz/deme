@@ -135,6 +135,7 @@ class ItemViewer(Viewer):
 
     def type_list_html(self):
         self.context['action_title'] = ''
+        self.context['metabar_contents'] = u'List %s' % self.accepted_item_type._meta.verbose_name_plural
         self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         self.context['item_create_ability'] = "create %s" % (self.accepted_item_type.__name__)
         self.context['search_query'] = self.request.GET.get('q', '')
@@ -352,6 +353,7 @@ class ItemViewer(Viewer):
 
     def type_newother_html(self):
         self.context['action_title'] = u'New'
+        self.context['metabar_contents'] = u'Create a new item'
         sorted_item_types = sorted(all_item_types(), key=lambda x: x._meta.verbose_name_plural.lower())
         all_item_types_can_create = [{'item_type': x, 'url': reverse('item_type_url', kwargs={'viewer': x.__name__.lower(), 'action': 'new'})} for x in sorted_item_types if self.cur_agent_can_global('create %s' % x.__name__)]
         self.context['all_item_types_can_create'] = all_item_types_can_create
@@ -360,6 +362,7 @@ class ItemViewer(Viewer):
 
     def type_new_html(self, form=None):
         self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
+        self.context['metabar_contents'] = u'Create a new %s' % self.accepted_item_type._meta.verbose_name
         if not self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__):
             form = None
         else:
@@ -380,6 +383,7 @@ class ItemViewer(Viewer):
     @require_POST
     def type_create_html(self):
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
+        self.context['metabar_contents'] = u'Create a new %s' % self.accepted_item_type._meta.verbose_name
         form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
@@ -397,6 +401,7 @@ class ItemViewer(Viewer):
 
     def type_recentchanges_html(self):
         self.context['action_title'] = 'Recent Changes'
+        self.context['metabar_contents'] = u'Display recent changes across this website'
         template = loader.get_template('item/recentchanges.html')
         viewable_items = self.permission_cache.filter_items('view Item.action_notices', Item.objects)
         viewable_action_notices = ActionNotice.objects.filter(action_item__in=viewable_items.values("pk").query).order_by('-action_time')
@@ -734,18 +739,21 @@ class ItemViewer(Viewer):
 
     def type_globalpermissions_html(self):
         self.context['action_title'] = 'Global permissions'
+        self.context['metabar_contents'] = u'Modify global permissions for this website'
         self.require_global_ability('do_anything')
         template = loader.get_template('item/globalpermissions.html')
         return HttpResponse(template.render(self.context))
 
     def type_admin_html(self):
         self.context['action_title'] = 'Admin'
+        self.context['metabar_contents'] = u'Administrative options for this website'
         self.require_global_ability('do_anything')
         template = loader.get_template('item/admin.html')
         return HttpResponse(template.render(self.context))
 
     def type_permissionshelp_html(self):
-        self.context['action_title'] = ''
+        self.context['action_title'] = 'Permissions help'
+        self.context['metabar_contents'] = u'Documentation on setting up permissions'
         template = loader.get_template('item/permissionshelp.html')
         return HttpResponse(template.render(self.context))
 
@@ -888,6 +896,7 @@ class AuthenticationMethodViewer(ItemViewer):
 
     def type_login_html(self):
         self.context['action_title'] = 'Login'
+        self.context['metabar_contents'] = u'Login as a particular agent'
         if self.request.method == 'GET':
             login_as_agents = Agent.objects.filter(active=True).order_by('name')
             login_as_agents = self.permission_cache.filter_items('login_as', login_as_agents)
@@ -930,8 +939,10 @@ class AuthenticationMethodViewer(ItemViewer):
             return HttpResponseRedirect(force_redirect_path)
         if self.cur_agent.is_anonymous():
             self.context['action_title'] = 'Logged out'
+            self.context['metabar_contents'] = u'You are now logged out'
         else:
             self.context['action_title'] = 'Logged in'
+            self.context['metabar_contents'] = u'You are now logged in'
         self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('authenticationmethod/loggedinorout.html')
         return HttpResponse(template.render(self.context))
@@ -1331,6 +1342,7 @@ class TextCommentViewer(TextDocumentViewer, CommentViewer):
 
     def type_new_html(self, form=None):
         self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
+        self.context['metabar_contents'] = u'Create a new %s' % self.accepted_item_type._meta.verbose_name
         try:
             item = Item.objects.get(pk=self.request.REQUEST.get('populate_item' if form is None else 'item'))
         except:
@@ -1512,6 +1524,7 @@ class DemeSettingViewer(ItemViewer):
 
     def type_modify_html(self):
         self.context['action_title'] = 'Modify settings'
+        self.context['metabar_contents'] = u'Modify global website settings'
         self.require_global_ability('do_anything')
         self.context['deme_settings'] = DemeSetting.objects.filter(active=True).order_by('key')
         template = loader.get_template('demesetting/modify.html')
