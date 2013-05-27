@@ -83,8 +83,20 @@ body {
 {% endblock %}
 ```
 
-If you have existing CSS files or anything else you need to include inside the <head>, use the `head_append` block.
+If you have existing CSS files or anything else you need to include inside the `<head>`, use the `head_append` block.
 
 ### Tabs
 
+Tabs can be added to a special section underneath the Banner section. Tabs need special syntax to work:
+
+```
+<div class="tabs-section">
+  <ul class="nav nav-tabs">
+    <li><a href="/" {% ifequal full_path "/" %}class="active"{% endifequal %}>Welcome</a></li>
+    ...
+  </ul>
+</div>
+```
+
+The `{% ifequal full_path "/" %}` syntax highlights that specific tab if you're on the relevant page.
 

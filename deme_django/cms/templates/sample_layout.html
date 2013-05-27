@@ -16,9 +16,9 @@ Edit "Default Site" (or any other Site that you want to override the layout for)
 {% endblock body_wrap %}
 
 {% block logo-section %}
-<div class="logo-section">
-  <a href="/" class="logo"><h1>Logo</h1></a>
-</div>
+  <div class="logo-section">
+    <a href="/" class="logo"><h1>Logo</h1></a>
+  </div>
 {% endblock logo-section %}
 
 {% block banner-section %}
@@ -29,32 +29,25 @@ Edit "Default Site" (or any other Site that you want to override the layout for)
 
 {% block custom_css %}
   .page-layout .logo-section a.logo {
-  background: red;
+    background: darkred;
   }
   .page-layout .logo-section a.logo:hover {
-  background: orange;
+    background: red;
   }
-  .xyz123 {
-  border-bottom: thick solid #ccc;
-  margin-bottom: 0;
-  }
-  .xyz123 li {
-  border: thin solid #ccc; border-radius: 10px 10px 0 0; background: #eee; font-family: Georgia; font-weight: bold; font-size: larger;
-  }
-  .xyz123 li a {
-  color: #444;
-  }
-  .xyz123 li a.xyzhighlighted {
-  background: #def;
+  .nav-tabs > li > a {
+    border-color: #f3f3f3;
+    border-bottom-color: transparent;
   }
 {% endblock %}
 
 {% block tabs-section %}
-  <ul class="nav nav-pills xyz123">
-    <li><a href="/" {% ifequal full_path "/" %}class="xyzhighlighted"{% endifequal %}>Welcome</a></li>
-    <li><a href="/viewing/discussion/25" {% ifequal full_path "/viewing/discussion/25" %}class="xyzhighlighted"{% endifequal %}>Discussion</a></li>
-    <li><a href="/viewing/agreedisagreepoll" {% ifequal full_path "/viewing/agreedisagreepoll" %}class="xyzhighlighted"{% endifequal %}>Polls</a></li>
-  </ul>
+  <div class="tabs-section">
+    <ul class="nav nav-tabs">
+      <li {% ifequal full_path "/" %}class="active"{% endifequal %}><a href="/">Welcome</a></li>
+      <li {% ifequal full_path "/viewing/discussion/25" %}class="active"{% endifequal %}><a href="/viewing/discussion/25">Discussion</a></li>
+      <li {% ifequal full_path "/viewing/agreedisagreepoll" %}class="active"{% endifequal %}><a href="/viewing/agreedisagreepoll">Polls</a></li>
+    </ul>
+  </div>
 {% endblock tabs-section %}
 
 {% block chat %}{% endblock %}
