@@ -59,6 +59,18 @@ By default, the banner area (block) is left empty. To place content into it, we 
 {% endblock banner-section %}
 ```
 
+### Logo section
+
+To change the logo, overwrite the `logo-section` block:
+
+```
+{% block logo-section %}
+<div class="logo-section">
+  <a href="/" class="logo"><h1>Logo</h1></a>
+</div>
+{% endblock logo-section %}
+```
+
 ### Custom CSS
 
 The easiest way to add your own CSS is through using the `custom_css` block:
