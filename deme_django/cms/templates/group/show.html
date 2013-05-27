@@ -19,7 +19,8 @@
     <div id="member{{ member.item.pk }}" class="member col col-lg-3">
       <a href="{{ member.item.get_absolute_url }}">
       <div class="thumb profile-pic"
-        {% if member.photo %} style="background-image: url('{{ member.photo.datafile.url }}')"{% endif %}
+        {% if member.photo %}{% ifagentcan 'view Agent.photo' member.item %}
+      {% ifagentcan 'view FileDocument.datafile' member.photo %} style="background-image: url('{{ member.photo.datafile.url }}')"{% endifagentcan %}{% endifagentcan %}{% endif %}
       ></div>
       </a>
       <p class="name"><a href="{{ member.item.get_absolute_url }}">{% viewable_name member.item %}</a></p>

@@ -43,9 +43,10 @@ Edit "Default Site" (or any other Site that you want to override the layout for)
 {% block tabs-section %}
   <div class="tabs-section">
     <ul class="nav nav-tabs">
-      <li {% ifequal full_path "/" %}class="active"{% endifequal %}><a href="/">Welcome</a></li>
-      <li {% ifequal full_path "/viewing/discussion/25" %}class="active"{% endifequal %}><a href="/viewing/discussion/25">Discussion</a></li>
-      <li {% ifequal full_path "/viewing/agreedisagreepoll" %}class="active"{% endifequal %}><a href="/viewing/agreedisagreepoll">Polls</a></li>
+      <li {% ifequal full_path "/" %}class="active"{% endifequal %}><a href="/">1: Welcome</a></li>
+      <li {% ifequal full_path "/viewing/discussion/9" %}class="active"{% endifequal %}><a href="/viewing/discussion/9">2: Discussion</a></li>
+      <li {% ifequal full_path "/viewing/agreedisagreepoll" %}class="active"{% endifequal %}><a href="/viewing/agreedisagreepoll">3: Polls</a></li>
+      <li {% ifequal full_path "/viewing/djangotemplatedocument/8" %}class="active"{% endifequal %}><a href="/viewing/djangotemplatedocument/8">4: Sample Layout</a></li>
     </ul>
   </div>
 {% endblock tabs-section %}
