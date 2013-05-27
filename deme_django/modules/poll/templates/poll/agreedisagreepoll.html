@@ -55,7 +55,37 @@ $(document).ready(function() {
 		$("#removeInput").val(pk);
 		$("#removemember").submit();
 	};
+
+	// read more buttons
+	$(function(){
+  	$('.btn-read-more').click(function(e){
+  	  e.preventDefault();
+      var content = $(this).next().html();
+      var title = $(this).closest('.proposition').find('h4').text();
+      var modal = $('#readMoreModal');
+      modal.find('.modal-body').html(content);
+      modal.find('.modal-title').text(title);
+      modal.modal('show');
+  	});
+	});
 </script>
+
+<!-- Modal -->
+<div class="modal fade" id="readMoreModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Read More</h4>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Close</a>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dalog -->
+</div><!-- /.modal -->
 
 <div class="approvenpoll">
   {% if item.question %}
@@ -98,7 +128,7 @@ $(document).ready(function() {
     		      <h4>{% firstof proposition.name forloop.counter %}</h4>
     		      <p>{{proposition.summary_text|safe}}</p>
     		      {% if proposition.body %}
-      		      <button onclick="$(this).next().removeClass('hide');$(this).remove()" class="btn btn-small">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
+      		      <button class="btn btn-small btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
     		      {% endif %}
 
     	 	      <!-- admin -->
@@ -161,7 +191,7 @@ $(document).ready(function() {
         <h4>{% firstof proposition.name forloop.counter %}</h4>
 	      <p>{{proposition.summary_text|safe}}</p>
 	      {% if proposition.body %}
-		      <button onclick="$(this).next().removeClass('hide');$(this).remove()" class="btn btn-small">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
+		      <button class="btn btn-small btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
 	      {% endif %}
 	      <div class="proposition_graph">
 	        <div class="position">
