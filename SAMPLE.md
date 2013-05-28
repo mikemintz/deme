@@ -92,7 +92,7 @@ Tabs can be added to a special section underneath the Banner section. Tabs need 
 ```
 <div class="tabs-section">
   <ul class="nav nav-tabs">
-    <li><a href="/" {% ifequal full_path "/" %}class="active"{% endifequal %}>Welcome</a></li>
+    <li {% ifequal full_path "/" %}class="active"{% endifequal %}><a href="/">Welcome</a></li>
     ...
   </ul>
 </div>
