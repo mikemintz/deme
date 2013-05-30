@@ -54,7 +54,7 @@ $(document).ready(function () {
         {% endif %}
     </form>
 {% else %}
-    You do not have permission to create {{ accepted_item_type_name_plural }}.
+    You do not have permission to create {{ accepted_item_type_name_plural }}. <a href="javascript:history.back()">Go back</a>
 {% endif %}
 </div>
 
