@@ -370,7 +370,6 @@ class ItemViewer(Viewer):
                 form_initial = self.get_populated_field_dict(self.accepted_item_type)
                 form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
                 form = form_class(initial=form_initial)
-        template = loader.get_template('item/new.html')
         self.context['form'] = form
         self.context['is_html'] = issubclass(self.accepted_item_type, HtmlDocument)
         self.context['redirect'] = self.request.GET.get('redirect')
@@ -378,6 +377,11 @@ class ItemViewer(Viewer):
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name': x._meta.verbose_name, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
         item_types.sort(key=lambda x:x['name'].lower())
         self.context['item_types'] = item_types
+        is_true = lambda value: bool(value) and value.lower() not in ('false', '0')
+        if (is_true(self.request.GET.get('modal'))):
+          template = loader.get_template('item/new_embed.html')
+        else:
+          template = loader.get_template('item/new.html')
         return HttpResponse(template.render(self.context))
 
     @require_POST

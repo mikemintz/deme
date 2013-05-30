@@ -1,0 +1,57 @@
+{% load item_tags %}
+{% if is_html %}
+<script type="text/javascript" src="{% media_url "javascripts/tinymce/jscripts/tiny_mce/tiny_mce.js" %}"></script>
+<script type="text/javascript">
+$(document).ready(function () {
+    tinyMCE.init({
+        // General options
+        mode: "exact",
+        elements: "body",
+        theme : "advanced",
+        plugins : "table,advimage,advlink,media,paste,fullscreen,xhtmlxtras,searchreplace",
+
+        // Theme options
+        theme_advanced_buttons1 : "bold,italic,underline,strikethrough,|,justifyleft,justifycenter,justifyright,justifyfull,|,formatselect,fontselect,fontsizeselect,|,search,replace",
+        theme_advanced_buttons2 : "cut,copy,paste,pastetext,pasteword,|,bullist,numlist,|,outdent,indent,blockquote,|,cite,abbr,acronym,|,undo,redo,|,link,unlink,anchor,image,cleanup,code,|,forecolor,backcolor",
+        theme_advanced_buttons3 : "tablecontrols,|,hr,removeformat,|,sub,sup,|,charmap,media,|,fullscreen",
+        theme_advanced_toolbar_location : "top",
+        theme_advanced_toolbar_align : "left",
+        theme_advanced_statusbar_location : "bottom",
+        theme_advanced_resizing : true,
+        convert_urls : false,
+    });
+});
+</script>
+{% endif %}
+
+<div style="border: thin solid #aaa; background: #eee; padding: 10px; margin-bottom: 10px;">
+    {% for item_type in item_types %}
+    <span>[
+    {% ifequal item_type.item_type accepted_item_type %}
+    <b>New {{ item_type.name|capfirst }}</b>
+    {% else %}
+    <a href="{% url item_type_url viewer=item_type.viewer,action="new" %}?{{ query_string }}">New {{ item_type.name|capfirst }}</a>
+    {% endifequal %}
+    ]</span>
+    {% endfor %}
+</div>
+
+<div>
+{% if form %}
+    <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=viewer_name,action="create" %}?{% if add_to_collection %}add_to_collection={{ add_to_collection|urlencode }}&{% endif %}{% if redirect %}redirect={{ redirect|urlencode }}{% endif %}" class="item_form">
+        <table cellspacing="0">
+           {{ form.as_table }}
+        </table>
+        <div>
+            <button type="button" onclick="$('#permission_editor').toggle();"><img src="{{ "permissions"|icon_url:16 }}" /> <span>Permissions</span></button>
+        </div>
+        <div id="permission_editor" style="display: none;">
+            {% new_item_permission_editor item %}
+        </div>
+        <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Create {{ accepted_item_type_name }}</span></button>
+    </form>
+{% else %}
+    You do not have permission to create {{ accepted_item_type_name_plural }}.
+{% endif %}
+</div>
+

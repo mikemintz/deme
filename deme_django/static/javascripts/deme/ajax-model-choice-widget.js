@@ -27,5 +27,11 @@ $(function() {
             });
         },
     });
+
+    // set up new button
+    var newbtn = $('<span class="input-group-btn"><button class="btn btn-default">New</button></span>').insertAfter(search_input);
+    newbtn.click(function(e){
+      e.preventDefault();
+    })
   });
 });

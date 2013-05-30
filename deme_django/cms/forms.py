@@ -48,9 +48,11 @@ class AjaxModelChoiceWidget(forms.Widget):
         ajax_query_string = '&'.join('ability=' + urlquote(ability) for ability in self.required_abilities)
         ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'}) + '?' + ajax_query_string
         result = """
-        <input type="hidden" name="%(name)s" value="%(value)s" data-input-id="%(id)s" data-ajax-url="%(ajax_url)s" class="ajax-model-choice-widget">
-        <input id="%(id)s" name="%(name)s_search" value="%(initial_search)s">
-        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search}
+        <div class="input-group">
+          <input type="hidden" name="%(name)s" value="%(value)s" data-model-name="%(model_name)s" data-input-id="%(id)s" data-ajax-url="%(ajax_url)s" class="ajax-model-choice-widget">
+          <input type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s">
+        </div>
+        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search, 'model_name': model.__name__.lower()}
         # see /javascripts/deme/ajax-model-choice-widget.js for implementation
         #TODO fail in more obvious way if attrs['id'] is not set
         return result
