@@ -49,6 +49,9 @@ $(document).ready(function () {
             {% new_item_permission_editor item %}
         </div>
         <button type="submit"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Create {{ accepted_item_type_name }}</span></button>
+        {% if receiver_input_id %}
+        <input type="hidden" name="receiver_input_id" value="{{ receiver_input_id }}">
+        {% endif %}
     </form>
 {% else %}
     You do not have permission to create {{ accepted_item_type_name_plural }}.

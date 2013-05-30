@@ -1,9 +1,9 @@
 $(function() {
   $('.ajax-model-choice-widget').each(function(){
-    var id = $(this).attr('data-input-id');
-    var ajax_url = $(this).attr('data-ajax-url');
-    var search_input = $("#"+id);
     var hidden_input = $(this);
+    var id = hidden_input.attr('data-input-id');
+    var ajax_url = hidden_input.attr('data-ajax-url');
+    var search_input = $("#"+id);
     var cache = {};
     var last_xhr;
     search_input.autocomplete({
@@ -29,9 +29,21 @@ $(function() {
     });
 
     // set up new button
-    var newbtn = $('<span class="input-group-btn"><button class="btn btn-default">New</button></span>').insertAfter(search_input);
-    newbtn.click(function(e){
+    var newbtn = $('<span class="input-group-btn"><a href="#" class="btn btn-default">New</a></span>').insertAfter(search_input);
+    newbtn.find('a').click(function(e){
       e.preventDefault();
+      var new_modal_url = hidden_input.attr('data-new-modal-url');
+      window.open(new_modal_url, 'embedform', 'width=400,toolbar=1,resizable=1,scrollbars=yes,height=400,top=100,left=100');
     })
   });
+
+  function ajaxModelChoiceWidgetUpdateValue(id, dict) {
+    var itemid = dict['id'];
+    var itemname = dict['name'];
+    var input = $('#' + id);
+    var hidden_input = $('[data-input-id="'+id+'"]');
+    hidden_input.val(itemid);
+    input.val(itemname);
+  }
+  window.ajaxModelChoiceWidgetUpdateValue = ajaxModelChoiceWidgetUpdateValue;
 });
