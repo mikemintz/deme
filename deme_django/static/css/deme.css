@@ -5117,13 +5117,6 @@ body.nonadmin #metabar {
     max-width: 100%;
     padding: 0;
     overflow-x: scroll;
-    background-color: #29687e;
-    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#68a7bd), to(#29687e));
-    background-image: -webkit-linear-gradient(top, #68a7bd, #29687e);
-    background-image: -moz-linear-gradient(top, #68a7bd, #29687e);
-    background-image: linear-gradient(to bottom, #68a7bd, #29687e);
-    background-repeat: repeat-x;
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
     border: 0;
   }
   .adminbar .nav.breadcrumbs > li {
@@ -5137,10 +5130,27 @@ body.nonadmin #metabar {
     padding: 8px 10px;
     border-left: 1px solid rgba(255, 255, 255, 0.15);
     border-right: 1px solid rgba(0, 0, 0, 0.15);
+    background-color: #29687e;
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#68a7bd), to(#29687e));
+    background-image: -webkit-linear-gradient(top, #68a7bd, #29687e);
+    background-image: -moz-linear-gradient(top, #68a7bd, #29687e);
+    background-image: linear-gradient(to bottom, #68a7bd, #29687e);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
     /*&:after {
                 content: " » ";
               }*/
   
+  }
+  .adminbar .nav.breadcrumbs > li:last-child > a,
+  .adminbar .nav.breadcrumbs > li:last-child > span {
+    background-color: #29687e;
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#68a7bd), to(#29687e));
+    background-image: -webkit-linear-gradient(top, #68a7bd, #29687e);
+    background-image: -moz-linear-gradient(top, #68a7bd, #29687e);
+    background-image: linear-gradient(to bottom, #68a7bd, #29687e);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
   }
   .adminbar .nav.breadcrumbs > li:last-child > a:after,
   .adminbar .nav.breadcrumbs > li:last-child > span:after {
@@ -5157,6 +5167,10 @@ body.nonadmin #metabar {
   .adminbar .nav.actions-wrap > li > .dropdown-menu {
     left: 0;
     right: auto;
+  }
+  html.ua-android .adminbar .nav.breadcrumbs {
+    white-space: normal;
+    overflow: visible;
   }
 }
 #overall-wrap {

@@ -194,7 +194,6 @@ body {
         max-width: 100%;
         padding: 0;
         overflow-x: scroll;
-        #gradient .vertical(@adminbar-top, @adminbar-bottom);
         border: 0;
         > li {
           background: none;
@@ -205,12 +204,15 @@ body {
             padding: 8px 10px;
             border-left: 1px solid fade(@white, 15%);
             border-right: 1px solid fade(@black, 15%);
-
+            #gradient .vertical(@adminbar-top, @adminbar-bottom);
             /*&:after {
               content: " » ";
             }*/
           }
           &:last-child {
+            > a, > span {
+              #gradient .vertical(@adminbar-top, @adminbar-bottom);
+            }
             > a:after, > span:after {
               content: '';
             }
@@ -227,6 +229,16 @@ body {
         > li > .dropdown-menu {
           left: 0;
           right: auto;
+        }
+      }
+    }
+  }
+  html.ua-android {
+    .adminbar {
+      .nav {
+        &.breadcrumbs {
+          white-space: normal;
+          overflow: visible;
         }
       }
     }
