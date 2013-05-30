@@ -84,6 +84,11 @@ sample_layout_code = open(os.path.join(os.path.dirname(__file__), '..', 'cms', '
 sample_layout = DjangoTemplateDocument(override_default_layout=True, name='Sample Layout', body=sample_layout_code)
 sample_layout.save_versioned(action_agent=admin)
 
+# Set the forum sample layout
+forum_sample_layout_code = open(os.path.join(os.path.dirname(__file__), '..', 'cms', 'templates', 'forum_layout.html')).read()
+forum_sample_layout = DjangoTemplateDocument(override_default_layout=True, name='Sample Forum Layout', body=forum_sample_layout_code)
+forum_sample_layout.save_versioned(action_agent=admin)
+
 git_log = subprocess.Popen(["git", "log"], stdout=subprocess.PIPE).communicate()[0]
 git_commit = re.search(r'commit (.+)\nAuthor:', git_log).group(1)
 git_date = re.search(r'Date:\s*(.*) (-|\+)\d+', git_log).group(1)
