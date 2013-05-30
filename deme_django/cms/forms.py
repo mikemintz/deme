@@ -48,38 +48,10 @@ class AjaxModelChoiceWidget(forms.Widget):
         ajax_query_string = '&'.join('ability=' + urlquote(ability) for ability in self.required_abilities)
         ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'}) + '?' + ajax_query_string
         result = """
-        <input type="hidden" name="%(name)s" value="%(value)s" />
-        <input id="%(id)s" name="%(name)s_search" value="%(initial_search)s" />
-        <script type="text/javascript">
-        $(function() {
-            var search_input = $("#%(id)s")
-            var hidden_input = $(search_input).prev();
-            var cache = {};
-            var last_xhr;
-            search_input.autocomplete({
-                minLength: 0,
-                select: function(event, ui) {
-                    search_input[0].value = ui.item.value;
-                    hidden_input[0].value = ui.item.id;
-                    return false;
-                },
-                source: function(request, response) {
-                    var term = request.term;
-                    if (term in cache) {
-                        response(cache[term]);
-                        return;
-                    }
-                    last_xhr = $.getJSON('%(ajax_url)s', {q:term}, function(data, status, xhr) {
-                        var normalized_data = $.map(data, function(x){ return {value: x[0], id: x[1]} });
-                        normalized_data.splice(0, 0, {value: "[None]", id: ""});
-                        cache[term] = normalized_data;
-                        response(normalized_data);
-                    });
-                },
-            });
-        });
-        </script>
+        <input type="hidden" name="%(name)s" value="%(value)s" data-input-id="%(id)s" data-ajax-url="%(ajax_url)s" class="ajax-model-choice-widget">
+        <input id="%(id)s" name="%(name)s_search" value="%(initial_search)s">
         """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search}
+        # see /javascripts/deme/ajax-model-choice-widget.js for implementation
         #TODO fail in more obvious way if attrs['id'] is not set
         return result
 
