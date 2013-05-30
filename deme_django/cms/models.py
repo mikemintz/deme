@@ -944,12 +944,16 @@ class Agent(Item):
 
     def can_be_deleted(self):
         # Don't delete the admin agent
-        if self.pk == 1:
+        if self.is_admin():
             return False
         return super(Agent, self).can_be_deleted()
 
     def is_anonymous(self):
         return issubclass(self.actual_item_type(), AnonymousAgent)
+
+    def is_admin(self):
+        return self.pk == 1
+
 
 
 class AnonymousAgent(Agent):

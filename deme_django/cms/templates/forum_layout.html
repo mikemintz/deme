@@ -1,0 +1,127 @@
+{% extends "base_layout.html" %}
+
+{% comment %}
+Make a new DjangoTemplateDocument. Make sure "override default layout" is checked, and "layout" is blank.
+
+Edit "Default Site" (or any other Site that you want to override the layout for). Set "default layout" to point to the DjangoTemplateDocument you just created.
+{% endcomment %}
+
+
+{% block body_wrap %}
+  {% if cur_agent.is_anonymous %}
+    {% include "demeaccount/required_login_include.html" %}
+  {% else %}
+    {{ block.super }}
+  {% endif %}
+{% endblock body_wrap %}
+
+{% block logo-section %}
+  <div class="logo-section">
+    <a href="/" class="logo"><h1>Logo</h1></a>
+  </div>
+{% endblock logo-section %}
+
+{% block banner-section %}
+  <div class="banner-section">
+    <h3>Generic website banner text</h3>
+  </div>
+{% endblock banner-section %}
+
+{% block custom_css %}
+  html, body {
+    background: #3badd5;
+  }
+  .page-layout {
+    color: #fff;
+  }
+  .panel {
+    border-color: #2d83a5;
+    color: #333;
+  }
+  .panel-heading {
+    background: #2d83a5;
+    border-bottom: 0;
+    color: #fff;
+  }
+  .page-layout .logo-section a.logo {
+    background: transparent;
+  }
+  .page-layout .logo-section a.logo:hover {
+    background: #2d83a5;
+  }
+  .nav-tabs {
+    border-bottom-color: #2d83a5;
+  }
+  .nav-tabs > li > a {
+    background: #2f7c9a;
+    -ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr=#82bcd0, endColorstr=#2a7a98)";
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#82bcd0', endColorstr='#2a7a98');
+    background-image: -moz-linear-gradient(top, #82bcd0, #2a7a98);
+    background-image: -webkit-linear-gradient(#82bcd0, #2a7a98);
+    background-image: -o-linear-gradient(#82bcd0, #2a7a98);
+    border-color: #2d83a5;
+    color: #fff;
+    font-weight: bold;
+  }
+  .nav-tabs > li.active > a {
+    filter: none;
+    background: #fff;
+    border-color: #2d83a5;
+    border-bottom-color: #fff;
+  }
+  .item-view-section {
+    border: 1px solid #2d83a5;
+    background: #fff;
+    color: #333;
+    border-top-width: 0;
+    padding: 0 15px 30px;
+    border-radius: 0 0 4px 4px;
+  }
+  .item-view-section h1.title {
+    margin-top: 0;
+    padding-top: 20px;
+  }
+  .footer {
+    color: white;
+  }
+  .footer a {
+    color: white !important;
+    text-decoration: none !important;
+  }
+  .footer a:hover {
+    text-decoration: underline !important;
+  }
+{% endblock %}
+
+{% block tabs-section %}
+  <div class="tabs-section">
+    <ul class="nav nav-tabs">
+      <li {% ifequal full_path "/" %}class="active"{% endifequal %}><a href="/">1: Welcome</a></li>
+      <li {% ifequal full_path "/viewing/discussion/9" %}class="active"{% endifequal %}><a href="/viewing/discussion/9">2: Discussion</a></li>
+      <li {% ifequal full_path "/viewing/agreedisagreepoll" %}class="active"{% endifequal %}><a href="/viewing/agreedisagreepoll">3: Polls</a></li>
+      <li {% ifequal full_path "/viewing/djangotemplatedocument/8" %}class="active"{% endifequal %}><a href="/viewing/djangotemplatedocument/8">4: Sample Layout</a></li>
+    </ul>
+  </div>
+{% endblock tabs-section %}
+
+{% block chat %}{% endblock %}
+
+{% block sidebar-section %}
+<div class="sidebar-section">
+  <div class="panel">
+    <div class="panel-heading">
+      Resources
+    </div>
+    <ul>
+        <li><a href="#">PDF Link Goes Here</a></li>
+        <li>...</li>
+    </ul>
+  </div>
+</div>
+{% endblock sidebar-section %}
+
+{% block footer %}
+  {% if cur_agent.is_admin %}
+    {{ block.super }}
+  {% endif %}
+{% endblock footer %}

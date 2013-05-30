@@ -1,11 +1,7 @@
 {% extends "base_layout.html" %}
 
 {% comment %}
-{% block body_wrap %}
-  {% if cur_agent.is_anonymous %}
-    {% include "demeaccount/required_login_include.html" %}
-  {% else %}
-    {{ block.super }}
-  {% endif %}
-{% endblock body_wrap %}
+Make a new DjangoTemplateDocument. Make sure "override default layout" is checked, and "layout" is blank.
+
+Edit "Default Site" (or any other Site that you want to override the layout for). Set "default layout" to point to the DjangoTemplateDocument you just created.
 {% endcomment %}
