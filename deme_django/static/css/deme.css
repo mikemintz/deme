@@ -4748,18 +4748,6 @@ table.twocol tr th {
 table.twocol tr td {
   padding: 3px;
 }
-table.search-items .item-type-container span a,
-table.search-items .item-type-container span b {
-  white-space: nowrap;
-  background: #fcfcfc;
-  border-radius: 5px;
-  padding: .1em .75em;
-  margin: 0 0 .25em .25em;
-  display: inline-block;
-}
-table.search-items .item-type-container span b {
-  background: #ccc;
-}
 form.item_form table tr th {
   text-align: right;
   padding-right: 10px;
@@ -5329,15 +5317,19 @@ body.nonadmin #metabar {
   margin-bottom: 15px;
 }
 #metadata_content_related_items .relationship .type {
-  background: #e4f7fd;
-  margin: 0 -10px;
+  background: #eeeeee;
+  margin: 0 -10px 5px;
   padding: 3px 10px;
+  position: relative;
 }
 #metadata_content_related_items .relationship .type a {
   vertical-align: middle;
 }
 #metadata_content_related_items .relationship .type .btn {
   margin-left: 10px;
+  position: absolute;
+  top: 2px;
+  right: 5px;
 }
 .approvenpoll .propositions {
   margin-bottom: 15px;
@@ -5614,6 +5606,21 @@ h6,
 .h5,
 .h6 {
   line-height: 1.25;
+}
+html.embed .item-type-new-container {
+  padding: 0 15px;
+}
+.item-type-container span a,
+.item-type-container span b {
+  white-space: nowrap;
+  background: #fcfcfc;
+  border-radius: 5px;
+  padding: .1em .75em;
+  margin: 0 0 .25em .25em;
+  display: inline-block;
+}
+.item-type-container span b {
+  background: #ccc;
 }
 @media (max-width: 767px) {
   #overall {

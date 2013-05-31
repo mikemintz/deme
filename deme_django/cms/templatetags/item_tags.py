@@ -19,10 +19,12 @@ from django.utils.text import capfirst, truncate_words
 from django.utils import simplejson
 from django.utils.safestring import mark_safe
 from django.template import Context
+from django.template.defaultfilters import stringfilter
 from urlparse import urljoin
 import os
 import itertools
 import random
+import re
 
 register = template.Library()
 
@@ -2012,3 +2014,39 @@ def defaultcreateitemtypes(parser, token):
     token = parser.next_token()
     return DefaultCreateItemTypes(nodelist)
 
+@register.filter
+def to_name(value):
+  return value.__name__
+
+# http://djangosnippets.org/snippets/1519/
+
+CONSONANT_SOUND = re.compile(r'''
+one(![ir])
+''', re.IGNORECASE|re.VERBOSE)
+VOWEL_SOUND = re.compile(r'''
+[aeio]|
+u([aeiou]|[^n][^aeiou]|ni[^dmnl]|nil[^l])|
+h(ier|onest|onou?r|ors\b|our(!i))|
+[fhlmnrsx]\b
+''', re.IGNORECASE|re.VERBOSE)
+
+@register.filter
+@stringfilter
+def an(text):
+    """
+    Guess "a" vs "an" based on the phonetic value of the text.
+
+    "An" is used for the following words / derivatives with an unsounded "h":
+    heir, honest, hono[u]r, hors (d'oeuvre), hour
+
+    "An" is used for single consonant letters which start with a vowel sound.
+
+    "A" is used for appropriate words starting with "one".
+
+    An attempt is made to guess whether "u" makes the same sound as "y" in
+    "you".
+    """
+    text = force_unicode(text)
+    if not CONSONANT_SOUND.match(text) and VOWEL_SOUND.match(text):
+        return 'an'
+    return 'a'

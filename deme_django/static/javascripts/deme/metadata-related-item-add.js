@@ -6,7 +6,7 @@ $(function(){
       var new_modal_url = type.attr('data-new-modal-url');
 
       // add button
-      var newbtn = $('<a href="#" class="btn btn-default btn-small">New</a>').insertAfter(detail_link);
+      var newbtn = $('<a href="#" class="btn btn-default btn-small newbtn" title="New Item"><i class="glyphicon glyphicon-plus"></i></a>').insertAfter(detail_link);
       newbtn.click(function(e){
         e.preventDefault();
         var random_num = Math.floor((Math.random()*1000000)+1);

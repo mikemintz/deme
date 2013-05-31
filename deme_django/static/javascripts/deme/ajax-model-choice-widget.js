@@ -29,7 +29,7 @@ $(function() {
     });
 
     // set up new button
-    var newbtn = $('<span class="input-group-btn"><a href="#" class="btn btn-default">New</a></span>').insertAfter(search_input);
+    var newbtn = $('<span class="input-group-btn"><a href="#" class="btn btn-default newbtn" title="New Item"><i class="glyphicon glyphicon-plus"></i></a></span>').insertAfter(search_input);
     newbtn.find('a').click(function(e){
       e.preventDefault();
       var new_modal_url = hidden_input.attr('data-new-modal-url');
