@@ -52,6 +52,9 @@ $(document).ready(function () {
         {% if receiver_input_id %}
         <input type="hidden" name="receiver_input_id" value="{{ receiver_input_id }}">
         {% endif %}
+        {% if src %}
+        <input type="hidden" name="src" value="{{ src }}">
+        {% endif %}
     </form>
 {% else %}
     You do not have permission to create {{ accepted_item_type_name_plural }}. <a href="javascript:history.back()">Go back</a>

@@ -154,6 +154,7 @@ $(function(){
         success: function(data) {
           collapse.addClass('ajax-loaded');
           collapse.find('.content').html(data);
+          collapse.trigger('contentload');
           if ($('body').hasClass('nonadmin')) {
             collapse.css('height', 'auto');
           }

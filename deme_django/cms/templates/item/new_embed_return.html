@@ -4,12 +4,21 @@
   </head>
   <body>
   <script>
+    {% if receiver_input_id %}
     var data = {
       id: "{{new_item.pk}}",
       name: "{% viewable_name new_item %}"
     };
     window.opener.ajaxModelChoiceWidgetUpdateValue("{{receiver_input_id}}", data);
     window.close();
+    {% endif %}
+    {% if src == "metadata" %}
+    // reload the parent window
+    if (window.opener.confirm('Reload to see new changes?')) {
+      window.opener.location.reload();
+    }
+    window.close();
+    {% endif %}
   </script>
   </body>
 </html>

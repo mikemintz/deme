@@ -380,6 +380,9 @@ class ItemViewer(Viewer):
         is_true = lambda value: bool(value) and value.lower() not in ('false', '0')
         if (is_true(self.request.GET.get('modal'))):
           self.context['receiver_input_id'] = self.request.GET.get('id') # the name of the field that expects a response
+          src = self.request.GET.get('src') # src, if set, describes the source of the creation request
+          if src:
+            self.context['src'] = src
           template = loader.get_template('item/new_embed.html')
         else:
           template = loader.get_template('item/new.html')
@@ -400,10 +403,12 @@ class ItemViewer(Viewer):
                 membership_permissions = [OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
                 new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions)
             redirect = self.request.GET.get('redirect', new_item.get_absolute_url())
+            src = self.request.POST.get('src')
             receiver_input_id = self.request.POST.get('receiver_input_id')
-            if receiver_input_id:
+            if receiver_input_id or src:
               template = loader.get_template('item/new_embed_return.html')
               self.context['receiver_input_id'] = receiver_input_id
+              self.context['src'] = src
               self.context['new_item'] = new_item
               return HttpResponse(template.render(self.context))
             return HttpResponseRedirect(redirect)
