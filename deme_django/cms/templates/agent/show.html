@@ -5,16 +5,19 @@
 {% block content %}
 <div class="agent-profile container">
   <div class="row">
-    <div class="col col-lg-3 thumb"
     {% if item.photo %}
-      {% ifagentcan 'view Agent.photo' item %}
-      {% ifagentcan 'view FileDocument.datafile' item.photo %} style="background-image:url('{{ item.photo.datafile.url }}')"
-      {% endifagentcan %}
-      {% endifagentcan %}
-    {% endif %}>
+    {% ifagentcan 'view Agent.photo' item %}
+    {% ifagentcan 'view FileDocument.datafile' item.photo %}
+    <div class="thumb" style="background-image:url('{{ item.photo.datafile.url }}')">
+      <img src="{{ item.photo.datafile.url }}" alt="{% viewable_name item %}">
     </div>
+    {% endifagentcan %}
+    {% endifagentcan %}
+    {% else %}
+    <div class="thumb"></div>
+    {% endif %}
 
-    <div class="col col-lg-9">
+    <div class="profile">
       <!--h1 title="title">{% viewable_name item %}</h1-->
       <ul>
         {% for contact_method in contact_methods %}

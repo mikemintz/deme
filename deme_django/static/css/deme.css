@@ -5424,8 +5424,9 @@ body.nonadmin #metabar {
 }
 .agent-profile .thumb,
 .group-profile .thumb {
-  margin-top: 20px;
+  margin: 0 20px 20px 0;
   height: 200px;
+  width: 200px;
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center center;
@@ -5433,13 +5434,18 @@ body.nonadmin #metabar {
   border: 1px solid #eee;
   display: block;
   background-image: url('../img/empty-profile-pic.jpg');
+  float: left;
+}
+.agent-profile .thumb img,
+.group-profile .thumb img {
+  display: none;
 }
 .agent-profile .activity-inner h3,
 .group-profile .activity-inner h3 {
   display: none;
 }
-.group-profile .header .thumb {
-  height: 150px;
+.group-profile .header {
+  width: 100%;
 }
 .group-profile .name {
   text-align: center;
@@ -5447,6 +5453,16 @@ body.nonadmin #metabar {
 }
 .group-profile .pagination {
   text-align: center;
+}
+.group-profile .members.row {
+  clear: both;
+}
+.group-profile .member.col {
+  width: 165px;
+}
+.group-profile .member.col .thumb {
+  width: 150px;
+  height: 150px;
 }
 .HiddenMenu {
   z-index: 1;

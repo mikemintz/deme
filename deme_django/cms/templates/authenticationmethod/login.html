@@ -5,7 +5,7 @@
 {% if login_as_agents %}
 <form action="{% url item_type_url viewer="authenticationmethod",action="login" %}?redirect={{ redirect|urlencode }}" method="post">
 <div style="margin-top: 15px;">
-    You may login as one of the following agents:
+    <p>You may login as one of the following agents:</p>
     {% for agent in login_as_agents %}
         {% if agent.active %}
         <p>

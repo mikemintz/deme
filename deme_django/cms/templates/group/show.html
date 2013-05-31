@@ -4,10 +4,10 @@
 
 {% block content %}
 <div class="group-profile container">
-  <div class="header row">
-    <div class="col col-lg-4 thumb" style="background-image:url('{% if item.image %}{% ifagentcan 'view Group.image' item %}{% ifagentcan 'view FileDocument.datafile' item.image %}{{ item.image.datafile.url }}{% endifagentcan %}{% endifagentcan %}{% else %}{{ item.actual_item_type|icon_url:128 }}{% endif %}')">
+  <div class="header">
+    <div class="thumb" style="background-image:url('{% if item.image %}{% ifagentcan 'view Group.image' item %}{% ifagentcan 'view FileDocument.datafile' item.image %}{{ item.image.datafile.url }}{% endifagentcan %}{% endifagentcan %}{% else %}{{ item.actual_item_type|icon_url:128 }}{% endif %}')">
   	</div>
-  	<div class="col col-lg-8">
+  	<div class="details">
   	 {% ifagentcan 'view Item.description' item %}
    	 <p>{{ item.description }}</p>
   	 {% endifagentcan %}
@@ -16,7 +16,7 @@
 
   <div class="members row">
   {% for member in members %}
-    <div id="member{{ member.item.pk }}" class="member col col-lg-3">
+    <div id="member{{ member.item.pk }}" class="member col">
       <a href="{{ member.item.get_absolute_url }}">
       <div class="thumb profile-pic"
         {% if member.photo %}{% ifagentcan 'view Agent.photo' member.item %}

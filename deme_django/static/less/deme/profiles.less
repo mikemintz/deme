@@ -1,8 +1,9 @@
 .agent-profile,
 .group-profile {
   .thumb {
-    margin-top: 20px;
+    margin: 0 20px 20px 0;
     height: 200px;
+    width: 200px;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
@@ -10,6 +11,10 @@
     border: 1px solid #eee;
     display: block;
     background-image: url('../img/empty-profile-pic.jpg');
+    float: left;
+    img {
+      display: none;
+    }
   }
   .activity-inner {
     h3 {
@@ -20,8 +25,8 @@
 
 .group-profile {
   .header {
+    width: 100%;
     .thumb {
-      height: 150px;
     }
   }
   .name {
@@ -30,5 +35,15 @@
   }
   .pagination {
     text-align: center;
+  }
+  .members.row {
+    clear: both;
+  }
+  .member.col {
+    width: 215px - 50;
+    .thumb {
+      width: 150px;
+      height: 150px;
+    }
   }
 }

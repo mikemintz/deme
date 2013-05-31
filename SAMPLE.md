@@ -15,6 +15,13 @@ To change who can see the advanced layout tools, you'll need to change `Advanced
 5. Let's say we want logged in users to see the Advanced Layout bar but not Anonymous users. First, let's allow all users to see the bar by reenabling `Advanced Layout` under `Everyone` by clicking [+] and saving. Now, let's click `Assign a Permission to a User` at the very bottom of the permissions and enter `Anonymous` and then click `Add Collection`. Next, in the newly generated permission area for Anonymous, add a `New Permission`, from its dropdwon menu select `Advanced Layout`, click [-] to disallow, and then finally `Save Permissions`.
 6. Now if you visit the site as an Anonymous user, you'll no longer see the Advaned Layout tools.
 
+Adding users
+------------
+
+1. Log in as Admin
+2. From the Actions menu, Actions > Create (you can also click directly on the [+] icon)
+3. Choose `New person`
+4.
 
 Customizing the Site
 --------------------
