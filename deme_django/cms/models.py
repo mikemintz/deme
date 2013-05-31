@@ -1944,7 +1944,7 @@ class Site(ViewerRequest):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view Site.hostname', 'edit Site.hostname', 'view Site.default_layout', 'edit Site.default_layout', 'advanced_layout'])
+    introduced_abilities = frozenset(['view Site.hostname', 'edit Site.hostname', 'view Site.default_layout', 'edit Site.default_layout', 'advanced_layout', 'view Site.title', 'edit Site.title', 'view Site.logo', 'edit Site.logo', ])
     introduced_global_abilities = frozenset(['create Site'])
     dyadic_relations = {}
     class Meta:
@@ -1954,6 +1954,8 @@ class Site(ViewerRequest):
     # Fields
     hostname = models.CharField(_('hostname'), max_length=255, unique=True)
     default_layout = FixedForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout'))
+    title = models.CharField(_('title'), null=True, blank=True, max_length=255)
+    logo = FixedForeignKey('ImageDocument', related_name='sites_with_logo', null=True, blank=True, default=None, verbose_name=_('logo'))
 
     def can_be_deleted(self):
         # Don't delete the default site

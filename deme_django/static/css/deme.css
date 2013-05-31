@@ -5475,6 +5475,12 @@ body {
 .page-layout .logo-section a.logo h1 {
   margin: 0;
 }
+.page-layout .logo-section a.logo.img-logo {
+  background: none;
+}
+.page-layout .logo-section a.logo.img-logo:hover {
+  background: none;
+}
 .page-layout h1.title {
   font-size: 2em;
 }

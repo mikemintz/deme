@@ -56,13 +56,13 @@ $(function(){
            {{ form.as_table }}
         </table>
         <p>
-            <button type="button" class="btn btn-default" onclick="$('#permission_editor').toggle();"><img src="{{ "permissions"|icon_url:16 }}" /> <span>Permissions</span></button>
+            <button type="button" class="btn btn-default" onclick="$('#permission_editor').toggle();"><i class="glyphicon glyphicon-lock"></i> Permissions</button>
         </p>
         <div id="permission_editor" style="display: none;">
             {% new_item_permission_editor item %}
         </div>
         <p>
-        <button type="submit" class="btn btn-primary"><img src="{{ "checkbox"|icon_url:16 }}" /> <span>Create {{ accepted_item_type_name }}</span></button></p>
+        <button type="submit" class="btn btn-primary"><i class="glyphicon glyphicon-ok"></i> Create {{ accepted_item_type_name }}</button></p>
         {% if receiver_input_id %}
         <input type="hidden" name="receiver_input_id" value="{{ receiver_input_id }}">
         {% endif %}

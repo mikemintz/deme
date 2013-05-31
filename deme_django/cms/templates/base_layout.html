@@ -3,8 +3,8 @@
   <head>
     <title>
     {% block title %}
-    {% if item %}Deme &raquo; {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
-    {% else %}Deme{% if action_title %} &raquo; {{ action_title }}{% endif %}
+    {% if item %}{% firstof cur_site.title "Deme" %} &raquo; {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
+    {% else %}{% firstof cur_site.title "Deme" %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
     {% endif %}
     {% endblock title %}
     </title>
@@ -185,7 +185,13 @@
               <div class="visible-phone sidebar-toggle-wrap"><a href="#" class="sidebar-toggle"><i class="glyphicon glyphicon-align-justify"></i></a></div>
               {% block logo-section %}
               <div class="logo-section">
-                <a href="/" class="logo"><h1>Deme</h1></a>
+                <a href="/" class="logo {% if cur_site.logo %}img-logo{% endif %}">
+                  {% if cur_site.logo %}
+                  <h1><img src="{{ cur_site.logo.datafile.url }}" alt="{% firstof cur_site.title "Deme" %}"></h1>
+                  {% else %}
+                  <h1>{% firstof cur_site.title "Deme" %}</h1>
+                  {% endif %}
+                </a>
               </div>
               {% endblock logo-section %}
               {% block sidebar-section %}

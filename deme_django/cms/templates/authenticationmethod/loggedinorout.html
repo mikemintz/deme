@@ -2,20 +2,20 @@
 {% load item_tags %}
 {% block content %}
 
-<div style="padding: 5px; margin-bottom: 5px; font-size: 125%;">
+<p>
 {% if cur_agent.is_anonymous %}
-You are now logged out. 
+You are now logged out.
 {% else %}
 You are now logged in as {% viewable_name cur_agent %}.
 {% endif %}
-</div>
+</p>
 
-<div style="padding: 5px; margin-bottom: 5px; font-size: 125%;">
+<p>
 {% if redirect %}
-<a href="{{ redirect }}">[Return to previous page]</a>
+<a href="{{ redirect }}" class="btn btn-primary">Return to previous page</a>
 {% endif %}
-<a href="/">[Return to home page]</a>
-</div>
+<a href="/" class="btn btn-default">Return to home page</a>
+</p>
 
 
 {% endblock content %}

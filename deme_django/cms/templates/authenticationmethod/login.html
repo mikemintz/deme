@@ -8,10 +8,10 @@
     You may login as one of the following agents:
     {% for agent in login_as_agents %}
         {% if agent.active %}
-        <div>
-            <button type="submit" name="login_as_{{ agent.pk }}" class="fg-button ui-state-default ui-corner-all">Login</button>
+        <p>
+            <button type="submit" name="login_as_{{ agent.pk }}" class="btn btn-default">Login</button>
             <a href="{{ agent.get_absolute_url }}">{% viewable_name agent %}</a>
-        </div>
+        </p>
         {% endif %}
     {% endfor %}
 </div>
