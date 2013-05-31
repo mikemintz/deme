@@ -5537,7 +5537,7 @@ body {
   width: 100%;
 }
 .permission_table th {
-  text-align: left;
+  text-align: left !important;
 }
 .permission_table .ability-display .glyphicon {
   padding-right: 10px;

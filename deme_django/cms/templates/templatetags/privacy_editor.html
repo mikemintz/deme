@@ -235,13 +235,21 @@
                 $('input[name="new_agent_search"]').val('');
             },
             buttons: {
-                'Add Agent': function(){
-                    var row = add_agent_or_collection_row('agent', $('input[name="new_agent"]').val(), $('input[name="new_agent_search"]').val());
-                    $('#permission_table_{{permission_editor_counter}} tbody').append(row);
-                    $(this).dialog("close");
+                'Add Agent': {
+                    click: function(){
+                        var row = add_agent_or_collection_row('agent', $('input[name="new_agent"]').val(), $('input[name="new_agent_search"]').val());
+                        $('#permission_table_{{permission_editor_counter}} tbody').append(row);
+                        $(this).dialog("close");
+                    },
+                    'class': 'btn btn-primary',
+                    text: 'Add Collection'
                 },
-                'Cancel': function(){
-                    $(this).dialog("close");
+                'Cancel': {
+                    click: function(){
+                        $(this).dialog("close");
+                    },
+                    'class': 'btn btn-default',
+                    text: 'Cancel'
                 }
             },
         });
@@ -253,13 +261,21 @@
                 $('input[name="new_collection_search"]').val('');
             },
             buttons: {
-                'Add Collection': function(){
-                    var row = add_agent_or_collection_row('collection', $('input[name="new_collection"]').val(), $('input[name="new_collection_search"]').val());
-                    $('#permission_table_{{permission_editor_counter}} tbody').append(row);
-                    $(this).dialog("close");
+                'Add Collection': {
+                    click: function(){
+                        var row = add_agent_or_collection_row('collection', $('input[name="new_collection"]').val(), $('input[name="new_collection_search"]').val());
+                        $('#permission_table_{{permission_editor_counter}} tbody').append(row);
+                        $(this).dialog("close");
+                    },
+                    'class': 'btn btn-primary',
+                    text: 'Add Collection'
                 },
-                'Cancel': function(){
-                    $(this).dialog("close");
+                'Cancel': {
+                    click: function(){
+                        $(this).dialog("close");
+                    },
+                    'class': 'btn btn-default',
+                    text: 'Cancel'
                 }
             },
         });
@@ -270,7 +286,7 @@
     });
 </script>
 
-<table id="permission_table_{{permission_editor_counter}}" class="permission_table list" cellspacing="0">
+<table id="permission_table_{{permission_editor_counter}}" class="permission_table table table-bordered" cellspacing="0">
     <tbody>
         <tr>
             <th>Name</th>
@@ -287,10 +303,10 @@
     Name of the group: {{new_collection_select_widget}}
 </div>
 
-<div style="display: none;" id="agent_and_collection_select_div_{{permission_editor_counter}}">
-    <a href="#" class="img_link" onclick="$('#new_agent_dialog_{{permission_editor_counter}}').dialog('open'); return false;"><img src="{{agent_img_url}}" /> <span>Assign a Permission to a User</span></a>
-    <a href="#" class="img_link" onclick="$('#new_collection_dialog_{{permission_editor_counter}}').dialog('open'); return false;"><img src="{{collection_img_url}}" /> <span>Assign a Permission to a Group of Users</span></a>
-</div>
-<div style="margin-top: 10px;">
+<p style="display: none;" id="agent_and_collection_select_div_{{permission_editor_counter}}">
+    <a href="#" class="btn btn-default" onclick="$('#new_agent_dialog_{{permission_editor_counter}}').dialog('open'); return false;"><i class="glyphicon glyphicon-user"></i> <span>Assign a Permission to a User</span></a>
+    <a href="#" class="btn btn-default" onclick="$('#new_collection_dialog_{{permission_editor_counter}}').dialog('open'); return false;"><i class="glyphicon glyphicon-folder-open"></i> <span>Assign a Permission to a Group of Users</span></a>
+</p>
+<p style="margin-top: 10px;">
     Having trouble with permissions? Try reading the <a href="{{permissions_help_url}}">guide to using Permissions</a>
-</div>
+</p>
