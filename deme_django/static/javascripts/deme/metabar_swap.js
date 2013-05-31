@@ -173,9 +173,18 @@ $(function(){
     }
   }
 
+  // set up related items button
+  $('.metadata_activate_related_items').click(function(e){
+    e.preventDefault();
+    // open metadata menu
+    toggleMetabar('open');
+    // load and open related items in metadata
+    metabar_show_section($("#metadata_content_related_items"));
+  });
 
   // set up comment button
-  $('.actions-wrap > li > a.comment, .actions-menu a.comment').click(function(){
+  $('.actions-wrap > li > a.comment, .actions-menu a.comment').click(function(e){
+    e.preventDefault();
     // open metadata menu
     toggleMetabar('open');
     // if is navbar button and toolbar already on correct section, open new comment
@@ -188,7 +197,8 @@ $(function(){
   });
 
   // set up permissions button
-  $('.actions-wrap > li > a.permissions, .actions-menu a.permissions').click(function(){
+  $('.actions-wrap > li > a.permissions, .actions-menu a.permissions').click(function(e){
+    e.preventDefault();
     // open metadata menu
     toggleMetabar('open');
     // load and open comments in metadata
