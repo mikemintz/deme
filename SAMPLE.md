@@ -8,10 +8,10 @@ Hiding `Advanced Layout`
 
 To change who can see the advanced layout tools, you'll need to change `Advanced Layout` under `Global Permissions`:
 
-1. Log in as Admin
-2. Go to the Admin page (which is found in the footer)
+1. Log in as Admin by clicking on the person icon in the top right of the site, then clicking `Login as` and choosing `Admin`
+2. Go to the site Admin page by clicking its link in the footer
 3. Go to Global Permissions
-4. Remove the `Advanced Layout` permission from the target user or group. For instance, to prevent Anonymous from seeing the tools, click `Assign a Permission to a User` at the bottom and enter `Anonymous`. Then, in the new permission area for Anonymous, add a `New Permission`, choose `Advanced Layout`, click `-` to disallow, and then `Save Permissions`.
+4. Under `Everyone`, remove the `Advanced Layout` permission by clicking its [-] button and then save. Now the only user who sees the Advanced Layout bar is the Admin. Let's say we want logged in users to see the Advanced Layout bar but not Anonymous users. First, let's allow all users to see the bar by reenabling `Advanced Layout` under `Everyone` by clicking [+] and saving. Now, let's click `Assign a Permission to a User` at the very bottom of the permissions and enter `Anonymous` and then click `Add Collection`. Next, in the newly generated permission area for Anonymous, add a `New Permission`, from its dropdwon menu select `Advanced Layout`, click [-] to disallow, and then finally `Save Permissions`.
 5. Now if you visit the site as an Anonymouse user, you'll no longer see the Advaned Layout tools.
 
 
@@ -25,7 +25,7 @@ To change how Deme looks, you'll need to change your site's `default layout`:
   * Set `Override default layout` to true.
   * Have `{% extends "base_layout.html" %}` be the first line of your new layout.
 3. Go to your current site settings. By default, your site will be `Default Site`, which you can get to by searching for it.
-4. Edit your site's `Default layout` to your new layout. In our case, this will be `Sample Layout`.
+4. Edit your site's `Default layout` to your new layout. In our case, this will be `Sample Layout`. By default, there is also a "Sample Forum Layout" with another look and feel.
 5. Click save and your layout will be updated
 
 
