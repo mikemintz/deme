@@ -51,7 +51,7 @@ $(function(){
 
 <div class="item-type-new-container">
 {% if form %}
-    <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=viewer_name,action="create" %}?{% if add_to_collection %}add_to_collection={{ add_to_collection|urlencode }}&{% endif %}{% if redirect %}redirect={{ redirect|urlencode }}{% endif %}" class="item_form">
+    <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=viewer_name,action="create" %}?{% if add_to_collection %}add_to_collection={{ add_to_collection|urlencode }}&{% endif %}{% if redirect %}redirect={{ redirect|urlencode }}{% endif %}{% if modal %}&modal=1{% endif %}{% if receiver_input_id %}&id={{ receiver_input_id }}{% endif %}{% if src %}&src={{ src }}{% endif %}" class="item_form">
         <table cellspacing="0">
            {{ form.as_table }}
         </table>

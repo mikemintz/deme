@@ -383,6 +383,7 @@ class ItemViewer(Viewer):
           src = self.request.GET.get('src') # src, if set, describes the source of the creation request
           if src:
             self.context['src'] = src
+          self.context['modal'] = True
           template = loader.get_template('item/new_embed.html')
         else:
           template = loader.get_template('item/new.html')
