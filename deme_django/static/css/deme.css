@@ -5325,6 +5325,20 @@ body.nonadmin #metabar {
 #metabar .section > .collapse#metadata_content_item_details h3:first-child {
   display: none;
 }
+#metadata_content_related_items .relationship {
+  margin-bottom: 15px;
+}
+#metadata_content_related_items .relationship .type {
+  background: #e4f7fd;
+  margin: 0 -10px;
+  padding: 3px 10px;
+}
+#metadata_content_related_items .relationship .type a {
+  vertical-align: middle;
+}
+#metadata_content_related_items .relationship .type .btn {
+  margin-left: 10px;
+}
 .approvenpoll .propositions {
   margin-bottom: 15px;
 }

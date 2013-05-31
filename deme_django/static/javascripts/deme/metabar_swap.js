@@ -8,10 +8,13 @@ $(function(){
 
   // sets metabar sizing styles based on window dimensions
   function metabar_sizing(){
-    $metabar.css('min-height', $(window).height());
+    $metabar.css('min-height', 0);
+    $metabar.css('height', 0);
+    var height = $(document).height();
+    $metabar.css('min-height', height);
+    $metabar.css('height', 'auto');
   }
-  $(window).resize(function(){ metabar_sizing(); metabarWidthAdjust(); });
-  metabar_sizing();
+  $(window).resize(function(){ metabar_sizing(); metabarWidthAdjust(); }).trigger('resize');
 
   // attach resizable to entire metabar
   $metabar.resizable({

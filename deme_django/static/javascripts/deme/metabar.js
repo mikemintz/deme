@@ -8,10 +8,9 @@ $(function(){
 
   // sets metabar sizing styles based on window dimensions
   function metabar_sizing(){
-    $metabar.css('min-height', $(window).height());
+    $metabar.css('min-height', $(document).height());
   }
-  $(window).resize(function(){ metabar_sizing(); metabarWidthAdjust(); });
-  metabar_sizing();
+  $(window).resize(function(){ metabar_sizing(); metabarWidthAdjust(); }).trigger('resize');
 
   // attach resizable to entire metabar
   $metabar.resizable({
