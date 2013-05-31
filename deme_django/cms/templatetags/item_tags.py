@@ -933,17 +933,17 @@ class PermissionsBox(template.Node):
             else:
                 item_permissions_name = 'View permissions'
             item_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'itempermissions'})
-            result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>%s</a></div>""" % (item_permissions_url, item_permissions_name))
+            result.append("""<p><a href="%s" class="btn btn-default"><i class="glyphicon glyphicon-lock"></i> %s</a></p>""" % (item_permissions_url, item_permissions_name))
             if issubclass(item.actual_item_type(), Collection):
                 if agentcan_helper(context, 'do_anything', item):
                     collection_permissions_name = 'Modify permissions of members'
                 else:
                     collection_permissions_name = 'View permissions of members'
                 collection_permissions_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'collectionpermissions'})
-                result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>%s</a></div>""" % (collection_permissions_url, collection_permissions_name))
+                result.append("""<p><a href="%s" class="btn btn-default"><i class="glyphicon glyphicon-lock"></i> %s</a></p>""" % (collection_permissions_url, collection_permissions_name))
         if agentcan_helper(context, 'modify_privacy_settings', item) and not agentcan_helper(context, 'do_anything', item):
             modify_privacy_url = reverse('item_url', kwargs={'viewer': item.get_default_viewer(), 'noun': item.pk, 'action': 'privacy'})
-            result.append("""<div><a href="%s" class="fg-button ui-state-default fg-button-icon-left ui-corner-all"><span class="ui-icon ui-icon-locked"></span>Modify privacy</a></div>""" % modify_privacy_url)
+            result.append("""<p><a href="%s" class="btn btn-default"><i class="glyphicon glyphicon-lock"></i> Modify privacy</a></p>""" % modify_privacy_url)
         result.append('<div style="clear: both;">As user %s, you can:</div>' % get_item_link_tag(context, cur_agent))
         result.append("<ul>")
         friendly_names = [x[1] for x in POSSIBLE_ITEM_AND_GLOBAL_ABILITIES if x[0] in abilities]
