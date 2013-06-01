@@ -5459,6 +5459,12 @@ body.nonadmin #metabar {
 }
 .group-profile .member.col {
   width: 165px;
+  display: inline-block;
+  vertical-align: top;
+  float: none;
+  *display: inline;
+  _height: 200px;
+  min-height: 200px;
 }
 .group-profile .member.col .thumb {
   width: 150px;

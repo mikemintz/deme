@@ -31,22 +31,22 @@
 
   <div class="pagination row">
     <div class="col col-lg-12">
-    {% if members.has_previous %}
-    <a href="?page={{ members.previous_page_number }}">Prev |</a>
+    {% if entries.has_previous %}
+    <a href="?page={{ entries.previous_page_number }}">Prev |</a>
     {% endif %}
     {% if page_range|length > 1 %}
         {% for page in page_range %}
-            {% ifequal page members.number %}
-                {{ members.number }}
+            {% ifequal page entries.number %}
+                {{ entries.number }}
             {% endifequal %}
 
-            {% ifnotequal page members.number %}
+            {% ifnotequal page entries.number %}
                 <a href="?page={{ page }}">{{ page }}</a>
             {% endifnotequal %}
         {% endfor %}
     {% endif %}
-    {% if members.has_next %}
-    <a href="?page={{ members.next_page_number }}">| Next</a>
+    {% if entries.has_next %}
+    <a href="?page={{ entries.next_page_number }}">| Next</a>
     {% endif %}
     </div>
   </div>

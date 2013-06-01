@@ -43,20 +43,14 @@ admin = Agent.objects.get(pk=1)
 from django.template.defaultfilters import slugify
 
 for name in names:
-  print name
-  split = name.split(' ')
-  mike, created = Person.objects.get_or_create(first_name=split[0], last_name=split[1], name=name)
-  mike.save_versioned(action_agent=admin)
-  permission, created = OneToOnePermission.objects.get_or_create(source=mike, target=mike, ability='do_anything', is_allowed=True)
-  mike_authentication_method, created = DemeAccount.objects.get_or_create(username=slugify(name), agent=mike)
-  mike_authentication_method.set_password('')
-  try:
-    permission2 = OneToOnePermission.objects.filter(source=mike, ability='do_anything', is_allowed=True)[0]
-  except OneToOnePermission.DoesNotExist:
-    permission2, created = OneToOnePermission.objects.get_or_create(source=mike, ability='do_anything', is_allowed=True)[0]
-  mike_authentication_method.save_versioned(action_agent=mike, initial_permissions=[permission2])
-  try:
-    Membership.get(item=mike, collection=discuss_group)
-  except:
+    print name
+    split = name.split(' ')
+    mike = Person(first_name=split[0], last_name=split[1], name=name)
+    mike.save_versioned(action_agent=admin)
+    permission = OneToOnePermission(source=mike, target=mike, ability='do_anything', is_allowed=True)
+    mike_authentication_method = DemeAccount(username=slugify(name), agent=mike)
+    mike_authentication_method.set_password('')
+    permission2 = OneToOnePermission(source=mike, ability='do_anything', is_allowed=True)
+    mike_authentication_method.save_versioned(action_agent=mike, initial_permissions=[permission2])
     Membership(item=mike, collection=discuss_group).save_versioned(action_agent=mike, initial_permissions=[OneToOnePermission(source=mike, ability='do_anything', is_allowed=True)])
 

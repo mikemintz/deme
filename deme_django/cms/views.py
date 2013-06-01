@@ -1137,6 +1137,7 @@ class GroupViewer(CollectionViewer):
 
         self.context['members'] = members
         self.context['page_range'] = displayed_page_range
+        self.context['entries'] = entries
 
         try:
             folio = self.item.folios.get()
