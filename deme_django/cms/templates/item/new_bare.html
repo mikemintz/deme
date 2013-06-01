@@ -24,7 +24,7 @@ $(document).ready(function () {
 </script>
 {% endif %}
 
-<div style="border: thin solid #aaa; background: #eee; padding: 10px; margin-bottom: 10px;" class="item-type-container">
+<div class="well item-type-container">
     {% for item_type in item_types %}
     <span>
     {% ifequal item_type.item_type accepted_item_type %}
