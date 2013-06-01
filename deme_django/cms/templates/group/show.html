@@ -50,7 +50,7 @@
     </div>
   </div>
 
-  <a href="#" class="viewall">View as Collection</a>
+  <p><a href="#" class="viewall btn btn-default" data-target=".collection-view"><i class="glyphicon glyphicon-th"></i> View as Collection</a></p>
   <div class="collection-view hide">
     <div class="panel">
       <h3 class="panel-heading">Collection View</h3>
@@ -64,8 +64,13 @@
 
   {% if folio %}
   <div class="folio">
-    <p><a href="{{ folio.get_absolute_url }}">Group Folio</a></p>
-    {% embed 'folio' folio %}
+    <p><a href="{{ folio.get_absolute_url }}" class="viewall btn btn-default" data-target=".group-folio-view"><i class="glyphicon glyphicon-folder-open"></i> View Group Folio</a></p>
+    <div class="group-folio-view">
+      <div class="panel">
+        <h3 class="panel-heading">Group Folio</h3>
+        {% embed 'folio' folio %}
+      </div>
+    </div>
   </div>
   {% endif %}
 
@@ -74,8 +79,9 @@
 $(function(){
   $('.viewall').click(function(e){
     e.preventDefault();
-    $('.collection-view').removeClass('hide');
-    $(this).remove();
+    var target = $(this).attr('data-target');
+    $(target).toggleClass('hide');
+    $(window).trigger('resize'); // to properly size any jqgrids
   });
 });
 </script>
