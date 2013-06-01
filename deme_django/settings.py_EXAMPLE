@@ -90,6 +90,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'south',
     'deme_django.cms',
+    'pure_pagination',
 )
 
 MODULES_DIR = os.path.join(ROOT_DIR, 'modules')

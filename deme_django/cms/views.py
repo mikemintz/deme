@@ -1092,7 +1092,8 @@ class GroupViewer(CollectionViewer):
     viewer_name = 'group'
 
     def item_show_html(self):
-        from django.core.paginator import Paginator, InvalidPage, EmptyPage
+        #from django.core.paginator import Paginator, InvalidPage, EmptyPage
+        from pure_pagination import Paginator, EmptyPage, PageNotAnInteger
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
 
@@ -1107,8 +1108,8 @@ class GroupViewer(CollectionViewer):
         p = Paginator(collection_members, members_per_page)
 
         try:
-            page = int(self.request.GET.get('page','1'))
-        except ValueError:
+            page = int(self.request.GET.get('page', 1))
+        except PageNotAnInteger:
             page = 1
 
         try:
