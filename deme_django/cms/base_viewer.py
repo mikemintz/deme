@@ -504,7 +504,7 @@ class Viewer(object):
         {%% load item_tags %%}
         {%% block favicon %%}{{ "error"|icon_url:16 }}{%% endblock %%}
         {%% block title %%}%s{%% endblock %%}
-        {%% block content %%}<img src="{{ "error"|icon_url:24 }}" /> %s{%% endblock content %%}
+        {%% block content %%}<div class="alert alert-danger"><img src="{{ "error"|icon_url:24 }}" /> %s</div>{%% endblock content %%}
         """ % (title, body))
         return request_class(template.render(self.context))
 

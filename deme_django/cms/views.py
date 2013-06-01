@@ -1102,7 +1102,7 @@ class GroupViewer(CollectionViewer):
         else:
             visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
-        collection_members = self.item.all_contained_collection_members(recursive_filter).order_by("name")
+        collection_members = self.item.all_contained_collection_members(recursive_filter).filter(active=True).order_by("name")
 
         members_per_page = 12
         p = Paginator(collection_members, members_per_page)
