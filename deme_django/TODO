@@ -13,8 +13,8 @@ Legitimate bugs
 ---------------
 * Diff functionality can break on complicated formatting changes of HTML documents
 + All links need to use default_viewer, not item_type.lower()
-+ When you deactivate a membership from a collection and try to reactivate it, the membership creator doesn't check to see if a deactivated membership exists and creates a new one. This leads to a server error. (Jimmy 8/19/11)
-+ If you destroy an item that is a member of a collection, it gives an error in viewing the collection because the membership of the destroyed item in the collection is not destroyed. Collection viewer should be modified so this doesn't happen. (Todd, 2/15/2012; updated 5/11/12)
+--- can't reproduce (Michael 6/1/2013) + When you deactivate a membership from a collection and try to reactivate it, the membership creator doesn't check to see if a deactivated membership exists and creates a new one. This leads to a server error. (Jimmy 8/19/11)
+--- can't reproduce (Michael 6/1/2013) + If you destroy an item that is a member of a collection, it gives an error in viewing the collection because the membership of the destroyed item in the collection is not destroyed. Collection viewer should be modified so this doesn't happen. (Todd, 2/15/2012; updated 5/11/12)
 + Modify privacy settings ability doesn't work on symsys site (boxes just grayed out). (Mike 2011-09-28)
 + Creator of a Membership does not get permission to deactivate/destroy that Membership. I think this is a bug. (Todd 2/18/2012)
 --- Not relevant (Michael 6/1/2013) + Layout does not render properly in IE8. Must scroll down to see the page. This needs to be fixed asap. (Todd 5/7/2012)
