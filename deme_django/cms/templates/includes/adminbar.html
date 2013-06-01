@@ -25,12 +25,10 @@
     <li><a href="#" title="Create" class="create"><i class="glyphicon glyphicon-plus-sign"></i></a></li>
     {% endifagentcanglobal %}
     {% if item %}
-    {% ifagentcan 'edit' item %}
-    <li><a href="#" title="Edit" class="edit"><i class="glyphicon glyphicon-edit"></i></a></li>
-    {% endifagentcan %}
-    {% ifagentcan 'comment' item %}
-    <li><a href="#" title="Comment" class="comment"><i class="glyphicon glyphicon-comment"></i></a></li>
-    {% endifagentcan %}
+      <li><a href="#" title="Edit" class="edit"><i class="glyphicon glyphicon-edit"></i></a></li>
+      {% ifagentcan 'comment' item %}
+      <li><a href="#" title="Comment" class="comment"><i class="glyphicon glyphicon-comment"></i></a></li>
+      {% endifagentcan %}
     {% endif %}
     {% include 'includes/adminbar_widgets/account.html' %}
     <li><a href="#" title="Toggle Metadata" class="metabar-toggle"><i class="glyphicon glyphicon-info-sign"></i></a></li>
