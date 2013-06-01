@@ -1075,6 +1075,9 @@ class Person(Agent):
     last_name    = models.CharField(_('last name'), max_length=255, blank=True)
     suffix       = models.CharField(_('suffix'), max_length=255, blank=True)
 
+    def full_name(self):
+      return " ".join([self.first_name, self.middle_names, self.last_name, self.suffix]).strip()
+
 
 class ContactMethod(Item):
     """

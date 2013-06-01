@@ -18,6 +18,17 @@
     {% endif %}
 
     <div class="profile">
+      {% if item.full_name != '' and item.full_name != item.name %}
+      {% ifagentcan 'view Person.first_name' item %}
+      {% ifagentcan 'view Person.first_name' item %}
+      {% ifagentcan 'view Person.first_name' item %}
+      {% ifagentcan 'view Person.first_name' item %}
+      <p class="full-name"><b>Full name:</b> {{ item.full_name }}</p>
+      {% endifagentcan %}
+      {% endifagentcan %}
+      {% endifagentcan %}
+      {% endifagentcan %}
+      {% endif %}
       <!--h1 title="title">{% viewable_name item %}</h1-->
       <h4>Contact Methods</h4>
       <ul class="contact-methods">
