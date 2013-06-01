@@ -81,7 +81,7 @@ $(document).ready(function() {
       <div class="modal-body">
       </div>
       <div class="modal-footer">
-        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">Close</a>
+        <a href="#" class="btn btn-default" data-dismiss="modal" aria-hidden="true">Close</a>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dalog -->
@@ -95,7 +95,7 @@ $(document).ready(function() {
   </p>
   {% endif %}
   {% if cur_agent_can_view_survey or item.allow_editing_responses %}
-  {% if cur_agent_has_voted and item.allow_editing_responses %}<p><button class="btn" onclick="$(this).parent().remove(); $('.take-survey-wrap').removeClass('hide'); $('.result-wrap').hide(); ">Retake survey</button></p>{% endif %}
+  {% if cur_agent_has_voted and item.allow_editing_responses %}<p><button class="btn btn-default" onclick="$(this).parent().remove(); $('.take-survey-wrap').removeClass('hide'); $('.result-wrap').hide(); ">Retake survey</button></p>{% endif %}
   <div class="take-survey-wrap{% if cur_agent_has_voted and item.allow_editing_responses %} hide{% endif %}">
 
     <script type="text/javascript">
@@ -169,7 +169,7 @@ $(document).ready(function() {
       <!-- admin -->
       <p>
         {% ifagentcanglobal 'create Proposition' %}
-      	<a class="btn" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Add a Proposition</a>
+      	<a class="btn btn-default" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Add a Proposition</a>
       	{% endifagentcanglobal %}
       	{% ifagentcan 'modify_membership' item %}
       	<!--a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a-->

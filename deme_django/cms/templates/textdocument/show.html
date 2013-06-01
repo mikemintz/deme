@@ -245,15 +245,15 @@
 {% ifagentcan 'view TextDocument.body' item %}
 <div id="show_comments_link">
     {% ifagentcan 'comment_on' item %}
-    <button class="btn" href="#" onclick="openCommentDialog('comment{{ item.pk }}'); return false;">Add Comment</button>
+    <button class="btn btn-default" href="#" onclick="openCommentDialog('comment{{ item.pk }}'); return false;">Add Comment</button>
     {% endifagentcan %}
-    <button class="btn" href="#" onclick="expand_comments_reallybig(); return false;">Show all comments</button>
+    <button class="btn btn-default" href="#" onclick="expand_comments_reallybig(); return false;">Show all comments</button>
 </div>
 <div id="hide_comments_link" style="display: none;">
     {% ifagentcan 'comment_on' item %}
-    <button class="btn" href="#" onclick="openCommentDialog('comment{{ item.pk }}'); return false;">Add Comment</button>
+    <button class="btn btn-default" href="#" onclick="openCommentDialog('comment{{ item.pk }}'); return false;">Add Comment</button>
     {% endifagentcan %}
-    <button class="btn" href="#" onclick="hide_comments_reallybig(); return false;">Hide Comments</button>
+    <button class="btn btn-default" href="#" onclick="hide_comments_reallybig(); return false;">Hide Comments</button>
 </div>
 
 <div id="parse_errors" style="display: none;">
