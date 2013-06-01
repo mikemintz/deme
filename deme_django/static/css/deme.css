@@ -5647,6 +5647,9 @@ html.embed .item-type-new-container {
   padding: 10px;
   margin-bottom: 10px;
 }
+.capitalize {
+  text-transform: capitalize;
+}
 @media (max-width: 767px) {
   #overall {
     padding: 0;

@@ -2,11 +2,11 @@
 {% load item_tags %}
 {% block content %}
 
+<div class="list-group">
 {% for x in all_item_types_can_create %}
-    <div>
-        <a href="{{ x.url }}" class="img_link"><img src="{{x.item_type|icon_url:16}}" />New {% item_type_verbose_name x.item_type %}</a>
-    </div>
+    <a href="{{ x.url }}" class="list-group-item capitalize"><img src="{{x.item_type|icon_url:16}}" /> {% item_type_verbose_name x.item_type %} <span class="glyphicon glyphicon-chevron-right"></span></a>
 {% endfor %}
+</div>
 
 {% endblock content %}
 
