@@ -21,9 +21,7 @@
         {% actionsmenu %}
       </ul>
     </li>
-    {% ifagentcanglobal 'create' %}
     <li><a href="#" title="Create" class="create"><i class="glyphicon glyphicon-plus-sign"></i></a></li>
-    {% endifagentcanglobal %}
     {% if item %}
       <li><a href="#" title="Edit" class="edit"><i class="glyphicon glyphicon-edit"></i></a></li>
       {% ifagentcan 'comment' item %}
