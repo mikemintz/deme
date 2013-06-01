@@ -4829,8 +4829,6 @@ div.comment_body {
   background: #ff0;
 }
 .ui-autocomplete {
-  max-height: 200px;
-  overflow-y: auto;
   /* prevent horizontal scrollbar */
 
   overflow-x: hidden;
@@ -4838,12 +4836,13 @@ div.comment_body {
 
   padding-right: 20px;
 }
+.ui-autocomplete.ui-menu .ui-menu-item {
+  margin-bottom: 5px;
+  cursor: pointer;
+}
 /* IE 6 doesn't support max-height
  * we use height instead, but this forces the menu to always be this tall
  */
-* html .ui-autocomplete {
-  height: 200px;
-}
 .ui-autocomplete-loading {
   background: #ffffff url('/static/ui-anim_basic_16x16.gif') right center no-repeat;
 }

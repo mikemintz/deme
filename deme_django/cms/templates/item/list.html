@@ -3,61 +3,58 @@
 {% block content %}
 
 <div class="well">
-<form method="get" name="list_filter_form">
-<table cellspacing="0" class="twocol search-items">
-    <tr>
-        <th>
-            Item Type Filter:
-        </th>
-        <td class="item-type-container">
-            {% for item_type in item_types %}
-            <span>
-            {% ifequal item_type.item_type accepted_item_type %}
-            <b>{{ item_type.name_plural|capfirst }}</b>
+  <form method="get" name="list_filter_form" class="form-horizontal">
+    <div class="row">
+      <label class="col col-lg-2 control-label">
+        Item Type Filter:
+      </label>
+      <div class="col col-lg-10 item-type-container">
+        {% for item_type in item_types %}
+        <span>
+        {% ifequal item_type.item_type accepted_item_type %}
+        <b>{{ item_type.name_plural|capfirst }}</b>
+        {% else %}
+        <a href="{% url item_type_url viewer=item_type.viewer %}">{{ item_type.name_plural|capfirst }}</a>
+        {% endifequal %}
+        </span>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="row">
+      <label class="col col-lg-2 control-label" for="collection">
+        Filter on:
+      </label>
+      <div class="col col-lg-10">
+        <select name="collection">
+            {% if collection %}
+            <option value=""></option>
             {% else %}
-            <a href="{% url item_type_url viewer=item_type.viewer %}">{{ item_type.name_plural|capfirst }}</a>
+            <option value="" selected="selected"></option>
+            {% endif %}
+            {% for other_collection in all_collections %}
+            {% ifequal other_collection.pk collection.pk %}
+            <option value="{{ other_collection.pk }}" selected="selected">{% viewable_name other_collection %}</option>
+            {% else %}
+            <option value="{{ other_collection.pk }}">{% viewable_name other_collection %}</option>
             {% endifequal %}
-            </span>
             {% endfor %}
-        </td>
-    </tr>
-    <tr>
-        <th>
-            Filter on:
-        </th>
-        <td>
-            <select name="collection">
-                {% if collection %}
-                <option value=""></option>
-                {% else %}
-                <option value="" selected="selected"></option>
-                {% endif %}
-                {% for other_collection in all_collections %}
-                {% ifequal other_collection.pk collection.pk %}
-                <option value="{{ other_collection.pk }}" selected="selected">{% viewable_name other_collection %}</option>
-                {% else %}
-                <option value="{{ other_collection.pk }}">{% viewable_name other_collection %}</option>
-                {% endifequal %}
-                {% endfor %}
-            </select>
-        </td>
-    </tr>
-    <tr>
-        <th>
-            Search:
-        </th>
-        <td>
-            <input type="text" name="q" value="{{ search_query }}" />
-        </td>
-    </tr>
-    <tr>
-        <th></th>
-        <td>
-          <button type="submit" class="btn btn-default"><i class="glyphicon glyphicon-filter"></i> Filter</button>
-        </td>
-    </tr>
-</table>
-</form>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <label class="col col-lg-2 control-label" for="q">
+        Search term:
+      </label>
+      <div class="col col-lg-10">
+        <input type="text" name="q" value="{{ search_query }}" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col col-lg-10 col-offset-2">
+        <button type="submit" class="btn btn-default"><i class="glyphicon glyphicon-search"></i> Search</button>
+      </div>
+    </div>
+  </form>
 </div>
 
 {% ifagentcanglobal item_create_ability %}
