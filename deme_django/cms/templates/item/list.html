@@ -5,10 +5,10 @@
 <div class="well">
   <form method="get" name="list_filter_form" class="form-horizontal">
     <div class="row">
-      <label class="col col-lg-2 control-label">
+      <label class="col col-lg-3 control-label">
         Item Type Filter:
       </label>
-      <div class="col col-lg-10 item-type-container">
+      <div class="col col-lg-9 item-type-container">
         {% for item_type in item_types %}
         <span>
         {% ifequal item_type.item_type accepted_item_type %}
@@ -21,15 +21,15 @@
       </div>
     </div>
     <div class="row">
-      <label class="col col-lg-2 control-label" for="collection">
+      <label class="col col-lg-3 control-label" for="collection">
         Filter on:
       </label>
-      <div class="col col-lg-10">
+      <div class="col col-lg-9">
         <select name="collection">
             {% if collection %}
-            <option value=""></option>
+            <option value="">[None]</option>
             {% else %}
-            <option value="" selected="selected"></option>
+            <option value="" selected="selected">[None]</option>
             {% endif %}
             {% for other_collection in all_collections %}
             {% ifequal other_collection.pk collection.pk %}
@@ -42,15 +42,37 @@
       </div>
     </div>
     <div class="row">
-      <label class="col col-lg-2 control-label" for="q">
+      <label class="col col-lg-3 control-label" for="q">
         Search term:
       </label>
-      <div class="col col-lg-10">
+      <div class="col col-lg-9">
         <input type="text" name="q" value="{{ search_query }}" />
       </div>
     </div>
     <div class="row">
-      <div class="col col-lg-10 col-offset-2">
+      <div class="col col-lg-9 col-offset-3">
+
+        <div class="accordion" style="margin-bottom:0">
+          <div class="accordion-group">
+            <div class="accordion-heading">
+              <a href="#list-advanced" class="accordion-toggle" data-toggle="collapse"><i class="glyphicon glyphicon-cog"></i> Advanced</a>
+            </div>
+            <div id="list-advanced" class="accordion-body collapse {% if inactive %}in{% endif %}">
+              <div class="accordion-inner">
+                <label class="radio-inline">
+                  <input type="radio" name="inactive" value="0"{% if not inactive %} checked="checked"{% endif %}> Active Items
+                </label>
+                <label class="radio-inline">
+                  <input type="radio" name="inactive" value="1"{% if inactive %} checked="checked"{% endif %}> Deactivated Items
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col col-lg-9 col-offset-3">
         <button type="submit" class="btn btn-default"><i class="glyphicon glyphicon-search"></i> Search</button>
       </div>
     </div>
@@ -59,7 +81,7 @@
 
 {% ifagentcanglobal item_create_ability %}
 <p>
-  <a class="btn btn-primary btn-large" href="{% url item_type_url viewer=item_type_lower,action="new" %}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
+  <a class="btn btn-primary" href="{% url item_type_url viewer=item_type_lower,action="new" %}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
 </p>
 {% endifagentcanglobal %}
 

@@ -41,6 +41,7 @@ class ItemViewer(Viewer):
         offset = offset or int(self.request.GET.get('offset', 0))
         limit = limit or int(self.request.GET.get('limit', 100))
         active = self.request.GET.get('active', '1') == '1'
+        self.context['active'] = active
         self.context['search_query'] = q or self.request.GET.get('q', '')
         self.context['item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
@@ -141,6 +142,8 @@ class ItemViewer(Viewer):
         self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         self.context['item_create_ability'] = "create %s" % (self.accepted_item_type.__name__)
         self.context['search_query'] = self.request.GET.get('q', '')
+        inactive = self.request.GET.get('inactive', '0') == '1'
+        self.context['inactive'] = inactive
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
         item_types.sort(key=lambda x:x['name'].lower())
         self.context['item_types'] = item_types
@@ -166,6 +169,7 @@ class ItemViewer(Viewer):
         field_names = self.request.GET['fields'].split(',')
         n_rows = int(self.request.GET['rows'])
         page = int(self.request.GET['page'])
+        inactive = self.request.GET.get('inactive', 'false') == 'true'
         search_field = self.request.GET.get('searchField', '')
         search_oper = self.request.GET.get('searchOper', '')
         search_string = self.request.GET.get('searchString', '')
@@ -178,6 +182,8 @@ class ItemViewer(Viewer):
 
         offset = (page - 1) * n_rows
         active = True
+        if inactive:
+          active = False
 
         # Get the basic list of items
         items = self.accepted_item_type.objects
@@ -217,6 +223,7 @@ class ItemViewer(Viewer):
                 items = items.filter(**{field.name + "__in": foreign_items})
             else:
                 items = items.filter(search_filter)
+
         # Filter by the filter parameter
         for filter_string in self.request.GET.getlist('filter'):
             if not filter_string: continue
@@ -239,7 +246,7 @@ class ItemViewer(Viewer):
                 else:
                     raise Exception("Cannot filter on field %s.%s (not a related field)" % (cur_item_type.__name__, field.name))
 
-            def filter_by_filter(queryset, fields, item_types):
+            def filter_by_filter(queryset, fields, item_types, active):
                 if not fields:
                     return queryset.filter(pk=target_pk)
                 field = fields[0]
@@ -264,9 +271,9 @@ class ItemViewer(Viewer):
                 else:
                     assert False
                 if issubclass(item_type, Item):
-                    result = result.filter(active=True)
+                    result = result.filter(active=active)
                 return result
-            items = filter_by_filter(items, fields, item_types)
+            items = filter_by_filter(items, fields, item_types, inactive)
         # Filter by collection
         if isinstance(collection, Collection):
             if self.cur_agent_can_global('do_anything'):

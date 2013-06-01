@@ -1199,6 +1199,7 @@ class ListGridBox(template.Node):
         item_type = self.item_type.resolve(context)
         filter_string = viewer.request.GET.get('filter', '')
         q = viewer.request.GET.get('q', '')
+        inactive = viewer.request.GET.get('inactive', '0') == '1'
         collection = viewer.request.GET.get('collection', '')
         fields = []
         possible_abilities = all_possible_item_abilities(item_type)
@@ -1226,6 +1227,8 @@ class ListGridBox(template.Node):
             post_data['searchString'] = q
         if collection:
             post_data['collection'] = collection
+        if inactive:
+            post_data['inactive'] = inactive
         url = reverse('item_type_url', kwargs={'viewer': item_type.__name__.lower(), 'action': 'grid', 'format': 'json'})
         r = []
         r.append("""<table id="jqgrid_list"></table>""")
