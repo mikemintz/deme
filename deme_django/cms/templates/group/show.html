@@ -51,40 +51,35 @@
     </div>
   </div>
 
-  <p><a href="#" class="viewall btn btn-default" data-target=".collection-view"><i class="glyphicon glyphicon-th"></i> View Group as Collection</a></p>
-  <div class="collection-view hide">
-    <div class="panel">
-      <h3 class="panel-heading">Collection View</h3>
-      {% embed 'collection' item %}
-    </div>
-  </div>
-
-  <!--
-  <div style="font-size: larger; margin-left: 58% "><a>All</a><a style="margin-left:1em">Individuals</a> <a style="margin-left:1em;">Subgroups </a></div>
-  -->
-
-  {% if folio %}
-  <div class="folio">
-    <p><a href="{{ folio.get_absolute_url }}" class="viewall btn btn-default" data-target=".group-folio-view"><i class="glyphicon glyphicon-folder-open"></i> View Group Folio</a></p>
-    <div class="group-folio-view">
-      <div class="panel">
-        <h3 class="panel-heading">Group Folio</h3>
-        {% embed 'folio' folio %}
+  <div class="accordion">
+    <div class="accordion-group">
+      <div class="accordion-heading">
+        <a href="#collection-view" class="accordion-toggle" data-toggle="collapse"><i class="glyphicon glyphicon-th"></i> View Group as Collection</a>
+      </div>
+      <div id="collection-view" class="accordion-body collapse">
+        <div class="accordion-inner">
+          {% embed 'collection' item %}
+          <!--
+          <div style="font-size: larger; margin-left: 58% "><a>All</a><a style="margin-left:1em">Individuals</a> <a style="margin-left:1em;">Subgroups </a></div>
+          -->
+        </div>
       </div>
     </div>
   </div>
-  {% endif %}
+
+  <div class="accordion">
+    <div class="accordion-group">
+      <div class="accordion-heading">
+        <a href="#group-folio-view" class="accordion-toggle" data-toggle="collapse"><i class="glyphicon glyphicon-folder-open"></i> View Group Folio</a>
+      </div>
+      <div id="group-folio-view" class="accordion-body collapse in">
+        <div class="accordion-inner">
+          {% embed 'folio' folio %}
+        </div>
+      </div>
+    </div>
+  </div>
 
 </div>
-<script>
-$(function(){
-  $('.viewall').click(function(e){
-    e.preventDefault();
-    var target = $(this).attr('data-target');
-    $(target).toggleClass('hide');
-    $(window).trigger('resize'); // to properly size any jqgrids
-  });
-});
-</script>
 {% endblock content %}
 
