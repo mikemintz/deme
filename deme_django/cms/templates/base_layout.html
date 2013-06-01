@@ -243,6 +243,9 @@
                   <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
                   {% endif %}
                   </h1>
+                  {% if item and not item.active %}
+                  <div class="alert">This item has been deactivated.</div>
+                  {% endif %}
                 {% endblock title-section %}
 
                 <div class="content">

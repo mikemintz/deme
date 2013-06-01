@@ -17,11 +17,11 @@ Legitimate bugs
 + If you destroy an item that is a member of a collection, it gives an error in viewing the collection because the membership of the destroyed item in the collection is not destroyed. Collection viewer should be modified so this doesn't happen. (Todd, 2/15/2012; updated 5/11/12)
 + Modify privacy settings ability doesn't work on symsys site (boxes just grayed out). (Mike 2011-09-28)
 + Creator of a Membership does not get permission to deactivate/destroy that Membership. I think this is a bug. (Todd 2/18/2012)
-+ Layout does not render properly in IE8. Must scroll down to see the page. This needs to be fixed asap. (Todd 5/7/2012)
-+ Fix bug with grid view occluding metadata window. When viewing all the items (viewing 100 at a time on the item menu) the top banner disappears behind the list viewer. When creating an html document TinyMCE overlaps with the banner and metadata window when you scroll. (Jimmy 10/27/11; Todd 5/11/12)
+--- Not relevant (Michael 6/1/2013) + Layout does not render properly in IE8. Must scroll down to see the page. This needs to be fixed asap. (Todd 5/7/2012)
+--- Not relevant (Michael 6/1/2013) + Fix bug with grid view occluding metadata window. When viewing all the items (viewing 100 at a time on the item menu) the top banner disappears behind the list viewer. When creating an html document TinyMCE overlaps with the banner and metadata window when you scroll. (Jimmy 10/27/11; Todd 5/11/12)
 * Cannot edit FileDocuments by uploading new version (Todd, 5/11/11
 * Destroying items may cause an error because the outgoing email code will try to access created_at which is now None.
-+ Pulldown selector does not reliably autocomplete - often requires multiple backspacings and other fiddling, and sometimes does not work at all (Todd, 9/27/12)
+--- Fixed (Michael 6/1/2013) + Pulldown selector does not reliably autocomplete - often requires multiple backspacings and other fiddling, and sometimes does not work at all (Todd, 9/27/12)
 
 Interface
 ---------
@@ -63,7 +63,7 @@ Interface
     - Even simpler, no ajax
   - http://trirand.com/jqgrid/jqgrid.html
     - Most flexible, looks funny though, but currently uses nested set model which we don't use
-* In a long document (I tested a 700 page document to see what would break) the line does not show up for located comments. (Jimmy 10/27/11) 
+* In a long document (I tested a 700 page document to see what would break) the line does not show up for located comments. (Jimmy 10/27/11)
 * Action drop-down menu should display action when in progress (e.g. when in Edit view, Action menu should display "Edit" (Todd 2/27/2012)
 * List viewer should have a Submit button to make it easier for users to see how to filter item types. (Todd, 2/29/12)
 + Search should include an option to include Deactivated items. Right not it is very hard to find and reactivate a membership, for example. (Todd, 9/27/12)
@@ -101,8 +101,8 @@ New Functionality (longer term)
 * Consider how to set permissions on comments, based on the permissions of the parent item. For example, if you have a very private item, and someone posts a comment on it, should the comment be just as private? Should it be just the default, or should it be enforced, and should it be dynamic whenever either permission changes? Should it be based on the parent item, or the top-most item? How do we reconcile abilities which are not shared between the items (for example, if the parent item is Agent with invisible name, how do we set the visibility of the comment body? E.g. http://symsys.stanford.edu/viewing/webpage/16235 (comment was public by default)
 * Fix captcha or better prevent spam in anonymous postings: use javascript and absolute positioning to create words that are not predictable unless a human reads it
 * Group can have multiple folios
-* Should support graphic layout design within Deme, e.g. for DjangoTemplateDocuments, or at least editing the standard menus (Navigation menu). Potentially a set of skins (Todd, 12/4/10)    
-+ Improve search. It should search for more fields than just the name (but keep permissions in mind), and it shouldn't require exact match    
+* Should support graphic layout design within Deme, e.g. for DjangoTemplateDocuments, or at least editing the standard menus (Navigation menu). Potentially a set of skins (Todd, 12/4/10)
++ Improve search. It should search for more fields than just the name (but keep permissions in mind), and it shouldn't require exact match
 * Advanced search; combinatorial search, etc.
 
 Distant Future (sorted by approximate order of planned implementation)

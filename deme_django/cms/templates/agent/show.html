@@ -5,37 +5,39 @@
 {% block content %}
 <div class="agent-profile container">
   <div class="row">
-    {% if item.photo %}
-    {% ifagentcan 'view Agent.photo' item %}
-    {% ifagentcan 'view FileDocument.datafile' item.photo %}
-    <div class="thumb" style="background-image:url('{{ item.photo.datafile.url }}')">
-      <img src="{{ item.photo.datafile.url }}" alt="{% viewable_name item %}">
-    </div>
-    {% endifagentcan %}
-    {% endifagentcan %}
-    {% else %}
-    <div class="thumb"></div>
-    {% endif %}
-
-    <div class="profile">
-      {% if item.full_name != '' and item.full_name != item.name %}
-      {% ifagentcan 'view Person.first_name' item %}
-      {% ifagentcan 'view Person.first_name' item %}
-      {% ifagentcan 'view Person.first_name' item %}
-      {% ifagentcan 'view Person.first_name' item %}
-      <p class="full-name"><b>Full name:</b> {{ item.full_name }}</p>
+    <div class="col col-lg-12">
+      {% if item.photo %}
+      {% ifagentcan 'view Agent.photo' item %}
+      {% ifagentcan 'view FileDocument.datafile' item.photo %}
+      <div class="thumb" style="background-image:url('{{ item.photo.datafile.url }}')">
+        <img src="{{ item.photo.datafile.url }}" alt="{% viewable_name item %}">
+      </div>
       {% endifagentcan %}
       {% endifagentcan %}
-      {% endifagentcan %}
-      {% endifagentcan %}
+      {% else %}
+      <div class="thumb"></div>
       {% endif %}
-      <!--h1 title="title">{% viewable_name item %}</h1-->
-      <h4>Contact Methods</h4>
-      <ul class="contact-methods">
-        {% for contact_method in contact_methods %}
-        <li>{{ contact_method }}</li>
-        {% endfor %}
-      </ul>
+
+      <div class="profile">
+        {% if item.full_name != '' and item.full_name != item.name %}
+        {% ifagentcan 'view Person.first_name' item %}
+        {% ifagentcan 'view Person.first_name' item %}
+        {% ifagentcan 'view Person.first_name' item %}
+        {% ifagentcan 'view Person.first_name' item %}
+        <p class="full-name"><b>Full name:</b> {{ item.full_name }}</p>
+        {% endifagentcan %}
+        {% endifagentcan %}
+        {% endifagentcan %}
+        {% endifagentcan %}
+        {% endif %}
+        <!--h1 title="title">{% viewable_name item %}</h1-->
+        <h4>Contact Methods</h4>
+        <ul class="contact-methods">
+          {% for contact_method in contact_methods %}
+          <li>{{ contact_method }}</li>
+          {% endfor %}
+        </ul>
+      </div>
     </div>
   </div>
   <div class="row">
