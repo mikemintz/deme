@@ -5375,6 +5375,9 @@ body {
 .ui-jqgrid td a {
   display: block;
 }
+.ui-jqgrid input.ui-pg-input {
+  display: inline;
+}
 .permission_table {
   width: 100%;
 }
