@@ -134,7 +134,7 @@ def icon_url(item_type, size=32):
         DemeSetting:            'apps/advancedsettings',
         Document:               'mimetypes/empty',
         DjangoTemplateDocument: 'mimetypes/html',
-        EmailContactMethod:     'apps/kmail',
+        EmailContactMethod:     'actions/mail_generic',
         Excerpt:                'mimetypes/shellscript',
         FileDocument:           'mimetypes/misc',
         Folio:                  'apps/kfm',

@@ -5464,6 +5464,9 @@ body.nonadmin #metabar {
   width: 150px;
   height: 150px;
 }
+.agent-profile .contact-methods {
+  list-style: none;
+}
 .HiddenMenu {
   z-index: 1;
 }

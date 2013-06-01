@@ -15,6 +15,7 @@
   </div>
 
   <div class="members row">
+    <div class="col col-lg-12"><h4>Members</h4></div>
   {% for member in members %}
     <div id="member{{ member.item.pk }}" class="member col">
       <a href="{{ member.item.get_absolute_url }}">
@@ -50,7 +51,7 @@
     </div>
   </div>
 
-  <p><a href="#" class="viewall btn btn-default" data-target=".collection-view"><i class="glyphicon glyphicon-th"></i> View as Collection</a></p>
+  <p><a href="#" class="viewall btn btn-default" data-target=".collection-view"><i class="glyphicon glyphicon-th"></i> View Group as Collection</a></p>
   <div class="collection-view hide">
     <div class="panel">
       <h3 class="panel-heading">Collection View</h3>
