@@ -1,6 +1,13 @@
 $(function() {
   $('.ajax-model-choice-widget').each(function(){
     var hidden_input = $(this);
+    processAjaxModelChoiceWidget(hidden_input);
+  });
+
+  function processAjaxModelChoiceWidget(hidden_input) {
+    if (hidden_input.hasClass('ajax-model-choice-widget-processed')) {
+      return;
+    }
     var id = hidden_input.attr('data-input-id');
     var ajax_url = hidden_input.attr('data-ajax-url');
     var search_input = $("#"+id);
@@ -35,8 +42,11 @@ $(function() {
       var new_modal_url = hidden_input.attr('data-new-modal-url');
       var random_num = Math.floor((Math.random()*1000000)+1);
       window.open(new_modal_url, 'embedform-' + random_num, 'width=400,toolbar=1,resizable=1,scrollbars=yes,height=400,top=100,left=100');
-    })
-  });
+    });
+
+    hidden_input.addClass('ajax-model-choice-widget-processed');
+  }
+  window.processAjaxModelChoiceWidget = processAjaxModelChoiceWidget;
 
   function ajaxModelChoiceWidgetUpdateValue(id, dict) {
     var itemid = dict['id'];

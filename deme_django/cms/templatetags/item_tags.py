@@ -752,7 +752,7 @@ class NewMemberDialog(template.Node):
                 'item.pk': item.pk,
                 'full_path': full_path,
                 'create_url': reverse('item_type_url', kwargs={'viewer':'membership', 'action':'collectioncreate'}),
-                'ajax_field': AjaxModelChoiceField(Item.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('item', None, {'id':'add_item_to_collection_item_field'}),
+                'ajax_field': AjaxModelChoiceField(Item.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('item', None, {'id':'add_item_to_collection_item_field_%s' % (item.pk)}),
              })
 
         return mark_safe('\n'.join(result))
