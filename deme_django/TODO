@@ -52,7 +52,7 @@ Interface
 * Get forward links to include breadcrumbs, including clickable arrows to get to all links from A to B (difficult problem, since there are so many forward links); could include history arbitrarily far back, with no link arrow when you get to a page without clicking on a link from another page
 * Come up with better breadcrumb url if possible
 * We need a bulk uploader for ImageDocuments, so you can upload a bunch of photos without having to fill out a fresh form (html5 http://code.google.com/p/jquery-html5-upload/). Take default image doc name from file name. (Todd)
-* Permission setting should have a much easier interface. Replace unchecked versus checked box with minus and plus to indicate negative and positive permissions.(Todd, 12/4/10)
+--- done (Michael 6/1/2013) * Permission setting should have a much easier interface. Replace unchecked versus checked box with minus and plus to indicate negative and positive permissions.(Todd, 12/4/10)
 * Discussion viewer - full page view of comment threads - implement by letting metadata viewer take over main window
 * If you go to "new" and one of the initial model fields is permission denied (e.g., you're creating a membership on a collection you aren't allowed to modify_membership for, or creating a comment on an item you can't reply to), let the user know
 * Give more data about each version in Versions metadata display (e.g. datetime, updater)
