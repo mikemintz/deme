@@ -22,11 +22,6 @@ $(document).ready(function () {
     });
 });
 </script>
-<script>
-$(function(){
-  $('.tooltip-trigger').tooltip();
-});
-</script>
 {% endif %}
 
 <div style="border: thin solid #aaa; background: #eee; padding: 10px; margin-bottom: 10px;" class="item-type-container">
@@ -40,7 +35,7 @@ $(function(){
       {% ifagentcanglobal create_permission  %}
         <a href="{% url item_type_url viewer=item_type.viewer,action="new" %}?{{ query_string }}">New {{ item_type.name|capfirst }}</a>
       {% else %}
-        <b class="disabled" data-toggle="tooltip" title="You do not have permission to create this type of item" class="tooltip-trigger">New {{ item_type.name|capfirst }}</b>
+        <a class="disabled" href="{% url item_type_url viewer=item_type.viewer,action="new" %}?{{ query_string }}">New {{ item_type.name|capfirst }}</a>
       {% endifagentcanglobal %}
       {% endwith %}
       {% endwith %}
@@ -78,4 +73,3 @@ $(function(){
     {% endif %}
 {% endif %}
 </div>
-
