@@ -56,7 +56,7 @@
 
 {% ifagentcanglobal item_create_ability %}
 <p>
-  <a class="btn btn-primary btn-large" href="{% url item_type_url viewer=item_type_lower,action="new" %}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_lower }}</a>
+  <a class="btn btn-primary btn-large" href="{% url item_type_url viewer=item_type_lower,action="new" %}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
 </p>
 {% endifagentcanglobal %}
 

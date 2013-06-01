@@ -42,6 +42,7 @@ class ItemViewer(Viewer):
         limit = limit or int(self.request.GET.get('limit', 100))
         active = self.request.GET.get('active', '1') == '1'
         self.context['search_query'] = q or self.request.GET.get('q', '')
+        self.context['item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         self.context['item_create_ability'] = "create %s" % (self.accepted_item_type.__name__)
         items = self.accepted_item_type.objects
@@ -136,6 +137,7 @@ class ItemViewer(Viewer):
     def type_list_html(self):
         self.context['action_title'] = ''
         self.context['metabar_contents'] = u'List %s' % self.accepted_item_type._meta.verbose_name_plural
+        self.context['item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         self.context['item_create_ability'] = "create %s" % (self.accepted_item_type.__name__)
         self.context['search_query'] = self.request.GET.get('q', '')
