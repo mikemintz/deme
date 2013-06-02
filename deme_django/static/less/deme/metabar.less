@@ -155,12 +155,16 @@
   .relationship {
   margin-bottom: 15px;
     .type {
-      background: @gray-lighter;//darken(@metabar-background, 5%);
-      margin: 0 -10px 5px;
-      padding: 3px 10px;
+      border-top: 1px solid @gray-lighter;
+      //background: @gray-lighter;//darken(@metabar-background, 5%);
+      margin: 0 -10px 0;
+      padding: 0 10px;
       position: relative;
       a {
         vertical-align: middle;
+        b {
+          color: @gray;
+        }
       }
       .newbtn {
         margin-left: 10px;
@@ -168,6 +172,9 @@
         top: 5px;
         right: 5px;
       }
+    }
+    &.empty {
+
     }
   }
 }

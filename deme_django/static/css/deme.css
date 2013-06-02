@@ -5140,13 +5140,16 @@ body.nonadmin #metabar {
   margin-bottom: 15px;
 }
 #metadata_content_related_items .relationship .type {
-  background: #eeeeee;
-  margin: 0 -10px 5px;
-  padding: 3px 10px;
+  border-top: 1px solid #eeeeee;
+  margin: 0 -10px 0;
+  padding: 0 10px;
   position: relative;
 }
 #metadata_content_related_items .relationship .type a {
   vertical-align: middle;
+}
+#metadata_content_related_items .relationship .type a b {
+  color: #555555;
 }
 #metadata_content_related_items .relationship .type .newbtn {
   margin-left: 10px;
