@@ -41,18 +41,15 @@
         <h4 class="modal-title"><i class="glyphicon glyphicon-plus-sign"></i> Create a new item</h4>
       </div>
       <div class="modal-body">
-        <div class="list-group">
+        <div class="list-group" style="margin-bottom:0">
         {% defaultcreateitemtypes %}
           <a href="{% url item_type_url viewer=create_item_viewer_name,action="new"%}" class="list-group-item">
-            <img src="{{create_item_type|icon_url:32}}" title="Create new {% item_type_verbose_name create_item_type %}" class="thumb">
-            New {% item_type_verbose_name create_item_type %}
+            <img src="{{create_item_type|icon_url:16}}" title="Create new {% item_type_verbose_name create_item_type %}" class="thumb">
+            New {% item_type_verbose_name create_item_type %} <span class="glyphicon glyphicon-chevron-right"></span>
           </a>
         {% enddefaultcreateitemtypes %}
+          <a href="{% url item_type_url viewer="item",action="newother"%}" class="list-group-item"><b>Other Items...</b> <span class="glyphicon glyphicon-chevron-right"></span></a>
         </div>
-      </div>
-      <div class="modal-footer">
-        <a href="{% url item_type_url viewer="item",action="newother"%}" class="btn btn-primary">Other Items</a>
-        <a href="#" class="btn btn-default" data-dismiss="modal" aria-hidden="true">Close</a>
       </div>
     </div>
   </div>

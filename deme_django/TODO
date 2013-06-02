@@ -19,7 +19,7 @@ Legitimate bugs
 + Creator of a Membership does not get permission to deactivate/destroy that Membership. I think this is a bug. (Todd 2/18/2012)
 --- Not relevant (Michael 6/1/2013) + Layout does not render properly in IE8. Must scroll down to see the page. This needs to be fixed asap. (Todd 5/7/2012)
 --- Not relevant (Michael 6/1/2013) + Fix bug with grid view occluding metadata window. When viewing all the items (viewing 100 at a time on the item menu) the top banner disappears behind the list viewer. When creating an html document TinyMCE overlaps with the banner and metadata window when you scroll. (Jimmy 10/27/11; Todd 5/11/12)
-* Cannot edit FileDocuments by uploading new version (Todd, 5/11/11
+--- can't reproduce (Michael 6/1/2013) * Cannot edit FileDocuments by uploading new version (Todd, 5/11/11
 * Destroying items may cause an error because the outgoing email code will try to access created_at which is now None.
 --- Fixed (Michael 6/1/2013) + Pulldown selector does not reliably autocomplete - often requires multiple backspacings and other fiddling, and sometimes does not work at all (Todd, 9/27/12)
 
@@ -37,9 +37,9 @@ Interface
 * Permission changes should be included in Action Notices (5/11/2012)
 + If you click away from an HTMLDocument you are editing (e.g. by clicking on Modify Permissions during editing), you can lose your edits. Back clicking goes to a fresh edit page. This should be fixed so that people don't lose their edits. (Todd 2011-09-13)
 * Member Of widget should say "This item is not a member of ony Collections" if it has no Memberships. (Todd, 10/3/2011)
-+ The viewer for a Webpage item should show the URL of the link and provide way to open it in a new window/tab. (Todd, 8/2/2011)
+--- Fixed (Michael 6/1/2013) + The viewer for a Webpage item should show the URL of the link and provide way to open it in a new window/tab. (Todd, 8/2/2011)
 + In the email about a located comment we should put in two lines and show the comment for context. (Jimmy 9/10/2011)
-+ The viewer for a Collection and the one for Groups both have the same buttons: "Add an item to this Collection" and "Become a member of <Collection>." The latter button only makes sense for Groups, not Folios and other types of Collections. The former does not make sense for Groups. (Todd, 8/2/2011)
+--- seems to be fixed (Michael 6/1/2013)+ The viewer for a Collection and the one for Groups both have the same buttons: "Add an item to this Collection" and "Become a member of <Collection>." The latter button only makes sense for Groups, not Folios and other types of Collections. The former does not make sense for Groups. (Todd, 8/2/2011)
 + Default Deme layout
     * Make Item Type clickable in Item Details panel of Metadata - takes to Item type hierarchy
     * Don't display "Login as" in Login pulldown options if there is no one to log in as
