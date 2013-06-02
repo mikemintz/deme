@@ -990,7 +990,9 @@ class CalculateRelationships(template.Node):
             relationship_set['name'] = name
             relationship_set['field'] = field
             viewable_items = manager.filter(active=True)
-            if viewable_items.count() == 0:
+            viewable_items_count = viewable_items.count()
+            relationship_set['count'] = viewable_items_count
+            if viewable_items_count == 0:
                 relationship_set['items'] = {}
                 relationship_sets.append(relationship_set)
                 continue
@@ -1024,10 +1026,11 @@ class CalculateRelationships(template.Node):
             new_modal_query_string = '?modal=1&src=metadata&populate_' + field.field.name + '=' + str(item.pk)
             new_modal_url = reverse('item_type_url', kwargs={'viewer': field.model.__name__.lower(), 'action': 'new'}) + new_modal_query_string
 
-            result.append('<div class="type type-related-item-add" data-new-modal-url="%(new_modal_url)s"><a href="%(list_url)s"><b>%(friendly_name)s</b></a></div>' % {
+            result.append('<div class="type type-related-item-add" data-new-modal-url="%(new_modal_url)s" data-count="%(count)s"><a href="%(list_url)s"><b>%(friendly_name)s</b></a></div>' % {
               "list_url": list_url,
               "friendly_name": friendly_name,
-              "new_modal_url": new_modal_url
+              "new_modal_url": new_modal_url,
+              "count": relationship_set['count']
             })
             for related_item in relationship_set['items']:
                 result.append('<div>%s</div>' % get_item_link_tag(context, related_item))

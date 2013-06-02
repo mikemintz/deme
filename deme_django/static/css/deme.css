@@ -5133,6 +5133,9 @@ body.nonadmin #metabar {
 #metabar .section > .collapse#metadata_content_item_details h3:first-child {
   display: none;
 }
+#metadata_content_related_items .metadata_content_related_items_switcher_wrap {
+  margin-bottom: 10px;
+}
 #metadata_content_related_items .relationship {
   margin-bottom: 15px;
 }
@@ -5145,10 +5148,10 @@ body.nonadmin #metabar {
 #metadata_content_related_items .relationship .type a {
   vertical-align: middle;
 }
-#metadata_content_related_items .relationship .type .btn {
+#metadata_content_related_items .relationship .type .newbtn {
   margin-left: 10px;
   position: absolute;
-  top: 2px;
+  top: 5px;
   right: 5px;
 }
 .approvenpoll .propositions {

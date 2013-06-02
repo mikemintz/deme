@@ -1,12 +1,35 @@
 $(function(){
   $('#metadata_content_related_items').on('contentload', function(){
-    $(this).find('.type-related-item-add').each(function(){
+    // add toggle to top of section
+    content_section = $(this);
+    title = content_section.find('h3').first();
+    toggleButtons = $('<div class="btn-group btn-group-justified metadata_content_related_items_switcher_wrap" data-toggle="buttons-radio"><label class="btn btn-small btn-info active"><input type="radio" name="metadata_content_related_items_switcher" value="existing" checked="checked"> Existing</label><label class="btn btn-small btn-info"><input type="radio" name="metadata_content_related_items_switcher" value="all"> All</label></div>').insertAfter(title);
+
+    toggleButtons.find('input').change(function(e){
+      toggleButtonChange();
+    });
+
+    function toggleButtonChange() {
+      if ($("input[name='metadata_content_related_items_switcher']:checked").val() == 'all') {
+        content_section.find('.relationship').show();
+      } else {
+        content_section.find('.relationship').each(function(){
+          if ($(this).find('.type-related-item-add').first().attr('data-count') == 0) {
+            $(this).hide();
+          }
+        });
+      }
+    }
+    toggleButtonChange();
+
+    // append add buttons
+    content_section.find('.type-related-item-add').each(function(){
       var type = $(this);
       var detail_link = type.find('a');
       var new_modal_url = type.attr('data-new-modal-url');
 
       // add button
-      var newbtn = $('<a href="#" class="btn btn-default btn-small newbtn" title="New Item"><i class="glyphicon glyphicon-plus"></i></a>').insertAfter(detail_link);
+      var newbtn = $('<a href="#" class="newbtn" title="New Item"><i class="glyphicon glyphicon-plus"></i></a>').insertAfter(detail_link);
       newbtn.click(function(e){
         e.preventDefault();
         var random_num = Math.floor((Math.random()*1000000)+1);
