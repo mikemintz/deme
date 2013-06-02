@@ -26,7 +26,7 @@ Legitimate bugs
 Interface
 ---------
 * There should be a full interface for specifying CommentLocations
-* Include hCard in user profiles
+--- Fixed (Michael 6/1/2013) * Include hCard in user profiles
 * When an agent logs in for the first time, and other agents have login_as (or do_anything) ability w.r.t. the agent that just logged in, display that in a warning message.
 * Make permissions easier to use in general (add read_anything and write_anything)
 * When creating ContactMethod or AuthenticationMethod via button from agent's profile viewer, viewer should default autofill the name field to "<Agent>'s [Authentication or Email] Contact Method". We can add populate_name in templatetags/item_tags.py for the link to add contact method or authentication menu. (Todd, 6/20/2011)

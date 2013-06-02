@@ -5301,6 +5301,9 @@ body.nonadmin #metabar {
 .agent-profile .contact-methods {
   list-style: none;
 }
+.agent-profile .contact-methods li {
+  margin-bottom: 10px;
+}
 .HiddenMenu {
   z-index: 1;
 }
