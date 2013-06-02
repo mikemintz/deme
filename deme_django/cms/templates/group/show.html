@@ -31,32 +31,9 @@
 
   <div class="pagination row">
     <div class="col col-lg-12">
-      {{ entries.render }}
+      {% include "includes/bs_pagination.html" %}
     </div>
   </div>
-  {% comment %}
-  <!--div class="pagination row">
-    <div class="col col-lg-12">
-    {% if entries.has_previous %}
-    <a href="?page={{ entries.previous_page_number }}">Prev |</a>
-    {% endif %}
-    {% if page_range|length > 1 %}
-        {% for page in page_range %}
-            {% ifequal page entries.number %}
-                {{ entries.number }}
-            {% endifequal %}
-
-            {% ifnotequal page entries.number %}
-                <a href="?page={{ page }}">{{ page }}</a>
-            {% endifnotequal %}
-        {% endfor %}
-    {% endif %}
-    {% if entries.has_next %}
-    <a href="?page={{ entries.next_page_number }}">| Next</a>
-    {% endif %}
-    </div>
-  </div-->
-  {% endcomment %}
 
   <div class="accordion">
     <div class="accordion-group">

@@ -1122,13 +1122,13 @@ class GroupViewer(CollectionViewer):
             page = 1
 
         try:
-            entries = p.page(page)
+            page_obj = p.page(page)
         except (EmptyPage, InvalidPage):
-            entries = p.page(p.num_pages)
+            page_obj = p.page(p.num_pages)
 
         members = []
 
-        for member in entries.object_list:
+        for member in page_obj.object_list:
             if issubclass(member.actual_item_type(), Agent):
                 member = member.downcast()
                 member_details = {}
@@ -1147,7 +1147,7 @@ class GroupViewer(CollectionViewer):
 
         self.context['members'] = members
         self.context['page_range'] = displayed_page_range
-        self.context['entries'] = entries
+        self.context['page_obj'] = page_obj
 
         try:
             folio = self.item.folios.get()

@@ -1,0 +1,23 @@
+<ul class="pagination">
+    {% if page_obj.has_previous %}
+        <li><a href="?{{ page_obj.previous_page_number.querystring }}" class="prev" title="Previous Page"><i class="glyphicon glyphicon-chevron-left"></i></a></li>
+    {% else %}
+        <li class="disabled prev"><span><i class="glyphicon glyphicon-chevron-left"></i></span></li>
+    {% endif %}
+    {% for page in page_obj.pages %}
+        {% if page %}
+            {% ifequal page page_obj.number %}
+                <li class="active"><span class="current page">{{ page }}</span></li>
+            {% else %}
+                <li><a href="?{{ page.querystring }}" class="page">{{ page }}</a></li>
+            {% endifequal %}
+        {% else %}
+            <li class="disabled"><span>...</span></li>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+        <li><a href="?{{ page_obj.next_page_number.querystring }}" class="next" title="Next Page"><i class="glyphicon glyphicon-chevron-right"></i></a></li>
+    {% else %}
+        <li class="disabled next"><span><i class="glyphicon glyphicon-chevron-right"></i></li>
+    {% endif %}
+</ul>
