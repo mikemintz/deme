@@ -10,7 +10,7 @@ $(function(){
       newbtn.click(function(e){
         e.preventDefault();
         var random_num = Math.floor((Math.random()*1000000)+1);
-        window.open(new_modal_url, 'embedform-' + random_num, 'width=400,toolbar=1,resizable=1,scrollbars=yes,height=400,top=100,left=100');
+        window.open(new_modal_url, 'embedform-' + random_num, 'width=400,toolbar=1,resizable=1,scrollbars=yes,height=500,top=100,left=100');
       });
     });
   });

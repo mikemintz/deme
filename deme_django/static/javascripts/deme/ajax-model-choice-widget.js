@@ -41,7 +41,7 @@ $(function() {
       e.preventDefault();
       var new_modal_url = hidden_input.attr('data-new-modal-url');
       var random_num = Math.floor((Math.random()*1000000)+1);
-      window.open(new_modal_url, 'embedform-' + random_num, 'width=400,toolbar=1,resizable=1,scrollbars=yes,height=400,top=100,left=100');
+      window.open(new_modal_url, 'embedform-' + random_num, 'width=400,toolbar=1,resizable=1,scrollbars=yes,height=500,top=100,left=100');
     });
 
     hidden_input.addClass('ajax-model-choice-widget-processed');

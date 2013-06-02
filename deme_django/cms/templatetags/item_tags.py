@@ -991,6 +991,8 @@ class CalculateRelationships(template.Node):
             relationship_set['field'] = field
             viewable_items = manager.filter(active=True)
             if viewable_items.count() == 0:
+                relationship_set['items'] = {}
+                relationship_sets.append(relationship_set)
                 continue
             viewable_items = permission_cache.filter_items('view %s.%s' % (field.model.__name__, field.field.name), viewable_items, cache_results=False)
             if field.field.name in field.model.dyadic_relations:
