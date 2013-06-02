@@ -5086,7 +5086,9 @@ body.nonadmin #metabar {
   margin-top: 10px;
 }
 #metabar .block .button-wrap {
-  padding: 0 5px;
+  margin: 0 10px;
+  padding: 0;
+  border-radius: 5px;
 }
 #metabar .section ~ .section {
   border-top: 1px solid #a6a6a6;
