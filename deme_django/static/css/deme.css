@@ -5162,9 +5162,19 @@ body.nonadmin #metabar {
 .approvenpoll .propositions {
   margin-bottom: 15px;
 }
+#poll-participants .accordion-inner {
+  padding: 0;
+}
+#poll-participants .response {
+  padding: 9px 15px;
+  border-bottom: 1px solid #eeeeee;
+}
+#poll-participants .response:last-child {
+  border-bottom: 0;
+}
 .proposition-result .proposition_graph {
   position: relative;
-  margin: 0 70px 60px;
+  margin: 10px 70px 60px;
   background: #eeeeee;
   border-bottom: 1px solid #000000;
   padding: 20px 0 10px;

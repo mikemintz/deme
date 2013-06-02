@@ -3,10 +3,22 @@
     margin-bottom: 15px;
   }
 }
+#poll-participants {
+  .accordion-inner {
+    padding: 0;
+  }
+  .response {
+    padding: 9px 15px;
+    border-bottom: 1px solid @gray-lighter;
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+}
 .proposition-result {
   .proposition_graph {
     position: relative;
-    margin: 0 70px 60px;
+    margin: 10px 70px 60px;
     background: @grayLighter;
     border-bottom: 1px solid @black;
     padding: 20px 0 10px;

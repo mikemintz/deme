@@ -128,15 +128,15 @@ $(document).ready(function() {
     		      <h4>{% firstof proposition.name forloop.counter %}</h4>
     		      <p>{{proposition.summary_text|safe}}</p>
     		      {% if proposition.body %}
-      		      <button class="btn btn-small btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
+      		      <button class="btn btn-default btn-small btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
     		      {% endif %}
 
     	 	      <!-- admin -->
      		 	    {% ifagentcan 'modify_membership' item %}
                 {% ifagentcanglobal 'create Proposition' %}
-          			<a href="{% url item_url viewer='proposition',action='edit',noun=proposition.pk %}?redirect={{ full_path|urlencode }}" class="btn btn-small"><i class="glyphicon glyphicon-edit"></i> Edit</a>
+          			<a href="{% url item_url viewer='proposition',action='edit',noun=proposition.pk %}?redirect={{ full_path|urlencode }}" class="btn btn-default btn-small"><i class="glyphicon glyphicon-edit"></i> Edit</a>
                 {% endifagentcanglobal %}
-        			<button class="btn btn-small" type="button" onclick="removeMember('{{ proposition.pk }}')"><i class="glyphicon glyphicon-trash"></i> Remove</button>
+        			<button class="btn btn-default btn-small" type="button" onclick="removeMember('{{ proposition.pk }}')"><i class="glyphicon glyphicon-trash"></i> Remove</button>
         		  {% endifagentcan %}
 
         			{% if cur_agent_in_eligbles %}
@@ -191,7 +191,7 @@ $(document).ready(function() {
         <h4>{% firstof proposition.name forloop.counter %}</h4>
 	      <p>{{proposition.summary_text|safe}}</p>
 	      {% if proposition.body %}
-		      <button class="btn btn-small btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
+		      <button class="btn btn-default btn-small btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
 	      {% endif %}
 	      <div class="proposition_graph">
 	        <div class="position">
@@ -274,36 +274,48 @@ $(document).ready(function() {
   {% endif %}<!--(cur_agent_has_voted or can_view_response_names_and_values)-->
 
   {% if can_view_response_names %}
-  <h3>Participants</h3>
-  <div class="responses-container list-group">
-    {% for key, value in responses.items %}
-    	<div class="response list-group-item">
-    	  <a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
-    	  {% if value %}
-        	has responded
-        	{% if can_view_response_names_and_values %}
-          <input type="button" class="pull-right btn btn-small"
-            value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
-          <ul id="responses{{ key.pk }}" style="display: none">
-            {% for response in value %}
-                 <li><a href="{{ response.proposition.get_absolute_url }}">
-                 {% viewable_name response.proposition %}</a>:
-                   {%ifequal response.value "approve" %}
-                   	Agree
-                   {% endifequal %}
-                   {%ifequal response.value "disapprove" %}
-                   	Disagree
-                   {% endifequal %}
-                 </li>
+
+  <div class="accordion groups">
+    <div class="accordion-group">
+      <div class="accordion-heading">
+        <a href="#poll-participants" class="accordion-toggle" data-toggle="collapse"><i class="glyphicon glyphicon-user"></i> Participants</a>
+      </div>
+      <div id="poll-participants" class="accordion-body collapse">
+        <div class="accordion-inner">
+          <div class="responses-container">
+            {% for key, value in responses.items %}
+            	<div class="response">
+            	  <a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
+            	  {% if value %}
+                	has responded
+                	{% if can_view_response_names_and_values %}
+                  <input type="button" class="pull-right btn btn-default btn-small"
+                    value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
+                  <ul id="responses{{ key.pk }}" style="display: none">
+                    {% for response in value %}
+                         <li><a href="{{ response.proposition.get_absolute_url }}">
+                         {% viewable_name response.proposition %}</a>:
+                           {%ifequal response.value "approve" %}
+                           	Agree
+                           {% endifequal %}
+                           {%ifequal response.value "disapprove" %}
+                           	Disagree
+                           {% endifequal %}
+                         </li>
+                    {% endfor %}
+                  </ul>
+                  {% endif %}
+            	  {% else %}
+                	has not responded
+              	{% endif %}
+            	</div>
             {% endfor %}
-          </ul>
-          {% endif %}
-    	  {% else %}
-        	has not responded
-      	{% endif %}
-    	</div>
-    {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
   {% endif %}<!--(can_view_response_names_and_values)-->
 
   {% for key, value in responses.items %}
@@ -335,7 +347,7 @@ $(document).ready(function() {
 
 
 <!------------------------------------------------------------------------>
-
+{% comment %}
 
 {% if cur_agent_has_voted or can_view_response_names_and_values %}
 
@@ -447,3 +459,4 @@ $(document).ready(function() {
 
 </div>
 
+{% endcomment %}
