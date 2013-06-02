@@ -284,7 +284,7 @@ $(document).ready(function() {
         <div class="accordion-inner">
           <div class="responses-container">
             {% for key, value in responses.items %}
-            	<div class="response">
+            	<div class="response {% if value %}has-responded{% endif %}">
             	  <a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
             	  {% if value %}
                 	has responded
@@ -318,24 +318,26 @@ $(document).ready(function() {
 
   {% endif %}<!--(can_view_response_names_and_values)-->
 
-  {% for key, value in responses.items %}
-    {% if cur_agent.pk == key.pk %}
-    <h3>Your Responses</h3>
-    <ul>
-      {% for response in value %}
-           <li><a href="{{ response.proposition.get_absolute_url }}">
-           {% viewable_name response.proposition %}</a>:
-             {%ifequal response.value "approve" %}
-             	Agree
-             {% endifequal %}
-             {%ifequal response.value "disapprove" %}
-             	Disagree
-             {% endifequal %}
-           </li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-  {% endfor %}
+  {% if cur_agent_has_voted %}
+    {% for key, value in responses.items %}
+      {% if cur_agent.pk == key.pk %}
+      <h3>Your Responses</h3>
+      <ul>
+        {% for response in value %}
+             <li><a href="{{ response.proposition.get_absolute_url }}">
+             {% viewable_name response.proposition %}</a>:
+               {%ifequal response.value "approve" %}
+               	Agree
+               {% endifequal %}
+               {%ifequal response.value "disapprove" %}
+               	Disagree
+               {% endifequal %}
+             </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
 
 </div><!--/.approvenpoll-->
 

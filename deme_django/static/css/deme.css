@@ -5172,6 +5172,13 @@ body.nonadmin #metabar {
 #poll-participants .response:last-child {
   border-bottom: 0;
 }
+#poll-participants .response .btn.pull-right {
+  margin-top: -5px;
+}
+#poll-participants .response.has-responded {
+  border-left: 5px solid #48ba1b;
+  padding-left: 10px;
+}
 .proposition-result .proposition_graph {
   position: relative;
   margin: 10px 70px 60px;

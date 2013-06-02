@@ -9,8 +9,10 @@
     {% for agent in login_as_agents %}
         {% if agent.active %}
         <p>
-            <button type="submit" name="login_as_{{ agent.pk }}" class="btn btn-default">Login</button>
-            <a href="{{ agent.get_absolute_url }}">{% viewable_name agent %}</a>
+          <div class="btn-group">
+            <button type="submit" name="login_as_{{ agent.pk }}" class="btn {% if agent.is_admin %}btn-success{% else %}btn-primary{% endif %}">{% viewable_name agent %}</button>
+            <a href="{{ agent.get_absolute_url }}" class="btn btn-info"><i class="glyphicon glyphicon-info-sign"></i></a>
+          </div>
         </p>
         {% endif %}
     {% endfor %}
