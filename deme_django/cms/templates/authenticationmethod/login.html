@@ -11,7 +11,7 @@
         <p>
           <div class="btn-group">
             <button type="submit" name="login_as_{{ agent.pk }}" class="btn {% if agent.is_admin %}btn-success{% else %}btn-primary{% endif %}">{% viewable_name agent %}</button>
-            <a href="{{ agent.get_absolute_url }}" class="btn btn-info"><i class="glyphicon glyphicon-info-sign"></i></a>
+            <a href="{{ agent.get_absolute_url }}" class="btn btn-info" title="{% viewable_name agent %} details"><i class="glyphicon glyphicon-info-sign"></i></a>
           </div>
         </p>
         {% endif %}

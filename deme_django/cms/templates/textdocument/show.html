@@ -45,14 +45,14 @@
         } else {
             if (comment_id != null) {
                 // Expand the accordion to the comment section
-                $('#right_accordion').accordion('activate', '#accordion_header_comments');
+                metabar_show_section($('#metadata_content_comments')); // $('#right_accordion').accordion('activate', '#accordion_header_comments');
                 // Highlight the comment
                 $('#right_pane_comment_' + comment_id).addClass('comment_header_highlighted');
                 // Scroll to the proper place in the comment sidebar
-                if (scroll_comments) {
-                    var y = $('#right_pane_comment_' + comment_id).offset().top - $('#fixed_right_pane').offset().top;
-                    $('#fixed_right_pane').animate({scrollTop:y}, 500);
-                }
+                //if (scroll_comments) {
+                //    var y = $('#right_pane_comment_' + comment_id).offset().top - $('#fixed_right_pane').offset().top;
+                //    $('#fixed_right_pane').animate({scrollTop:y}, 500);
+                //}
             }
             if (transclusion_id != null) {
                 // Show located comments
@@ -96,9 +96,12 @@
             targ = targ.parentNode;
         var tokenWrapper = targ;
         var index = tokenWrapper.deme_text_offset;
-        openLocatedCommentDialog('comment{{ item.pk }}', index);
-        //var url = '{% url item_type_url viewer="textcomment",action="new" %}?populate_item={{ item.pk }}&populate_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&populate_item_index=' + index;
-        //window.location = url;
+        // make sure comment is open
+        metabar_show_section($('#metadata_content_comments'), function(){
+          openLocatedCommentDialog('comment{{ item.pk }}', index);
+          //var url = '{% url item_type_url viewer="textcomment",action="new" %}?populate_item={{ item.pk }}&populate_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&populate_item_index=' + index;
+          //window.location = url;
+        });
         return false;
     }
     function openLocatedCommentDialog(name, position)

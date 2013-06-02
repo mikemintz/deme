@@ -122,7 +122,7 @@ $(function(){
     metabar_show_section($('#' + id));
   })
 
-  function metabar_show_section(collapse) {
+  function metabar_show_section(collapse, cb) {
     $metabar.find('.block').addClass('hide');
     collapse.removeClass('hide');
     // if not metabar, then add button
@@ -135,6 +135,9 @@ $(function(){
     var name = collapse.attr('id');
     $.cookie('METABAR_SECTION', name);
     metabar_load_section(collapse, function(collapse){
+      if (typeof cb === "function") {
+        cb();
+      }
     });
   }
   window.metabar_show_section = metabar_show_section;

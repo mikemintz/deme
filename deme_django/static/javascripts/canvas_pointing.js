@@ -53,9 +53,7 @@ var DemeCanvasPointing = function() {
     }
 
     pub.setup = function() {
-        $(document).ready(function(){
-            $('body').prepend('<canvas id="pointing_canvas" style="position: absolute; z-index: -100;"></canvas>');
-        });
+        $('body').prepend('<canvas id="pointing_canvas" style="position: absolute; z-index: 1; pointer-events: none"></canvas>');
         redrawTimer();
     };
 
