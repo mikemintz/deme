@@ -26,7 +26,7 @@ $(function(){
   });
 
   // attach focus to search button
-  $('.search-btn a').click(function(e){
+  $('.search-btn a.dropdown-toggle').click(function(e){
     e.preventDefault();
     hideAdminbarIfMobile(this);
     $dropdown = $(this).closest('.dropdown');

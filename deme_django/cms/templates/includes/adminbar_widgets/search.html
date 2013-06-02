@@ -4,5 +4,6 @@
     <form method="get" action="{% url item_type_url viewer="item" %}">
         <input type="search" class="search_box" name="q" placeholder="Search" value="{{ search_query }}">
     </form>
+    <small><a href="{% url item_type_url viewer="item" %}">Advanced Search</a></small>
   </div>
 </li>
