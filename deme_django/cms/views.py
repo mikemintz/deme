@@ -246,7 +246,7 @@ class ItemViewer(Viewer):
                 else:
                     raise Exception("Cannot filter on field %s.%s (not a related field)" % (cur_item_type.__name__, field.name))
 
-            def filter_by_filter(queryset, fields, item_types, active):
+            def filter_by_filter(queryset, fields, item_types, active=True):
                 if not fields:
                     return queryset.filter(pk=target_pk)
                 field = fields[0]
@@ -255,7 +255,7 @@ class ItemViewer(Viewer):
                     next_item_type = field.rel.to
                 elif isinstance(field, models.related.RelatedObject):
                     next_item_type = field.model
-                next_queryset = filter_by_filter(next_item_type.objects, fields[1:], item_types[1:])
+                next_queryset = filter_by_filter(next_item_type.objects, fields[1:], item_types[1:], active)
                 if isinstance(field, models.ForeignKey):
                     query_dict = {field.name + '__in': next_queryset}
                     result = queryset.filter(**query_dict)
@@ -273,7 +273,7 @@ class ItemViewer(Viewer):
                 if issubclass(item_type, Item):
                     result = result.filter(active=active)
                 return result
-            items = filter_by_filter(items, fields, item_types, inactive)
+            items = filter_by_filter(items, fields, item_types, active)
         # Filter by collection
         if isinstance(collection, Collection):
             if self.cur_agent_can_global('do_anything'):
@@ -305,7 +305,7 @@ class ItemViewer(Viewer):
             url = "%s?%s" % (item.get_absolute_url(), '&amp;'.join('crumb_filter=' + x for x in self.request.GET.getlist('filter')))
             icon = icon_url(item, 16)
             name = escape(item.display_name(can_view_name))
-            return '<a class="imglink" href="%s"><img src="%s" /><span>%s</span></a>' % (url, icon, name)
+            return '<a class="imglink" href="%s"><img src="%s" /> <span>%s</span></a>' % (url, icon, name)
 
         rows = []
         for item in items:
