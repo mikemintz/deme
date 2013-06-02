@@ -4904,9 +4904,13 @@ body.nonadmin #metabar {
   }
   .adminbar .nav {
     margin-top: 0;
+    margin-bottom: 0;
   }
   .adminbar .nav > li {
     float: left;
+  }
+  .adminbar .nav > li > a {
+    border-radius: 0;
   }
   .adminbar .nav.search {
     background-color: #29687e;
@@ -4931,7 +4935,7 @@ body.nonadmin #metabar {
   .adminbar .nav.breadcrumbs > li > span {
     background: none;
     display: inline-block;
-    padding: 8px 10px;
+    padding: 9px 10px;
     border-left: 1px solid rgba(255, 255, 255, 0.15);
     border-right: 1px solid rgba(0, 0, 0, 0.15);
     background-color: #29687e;
