@@ -787,7 +787,7 @@ class CalculateComments(template.Node):
                 else:
                     result.append(u'<div class="subcomments">')
             original_comment = parents[0]['comment'] if parents else comment
-            result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
+            result.append(u'<div id="comment%s" style="display: none;" title="Add a Comment"><form method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
             result.append(u'<p>Comment Title: <input name="title" value="Re: %s" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> </p> ' % (comment.name))
             if context['cur_agent'].is_anonymous():
                 result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
@@ -797,7 +797,7 @@ class CalculateComments(template.Node):
             permission_editor_html = PermissionEditor(None, target_level='one', privacy_only=False, is_new_item=True, accordion_comment_parent=comment).render(context)
             result.append(u'<div id="permission_editor%s" style="display: none;">%s</div>' % (comment.pk, permission_editor_html))
             result.append(u'</div><br> ')
-            result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (comment.pk, comment.version_number))
+            result.append(u' <input type="submit" value="Submit" class="btn btn-primary" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (comment.pk, comment.version_number))
             result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (comment.pk))
             result.append(u'</form></div>')
             result.append(u'<div style="position: relative;">')
@@ -881,7 +881,7 @@ class CalculateComments(template.Node):
         result.append(u'<div class="comment_box_header">')
         if agentcan_helper(context, 'comment_on', item):
             result.append(u'<a href="#" onclick="openCommentDialog(\'comment%s\'); return false;" class="btn btn-primary"><span class="glyphicon glyphicon-comment"></span> Add comment</a>' % item.pk)
-            result.append(u'<div id="comment%s" style="display: none;"><form method="post" action="%s?redirect=%s">'% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
+            result.append(u'<div id="comment%s" style="display: none;" title="Add a Comment"><form method="post" action="%s?redirect=%s">'% (item.pk, reverse('item_type_url', kwargs={'viewer': 'textcomment', 'action': 'accordioncreate'}), urlquote(full_path)))
             result.append(u'<p>Comment Title: <input name="title" type="text" size="25" maxlength="255" /></p><p>Body: <br><textarea name="comment_body" style="height: 200px; width: 250px;"></textarea> ')
             if context['cur_agent'].is_anonymous():
                 result.append(u'To verify you are not a spammer, please enter in "abc123" <input name="simple_captcha" type="text" size="25" />')
@@ -891,7 +891,7 @@ class CalculateComments(template.Node):
             permission_editor_html = PermissionEditor(None, target_level='one', privacy_only=False, is_new_item=True, accordion_comment_parent=item).render(context)
             result.append(u'<div id="permission_editor%s" style="display: none;">%s</div>' % (item.pk, permission_editor_html))
             result.append(u'</div><br> ')
-            result.append(u' <input type="submit" value="Submit" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (item.pk, item.version_number))
+            result.append(u' <input type="submit" value="Submit" class="btn btn-primary" /> <input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" /> ' % (item.pk, item.version_number))
             result.append(u'<a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv(\'advancedcomment%s\'); return false;">Advanced</a> ' % (item.pk))
             result.append(u'</form></div>')
         grid_url = u'%s?filter=recursive_comments_as_child.parent.%d' % (reverse('item_type_url', kwargs={'viewer': 'textcomment'}), item.pk)

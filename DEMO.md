@@ -54,6 +54,37 @@ Now let's make a group to put our new users in.
 
 - Now you should see two members on your group page, and if photos have been set, their photos.
 
+New Poll
+--------
+
+Now let's go ahead and make a poll for our group to take.
+
+- Go to Actions > New item and choose New agree disagree poll.
+
+- Name your poll as you like, perhaps something like "Exercise Poll". Under `question` you could put something like "How do you feel about exercise?"
+
+- Most importantly, each poll needs to have a group it's for. Under `Eligibles` type in the group you just created. There are also options to control if people can see who has voted and to allow people to change their answers. Create the poll.
+
+- Now we need to add propositions to the poll. Go ahead and click "Add a Proposition".
+
+- Let's say I want to find out whether people think that government ought to provide free exercise classes. For the `item name`, I would put "Free Exercise Classes", under `Summary text` I would put "Should government be mandated to provide free exercise classes for all US citizens", and in the `Body` I would put further details about the proposition, like why it might be a good idea, why it might not be, etc. After you've completed adding details to your proposition hit Create.
+
+- Now you'll see your first proposition listed, with the name and summary visible and the details listed under `Read More`. You'll also see Poll Results, of which we currently have none. Go ahead and create at least one more proposition in the same way.
+
+Taking the Poll
+---------------
+
+Let's now try taking the poll.
+
+- In the toolbar, click the Person icon to open the Account menu. Click Login As and choose one of your group members and go back to the previous page.
+
+- Notice that all of the administrative options are gone and you simply have a method to take the poll. Agree and disagree as you will and enter a personal statement if you'd like. Then submit.
+
+- Now you'll be able to see the poll results so far and if you had selected to allow people to take the poll again when making it, you'd be able to retake the poll.
+
+Making a new page
+-----------------
+
 
 
 

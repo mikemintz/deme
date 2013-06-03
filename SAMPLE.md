@@ -49,7 +49,7 @@ To change how Deme looks, you'll need to change your site's `default layout`:
   * Set `Override default layout` to true.
   * Have `{% extends "base_layout.html" %}` be the first line of your new layout.
 3. Go to your current site settings. By default, your site will be `Default Site`, which you can get to by searching for it.
-4. Edit your site's `Default layout` to your new layout. In our case, this will be `Sample Layout`. By default, there is also a "Sample Forum Layout" with another look and feel.
+4. Edit your site's `Default layout` to your new layout. In our case, this will be `Sample Layout`. By default, there is also a "Sample Forum Layout" with another look and feel based on http://communityforum.airhealthprojects.org.
 5. Click save and your layout will be updated
 
 

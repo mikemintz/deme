@@ -138,6 +138,7 @@ $(function(){
       if (typeof cb === "function") {
         cb();
       }
+      toggleMetabar('open');
     });
   }
   window.metabar_show_section = metabar_show_section;
