@@ -230,52 +230,63 @@
 
 {% ifagentcan 'view TextDocument.body' item %}
 
-    {% ifagentcan 'comment_on' item %}
-    <div><a href="#" onclick="add_comment(); return false;">Add Comment</a></div>
-    {% endifagentcan %}
+<div class="accordion groups">
+  <div class="accordion-group">
+    <div class="accordion-heading">
+      <a href="#comments" class="accordion-toggle" data-toggle="collapse"><i class="glyphicon glyphicon-comment"></i> Comment Tools</a>
+    </div>
+    <div id="comments" class="accordion-body collapse">
+      <div class="accordion-inner">
 
-<div id="parse_errors" style="display: none;">
+        {% ifagentcan 'comment_on' item %}
+        <div><a href="#" onclick="add_comment(); return false;">Add Comment</a></div>
+        {% endifagentcan %}
+
+        <div id="parse_errors" style="display: none;">
+        </div>
+        {% ifagentcan 'add_transclusion' item %}
+
+        {% ifagentcan 'comment_on' item %}
+        <div id="add_located_comment_div">
+        <a href="#" onclick="add_located_comment(); return false;">Add Located Comment</a>
+        </div>
+        <div id="adding_located_comment_div" style="display: none;">
+        Now just select text where you want to comment or
+        <a href="#" onclick="cancel_add_located_comment(); return false;">Cancel</a>
+        </div>
+        {% endifagentcan %}
+
+        <div id="add_transclusion_div">
+        <a href="#" onclick="add_transclusion(); return false;">Add Transclusion</a>
+        </div>
+        <div id="adding_transclusion_div" style="display: none;">
+        Now just select text where you want to add a Transclusion or
+        <a href="#" onclick="cancel_add_transclusion(); return false;">Cancel</a>
+        </div>
+
+        {% endifagentcan %}
+
+        {% ifagentcanglobal 'create TextDocumentExcerpt' %}
+        {% ifagentcanglobal 'create Collection' %}
+        <div id="add_highlight_div">
+        <a href="#" onclick="start_highlighting(); return false;">Add Excerpt</a>
+        </div>
+
+        <div id="adding_highlight_div" style="display: none;">
+        Now just select text you want to highlight.
+        When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); return false;">submit them</a> or <a href="#" onclick="cancel_highlighting(); return false;">cancel</a>.
+        <form id="excerpt_form" method="post" enctype="multipart/form-data" action="{% url item_type_url viewer="textdocumentexcerpt",action="createmultiexcerpt" %}">
+        </form>
+        </div>
+        {% endifagentcanglobal %}
+        {% endifagentcanglobal %}
+
+        <div id="show_located_comments" style="display: none;"><a href="#" onclick="$('.commentref').show(); $('#hide_located_comments').show(); $('#show_located_comments').hide(); return false;">Show Located Comments</a></div>
+        <div id="hide_located_comments"><a href="#" onclick="$('.commentref').hide(); $('#hide_located_comments').hide(); $('#show_located_comments').show(); DemeCanvasPointing.clearLine(); return false;">Hide Located Comments</a></div>
+      </div>
+    </div>
+  </div>
 </div>
-{% ifagentcan 'add_transclusion' item %}
-
-{% ifagentcan 'comment_on' item %}
-<div id="add_located_comment_div">
-<a href="#" onclick="add_located_comment(); return false;">Add Located Comment</a>
-</div>
-<div id="adding_located_comment_div" style="display: none;">
-Now just select text where you want to comment or
-<a href="#" onclick="cancel_add_located_comment(); return false;">Cancel</a>
-</div>
-{% endifagentcan %}
-
-<div id="add_transclusion_div">
-<a href="#" onclick="add_transclusion(); return false;">Add Transclusion</a>
-</div>
-<div id="adding_transclusion_div" style="display: none;">
-Now just select text where you want to add a Transclusion or
-<a href="#" onclick="cancel_add_transclusion(); return false;">Cancel</a>
-</div>
-
-{% endifagentcan %}
-
-{% ifagentcanglobal 'create TextDocumentExcerpt' %}
-{% ifagentcanglobal 'create Collection' %}
-<div id="add_highlight_div">
-<a href="#" onclick="start_highlighting(); return false;">Add Excerpt</a>
-</div>
-
-<div id="adding_highlight_div" style="display: none;">
-Now just select text you want to highlight.
-When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); return false;">submit them</a> or <a href="#" onclick="cancel_highlighting(); return false;">cancel</a>.
-<form id="excerpt_form" method="post" enctype="multipart/form-data" action="{% url item_type_url viewer="textdocumentexcerpt",action="createmultiexcerpt" %}">
-</form>
-</div>
-{% endifagentcanglobal %}
-{% endifagentcanglobal %}
-
-<div id="show_located_comments" style="display: none;"><a href="#" onclick="$('.commentref').show(); $('#hide_located_comments').show(); $('#show_located_comments').hide(); return false;">Show Located Comments</a></div>
-<div id="hide_located_comments"><a href="#" onclick="$('.commentref').hide(); $('#hide_located_comments').hide(); $('#show_located_comments').show(); DemeCanvasPointing.clearLine(); return false;">Hide Located Comments</a></div>
-
 {% endifagentcan %}
 
 {% endblock content %}
