@@ -34,6 +34,12 @@ Customizing the Site
   * To add an image logo, click the + button and in the popup window, choose a file and create the image document. The popup window will then close and your image's name will show up in the image logo field. Be sure to save for the logo to show up.
   * To edit the title, simply add a title and save.
 
+### Change the home page
+
+1. Log in as Admin
+2. From the Home Page, press the Edit button
+3. The Home Page is a Django style template. In this case, all we need to do is keep everything inside the `{% block content %}...{% endblock content %}` tags.
+
 ### Changing the site's layout
 
 To change how Deme looks, you'll need to change your site's `default layout`:

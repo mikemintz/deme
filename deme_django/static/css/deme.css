@@ -4664,6 +4664,12 @@ div.comment_body {
 .ui-autocomplete-loading {
   background: #ffffff url('/static/ui-anim_basic_16x16.gif') right center no-repeat;
 }
+form.item_form > table {
+  width: 100%;
+}
+form.item_form textarea {
+  width: 100%;
+}
 @font-face {
   font-family: 'Deme-Symbols';
   src: url('../fonts/Deme-Symbols.eot');

@@ -391,7 +391,7 @@ class ActionsMenu(template.Node):
 
         list_items = []
         if agentcan_global_helper(context, 'create', wildcard_suffix=True):
-            list_items.append("""<li><a href="#" onclick="$('#newItemMenu').modal('show'); return false;" tabindex="-1" title="Create" class="create"><i class="glyphicon glyphicon-plus-sign"></i> Create</a></li>""")
+            list_items.append("""<li><a href="#" onclick="$('#newItemMenu').modal('show'); return false;" tabindex="-1" title="Create" class="create"><i class="glyphicon glyphicon-plus-sign"></i> New</a></li>""")
 
         if item:
             if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
@@ -1777,7 +1777,7 @@ class RecentlyViewed(template.Node):
                     var title = datum[1];
                     outer_div.append('<div><a href="' + url + '">' + title + '</a></div>');
                 });
-                outer_div.append('<div><a href="#" onclick="num_recently_viewed_pages += 10; display_recently_viewed_pages(false, false); return false;" class="btn btn-default">More</a> <a href="#" onclick="num_recently_viewed_pages += 10; display_recently_viewed_pages(false, true); return false;" class="btn btn-default">Clear</a></div>');
+                outer_div.append('<div><a href="#" onclick="num_recently_viewed_pages += 10; display_recently_viewed_pages(false, false); return false;" class=""><i class="glyphicon glyphicon-chevron-down"></i> More</a> <a href="#" onclick="num_recently_viewed_pages += 10; display_recently_viewed_pages(false, true); return false;" class=""><i class="glyphicon glyphicon-remove"></i> Clear</a></div>');
             });
         }
         $(function(){
