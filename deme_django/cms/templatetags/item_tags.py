@@ -391,7 +391,7 @@ class ActionsMenu(template.Node):
 
         list_items = []
         if agentcan_global_helper(context, 'create', wildcard_suffix=True):
-            list_items.append("""<li><a href="#" onclick="$('#newItemMenu').modal('show'); return false;" tabindex="-1" title="Create" class="create"><i class="glyphicon glyphicon-plus-sign"></i> New</a></li>""")
+            list_items.append("""<li><a href="#" onclick="$('#newItemMenu').modal('show'); return false;" tabindex="-1" title="Create" class="create"><i class="glyphicon glyphicon-plus-sign"></i> New item</a></li>""")
 
         if item:
             if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
@@ -735,7 +735,7 @@ class NewMemberDialog(template.Node):
         result = []
 
         result.append( """
-            <div style="display: none;" id="addmember%(item.pk)s">
+            <div style="display: none;" id="addmember%(item.pk)s" title="Add Item">
             <form method="post" action="%(create_url)s?redirect=%(full_path)s">
                 Item: %(ajax_field)s
                 <input type="hidden" name="collection" value="%(item.pk)s" /><br><br>
@@ -745,7 +745,7 @@ class NewMemberDialog(template.Node):
                     Permission Enabled: <input name="permissionenabled" type="checkbox" />
                     <div style="float: top; font-size: 7pt;">Enable this if you want collection-wide permissions to apply to this child item</div>
                 </div>
-                <input type="submit" value="Submit" />
+                <input type="submit" value="Add Item" class="btn btn-primary">
             </form>
             </div>  """ %
             {

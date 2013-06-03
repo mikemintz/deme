@@ -21,11 +21,11 @@
         {% actionsmenu %}
       </ul>
     </li>
-    <li><a href="#" title="New" class="create"><i class="glyphicon glyphicon-plus-sign"></i></a></li>
+    <li><a href="#" title="Create a new item" class="create"><i class="glyphicon glyphicon-plus-sign"></i></a></li>
     {% if item %}
-      <li><a href="#" title="Edit" class="edit"><i class="glyphicon glyphicon-edit"></i></a></li>
+      <li><a href="#" title="Edit this item" class="edit"><i class="glyphicon glyphicon-edit"></i></a></li>
       {% ifagentcan 'comment' item %}
-      <li><a href="#" title="Comment" class="comment"><i class="glyphicon glyphicon-comment"></i></a></li>
+      <li><a href="#" title="Comment on this item" class="comment"><i class="glyphicon glyphicon-comment"></i></a></li>
       {% endifagentcan %}
     {% endif %}
     {% include 'includes/adminbar_widgets/account.html' %}

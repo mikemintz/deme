@@ -30,6 +30,33 @@ Site title and logo
 
 - The site title should now be changed across all pages. You can also upload a logo. Edit the Default Site again, then click the Plus sign next to Logo. This opens a popup that lets you upload a photo. Go ahead and do so, clicking "create image document", then save the site. You should see the picture as your logo throughout the site.
 
+We'll look at editing the site further later in the demo.
+
+New Users
+---------
+
+Now let's go ahead and add some new users.
+
+- Go to Actions > New item and select "New person". The `Name` is what's displayed publicly throughout the site and in general is the person's full name. You can also add a picture of that person in the same way that you uploaded a logo. Name your person something you'll remember.
+
+- Let's go ahead and make a second person. So that we'll have enough to make a group.
+
+New Groups
+----------
+
+Now let's make a group to put our new users in.
+
+- Go to Actions > New item and select "New group". Like persons, groups have names and an image. Name your group something you'll remember, and if you'd like, give it an image.
+
+- Create the group. After creating it, you'll see the group page, which doesn't have anyone on it yet.
+
+- Let's add the people we just created. Go to Actions > Insert an item which opens a popup. Start typing in the name of your first person and then click submit when she appears. Do so for your second person.
+
+- Now you should see two members on your group page, and if photos have been set, their photos.
+
+
+
+
 Editing Items
 -------------
 
@@ -41,3 +68,5 @@ Editing Items
 
 - Now when you open up the home page, you'll see that all the text that used to be there is now simply "Hello World"
 
+Editing the Layout
+------------------

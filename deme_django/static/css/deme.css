@@ -4573,10 +4573,13 @@ form.item_form table tr th {
   vertical-align: top;
 }
 form.item_form table tr td {
-  padding-bottom: 10px;
+  padding-bottom: 15px;
   vertical-align: top;
   color: #999;
   font-size: 85%;
+}
+form.item_form table tr td br {
+  display: none;
 }
 form.item_form ul.errorlist {
   list-style: none;
