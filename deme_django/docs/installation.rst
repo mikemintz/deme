@@ -62,6 +62,7 @@ Once you've installed virtualenv, you can install the python dependencies as fol
   $ pip install Django==1.2.5
   $ pip install South==0.7
   $ pip install psycopg2
+  $ pip install django-pure-pagination
 
 TinyMCE
 ^^^^^^^
