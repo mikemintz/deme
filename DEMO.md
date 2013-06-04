@@ -115,6 +115,8 @@ Each group has a "folio" of items that can contain any items. Let's go ahead and
 Editing the home page
 ---------------------
 
+This section assumes you know a little bit about HTML
+
 - Let's go back to the home page and click the edit button.
 
 - The Home Page is written in Django templated HTML, so let's take a look. Please note that all the edits you make should be between the {% block content %} and {% endblock content %} tags. Let's go ahead and change it to something very simple, for example `{% block content %} Hello World {% endblock content %}`
@@ -130,8 +132,12 @@ With Deme, you can customize the look and feel of the entire site by changing th
 
 - Set the default layout to `Sample Forum Layout`, then save. Now the site should look more like the discussion site.
 
+- This new layout also makes it so that login is required to see the site so if you log out, you'll need to log in to see anything. Try using "todd" or "mike" with blank password to get in if you get logged out.
+
 Editing the Layout
 ------------------
+
+This section assumes you know a little bit about HTML
 
 - Let's go ahead and change the tabs to link to our poll, discussion board, and new page. In order to do so, we'll need the links of all those pages. We can change the links by editing the Layout. Search for "Sample Forum Layout" and edit it.
 
@@ -145,3 +151,6 @@ Editing the Layout
 
 Likewise, update the `{% block sidebar-section %}` in order to change what's listed under Resources.
 
+- Look for `<a href="#">PDF Link Goes Here</a>` and change it to fit your needs. Copy and paste as many new list items (<li>) as you need.
+
+For more information about editing the Layout, see the SAMPLE.md file.
