@@ -82,22 +82,66 @@ Let's now try taking the poll.
 
 - Now you'll be able to see the poll results so far and if you had selected to allow people to take the poll again when making it, you'd be able to retake the poll.
 
+Creating a discussion board
+---------------------------
+
+Now let's try adding a discussion.
+
+- Go to Actions > New item and choose New Discussion Board. Name it "Exercise Discussion Board"
+
 Making a new page
 -----------------
 
+- Go ahead and log in as admin.
 
+- Go to Actions > New item and choose HTML document. Put a memorable page title in Item name like "Exercise Experts" and use the WYSIWYG editor to create your page. When you're done making it, go ahead and click create.
 
+Uploading a PDF/DOC/other file
+------------------------------
 
-Editing Items
--------------
+- Go to Actions > New item and choose new file document. Name it something memorable and choose your file and create. This uploads the file to the server.
 
-- Let's go back to the home page to edit it.
+The group folio
+---------------
 
-- Now when we look at the Actions dropdown menu, there are a lot of actions that weren't there before. The one we're interested in is Edit, so let's click that.
+(perhaps skip)
 
-- The Home Page is written in HTML, so let's take a look. Please note that all the edits you make should be between the {% block content %} and {% endblock content %} tags. Let's go ahead and change it to something very simple, for example `{% block content %} Hello World {% endblock content %}`
+Each group has a "folio" of items that can contain any items. Let's go ahead and put our poll, new page, and file upload in the folio.
+
+- Go to your group. The easiest way is probably to search for the group.
+
+- In the Group Folio table, clik the small Add button. You can add your items to the folio this way.
+
+Editing the home page
+---------------------
+
+- Let's go back to the home page and click the edit button.
+
+- The Home Page is written in Django templated HTML, so let's take a look. Please note that all the edits you make should be between the {% block content %} and {% endblock content %} tags. Let's go ahead and change it to something very simple, for example `{% block content %} Hello World {% endblock content %}`
 
 - Now when you open up the home page, you'll see that all the text that used to be there is now simply "Hello World"
 
+Changing the Layout
+------------------
+
+With Deme, you can customize the look and feel of the entire site by changing the layout. We've got a ready made layout that we'll use.
+
+- Open the Default Site we used earlier to customize title and logo.
+
+- Set the default layout to `Sample Forum Layout`, then save. Now the site should look more like the discussion site.
+
 Editing the Layout
 ------------------
+
+- Let's go ahead and change the tabs to link to our poll, discussion board, and new page. In order to do so, we'll need the links of all those pages. We can change the links by editing the Layout. Search for "Sample Forum Layout" and edit it.
+
+- The section we are interested in is {% block tabs-section %}. Scroll down until you reach it.
+
+- You should see a number of <li> tags that look like `<li {% ifequal full_path "/" %}class="active"{% endifequal %}><a href="/">1: Welcome</a></li>`. What we need to do here is to change the links and title to those we want.
+
+- More specifically, replace both "/" with the url of the page we're interested in, being sure to remove the http://www.domain.com portion.
+
+- Save after you've made your changes
+
+Likewise, update the `{% block sidebar-section %}` in order to change what's listed under Resources.
+

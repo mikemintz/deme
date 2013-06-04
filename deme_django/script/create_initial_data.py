@@ -71,7 +71,7 @@ if len(sys.argv) < 2 or sys.argv[1] != 'test':
 
 print 'Test stuff...'
 
-DemeSetting.set("cms.default_create_item_types", "HtmlDocument,Project,AgreeDisagreePoll,Person,Group,ImageDocument,FileDocument", admin)
+DemeSetting.set("cms.default_create_item_types", "HtmlDocument,Project,AgreeDisagreePoll,Person,Group,DiscussionBoard,ImageDocument,FileDocument", admin)
 DemeSetting.set("cms.comment_max_nesting_level", "99999", admin)
 
 # Set the default layout
