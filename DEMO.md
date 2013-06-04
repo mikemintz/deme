@@ -104,8 +104,6 @@ Uploading a PDF/DOC/other file
 The group folio
 ---------------
 
-(perhaps skip)
-
 Each group has a "folio" of items that can contain any items. Let's go ahead and put our poll, new page, and file upload in the folio.
 
 - Go to your group. The easiest way is probably to search for the group.
@@ -151,6 +149,6 @@ This section assumes you know a little bit about HTML
 
 Likewise, update the `{% block sidebar-section %}` in order to change what's listed under Resources.
 
-- Look for `<a href="#">PDF Link Goes Here</a>` and change it to fit your needs. Copy and paste as many new list items (<li>) as you need.
+- Look for `<a href="#">PDF Link Goes Here</a>` and change it to fit your needs. Copy and paste as many new list items (`<li>`) as you need.
 
 For more information about editing the Layout, see the SAMPLE.md file.
