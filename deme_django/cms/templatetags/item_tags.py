@@ -1252,7 +1252,7 @@ class ListGridBox(template.Node):
         r.append("""    pager: '#jqgrid_pager',""")
         r.append("""    height: "100%",""")
         r.append("""    autowidth: true,""")
-        r.append("""    multiselect: true,""")
+        #r.append("""    multiselect: true,""")
         r.append("""  });""")
         r.append("""  $("#jqgrid_list").jqGrid('navGrid','#jqgrid_pager',{edit:false,add:false,del:false});""")
         r.append("""  $("#jqgrid_list").jqGrid('navButtonAdd',"#jqgrid_pager",{caption:"Columns",title:"Choose columns",buttonicon:"ui-icon-gear",onClickButton:function(){$("#jqgrid_list").jqGrid('columnChooser',{});}});""")
