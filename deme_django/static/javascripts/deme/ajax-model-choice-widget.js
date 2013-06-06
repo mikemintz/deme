@@ -36,12 +36,14 @@ $(function() {
     });
 
     // set up new button
-    var newbtn = $('<span class="input-group-btn"><a href="#" class="btn btn-default newbtn" title="New Item"><i class="glyphicon glyphicon-plus"></i></a></span>').insertAfter(search_input);
+    var newbtn = $('<span class="input-group-btn"><a href="#" class="btn btn-default newbtn" title="Add/Find Item">&bull;&bull;&bull;</a></span>').insertAfter(search_input);
     newbtn.find('a').click(function(e){
       e.preventDefault();
       var new_modal_url = hidden_input.attr('data-new-modal-url');
+      var list_modal_url = hidden_input.attr('data-list-modal-url');
+
       var random_num = Math.floor((Math.random()*1000000)+1);
-      window.open(new_modal_url, 'embedform-' + random_num, 'width=400,toolbar=1,resizable=1,scrollbars=yes,height=500,top=100,left=100');
+      window.open(list_modal_url, 'embedform-' + random_num, 'width=600,toolbar=1,resizable=1,scrollbars=yes,height=600,top=100,left=100');
     });
 
     hidden_input.addClass('ajax-model-choice-widget-processed');

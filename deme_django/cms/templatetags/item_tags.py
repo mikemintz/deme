@@ -735,7 +735,7 @@ class NewMemberDialog(template.Node):
         result = []
 
         result.append( """
-            <div style="display: none;" id="addmember%(item.pk)s" title="Add Item">
+            <div style="display: none;" id="addmember%(item.pk)s" title="Insert Into This Collection">
             <form method="post" action="%(create_url)s?redirect=%(full_path)s">
                 Item: %(ajax_field)s
                 <input type="hidden" name="collection" value="%(item.pk)s" /><br><br>
@@ -745,7 +745,7 @@ class NewMemberDialog(template.Node):
                     Permission Enabled: <input name="permissionenabled" type="checkbox" />
                     <div style="float: top; font-size: 7pt;">Enable this if you want collection-wide permissions to apply to this child item</div>
                 </div>
-                <input type="submit" value="Add Item" class="btn btn-primary">
+                <input type="submit" value="Insert Item" class="btn btn-primary">
             </form>
             </div>  """ %
             {

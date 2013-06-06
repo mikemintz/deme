@@ -153,7 +153,17 @@ class ItemViewer(Viewer):
             collection = None
         self.context['collection'] = collection
         self.context['all_collections'] = self.permission_cache.filter_items('view Item.name', Collection.objects.filter(active=True)).order_by('name')
-        template = loader.get_template('item/list.html')
+
+        is_true = lambda value: bool(value) and value.lower() not in ('false', '0')
+        if (is_true(self.request.GET.get('modal'))):
+          self.context['receiver_input_id'] = self.request.GET.get('id') # the name of the field that expects a response
+          src = self.request.GET.get('src') # src, if set, describes the source of the creation request
+          if src:
+            self.context['src'] = src
+          self.context['modal'] = True
+          template = loader.get_template('item/list_embed.html')
+        else:
+          template = loader.get_template('item/list.html')
         return HttpResponse(template.render(self.context))
 
     def type_list_json(self):
@@ -305,7 +315,7 @@ class ItemViewer(Viewer):
             url = "%s?%s" % (item.get_absolute_url(), '&amp;'.join('crumb_filter=' + x for x in self.request.GET.getlist('filter')))
             icon = icon_url(item, 16)
             name = escape(item.display_name(can_view_name))
-            return '<a class="imglink" href="%s"><img src="%s" /> <span>%s</span></a>' % (url, icon, name)
+            return '<a class="imglink" href="%s" data-id="%s"><img src="%s" /> <span class="name">%s</span></a>' % (url, item.pk, icon, name)
 
         rows = []
         for item in items:

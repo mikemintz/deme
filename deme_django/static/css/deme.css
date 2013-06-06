@@ -4673,6 +4673,23 @@ form.item_form > table {
 form.item_form textarea {
   width: 100%;
 }
+.well-item-search {
+  padding: 10px;
+}
+.well-item-search .ui-jqgrid {
+  margin-top: 15px;
+}
+.well-item-search .row .input-group {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+html.embed .well-item-search {
+  margin-bottom: 0;
+}
+html.embed .well-item-search,
+html.embed .item-type-container {
+  border-radius: 0;
+}
 @font-face {
   font-family: 'Deme-Symbols';
   src: url('../fonts/Deme-Symbols.eot');

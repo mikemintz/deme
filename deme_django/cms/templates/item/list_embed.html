@@ -1,0 +1,32 @@
+{% extends "embed.html" %}
+{% block title %}{{ action_title }}{% endblock %}
+{% block content %}
+{% include "item/list_bare.html" %}
+
+<script>
+  {% if receiver_input_id %}
+  $('.well-item-search').on('click', '.ui-jqgrid .jqgrow a', function(e){
+    e.preventDefault();
+    var link = $(this);
+    if (link.closest('td').attr('aria-describedby') == 'jqgrid_list_name') {
+      var data = {
+        id: link.attr('data-id'),
+        name: link.find('.name').text()
+      };
+      window.opener.ajaxModelChoiceWidgetUpdateValue("{{receiver_input_id}}", data);
+      window.close();
+    }
+  });
+  {% endif %}
+
+  {% comment %}
+  {% if src == "metadata" %}
+  // reload the parent window
+  if (window.opener.confirm('Reload to see new changes?')) {
+    window.opener.location.reload();
+  }
+  window.close();
+  {% endif %}
+  {% endcomment %}
+</script>
+{% endblock content %}
