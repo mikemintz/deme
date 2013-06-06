@@ -21,9 +21,9 @@
       <div class="profile">
 
         {% ifagentcan 'view Person.first_name' item %}
-        {% ifagentcan 'view Person.first_name' item %}
-        {% ifagentcan 'view Person.first_name' item %}
-        {% ifagentcan 'view Person.first_name' item %}
+        {% ifagentcan 'view Person.last_name' item %}
+        {% ifagentcan 'view Person.middle_names' item %}
+        {% ifagentcan 'view Person.suffix' item %}
         {% if item.full_name != '' and item.full_name != item.name %}
         <p class="full-name"><b>Full name:</b> <span class="fn">{{ item.full_name }}</span></p>
         {% else %}
@@ -54,8 +54,11 @@
           <div id="groups" class="accordion-body collapse in">
             <div class="accordion-inner">
               {% for membership in item.memberships.all %}
-                <!-- TODO: check to see if user can view this group -->
+                {% ifagentcan 'view Membership.collection' membership %}
                 <li><a href="{{ membership.collection.get_absolute_url }}">{{ membership.collection.name }}</a></li>
+                {% endifagentcan %}
+              {% empty %}
+                <li>No groups</li>
               {% endfor %}
             </div>
           </div>
