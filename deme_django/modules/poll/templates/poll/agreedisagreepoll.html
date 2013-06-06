@@ -88,6 +88,10 @@ $(document).ready(function() {
 </div><!-- /.modal -->
 
 <div class="approvenpoll">
+  {% if responses.items|length == 0 %}
+  <div class="alert">There is no one eligible to take this poll. Please either add users to your eligible group or pick another group with users.</div>
+  {% endif %}
+
   {% if item.question %}
   <p class="issue">
   <strong>Issue:</strong>

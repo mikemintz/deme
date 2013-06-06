@@ -156,10 +156,7 @@ class AgreeDisagreePollViewer(PollViewer):
             #if(maxTemp > maxNumber): maxNumber = maxTemp
             vote_numbers.append({'agree': int(agree), 'count':int(n), 'n':range(int(n)), 'agreeList':range(int(agree)), 'disagree': int(disagree), 'disagreeList': range(int(disagree)), 'no_vote':int(no_vote), 'no_voteList':range(int(no_vote)), 'proposition': proposition})
 
-        #self.context['maxVal'] = maxNumber
         self.context['rangeN'] = range(int(n)+1)
-        self.context['proportion'] = int(12.0*15.0/n)
-        self.context['2proportion'] = 2*int(12.0*15.0/n)
         self.context['vote_numbers_list'] = vote_numbers
         self.context['comments'] = TextComment.objects.filter(item=self.item)
         self.context['cur_agent_can_view_results'] = self.context['cur_agent_has_voted'] or (self.context['can_view_response_names_and_values'] and not (self.context['cur_agent_in_eligbles']))
