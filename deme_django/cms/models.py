@@ -1955,10 +1955,10 @@ class Site(ViewerRequest):
         verbose_name_plural = _('sites')
 
     # Fields
-    hostname = models.CharField(_('hostname'), max_length=255, unique=True)
+    title = models.CharField(_('site title'), null=True, blank=True, max_length=255, help_text="Displayed in the title bar and on the top left by default.")
+    logo = FixedForeignKey('ImageDocument', related_name='sites_with_logo', null=True, blank=True, default=None, verbose_name=_('site logo'), help_text="Replaces the site title on the top left of the page by default")
+    hostname = models.CharField(_('hostname'), max_length=255, unique=True, help_text="Used for multi-site installations, for example `one.domain.com`, `two.domain.com`")
     default_layout = FixedForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout'))
-    title = models.CharField(_('title'), null=True, blank=True, max_length=255)
-    logo = FixedForeignKey('ImageDocument', related_name='sites_with_logo', null=True, blank=True, default=None, verbose_name=_('logo'))
 
     def can_be_deleted(self):
         # Don't delete the default site
