@@ -74,7 +74,9 @@
     </div>
     {% ifagentcanglobal item_create_ability %}
     <div class="row">
-      <a class="btn btn-primary" href="{% url item_type_url viewer=item_type_lower,action="new" %}{% if modal %}?modal=1{% endif %}{% if receiver_input_id %}&id={{ receiver_input_id }}{% endif %}{% if src %}&src={{ src }}{% endif %}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
+      <div class="col col-lg-9 col-offset-3">
+        <a class="btn btn-primary" href="{% url item_type_url viewer=item_type_lower,action="new" %}{% if modal %}?modal=1{% endif %}{% if receiver_input_id %}&id={{ receiver_input_id }}{% endif %}{% if src %}&src={{ src }}{% endif %}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
+      </div>
     </div>
     {% endifagentcanglobal %}
   </form>
