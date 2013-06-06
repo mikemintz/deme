@@ -391,7 +391,7 @@ class ActionsMenu(template.Node):
 
         list_items = []
         if agentcan_global_helper(context, 'create', wildcard_suffix=True):
-            list_items.append("""<li><a href="#" onclick="$('#newItemMenu').modal('show'); return false;" tabindex="-1" title="Create" class="create"><i class="glyphicon glyphicon-plus-sign"></i> Create</a></li>""")
+            list_items.append("""<li><a href="#" onclick="$('#newItemMenu').modal('show'); return false;" tabindex="-1" title="Create" class="create"><i class="glyphicon glyphicon-file"></i> Create</a></li>""")
 
         if item:
             if agentcan_helper(context, 'edit ', item, wildcard_suffix=True):
@@ -412,11 +412,11 @@ class ActionsMenu(template.Node):
                 list_items.append("""<li><a href="#" onclick="openCommentDialog('subscribe_dialog'); return false;" tabindex="-1" class="subscribe"><i class="glyphicon glyphicon-envelope"></i> Subscribe</a></li>""")
 
             if agentcan_global_helper(context, 'create Membership'):
-                list_items.append("""<li><a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" tabindex="-1" title="Add to a collection" class="add-to-collection"><i class="demeicon  demeicon-add-collection"></i> Add to collection</a></li>""" % (item.pk))
+                list_items.append("""<li><a href="#" onclick="openCommentDialog('additemtocollection%s'); return false;" tabindex="-1" title="Add to a collection" class="add-to-collection"><i class="glyphicon glyphicon-plus-sign"></i> Add this to a collection</a></li>""" % (item.pk))
 
             # add an item to this collection
             if isinstance(item, Collection) and agentcan_helper(context, 'modify_membership', item):
-                list_items.append("""<li><a href="#" onclick="openDialog('addmember%(id)s'); return false;" tabindex="-1" title="Insert an item" class="insert-item" data-target="addmember%(id)s"><i class="glyphicon glyphicon-plus-sign"></i> Insert an item</a></li>""" % {'id': item.pk})
+                list_items.append("""<li><a href="#" onclick="openDialog('addmember%(id)s'); return false;" tabindex="-1" title="Insert an item" class="insert-item" data-target="addmember%(id)s"><i class="demeicon  demeicon-add-collection"></i> Insert into this collection</a></li>""" % {'id': item.pk})
 
             if agentcan_global_helper(context, 'create %s' % item.item_type_string):
                 list_items.append('<li><a href="%s" tabindex="-1" title="Copy" class="copy"><i class="demeicon  demeicon-copy"></i> Copy</a></li>' % copy_url)
