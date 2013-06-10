@@ -31,7 +31,7 @@ $(document).ready(function () {
     height: "100%",
     autowidth: true,
     multiselect: true,
-    {% if collection %}
+    {% if collection_item %}
     {% ifagentcan 'modify_membership' item %}
     gridComplete: function(){
       var ids = $("#jqgrid_list{{ identifier }}").getDataIDs();
@@ -47,36 +47,36 @@ $(document).ready(function () {
   });
   $("#jqgrid_list{{identifier}}").jqGrid('navGrid','#jqgrid_pager{{identifier}}',{edit:false,add:false,del:false});
   $("#jqgrid_list{{identifier}}").jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Columns",title:"Choose columns",buttonicon:"ui-icon-gear",onClickButton:function(){$("#jqgrid_list{{identifier}}").jqGrid('columnChooser',{});}});
-  {% if collection %}
-    {% ifagentcan 'modify_membership' collection %}
-    $("#jqgrid_list{{identifier}}").jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Add",title:"Add an item to {% viewable_name collection %}",buttonicon:"ui-icon-circle-plus",onClickButton:function(){openDialog('addmember{{collection.pk}}');}})
+  {% if collection_item %}
+    {% ifagentcan 'modify_membership' collection_item %}
+    $("#jqgrid_list{{identifier}}").jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Add",title:"Add an item to {% viewable_name collection_item %}",buttonicon:"ui-icon-circle-plus",onClickButton:function(){openDialog('addmember{{collection_item.pk}}');}})
     {% endifagentcan %}
 
     {% if cur_agent_in_collection %}
-    {% ifagentcan 'remove_self' collection %}
-    $("#jqgrid_list{{identifier}}").jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Leave",title:"Remove my membership in {% viewable_name collection %}",buttonicon:"ui-icon-person",onClickButton:function(){$('#removeselfform{{identifier}}')[0].submit();}})
+    {% ifagentcan 'remove_self' collection_item %}
+    $("#jqgrid_list{{identifier}}").jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Leave",title:"Remove my membership in {% viewable_name collection_item %}",buttonicon:"ui-icon-person",onClickButton:function(){$('#removeselfform{{identifier}}')[0].submit();}})
     {% endifagentcan %}
     {% else %}
-    {% ifagentcan 'add_self' collection %}
-    $("#jqgrid_list{{identifier}}").jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Join",title:"Become a member of {% viewable_name collection %}",buttonicon:"ui-icon-person",onClickButton:function(){$('#addselfform{{identifier}}')[0].submit();}})
+    {% ifagentcan 'add_self' collection_item %}
+    $("#jqgrid_list{{identifier}}").jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Join",title:"Become a member of {% viewable_name collection_item %}",buttonicon:"ui-icon-person",onClickButton:function(){$('#addselfform{{identifier}}')[0].submit();}})
     {% endifagentcan %}
     {% endif %}
   {% endif %}
 });
 </script>
 
-{% if collection %}
-  <form id="removememberform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=collection.pk %}?redirect={{ full_path|urlencode }}" style="display: none;">
+{% if collection_item %}
+  <form id="removememberform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=collection_item.default_viewer,action="removemember",noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" style="display: none;">
       <input type="hidden" name="item" value="" />
   </form>
 
   {% newmemberdialog %}
 
-  <form id="removeselfform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=collection.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+  <form id="removeselfform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=collection_item.default_viewer,action="removemember",noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
       <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
   </form>
 
-  <form id="addselfform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="addmember",noun=collection.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+  <form id="addselfform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=collection_item.default_viewer,action="addmember",noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
       <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
   </form>
 {% endif %}

@@ -1217,6 +1217,11 @@ class ListGridBox(template.Node):
           collection = collection_item.pk
         else:
           collection = viewer.request.GET.get('collection', '')
+          if collection:
+            try:
+              collection_item = Collection.objects.get(pk=collection)
+            except Collection.DoesNotExist:
+              collection = False
         fields = []
         possible_abilities = all_possible_item_abilities(item_type)
         for field in item_type._meta.fields:
@@ -1231,6 +1236,7 @@ class ListGridBox(template.Node):
         fields.sort(key=lambda field: 0 if field.name == 'name' else 1)
         col_names = [u'%s' % capfirst(field.verbose_name) for field in fields]
         col_model = []
+        data = context
         for field in fields:
             field_dict = {}
             field_dict['name'] = field.name
@@ -1245,6 +1251,7 @@ class ListGridBox(template.Node):
             post_data['collection'] = collection
             col_names.append('Actions')
             col_model.append({'name': 'actions', 'index': 'actions', 'sortable': 'false'})
+            data['cur_agent_in_collection'] = collection_item.child_memberships.filter(active=True, item=data['cur_agent']).exists()
         if inactive:
             post_data['inactive'] = inactive
         url = reverse('item_type_url', kwargs={'viewer': item_type.__name__.lower(), 'action': 'grid', 'format': 'json'})
@@ -1254,15 +1261,15 @@ class ListGridBox(template.Node):
         else:
           identifier = random.randint(0,100000)
 
-        data = context
         data['post_data_json'] = simplejson.dumps(post_data)
         data['col_names_json'] = simplejson.dumps(col_names)
         data['col_model_json'] = simplejson.dumps(col_model)
         data['identifier'] = identifier
         data['url'] = url
-        data['collection'] = collection_item
+        data['collection_item'] = collection_item
         data['item'] = collection_item
         data.autoescape = False
+
         t = template.loader.get_template('templatetags/listgridbox.html')
         return t.render(data)
 
