@@ -1193,19 +1193,30 @@ def metadata_action_notices(parser, token):
 
 
 class ListGridBox(template.Node):
-    def __init__(self, item_type):
+    def __init__(self, item_type, collection_var=None):
         self.item_type = template.Variable(item_type)
+        if collection_var:
+          self.collection_var = template.Variable(collection_var)
+        else:
+          self.collection_var = None
 
     def __repr__(self):
         return "<ListGridBox>"
 
     def render(self, context):
+        import random
+
         viewer = context['_viewer']
         item_type = self.item_type.resolve(context)
         filter_string = viewer.request.GET.get('filter', '')
         q = viewer.request.GET.get('q', '')
         inactive = viewer.request.GET.get('inactive', '0') == '1'
-        collection = viewer.request.GET.get('collection', '')
+        collection_item = None
+        if self.collection_var:
+          collection_item = self.collection_var.resolve(context)
+          collection = collection_item.pk
+        else:
+          collection = viewer.request.GET.get('collection', '')
         fields = []
         possible_abilities = all_possible_item_abilities(item_type)
         for field in item_type._meta.fields:
@@ -1232,41 +1243,41 @@ class ListGridBox(template.Node):
             post_data['searchString'] = q
         if collection:
             post_data['collection'] = collection
+            col_names.append('Actions')
+            col_model.append({'name': 'actions', 'index': 'actions', 'sortable': 'false'})
         if inactive:
             post_data['inactive'] = inactive
         url = reverse('item_type_url', kwargs={'viewer': item_type.__name__.lower(), 'action': 'grid', 'format': 'json'})
-        r = []
-        r.append("""<table id="jqgrid_list"></table>""")
-        r.append("""<div id="jqgrid_pager"></div>""")
-        r.append("""<script type="text/javascript">""")
-        r.append("""$(document).ready(function () {""")
-        r.append("""  $("#jqgrid_list").jqGrid({""")
-        r.append("""    url: '%s',""" % url)
-        r.append("""    postData: %s,""" % simplejson.dumps(post_data))
-        r.append("""    datatype: "json",""")
-        r.append("""    colNames: %s,""" % simplejson.dumps(col_names))
-        r.append("""    colModel: %s,""" % simplejson.dumps(col_model))
-        r.append("""    rowNum: 10,""")
-        r.append("""    rowList: [10,20,50,100],""")
-        r.append("""    viewrecords: true,""")
-        r.append("""    pager: '#jqgrid_pager',""")
-        r.append("""    height: "100%",""")
-        r.append("""    autowidth: true,""")
-        #r.append("""    multiselect: true,""")
-        r.append("""  });""")
-        r.append("""  $("#jqgrid_list").jqGrid('navGrid','#jqgrid_pager',{edit:false,add:false,del:false});""")
-        r.append("""  $("#jqgrid_list").jqGrid('navButtonAdd',"#jqgrid_pager",{caption:"Columns",title:"Choose columns",buttonicon:"ui-icon-gear",onClickButton:function(){$("#jqgrid_list").jqGrid('columnChooser',{});}});""")
-        r.append("""});""")
-        r.append("""</script>""")
-        return '\n'.join(r)
+
+        if collection:
+          identifier = 'c' + str(collection)
+        else:
+          identifier = random.randint(0,100000)
+
+        data = context
+        data['post_data_json'] = simplejson.dumps(post_data)
+        data['col_names_json'] = simplejson.dumps(col_names)
+        data['col_model_json'] = simplejson.dumps(col_model)
+        data['identifier'] = identifier
+        data['url'] = url
+        data['collection'] = collection_item
+        data['item'] = collection_item
+        data.autoescape = False
+        t = template.loader.get_template('templatetags/listgridbox.html')
+        return t.render(data)
 
 
 @register.tag
 def listgridbox(parser, token):
     bits = list(token.split_contents())
-    if len(bits) != 2:
-        raise template.TemplateSyntaxError, "%r takes one arguments" % bits[0]
-    return ListGridBox(bits[1])
+    collection = None
+    if len(bits) > 2:
+      collection = bits[2]
+    if len(bits) < 2:
+        raise template.TemplateSyntaxError, "%r takes one at least one argument" % bits[0]
+    if len(bits) > 3:
+        raise template.TemplateSyntaxError, "%r takes at most two argument" % bits[0]
+    return ListGridBox(bits[1], collection)
 
 
 class SubclassFieldsBox(template.Node):

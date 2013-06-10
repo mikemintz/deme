@@ -2,6 +2,10 @@
 {% load item_tags %}
 {% block content %}
 
+
+{% listgridbox base_item_type item %}
+
+{% comment %}
 <script type="text/javascript">
     function openDialog(name)
     {
@@ -30,6 +34,8 @@
 <form id="addselfform" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="addmember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
     <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
 </form>
+
+
 
 <table id="jqgrid_list_collection_{{ item.pk }}"></table>
 <div id="jqgrid_pager_collection_{{ item.pk }}"></div>
@@ -89,6 +95,7 @@ $(document).ready(function () {
   {% endif %}
 });
 </script>
+{% endcomment %}
 
 {% endblock content %}
 

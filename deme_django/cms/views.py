@@ -1070,6 +1070,7 @@ class CollectionViewer(ItemViewer):
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
         self.context['cur_agent_in_collection'] = self.item.child_memberships.filter(active=True, item=self.cur_agent).exists()
+        self.context['base_item_type'] = Item
         template = loader.get_template('collection/show.html')
         return HttpResponse(template.render(self.context))
 
