@@ -1529,7 +1529,7 @@ class PermissionEditor(template.Node):
                     assert False
             if self.is_new_item:
                 # Creator has do_anything ability when creating a new item
-                assert target is None
+                #assert target is None
                 if self.accordion_comment_parent or issubclass(viewer.accepted_item_type, Comment):
                     parent = self.accordion_comment_parent or Item.objects.get(pk=viewer.request.REQUEST.get('item') or viewer.request.REQUEST.get('populate_item'))
                     is_inheritable_permission = lambda x: (x.ability.startswith('view') or x.ability == 'comment_on') and x.ability in possible_abilities
