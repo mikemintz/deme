@@ -56,7 +56,9 @@ $(document).ready(function () {
     pager: '#jqgrid_pager{{identifier}}',
     height: "100%",
     autowidth: true,
+    {% if not modal %}
     multiselect: true,
+    {% endif %}
     {% if collection_item %}
     {% ifagentcan 'modify_membership' item %}
     gridComplete: function(){
@@ -141,6 +143,35 @@ $(document).ready(function () {
   {% endif %}
 
 });
+
+function endsWith(str, suffix) {
+    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
+{% if modal and receiver_input_id %}
+  $('.well-item-search').on('click', '.ui-jqgrid .jqgrow a', function(e){
+    var link = $(this);
+    if (endsWith(link.closest('td').attr('aria-describedby'),'_name')) {
+      e.preventDefault();
+      var data = {
+        id: link.attr('data-id'),
+        name: link.find('.name').text()
+      };
+      window.opener.ajaxModelChoiceWidgetUpdateValue("{{receiver_input_id}}", data);
+      window.close();
+    }
+  });
+
+  /**
+  {% if src == "metadata" %}
+  // reload the parent window
+  if (window.opener.confirm('Reload to see new changes?')) {
+    window.opener.location.reload();
+  }
+  window.close();
+  {% endif %}
+  **/
+{% endif %}
 </script>
 
 
