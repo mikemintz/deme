@@ -2,9 +2,9 @@
 <table id="jqgrid_list{{identifier}}"></table>
 <div id="jqgrid_pager{{identifier}}"></div>
 <div class="hide jqgrid_multitools" id="jqgrid_multitools{{identifier}}">
-  <button class="btn btn-default btn-small action-add-to-collection" title="Add selected to a Collection"><i class="glyphicon glyphicon-plus-sign"></i> Add to a Collection</button>
+  <button class="btn btn-info btn-small action-add-to-collection" title="Add selected to a Collection"><i class="glyphicon glyphicon-plus-sign"></i> Add to a Collection</button>
   {% if collection_item %}
-  <button class="btn btn-default btn-small action-remove-from-collection" title="Remove selected from this Collection"><i class="glyphicon glyphicon-remove"></i> Remove from Collection</button>
+  <button class="btn btn-warning btn-small action-remove-from-collection" title="Remove selected from this Collection"><i class="glyphicon glyphicon-remove"></i> Remove from Collection</button>
   {% endif %}
 </div>
 <script type="text/javascript">
@@ -57,7 +57,7 @@ $(document).ready(function () {
       var ids = $("#jqgrid_list{{ identifier }}").getDataIDs();
       for (var i = 0; i < ids.length; i++) {
         var id = ids[i];
-        var deleteButton = '<button type="button" class="" onclick="$(\'#removememberform{{identifier}}\')[0].elements[0].value = '+id+'; $(\'#removememberform{{identifier}}\')[0].submit();" title="Remove From Collection"><span class="glyphicon glyphicon-remove"></span></button>';
+        var deleteButton = '<button type="button" class="btn btn-small btn-warning" onclick="$(\'#removememberform{{identifier}}\')[0].elements[0].value = '+id+'; $(\'#removememberform{{identifier}}\')[0].submit();" title="Remove From Collection"><span class="glyphicon glyphicon-remove"></span></button>';
 
         $("#jqgrid_list{{ identifier }}").setRowData(id, {actions: deleteButton});
       }
