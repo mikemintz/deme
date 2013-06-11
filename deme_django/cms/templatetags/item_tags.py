@@ -442,7 +442,7 @@ class ActionsMenu(template.Node):
                 if item.active:
                     list_items.append("""<li><a href="#" onclick="$('#deactivate_dialog').dialog('open'); return false;" tabindex="-1" title="Deactivate" class="deactivate"><i class="glyphicon glyphicon-trash"></i> Deactivate</a></li>""")
                 else:
-                    list_items.append("""<li><a href="#" onclick="$('#reactivate_dialog').dialog('open'); return false;" tabindex="-1" title="Reactivate" class="reactivate"><i class="glyphicon glyphicon-trash"></i> Reactivate</a></li>""")
+                    list_items.append("""<li><a href="#" onclick="$('#reactivate_dialog').dialog('open'); return false;" tabindex="-1" title="Reactivate" class="reactivate"><i class="glyphicon glyphicon-refresh"></i> Reactivate</a></li>""")
                     list_items.append("""<li><a href="#" onclick="$('#destroy_dialog').dialog('open'); return false;" tabindex="-1" title="Destroy" class="destroy"><i class="glyphicon glyphicon-trash"></i> Destroy</a></li>""")
 
         if not list_items:

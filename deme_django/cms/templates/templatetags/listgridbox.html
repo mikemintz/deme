@@ -1,10 +1,16 @@
 {% load item_tags %}
+
 <table id="jqgrid_list{{identifier}}"></table>
 <div id="jqgrid_pager{{identifier}}"></div>
 <div class="hide jqgrid_multitools" id="jqgrid_multitools{{identifier}}">
   <button class="btn btn-info btn-small action-add-to-collection" title="Add selected to a Collection"><i class="glyphicon glyphicon-plus-sign"></i> Add to a Collection</button>
   {% if collection_item %}
   <button class="btn btn-warning btn-small action-remove-from-collection" title="Remove selected from this Collection"><i class="glyphicon glyphicon-remove"></i> Remove from Collection</button>
+  {% endif %}
+  {% if inactive %}
+  <button class="btn btn-success btn-small action-reactivate" title="Reactivate selected items"><i class="glyphicon glyphicon-refresh"></i> Reactivate</button>
+  {% else %}
+  <button class="btn btn-danger btn-small action-deactivate" title="Deactivate selected items"><i class="glyphicon glyphicon-trash"></i> Deactivate</button>
   {% endif %}
 </div>
 <script type="text/javascript">
@@ -98,6 +104,30 @@ $(document).ready(function () {
     openDialog('multiadd{{identifier}}');
   });
 
+  multi.on('click', '.action-reactivate', function(e){
+    e.preventDefault();
+    var reason = prompt("Please give a reason for reactivating these items:");
+    if (reason != null) {
+      var sel = jqgrid_list.jqGrid('getGridParam','selarrrow');
+      var form = $('#reactivatemultiform{{identifier}}');
+      form.find('[name="items"]').val(sel);
+      form.find('[name="action_summary"]').val(reason);
+      form.submit();
+    }
+  });
+
+  multi.on('click', '.action-deactivate', function(e){
+    e.preventDefault();
+    var reason = prompt("Please give a reason for deactivating these items:");
+    if (reason != null) {
+      var sel = jqgrid_list.jqGrid('getGridParam','selarrrow');
+      var form = $('#deactivatemultiform{{identifier}}');
+      form.find('[name="items"]').val(sel);
+      form.find('[name="action_summary"]').val(reason);
+      form.submit();
+    }
+  });
+
   {% if collection_item %}
   multi.on('click', '.action-remove-from-collection', function(e){
     e.preventDefault();
@@ -116,6 +146,18 @@ $(document).ready(function () {
 
 
 {% multiadddialog identifier %}
+
+{% if inactive %}
+  <form id="reactivatemultiform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_type_url viewer='item',action="reactivatemulti" %}?redirect={{ full_path|urlencode }}" class="item_form">
+      <input type="hidden" name="items" value="" />
+      <input type="hidden" name="action_summary" value="" />
+  </form>
+{% else %}
+  <form id="deactivatemultiform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_type_url viewer='item',action="deactivatemulti" %}?redirect={{ full_path|urlencode }}" class="item_form">
+      <input type="hidden" name="items" value="" />
+      <input type="hidden" name="action_summary" value="" />
+  </form>
+{% endif %}
 
 {% if collection_item %}
   <form id="removememberform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=collection_item.default_viewer,action="removemember",noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" style="display: none;">

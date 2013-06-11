@@ -619,12 +619,52 @@ class ItemViewer(Viewer):
         return HttpResponseRedirect(redirect)
 
     @require_POST
+    def type_deactivatemulti_html(self):
+        items_string = self.request.POST.get('items').split(',')
+        try:
+            items = Item.objects.filter(pk__in=items_string)
+        except:
+            return self.render_error('Invalid URL', "You must specify the items you are deactivating")
+
+        errors = []
+        for item in items:
+            item = item.downcast()
+            if not item.can_be_deleted():
+                errors.append('The item %s may not be deleted.' % (item))
+            self.require_ability('delete', item)
+            item.deactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+        if errors:
+            return self.render_error('Errors', errors.join('<br><br>'))
+        redirect = self.request.GET.get('redirect', '/')
+        return HttpResponseRedirect(redirect)
+
+    @require_POST
     def item_reactivate_html(self):
         if not self.item.can_be_deleted():
             return self.render_error('Cannot delete', "This item may not be deleted")
         self.require_ability('delete', self.item)
         self.item.reactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
+
+    @require_POST
+    def type_reactivatemulti_html(self):
+        items_string = self.request.POST.get('items').split(',')
+        try:
+            items = Item.objects.filter(pk__in=items_string)
+        except:
+            return self.render_error('Invalid URL', "You must specify the items you are deactivating")
+
+        errors = []
+        for item in items:
+            item = item.downcast()
+            if not item.can_be_deleted():
+                errors.append('The item %s may not be deleted.' % (item))
+            self.require_ability('delete', item)
+            item.reactivate(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+        if errors:
+            return self.render_error('Errors', errors.join('<br><br>'))
+        redirect = self.request.GET.get('redirect', '/')
         return HttpResponseRedirect(redirect)
 
     @require_POST
@@ -1105,7 +1145,6 @@ class CollectionViewer(ItemViewer):
                 pass
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
-
 
     def item_removemember_html(self):
         #TODO use a form
