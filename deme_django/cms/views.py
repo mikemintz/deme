@@ -1093,6 +1093,19 @@ class CollectionViewer(ItemViewer):
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
         return HttpResponseRedirect(redirect)
 
+    def item_removemembermulti_html_action(self, members):
+        for member in members:
+            if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('remove_self', self.item))):
+                raise DemePermissionDenied('modify_membership', None)
+            try:
+                membership = Membership.objects.get(collection=self.item, item=member)
+                if membership.active:
+                    membership.deactivate(action_agent=self.cur_agent)
+            except ObjectDoesNotExist:
+                pass
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
+        return HttpResponseRedirect(redirect)
+
 
     def item_removemember_html(self):
         #TODO use a form
@@ -1100,16 +1113,18 @@ class CollectionViewer(ItemViewer):
             member = Item.objects.get(pk=self.request.POST.get('item'))
         except:
             return self.render_error('Invalid URL', "You must specify the member you are removing")
-        if not (self.cur_agent_can('modify_membership', self.item) or (member.pk == self.cur_agent.pk and self.cur_agent_can('remove_self', self.item))):
-            raise DemePermissionDenied('modify_membership', None)
+
+        return self.item_removemembermulti_html_action([member,])
+
+    def item_removemembermulti_html(self):
+        #TODO use a form
+        items_string = self.request.POST.get('items').split(',')
         try:
-            membership = Membership.objects.get(collection=self.item, item=member)
-            if membership.active:
-                membership.deactivate(action_agent=self.cur_agent)
-        except ObjectDoesNotExist:
-            pass
-        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk}))
-        return HttpResponseRedirect(redirect)
+            members = Item.objects.filter(pk__in=items_string)
+        except:
+            return self.render_error('Invalid URL', "You must specify the members you are removing")
+
+        return self.item_removemembermulti_html_action(members)
 
 
 class GroupViewer(CollectionViewer):

@@ -2,7 +2,10 @@
 <table id="jqgrid_list{{identifier}}"></table>
 <div id="jqgrid_pager{{identifier}}"></div>
 <div class="hide jqgrid_multitools" id="jqgrid_multitools{{identifier}}">
-  <button class="btn btn-default btn-small action-add-to-collection" title="Add selected to a Collection"><i class="glyphicon glyphicon-plus-sign"></i> Add selected to a Collection</button>
+  <button class="btn btn-default btn-small action-add-to-collection" title="Add selected to a Collection"><i class="glyphicon glyphicon-plus-sign"></i> Add to a Collection</button>
+  {% if collection_item %}
+  <button class="btn btn-default btn-small action-remove-from-collection" title="Remove selected from this Collection"><i class="glyphicon glyphicon-remove"></i> Remove from Collection</button>
+  {% endif %}
 </div>
 <script type="text/javascript">
 
@@ -95,6 +98,18 @@ $(document).ready(function () {
     openDialog('multiadd{{identifier}}');
   });
 
+  {% if collection_item %}
+  multi.on('click', '.action-remove-from-collection', function(e){
+    e.preventDefault();
+    if (confirm("Are you sure you want to remove these items from this collection?")) {
+      var sel = jqgrid_list.jqGrid('getGridParam','selarrrow');
+      var form = $('#removemembermultiform{{identifier}}');
+      form.find('[name="items"]').val(sel);
+      form.submit();
+    }
+  });
+  {% endif %}
+
 });
 </script>
 
@@ -105,6 +120,10 @@ $(document).ready(function () {
 {% if collection_item %}
   <form id="removememberform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=collection_item.default_viewer,action="removemember",noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" style="display: none;">
       <input type="hidden" name="item" value="" />
+  </form>
+
+  <form id="removemembermultiform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=collection_item.default_viewer,action="removemembermulti",noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" style="display: none;">
+      <input type="hidden" name="items" value="" />
   </form>
 
   {% newmemberdialog %}
