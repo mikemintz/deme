@@ -1,6 +1,9 @@
 {% load item_tags %}
 <table id="jqgrid_list{{identifier}}"></table>
 <div id="jqgrid_pager{{identifier}}"></div>
+<div class="hide jqgrid_multitools" id="jqgrid_multitools{{identifier}}">
+  <button class="btn btn-default btn-small action-add-to-collection" title="Add selected to a Collection"><i class="glyphicon glyphicon-plus-sign"></i> Add selected to a Collection</button>
+</div>
 <script type="text/javascript">
 
 if (typeof(openDialog) == 'undefined') {
@@ -18,7 +21,21 @@ if (typeof(openDialog) == 'undefined') {
 }
 
 $(document).ready(function () {
-  $("#jqgrid_list{{identifier}}").jqGrid({
+  var jqgrid_list = $("#jqgrid_list{{identifier}}");
+  window.jql = jqgrid_list;
+  var jqgrid_pager = $("#jqgrid_pager{{identifier}}");
+  var multi = $('#jqgrid_multitools{{identifier}}');
+
+  function checkMulti(){
+    var sel = jqgrid_list.jqGrid('getGridParam','selarrrow');
+    if (sel && sel.length > 0) {
+      multi.removeClass('hide');
+    } else {
+      multi.addClass('hide');
+    }
+  }
+
+  jqgrid_list.jqGrid({
     url: '{{url}}',
     postData: {{post_data_json}},
     datatype: "json",
@@ -37,33 +54,53 @@ $(document).ready(function () {
       var ids = $("#jqgrid_list{{ identifier }}").getDataIDs();
       for (var i = 0; i < ids.length; i++) {
         var id = ids[i];
-        var deleteButton = '<button type="button" onclick="$(\'#removememberform{{identifier}}\')[0].elements[0].value = '+id+'; $(\'#removememberform{{identifier}}\')[0].submit();"><span class="ui-icon ui-icon-trash"></span></button>';
+        var deleteButton = '<button type="button" class="" onclick="$(\'#removememberform{{identifier}}\')[0].elements[0].value = '+id+'; $(\'#removememberform{{identifier}}\')[0].submit();" title="Remove From Collection"><span class="glyphicon glyphicon-remove"></span></button>';
 
         $("#jqgrid_list{{ identifier }}").setRowData(id, {actions: deleteButton});
       }
     },
     {% endifagentcan %}
     {% endif %}
+    onSelectRow: function(){
+      checkMulti();
+    },
+    onSelectAll: function(){
+      checkMulti();
+    }
   });
-  $("#jqgrid_list{{identifier}}").jqGrid('navGrid','#jqgrid_pager{{identifier}}',{edit:false,add:false,del:false});
-  $("#jqgrid_list{{identifier}}").jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Columns",title:"Choose columns",buttonicon:"ui-icon-gear",onClickButton:function(){$("#jqgrid_list{{identifier}}").jqGrid('columnChooser',{});}});
+  jqgrid_list.jqGrid('navGrid','#jqgrid_pager{{identifier}}',{edit:false,add:false,del:false});
+  jqgrid_list.jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Columns",title:"Choose columns",buttonicon:"ui-icon-gear",onClickButton:function(){jqgrid_list.jqGrid('columnChooser',{});}});
   {% if collection_item %}
     {% ifagentcan 'modify_membership' collection_item %}
-    $("#jqgrid_list{{identifier}}").jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Add",title:"Add an item to {% viewable_name collection_item %}",buttonicon:"ui-icon-circle-plus",onClickButton:function(){openDialog('addmember{{collection_item.pk}}');}})
+    jqgrid_list.jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Add",title:"Add an item to {% viewable_name collection_item %}",buttonicon:"ui-icon-circle-plus",onClickButton:function(){openDialog('addmember{{collection_item.pk}}');}})
     {% endifagentcan %}
 
     {% if cur_agent_in_collection %}
     {% ifagentcan 'remove_self' collection_item %}
-    $("#jqgrid_list{{identifier}}").jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Leave",title:"Remove my membership in {% viewable_name collection_item %}",buttonicon:"ui-icon-person",onClickButton:function(){$('#removeselfform{{identifier}}')[0].submit();}})
+    jqgrid_list.jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Leave",title:"Remove my membership in {% viewable_name collection_item %}",buttonicon:"ui-icon-person",onClickButton:function(){$('#removeselfform{{identifier}}')[0].submit();}})
     {% endifagentcan %}
     {% else %}
     {% ifagentcan 'add_self' collection_item %}
-    $("#jqgrid_list{{identifier}}").jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Join",title:"Become a member of {% viewable_name collection_item %}",buttonicon:"ui-icon-person",onClickButton:function(){$('#addselfform{{identifier}}')[0].submit();}})
+    jqgrid_list.jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Join",title:"Become a member of {% viewable_name collection_item %}",buttonicon:"ui-icon-person",onClickButton:function(){$('#addselfform{{identifier}}')[0].submit();}})
     {% endifagentcan %}
     {% endif %}
   {% endif %}
+
+  // multi actions
+  multi.on('click', '.action-add-to-collection', function(e){
+    e.preventDefault();
+    var sel = jqgrid_list.jqGrid('getGridParam','selarrrow');
+    // populate vars
+    $('#multiadd{{identifier}}').find('[name="items"]').val(sel);
+    openDialog('multiadd{{identifier}}');
+  });
+
 });
 </script>
+
+
+
+{% multiadddialog identifier %}
 
 {% if collection_item %}
   <form id="removememberform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=collection_item.default_viewer,action="removemember",noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" style="display: none;">

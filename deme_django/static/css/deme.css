@@ -4690,6 +4690,9 @@ html.embed .well-item-search,
 html.embed .item-type-container {
   border-radius: 0;
 }
+.jqgrid_multitools {
+  margin-top: 10px;
+}
 @font-face {
   font-family: 'Deme-Symbols';
   src: url('../fonts/Deme-Symbols.eot');

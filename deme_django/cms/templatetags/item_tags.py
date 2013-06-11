@@ -714,6 +714,49 @@ def display_body_with_inline_transclusions(item, is_html):
     result.insert(0, format(item.body[0:last_i]))
     return ''.join(result)
 
+@register.tag
+def multiadddialog(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError, "%r takes one argument" % bits[0]
+    return MultiAddDialog(bits[1])
+
+class MultiAddDialog(template.Node):
+    def __init__(self, identifier):
+        self.identifier = template.Variable(identifier)
+        pass
+
+    def __repr__(self):
+        return "<MultiAddDialogNode>"
+
+    def render(self, context):
+        identifier = self.identifier.resolve(context)
+        full_path = context['full_path']
+        result = []
+
+        result.append( """
+            <div style="display: none;" id="multiadd%(identifier)s" title="Add selected to a Collection">
+            <form method="post" action="%(create_url)s">
+                Item: %(ajax_field)s
+                <input type="hidden" name="items" value="" /><br><br>
+                <a href="#" style="float: right; font-size: 9pt;" onclick="displayHiddenDiv('advancedmultiadd%(identifier)s'); return false;">Advanced</a>
+                <div style="display: none;" id="advancedmultiadd%(identifier)s">
+                    Action Summary: <input name="actionsummary" type="text" size="25" maxlength="255" /><br>
+                    Permission Enabled: <input name="permissionenabled" type="checkbox" />
+                    <div style="float: top; font-size: 7pt;">Enable this if you want collection-wide permissions to apply to child items</div>
+                </div>
+                <input type="submit" value="Add Selected" class="btn btn-primary">
+            </form>
+            </div>  """ %
+            {
+                'identifier': identifier,
+                'full_path': full_path,
+                'create_url': reverse('item_type_url', kwargs={'viewer':'membership', 'action':'itemmembercreatemulti'}),
+                'ajax_field': AjaxModelChoiceField(Collection.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('item', None, {'id':'multi_add_item_field_%s' % (identifier)}),
+             })
+
+        return mark_safe('\n'.join(result))
+
 
 @register.tag
 def newmemberdialog(parser, token):
@@ -735,7 +778,7 @@ class NewMemberDialog(template.Node):
         result = []
 
         result.append( """
-            <div style="display: none;" id="addmember%(item.pk)s" title="Insert Into This Collection">
+            <div style="display: none;" id="addmember%(item.pk)s" title="Add to this Collection">
             <form method="post" action="%(create_url)s?redirect=%(full_path)s">
                 Item: %(ajax_field)s
                 <input type="hidden" name="collection" value="%(item.pk)s" /><br><br>

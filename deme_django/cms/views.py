@@ -1217,18 +1217,39 @@ class MembershipViewer(ItemViewer):
         collection = Collection.objects.get(pk=collection_pk)
         item = Item.objects.get(pk=self.request.POST['item'])
 
-        try:
-            membership = Membership.objects.get(collection=collection, item=item)
-            if not membership.active:
-                membership.reactivate(action_agent=self.cur_agent)
-        except ObjectDoesNotExist:
-            membership = Membership(collection=collection, item=item)
-        if self.request.POST.get('permissionenabled', '') == 'on':
-            membership.permission_enabled = True
-        permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
-        membership.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
+        return self.type_itemmembercreatemulti_html_action(collection, [item,])
 
-        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': membership.pk}))
+    def type_itemmembercreatemulti_html(self):
+        collection_pk = self.request.POST.get('item')
+        if collection_pk == '':
+            return self.render_error('Invalid Membership', "You must specify which collection to add these items to")
+
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
+        collection = Collection.objects.get(pk=collection_pk)
+        items_string = self.request.POST.get('items').split(',')
+        items = Item.objects.filter(pk__in=items_string)
+
+        if not items:
+            return self.render_error('Invalid Membership', "You must specify one or more items to add to this collection")
+
+        return self.type_itemmembercreatemulti_html_action(collection, items)
+
+
+    def type_itemmembercreatemulti_html_action(self, collection, items):
+
+        for item in items:
+            try:
+                membership = Membership.objects.get(collection=collection, item=item)
+                if not membership.active:
+                    membership.reactivate(action_agent=self.cur_agent)
+            except ObjectDoesNotExist:
+                membership = Membership(collection=collection, item=item)
+            if self.request.POST.get('permissionenabled', '') == 'on':
+                membership.permission_enabled = True
+            permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one')
+            membership.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions, action_summary=self.request.POST.get('actionsummary', ''))
+
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': collection.default_viewer, 'noun': collection.pk}))
         return HttpResponseRedirect(redirect)
 
 
