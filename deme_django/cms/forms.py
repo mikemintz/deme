@@ -47,7 +47,7 @@ class AjaxModelChoiceWidget(forms.Widget):
         if attrs is None: attrs = {}
         ajax_query_string = '&'.join('ability=' + urlquote(ability) for ability in self.required_abilities)
         ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'}) + '?' + ajax_query_string
-        new_modal_query_string = '?modal=1&id=' + attrs.get('id', '')
+        new_modal_query_string = '?modal=1&id=' + attrs.get('id', '') + '&base_type=' + model.__name__.lower()
         new_modal_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'action': 'new'}) + new_modal_query_string
         list_modal_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'action': 'list'}) + new_modal_query_string
         result = """

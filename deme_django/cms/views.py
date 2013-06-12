@@ -150,8 +150,13 @@ class ItemViewer(Viewer):
         # generate breadcrumb back to Item type
         breadcrumbs = []
         breadcrumb_iter = self.accepted_item_type
+        base_type = self.request.GET.get('base_type')
+        if base_type:
+          self.context['base_type'] = base_type
         while breadcrumb_iter != models.base.Model:
             breadcrumbs.append({'viewer': breadcrumb_iter.__name__.lower(), 'name': breadcrumb_iter._meta.verbose_name, 'name_plural': breadcrumb_iter._meta.verbose_name_plural, 'item_type': breadcrumb_iter})
+            if base_type and breadcrumb_iter.__name__.lower() == base_type:
+                break
             breadcrumb_iter = breadcrumb_iter.__base__
         self.context['breadcrumbs'] = breadcrumbs
         if self.request.GET.get('collection'):
