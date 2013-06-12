@@ -7,7 +7,7 @@
 
 
 <script type="text/javascript">
-    function openDialog(name, edit_url)
+    function openDialogCalendar(name, edit_url)
     {
         var dialogBox = $("#" + name);
         dialogBox.dialog({
@@ -24,7 +24,7 @@
             close: function(event, ui) {dialogBox.dialog('destroy')}
         });
         dialogBox.dialog('open');
-    }   
+    }
 
     function GoToMonth()
     {
@@ -44,7 +44,7 @@
   background: #eef;
 }
 
-.day { 
+.day {
   width: 14%;
   height: 70px;
   color: #456;
@@ -79,12 +79,12 @@
         <th>Fri</th>
         <th>Sat</th>
     </tr>
-    
+
     <tbody>
     {% for weeks_events in week_list %}
         <tr valign="top">
             {% for days_events in weeks_events %}
-            <td class="day" {% if days_events.is_today %} style="background: lightblue;" {% endif %}> 
+            <td class="day" {% if days_events.is_today %} style="background: lightblue;" {% endif %}>
                     {% if days_events.in_cur_month %}
                         {{ days_events.day.day }}
                     {% else %}
@@ -98,7 +98,7 @@
                         {% if event.is_starting_date %}
                                 {{ event.start_time|time:"P" }}
                         {% endif %}
-                        <a href="{{ event.url }}" onclick="openDialog('{{ event.pk }}-{{ days_events.day.day }}', '{{ event.edit_url }}'); return false;">{{ event.name }}</a>
+                        <a href="{{ event.url }}" onclick="openDialogCalendar('{{ event.pk }}-{{ days_events.day.day }}', '{{ event.edit_url }}'); return false;">{{ event.name }}</a>
                         <div id="{{ event.pk }}-{{ days_events.day.day }}" title="<a href='{{ event.url }}'>{{ event.name }}</a>" style="display: none;">
                                 Start Time: {{ event.start_time|time:"P" }}
                                 <p>Start Date: {{ event.start_date|date:"M d, Y" }}</p>
@@ -106,14 +106,14 @@
                                 <p>End Date: {{ event.end_date|date:"M d, Y" }}</p>
                                 Location: {{ event.location }}
                                 <p>Description: {{ event.body|safe|truncatewords_html:50 }}</p>
-                                <a href="{{ event.url }}" style="color: blue;">View the full event</a> 
+                                <a href="{{ event.url }}" style="color: blue;">View the full event</a>
                             </div>
                     </div>
                     {% endfor %}
                 </td>
             {% endfor %}
         </tr>
-    {% endfor %}    
+    {% endfor %}
     </tbody>
 
 </table>
@@ -128,11 +128,11 @@
 </div>
 <div style="text-align: center; border-top: 1px solid black; padding: 4px; margin-top: 5px; margin-right: 40px;">
     {% ifagentcan 'modify_membership' collection %}
-        <a href="{% url item_type_url viewer="event",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Add A New Event to this Calendar ||</a> 
+        <a href="{% url item_type_url viewer="event",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Add A New Event to this Calendar ||</a>
     {% endifagentcan %}
 
     <a href="{% url item_url viewer="calendar" action="exportguide" noun=collection.pk %}">Export this Calendar ||</a>
-    <a href="{% url item_url viewer="newsroll" action="show" noun=collection.pk %}">View a listing of this calendar's events</a> 
+    <a href="{% url item_url viewer="newsroll" action="show" noun=collection.pk %}">View a listing of this calendar's events</a>
 </div>
 
 {% endblock %}

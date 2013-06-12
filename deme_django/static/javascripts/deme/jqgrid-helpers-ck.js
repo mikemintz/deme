@@ -1,0 +1,1 @@
+function openDialogBox(e){var t=$("#"+e);t.dialog({autoOpen:!1,bgiframe:!0,modal:!0,close:function(e,n){t.dialog("destroy")}});t.dialog("open")}$(function(){$(window).resize(function(){$(".ui-jqgrid").each(function(){var e=$(this).find(".ui-jqgrid-btable"),t=$(this).parent().width();e.setGridWidth(t)})})});

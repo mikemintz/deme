@@ -131,7 +131,7 @@ $(document).ready(function() {
 			$(button).val("Show Responses");
 		}
 	};
-	
+
 	function toggleButtons(className){
 		var buttons = "#" + className;
 		if ($(buttons).is(":hidden")) {
@@ -140,13 +140,13 @@ $(document).ready(function() {
 			$(buttons).slideUp("slow");
 		}
 	};
-	
+
 	function removeMember(pk){
 		$("#removeInput").val(pk);
 		$("#removemember").submit();
 	};
-	
-    
+
+
 </script>
 <form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
     <input id="removeInput"type="hidden" name="item" value="{{ membership.item.pk }}" />
@@ -180,7 +180,7 @@ $(document).ready(function() {
 			<p>Unanimous Aggregation: unanimous minus m [where m <= #Poll] </p>
 		</div>
 		<div id="hiddenDecisionButtons" style="display: none; width: 150%;">
-			{% ifagentcanglobal 'create PluralityChooseNDecision' %} 
+			{% ifagentcanglobal 'create PluralityChooseNDecision' %}
 			<p><a href="{% url item_type_url viewer='pluralitychoosendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Plurality Aggregation</a></p>
 			{% endifagentcanglobal %}
 			{% ifagentcanglobal 'create ThresholdChooseNDecision' %}
@@ -198,7 +198,7 @@ $(document).ready(function() {
 </div>
 
 
-<div class='Question' style="width: 50%"> 
+<div class='Question' style="width: 50%">
 	{% ifagentcan 'view Poll.question' item %}
 	<p>{{ item.question }}</p>
 	{% else %}
@@ -230,30 +230,12 @@ $(document).ready(function() {
 	{% endifagentcan %}
 </div>
 
-
-
-<script type="text/javascript">
-    function openDialog(name)
-    {
-        var dialogBox = $("#" + name);
-        dialogBox.dialog({
-            autoOpen: false,
-            bgiframe: true,
-            modal: true,
-            close: function(event, ui) {dialogBox.dialog('destroy')}
-        });
-        dialogBox.dialog('open');
-    }   =me
-</script>
-
-
-
 {% if propositions %}
-<form method="post" enctype="multipart/form-data" 
+<form method="post" enctype="multipart/form-data"
 	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
 <div class="container propositions" id="Propcontainer" style="width: 78%; margin-left: 0; ">
-    
-	
+
+
 	{% for proposition in propositions %}
     <div class="{% cycle 'even' 'odd' %} row ">
            <div class='description' style="float:left"><span class="row"> <a style="width=100px; overflow:hidden;" href="{{ proposition.get_absolute_url }}?crumb_filter=memberships.collection.{{ item.pk }}">{% viewable_name proposition %}</a><br>
@@ -263,17 +245,17 @@ $(document).ready(function() {
 				<select name="{{ proposition.pk }}">
 	        	<option value="not chosen">Not Chosen</option>
 				<option value="chosen">Chosen</option>
-				</select> 
+				</select>
 				{% endif %}
-			<input type="button" value="Show Details" id="hide{{ proposition.pk }}" onclick="toggleImplementation('{{ proposition.pk }}')" />				 	
+			<input type="button" value="Show Details" id="hide{{ proposition.pk }}" onclick="toggleImplementation('{{ proposition.pk }}')" />
 					{% ifagentcan 'modify_membership' item %}
 		                <button type="button" onclick="removeMember('{{ proposition.pk }}')"><img src="{{ "delete"|icon_url:16 }}" /> Remove</button>
-		            {% endifagentcan %}<div style="clear: both;"></div>		
-				
+		            {% endifagentcan %}<div style="clear: both;"></div>
+
 			</div></span></div>
-			
+
     <div class="implementation"id="{{ proposition.pk }}">
-	<a href="{{ proposition.get_absolute_url }}">View as an item</a>{{proposition.body|safe}} 
+	<a href="{{ proposition.get_absolute_url }}">View as an item</a>{{proposition.body|safe}}
 	</div>
     {% endfor %}
 {% if cur_agent_in_eligbles %}
@@ -289,7 +271,7 @@ $(document).ready(function() {
 
 
 {% ifagentcan 'modify_membership' item %}
-<div class="submit_button">  
+<div class="submit_button">
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Add a Proposition</a>
 </div>
 {% endifagentcan %}
@@ -300,7 +282,7 @@ $(document).ready(function() {
 	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Proposition</a>
 	{% endifagentcanglobal %}
 	{% ifagentcan 'modify_membership' item %}
-	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a>
+	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialogBox('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a>
 	{% endifagentcan %}
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" onclick="toggleButtons('hiddenPropositionButtons')">Cancel</a><br><br>
 </div>
@@ -315,7 +297,7 @@ $(document).ready(function() {
         	<div class="{% cycle 'even' 'odd' %} row " >
         	<span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
      		{% if value %}
-            	has responded 
+            	has responded
                 <input type="button" style="float:right;"
                 value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
 				</div>
@@ -335,7 +317,7 @@ $(document).ready(function() {
     <div class="{% cycle 'even' 'odd' %} row " >
     <span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
     {% if value %} has responded {% else %} has not responded {% endif %}
-	{% ifequal cur_agent key %} 
+	{% ifequal cur_agent key %}
 		<input type="button" style="float:right;"
         value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
 		</div>
@@ -351,12 +333,12 @@ $(document).ready(function() {
 		Responses are not visible
 		<p>You're response:</p>
 		 {% for key,value in responses.items %}
-			
+
 			{% ifequal cur_agent.pk key.pk %}
 	        	<div class="{% cycle 'even' 'odd' %} row " >
 	        	<span class="row"><a href="{{ key.get_absolute_url }}">{% viewable_name key %}</a>
 	     		{% if value %}
-	            	has responded 
+	            	has responded
 	                <input type="button" style="float:right;"
 	                value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
 					</div>
