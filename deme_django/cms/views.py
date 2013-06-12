@@ -147,6 +147,13 @@ class ItemViewer(Viewer):
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
         item_types.sort(key=lambda x:x['name'].lower())
         self.context['item_types'] = item_types
+        # generate breadcrumb back to Item type
+        breadcrumbs = []
+        breadcrumb_iter = self.accepted_item_type
+        while breadcrumb_iter != models.base.Model:
+            breadcrumbs.append({'viewer': breadcrumb_iter.__name__.lower(), 'name': breadcrumb_iter._meta.verbose_name, 'name_plural': breadcrumb_iter._meta.verbose_name_plural, 'item_type': breadcrumb_iter})
+            breadcrumb_iter = breadcrumb_iter.__base__
+        self.context['breadcrumbs'] = breadcrumbs
         if self.request.GET.get('collection'):
             collection = Item.objects.get(pk=self.request.GET.get('collection')).downcast()
         else:
