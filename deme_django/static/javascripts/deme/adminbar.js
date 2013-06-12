@@ -68,8 +68,8 @@ $(function(){
       document.body.style.fontSize = defaultFontSize + "px";
     }
     current_size = parseFloat(document.body.style.fontSize);
-    pos = validFontSizes.indexOf(current_size);
-    default_pos = validFontSizes.indexOf(defaultFontSize);
+    pos = $.inArray(current_size, validFontSizes);
+    default_pos = $.inArray(defaultFontSize, validFontSizes);
     if (pos < 0 || delta == 0) {
       pos = default_pos;
     }
