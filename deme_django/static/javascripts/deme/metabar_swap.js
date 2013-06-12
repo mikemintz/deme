@@ -27,7 +27,7 @@ $(function(){
 
       //New height and width
       var winNewWidth = $(window).width(),
-      winNewHeight = $(window).height();
+         winNewHeight = $(window).height();
 
       // compare the new height and width with old one
       if(winWidth!=winNewWidth || winHeight!=winNewHeight)

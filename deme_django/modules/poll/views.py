@@ -125,6 +125,8 @@ class AgreeDisagreePollViewer(PollViewer):
         if memberships:
             self.permission_cache.filter_items('view Item.name', Item.objects.filter(pk__in=[x.item_id for x in memberships]))
         self.context['responses'] = PropositionResponseApprove.objects.filter(poll=self.item)
+        if not self.item.eligibles:
+            return self.render_error('No eligibles chosen', "Please edit this poll and choose a group of eligible participants")
         eligible_agent_memberships = self.item.eligibles.child_memberships
         eligible_agent_memberships = eligible_agent_memberships.filter(active=True, item__active=True)
         eligible_agent_memberships = self.permission_cache.filter_items('view Membership.item', eligible_agent_memberships)
