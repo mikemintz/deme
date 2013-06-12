@@ -5506,17 +5506,52 @@ h6,
 .h6 {
   line-height: 1.25;
 }
+.item-type-wrap {
+  background-color: #F5F5F5;
+  border: 1px solid #E3E3E3;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+.item-type-wrap .breadcrumb {
+  margin: 0;
+  background: transparent;
+}
+.item-type-wrap .item-type-container {
+  border-top: 1px solid #e5e5e5;
+  padding: 5px 10px;
+}
 html.embed .item-type-new-container {
   padding: 0 15px;
+}
+html.embed .popup-title {
+  padding: 5px 15px 5px;
+  margin: 0;
+  background: #5bc0de;
+  color: white;
+}
+html.embed .top-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+html.embed .well {
+  border-radius: 0;
+}
+html.embed .well .row {
+  margin-right: -15px;
+  margin-left: -15px;
 }
 .item-type-container span a,
 .item-type-container span b {
   white-space: nowrap;
-  background: #fcfcfc;
+  /*background: #fcfcfc;
   border-radius: 5px;
   padding: .1em .75em;
-  margin: 0 0 .25em .25em;
-  display: inline-block;
+  margin: 0 .25em .5em 0;
+  display: inline-block;*/
+
+  margin-bottom: 5px;
 }
 .item-type-container span b {
   background: #ccc;

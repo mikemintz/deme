@@ -1,5 +1,12 @@
 {% load item_tags %}
-<h3 class="popup-title">Select an Item...</h3>
+{% if modal %}
+<h3 class="popup-title">Select {{item_type_name|an}} {{item_type_name}}</h3>
+{% ifagentcanglobal item_create_ability %}
+    <div class="top-button">
+        <a class="btn btn-primary btn-small" href="{% url item_type_url viewer=item_type_lower,action="new" %}?{{ query_string }}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
+    </div>
+{% endifagentcanglobal %}
+{% endif %}
 <div class="well well-item-search">
   <form method="get" name="list_filter_form" class="form-horizontal">
     {% if modal %}<input type="hidden" name="modal" value="1">{% endif %}
@@ -11,27 +18,28 @@
         Item Type Filter:
       </label>
       <div class="col col-lg-9">
-        <ul class="breadcrumb">
-        {% for item_type in breadcrumbs reversed %}
-          <li{% ifequal item_type.item_type accepted_item_type %} class="active"{% endifequal %}>
-            {% if item_type.item_type != accepted_item_type %}
-            <a href="{% url item_type_url viewer=item_type.viewer %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a>
-            {% else %}
-            {{ item_type.name_plural|capfirst }}
-            {% endif %}
-          </li>
-        {% endfor %}
-        </ul>
-        <div class="item-type-container">
-          {% for item_type in item_types %}
-          <span>
-          {% ifequal item_type.item_type accepted_item_type %}
-
-          {% else %}
-          <a href="{% url item_type_url viewer=item_type.viewer %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a>
-          {% endifequal %}
-          </span>
+        <div class="item-type-wrap">
+          <ul class="breadcrumb">
+          {% for item_type in breadcrumbs reversed %}
+            <li{% ifequal item_type.item_type accepted_item_type %} class="active"{% endifequal %}>
+              {% if item_type.item_type != accepted_item_type %}
+              <a href="{% url item_type_url viewer=item_type.viewer %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a>
+              {% else %}
+              {{ item_type.name_plural|capfirst }}
+              {% endif %}
+            </li>
           {% endfor %}
+          </ul>
+          {% if item_types|length > 1 %}
+          <div class="item-type-container">
+            {% for item_type in item_types %}
+            {% ifequal item_type.item_type accepted_item_type %}
+            {% else %}
+            <span><a class="btn btn-small btn-default" href="{% url item_type_url viewer=item_type.viewer %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a></span>
+            {% endifequal %}
+            {% endfor %}
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -87,16 +95,21 @@
         <span class="input-group-btn"><button type="submit" class="btn btn-info"><i class="glyphicon glyphicon-search"></i> Search</button></span>
       </div>
     </div>
+  </form>
+
+  <div class="row">
+    <div class="col col-lg-12">
+  {% listgridbox accepted_item_type %}
+    </div>
+  </div>
+<br>
     {% ifagentcanglobal item_create_ability %}
     <div class="row">
-      <div class="col col-lg-9 col-offset-3">
+      <div class="col col-lg-12">
         <a class="btn btn-primary" href="{% url item_type_url viewer=item_type_lower,action="new" %}?{{ query_string }}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
       </div>
     </div>
     {% endifagentcanglobal %}
-  </form>
-
-  {% listgridbox accepted_item_type %}
 
 </div>
 
