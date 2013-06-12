@@ -114,12 +114,13 @@ $(function(){
     var page_layout_width = '';
     if (typeof(metabar_width) == 'undefined') {
       metabar_width = $metabar.width();
+    } else {
+      $metabar.css('width', metabar_width);
     }
     // if visible, then calculate
     if (!$('body').hasClass('nonadmin') && !$metabar.hasClass('closed')) {
       page_layout_width = $(window).width() - metabar_width + 'px';
     }
-    $metabar.css('width', metabar_width);
     $('#overall').css('max-width', page_layout_width);
   }
   window.metabarWidthAdjust = metabarWidthAdjust;
