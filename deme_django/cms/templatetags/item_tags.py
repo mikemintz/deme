@@ -1121,7 +1121,7 @@ class CalculateHistory(template.Node):
             version_text = u'<a href="%s">%s</a>' % (version_url, version_name)
             diff_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'diff', 'noun': item.pk}) + '?version=%s&reference_version=%s' % (version.version_number, version.version_number - 1)
             diff_text = u'<a href="%s">(Diff)</a>' % diff_url if version.version_number > 1 else ''
-            time_text = u'<span title="%s">[%s ago]</span><br />' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
+            time_text = u'<span title="%s" class="timestamp">%s ago</span><br />' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
             agent_text = u'by %s' % get_item_link_tag(context, action_notice.action_agent)
             result.append(u'<div style="font-size: 85%%; margin-bottom: 5px;">')
             if agentcan_helper(context, 'view Item.created_at', item):
@@ -1175,7 +1175,7 @@ class CalculateActionNotices(template.Node):
                 if isinstance(action_notice, RelationActionNotice):
                     if not agentcan_helper(context, 'view %s.%s' % (action_notice.from_field_model, action_notice.from_field_name), action_notice.from_item):
                         continue
-                action_time_text = '<span title="%s">[%s ago]</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
+                action_time_text = '<span title="%s" class="timestamp">%s ago</span>' % (action_notice.action_time.strftime("%Y-%m-%d %H:%M:%S"), timesince(action_notice.action_time))
                 action_agent_text = get_item_link_tag(context, action_notice.action_agent)
                 if action_notice.action_item.pk == item.pk:
                     action_item_name = 'this'

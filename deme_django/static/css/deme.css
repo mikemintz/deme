@@ -5506,6 +5506,9 @@ h6,
 .h6 {
   line-height: 1.25;
 }
+.timestamp {
+  color: #999999;
+}
 .ui-widget-content a.btn {
   color: white;
 }
