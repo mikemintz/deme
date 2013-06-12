@@ -5506,6 +5506,9 @@ h6,
 .h6 {
   line-height: 1.25;
 }
+.ui-widget-content a.btn {
+  color: white;
+}
 .item-type-wrap {
   background-color: #F5F5F5;
   border: 1px solid #E3E3E3;

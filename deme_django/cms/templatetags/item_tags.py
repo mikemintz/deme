@@ -416,7 +416,7 @@ class ActionsMenu(template.Node):
 
             # add an item to this collection
             if isinstance(item, Collection) and agentcan_helper(context, 'modify_membership', item):
-                list_items.append("""<li><a href="#" onclick="openDialog('addmember%(id)s'); return false;" tabindex="-1" title="Insert an item" class="insert-item" data-target="addmember%(id)s"><i class="demeicon  demeicon-add-collection"></i> Insert into this collection</a></li>""" % {'id': item.pk})
+                list_items.append("""<li><a href="#" onclick="openDialog('addmember%(id)s'); return false;" tabindex="-1" title="Add an item into this collection" class="insert-item" data-target="addmember%(id)s"><i class="demeicon  demeicon-add-collection"></i> Add to this collection</a></li>""" % {'id': item.pk})
 
             if agentcan_global_helper(context, 'create %s' % item.item_type_string):
                 list_items.append('<li><a href="%s" tabindex="-1" title="Copy" class="copy"><i class="demeicon  demeicon-copy"></i> Copy</a></li>' % copy_url)
