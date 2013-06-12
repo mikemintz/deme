@@ -14,7 +14,31 @@ $(function(){
     $metabar.css('min-height', height);
     $metabar.css('height', 'auto');
   }
-  $(window).resize(function(){ metabar_sizing(); metabarWidthAdjust(); }).trigger('resize');
+
+  var winWidth = $(window).width(),
+      winHeight = $(window).height();
+
+  $(window).resize(function(){
+      var onResize = function() {
+          //The method which sets the LEFT css property which triggers 
+          //window.resize again and it was a infinite loop
+          metabar_sizing(); metabarWidthAdjust();
+      }
+
+      //New height and width
+      var winNewWidth = $(window).width(),
+      winNewHeight = $(window).height();
+
+      // compare the new height and width with old one
+      if(winWidth!=winNewWidth || winHeight!=winNewHeight)
+      {
+          window.clearTimeout(resizeTimeout);
+          resizeTimeout = window.setTimeout(onResize, 10);
+      }
+      //Update the width and height
+      winWidth = winNewWidth;
+      winHeight = winNewHeight;
+  }).trigger('resize');
 
   // attach resizable to entire metabar
   $metabar.resizable({
