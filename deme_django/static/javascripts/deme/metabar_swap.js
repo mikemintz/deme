@@ -5,6 +5,7 @@ $(function(){
   var $metabar = $('#metabar');
   var metabar_width = min_metabar_width = 150; // minimum/default width
   var max_metabar_width = 800;
+  var resizeTimeout = null;
 
   // sets metabar sizing styles based on window dimensions
   function metabar_sizing(){
@@ -15,12 +16,12 @@ $(function(){
     $metabar.css('height', 'auto');
   }
 
-  var winWidth = $(window).width(),
-      winHeight = $(window).height();
+  var winWidth = 0; // set to zero so first run through happens
+      winHeight = 0; 
 
   $(window).resize(function(){
       var onResize = function() {
-          //The method which sets the LEFT css property which triggers 
+          //The method which sets the height css property which triggers 
           //window.resize again and it was a infinite loop
           metabar_sizing(); metabarWidthAdjust();
       }
