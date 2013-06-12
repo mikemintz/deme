@@ -1,4 +1,5 @@
 {% load item_tags %}
+<h3 class="popup-title">Select an Item...</h3>
 <div class="well well-item-search">
   <form method="get" name="list_filter_form" class="form-horizontal">
     {% if modal %}<input type="hidden" name="modal" value="1">{% endif %}
@@ -12,13 +13,13 @@
       <div class="col col-lg-9">
         <ul class="breadcrumb">
         {% for item_type in breadcrumbs reversed %}
-        <li{% ifequal item_type.item_type accepted_item_type %} class="active"{% endifequal %}>
-          {% if item_type.item_type != accepted_item_type %}
-          <a href="{% url item_type_url viewer=item_type.viewer %}{% if modal %}?modal=1{% endif %}{% if receiver_input_id %}&id={{ receiver_input_id }}{% endif %}{% if src %}&src={{ src }}{% endif %}{% if base_type %}&base_type={{ base_type }}{% endif %}">{{ item_type.name_plural|capfirst }}</a>
-          {% else %}
-          {{ item_type.name_plural|capfirst }}
-          {% endif %}
-        </li>
+          <li{% ifequal item_type.item_type accepted_item_type %} class="active"{% endifequal %}>
+            {% if item_type.item_type != accepted_item_type %}
+            <a href="{% url item_type_url viewer=item_type.viewer %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a>
+            {% else %}
+            {{ item_type.name_plural|capfirst }}
+            {% endif %}
+          </li>
         {% endfor %}
         </ul>
         <div class="item-type-container">
@@ -27,7 +28,7 @@
           {% ifequal item_type.item_type accepted_item_type %}
 
           {% else %}
-          <a href="{% url item_type_url viewer=item_type.viewer %}{% if modal %}?modal=1{% endif %}{% if receiver_input_id %}&id={{ receiver_input_id }}{% endif %}{% if src %}&src={{ src }}{% endif %}{% if base_type %}&base_type={{ base_type }}{% endif %}">{{ item_type.name_plural|capfirst }}</a>
+          <a href="{% url item_type_url viewer=item_type.viewer %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a>
           {% endifequal %}
           </span>
           {% endfor %}
@@ -89,7 +90,7 @@
     {% ifagentcanglobal item_create_ability %}
     <div class="row">
       <div class="col col-lg-9 col-offset-3">
-        <a class="btn btn-primary" href="{% url item_type_url viewer=item_type_lower,action="new" %}{% if modal %}?modal=1{% endif %}{% if receiver_input_id %}&id={{ receiver_input_id }}{% endif %}{% if src %}&src={{ src }}{% endif %}{% if base_type %}&base_type={{ base_type }}{% endif %}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
+        <a class="btn btn-primary" href="{% url item_type_url viewer=item_type_lower,action="new" %}?{{ query_string }}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
       </div>
     </div>
     {% endifagentcanglobal %}

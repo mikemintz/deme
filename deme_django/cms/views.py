@@ -408,6 +408,18 @@ class ItemViewer(Viewer):
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name': x._meta.verbose_name, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
         item_types.sort(key=lambda x:x['name'].lower())
         self.context['item_types'] = item_types
+        # generate breadcrumb back to Item type
+        breadcrumbs = []
+        breadcrumb_iter = self.accepted_item_type
+        base_type = self.request.GET.get('base_type')
+        if base_type:
+          self.context['base_type'] = base_type
+        while breadcrumb_iter != models.base.Model:
+            breadcrumbs.append({'viewer': breadcrumb_iter.__name__.lower(), 'name': breadcrumb_iter._meta.verbose_name, 'name_plural': breadcrumb_iter._meta.verbose_name_plural, 'item_type': breadcrumb_iter})
+            if base_type and breadcrumb_iter.__name__.lower() == base_type:
+                break
+            breadcrumb_iter = breadcrumb_iter.__base__
+        self.context['breadcrumbs'] = breadcrumbs
         is_true = lambda value: bool(value) and value.lower() not in ('false', '0')
         if (is_true(self.request.GET.get('modal'))):
           self.context['receiver_input_id'] = self.request.GET.get('id') # the name of the field that expects a response
