@@ -662,12 +662,13 @@ class Viewer(object):
         a DjangoTemplateDocument) for the current Site, or default_layout.html
         if there is no default layout item.
         """
-        self.context['layout'] = 'default_layout.html'
         if self.cur_agent_can('view Site.default_layout', self.cur_site):
             if self.cur_site.default_layout:
-                self.context['layout'] = self.construct_template(self.cur_site.default_layout)
+                 self.context['layout'] = self.construct_template(self.cur_site.default_layout)
         else:
             self.context['layout_permissions_problem'] = True
+        if not self.context.get('layout', None):
+            self.context['layout'] = 'default_layout.html'
 
     def construct_template(self, django_template_document):
         """
@@ -703,10 +704,7 @@ class Viewer(object):
             if cur_node.override_default_layout:
                 extends_string = ''
             elif not next_node:
-                if 'layout' in self.context:
-                    extends_string = "{% extends layout %}\n"
-                else:
-                    raise Exception("The default layout for this site cycles with itself")
+                extends_string = "{% extends 'default_layout.html' %}\n"
             else:
                 extends_string = '{%% extends layout%s %%}\n' % next_node.pk
 
