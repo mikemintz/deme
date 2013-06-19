@@ -235,6 +235,13 @@
                 </div>
                 {% endif %}
 
+                {% if layout_syntax_problem %}
+                <div class="alert alert-block">
+                    <h4>Template Syntax Error</h4>
+                    <p>There is an error in the layout syntax, so this page is being displayed in the default layout. If your layout "extends" another layout, please make sure the "override base layout" checkbox is active.</p>
+                </div>
+                {% endif %}
+
                 {% block title-section %}
                   <h1 class="title">
                   {% if item %}

@@ -89,6 +89,11 @@ forum_sample_layout_code = open(os.path.join(os.path.dirname(__file__), '..', 'c
 forum_sample_layout = DjangoTemplateDocument(override_default_layout=True, name='Sample Forum Layout', body=forum_sample_layout_code)
 forum_sample_layout.save_versioned(action_agent=admin)
 
+# Set the demo page
+demo_htmldocument_code = open(os.path.join(os.path.dirname(__file__), '..', 'cms', 'templates', 'demo', 'demo.html')).read()
+demo_htmldocument = DjangoTemplateDocument(name='Demo Home Page', body=demo_htmldocument_code)
+demo_htmldocument.save_versioned(action_agent=admin)
+
 git_log = subprocess.Popen(["git", "log"], stdout=subprocess.PIPE).communicate()[0]
 git_commit = re.search(r'commit (.+)\nAuthor:', git_log).group(1)
 git_date = re.search(r'Date:\s*(.*) (-|\+)\d+', git_log).group(1)
@@ -96,6 +101,8 @@ formatted_git_date = time.strftime("%Y-%m-%d", time.strptime(git_date, "%a %b %d
 home_page = DjangoTemplateDocument(name='Deme Home Page', body="""
 {%% block content %%}
 Welcome to Deme!
+<br /><br />
+First time using Deme? <a href="/viewing/htmldocument/%s">Follow this guide</a> to learn how to set up Deme.
 <br /><br />
 Visit our GitHub page for the latest source code: <a href="http://github.com/mikemintz/deme">http://github.com/mikemintz/deme</a>.
 <br /><br />
@@ -105,7 +112,7 @@ View the slides from our presentation at Silicon Valley Code Camp 2008 at <a hre
 <br /><br />
 Read our paper on Deme's architecture for IWWOST 2009 at <a href="http://www.stanford.edu/~davies/IWWOST09-Davies-Mintz-websiteversion.pdf">http://www.stanford.edu/~davies/IWWOST09-Davies-Mintz-websiteversion.pdf</a>
 {%% endblock content %%}
-""" % (git_commit, git_commit, formatted_git_date) )
+""" % (demo_htmldocument.pk, git_commit, git_commit, formatted_git_date) )
 home_page.save_versioned(action_agent=admin)
 default_site.viewer = 'djangotemplatedocument'
 default_site.action = 'render'

@@ -663,13 +663,17 @@ class Viewer(object):
         if there is no default layout item.
         """
         self.context['layout'] = 'default_layout.html'
+        self.context['layout'] = self.construct_template(self.cur_site.default_layout, base_layout_required=True)
         if self.cur_agent_can('view Site.default_layout', self.cur_site):
             if self.cur_site.default_layout:
-                self.context['layout'] = self.construct_template(self.cur_site.default_layout)
+                try:
+                    self.context['layout'] = self.construct_template(self.cur_site.default_layout, base_layout_required=True)
+                except:
+                    self.context['layout_syntax_problem'] = True
         else:
             self.context['layout_permissions_problem'] = True
 
-    def construct_template(self, django_template_document):
+    def construct_template(self, django_template_document, **kwargs):
         """
         Construct a template object (like the result of loader.get_template)
         from the specified DjangoTemplateDocument, as it should be rendered to
@@ -680,6 +684,9 @@ class Viewer(object):
         """
         visited_nodes = set()
         cur_node = django_template_document
+        base_layout_extended = True
+        count = 0
+        debug_list = {}
         while cur_node is not None:
             # Check for cycles
             if cur_node in visited_nodes:
@@ -698,6 +705,8 @@ class Viewer(object):
             else:
                 next_node = None
                 self.context['layout_permissions_problem'] = True
+
+            extends_string = body_string = ''
 
             # Set extends_string
             if cur_node.override_default_layout:
@@ -719,11 +728,36 @@ class Viewer(object):
                     extends_string = "{% extends 'default_layout.html' %}"
                 self.context['layout_permissions_problem'] = True
 
-            # Create the template
-            t = loader.get_template_from_string(extends_string + body_string)
-            self.context[context_key] = t
+            combined = extends_string + body_string
 
+            if combined.strip() == '':
+                self.context['layout_syntax_problem'] = True
+                raise Exception('Layout cannot be blank')
+
+            # Create the template
+            t = loader.get_template_from_string(combined)
+            self.context[context_key] = t
             cur_node = next_node
+
+            # Check to see if base_layout was included
+            base_layout_strings = ['{% extends "base_layout.html" %}', "{% extends 'base_layout.html' %}"]
+            # plan: test to see if extend is present at all. if not, then fail. if yes, then keep going and check to see base_layout is included at some point and if so then it's really true.
+
+            for test_string in base_layout_strings:
+                if test_string in combined:
+                    base_layout_extended = True
+                    raise Exception
+
+            debug_list[count] = combined
+            count = count + 1
+
+
+
+        # make sure the base node is base_layout
+        if kwargs.get('base_layout_required') and not base_layout_extended:
+            self.context['layout_syntax_problem'] = True
+            raise Exception('Layout must extend "base_layout.html"')
+
         return self.context['layout%s' % django_template_document.pk]
 
 
