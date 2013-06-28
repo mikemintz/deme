@@ -662,16 +662,18 @@ class Viewer(object):
         a DjangoTemplateDocument) for the current Site, or default_layout.html
         if there is no default layout item.
         """
-        self.context['layout'] = 'default_layout.html'
-        self.context['layout'] = self.construct_template(self.cur_site.default_layout, base_layout_required=True)
+
         if self.cur_agent_can('view Site.default_layout', self.cur_site):
             if self.cur_site.default_layout:
                 try:
                     self.context['layout'] = self.construct_template(self.cur_site.default_layout, base_layout_required=True)
-                except:
+                except Exception as e:
                     self.context['layout_syntax_problem'] = True
+                    self.context['layout_syntax_problem_text'] = str(e)
         else:
             self.context['layout_permissions_problem'] = True
+        if not self.context.get('layout', None):
+            self.context['layout'] = 'default_layout.html'
 
     def construct_template(self, django_template_document, **kwargs):
         """
@@ -684,13 +686,12 @@ class Viewer(object):
         """
         visited_nodes = set()
         cur_node = django_template_document
-        base_layout_extended = True
-        count = 0
-        debug_list = {}
+        base_layout_extended = False
+
         while cur_node is not None:
             # Check for cycles
             if cur_node in visited_nodes:
-                raise Exception("There is a layout cycle")
+                raise Exception("There is a layout cycle. Please make sure the layout doesn't have itself as its layout.")
             visited_nodes.add(cur_node)
 
             # Get the context variable name, and don't set it if it was set
@@ -700,10 +701,11 @@ class Viewer(object):
                 break
 
             # Set next_node
+            next_node = None
             if self.cur_agent_can('view DjangoTemplateDocument.layout', cur_node):
-                next_node = cur_node.layout
+                if not cur_node.override_default_layout:
+                    next_node = cur_node.layout
             else:
-                next_node = None
                 self.context['layout_permissions_problem'] = True
 
             extends_string = body_string = ''
@@ -712,10 +714,7 @@ class Viewer(object):
             if cur_node.override_default_layout:
                 extends_string = ''
             elif not next_node:
-                if 'layout' in self.context:
-                    extends_string = "{% extends layout %}\n"
-                else:
-                    raise Exception("The default layout for this site cycles with itself")
+                extends_string = "{% extends 'default_layout.html' %}\n"
             else:
                 extends_string = '{%% extends layout%s %%}\n' % next_node.pk
 
@@ -732,26 +731,23 @@ class Viewer(object):
 
             if combined.strip() == '':
                 self.context['layout_syntax_problem'] = True
-                raise Exception('Layout cannot be blank')
+                raise Exception('Layout cannot be blank. Try setting override default layout to false.')
 
             # Create the template
             t = loader.get_template_from_string(combined)
             self.context[context_key] = t
-            cur_node = next_node
 
             # Check to see if base_layout was included
             base_layout_strings = ['{% extends "base_layout.html" %}', "{% extends 'base_layout.html' %}"]
-            # plan: test to see if extend is present at all. if not, then fail. if yes, then keep going and check to see base_layout is included at some point and if so then it's really true.
 
+            # Check to make sure base_layout is extended or that base_layout will be included by default
             for test_string in base_layout_strings:
                 if test_string in combined:
                     base_layout_extended = True
-                    raise Exception
+            if cur_node.override_default_layout is False and next_node is None:
+                base_layout_extended = True
 
-            debug_list[count] = combined
-            count = count + 1
-
-
+            cur_node = next_node
 
         # make sure the base node is base_layout
         if kwargs.get('base_layout_required') and not base_layout_extended:
