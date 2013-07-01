@@ -90,32 +90,15 @@ forum_sample_layout = DjangoTemplateDocument(override_default_layout=True, name=
 forum_sample_layout.save_versioned(action_agent=admin)
 
 # Set the demo page
-demo_htmldocument_code = open(os.path.join(os.path.dirname(__file__), '..', 'cms', 'templates', 'demo', 'demo.html')).read()
-demo_htmldocument = DjangoTemplateDocument(name='Demo Home Page', body=demo_htmldocument_code)
-demo_htmldocument.save_versioned(action_agent=admin)
-
 git_log = subprocess.Popen(["git", "log"], stdout=subprocess.PIPE).communicate()[0]
 git_commit = re.search(r'commit (.+)\nAuthor:', git_log).group(1)
 git_date = re.search(r'Date:\s*(.*) (-|\+)\d+', git_log).group(1)
 formatted_git_date = time.strftime("%Y-%m-%d", time.strptime(git_date, "%a %b %d %H:%M:%S %Y"))
-home_page = DjangoTemplateDocument(name='Deme Home Page', body="""
-{%% block content %%}
-Welcome to Deme!
-<br /><br />
-First time using Deme? <a href="/viewing/htmldocument/%s">Follow this guide</a> to learn how to set up Deme.
-<br /><br />
-Visit our GitHub page for the latest source code: <a href="http://github.com/mikemintz/deme">http://github.com/mikemintz/deme</a>.
-<br /><br />
-This site is running a working copy of Deme <a href="http://github.com/mikemintz/deme/commit/%s">commit %s</a> from %s.
-<br /><br />
-View the slides from our presentation at Silicon Valley Code Camp 2008 at <a href="http://www.stanford.edu/~davies/tdavies-presentations.html">http://www.stanford.edu/~davies/tdavies-presentations.html</a> (scroll down).
-<br /><br />
-Read our paper on Deme's architecture for IWWOST 2009 at <a href="http://www.stanford.edu/~davies/IWWOST09-Davies-Mintz-websiteversion.pdf">http://www.stanford.edu/~davies/IWWOST09-Davies-Mintz-websiteversion.pdf</a>
-{%% endblock content %%}
-""" % (demo_htmldocument.pk, git_commit, git_commit, formatted_git_date) )
+demo_htmldocument_code = open(os.path.join(os.path.dirname(__file__), '..', 'cms', 'templates', 'demo', 'demo.html')).read()
+home_page = HtmlDocument(name='Deme Home Page', body=demo_htmldocument_code % (git_commit, git_commit, formatted_git_date) )
 home_page.save_versioned(action_agent=admin)
-default_site.viewer = 'djangotemplatedocument'
-default_site.action = 'render'
+default_site.viewer = 'htmldocument'
+default_site.action = 'show'
 default_site.aliased_item = home_page
 default_site.query_string = ''
 #default_site.default_layout = default_layout #TODO uncomment this line
