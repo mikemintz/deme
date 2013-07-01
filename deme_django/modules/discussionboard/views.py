@@ -12,11 +12,11 @@ class DiscussionViewer(ItemViewer):
     def item_show_html(self):
         self.context['action_title'] = ''
         template = loader.get_template('discussionboard/show.html')
-        top_level_comments = list(TextComment.objects.filter(item=self.item))
+        top_level_comments = list(TextComment.objects.filter(item=self.item, active=True))
         last_posts = {}
         num_replies = {}
         for top_level_comment in top_level_comments:
-            all_replies = TextComment.objects.filter(pk__in=RecursiveComment.objects.filter(parent=top_level_comment).values('child').query)
+            all_replies = TextComment.objects.filter(pk__in=RecursiveComment.objects.filter(parent=top_level_comment).values('child').query, active=True)
             for reply in all_replies.order_by('-created_at')[:1]:
                 last_posts[top_level_comment] = reply
             num_replies[top_level_comment] = all_replies.count()
