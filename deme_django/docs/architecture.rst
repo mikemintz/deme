@@ -50,7 +50,7 @@ There are two ways of deleting items: deactivating and destroying. Neither of th
 * **Destroying:** After an item is deactivated, you can permanently nullify all of its fields (and/or the fields in its versions) so that it is impossible to recover (but keep active=false). A DestroyActionNotice is automatically generated to log when the item was around.
 
   Our solution is as follows. We allow any field to have the special NULL value from SQL. The application (not the database) ensures that fields only take on these values when the item is destroyed, and never otherwise (I haven't finished making sure this happens yet). Thus, to destroy an item is to set every field to NULL, and set destroyed=True (and leave alone id, item_type, and active, version_number). Destroying an item also removes all permissions and versions of the item. After an item is destroyed, nobody can make changes (in particular, it cannot be reactivated or edited).
-  
+
   Normally, having NULL values makes the code much more complex and prone to bugs, since the developer has to write a lot of checks for NULL. For example, to display the name of the creator of an item, the developer would have to write something like ``if (item.creator != NULL && item.creator.name != NULL) ...``. Since we already do all of this up-front error checking in the permission system (to ensure that the logged in agent has permission to view the creator of the item and the name of the creator), all we have to do is modify the permission code so that users cannot view fields (or take any actions) for destroyed items. So if an item's creator was destroyed, a simple viewer will just display the creator's name in the same way it would display something it does not have permission to view (a more advanced viewer could check to see if it was destroyed).
 
   It will also be possible to destroy specific versions of an item (not yet implemented). You can destroy any version except for the latest version (if you want to destroy the latest version, just edit the item to make a new version so that the version you want to destroy is now the second-latest). Destroying a version will permanently NULLify all fields in the version.
@@ -87,7 +87,7 @@ Below are the core item types and the role they play (see the full ontology at h
 Agents and related item types
 
 * **Agent:** This item type represents an agent that can "do" things. Often this will be a person (see the Person subclass), but actions can also be performed by other agents, such as bots and anonymous agents. Agents are unique in the following ways:
-    
+
   * Agents can be assigned permissions
   * Agents show up in the creator and updater fields of other items
   * Agents can authenticate with Deme using AuthenticationMethods
@@ -183,7 +183,7 @@ Annotations (Transclusions, Comments, and Excerpts)
 * **Excerpt:** An Excerpt is an Item that refers to a portion of another Item (or an external resource, such as a webpage). Excerpt is meant to be abstract, so developers should always create subclasses rather than creating raw Excerpts.
 
 * **TextDocumentExcerpt:** A TextDocumentExcerpt refers to a contiguous region of text in a version of another TextDocument in Deme. The body field contains the excerpted region, and the following fields are introduced:
- 
+
   * The ``text_document`` field is a pointer to the TextDocument being excerpted.
   * The ``text_document_version_number`` field is the version number of the TextDocument being excerpted.
   * The ``start_index`` field identifies the character position of the beginning of the region.
@@ -194,20 +194,20 @@ Viewer aliases
 In order to allow vanity URLs (i.e., things other than ``/viewing/item/5``), we have a system of hierarchical URLs. In the future, we'll need to make sure URL aliases cannot start with /viewing/ (our base URL for viewers), /static/ (our base URL for static content like stylesheets), or /meta/ (our base URL for Deme framework things like authentication). Right now, if someone makes a vanity URL with one of those prefixes, you just cannot reach it (it does not shadow the important URLs).
 
 * **ViewerRequest:** A ViewerRequest represents a particular action at a particular viewer (basically a URL, although its stored more explicitly). A ViewerRequest is supposed to be abstract, so users can only create Sites and CustomUrls. It specifies the following fields
-  
+
   * A ``viewer`` (just a string, since viewers are not Items)
   * An ``action`` (like "view" or "edit")
   * An ``item`` that is referred to (or null for item type actions like "list" and "new")
   * A ``query_string`` if you want to pass parameters to the viewer
   * A ``format`` (like "html" or "json", for the viewer to know what output to render)
-    
+
 * **Site:** A Site is a ViewerRequest that represents a logical website with URLs. Multiple Sites on the same Deme installation share the same Items with the same unique ids, but they resolve URLs differently so each Site can have a different page for /mike. If you go to the base URL of a site (like http://example.com/), you see the ViewerRequest that this Site inherits from. This item type specifies the following fields:
 
   * The ``hostname`` field specifies the hostname of this site, so that the viewer can determine which site a visitor is currently at from the URL.
   * The ``default_layout`` field is a pointer to a DjangoTemplateDocument. Whenever a visitor is at a URL designated for this site, the template will be rendered under this layout. If this field is null, the Deme default layout (in ``cms/templates/default_layout.html``) will be used.
 
 * **CustomUrl:** A CustomUrl is a ViewerRequest that represents a specific path.
-    
+
   Each CustomUrl has a ``parent_url`` field pointing to the parent ViewerRequest (it will be the Site if this CustomUrl is the first path component) and a ``path`` field. So when a user visits http://example.com/abc/def, Deme looks for a CustomUrl with name "def" with a parent with name "abc" with a parent Site with hostname "example.com". In other words, we need to find something that looks like this::
 
     CustomUrl(name="def", parent_url=CustomUrl(name="abc", parent_url=Site(hostname="example.com")))
@@ -556,3 +556,15 @@ Email integration
 -----------------
 
 As described in the section on Subscriptions, Deme will email notifications for every action notice made on items that are subscribed to (in the future we will support other ContactMethods, like sending SMS notifications). The communication also goes the other way: if someone responds to a notification email (or sends an email to the address corresponding to a particular item), that will become a comment on Deme.
+
+Bootstrap Framework
+-------------------
+
+Deme uses the Bootstrap 3 front-end framework (http://getbootstrap.com).
+
+Stylesheets (CSS) for Deme are generated from LESS files (http://lesscss.org). There are many ways to compile LESS files but the one used was CodeKit (http://incident57.com/codekit), a commercial software package that simplifies the process.
+
+In order to allow easy upgrade of the Bootstrap framework files, files in /static/less/bootstrap should not be customized for Deme as any customization would be overwritten when upgrading Bootstrap. Instead, changes should be made to files in /static/less/deme.
+
+The Bootstrap Javascript is simply included as a minified JS file.
+
