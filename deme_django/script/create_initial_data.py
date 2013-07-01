@@ -101,7 +101,7 @@ default_site.viewer = 'htmldocument'
 default_site.action = 'show'
 default_site.aliased_item = home_page
 default_site.query_string = ''
-#default_site.default_layout = default_layout #TODO uncomment this line
+default_site.default_layout = default_layout
 default_site.save_versioned(action_agent=admin)
 
 mike = Person(first_name="Mike", last_name="Mintz", name="Mike Mintz")

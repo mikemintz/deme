@@ -1,10 +1,17 @@
 {% extends "base_layout.html" %}
 
-{% comment %}
-Make a new DjangoTemplateDocument. Make sure "override default layout" is checked, and "layout" is blank.
-
-Edit "Default Site" (or any other Site that you want to override the layout for). Set "default layout" to point to the DjangoTemplateDocument you just created.
-{% endcomment %}
-
 {% block chat %}
+<!-- delete this block to allow chat -->
 {% endblock chat %}
+
+{% block banner-section %}
+<div class="banner-section">
+<!-- add content to be shown above the main content area here -->
+</div>
+{% endblock banner-section %}
+
+{% block tabs-section %}
+<div class="tabs-section">
+<!-- add a navigation tab section here -->
+</div>
+{% endblock tabs-section %}
