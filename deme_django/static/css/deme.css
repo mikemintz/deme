@@ -5208,6 +5208,19 @@ body.nonadmin #metabar {
   border-left: 5px solid #48ba1b;
   padding-left: 10px;
 }
+.proposition.actions-visible {
+  overflow: auto;
+}
+.proposition.actions-visible .proposition-inner {
+  float: left;
+}
+.proposition.actions-visible .proposition-inner h4 {
+  margin-top: 0;
+}
+.proposition.actions-visible .proposition-actions {
+  float: left;
+  margin-right: 15px;
+}
 .proposition-result .proposition_graph {
   position: relative;
   margin: 10px 70px 60px;
