@@ -1,6 +1,35 @@
 Usage
 =====
 
+Deme is designed for the Chrome, Safari, and Firefox browsers. It should also work in Internet Explore 8 and above, but will have visual inconsistencies.
+
+Interface
+---------
+
+At the top is the Toolbar, which allows users to Log in, Search, etc. By default, the Toolbar is in "Basic Layout", which hides the more advanced functionality. Clicking on the Gear icon at the very top left switches to "Advanced Layout", which introduces more advanced funtionality.
+
+Basic Layout
+^^^^^^^^^^^^
+
+Buttons from left to right:
+
+**Gear:** Switches between Basic and Advanced Layout. Hidden if the user does not have permission to view the Advanced Layout.
+**Font size:** Allows the user to change the font size for all text on the screen.
+**Search:** Searches all items by name and provides a quick link to the Advanced Search interface.
+**Login menu:** Displays log in options as well as details for logged in users.
+
+Advanced Layout
+^^^^^^^^^^^^^^^
+
+Buttons from left to right not present in the Basic Layout:
+
+**Breadcrumbs:** A list showing the current item (if any), item type, and a link to all items.
+**Actions menu:** A menu of actions that apply to the current page.
+**Actions icons:** Shortcuts to some of the key actions of the Actions menu.
+**Metadata:** Opens the Metadata sidebar, which contains help and information about the current page.
+
+
+
 Customizing a Deme Site
 -----------------------
 
@@ -22,6 +51,18 @@ Edit the Home Page
 
 1. From the ``Home Page``, click the ``Edit`` button
 2. The editor uses TinyMCE as a WYSIWYG editor. After editing, click ``Save HTML document`` to commit your changes.
+
+Hiding `Advanced Layout`
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+To change who can see the advanced layout tools, you'll need to change `Advanced Layout` under `Global Permissions`:
+
+1. Log in as Admin by clicking on the person icon in the top right of the site, then clicking `Login as` and choosing `Admin`
+2. Go to the site Admin page by clicking its link in the footer
+3. Go to Global Permissions
+4. Under `Everyone`, remove the `Advanced Layout` permission by clicking its [-] button and then save. Now the only user who sees the Advanced Layout bar is the Admin.
+5. Let's say we want logged in users to see the Advanced Layout bar but not Anonymous users. First, let's allow all users to see the bar by reenabling `Advanced Layout` under `Everyone` by clicking [+] and saving. Now, let's click `Assign a Permission to a User` at the very bottom of the permissions and enter `Anonymous` and then click `Add Collection`. Next, in the newly generated permission area for Anonymous, add a `New Permission`, from its dropdwon menu select `Advanced Layout`, click [-] to disallow, and then finally `Save Permissions`.
+6. Now if you visit the site as an Anonymous user, you'll no longer see the Advaned Layout tools.
 
 Understanding DjangoTemplateDocuments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
