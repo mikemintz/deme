@@ -83,12 +83,23 @@
                     </select>
                   </div>
                 </div>
-                <label class="radio-inline">
-                  <input type="radio" name="inactive" value="0"{% if not inactive %} checked="checked"{% endif %}> Active Items
-                </label>
-                <label class="radio-inline">
-                  <input type="radio" name="inactive" value="1"{% if inactive %} checked="checked"{% endif %}> Deactivated Items
-                </label>
+                <div class="row">
+                  <div class="col col-lg-9">
+                    <label class="radio-inline">
+                      <input type="radio" name="inactive" value="0"{% if not inactive %} checked="checked"{% endif %}> Active Items
+                    </label>
+                    <label class="radio-inline">
+                      <input type="radio" name="inactive" value="1"{% if inactive %} checked="checked"{% endif %}> Deactivated Items
+                    </label>
+                  </div>
+                  <div class="col col-lg-3">
+                    <div class="pull-right">
+                      <p>
+                        <button type="submit" class="btn btn-info btn-small">Apply</button>
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

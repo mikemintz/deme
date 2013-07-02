@@ -678,7 +678,7 @@ class ItemViewer(Viewer):
         try:
             items = Item.objects.filter(pk__in=items_string)
         except:
-            return self.render_error('Invalid URL', "You must specify the items you are deactivating")
+            return self.render_error('Invalid URL', "You must specify the items you are reactivating")
 
         errors = []
         for item in items:
@@ -699,6 +699,26 @@ class ItemViewer(Viewer):
         self.require_ability('delete', self.item)
         self.item.destroy(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': self.item.pk, 'action': 'justdestroyed'}))
+        return HttpResponseRedirect(redirect)
+
+    @require_POST
+    def type_destroymulti_html(self):
+        items_string = self.request.POST.get('items').split(',')
+        try:
+            items = Item.objects.filter(pk__in=items_string)
+        except:
+            return self.render_error('Invalid URL', "You must specify the items you are destroying")
+
+        errors = []
+        for item in items:
+            item = item.downcast()
+            if not item.can_be_deleted():
+                errors.append('The item %s may not be deleted.' % (item))
+            self.require_ability('delete', item)
+            item.destroy(action_agent=self.cur_agent, action_summary=self.request.POST.get('action_summary'))
+        if errors:
+            return self.render_error('Errors', errors.join('<br><br>'))
+        redirect = self.request.GET.get('redirect', '/')
         return HttpResponseRedirect(redirect)
 
     def item_justdestroyed_html(self):
