@@ -128,29 +128,34 @@ $(document).ready(function() {
             	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
         	<div class="propositions list-group" id="Propcontainer">
       		{% for proposition in propositions %}
-    		    <div class="proposition list-group-item">
-    		      <h4>{% firstof proposition.name forloop.counter %}</h4>
-    		      <p>{{proposition.summary_text|safe}}</p>
-    		      {% if proposition.body %}
-      		      <button class="btn btn-default btn-small btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
-    		      {% endif %}
-
-    	 	      <!-- admin -->
+    		    <div class="proposition list-group-item{% ifagentcan 'modify_membership' item %} actions-visible{% endifagentcan %}">
+    		      <!-- admin -->
      		 	    {% ifagentcan 'modify_membership' item %}
+       		 	    <div class="proposition-actions">
                 {% ifagentcanglobal 'create Proposition' %}
-          			<a href="{% url item_url viewer='proposition',action='edit',noun=proposition.pk %}?redirect={{ full_path|urlencode }}" class="btn btn-default btn-small"><i class="glyphicon glyphicon-edit"></i> Edit</a>
+          			<a href="{% url item_url viewer='proposition',action='edit',noun=proposition.pk %}?redirect={{ full_path|urlencode }}" class="btn btn-link btn-small"><i class="glyphicon glyphicon-edit"></i> Edit</a><br>
                 {% endifagentcanglobal %}
-        			<button class="btn btn-default btn-small" type="button" onclick="removeMember('{{ proposition.pk }}')"><i class="glyphicon glyphicon-trash"></i> Remove</button>
+        			<button class="btn btn-link btn-small" type="button" onclick="removeMember('{{ proposition.pk }}')"><i class="glyphicon glyphicon-trash"></i> Remove</button>
+	    		      </div>
         		  {% endifagentcan %}
+        		  <div class="proposition-inner">
+      		      <h4>{% firstof proposition.name forloop.counter %}</h4>
+      		      <p>{{proposition.summary_text|safe}}</p>
+      		      {% if proposition.body %}
+        		      <button class="btn btn-info btn-small btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
+      		      {% endif %}
 
-        			{% if cur_agent_in_eligbles %}
-        			<label class="radio-inline">
-        				<input type="radio" name="{{ proposition.pk }}" value="approve"> Agree
-        			</label>
-        			<label class="radio-inline">
-        				<input type="radio" name="{{ proposition.pk }}" value="disapprove"> Disagree
-        			</label>
-        			{% endif %}
+
+
+          			{% if cur_agent_in_eligbles %}
+          			<label class="radio-inline">
+          				<input type="radio" name="{{ proposition.pk }}" value="approve"> Agree
+          			</label>
+          			<label class="radio-inline">
+          				<input type="radio" name="{{ proposition.pk }}" value="disapprove"> Disagree
+          			</label>
+          			{% endif %}
+        		  </div>
       			</div>
     	    {% endfor %}
           </div><!-- /#Propcontainer -->
@@ -195,7 +200,7 @@ $(document).ready(function() {
         <h4>{% firstof proposition.name forloop.counter %}</h4>
 	      <p>{{proposition.summary_text|safe}}</p>
 	      {% if proposition.body %}
-		      <button class="btn btn-default btn-small btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
+		      <button class="btn btn-info btn-small btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
 	      {% endif %}
 	      <div class="proposition_graph">
 	        <div class="position">
