@@ -14,6 +14,15 @@
     {% if src %}<input type="hidden" name="src" value="{{ src }}">{% endif %}
     {% if base_type %}<input type="hidden" name="base_type" value="{{ base_type }}">{% endif %}
     <div class="row">
+      <label class="hidden-sm col col-lg-3 control-label" for="q">
+        Search term:
+      </label>
+      <div class="col col-lg-9 input-group">
+        <input type="text" name="q" value="{{ search_query }}" />
+        <span class="input-group-btn"><button type="submit" class="btn btn-info"><i class="glyphicon glyphicon-search"></i> Search</button></span>
+      </div>
+    </div>
+    <div class="row">
       <label class="hidden-sm col col-lg-3 control-label">
         Item Type Filter:
       </label>
@@ -86,20 +95,14 @@
         </div>
       </div>
     </div>
-    <div class="row">
-      <label class="hidden-sm col col-lg-3 control-label" for="q">
-        Search term:
-      </label>
-      <div class="col col-lg-9 input-group">
-        <input type="text" name="q" value="{{ search_query }}" />
-        <span class="input-group-btn"><button type="submit" class="btn btn-info"><i class="glyphicon glyphicon-search"></i> Search</button></span>
-      </div>
-    </div>
   </form>
 
   <div class="row">
     <div class="col col-lg-12">
-  {% listgridbox accepted_item_type %}
+    {% if search_query %}
+    <h5>{{ item_type_name_plural|capfirst }} containing &ldquo;{{ search_query}}&rdquo;</h5>
+    {% endif %}
+    {% listgridbox accepted_item_type %}
     </div>
   </div>
 <br>
