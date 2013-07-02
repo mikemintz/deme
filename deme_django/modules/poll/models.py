@@ -26,7 +26,7 @@ class Poll(Collection):
         verbose_name_plural = _('polls')
 
     #fields:
-    question = models.TextField(_('question'), blank=True, help_text=_('Explain to poll participants what the poll is about'))
+    question = models.TextField(_('question'), blank=True, help_text=_('Explain to participants what this poll is about'))
     begins = models.DateTimeField(_('begins'), null=True, blank=True, default=None, help_text=_('(Advanced) Dates must be entered in the format "MM/DD/YY"'))
     deadline = models.DateTimeField(_('deadline'), null=True, blank=True, default=None, help_text=_('(Advanced) Dates must be entered in the format "MM/DD/YY"'))
     time_zones = (
@@ -114,7 +114,7 @@ class Proposition(HtmlDocument):
         verbose_name_plural = _('propositions')
 
     #fields:
-    summary_text = models.CharField(_('summary text'), blank=True, max_length=140)
+    summary_text = models.CharField(_('summary text'), blank=True, max_length=140, help_text=_('A short summary of this proposition. This is displayed by the item name while the Body is displayed only when a participant clicks the Read More button'))
 
 
 class PropositionResponse(models.Model):
