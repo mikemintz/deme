@@ -75,14 +75,16 @@ $(document).ready(function () {
     jqgrid_list.jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Add",title:"Add an item to {% viewable_name collection_item %}",buttonicon:"ui-icon-circle-plus",onClickButton:function(){openDialogBox('addmember{{collection_item.pk}}');}})
     {% endifagentcan %}
 
-    {% if cur_agent_in_collection %}
-    {% ifagentcan 'remove_self' collection_item %}
-    jqgrid_list.jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Leave",title:"Remove my membership in {% viewable_name collection_item %}",buttonicon:"ui-icon-person",onClickButton:function(){$('#removeselfform{{identifier}}')[0].submit();}})
-    {% endifagentcan %}
-    {% else %}
-    {% ifagentcan 'add_self' collection_item %}
-    jqgrid_list.jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Join",title:"Become a member of {% viewable_name collection_item %}",buttonicon:"ui-icon-person",onClickButton:function(){$('#addselfform{{identifier}}')[0].submit();}})
-    {% endifagentcan %}
+    {% if collection_is_group %}
+      {% if cur_agent_in_collection %}
+      {% ifagentcan 'remove_self' collection_item %}
+      jqgrid_list.jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Leave",title:"Remove my membership in {% viewable_name collection_item %}",buttonicon:"ui-icon-person",onClickButton:function(){$('#removeselfform{{identifier}}')[0].submit();}})
+      {% endifagentcan %}
+      {% else %}
+      {% ifagentcan 'add_self' collection_item %}
+      jqgrid_list.jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Join",title:"Become a member of {% viewable_name collection_item %}",buttonicon:"ui-icon-person",onClickButton:function(){$('#addselfform{{identifier}}')[0].submit();}})
+      {% endifagentcan %}
+      {% endif %}
     {% endif %}
   {% endif %}
 

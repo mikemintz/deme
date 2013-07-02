@@ -1294,6 +1294,7 @@ class ListGridBox(template.Node):
             post_data['collection'] = collection
             col_names.append('Actions')
             col_model.append({'name': 'actions', 'index': 'actions', 'sortable': 'false'})
+            data['collection_is_group'] = collection_item.__class__ is Group
             data['cur_agent_in_collection'] = collection_item.child_memberships.filter(active=True, item=data['cur_agent']).exists()
         if inactive:
             post_data['inactive'] = inactive
