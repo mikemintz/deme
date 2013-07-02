@@ -24,6 +24,7 @@ $(document).ready(function () {
 </script>
 {% endif %}
 {% if modal %}<h3 class="popup-title">{{metabar_contents}}</h3>{% endif %}
+{% if item_types %}
 <div class="">
   <div class="item-type-wrap">
     <ul class="breadcrumb">
@@ -60,6 +61,7 @@ $(document).ready(function () {
   </div>
   <br>
 </div>
+{% endif %}
 
 <div class="item-type-new-container">
 {% if form %}
