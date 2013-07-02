@@ -58,9 +58,9 @@ class Poll(Collection):
     time_zone  = models.CharField(_('time zone'), max_length=255, choices=time_zones, default=settings.TIME_ZONE, help_text=_("(Advanced) What time zone are dates in?"))
     eligibles = FixedForeignKey(Group, related_name='poll_participant', null=True, blank=True, default=None, help_text=_('Which group is this poll for'), verbose_name="Eligible Group")
     visibility_choices = (
-        ('responses visible' , 'responses visible - each user that has responded is visible' ),
-        ('who responded visible', 'who responded visible - who has responded is visible, but not how they responded'),
-        ('closed' , 'closed - neither who has responded nor how they have responded is visible'),
+        ('responses visible' , 'responses visible - each user that has responded is visible to participants' ),
+        ('who responded visible', 'who responded visible - who has responded is visible to participants, but not how they responded'),
+        ('closed' , 'closed - neither who has responded nor how they have responded is visible to participants'),
     )
     visibility = models.CharField(_('visibility'), default='Unassigned', max_length=36, choices=visibility_choices)
     allow_editing_responses = FixedBooleanField(_('allow editing responses'), default=False, help_text=_("If enabled, poll participants can go back and edit their responses after their initial submission"))
