@@ -1908,12 +1908,12 @@ class ViewerRequest(Item):
         verbose_name_plural = _('viewer requests')
 
     # Fields
-    viewer       = models.CharField(_('viewer'), max_length=255)
-    action       = models.CharField(_('action'), max_length=255)
+    viewer       = models.CharField(_('viewer'), max_length=255, help_text=_("This describes the type of the Aliased item. For example, a DjangoTemplateDocument should have 'djangotemplatedocument' while a HtmlDocument should have 'htmldocument'"))
+    action       = models.CharField(_('action'), max_length=255, help_text=_("This is the action that should be taken on the Aliased item. The 'show' action works for most any item type. For DjangoTemplateDocuments, the action should be 'render'"))
     # If aliased_item is null, it is a collection action
-    aliased_item = FixedForeignKey(Item, related_name='viewer_requests', null=True, blank=True, default=None, verbose_name=_('aliased item'))
-    query_string = models.CharField(_('query string'), max_length=1024, blank=True)
-    format       = models.CharField(_('format'), max_length=255, default='html')
+    aliased_item = FixedForeignKey(Item, related_name='viewer_requests', null=True, blank=True, default=None, verbose_name=_('aliased item'), help_text=_("This is the item that should be shown. The item is typically a HtmlDocument or DjangoTemplateDocument but can be any type of item so long as the viewer and action are set appropriately"))
+    query_string = models.CharField(_('query string'), max_length=1024, blank=True, help_text=_("This is used to pass parameters to an item, for instance 'page=2' for a Group item with many pages of members"))
+    format       = models.CharField(_('format'), max_length=255, default='html', help_text=_("Typically this should be 'html', but could also be 'rss', etc"))
 
     def calculate_full_path(self):
         """Return a tuple (site, custom_urls) where custom_urls is a list."""
@@ -1955,10 +1955,10 @@ class Site(ViewerRequest):
         verbose_name_plural = _('sites')
 
     # Fields
-    title = models.CharField(_('site title'), null=True, blank=True, max_length=255, help_text="Displayed in the title bar and on the top left by default.")
-    logo = FixedForeignKey('ImageDocument', related_name='sites_with_logo', null=True, blank=True, default=None, verbose_name=_('site logo'), help_text="Replaces the site title on the top left of the page by default")
-    hostname = models.CharField(_('hostname'), max_length=255, unique=True, help_text="Used for multi-site installations, for example `one.domain.com`, `two.domain.com`")
-    default_layout = FixedForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout'))
+    title = models.CharField(_('site title'), null=True, blank=True, max_length=255, help_text=_("Displayed in the title bar and on the top left by default."))
+    logo = FixedForeignKey('ImageDocument', related_name='sites_with_logo', null=True, blank=True, default=None, verbose_name=_('site logo'), help_text=_("Replaces the site title on the top left of the page by default"))
+    hostname = models.CharField(_('hostname'), max_length=255, unique=True, help_text=_("Used for multi-site installations, for example `one.domain.com`, `two.domain.com`"))
+    default_layout = FixedForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout'), help_text=_("A DjangoTemplateDocument used as the base layout throughout the entire site"))
 
     def can_be_deleted(self):
         # Don't delete the default site
