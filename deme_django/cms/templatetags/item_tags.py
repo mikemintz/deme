@@ -418,6 +418,14 @@ class ActionsMenu(template.Node):
             if isinstance(item, Collection) and agentcan_helper(context, 'modify_membership', item):
                 list_items.append("""<li><a href="#" onclick="openDialogBox('addmember%(id)s'); return false;" tabindex="-1" title="Add an item into this collection" class="insert-item" data-target="addmember%(id)s"><i class="demeicon  demeicon-add-collection"></i> Add to %(name)s</a></li>""" % {'id': item.pk, 'name': item_name })
 
+            # join/leave this collection
+            if isinstance(item, Group):
+              cur_agent_in_collection = item.child_memberships.filter(active=True, item=context['cur_agent']).exists()
+              if cur_agent_in_collection and agentcan_helper(context, 'remove_self', item):
+                list_items.append("""<li><a href="#" onclick="$('#removeselfformc%(identifier)s')[0].submit();" tabindex="-1" title="Remove my membership in %(name)s"><i class="glyphicon glyphicon-user"></i> Leave this group</a></li>""" % {'identifier':item.pk,'name': item_name})
+              if not cur_agent_in_collection and agentcan_helper(context, 'add_self', item):
+                list_items.append("""<li><a href="#" onclick="$('#addselfformc%(identifier)s')[0].submit();" tabindex="-1" title="Become a member of %(name)s"><i class="glyphicon glyphicon-user"></i> Join this group</a></li>""" % {'identifier':item.pk,'name': item_name})
+
             if agentcan_global_helper(context, 'create %s' % item.item_type_string):
                 list_items.append('<li><a href="%s" tabindex="-1" title="Copy" class="copy"><i class="demeicon  demeicon-copy"></i> Copy</a></li>' % copy_url)
 
