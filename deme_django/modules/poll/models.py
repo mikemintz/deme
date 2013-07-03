@@ -93,6 +93,7 @@ class AgreeDisagreePoll(Poll):
     introduced_abilities = frozenset([])
     introduced_global_abilities = frozenset(['create AgreeDisagreePoll'])
     dyadic_relations = {}
+    default_membership_type = 'proposition'
 
     class Meta:
         verbose_name = _('agree disagree poll')

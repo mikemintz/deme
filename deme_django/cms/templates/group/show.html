@@ -32,6 +32,10 @@
   <div class="pagination row">
     <div class="col col-lg-12">
       {% include "includes/bs_pagination.html" %}
+
+      {% ifagentcan 'modify_membership' item %}
+      <p><a href="#" onclick="openDialogBox('addmember{{item.pk}}'); return false;" tabindex="-1" title="Add an item into this collection" class="btn btn-default insert-item" data-target="addmember{{item.pk}}"><i class="demeicon  demeicon-add-collection"></i> Add a member</a></p>
+      {% endifagentcan %}
     </div>
   </div>
 

@@ -1378,6 +1378,8 @@ class Group(Collection):
     introduced_abilities = frozenset(['view Group.image', 'edit Group.image'])
     introduced_global_abilities = frozenset(['create Group'])
     dyadic_relations = {}
+    default_membership_type = 'agent'
+
     class Meta:
         verbose_name = _('group')
         verbose_name_plural = _('groups')

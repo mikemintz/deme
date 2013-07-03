@@ -769,8 +769,6 @@ class MultiAddDialog(template.Node):
 @register.tag
 def newmemberdialog(parser, token):
     bits = list(token.split_contents())
-    if len(bits) != 1:
-        raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
     return NewMemberDialog()
 
 class NewMemberDialog(template.Node):
@@ -782,6 +780,9 @@ class NewMemberDialog(template.Node):
 
     def render(self, context):
         item = context['item']
+        override_type = None
+        if isinstance(item, Collection):
+            override_type = getattr(item, 'default_membership_type', None)
         full_path = context['full_path']
         result = []
 
@@ -803,7 +804,7 @@ class NewMemberDialog(template.Node):
                 'item.pk': item.pk,
                 'full_path': full_path,
                 'create_url': reverse('item_type_url', kwargs={'viewer':'membership', 'action':'collectioncreate'}),
-                'ajax_field': AjaxModelChoiceField(Item.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('item', None, {'id':'add_item_to_collection_item_field_%s' % (item.pk)}),
+                'ajax_field': AjaxModelChoiceField(Item.objects, permission_cache=context['_viewer'].permission_cache, required_abilities=[]).widget.render('item', None, {'id':'add_item_to_collection_item_field_%s' % (item.pk), 'override_type': override_type}),
              })
 
         return mark_safe('\n'.join(result))
@@ -1336,7 +1337,7 @@ def listgridbox(parser, token):
     if len(bits) < 2:
         raise template.TemplateSyntaxError, "%r takes one at least one argument" % bits[0]
     if len(bits) > 3:
-        raise template.TemplateSyntaxError, "%r takes at most two argument" % bits[0]
+        raise template.TemplateSyntaxError, "%r takes at most two arguments" % bits[0]
     return ListGridBox(bits[1], collection)
 
 

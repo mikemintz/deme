@@ -43,19 +43,33 @@ class AjaxModelChoiceWidget(forms.Widget):
             initial_search = value_item.display_name(can_view_name_field=can_view_name)
         else:
             initial_search = ''
+
         if value is None: value = ''
         if attrs is None: attrs = {}
+        base_type = model.__name__.lower()
+        if attrs.get('override_type'):
+            base_type = attrs.get('override_type')
         ajax_query_string = '&'.join('ability=' + urlquote(ability) for ability in self.required_abilities)
-        ajax_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'format': 'json'}) + '?' + ajax_query_string
-        new_modal_query_string = '?modal=1&id=' + attrs.get('id', '') + '&base_type=' + model.__name__.lower()
-        new_modal_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'action': 'new'}) + new_modal_query_string
-        list_modal_url = reverse('item_type_url', kwargs={'viewer': model.__name__.lower(), 'action': 'list'}) + new_modal_query_string
+        ajax_url = reverse('item_type_url', kwargs={'viewer': base_type, 'format': 'json'}) + '?' + ajax_query_string
+        new_modal_query_string = '?modal=1&id=' + attrs.get('id', '') + '&base_type=' + base_type
+        new_modal_url = reverse('item_type_url', kwargs={'viewer': base_type, 'action': 'new'}) + new_modal_query_string
+        list_modal_url = reverse('item_type_url', kwargs={'viewer': base_type, 'action': 'list'}) + new_modal_query_string
         result = """
         <div class="input-group">
           <input type="hidden" name="%(name)s" value="%(value)s" data-model-name="%(model_name)s" data-input-id="%(id)s" data-ajax-url="%(ajax_url)s" data-new-modal-url="%(new_modal_url)s" data-list-modal-url="%(list_modal_url)s" class="ajax-model-choice-widget">
           <input type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" placeholder="Select an item...">
         </div>
-        """ % {'name': name, 'value': value, 'id': attrs.get('id', ''), 'ajax_url': ajax_url, 'initial_search': initial_search, 'model_name': model.__name__.lower(), 'new_modal_url': new_modal_url, 'list_modal_url': list_modal_url}
+        """ % {
+          'base_type': base_type,
+          'name': name,
+          'value': value,
+          'id': attrs.get('id', ''),
+          'ajax_url': ajax_url,
+          'initial_search': initial_search,
+          'model_name': model.__name__.lower(),
+          'new_modal_url': new_modal_url,
+          'list_modal_url': list_modal_url
+        }
         # see /javascripts/deme/ajax-model-choice-widget.js for implementation
         #TODO fail in more obvious way if attrs['id'] is not set
         return result
