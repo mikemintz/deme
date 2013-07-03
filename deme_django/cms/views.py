@@ -1686,7 +1686,7 @@ class SiteViewer(ViewerRequestViewer):
         site.default_layout = None
         site.save_versioned(admin)
 
-        redirect = self.request.GET.get('redirect', '/')
+        redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': self.viewer_name, 'noun': site.pk}))
         return HttpResponseRedirect(redirect)
 
 
