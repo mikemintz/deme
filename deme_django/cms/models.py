@@ -691,9 +691,7 @@ class Item(models.Model):
             overwrite_query_params = []
             for field in self._meta.fields:
                 k = 'populate_' + field.name
-                v = getattr(self, field.name)
-                if isinstance(v, Item):
-                    v = str(v.pk)
+                v = getattr(self, field.attname)
                 overwrite_query_params.append(urlencode({k: v}))
             #TODO we can't do this anymore now now that we don't have the viewer
             #for k, list_ in viewer.request.GET.lists():
