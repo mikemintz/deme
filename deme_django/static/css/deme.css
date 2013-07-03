@@ -5586,9 +5586,9 @@ html.embed .well .row {
 }
 .reset-layout {
   margin: 20px;
-}
-.reset-layout a {
-  color: #999999;
+  padding: 5px;
+  border-radius: 5px;
+  background: #ffffff;
 }
 @media (max-width: 767px) {
   #overall {

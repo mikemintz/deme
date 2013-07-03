@@ -336,8 +336,10 @@
 
     </div><!-- /#overall-wrap -->
   {% endblock body_wrap %}
+  {% if cur_site.default_layout %}
   {% ifagentcanglobal 'do_anything' %}
-  <!--small class="reset-layout"><a href="#" onclick="return prompt('This will set your site's layout to None. You should only do this if you have severe problems with your site layout. Are you sure you wish to do so?')">Reset layout</a></small-->
+  <small class="reset-layout"><a href="{% url item_type_url viewer='site',action="resetgloballayout" %}" onclick="return confirm('Are you sure you wish to reset your site\'s layout? This will set the default layout to None.')"><span class="glyphicon glyphicon-warning-sign"></span> Reset layout</a></small>
   {% endifagentcanglobal %}
+  {% endif %}
   </body>
 </html>

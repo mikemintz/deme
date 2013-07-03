@@ -1676,6 +1676,20 @@ class SiteViewer(ViewerRequestViewer):
     accepted_item_type = Site
     viewer_name = 'site'
 
+    def type_resetgloballayout_html(self):
+        self.context['action_title'] = 'Reset global layout'
+        self.context['metabar_contents'] = 'Reset the site\'s layout'
+        self.require_global_ability('do_anything')
+
+        admin = Agent.objects.get(pk=1)
+        site = Site.objects.get(pk=DemeSetting.objects.get(name="cms.default_site").value)
+        site.default_layout = None
+        site.save_versioned(admin)
+
+        redirect = self.request.GET.get('redirect', '/')
+        return HttpResponseRedirect(redirect)
+
+
 
 class CustomUrlViewer(ViewerRequestViewer):
     accepted_item_type = CustomUrl
