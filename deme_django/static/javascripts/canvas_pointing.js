@@ -8,6 +8,7 @@ var DemeCanvasPointing = function() {
     }
 
     function redraw() {
+
         var canvasJq = $("#pointing_canvas");
 		var canvasEl = canvasJq[0];
 		canvasEl.width = document.documentElement.scrollWidth;
@@ -53,6 +54,10 @@ var DemeCanvasPointing = function() {
     }
 
     pub.setup = function() {
+        // if IE, don't run
+        if(navigator.appName.indexOf("Internet Explorer")!=-1) {
+          return false;
+        }
         $('body').prepend('<canvas id="pointing_canvas" style="position: absolute; z-index: 1; pointer-events: none"></canvas>');
         redrawTimer();
     };

@@ -218,6 +218,8 @@
 
 {% ifagentcan 'view TextDocument.body' item %}
     <div id="docbody">{% display_body_with_inline_transclusions item is_html %}</div>
+{% else %}
+    <div class="alert alert-warning">You are not authorized to view the text of this document.</div>
 {% endifagentcan %}
 
 <script type="text/javascript">

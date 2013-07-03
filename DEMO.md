@@ -152,3 +152,15 @@ Likewise, update the `{% block sidebar-section %}` in order to change what's lis
 - Look for `<a href="#">PDF Link Goes Here</a>` and change it to fit your needs. Copy and paste as many new list items (`<li>`) as you need.
 
 For more information about editing the Layout, see the SAMPLE.md file.
+
+
+Testing Procedure
+-----------------
+
+Modify the layout
+Change permissions
+Add new members
+Create a new poll
+Take the poll
+Add multiple items to a collection
+Search for items

@@ -136,13 +136,13 @@
     }
 
     function add_permission_div(wrapper, permission_type, agent_or_collection_id, is_allowed, ability) {
-        var permission_div = $('<div class="permission">');
+        var permission_div = $('<div class="permission"></div>');
         add_permission_fields(permission_div, permission_type, agent_or_collection_id, is_allowed, ability);
         wrapper.append(permission_div);
     }
 
     function add_agent_or_collection_row(permission_type, agent_or_collection_id, name) {
-        var row = $('<tr style="border: 2px solid #aaa">');
+        var row = $('<tr style="border: 2px solid #aaa"></tr>');
         if (permission_type == 'agent') {
             var name_url = '{{sample_agent_url}}'.replace('1', agent_or_collection_id);
             row.append('<td><a href="' + name_url + '">' + name + '</a></td>');
@@ -152,14 +152,13 @@
         } else if (permission_type == 'everyone') {
             row.append('<td>' + name + '</td>');
         }
-        var permissions_cell = $('<td>');
-        permissions_cell.addClass('permissions_cell');
+        var permissions_cell = $('<td class="permissions_cell"></td>');
         if (can_edit_permissions) {
             // add permission button
-            var add_button = $('<a href="#" class="img_link">');
+            var add_button = $('<a href="#" class="img_link"></a>');
             add_button.append('<i class="glyphicon glyphicon-edit"></i> New Permission');
             add_button.bind('click', function(e){
-                var permission_div = $('<div class="permission permission-new">');
+                var permission_div = $('<div class="permission permission-new"></div>');
                 add_permission_fields(permission_div, permission_type, agent_or_collection_id, true, '', permissions_cell);
                 permissions_cell.append(permission_div);
                 return false;
@@ -167,7 +166,7 @@
             permissions_cell.append(add_button);
 
             // show all permissions button
-            var show_button = $('<a href="#" class="img_link">');
+            var show_button = $('<a href="#" class="img_link"></a>');
             show_button.append('<i class="glyphicon glyphicon-th-list"></i> Show All');
             show_button.bind('click', function(e){
                 e.preventDefault();
@@ -178,7 +177,6 @@
 
                     // check to see if currently is manifested as a dropdown, if so kill dropdown and take value as default permission setting
                     var possible_select = permissions_cell.find('select.ability').each(function(){
-                      //console.log($(this).val() + ' ' + ability);
                       if ($(this).val() == ability) {
                         // TODO: check to see if it's enabled, disabled or neither
                         var permission_div = $(this).closest('.permission');
@@ -196,7 +194,7 @@
                     // look for existing in this div
                     var permission = permissions_cell.find('.ability[value="'+ability+'"]');
                     if (permission.length == 0) {
-                      var permission_div = $('<div class="permission permission-mass">');
+                      var permission_div = $('<div class="permission permission-mass"></div>');
 
                       add_permission_fields(permission_div, permission_type, agent_or_collection_id, default_permission, ability);
                       permissions_cell.append(permission_div);
