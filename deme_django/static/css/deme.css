@@ -5519,6 +5519,13 @@ h6,
 .h6 {
   line-height: 1.25;
 }
+select[name$="time_hour"],
+select[name$="time_minute"],
+select[name$="time_second"],
+select[name$="time_meridiem"] {
+  width: auto;
+  display: inline-block;
+}
 .timestamp {
   color: #999999;
 }

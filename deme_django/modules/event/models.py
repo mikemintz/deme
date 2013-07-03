@@ -6,7 +6,7 @@ from django.conf import settings
 from django import forms
 from cms.forms import SelectTimeWidget
 
-__all__ = ['Event', 'Calendar'] 
+__all__ = ['Event', 'Calendar']
 
 class Event(HtmlDocument):
 
@@ -18,7 +18,7 @@ class Event(HtmlDocument):
     introduced_global_abilities = frozenset(['create Event'])
     dyadic_relations = {}
 
-    class Meta:    
+    class Meta:
         verbose_name = _('event')
         verbose_name_plural = _('events')
 
@@ -54,7 +54,7 @@ class Event(HtmlDocument):
     start_time = models.TimeField(_('start time'))
     end_date   = models.DateField(_('end date'), help_text=_('Dates must be entered in the format "MM/DD/YY"'))
     end_time   = models.TimeField(_('end time'))
-    location   = models.CharField(_('location'), max_length=255) 
+    location   = models.CharField(_('location'), max_length=255)
     time_zone  = models.CharField(_('time zone'), max_length=255, choices=time_zones, default=settings.TIME_ZONE)
 
 
@@ -71,8 +71,9 @@ class Calendar(Collection):
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create Calendar'])
     dyadic_relations = {}
+    default_membership_type = 'event'
     class Meta:
         verbose_name = _('Calendar')
         verbose_name_plural = _('Calendar')
-    
+
 
