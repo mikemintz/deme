@@ -1,0 +1,17 @@
+// Gradients
+
+// overwriting to get rid of filters
+#gradient {
+  .horizontal(@startColor: #555, @endColor: #333) {
+    filter: e(%("progid:DXImageTransform.Microsoft.gradient(enabled = false)"));
+  }
+  .vertical(@startColor: #555, @endColor: #333) {
+    filter: e(%("progid:DXImageTransform.Microsoft.gradient(enabled = false)"));
+  }
+  .horizontal-three-colors(@startColor: #00b3ee, @midColor: #7a43b6, @colorStop: 50%, @endColor: #c3325f) {
+    filter: e(%("progid:DXImageTransform.Microsoft.gradient(enabled = false)"));
+  }
+  .vertical-three-colors(@startColor: #00b3ee, @midColor: #7a43b6, @colorStop: 50%, @endColor: #c3325f) {
+    filter: e(%("progid:DXImageTransform.Microsoft.gradient(enabled = false)"));
+  }
+}

@@ -2304,6 +2304,7 @@ input[type="button"].btn-block {
   background-image: linear-gradient(to bottom, #428bca, #357ebd);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff428bca', endColorstr='#ff357ebd', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
 }
 .dropdown-menu > .active > a,
 .dropdown-menu > .active > a:hover,
@@ -2318,6 +2319,7 @@ input[type="button"].btn-block {
   background-image: linear-gradient(to bottom, #428bca, #357ebd);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff428bca', endColorstr='#ff357ebd', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
 }
 .dropdown-menu > .disabled > a,
 .dropdown-menu > .disabled > a:hover,
@@ -4171,6 +4173,7 @@ a.list-group-item.active > .badge,
   background-image: linear-gradient(to right, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.0001));
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#80000000', endColorstr='#00000000', GradientType=1);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
   background-color: transparent;
 }
 .carousel-control.right {
@@ -4183,6 +4186,7 @@ a.list-group-item.active > .badge,
   background-image: linear-gradient(to right, rgba(0, 0, 0, 0.0001), rgba(0, 0, 0, 0.5));
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00000000', endColorstr='#80000000', GradientType=1);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
   background-color: transparent;
 }
 .carousel-control:hover,
@@ -4768,6 +4772,7 @@ body.nonadmin #metabar {
   background-image: linear-gradient(to bottom, #68a7bd, #29687e);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
   border-radius: 0;
   padding: 0;
   height: 2.9285714285714284em;
@@ -4804,6 +4809,7 @@ body.nonadmin #metabar {
   background-image: linear-gradient(to bottom, #5c95ad, #17475b);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5c95ad', endColorstr='#ff17475b', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
 }
 .adminbar .nav .dropdown.open > a {
   background-color: #17475b;
@@ -4813,6 +4819,7 @@ body.nonadmin #metabar {
   background-image: linear-gradient(to bottom, #5c95ad, #17475b);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5c95ad', endColorstr='#ff17475b', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
 }
 .adminbar .nav .dropdown-menu .divider {
   margin: 3px 0;
@@ -4842,6 +4849,7 @@ body.nonadmin #metabar {
   background-image: linear-gradient(to bottom, #68a7bd, #29687e);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
 }
 .adminbar .nav.breadcrumbs {
   border-left: 1px solid rgba(255, 255, 255, 0.15);
@@ -4858,6 +4866,7 @@ body.nonadmin #metabar {
   background-image: linear-gradient(to bottom, #8ac9df, #49869c);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff8ac9df', endColorstr='#ff49869c', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
 }
 .adminbar .nav.breadcrumbs > li:first-child {
   margin-left: 5px;
@@ -4949,6 +4958,7 @@ body.nonadmin #metabar {
     background-image: linear-gradient(to bottom, #68a7bd, #29687e);
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
   }
   .adminbar .nav.breadcrumbs {
     max-width: 100%;
@@ -4974,6 +4984,7 @@ body.nonadmin #metabar {
     background-image: linear-gradient(to bottom, #68a7bd, #29687e);
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
     /*&:after {
                 content: " » ";
               }*/
@@ -4988,6 +4999,7 @@ body.nonadmin #metabar {
     background-image: linear-gradient(to bottom, #68a7bd, #29687e);
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
   }
   .adminbar .nav.breadcrumbs > li:last-child > a:after,
   .adminbar .nav.breadcrumbs > li:last-child > span:after {
@@ -5059,6 +5071,7 @@ body.nonadmin #metabar {
   background-image: linear-gradient(to bottom, #8ac9df, #49869c);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff8ac9df', endColorstr='#ff49869c', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
   text-align: left;
   line-height: 2.142857142857143;
   font-size: 114.28571428571428%;
@@ -5093,6 +5106,7 @@ body.nonadmin #metabar {
   background-image: linear-gradient(to bottom, #49869c, #8ac9df);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff49869c', endColorstr='#ff8ac9df', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
 }
 #metabar > .title > li > a {
   padding: .33em 0;
@@ -5251,6 +5265,7 @@ body.nonadmin #metabar {
   background-image: linear-gradient(to bottom, #5c95ad, #17475b);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5c95ad', endColorstr='#ff17475b', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
   height: 40px;
   display: inline-block;
   vertical-align: middle;
