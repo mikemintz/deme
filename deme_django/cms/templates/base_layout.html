@@ -314,7 +314,7 @@
                     layout: google.translate.TranslateElement.InlineLayout.SIMPLE
                   }, 'google_translate_element');
                 }
-                </script><script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+                </script><script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async="true"></script>
             </p>
             <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> | <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
           {% endblock footer %}

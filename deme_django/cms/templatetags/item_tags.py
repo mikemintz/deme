@@ -1067,9 +1067,9 @@ class CalculateRelationships(template.Node):
         result = []
         memberOf = []
         result.append("<h3>%d related item%s</h3>" % (n_relationships, '' if n_relationships == 1 else 's'))
-        result.append("<div>")
         for relationship_set in relationship_sets:
-            result.append("<div class='relationship'>")
+
+            result.append("<div class='relationship accordion-group'>")
             friendly_name = capfirst(relationship_set['name']).replace('_', ' ')
             field = relationship_set['field']
             list_url = '%s?filter=%s.%d' % (reverse('item_type_url', kwargs={'viewer': field.model.__name__.lower()}), field.field.name, item.pk)
@@ -1077,18 +1077,19 @@ class CalculateRelationships(template.Node):
             new_modal_query_string = '?modal=1&src=metadata&populate_' + field.field.name + '=' + str(item.pk)
             new_modal_url = reverse('item_type_url', kwargs={'viewer': field.model.__name__.lower(), 'action': 'new'}) + new_modal_query_string
 
-            result.append('<div class="type type-related-item-add" data-new-modal-url="%(new_modal_url)s" data-count="%(count)s"><a href="%(list_url)s"><b>%(friendly_name)s</b></a></div>' % {
+            result.append('<div class="accordion-heading type type-related-item-add" data-new-modal-url="%(new_modal_url)s" data-count="%(count)s"><a href="#%(id)s" data-toggle="collapse" class="accordion-toggle">%(friendly_name)s <span class="badge">%(count)s</span></a><div class="action-wrap"><a href="%(list_url)s" class="detailbtn btn btn-info btn-small"><i class="glyphicon glyphicon-th"></i></a></div></div><div class="accordion-body collapse" id="%(id)s"><div class="accordion-inner">' % {
               "list_url": list_url,
               "friendly_name": friendly_name,
               "new_modal_url": new_modal_url,
-              "count": relationship_set['count']
+              "count": relationship_set['count'],
+              "id": "%s_%s" % (item.pk, relationship_set['name'])
             })
+
             for related_item in relationship_set['items']:
                 result.append('<div>%s</div>' % get_item_link_tag(context, related_item))
                 if friendly_name == "Member of":
                     memberOf.append('<div>%s</div>' % get_item_link_tag(context, related_item))
-            result.append("</div>")
-        result.append("</div>")
+            result.append("</div></div></div>")
         context['memberOf_box'] = mark_safe('\n'.join(memberOf))
         return '\n'.join(result)
 

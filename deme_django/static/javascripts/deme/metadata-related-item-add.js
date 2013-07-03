@@ -26,11 +26,11 @@ $(function(){
     // append add buttons
     content_section.find('.type-related-item-add').each(function(){
       var type = $(this);
-      var detail_link = type.find('a');
+      var action_wrap = type.find('.action-wrap');
       var new_modal_url = type.attr('data-new-modal-url');
 
       // add button
-      var newbtn = $('<a href="#" class="newbtn btn btn-info btn-small" title="New Item"><i class="glyphicon glyphicon-plus"></i></a>').insertAfter(detail_link);
+      var newbtn = $('<a href="#" class="newbtn btn btn-info btn-small" title="New Item"><i class="glyphicon glyphicon-plus"></i></a>').appendTo(action_wrap);
       newbtn.click(function(e){
         e.preventDefault();
         var random_num = Math.floor((Math.random()*1000000)+1);

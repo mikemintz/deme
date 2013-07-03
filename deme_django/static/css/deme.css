@@ -5171,9 +5171,6 @@ body.nonadmin #metabar {
   margin-bottom: 15px;
 }
 #metadata_content_related_items .relationship .type {
-  border-top: 1px solid #eeeeee;
-  margin: 0 -10px 0;
-  padding: 0 10px;
   position: relative;
 }
 #metadata_content_related_items .relationship .type a {
@@ -5182,11 +5179,13 @@ body.nonadmin #metabar {
 #metadata_content_related_items .relationship .type a b {
   color: #555555;
 }
-#metadata_content_related_items .relationship .type .newbtn {
-  margin-left: 10px;
+#metadata_content_related_items .relationship .type .action-wrap {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 3px;
+  right: 3px;
+}
+#metadata_content_related_items .relationship .type .detailbtn {
+  margin-right: 3px;
 }
 .approvenpoll .propositions {
   margin-bottom: 15px;
