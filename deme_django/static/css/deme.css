@@ -4760,7 +4760,7 @@ body.nonadmin #metabar {
   display: none;
 }
 .adminbar {
-  z-index: 1;
+  z-index: 1000;
   background-color: #29687e;
   background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#68a7bd), to(#29687e));
   background-image: -webkit-linear-gradient(top, #68a7bd, #29687e);
@@ -5033,6 +5033,7 @@ body.nonadmin #metabar {
 #metabar .ui-resizable-w {
   cursor: col-resize;
   width: 9px;
+  z-index: 999 !important;
 }
 #metabar.noanim {
   -webkit-transition: none;
@@ -5582,6 +5583,12 @@ html.embed .well .row {
 }
 .capitalize {
   text-transform: capitalize;
+}
+.reset-layout {
+  margin: 20px;
+}
+.reset-layout a {
+  color: #999999;
 }
 @media (max-width: 767px) {
   #overall {

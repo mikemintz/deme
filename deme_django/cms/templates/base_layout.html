@@ -316,7 +316,7 @@
                 }
                 </script><script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async="true"></script>
             </p>
-            <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> | <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
+            <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> | <a href="http://www.stanford.edu/~davies/">Authors</a> | {% ifagentcanglobal 'do_anything' %}<a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | {% endifagentcanglobal %}<a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
           {% endblock footer %}
         </div><!-- /.footer -->
 
@@ -336,5 +336,8 @@
 
     </div><!-- /#overall-wrap -->
   {% endblock body_wrap %}
+  {% ifagentcanglobal 'do_anything' %}
+  <!--small class="reset-layout"><a href="#" onclick="return prompt('This will set your site's layout to None. You should only do this if you have severe problems with your site layout. Are you sure you wish to do so?')">Reset layout</a></small-->
+  {% endifagentcanglobal %}
   </body>
 </html>
