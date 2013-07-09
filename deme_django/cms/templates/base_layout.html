@@ -81,10 +81,10 @@
     <![endif]-->
 
     {% if item %}
-    <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}" />
+    <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url 'item_url' viewer=viewer_name action="show" noun=item.pk format="rss" %}" />
     {% endif %}
     {% ifequal action 'list' %}
-    <link rel="alternate" type="application/rss+xml" title="Item feed" href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}" />
+    <link rel="alternate" type="application/rss+xml" title="Item feed" href="{% url 'item_type_url' viewer=viewer_name action="list" format="rss" %}" />
     {% endifequal %}
     <script type="text/javascript">
         // from http://www.filamentgroup.com/examples/buttonFrameworkCSS/
@@ -127,7 +127,7 @@
                         response(cache[term]);
                         return;
                     }
-                    last_xhr = $.getJSON('{% url item_type_url viewer="item",action="grid",format="json" %}', {rows:10, page:1, sidx:"name", sord:"asc", fields:"name", searchOper:"cn", searchField:"name", searchString:term}, function(data, status, xhr) {
+                    last_xhr = $.getJSON('{% url 'item_type_url' viewer="item" action="grid" format="json" %}', {rows:10, page:1, sidx:"name", sord:"asc", fields:"name", searchOper:"cn", searchField:"name", searchString:term}, function(data, status, xhr) {
                         var normalized_data = $.map(data["rows"], function(x){ var cell = $(x["cell"][0]); return {value: cell.text(), url: cell[0].href} });
                         cache[term] = normalized_data;
                         response(normalized_data);
@@ -205,7 +205,7 @@
                   </div>
                   <ul>
                       <li{% ifequal full_path "/" %} style="font-weight: bold;"{% endifequal %}><a href="/">Home</a></li>
-                      <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
+                      <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url 'item_type_url' viewer="item" %}">Items</a></li>
                   </ul>
                 </div>
                 <div class="panel recently-viewed">
@@ -294,11 +294,11 @@
                 <b>Desktop Browser</b>
                 {% if item %}
                 |
-                <a href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}">RSS</a>
+                <a href="{% url 'item_url' viewer=viewer_name action="show" noun=item.pk format="rss" %}">RSS</a>
                 {% endif %}
                 {% ifequal action 'list' %}
                 |
-                <a href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}?{{ query_string }}">RSS</a>
+                <a href="{% url 'item_type_url' viewer=viewer_name action="list" format="rss" %}?{{ query_string }}">RSS</a>
                 {% endifequal %}
                 |
                 <a href="#" id="showhidetrigger">Fullscreen</a>
@@ -319,7 +319,7 @@
                 }
                 </script><script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async="true"></script>
             </p>
-            <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> | <a href="http://www.stanford.edu/~davies/">Authors</a> | {% ifagentcanglobal 'do_anything' %}<a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | {% endifagentcanglobal %}<a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
+            <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> | <a href="http://www.stanford.edu/~davies/">Authors</a> | {% ifagentcanglobal 'do_anything' %}<a href="{% url 'item_type_url' viewer="item" action="admin" %}">Admin</a> | {% endifagentcanglobal %}<a href="{% url 'item_type_url' viewer="item" action="recentchanges" %}">Recent Changes</a></p>
           {% endblock footer %}
         </div><!-- /.footer -->
 
@@ -341,7 +341,7 @@
   {% endblock body_wrap %}
   {% if cur_site.default_layout %}
   {% ifagentcanglobal 'do_anything' %}
-  <small class="reset-layout"><a href="{% url item_type_url viewer='site',action="resetgloballayout" %}" onclick="return confirm('Are you sure you wish to reset your site\'s layout? This will set the default layout to None.')"><span class="glyphicon glyphicon-warning-sign"></span> Reset layout</a></small>
+  <small class="reset-layout"><a href="{% url 'item_type_url' viewer='site' action="resetgloballayout" %}" onclick="return confirm('Are you sure you wish to reset your site\'s layout? This will set the default layout to None.')"><span class="glyphicon glyphicon-warning-sign"></span> Reset layout</a></small>
   {% endifagentcanglobal %}
   {% endif %}
   </body>

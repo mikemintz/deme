@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load item_tags %}
 {% block content %}
-<form method="post" action="{% url item_url viewer=viewer_name,action="updateprivacy",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+<form method="post" action="{% url 'item_url' viewer=viewer_name action="updateprivacy" noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
 <div>
 {% privacy_editor item %}
 </div>

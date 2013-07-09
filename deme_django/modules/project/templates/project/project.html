@@ -78,7 +78,7 @@ div.start {
 		  {% endifagentcan %}</p>
 	<p id="label">Due Date </p>
 	{% ifagentcan 'edit Project.status' item %}
-		<form method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="setstatustocompleted",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+		<form method="post" enctype="multipart/form-data" action="{% url 'item_url' viewer=viewer_name action="setstatustocompleted" noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
         <input type="hidden" name="item" value="{{ item.pk }}" /><button type="submit" style= "margin-left: 4em;"><span>Completed</span></button></form>
    	{% endifagentcan %}
 	{% ifagentcan 'view Project.repeat' item %}
@@ -204,7 +204,7 @@ div.start {
 		</td>
 		<td> 
 			{% ifagentcan 'edit Project.status' subproject %}
-			<form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="setstatustocompleted",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+			<form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url 'item_url' viewer=viewer_name action="setstatustocompleted" noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
                 <input type="hidden" name="item" value="{{ subproject.pk }}" />
                 <button type="submit"><span>Completed</span></button>
 			{% endifagentcan %}
@@ -230,7 +230,7 @@ div.start {
 	    
         <td>
             {% ifagentcan 'modify_membership' item %}
-            <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=subproject.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+            <form style="display: inline;" method="post" enctype="multipart/form-data" action="{% url 'item_url' viewer=viewer_name action="removemember" noun=subproject.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
                 <input type="hidden" name="item" value="{{ subproject.pk }}" />
                 <button type="submit"><img src="{{ "delete"|icon_url:16 }}" /> <span>Remove</span></button>
             </form>

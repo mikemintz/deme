@@ -4,7 +4,7 @@
 {% if item %}
   <script type="text/javascript">
   function metabar_ajax_url(metadata_menu_name) {
-    return "{% url item_url viewer=viewer_name,noun=item.pk,action="metadata" %}?name=" + metadata_menu_name + '&amp;original_full_path={{ full_path|escapejs }}';
+    return "{% url 'item_url' viewer=viewer_name noun=item.pk action="metadata" %}?name=" + metadata_menu_name + '&amp;original_full_path={{ full_path|escapejs }}';
   }
 
   {% if default_metadata_menu_option %}

@@ -14,7 +14,6 @@ from django.utils.text import capfirst
 from django.utils.timesince import timesince
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.fields import FieldDoesNotExist
-import django.contrib.syndication.feeds
 import django.contrib.syndication.views
 from django.views.decorators.http import require_POST
 import re
@@ -371,7 +370,7 @@ class ItemViewer(Viewer):
         self._type_list_helper()
         item_list = self.context['items'] #TODO probably not useful to get this ordering
         #TODO permissions to view Item.name/Item.description
-        class ItemListFeed(django.contrib.syndication.feeds.Feed):
+        class ItemListFeed(django.contrib.syndication.views.Feed):
             title = "Items"
             description = "Items"
             link = reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'list', 'format': 'rss'})
@@ -527,7 +526,7 @@ class ItemViewer(Viewer):
             for action_notice in specific_action_notices:
                 action_notice_pk_to_object_map[action_notice.pk] = action_notice
         self.permission_cache.filter_items('view Item.name', Item.objects.filter(Q(pk__in=action_notices.values('action_item').query) | Q(pk__in=action_notices.values('action_agent').query)))
-        class ItemShowFeed(django.contrib.syndication.feeds.Feed):
+        class ItemShowFeed(django.contrib.syndication.views.Feed):
             title = get_viewable_name(viewer.context, viewer.item)
             description = viewer.item.description if viewer.cur_agent_can('view Item.description', viewer.item) else ''
             link = reverse('item_url', kwargs={'viewer': viewer.viewer_name, 'action': 'show', 'noun': viewer.item.pk, 'format': 'rss'})

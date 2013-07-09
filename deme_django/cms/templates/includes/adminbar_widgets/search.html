@@ -1,9 +1,9 @@
 <li class="dropdown search-btn">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Search"><i class="glyphicon glyphicon-search"></i></a>
   <div class="dropdown-menu">
-    <form method="get" action="{% url item_type_url viewer="item" %}">
+    <form method="get" action="{% url 'item_type_url' viewer="item" %}">
         <input type="search" class="search_box" name="q" placeholder="Search" value="{{ search_query }}">
     </form>
-    <small><a href="{% url item_type_url viewer="item" %}">Advanced Search</a></small>
+    <small><a href="{% url 'item_type_url' viewer="item" %}">Advanced Search</a></small>
   </div>
 </li>

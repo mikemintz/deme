@@ -1,7 +1,7 @@
 {% if cur_agent.is_anonymous %}
 <li>
     <div style="display: none;" id="login_dialog_openid" title="Login">
-        <form name="openid_form" action="{% url item_type_url viewer="openidaccount",action="login" %}?redirect={{ redirect|urlencode }}" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
+        <form name="openid_form" action="{% url 'item_type_url' viewer="openidaccount" action="login" %}?redirect={{ redirect|urlencode }}" method="post" onsubmit="$('#login_dialog_openid').dialog('hide');">
             <label>OpenID URL: <input type="text" name="openid_url" /></label>
         </form>
     </div>

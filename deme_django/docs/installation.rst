@@ -59,8 +59,8 @@ Once you've installed virtualenv, you can install the python dependencies as fol
   $ mkdir venv
   $ virtualenv venv
   $ source venv/bin/activate
-  $ pip install Django==1.2.5
-  $ pip install South==0.7
+  $ pip install Django==1.5.1
+  $ pip install South==0.8
   $ pip install psycopg2
   $ pip install django-pure-pagination
 

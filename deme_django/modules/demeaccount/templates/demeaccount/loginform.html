@@ -16,7 +16,7 @@
     }
     function encrypt_password() {
         var raw_password = document.forms['password_form']['password'].value;
-        var url = '{% url item_type_url viewer="demeaccount",action="getencryptionmethod" %}';
+        var url = '{% url 'item_type_url' viewer="demeaccount" action="getencryptionmethod" %}';
         jQuery.post(url, {username:document.forms['password_form']['username'].value}, function(json) {
             var algo = json.algo;
             var salt = json.salt;
@@ -34,7 +34,7 @@
     <div>Password:</div>
     <div><input type="password" name="password" /></div>
 </form>
-<form name="real_password_form" action="{% url item_type_url viewer="demeaccount",action="login" %}?redirect={{ redirect|urlencode }}" method="post">
+<form name="real_password_form" action="{% url 'item_type_url' viewer="demeaccount" action="login" %}?redirect={{ redirect|urlencode }}" method="post">
     <input type="hidden" name="username" />
     <input type="hidden" name="hashed_password" onchange="document.forms['password_form']['hashed_password'].value = '';" />
 </form>

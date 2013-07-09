@@ -192,37 +192,37 @@ function endsWith(str, suffix) {
 {% multiadddialog identifier %}
 
 {% if inactive %}
-  <form id="reactivatemultiform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_type_url viewer='item',action="reactivatemulti" %}?redirect={{ full_path|urlencode }}" class="item_form">
+  <form id="reactivatemultiform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url 'item_type_url' viewer='item' action="reactivatemulti" %}?redirect={{ full_path|urlencode }}" class="item_form">
       <input type="hidden" name="items" value="" />
       <input type="hidden" name="action_summary" value="" />
   </form>
-  <form id="destroymultiform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_type_url viewer='item',action="destroymulti" %}?redirect={{ full_path|urlencode }}" class="item_form">
+  <form id="destroymultiform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url 'item_type_url' viewer='item' action="destroymulti" %}?redirect={{ full_path|urlencode }}" class="item_form">
       <input type="hidden" name="items" value="" />
       <input type="hidden" name="action_summary" value="" />
   </form>
 {% else %}
-  <form id="deactivatemultiform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_type_url viewer='item',action="deactivatemulti" %}?redirect={{ full_path|urlencode }}" class="item_form">
+  <form id="deactivatemultiform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url 'item_type_url' viewer='item' action="deactivatemulti" %}?redirect={{ full_path|urlencode }}" class="item_form">
       <input type="hidden" name="items" value="" />
       <input type="hidden" name="action_summary" value="" />
   </form>
 {% endif %}
 
 {% if collection_item %}
-  <form id="removememberform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=collection_item.default_viewer,action="removemember",noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" style="display: none;">
+  <form id="removememberform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url 'item_url' viewer=collection_item.default_viewer action="removemember" noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" style="display: none;">
       <input type="hidden" name="item" value="" />
   </form>
 
-  <form id="removemembermultiform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=collection_item.default_viewer,action="removemembermulti",noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" style="display: none;">
+  <form id="removemembermultiform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url 'item_url' viewer=collection_item.default_viewer action="removemembermulti" noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" style="display: none;">
       <input type="hidden" name="items" value="" />
   </form>
 
   {% newmemberdialog %}
 
-  <form id="removeselfform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=collection_item.default_viewer,action="removemember",noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+  <form id="removeselfform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url 'item_url' viewer=collection_item.default_viewer action="removemember" noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
       <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
   </form>
 
-  <form id="addselfform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url item_url viewer=collection_item.default_viewer,action="addmember",noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+  <form id="addselfform{{identifier}}" method="post" enctype="multipart/form-data" action="{% url 'item_url' viewer=collection_item.default_viewer action="addmember" noun=collection_item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
       <input type="hidden" name="item" value="{{ cur_agent.pk }}" />
   </form>
 {% endif %}

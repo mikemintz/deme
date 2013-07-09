@@ -128,11 +128,11 @@
 </div>
 <div style="text-align: center; border-top: 1px solid black; padding: 4px; margin-top: 5px; margin-right: 40px;">
     {% ifagentcan 'modify_membership' collection %}
-        <a href="{% url item_type_url viewer="event",action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Add A New Event to this Calendar ||</a>
+        <a href="{% url 'item_type_url' viewer="event" action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Add A New Event to this Calendar ||</a>
     {% endifagentcan %}
 
-    <a href="{% url item_url viewer="calendar" action="exportguide" noun=collection.pk %}">Export this Calendar ||</a>
-    <a href="{% url item_url viewer="newsroll" action="show" noun=collection.pk %}">View a listing of this calendar's events</a>
+    <a href="{% url 'item_url' viewer="calendar" action="exportguide" noun=collection.pk %}">Export this Calendar ||</a>
+    <a href="{% url 'item_url' viewer="newsroll" action="show" noun=collection.pk %}">View a listing of this calendar's events</a>
 </div>
 
 {% endblock %}

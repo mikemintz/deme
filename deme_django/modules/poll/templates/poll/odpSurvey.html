@@ -156,7 +156,7 @@ $(document).ready(function() {
 {% if can_view_response_names_and_values or not cur_agent_has_voted %}
 
 
-<form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+<form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url 'item_url' viewer=viewer_name action="removemember" noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
     <input id="removeInput"type="hidden" name="item" value="{{ membership.item.pk }}" />
 </form>
 
@@ -189,7 +189,7 @@ deliberative session.</p>
 
 {% if propositions %}
 <form method="post" enctype="multipart/form-data" 
-	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
+	action="{% url 'item_url' viewer=viewer_name action="respondtopropositions" noun=item.pk %}?redirect={{ full_path|urlencode }}">
 	<div class="container propositions" id="Propcontainer" style="width: 78%; margin-left: 0; ">
     
 	
@@ -243,7 +243,7 @@ deliberative session.</p>
 <br>
 <div id="hiddenPropositionButtons" style="margin: 4px; height 2em; display:none;">
 	{% ifagentcanglobal 'create Proposition' %}
-	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Proposition</a>
+	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url 'item_type_url' viewer='proposition' action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Proposition</a>
 	{% endifagentcanglobal %}
 	{% ifagentcan 'modify_membership' item %}
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a>
@@ -326,7 +326,7 @@ deliberative session.</p>
     {% endfor %}
 
     <form method="post" enctype="multipart/form-data" 
-	action="{% url item_url viewer=viewer_name,action="createcsv",noun=item.pk %}?redirect={{ full_path|urlencode }}">
+	action="{% url 'item_url' viewer=viewer_name action="createcsv" noun=item.pk %}?redirect={{ full_path|urlencode }}">
 		<input type="submit" value="Create CSV Document" />
 	</form>
 

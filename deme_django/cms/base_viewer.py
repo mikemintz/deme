@@ -97,6 +97,7 @@ class VirtualRequest(HttpRequest):
     """
 
     def __init__(self, original_request, path, query_string):
+        self._post_parse_error = False
         self.original_request = original_request
         self.path = path
         self.query_string = query_string
@@ -107,7 +108,7 @@ class VirtualRequest(HttpRequest):
         self.REQUEST = MergeDict(self.POST, self.GET)
         self.COOKIES = self.original_request.COOKIES
         self.META = {}
-        self.raw_post_data = ''
+        self._body = ''
         #TODO: will we ever need META, path_info, or script_name?
         self.method = 'GET'
 

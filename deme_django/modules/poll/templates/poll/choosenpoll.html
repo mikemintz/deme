@@ -148,7 +148,7 @@ $(document).ready(function() {
 
 
 </script>
-<form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+<form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url 'item_url' viewer=viewer_name action="removemember" noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
     <input id="removeInput"type="hidden" name="item" value="{{ membership.item.pk }}" />
 </form>
 
@@ -181,16 +181,16 @@ $(document).ready(function() {
 		</div>
 		<div id="hiddenDecisionButtons" style="display: none; width: 150%;">
 			{% ifagentcanglobal 'create PluralityChooseNDecision' %}
-			<p><a href="{% url item_type_url viewer='pluralitychoosendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Plurality Aggregation</a></p>
+			<p><a href="{% url 'item_type_url' viewer='pluralitychoosendecision' action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Plurality Aggregation</a></p>
 			{% endifagentcanglobal %}
 			{% ifagentcanglobal 'create ThresholdChooseNDecision' %}
-			 <p><a  href="{% url item_type_url viewer='thresholdchoosendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Threshold Participant Aggregation</a></p>
+			 <p><a  href="{% url 'item_type_url' viewer='thresholdchoosendecision' action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Threshold Participant Aggregation</a></p>
 			{% endifagentcanglobal %}
 			{% ifagentcanglobal 'create ThresholdEChooseNDecision' %}
-			 <p><a  href="{% url item_type_url viewer='thresholdechoosendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Threshold Eligibles Aggregation</a></p>
+			 <p><a  href="{% url 'item_type_url' viewer='thresholdechoosendecision' action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Threshold Eligibles Aggregation</a></p>
 			{% endifagentcanglobal %}
 			{% ifagentcanglobal 'create UnanimousChooseNDecision' %}
-			 <p><a  href="{% url item_type_url viewer='unanimouschoosendecision',action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Unanimous Aggregation</a></p>
+			 <p><a  href="{% url 'item_type_url' viewer='unanimouschoosendecision' action='new'%}?populate_poll={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Unanimous Aggregation</a></p>
 			{% endifagentcanglobal %}
 			<a href="" onclick="return showDialog()">What are these?</a>
 		</div>
@@ -232,7 +232,7 @@ $(document).ready(function() {
 
 {% if propositions %}
 <form method="post" enctype="multipart/form-data"
-	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
+	action="{% url 'item_url' viewer=viewer_name action="respondtopropositions" noun=item.pk %}?redirect={{ full_path|urlencode }}">
 <div class="container propositions" id="Propcontainer" style="width: 78%; margin-left: 0; ">
 
 
@@ -279,7 +279,7 @@ $(document).ready(function() {
 <br>
 <div id="hiddenPropositionButtons" style="margin: 4px; height 2em; display:none;">
 	{% ifagentcanglobal 'create Proposition' %}
-	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Proposition</a>
+	 <a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all poll" href="{% url 'item_type_url' viewer='proposition' action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Make New Proposition</a>
 	{% endifagentcanglobal %}
 	{% ifagentcan 'modify_membership' item %}
 	<a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialogBox('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a>

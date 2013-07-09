@@ -5,7 +5,7 @@ This module creates the item type framework, and defines the core item types.
 from django.db import models, transaction
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import SMTPConnection, EmailMessage, EmailMultiAlternatives
+import django.core.mail
 from django.core.urlresolvers import reverse
 from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
@@ -232,6 +232,7 @@ class Item(models.Model):
     introduced_abilities = frozenset(['do_anything', 'view_anything', 'edit_anything', 'modify_privacy_settings', 'view_permissions', 'comment_on', 'delete', 'view Item.action_notices', 'view Item.name', 'view Item.description', 'view Item.creator', 'view Item.created_at', 'view Item.default_viewer', 'view Item.email_list_address', 'view Item.email_sets_reply_to_all_subscribers', 'edit Item.name', 'edit Item.description', 'edit Item.default_viewer', 'edit Item.email_list_address', 'edit Item.email_sets_reply_to_all_subscribers'])
     introduced_global_abilities = frozenset(['do_anything', 'view_anything', 'edit_anything'])
     dyadic_relations = {}
+    do_not_call_in_templates = True
     class Meta:
         verbose_name = _('item')
         verbose_name_plural = _('items')
@@ -2273,7 +2274,7 @@ class ActionNotice(models.Model):
             headers['Message-ID'] = messageid(reply_item)
         headers['In-Reply-To'] = messageid(item)
         headers['References'] = '%s %s' % (messageid(topmost_item), messageid(item))
-        email_message = EmailMultiAlternatives(subject, body_text, from_email, bcc=[recipient_email], headers=headers)
+        email_message = django.core.mail.EmailMultiAlternatives(subject, body_text, from_email, bcc=[recipient_email], headers=headers)
         email_message.attach_alternative(body_html, 'text/html')
         return email_message
 
@@ -2298,7 +2299,7 @@ def _action_notice_post_save_handler(sender, **kwargs):
     # Send the emails
     if messages:
         try:
-            smtp_connection = SMTPConnection()
+            smtp_connection = django.core.mail.get_connection()
             smtp_connection.send_messages(messages)
         except:
             pass

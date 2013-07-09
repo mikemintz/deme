@@ -99,7 +99,7 @@
         // make sure comment is open
         metabar_show_section($('#metadata_content_comments'), function(){
           openLocatedCommentDialog('comment{{ item.pk }}', index);
-          //var url = '{% url item_type_url viewer="textcomment",action="new" %}?populate_item={{ item.pk }}&populate_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&populate_item_index=' + index;
+          //var url = '{% url 'item_type_url' viewer="textcomment" action="new" %}?populate_item={{ item.pk }}&populate_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&populate_item_index=' + index;
           //window.location = url;
         });
         return false;
@@ -127,7 +127,7 @@
             targ = targ.parentNode;
         var tokenWrapper = targ;
         var index = tokenWrapper.deme_text_offset;
-        var url = '{% url item_type_url viewer="transclusion",action="new" %}?populate_from_item={{ item.pk }}&populate_from_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&populate_from_item_index=' + index;
+        var url = '{% url 'item_type_url' viewer="transclusion" action="new" %}?populate_from_item={{ item.pk }}&populate_from_item_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&populate_from_item_index=' + index;
         window.location = url;
         return false;
     }
@@ -204,7 +204,7 @@
             form_div.appendChild(remove_button);
             form_div.appendChild(selection.contents);
             $('#excerpt_form')[0].appendChild(form_div);
-            //var url = '{% url item_type_url viewer="textdocumentexcerpt",action="new" %}?text_document={{ item.pk }}&text_document_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&start_index=' + selection.start_offset + '&length=' + length;
+            //var url = '{% url 'item_type_url' viewer="textdocumentexcerpt" action="new" %}?text_document={{ item.pk }}&text_document_version_number={{ item.version_number }}&redirect={{ full_path|urlencode }}&start_index=' + selection.start_offset + '&length=' + length;
             //window.location = url;
         }
     }
@@ -277,7 +277,7 @@
           <div id="adding_highlight_div" style="display: none;">
           Now just select text you want to highlight.
           When you are done selecting excerpts, <a href="#" onclick="submit_highlights(); return false;">submit them</a> or <a href="#" onclick="cancel_highlighting(); return false;">cancel</a>.
-          <form id="excerpt_form" method="post" enctype="multipart/form-data" action="{% url item_type_url viewer="textdocumentexcerpt",action="createmultiexcerpt" %}">
+          <form id="excerpt_form" method="post" enctype="multipart/form-data" action="{% url 'item_type_url' viewer="textdocumentexcerpt" action="createmultiexcerpt" %}">
           </form>
           </div>
           {% endifagentcanglobal %}

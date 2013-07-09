@@ -115,7 +115,7 @@ $(document).ready(function() {
             dialogBox.dialog('open');
         }
     </script>
-    <form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url item_url viewer=viewer_name,action="removemember",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+    <form id="removemember" style="display: inline;" method="post" enctype="multipart/form-data" action="{% url 'item_url' viewer=viewer_name action="removemember" noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
       <input id="removeInput"type="hidden" name="item" value="{{ membership.item.pk }}" />
     </form>
 
@@ -125,7 +125,7 @@ $(document).ready(function() {
       <div class="col col-lg-12 propositions-container">
       {% if propositions %}
         <form method="post" enctype="multipart/form-data"
-            	action="{% url item_url viewer=viewer_name,action="respondtopropositions",noun=item.pk %}?redirect={{ full_path|urlencode }}">
+            	action="{% url 'item_url' viewer=viewer_name action="respondtopropositions" noun=item.pk %}?redirect={{ full_path|urlencode }}">
         	<div class="propositions list-group" id="Propcontainer">
       		{% for proposition in propositions %}
     		    <div class="proposition list-group-item{% ifagentcan 'modify_membership' item %} actions-visible{% endifagentcan %}">
@@ -133,7 +133,7 @@ $(document).ready(function() {
      		 	    {% ifagentcan 'modify_membership' item %}
        		 	    <div class="proposition-actions">
                 {% ifagentcanglobal 'create Proposition' %}
-          			<a href="{% url item_url viewer='proposition',action='edit',noun=proposition.pk %}?redirect={{ full_path|urlencode }}" class="btn btn-link btn-small"><i class="glyphicon glyphicon-edit"></i> Edit</a><br>
+          			<a href="{% url 'item_url' viewer='proposition' action='edit' noun=proposition.pk %}?redirect={{ full_path|urlencode }}" class="btn btn-link btn-small"><i class="glyphicon glyphicon-edit"></i> Edit</a><br>
                 {% endifagentcanglobal %}
         			<button class="btn btn-link btn-small" type="button" onclick="removeMember('{{ proposition.pk }}')"><i class="glyphicon glyphicon-trash"></i> Remove</button>
 	    		      </div>
@@ -178,7 +178,7 @@ $(document).ready(function() {
       <!-- admin -->
       <p>
         {% ifagentcanglobal 'create Proposition' %}
-      	<a class="btn btn-default" href="{% url item_type_url viewer='proposition',action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Add a Proposition</a>
+      	<a class="btn btn-default" href="{% url 'item_type_url' viewer='proposition' action='new'%}?populate_poll={{ item.pk }}&amp;add_to_collection={{ item.pk }}&amp;redirect={{ full_path|urlencode }}">Add a Proposition</a>
       	{% endifagentcanglobal %}
       	{% ifagentcan 'modify_membership' item %}
       	<!--a class="fg-button fg-button-icon-right ui-widget ui-state-default ui-corner-all" onclick="openDialog('addmember{{ item.pk }}'); return false;">Add Existing Proposition to Poll</a-->
@@ -272,7 +272,7 @@ $(document).ready(function() {
       <div class="panel">
       	<h5 class="panel-heading">Add a personal statement:</h5>
       	<form method="post" enctype="multipart/form-data"
-      	action="{% url item_url viewer=viewer_name,action="addawritein",noun=item.pk %}?redirect={{ full_path|urlencode }}">
+      	action="{% url 'item_url' viewer=viewer_name action="addawritein" noun=item.pk %}?redirect={{ full_path|urlencode }}">
       	  <p><textarea name="optional_writein_comment" type="text" cols="20" rows="2"></textarea></p>
       	  <p><input type="submit" value="Comment" class="btn btn-primary"></p>
       	</form>
@@ -379,7 +379,7 @@ $(document).ready(function() {
 	{% if cur_agent_in_eligbles %}
 	<p><strong>Add a personal statement:</strong><p>
 	<form method="post" enctype="multipart/form-data"
-	action="{% url item_url viewer=viewer_name,action="addawritein",noun=item.pk %}?redirect={{ full_path|urlencode }}">
+	action="{% url 'item_url' viewer=viewer_name action="addawritein" noun=item.pk %}?redirect={{ full_path|urlencode }}">
 	<textarea  name="optional_writein_comment" type="text" cols="20" rows="2"></textarea><br />
 			<div style="margin-left:40%; margin-bottom:1em;">
 			    <input type="submit" value="Submit" /><br><br>

@@ -3,7 +3,7 @@
 {% block content %}
 
 {% ifagentcan 'do_anything' item %}
-<form method="post" action="{% url item_url viewer=viewer_name,action="updateitempermissions",noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
+<form method="post" action="{% url 'item_url' viewer=viewer_name action="updateitempermissions" noun=item.pk %}?redirect={{ full_path|urlencode }}" class="item_form">
 <div>
 {% item_permission_editor item %}
 </div>

@@ -4,9 +4,9 @@
 
 <p>
     The requested item,
-    <a href="{% url item_url viewer=viewer_name,noun=item.pk,action="show" %}">{% viewable_name item %}</a>,
+    <a href="{% url 'item_url' viewer=viewer_name noun=item.pk action="show" %}">{% viewable_name item %}</a>,
     is currently being edited by
-    <a href="{% url item_url viewer=viewer_name,noun=edit_lock.editor.pk,action="show" %}">{% viewable_name edit_lock.editor %}</a>
+    <a href="{% url 'item_url' viewer=viewer_name noun=edit_lock.editor.pk action="show" %}">{% viewable_name edit_lock.editor %}</a>
     and has been that way for {{ edit_lock.lock_acquire_time|timesince }}.
 </p>
 <p>
@@ -16,7 +16,7 @@
 <script type="text/javascript">
 function unlock_edit() {
     var ajax_options = {
-        url: "{% url item_url viewer=viewer_name,noun=item.pk,action="editlockremove",format="json" %}",
+        url: "{% url 'item_url' viewer=viewer_name noun=item.pk action="editlockremove" format="json" %}",
         success: function(data) { window.location.reload(); },
     };
     jQuery.ajax(ajax_options);

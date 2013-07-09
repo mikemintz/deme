@@ -40,11 +40,11 @@
     
     {% ifequal action 'show' %}
     {% if item %}
-    <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url item_url viewer=viewer_name,action="show",noun=item.pk,format="rss" %}" />
+    <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url 'item_url' viewer=viewer_name action="show" noun=item.pk format="rss" %}" />
     {% endif %}
     {% endifequal %}
     {% ifequal action 'list' %}
-    <link rel="alternate" type="application/rss+xml" title="Item feed" href="{% url item_type_url viewer=viewer_name,action="list",format="rss" %}" />
+    <link rel="alternate" type="application/rss+xml" title="Item feed" href="{% url 'item_type_url' viewer=viewer_name action="list" format="rss" %}" />
     {% endifequal %}
     <script type="text/javascript">
         // from http://www.filamentgroup.com/examples/buttonFrameworkCSS/
@@ -124,7 +124,7 @@
 
                 {% new_item_menu %}
 
-                <form method="get" action="{% url item_type_url viewer="item" %}" style="display: inline;">
+                <form method="get" action="{% url 'item_type_url' viewer="item" %}" style="display: inline;">
                     <input type="search" id="search_box" name="q" value="{{ search_query }}" style="width: 20em;" />
                     {# TODO add magnifying glass #}
                 </form>
@@ -359,8 +359,8 @@
                         </li>
                         </ul>
                         {% comment %}
-                        <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url item_type_url viewer="item" %}">Items</a></li>
-                        <li{% ifequal viewer_name "codegraph"%} style="font-weight: bold;"{% endifequal %}><a href="{% url item_type_url viewer="codegraph" %}">Codegraph</a></li>
+                        <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url 'item_type_url' viewer="item" %}">Items</a></li>
+                        <li{% ifequal viewer_name "codegraph"%} style="font-weight: bold;"{% endifequal %}><a href="{% url 'item_type_url' viewer="codegraph" %}">Codegraph</a></li>
                         <li><a href="http://deme.stanford.edu/static/docs/index.html">Docs</a></li>
                         {% endcomment %}
                     </ul>
@@ -437,7 +437,7 @@
 </div>
 
 <div class="footer">
-    <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url item_type_url viewer="item",action="admin" %}">Admin</a> | <a href="{% url item_type_url viewer="item",action="recentchanges" %}">Recent Changes</a></p>
+    <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> <span class="pipe">|</span> <a href="http://www.stanford.edu/~davies/">Authors</a> | <a href="{% url 'item_type_url' viewer="item" action="admin" %}">Admin</a> | <a href="{% url 'item_type_url' viewer="item" action="recentchanges" %}">Recent Changes</a></p>
     <p>Desktop browser | <a href="list.mobi">Mobile</a> | <a href="list.rss">RSS</a></p> {# TODO generate formats list #}
 </div>
 

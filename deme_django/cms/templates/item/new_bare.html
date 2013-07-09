@@ -31,7 +31,7 @@ $(document).ready(function () {
     {% for item_type in breadcrumbs reversed %}
       <li{% ifequal item_type.item_type accepted_item_type %} class="active"{% endifequal %}>
         {% if item_type.item_type != accepted_item_type %}
-        <a href="{% url item_type_url viewer=item_type.viewer,action="new" %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a>
+        <a href="{% url 'item_type_url' viewer=item_type.viewer action="new" %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a>
         {% else %}
         {{ item_type.name_plural|capfirst }}
         {% endif %}
@@ -47,9 +47,9 @@ $(document).ready(function () {
         {% with item_type.item_type|to_name as accepted_item_type_name %}
         {% with "create "|add:accepted_item_type_name as create_permission %}
         {% ifagentcanglobal create_permission  %}
-          <a class="btn btn-small btn-default" href="{% url item_type_url viewer=item_type.viewer,action="new" %}?{{ query_string }}">{{ item_type.name|capfirst }}</a>
+          <a class="btn btn-small btn-default" href="{% url 'item_type_url' viewer=item_type.viewer action="new" %}?{{ query_string }}">{{ item_type.name|capfirst }}</a>
         {% else %}
-          <a class="btn btn-small btn-default no-permission" href="{% url item_type_url viewer=item_type.viewer,action="new" %}?{{ query_string }}">{{ item_type.name|capfirst }}</a>
+          <a class="btn btn-small btn-default no-permission" href="{% url 'item_type_url' viewer=item_type.viewer action="new" %}?{{ query_string }}">{{ item_type.name|capfirst }}</a>
         {% endifagentcanglobal %}
         {% endwith %}
         {% endwith %}
@@ -65,7 +65,7 @@ $(document).ready(function () {
 
 <div class="item-type-new-container">
 {% if form %}
-    <form method="post" enctype="multipart/form-data" action="{% url item_type_url viewer=viewer_name,action="create" %}?{% if add_to_collection %}add_to_collection={{ add_to_collection|urlencode }}&{% endif %}{% if redirect %}redirect={{ redirect|urlencode }}{% endif %}{% if modal %}&modal=1{% endif %}{% if receiver_input_id %}&id={{ receiver_input_id }}{% endif %}{% if src %}&src={{ src }}{% endif %}" class="item_form">
+    <form method="post" enctype="multipart/form-data" action="{% url 'item_type_url' viewer=viewer_name action="create" %}?{% if add_to_collection %}add_to_collection={{ add_to_collection|urlencode }}&{% endif %}{% if redirect %}redirect={{ redirect|urlencode }}{% endif %}{% if modal %}&modal=1{% endif %}{% if receiver_input_id %}&id={{ receiver_input_id }}{% endif %}{% if src %}&src={{ src }}{% endif %}" class="item_form">
         <table cellspacing="0">
            {{ form.as_table }}
         </table>
@@ -85,7 +85,7 @@ $(document).ready(function () {
 
         <p>
         <button type="submit" class="btn btn-primary"><i class="glyphicon glyphicon-ok"></i> Create {{ accepted_item_type_name }}</button>
-        <a href="{% url item_type_url viewer=viewer_name,action="list" %}?{{ query_string }}" class="btn btn-default">Cancel</a>
+        <a href="{% url 'item_type_url' viewer=viewer_name action="list" %}?{{ query_string }}" class="btn btn-default">Cancel</a>
         </p>
         {% if receiver_input_id %}
         <input type="hidden" name="receiver_input_id" value="{{ receiver_input_id }}">

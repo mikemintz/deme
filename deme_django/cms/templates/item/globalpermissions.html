@@ -2,7 +2,7 @@
 {% load item_tags %}
 {% block content %}
 
-<form method="post" action="{% url item_type_url viewer=viewer_name,action="updateglobalpermissions" %}?redirect={{ full_path|urlencode }}" class="item_form">
+<form method="post" action="{% url 'item_type_url' viewer=viewer_name action="updateglobalpermissions" %}?redirect={{ full_path|urlencode }}" class="item_form">
 <div>
 {% global_permission_editor %}
 </div>
