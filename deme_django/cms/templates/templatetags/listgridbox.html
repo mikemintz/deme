@@ -72,7 +72,7 @@ $(document).ready(function () {
     $(window).trigger('resize');
   });
   jqgrid_list.jqGrid('navGrid','#jqgrid_pager{{identifier}}',{edit:false,add:false,del:false});
-  jqgrid_list.jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Columns",title:"Choose columns",buttonicon:"ui-icon-gear",onClickButton:function(){jqgrid_list.jqGrid('columnChooser',{});}});
+  jqgrid_list.jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"",title:"Choose columns",buttonicon:"ui-icon-gear",onClickButton:function(){jqgrid_list.jqGrid('columnChooser',{});}});
   {% if collection_item %}
     {% ifagentcan 'modify_membership' collection_item %}
     jqgrid_list.jqGrid('navButtonAdd',"#jqgrid_pager{{identifier}}",{caption:"Add",title:"Add an item to {% viewable_name collection_item %}",buttonicon:"ui-icon-circle-plus",onClickButton:function(){openDialogBox('addmember{{collection_item.pk}}');}})
@@ -188,6 +188,8 @@ function endsWith(str, suffix) {
   **/
 {% endif %}
 </script>
+
+<small class="jqgrid_hint"><b>Tip:</b> Use the Gear icon to customize what columns are shown.</small>
 
 {% multiadddialog identifier %}
 

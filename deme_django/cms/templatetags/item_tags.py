@@ -1083,7 +1083,7 @@ class CalculateRelationships(template.Node):
               "friendly_name": friendly_name,
               "new_modal_url": new_modal_url,
               "count": relationship_set['count'],
-              "id": "%s_%s" % (item.pk, relationship_set['name'])
+              "id": "%s_%s" % (item.pk, relationship_set['name'].replace(' ','_'))
             })
 
             for related_item in relationship_set['items']:
