@@ -5124,7 +5124,7 @@ body.nonadmin #metabar {
   text-align: center;
   margin: 5px;
 }
-#metabar .block.ajax-loaded h3:first-child {
+#metabar .block h3:first-child {
   font-size: 100%;
   text-align: center;
   margin-top: 10px;

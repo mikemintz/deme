@@ -17,11 +17,11 @@ $(function(){
   }
 
   var winWidth = 0; // set to zero so first run through happens
-      winHeight = 0; 
+      winHeight = 0;
 
   $(window).resize(function(){
       var onResize = function() {
-          //The method which sets the height css property which triggers 
+          //The method which sets the height css property which triggers
           //window.resize again and it was a infinite loop
           metabar_sizing(); metabarWidthAdjust();
       }
@@ -181,21 +181,24 @@ $(function(){
     if (!collapse.hasClass('ajax-loaded')) {
       var name = collapse.attr('id').replace('metadata_content_', '');
       var url = metabar_ajax_url(name);
-      collapse.find('.content').html('Loading&hellip;');
-      $.ajax({
-        url: url,
-        success: function(data) {
-          collapse.addClass('ajax-loaded');
-          collapse.find('.content').html(data);
-          collapse.trigger('contentload');
-          if ($('body').hasClass('nonadmin')) {
-            collapse.css('height', 'auto');
+      var content = collapse.find('.content');
+      if (!content.hasClass('content-no-ajax')) {
+      content.html('Loading&hellip;');
+        $.ajax({
+          url: url,
+          success: function(data) {
+            collapse.addClass('ajax-loaded');
+            collapse.find('.content').html(data);
+            collapse.trigger('contentload');
+            if ($('body').hasClass('nonadmin')) {
+              collapse.css('height', 'auto');
+            }
+            if (typeof(cb) == 'function') {
+              cb(collapse);
+            }
           }
-          if (typeof(cb) == 'function') {
-            cb(collapse);
-          }
-        }
-      })
+        });
+      }
     } else {
       if (typeof(cb) == 'function') {
         cb(collapse);

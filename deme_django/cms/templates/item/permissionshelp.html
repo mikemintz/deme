@@ -3,19 +3,12 @@
 {% block title %}How to use Permissions
 {% endblock %}
 {% block content %}
-<script type="text/javascript">
-    $(document).ready(function() {
-            decrease_column_right();
-    });
-</script>
-
-<div style="margin-top: 5px; padding: 2px;">
 
     <p>Permissions in Deme are very powerful and can be extremely useful. If you are authorized,
     you can both give other users permission to perform actions and take away other users' permissions.</p>
 To better illustrate how permissions work, consider this following example:
 Joe is making a new document, and he wants no one except Mike to be able to read it or even know that it exists.
-Joe only wants Mike to be able to view the document and comment on it. 
+Joe only wants Mike to be able to view the document and comment on it.
 <br>The first thing he does is take away everyone's permission to do anything. He does this
 by clicking "New Permission" across from "Everyone", going to "Do anything" in the drop-down menu,
 and then unchecking the box next to the permission, which signifies that "Everyone" <b>cannot</b> "do anything".
@@ -26,18 +19,18 @@ view the document's body, nor edit the document, etc. <br>
 Now, Joe wants to allow Mike to view the document. So, Joe clicks on the "Select Agent" button, types in "mike",
 and then selects Mike from the drop-down menu.<br>
 <img src="{% media_url 'permissionshelp/help2.png' %}" alt="help1" style="border: thin solid #000;"/><br>
- He then gives Mike the ability to "view body", "view item name", 
+ He then gives Mike the ability to "view body", "view item name",
 and "comment on" the document, by clicking the "New Permission" link across from Mike and selecting the appropriate permission from the drop-down
-menu. 
+menu.
 <img src="{% media_url 'permissionshelp/help3.png' %}" alt="help1" style="border: thin solid #000;"/><br>
 Only Mike and Joe can now view the document. This is because individual permissions, which are permissions
 that only apply to one person, override permissions that apply to everyone. This is why Mike can view the document,
 but everyone else cannot. <br> <br>
 <p>
 You can also give a Collection of users permission to do something. Keep in mind that collection-wide permissions
-override permissions that apply to everyone, but individual permissions still over-ride Collection-wide permissions.   
+override permissions that apply to everyone, but individual permissions still over-ride Collection-wide permissions.
 To give a collection of users special permissions, simply click "Select Collection", select the desired collection
 of users, and then give the collection the desired permissions.
 </p>
-</div>
+
 {% endblock %}

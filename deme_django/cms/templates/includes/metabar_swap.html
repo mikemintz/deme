@@ -43,6 +43,12 @@
         {% with "metadata_content_permissions" as id %}{% with "Permissions" as title %}
         {% include 'includes/metabar_section_list.html' %}
         {% endwith %}{% endwith %}
+
+        {% if metabar_contents %}
+        {% with "metadata_contents" as id %}{% with "Help" as title %}
+        {% include 'includes/metabar_section_list.html' %}
+        {% endwith %}{% endwith %}
+        {% endif %}
       </ul>
     </li>
     <li class="pull-right">
@@ -97,8 +103,22 @@
   {% include 'includes/metabar_section_swap.html' %}
   {% endwith %}{% endwith %}
 
+  {% if metabar_contents %}
+  <div class="block" id="metadata_contents">
+    <div class="content content-no-ajax">
+      <h3>Help</h3>
+      {{ metabar_contents }}
+    </div>
+  </div>
+  {% endif %}
+
 {% else %}
   <ul class="title nav navbar-nav">
+    <li>
+    {% if metabar_contents %}
+    <a>Help</a>
+    {% endif %}
+    </li>
     <li class="pull-right">
       <button class="resize resize-left"><i class="glyphicon glyphicon-step-backward"></i></button>
       <button class="resize resize-right"><i class="glyphicon glyphicon-step-forward"></i></button>
@@ -106,9 +126,8 @@
   </ul>
   <div class="content">
   {% if metabar_contents %}
+    <h3>Help</h3>
     {{ metabar_contents }}
-  {% else %}
-    <small><i>No data</i></small>
   {% endif %}
   </div>
 {% endif %}

@@ -507,6 +507,7 @@ class ItemViewer(Viewer):
 
     def item_show_html(self):
         self.context['action_title'] = ''
+        self.context['metabar_contents'] = u'Viewing an item'
         self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('item/show.html')
         return HttpResponse(template.render(self.context))
