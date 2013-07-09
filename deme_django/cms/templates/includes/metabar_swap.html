@@ -44,11 +44,9 @@
         {% include 'includes/metabar_section_list.html' %}
         {% endwith %}{% endwith %}
 
-        {% if metabar_contents %}
         {% with "metadata_contents" as id %}{% with "Help" as title %}
         {% include 'includes/metabar_section_list.html' %}
         {% endwith %}{% endwith %}
-        {% endif %}
       </ul>
     </li>
     <li class="pull-right">
@@ -103,14 +101,20 @@
   {% include 'includes/metabar_section_swap.html' %}
   {% endwith %}{% endwith %}
 
-  {% if metabar_contents %}
   <div class="block" id="metadata_contents">
     <div class="content content-no-ajax">
       <h3>Help</h3>
+      {% if metabar_contents %}
+      <div class="metabar_contents">
       {{ metabar_contents }}
+      </div>
+      {% endif %}
+      <div class="help_text">
+      {{ item.display_help_text }}
+      </div>
     </div>
   </div>
-  {% endif %}
+
 
 {% else %}
   <ul class="title nav navbar-nav">

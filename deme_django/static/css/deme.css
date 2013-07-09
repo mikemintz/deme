@@ -5134,6 +5134,9 @@ body.nonadmin #metabar {
   padding: 0;
   border-radius: 5px;
 }
+#metabar .metabar_contents {
+  margin-bottom: 1em;
+}
 #metabar .section ~ .section {
   border-top: 1px solid #a6a6a6;
 }

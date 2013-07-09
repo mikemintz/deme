@@ -250,6 +250,8 @@ class Item(models.Model):
     email_list_address                  = models.CharField(_('email list address'), max_length=63, null=True, blank=True, unique=True, default=None, validators=[RegexValidator(email_local_address_re1, 'Field must be a valid local part of an email address (before the at-sign)'), RegexValidator(email_local_address_re2, 'Cannot be of the form "item-#" or "comment-#"')], help_text=_('(Advanced) The local part (before the at-sign) of the to email address of emails sent to subscribers of this item'))
     email_sets_reply_to_all_subscribers = FixedBooleanField(_('email sets reply to all subscribers'), default=True, help_text=_('(Advanced) For the reply-to field of emails sent to subscribers of this item: if set, reply to all subscribers, else reply to sender'))
 
+    help_text = "Default item help text"
+
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type_string, self.pk, self.name)
 
@@ -267,6 +269,24 @@ class Item(models.Model):
             return self.name
         else:
             return u'%s %s' % (capfirst(self.actual_item_type()._meta.verbose_name), self.pk)
+
+    def display_help_text(self):
+        help_text = None
+        breadcrumb_iter = self.actual_item_type()
+        while breadcrumb_iter != models.base.Model and help_text == None:
+            # look for help text as html doc
+            try:
+                name = breadcrumb_iter.__name__.lower()
+                template = loader.get_template('help_text/%s.html' % name)
+                help_text = template.render(Context({}))
+            except:
+                pass
+            breadcrumb_iter = breadcrumb_iter.__base__
+
+        if help_text == None:
+            if self.help_text:
+                return self.help_text
+        return help_text
 
     def actual_item_type(self):
         """
