@@ -5466,6 +5466,9 @@ body {
 .ui-jqgrid input.ui-pg-input {
   display: inline;
 }
+.jqgrid_hint {
+  color: #555555;
+}
 .permission_table {
   width: 100%;
 }
