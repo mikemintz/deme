@@ -1995,9 +1995,9 @@ class CustomUrl(ViewerRequest):
     """
 
     # Setup
-    introduced_immutable_fields = frozenset(['parent_url', 'path'])
-    introduced_abilities = frozenset(['view CustomUrl.parent_url', 'view CustomUrl.path'])
-    #introduced_abilities = frozenset(['edit CustomUrl.parent_url', 'edit CustomUrl.path', 'view CustomUrl.parent_url', 'view CustomUrl.path'])
+    #introduced_immutable_fields = frozenset(['parent_url', 'path'])
+    #introduced_abilities = frozenset(['view CustomUrl.parent_url', 'view CustomUrl.path'])
+    introduced_abilities = frozenset(['edit CustomUrl.parent_url', 'edit CustomUrl.path', 'view CustomUrl.parent_url', 'view CustomUrl.path'])
     introduced_global_abilities = frozenset(['create CustomUrl'])
     dyadic_relations = {}
     class Meta:
