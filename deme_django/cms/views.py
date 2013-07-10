@@ -136,7 +136,7 @@ class ItemViewer(Viewer):
 
     def type_list_html(self):
         self.context['action_title'] = ''
-        self.context['metabar_contents'] = u'List %s' % self.accepted_item_type._meta.verbose_name_plural
+        self.context['metabar_contents'] = u'Listing %s.' % self.accepted_item_type._meta.verbose_name_plural
         self.context['item_type_name'] = self.accepted_item_type._meta.verbose_name
         self.context['item_type_name_plural'] = self.accepted_item_type._meta.verbose_name_plural
         self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
