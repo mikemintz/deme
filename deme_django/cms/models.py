@@ -1997,6 +1997,7 @@ class CustomUrl(ViewerRequest):
     # Setup
     introduced_immutable_fields = frozenset(['parent_url', 'path'])
     introduced_abilities = frozenset(['view CustomUrl.parent_url', 'view CustomUrl.path'])
+    #introduced_abilities = frozenset(['edit CustomUrl.parent_url', 'edit CustomUrl.path', 'view CustomUrl.parent_url', 'view CustomUrl.path'])
     introduced_global_abilities = frozenset(['create CustomUrl'])
     dyadic_relations = {}
     class Meta:
@@ -2005,8 +2006,8 @@ class CustomUrl(ViewerRequest):
         unique_together = ('parent_url', 'path')
 
     # Fields
-    parent_url = FixedForeignKey(ViewerRequest, related_name='child_urls', verbose_name=_('parent URL'), required_abilities=['add_sub_path'])
-    path       = models.CharField(_('path'), max_length=255)
+    parent_url = FixedForeignKey(ViewerRequest, related_name='child_urls', verbose_name=_('parent URL'), required_abilities=['add_sub_path'], help_text=_("The site or custom URL that comes before this URL"))
+    path       = models.CharField(_('path'), max_length=255, help_text=_("The text of this part of the URL"))
 
     def relation_action_notice_natural_language_representation(self, permission_cache, field_name, relation_added, action_item):
         if field_name == 'parent_url':

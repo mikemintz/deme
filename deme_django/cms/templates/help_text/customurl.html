@@ -1,1 +1,9 @@
-<p><b>Custom URLs</b> let you point paths to items. For example, to have "http://www.yoursite.com/about/" point to an <a href="{% url 'item_type_url' viewer='htmldocument' %}">HTML document</a> named "about", set
+<p><b>Custom URLs</b> let you point paths to items.</p>
+<p>For example, to have <i>http://www.yoursite.com/about/</i> point to an <a href="{% url 'item_type_url' viewer='htmldocument' %}">HTML document</a> named "About Page", set:</p>
+<ol>
+  <li><b>Item name</b> to "About Page URL"</li>
+  <li><b>Aliased item</b> to the About Page item</li>
+  <li><b>Parent URL</b> to your base Site item</li>
+  <li><b>Path</b> to "about"</li>
+</ol>
+<p>To set up <i>http://www.yoursite.com/about/team</i>, you'd set <b>Parent URL</b> to the Custom URL for the about page, to the "About Page URL" item.</p>
