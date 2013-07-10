@@ -689,6 +689,10 @@ def metadata_item_details(parser, token):
         raise template.TemplateSyntaxError, "%r takes zero arguments" % bits[0]
     return ItemDetails()
 
+@register.simple_tag
+def display_item_type_help_text(item_type):
+    return get_item_type_help_text(item_type)
+
 
 @register.simple_tag
 def display_body_with_inline_transclusions(item, is_html):

@@ -385,6 +385,7 @@ class ItemViewer(Viewer):
     def type_newother_html(self):
         self.context['action_title'] = u'New'
         self.context['metabar_contents'] = u'Create a new item'
+        self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         sorted_item_types = sorted(all_item_types(), key=lambda x: x._meta.verbose_name_plural.lower())
         all_item_types_can_create = [{'item_type': x, 'url': reverse('item_type_url', kwargs={'viewer': x.__name__.lower(), 'action': 'new'})} for x in sorted_item_types if self.cur_agent_can_global('create %s' % x.__name__)]
         self.context['all_item_types_can_create'] = all_item_types_can_create
@@ -394,6 +395,7 @@ class ItemViewer(Viewer):
     def type_new_html(self, form=None):
         self.context['action_title'] = u'New %s' % self.accepted_item_type._meta.verbose_name
         self.context['metabar_contents'] = u'Create a new %s' % self.accepted_item_type._meta.verbose_name
+        self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         if not self.cur_agent_can_global('create %s' % self.accepted_item_type.__name__):
             form = None
         else:
@@ -436,6 +438,7 @@ class ItemViewer(Viewer):
     def type_create_html(self):
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         self.context['metabar_contents'] = u'Create a new %s' % self.accepted_item_type._meta.verbose_name
+        self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
         form = form_class(self.request.POST, self.request.FILES)
         if form.is_valid():
@@ -562,6 +565,7 @@ class ItemViewer(Viewer):
 
     def item_copy_html(self):
         self.context['action_title'] = 'Copy'
+        self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         form_class = self.get_form_class_for_item_type(self.accepted_item_type, True)
         fields_to_copy = []
@@ -598,6 +602,7 @@ class ItemViewer(Viewer):
         if edit_lock_response:
             return edit_lock_response
         self.context['action_title'] = 'Edit'
+        self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         abilities_for_item = self.permission_cache.item_abilities(self.item)
         self.require_ability('edit ', self.item, wildcard_suffix=True)
         if form is None:

@@ -114,8 +114,6 @@
       </div>
     </div>
   </div>
-
-
 {% else %}
   <ul class="title nav navbar-nav">
     <li>
@@ -129,10 +127,17 @@
     </li>
   </ul>
   <div class="content">
-  {% if metabar_contents %}
-    <h3>Help</h3>
+    {% if metabar_contents %}
+    <div class="metabar_contents">
     {{ metabar_contents }}
-  {% endif %}
+    </div>
+    {% endif %}
+    {% if item_type_lower %}
+    <div class="help_text">
+      {% display_item_type_help_text item_type_lower %}
+    </div>
+    {% endif %}
+
   </div>
 {% endif %}
 

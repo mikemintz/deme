@@ -34,6 +34,7 @@ __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
         'Site', 'Subscription', 'TextComment', 'TextDocument',
         'TextDocumentExcerpt', 'Transclusion', 'ViewerRequest',
         'WebsiteContactMethod', 'all_item_types', 'get_item_type_with_name',
+        'get_item_type_help_text',
         'ActionNotice', 'RelationActionNotice', 'DeactivateActionNotice',
         'ReactivateActionNotice', 'DestroyActionNotice', 'CreateActionNotice',
         'EditActionNotice', 'FixedBooleanField', 'FixedForeignKey',
@@ -271,22 +272,7 @@ class Item(models.Model):
             return u'%s %s' % (capfirst(self.actual_item_type()._meta.verbose_name), self.pk)
 
     def display_help_text(self):
-        help_text = None
-        breadcrumb_iter = self.actual_item_type()
-        while breadcrumb_iter != models.base.Model and help_text == None:
-            # look for help text as html doc
-            try:
-                name = breadcrumb_iter.__name__.lower()
-                template = loader.get_template('help_text/%s.html' % name)
-                help_text = template.render(Context({}))
-            except:
-                pass
-            breadcrumb_iter = breadcrumb_iter.__base__
-
-        if help_text == None:
-            if self.help_text:
-                return self.help_text
-        return help_text
+        return get_item_type_help_text(self.item_type_string)
 
     def actual_item_type(self):
         """
@@ -2855,3 +2841,24 @@ def get_item_type_with_name(name, case_sensitive=True):
     except StopIteration:
         return None
 
+def get_item_type_help_text(name):
+    help_text = None
+    item_type = get_item_type_with_name(name, False)
+    item_type_iter = item_type
+    while item_type_iter != models.base.Model and help_text == None:
+        # look for help text as html doc
+        try:
+            name = item_type_iter.__name__.lower()
+            template = loader.get_template('help_text/%s.html' % name)
+            help_text = template.render(Context({}))
+        except:
+            pass
+        try:
+            item_type_iter = item_type_iter.__base__
+        except:
+            break
+
+    if help_text == None:
+        if item_type and item_type.help_text:
+            return item_type.help_text
+    return help_text
