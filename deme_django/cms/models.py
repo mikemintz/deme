@@ -2863,6 +2863,6 @@ def get_item_type_help_text(name):
 
     if help_text != None and item_type_iter != item_type:
         # then the helptext is not from that specific item but a parent
-        help_text = "<p><b>%s</b> is a type of %s.</p>%s" % (item_type._meta.verbose_name.capitalize(), item_type_iter._meta.verbose_name.capitalize(), help_text)
+        help_text = "<p><b>%s</b> is a type of %s.</p>%s" % (item_type._meta.verbose_name.title(), item_type_iter._meta.verbose_name.title(), help_text)
 
     return help_text

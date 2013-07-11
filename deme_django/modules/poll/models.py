@@ -279,7 +279,7 @@ class PluralityApproveNDecision(Decision):
     dyadic_relations = {}
 
     class Meta:
-        verbose_name = _(' Approve Plurality Decision')
+        verbose_name = _('Approve Plurality Decision')
         verbose_name_plural = _('Approve Plurality Decisions')
 
     #fields
