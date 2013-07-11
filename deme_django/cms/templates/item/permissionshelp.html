@@ -1,8 +1,28 @@
 {% extends layout %}
 {% load item_tags %}
-{% block title %}How to use Permissions
-{% endblock %}
+{% block title %}How to use Permissions{% endblock %}
 {% block content %}
+  <p>Permissions in Deme control what users can see and do. If you are authorized, you can give other users permission to perform actions or take permissions away.</p>
+  <h3>Permissions Example</h3>
+  <p>Let's say you're making a <a href="{% url 'item_type_url' viewer='textdocument' action='new' %}">new text document</a> and don't want anyone to see it.</p>
+  <ol>
+    <li>Open <i class="glyphicon glyphicon-lock"></i> <b>Permissions</b> on the item.</li>
+    <li>Under "Everyone", create a <i class="glyphicon glyphicon-edit"></i> <b>New Permission</b>.</li>
+    <li>From the new permission's dropdown menu, choose the "Do Anything" permission.</li>
+    <li>Click the <b>- Minus sign</b> to make it a negative permission. This means that "Everyone" <b>can not</b> "Do Anything", hence won't be able to view, edit, etc our new item.</li>
+    <li>Save your document. Since only you have the ability to "Do Anything" on the item, other users won't be able to see it, with the exception of the Admin.</li>
+  </ol>
+  <p>Now let's say you want to show it to just one other person, Jane.</p>
+  <ol>
+    <li>Open the item <i class="glyphicon glyphicon-lock"></i> <b>Permissions</b>.</li>
+    <li>Click <i class="glyphicon glyphicon-profile"></i> <b>Assign a Permission to a User</b>.</li>
+    <li>In the popup, find Jane and add her.</li>
+    <li>Go ahead and <i class="glyphicon glyphicon-th-list"></i> <b>Show All</b> permissions, and click the <b>+ Plus sign</b> next to the ones necessary to show the text document, namely "View anything" and "Comment on".</li>
+    <li>Save your document and now Jane will be able to view and comment on it.</li>
+  </ol>
+
+<!--
+
 
     <p>Permissions in Deme are very powerful and can be extremely useful. If you are authorized,
     you can both give other users permission to perform actions and take away other users' permissions.</p>
@@ -26,8 +46,8 @@ menu.
 Only Mike and Joe can now view the document. This is because individual permissions, which are permissions
 that only apply to one person, override permissions that apply to everyone. This is why Mike can view the document,
 but everyone else cannot. <br> <br>
-<p>
-You can also give a Collection of users permission to do something. Keep in mind that collection-wide permissions
+<p>-->
+<p>You can also give a Collection of users permission to do something. Keep in mind that collection-wide permissions
 override permissions that apply to everyone, but individual permissions still over-ride Collection-wide permissions.
 To give a collection of users special permissions, simply click "Select Collection", select the desired collection
 of users, and then give the collection the desired permissions.

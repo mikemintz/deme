@@ -878,7 +878,7 @@ class ItemViewer(Viewer):
         return HttpResponse(template.render(self.context))
 
     def type_permissionshelp_html(self):
-        self.context['action_title'] = 'Permissions help'
+        self.context['action_title'] = 'Permissions Guide'
         self.context['metabar_contents'] = u'Documentation on setting up permissions'
         template = loader.get_template('item/permissionshelp.html')
         return HttpResponse(template.render(self.context))

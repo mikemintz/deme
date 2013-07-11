@@ -10,6 +10,8 @@
   <li>Items represent most of the content on a Deme site. While in Advanced Mode, create a new item by clicking on the Actions menu, then <i class="glyphicon glyphicon-file"></i> <b>Create</b>. Other actions are also found here.</li>
   <li>Click the <i class="glyphicon glyphicon-info-sign"></i> <b>Metadata icon</b> to show and hide the Metadata pane. When viewing an item, the Metadata pane contains useful information about that particular item.
 </ul>
+<h3>Permissions</h3>
+<p>Permissions control what users can see and do on the site. <a href="{% url 'item_type_url' viewer='item' action='permissionshelp' %}">View the Permissions Guide</a>.</p>
 <h3>Customizing Your Deme Site</h3>
 <ul>
   <li><a href="{% url 'item_url' viewer='site' action="edit" noun=cur_site.pk %}">Edit the current site</a> to change the website title, logo, and more.</li>
