@@ -865,21 +865,21 @@ class ItemViewer(Viewer):
 
     def type_globalpermissions_html(self):
         self.context['action_title'] = 'Global permissions'
-        self.context['metabar_contents'] = u'Modify global permissions for this website'
+        self.context['metabar_contents'] = u'Modify global permissions for this Deme installation.'
         self.require_global_ability('do_anything')
         template = loader.get_template('item/globalpermissions.html')
         return HttpResponse(template.render(self.context))
 
     def type_admin_html(self):
         self.context['action_title'] = 'Admin'
-        self.context['metabar_contents'] = u'Administrative options for this website'
+        self.context['metabar_contents'] = u'Administrative options for this Deme installation.'
         self.require_global_ability('do_anything')
         template = loader.get_template('item/admin.html')
         return HttpResponse(template.render(self.context))
 
     def type_permissionshelp_html(self):
         self.context['action_title'] = 'Permissions Guide'
-        self.context['metabar_contents'] = u'Documentation on setting up permissions'
+        self.context['metabar_contents'] = u'Viewing documentation on setting up permissions.'
         template = loader.get_template('item/permissionshelp.html')
         return HttpResponse(template.render(self.context))
 
