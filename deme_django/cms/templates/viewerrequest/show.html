@@ -11,8 +11,8 @@
 <table cellspacing="0" class="twocol">
     {% if custom_urls %}
     <tr>
-        <th>Path</th>
-        <td>&lt;<a href="{{ site.get_absolute_url }}">{% viewable_name site %}</a>&gt;{% for custom_url in custom_urls %}/<a href="{{ custom_url.get_absolute_url }}">{{ custom_url.path }}</a>{% endfor %}</td>
+        <th>Path Components</th>
+        <td>&lt;<a href="{{ site.get_absolute_url }}">{% viewable_name site %}</a>&gt;{% for custom_url in custom_urls %}/<a href="{{ custom_url.get_absolute_url }}">{{ custom_url.path }}</a>{% endfor %} <a href="{% for custom_url in custom_urls %}/{{ custom_url.path }}{% endfor %}"><i class="glyphicon glyphicon-share"></i></a></td>
     </tr>
     {% endif %}
     {% if item.default_layout %}

@@ -78,6 +78,10 @@
     {% with "metadata_content_permissions" as id %}{% with "Permissions" as title %}
     {% include 'includes/metabar_section_button.html' %}
     {% endwith %}{% endwith %}
+
+    {% with "metadata_contents" as id %}{% with "Help" as title %}
+    {% include 'includes/metabar_section_button.html' %}
+    {% endwith %}{% endwith %}
     </div>
   </div>
 
@@ -110,7 +114,7 @@
       </div>
       {% endif %}
       <div class="help_text">
-      {{ item.display_help_text }}
+      {{ item.display_help_text|safe }}
       </div>
     </div>
   </div>

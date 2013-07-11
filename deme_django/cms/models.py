@@ -1915,8 +1915,8 @@ class ViewerRequest(Item):
         verbose_name_plural = _('viewer requests')
 
     # Fields
-    viewer       = models.CharField(_('viewer'), max_length=255, help_text=_("This describes the type of the Aliased item. For example, a DjangoTemplateDocument should have 'djangotemplatedocument' while a HtmlDocument should have 'htmldocument'"))
-    action       = models.CharField(_('action'), max_length=255, help_text=_("This is the action that should be taken on the Aliased item. The 'show' action works for most any item type. For DjangoTemplateDocuments, the action should be 'render'"))
+    viewer       = models.CharField(_('viewer'), max_length=255, default="item", help_text=_("This describes the type of the Aliased item. For example, a DjangoTemplateDocument should have 'djangotemplatedocument' while a HtmlDocument should have 'htmldocument'"))
+    action       = models.CharField(_('action'), max_length=255, default="show", help_text=_("This is the action that should be taken on the Aliased item. The 'show' action works for most any item type. For DjangoTemplateDocuments, the action should be 'render'"))
     # If aliased_item is null, it is a collection action
     aliased_item = FixedForeignKey(Item, related_name='viewer_requests', null=True, blank=True, default=None, verbose_name=_('aliased item'), help_text=_("This is the item that should be shown. The item is typically a HtmlDocument or DjangoTemplateDocument but can be any type of item so long as the viewer and action are set appropriately"))
     query_string = models.CharField(_('query string'), max_length=1024, blank=True, help_text=_("This is used to pass parameters to an item, for instance 'page=2' for a Group item with many pages of members"))
@@ -2846,7 +2846,7 @@ def get_item_type_help_text(name):
     help_text = None
     item_type = get_item_type_with_name(name, False)
     item_type_iter = item_type
-    while item_type_iter != models.base.Model and help_text == None:
+    while item_type_iter != models.base.Model:
         # look for help text as html doc
         try:
             name = item_type_iter.__name__.lower()
@@ -2854,10 +2854,18 @@ def get_item_type_help_text(name):
             help_text = template.render(Context({}))
         except:
             pass
+
+        if item_type_iter == Item or help_text != None:
+            break
+
         try:
             item_type_iter = item_type_iter.__base__
         except:
             break
+
+    if help_text != None and item_type_iter != item_type:
+        # then the helptext is not from that specific item but a parent
+        help_text = "<p><b>%s</b> is a type of %s.</p>%s" % (item_type._meta.verbose_name.capitalize(), item_type_iter._meta.verbose_name.capitalize(), help_text)
 
     if help_text == None:
         if item_type and item_type.help_text:
