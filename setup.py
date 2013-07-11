@@ -7,7 +7,7 @@ setup(name='deme',
       author='Mike Mintz',
       author_email='',
       license='GNU AFFERO GENERAL PUBLIC LICENSE',
-      packages=['cms'],
+      packages=['deme_django'],
       zip_safe=False,
       install_requires=[
           'Django',
