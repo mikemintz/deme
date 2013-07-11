@@ -1,0 +1,14 @@
+{% extends layout %}
+{% load item_tags %}
+
+{% block title %}Getting Started with Deme{% endblock %}
+
+{% block content %}
+<h3>First Steps</h3>
+<ul>
+  <li>Try switching between the Basic and Advanced Toolbars by clicking on the <i class="glyphicon glyphicon-cog"></i> <b>Gear icon</b> at the top left of the page. The Advanced Toolbar has many of the tools you'll need to edit the site.</li>
+
+
+</ul>
+{% endblock %}
+<a href="{% url 'item_type_url' viewer='person' action="new" %}">

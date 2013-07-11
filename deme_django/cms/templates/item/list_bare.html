@@ -44,7 +44,7 @@
             {% for item_type in item_types %}
             {% ifequal item_type.item_type accepted_item_type %}
             {% else %}
-            <span><a class="btn btn-small btn-default" href="{% url 'item_type_url' viewer=item_type.viewer %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a></span>
+            <span><a class="btn btn-small btn-link" href="{% url 'item_type_url' viewer=item_type.viewer %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a></span>
             {% endifequal %}
             {% endfor %}
           </div>

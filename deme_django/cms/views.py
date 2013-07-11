@@ -883,6 +883,12 @@ class ItemViewer(Viewer):
         template = loader.get_template('item/permissionshelp.html')
         return HttpResponse(template.render(self.context))
 
+    def type_gettingstartedhelp_html(self):
+        self.context['action_title'] = 'Getting Started with Deme'
+        self.context['metabar_contents'] = u''
+        template = loader.get_template('help_text/_getting_started.html')
+        return HttpResponse(template.render(self.context))
+
     def item_diff_html(self):
         self.context['action_title'] = 'Changes'
         self.context['reference_version_number'] = self.request.GET.get('reference_version', '')
