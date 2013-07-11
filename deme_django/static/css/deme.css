@@ -5423,6 +5423,9 @@ body {
 .page-layout h1.title a {
   text-decoration: none;
 }
+.page-layout li {
+  margin-bottom: .5em;
+}
 .page-layout .table-discussion {
   table-layout: fixed;
 }

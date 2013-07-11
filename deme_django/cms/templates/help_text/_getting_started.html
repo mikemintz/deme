@@ -10,13 +10,27 @@
   <li>Items represent most of the content on a Deme site. While in Advanced Mode, create a new item by clicking on the Actions menu, then <i class="glyphicon glyphicon-file"></i> <b>Create</b>. Other actions are also found here.</li>
   <li>Click the <i class="glyphicon glyphicon-info-sign"></i> <b>Metadata icon</b> to show and hide the Metadata pane. When viewing an item, the Metadata pane contains useful information about that particular item.
 </ul>
+
 <h3>Permissions</h3>
-<p>Permissions control what users can see and do on the site. <a href="{% url 'item_type_url' viewer='item' action='permissionshelp' %}">View the Permissions Guide</a>.</p>
-<h3>Customizing Your Deme Site</h3>
+<p>Permissions control what users can see and do on the site. <a href="{% url 'item_type_url' viewer='item' action='permissionshelp' %}">Learn how to use Permissions</a>.</p>
+
+<h3>Customizing the Site</h3>
 <ul>
   <li><a href="{% url 'item_url' viewer='site' action="edit" noun=cur_site.pk %}">Edit the current site</a> to change the website title, logo, and more.</li>
   <li>Change the contents of the home page by <a href="/">going to the home page</a>, clicking on the Actions menu, then <i class="glyphicon glyphicon-edit"></i> <b>Edit</b>.</li>
   <li>See the <a href="http://deme.readthedocs.org">Technical Deme Guide</a> for details on advanced site customization.</li>
 </ul>
+
+<h3>Preparing for Launch</h3>
+<p>When Deme is first installed, anyone can login as Admin. After you've set up user accounts that you can log into, you should change this:</p>
+<ol>
+  <li>Open the <a href="{% url 'item_type_url' viewer='item' action="globalpermissions" %}">Global permissions</a>.</li>
+  <li>Click <i class="glyphicon glyphicon-profile"></i> <b>Assign a Permission to a User</b>.</li>
+  <li>In the popup, find "Anonymous" and add.</li>
+  <li>Under "Anonymous", create a <i class="glyphicon glyphicon-edit"></i> <b>New Permission</b>.</li>
+  <li>From the new permission's dropdown menu, choose the "Login As" permission.</li>
+  <li>Click the <b>- Minus sign</b> to make it a negative permission. This will prevent anonymous users from logging in as Admin.</li>
+  <li>Save the permissions.</li>
+</ol>
 {% endblock %}
 <a href="{% url 'item_type_url' viewer='person' action="new" %}">
