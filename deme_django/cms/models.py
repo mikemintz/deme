@@ -1261,8 +1261,8 @@ class Subscription(Item):
         unique_together = ('contact_method', 'item')
 
     # Fields
-    contact_method      = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'])
-    item                = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view Item.action_notices'])
+    contact_method      = FixedForeignKey(ContactMethod, related_name='subscriptions', verbose_name=_('contact method'), required_abilities=['add_subscription'], help_text=_("The contact method that will be invoked when the item is acted upon"))
+    item                = FixedForeignKey(Item, related_name='subscriptions_to', verbose_name=_('item'), required_abilities=['view Item.action_notices'], help_text=_("The item being subscribed to"))
     deep                = FixedBooleanField(_('deep subscription'), default=False, help_text=_("Enable this to extend your subscription to all members of this collection (applies only to collections)"))
     subscribe_edit      = FixedBooleanField(_('subscribe edit'), default=True, help_text=_("Enable this to receive notifications about edits"))
     subscribe_delete    = FixedBooleanField(_('subscribe delete'), default=True, help_text=_("Enable this to receive notifications about deletes"))
