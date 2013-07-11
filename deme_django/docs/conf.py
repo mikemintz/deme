@@ -25,8 +25,8 @@ import sys, os
 from django.core.management import setup_environ
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from deme_django import settings
-setup_environ(settings)
+import os
+os.environ['DJANGO_SETTINGS_MODULE'] = 'deme_django.settings'
 
 # General configuration
 # ---------------------
@@ -49,7 +49,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Deme'
-copyright = u'2009, Mike Mintz'
+copyright = u'2013, Mike Mintz'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

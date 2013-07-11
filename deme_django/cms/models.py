@@ -251,8 +251,6 @@ class Item(models.Model):
     email_list_address                  = models.CharField(_('email list address'), max_length=63, null=True, blank=True, unique=True, default=None, validators=[RegexValidator(email_local_address_re1, 'Field must be a valid local part of an email address (before the at-sign)'), RegexValidator(email_local_address_re2, 'Cannot be of the form "item-#" or "comment-#"')], help_text=_('(Advanced) The local part (before the at-sign) of the to email address of emails sent to subscribers of this item'))
     email_sets_reply_to_all_subscribers = FixedBooleanField(_('email sets reply to all subscribers'), default=True, help_text=_('(Advanced) For the reply-to field of emails sent to subscribers of this item: if set, reply to all subscribers, else reply to sender'))
 
-    help_text = "Default item help text"
-
     def __unicode__(self):
         return u'%s[%s] "%s"' % (self.item_type_string, self.pk, self.name)
 
@@ -2867,7 +2865,4 @@ def get_item_type_help_text(name):
         # then the helptext is not from that specific item but a parent
         help_text = "<p><b>%s</b> is a type of %s.</p>%s" % (item_type._meta.verbose_name.capitalize(), item_type_iter._meta.verbose_name.capitalize(), help_text)
 
-    if help_text == None:
-        if item_type and item_type.help_text:
-            return item_type.help_text
     return help_text

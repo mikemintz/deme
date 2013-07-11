@@ -116,6 +116,9 @@
       <div class="help_text">
       {{ item.display_help_text|safe }}
       </div>
+      <div class="help_footer">
+      {% include "help_text/_help_footer.html" %}
+      </div>
     </div>
   </div>
 {% else %}
@@ -141,7 +144,9 @@
       {% display_item_type_help_text item_type_lower %}
     </div>
     {% endif %}
-
+    <div class="help_footer">
+    {% include "help_text/_help_footer.html" %}
+    </div>
   </div>
 {% endif %}
 

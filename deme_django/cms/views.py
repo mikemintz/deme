@@ -1027,7 +1027,7 @@ class AuthenticationMethodViewer(ItemViewer):
 
     def type_login_html(self):
         self.context['action_title'] = 'Login'
-        self.context['metabar_contents'] = u'Login as a particular agent'
+        self.context['metabar_contents'] = u'Login as a particular agent.'
         if self.request.method == 'GET':
             login_as_agents = Agent.objects.filter(active=True).order_by('name')
             login_as_agents = self.permission_cache.filter_items('login_as', login_as_agents)
@@ -1070,10 +1070,10 @@ class AuthenticationMethodViewer(ItemViewer):
             return HttpResponseRedirect(force_redirect_path)
         if self.cur_agent.is_anonymous():
             self.context['action_title'] = 'Logged out'
-            self.context['metabar_contents'] = u'You are now logged out'
+            self.context['metabar_contents'] = u'You are now logged out.'
         else:
             self.context['action_title'] = 'Logged in'
-            self.context['metabar_contents'] = u'You are now logged in'
+            self.context['metabar_contents'] = u'You are now logged in.'
         self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('authenticationmethod/loggedinorout.html')
         return HttpResponse(template.render(self.context))
