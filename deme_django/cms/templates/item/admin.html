@@ -3,9 +3,9 @@
 {% block content %}
 
 <ul>
-    <li><a href="{% url 'item_type_url' viewer="item" action="globalpermissions" %}">Global permissions</a></li>
-    <li><a href="{% url 'item_type_url' viewer="demesetting" action="modify" %}">Deme settings</a></li>
-    <li><a href="{% url 'item_type_url' viewer="site" action="list" %}">Sites</a></li>
+    <li><a href="{% url 'item_type_url' viewer="item" action="globalpermissions" %}">Global permissions</a> - Change permissions that apply to all items throughout the site</li>
+    <li><a href="{% url 'item_type_url' viewer="demesetting" action="modify" %}">Deme settings</a> - Change settings for various parts of the site</li>
+    <li><a href="{% url 'item_url' viewer='site' action="edit" noun=cur_site.pk %}">Edit Current Site</a> (<a href="{% url 'item_type_url' viewer="site" action="list" %}">All Sites</a>) - View and change Site settings</li>
 </ul>
 
 {% endblock content %}

@@ -1117,7 +1117,7 @@ class CalculateHistory(template.Node):
         item = context['item']
 
         result = []
-        versions = item.versions.all()
+        versions = item.versions.all().order_by('-version_number')
         n_versions = len(versions) + 1
         result.append("<h3>%d version%s</h3>" % (n_versions, '' if n_versions == 1 else 's'))
 
@@ -1128,7 +1128,7 @@ class CalculateHistory(template.Node):
         action_notice_map = {}
         for action_notice in action_notices:
             action_notice_map[action_notice.action_item_version_number] = action_notice
-        for version in itertools.chain(versions, [item]):
+        for version in itertools.chain([item], versions):
             action_notice = action_notice_map[version.version_number]
             version_url = reverse('item_url', kwargs={'viewer': context['viewer_name'], 'action': 'show', 'noun': item.pk}) + '?version=%s' % version.version_number
             version_name = u'Version %d' % version.version_number
@@ -1172,7 +1172,7 @@ class CalculateActionNotices(template.Node):
         result.append('<div>')
         if agentcan_helper(context, 'view Item.action_notices', item):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
-            action_notices = ActionNotice.objects.filter(Q(action_item=item) | Q(action_agent=item)).order_by('action_time')
+            action_notices = ActionNotice.objects.filter(Q(action_item=item) | Q(action_agent=item)).order_by('-action_time')
             action_notice_pk_to_object_map = {}
             for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
                 select_related_fields = ['action_agent__name', 'action_item__name']
