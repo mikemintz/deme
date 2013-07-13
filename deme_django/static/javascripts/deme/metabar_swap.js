@@ -173,7 +173,7 @@ $(function(){
   if (initial_section) {
     metabar_show_section($('#' + initial_section));
   } else {
-    metabar_show_section($('#metadata_content_item_details'));
+    //metabar_show_section($('#metadata_content_item_details'));
   }
 
   function metabar_load_section(collapse, cb) {
