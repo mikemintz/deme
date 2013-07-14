@@ -1,20 +1,20 @@
-Welcome to Deme. Deme is a tool for making collaborative websites.
+Welcome to Deme. Deme is a tool for making collaborative websites. This video shows you how to set up your Deme website.
 
 --- Getting Started ---
 
-The first time you open Deme after installing it onto your web server, it'll look like this. Along the top is the Toolbar. Let's go ahead and log in by clicking on the Login dropdown and selecting Login As.
+The first time you open Deme after installing it, it'll look like this. Along the top is the Toolbar, on the left are the logo and some menus, and the rest of the page is content. Let's get started by logging in, clicking on the Login dropdown over here in the top right corner, and selecting Login As.
 
-We can directly login as Admin since we haven't set up user accounts or otherwise secured the site yet. Let's go ahead and get back to the home page.
+Since we haven't yet set up user accounts, we can login directly as the Admin. This is something we'll change later so that not everyone will be able to login as Admin. Now that we're logged in, let's go back to the home page.
 
-The toolbar is currently in Basic Mode, which besides letting people login, also contains search and accessibility functionality. The toolbar also has an Advanced Mode that we can turn on by clicking on Tools. Now we can take more actions like editing the home page. This we do by going to Actions and then Edit.
+The toolbar which we used to login with, is in Basic Mode, with tools for viewing the site, like a search button and font size button. We can switch the toolbar to Advanced Mode by clicking on Tools over here on the left. Now we see a lot more tools for editing and setting up the site. One of the most important items is the Actions menu, over here, which we're going going to open and use to Edit the home page.
 
-Let's go ahead and change things around a bit, then save the document. As you can see, our changes are now on the home page.
+And here's the Edit view. Let's go ahead and change things around, I'm going to change the first line to "Welcome to Deme, a tool for making collaborative sites". Now I save the document. As you can see, those changes are now on the home page.
 
-Also, in advanced mode, there's the Metabar pane that we can show by clicking on the information icon. It'll show use useful information like action notices that we just edited the page, versions so that we can see what the page looked like before we edited it, and help for further information.
+Another important part of advanced mode is the Metadata bar, which we can show and hide by clicking on the information icon. There's a lot of information here about what we're looking at. For example, if we open up the Action Notices, it'll show the history of the document, showing how we just edited it. Or if we open up Versions, we can see how the page looks before we edited it. There's also Help, which tells you more about the type of document you're looking at.
 
 --- Customizing Your Site ---
 
-Okay so now let's change the title of the site to something different. First, let's click on Admin in the footer. We want to change our site settings, so click "Edit Current Site". This takes us directly to editing the current site. Now let's scroll down until we get to Site Title. Let's change that to "Deme Demo" and save. Now we see that the title has changed both on the left and on the tab. Perhaps we also have a logo we'd like to use. Let's edit the site again, scroll down to Site logo, and click on the dot dot dot.
+Okay so now let's change the title of the site to something else. First, let's click on Admin in the footer. We want to change our site settings, so click "Edit Current Site". This takes us directly to editing the current site. Now let's scroll down until we get to Site Title. Let's change that to "Deme Demo" and save. Now we see that the title has changed both on the left and on the tab. Perhaps we also have a logo we'd like to use. Let's edit the site again, scroll down to Site logo, and click on the dot dot dot.
 
 Since we don't have any image documents yet, let's go ahead and create a new one. Let's call it "Deme Demo Logo", find the file, then create the image document. Notice that now Site logo is set to Deme Demo Logo. Let's save and now our new image logo is there.
 
@@ -22,7 +22,7 @@ Since we don't have any image documents yet, let's go ahead and create a new one
 
 Now let's go ahead and add some new users.
 
-- Go to Actions > New item and select "New person". The `Name` is what's displayed publicly throughout the site and in general is the person's full name. You can also add a picture of that person in the same way that you uploaded a logo. Name your person something you'll remember.
+- Go to Actions > Create and select "New person". The `Name` is what's displayed publicly throughout the site and in general is the person's full name. You can also add a picture of that person in the same way that you uploaded a logo. Name your person something you'll remember.
 
 - Let's go ahead and make a second person. So that we'll have enough to make a group.
 
@@ -31,7 +31,7 @@ New Groups
 
 Now let's make a group to put our new users in.
 
-- Go to Actions > New item and select "New group". Like persons, groups have names and an image. Name your group something you'll remember, and if you'd like, give it an image.
+- Go to Actions > Create and select "New group". Like persons, groups have names and an image. I'm going to name mine the Agora and give it an image.
 
 - Create the group. After creating it, you'll see the group page, which doesn't have anyone on it yet.
 
@@ -44,15 +44,15 @@ New Poll
 
 Now let's go ahead and make a poll for our group to take.
 
-- Go to Actions > New item and choose New agree disagree poll.
+- Go to Actions > Create and choose New agree disagree poll.
 
-- Name your poll as you like, perhaps something like "Exercise Poll". Under `question` you could put something like "How do you feel about exercise?"
+- Name your poll as appropriate. I'm going to name mine "Philosophy Poll". Under `question` I'm going to put "Do you adhere to these philosophical statements?"
 
-- Most importantly, each poll needs to have a group it's for. Under `Eligibles` type in the group you just created. There are also options to control if people can see who has voted and to allow people to change their answers. Create the poll.
+- Most importantly, each poll needs to have a group it's for. Under `Eligibles` I'm going to select my group, Agora. There are also options to control if people can see who has voted and to allow people to change their answers. Create the poll.
 
 - Now we need to add propositions to the poll. Go ahead and click "Add a Proposition".
 
-- Let's say I want to find out whether people think that government ought to provide free exercise classes. For the `item name`, I would put "Free Exercise Classes", under `Summary text` I would put "Should government be mandated to provide free exercise classes for all US citizens", and in the `Body` I would put further details about the proposition, like why it might be a good idea, why it might not be, etc. After you've completed adding details to your proposition hit Create.
+- Let's say I want the first one to be about wisdom. For the `item name`, I would put "Wisdom", under `Summary text` I would put "Wisdom means knowing that you know nothing", and in the `Body` I would put further details about the proposition, like why the statement might be correct, why not, etc. Click create after you're done typing in your details.
 
 - Now you'll see your first proposition listed, with the name and summary visible and the details listed under `Read More`. You'll also see Poll Results, of which we currently have none. Go ahead and create at least one more proposition in the same way.
 
@@ -66,6 +66,7 @@ Let's now try taking the poll.
 - Notice that all of the administrative options are gone and you simply have a method to take the poll. Agree and disagree as you will and enter a personal statement if you'd like. Then submit.
 
 - Now you'll be able to see the poll results so far and if you had selected to allow people to take the poll again when making it, you'd be able to retake the poll.
+
 
 Creating a discussion board
 ---------------------------

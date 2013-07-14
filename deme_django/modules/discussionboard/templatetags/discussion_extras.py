@@ -26,26 +26,26 @@ class CalculateComments(template.Node):
                 comment_body = escape(comment.body).replace('\n', '<br />')
             else:
                 comment_body = ''
-            result.append(u'<div style="margin-bottom: 5px; padding: 5px; border: 2px solid #000; background-color: #%s">' % ('def' if len(parents) == 0 else 'eee' if len(parents) % 2 == 0 else 'fff'))
+            result.append(u'<div style="margin-bottom: 5px; padding: 5px; border: 1px solid #ddd; border-width: 1px 0; background-color: #%s">' % ('f9f9f9' if len(parents) == 0 else 'f9f9f9' if len(parents) % 2 == 0 else 'fff'))
             if agentcan_helper(context, 'view Item.creator', comment):
                 result.append('<div style="font-weight: bold;">%s</div>' % get_viewable_name(context, comment.creator))
             result.append(u'<div>%s</div>' % comment_body)
             result.append(u'</div>')
             result.append(u'<div id="comment%s" style="display: none;"><form onsubmit="if (this[\'body\'].value.trim() == \'\') { alert(\'You must fill out a body for your reply\'); return false; } return true;" method="post" action="%s?redirect=%s">'% (comment.pk, reverse('item_url', kwargs={'viewer': 'discussion', 'noun': context['discussion_board'].pk, 'action': 'createreply'}), urlquote(full_path)))
-            result.append(u'<input name="name" type="hidden" value="Re: %s" /><div><textarea name="body" style="height: 100px; width: 100%%;"></textarea></div>' % (comment.name))
+            result.append(u'<input name="name" type="hidden" value="Re: %s" /><p><textarea name="body" style="height: 100px; width: 100%%;"></textarea></p>' % (comment.name))
             permission_editor_html = PermissionEditor(None, target_level='one', privacy_only=False, is_new_item=True, accordion_comment_parent=comment).render(context)
             result.append(u'<div style="display: none;">%s</div>' % permission_editor_html)
-            result.append(u'<div><input type="submit" value="Submit reply" /></div><input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" />' % (comment.pk, comment.version_number))
+            result.append(u'<p><input type="submit" value="Submit reply" class="btn btn-primary" /></p><input type="hidden" name="item" value="%s" /><input type="hidden" name="item_version_number" value="%s" />' % (comment.pk, comment.version_number))
             result.append(u'</form></div>')
-            result.append(u'<div style="margin-bottom: 10px;">')
+            result.append(u'<div style="margin-bottom: 5px;">')
             if agentcan_helper(context, 'comment_on', comment):
-                result.append(u'<div style="float: right;"><a href="#" onclick="$(\'#comment%s\').show(); return false;" class="fg-button ui-widget ui-state-default fg-button-icon-left ui-corner-all" style="background: #ffcc99;"><span class="ui-icon ui-icon-comment"></span>Reply</a></div>' % comment.pk)
+                result.append(u'<div style="float: right;"><a href="#" onclick="$(\'#comment%s\').show(); return false;" class="btn btn-default"><span class="glyphicon glyphicon-comment"></span> Reply</a></div>' % comment.pk)
             if agentcan_helper(context, 'view Item.created_at', comment):
-                result.append('<div style="font-style: italic;">%s</div>' % comment.created_at.strftime("%a %b %d %Y %I:%M %p"))
+                result.append('<div class="datetime" style="margin-left:5px">%s</div>' % comment.created_at.strftime("%B %d, %Y, %l:%M %p"))
             result.append(u'<div style="clear: both;"></div>')
             result.append(u'</div>')
             if len(parents) == 0:
-                result.append(u'<div style="border-bottom: 2px solid #000; margin-top: 10px; margin-bottom: 15px;"></div>')
+                result.append(u'<div style="border-bottom: 1px solid #ddd; margin-top: 5px; margin-bottom: 15px;"></div>')
             for subcomment in reversed(sorted(comment_info['subcomments'], key=lambda x: x['comment'].created_at)):
                 result.append(u'<div style="margin-left: 50px;">')
                 add_comment_to_div(subcomment, parents + (comment_info,))
