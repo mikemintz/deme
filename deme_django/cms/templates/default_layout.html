@@ -1,8 +1,4 @@
-{% extends "base_layout.html" %}
-
-{% block chat %}
-<!-- delete this block to allow chat -->
-{% endblock chat %}
+{% extends "base_layout.html" %}{% load item_tags %}
 
 {% block banner-section %}
 <div class="banner-section">
@@ -12,6 +8,38 @@
 
 {% block tabs-section %}
 <div class="tabs-section">
-<!-- add a navigation tab section here -->
+<!-- Sample navigation tabs: -->
+<!--
+  <ul class="nav nav-tabs">
+    <li><a href="/">1: Welcome</a></li>
+    <li><a href="/viewing/discussion/9">2: Discussion</a></li>
+    <li><a href="/viewing/agreedisagreepoll">3: Polls</a></li>
+    <li><a href="/viewing/djangotemplatedocument/8">4: Sample Layout</a></li>
+  </ul>
+-->
 </div>
 {% endblock tabs-section %}
+
+{% block sidebar-section %}
+<div class="sidebar-section">
+  <div class="panel">
+    <div class="panel-heading">
+      Side Menu
+    </div>
+    <ul>
+        <li{% ifequal full_path "/" %} style="font-weight: bold;"{% endifequal %}><a href="/">Home</a></li>
+        <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url 'item_type_url' viewer="item" %}">Items</a></li>
+    </ul>
+  </div>
+  <div class="panel recently-viewed">
+    <div class="panel-heading">
+      Recently Viewed
+    </div>
+    {% recently_viewed %}
+  </div>
+</div>
+{% endblock sidebar-section %}
+
+{% block chat %}
+<!-- delete this block to allow chat -->
+{% endblock chat %}

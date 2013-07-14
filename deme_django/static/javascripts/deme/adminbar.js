@@ -14,6 +14,15 @@ if (checker.android) {
   $('html').addClass('ua-android');
 }
 
+// check tab areas to see if is current page.
+$(function(){
+  var pathname = window.location.pathname;
+  $('a[href="' + pathname + '"],a[href="' + window.location + '"]').each(function(){
+    $(this).closest('li').addClass('active');
+  });
+});
+
+
 $(function(){
   // if actions menu is empty, remove it
   if ($.trim($('#actions-btn .actions-menu').text()) == '') {

@@ -71,9 +71,9 @@ Let's now try taking the poll.
 Creating a discussion board
 ---------------------------
 
-Now let's try adding a discussion.
+Now let's try adding a discussion board.
 
-- Go to Actions > New item and choose New Discussion Board. Name it "Exercise Discussion Board"
+- Go to Actions > New item and choose New Discussion Board. I'm going to Name it "Agora Discussion Board". I'm going to go ahead and kick it off.
 
 Making a new page
 -----------------
@@ -81,6 +81,8 @@ Making a new page
 - Go ahead and log in as admin.
 
 - Go to Actions > New item and choose HTML document. Put a memorable page title in Item name like "Exercise Experts" and use the WYSIWYG editor to create your page. When you're done making it, go ahead and click create.
+
+adding the socrates link to the side menu only scratches the surface of what we can do with the layout. For example, I've prepared a layout in advance that uses custom styles to really change how everything looks. To Learn more about the layout, please see the Technical Deme Guide, found under info, help, technical deme guide.
 
 Uploading a PDF/DOC/other file
 ------------------------------
@@ -150,3 +152,9 @@ Create a new poll
 Take the poll
 Add multiple items to a collection
 Search for items
+
+
+Securing the Site
+-----------------
+
+Now that we've got
