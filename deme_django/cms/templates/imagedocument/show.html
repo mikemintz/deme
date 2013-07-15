@@ -5,8 +5,8 @@
 {% subclassfields %}
 
 {% ifagentcan 'view FileDocument.datafile' item %}
-<img src="{{ item.datafile.url }}" />
+<p><a href="{{ item.datafile.url }}"><img src="{{ item.datafile.url }}" alt="{{ item.name }}" /></a></p>
+<p><a href="{{ item.datafile.url }}"><i class="glyphicon glyphicon-link"></i> Link to image</a></p>
 {% endifagentcan %}
-
 {% endblock content %}
 
