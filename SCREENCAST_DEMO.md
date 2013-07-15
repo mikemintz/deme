@@ -84,6 +84,15 @@ Making a new page
 
 adding the socrates link to the side menu only scratches the surface of what we can do with the layout. For example, I've prepared a layout in advance that uses custom styles to really change how everything looks. To Learn more about the layout, please see the Technical Deme Guide, found under info, help, technical deme guide.
 
+
+Now that we have a group, a poll, a discussion board, and an HTML page, let's do something a little more advanced and make them into tabs along the top of the site. We'll do this by editing the layout of our site. The first thing we'll want to do is log in as Admin so that we have the right permissions. Next, we need to find the correct layout. Let's go to Admin in the footer, then view current site. Here we see that the layout is set to Deme Layout. Let's click on that to edit it.
+
+The deme layout is written in a combination of HTML and something called Django template tags. The Django template tags define different parts of the page as "blocks", so here we can see there's a banner-section block, here's the tabs-section block, and here's the sidebar-section. We're interested in the tabs-section, so let's stick with that. if you're familiar with HTML, you'll notice that there are comment tags wrapping the main part of the tabs, that's why they aren't showing up right now. Let's go ahead and edit the layout to add our pages.
+
+The thing to notice here is that we're working with a list of links. <li> means list item, so you can see we've got a bunch of list items here. <a> means anchor, in other words a link, and the href part tells the browser where this link goes. Finally, inside the <a> is the label of the link. This part is all HTML.
+
+Now I've already gone through and copy and pasted the URLs of each of our pages, so I'm going to go ahead and paste it in.
+
 Uploading a PDF/DOC/other file
 ------------------------------
 
@@ -157,4 +166,12 @@ Search for items
 Securing the Site
 -----------------
 
-Now that we've got
+Now that we've got basic content and navigation, let's secure our site. The first thing we want to do is to give our users a way to log in.
+
+The site isn't too secure as long as everyone can use the "login as" ability. So we need to change the global permissions. First, we want to log in as Admin.
+
+<li><a href="/">Home</a></li>
+<li><a href="/viewing/group/42">Group</a></li>
+<li><a href="/viewing/agreedisagreepoll/48">Poll</a></li>
+<li><a href="/viewing/discussionboard/60">Discuss</a></li>
+<li><a href="/viewing/htmldocument/63">Bio</a></li>

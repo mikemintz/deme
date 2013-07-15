@@ -1,5 +1,5 @@
-Installation
-============
+Installing Deme
+===============
 
 Checking out the source code
 ----------------------------
@@ -98,7 +98,7 @@ You need to route incoming mail to ``script/incoming_email.py``. I have Deme ins
 
 I then added the following to the end of ``/etc/postfix/main.cf``::
 
-  # Deme incoming mail    
+  # Deme incoming mail
   transport_maps = regexp:/etc/postfix/deme_transport
   virtual_mailbox_domains = deme.stanford.edu
   virtual_mailbox_base = /var/mail
@@ -140,50 +140,50 @@ Here's what I have in my apache ``/etc/apache2/sites-available/deme`` config fil
     <VirtualHost *:80>
         ServerName deme.stanford.edu
         ServerAlias deme
-        
+
         Alias /static /var/www/deme/deme_django
         <Location "/static">
             SetHandler None
         </Location>
-        
+
         Options -indexes
         RewriteEngine On
         RewriteRule   ^/static/modules/([^/]*)/(.*)  /static/modules/$1/static/$2  [QSA,L,PT]
         RewriteRule   ^/static/(.*)  /static/static/$1  [QSA,L,PT]
-        
+
         WSGIScriptAlias / /var/www/deme/deme_django/apache/django.wsgi
-        
+
         BrowserMatch ^Mozilla/4 gzip-only-text/html
         BrowserMatch ^Mozilla/4.0[678] no-gzip
         BrowserMatch bMSIE !no-gzip !gzip-only-text/html
         AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript application/x-javascript
     </VirtualHost>
-    
+
     <VirtualHost *:443>
         ServerName deme.stanford.edu
         ServerAlias deme
-        
+
         SSLEngine On
         SSLCertificateFile /etc/apache2/ssl/server.crt
         SSLCertificateKeyFile /etc/apache2/ssl/server.key
-        
+
         <Location "/viewing/webauthaccount/login">
             AuthType WebAuth
             Require valid-user
         </Location>
-        
+
         Alias /static /var/www/deme/deme_django
         <Location "/static">
             SetHandler None
         </Location>
-        
+
         Options -indexes
         RewriteEngine On
         RewriteRule   ^/static/modules/([^/]*)/(.*)  /static/modules/$1/static/$2  [QSA,L,PT]
         RewriteRule   ^/static/(.*)  /static/static/$1  [QSA,L,PT]
-        
+
         WSGIScriptAlias / /var/www/deme/deme_django/apache/django.wsgi
-        
+
         BrowserMatch ^Mozilla/4 gzip-only-text/html
         BrowserMatch ^Mozilla/4.0[678] no-gzip
         BrowserMatch bMSIE !no-gzip !gzip-only-text/html

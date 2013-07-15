@@ -7,19 +7,20 @@
 <h3>General</h3>
 <ul>
   <li>Switch between Basic and Advanced Mode by clicking the <i class="glyphicon glyphicon-cog"></i> <b>Gear icon</b> at the top left of the page.</li>
-  <li>Items represent most of the content on a Deme site. While in Advanced Mode, create a new item by clicking on the Actions menu, then <i class="glyphicon glyphicon-file"></i> <b>Create</b>. Other actions are also found here.</li>
+  <li><a href="{% url 'item_type_url' viewer='item' %}">Items</a> represent most of the content on a Deme site. While in Advanced Mode, create a new item by clicking on the Actions menu, then <i class="glyphicon glyphicon-file"></i> <b>Create</b>. Other actions like Copying, Commenting, and Modifying Permissions are also found on the Actions menu.</li>
   <li>Click the <i class="glyphicon glyphicon-info-sign"></i> <b>Metadata icon</b> to show and hide the Metadata pane. When viewing an item, the Metadata pane contains useful information about that particular item.
 </ul>
-
-<h3>Permissions</h3>
-<p>Permissions control what users can see and do on the site. <a href="{% url 'item_type_url' viewer='item' action='permissionshelp' %}">Learn how to use Permissions</a>.</p>
 
 <h3>Customizing the Site</h3>
 <ul>
   <li><a href="{% url 'item_url' viewer='site' action="edit" noun=cur_site.pk %}">Edit the current site</a> to change the website title, logo, and more.</li>
   <li>Change the contents of the home page by <a href="/">going to the home page</a>, clicking on the Actions menu, then <i class="glyphicon glyphicon-edit"></i> <b>Edit</b>.</li>
-  <li>See the <a href="http://deme.readthedocs.org">Technical Deme Guide</a> for details on advanced site customization.</li>
+  <li>See the <a href="http://deme.stanford.edu/docs">Technical Deme Guide</a> for more details on site customization.</li>
 </ul>
+
+<h3>Permissions</h3>
+<p>Permissions control what groups and particular users can see and do on the site.</p>
+<p>There are both permissions on specific items (accessed from the Actions menu when viewing that item) as well as general permissions (found under the <a href="{% url 'item_type_url' viewer='item' action="admin" %}">Admin link</a> in the footer). <a href="{% url 'item_type_url' viewer='item' action='permissionshelp' %}">Learn how to use Permissions</a>.</p>
 
 <h3>Preparing for Launch</h3>
 <p>When Deme is first installed, anyone can login as Admin. After you've set up user accounts that you can log into, you should change this:</p>
@@ -33,4 +34,3 @@
   <li>Save the permissions.</li>
 </ol>
 {% endblock %}
-<a href="{% url 'item_type_url' viewer='person' action="new" %}">

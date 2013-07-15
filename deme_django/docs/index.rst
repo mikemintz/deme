@@ -5,7 +5,7 @@
 Welcome to Deme's documentation!
 ================================
 
-Contents:
+Deme is a tool for making collaborative websites. Contents:
 
 .. toctree::
    :maxdepth: 2

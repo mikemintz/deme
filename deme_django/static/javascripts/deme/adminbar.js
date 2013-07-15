@@ -17,7 +17,7 @@ if (checker.android) {
 // check tab areas to see if is current page.
 $(function(){
   var pathname = window.location.pathname;
-  $('a[href="' + pathname + '"],a[href="' + window.location + '"]').each(function(){
+  $('.page-layout').find('a[href="' + pathname + '"],a[href="' + window.location + '"]').each(function(){
     $(this).closest('li').addClass('active');
   });
 });

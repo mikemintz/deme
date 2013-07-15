@@ -1,10 +1,10 @@
-Usage
-=====
+Using Deme
+==========
 
 Deme is designed for the Chrome, Safari, and Firefox browsers. It should also work in Internet Explore 8 and above, but will have visual inconsistencies.
 
-Interface
----------
+Interface Guide
+---------------
 
 At the top is the Toolbar, which allows users to Log in, Search, etc. By default, the Toolbar is in "Basic Layout", which hides the more advanced functionality. Clicking on the Gear icon at the very top left switches to "Advanced Layout", which introduces more advanced funtionality.
 
@@ -30,8 +30,8 @@ Buttons from left to right not present in the Basic Layout:
 
 
 
-Customizing a Deme Site
------------------------
+Customizing the Site
+--------------------
 
 After your Deme site is appropriately set up, many components can be easily customized. Be sure to log in as Admin in order to have permission to make many of these changes.
 
@@ -52,17 +52,20 @@ Edit the Home Page
 1. From the ``Home Page``, click the ``Edit`` button
 2. The editor uses TinyMCE as a WYSIWYG editor. After editing, click ``Save HTML document`` to commit your changes.
 
+Advanced Customization
+----------------------
+
 Hiding `Advanced Layout`
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-To change who can see the advanced layout tools, you'll need to change `Advanced Layout` under `Global Permissions`:
+To change who can see the Advanced toolbar, you'll need to change `Advanced Layout` under `Global Permissions`:
 
 1. Log in as Admin by clicking on the person icon in the top right of the site, then clicking `Login as` and choosing `Admin`
 2. Go to the site Admin page by clicking its link in the footer
 3. Go to Global Permissions
 4. Under `Everyone`, remove the `Advanced Layout` permission by clicking its [-] button and then save. Now the only user who sees the Advanced Layout bar is the Admin.
 5. Let's say we want logged in users to see the Advanced Layout bar but not Anonymous users. First, let's allow all users to see the bar by reenabling `Advanced Layout` under `Everyone` by clicking [+] and saving. Now, let's click `Assign a Permission to a User` at the very bottom of the permissions and enter `Anonymous` and then click `Add Collection`. Next, in the newly generated permission area for Anonymous, add a `New Permission`, from its dropdwon menu select `Advanced Layout`, click [-] to disallow, and then finally `Save Permissions`.
-6. Now if you visit the site as an Anonymous user, you'll no longer see the Advaned Layout tools.
+6. Now if you visit the site as an Anonymous user, you'll no longer see the Advanced Layout tools.
 
 Understanding DjangoTemplateDocuments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -77,25 +80,37 @@ DjangoTemplateDocuments allow many different sections of the page to be modified
 * ``{% block sidebar-section %}...{% endblock %}`` addresses the sidebar underneath the logo
 * ``{% block custom_css %}...{% endblock %}`` allows insertion of custom CSS styles
 
-To customize your site, you edit these different sections. To learn more about the syntax and technical details, visit [Django's Templates Documentation](https://docs.djangoproject.com/en/1.2/ref/templates/)
+To customize your site, you edit these different sections. To learn more about the syntax and technical details, visit [Django's Templates Documentation](https://docs.djangoproject.com/en/1.5/ref/templates/)
 
 Switching the Site Layout
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1. Go to your current site's settings. By default, your site will be ``Default Site``. Either look for ``Default Site`` using search or, in the footer, click ``Admin > Sites > Default Site``.
 2. The ``Default layout`` is used on all pages of the current site. By default, it should be ``Deme Layout``. Click on it to open it for editing.
-  * Deme also comes with some sample layouts. By default they are called "Sample Layout" and "Sample Forum Layout". Change the ``Default layout`` to one of them to see what they do.
+  * Deme also comes with some sample layouts. By default they are called "Sample Layout" and "Sample Forum Layout". Change the ``Default layout`` to one of them for a very different look and feel.
 
 Editing the Site Layout
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 In the current layout, edit the different "blocks" to modify the site.
 
+Adding navigation tabs::
+
+  {% block tabs-section %}
+  <div class="tabs-section">
+    <ul class="nav nav-tabs">
+      <li><a href="/">Home</a></li>
+      <li><a href="/viewing/group/5">Group</a></li>
+      <li><a href="...">...</a></li>
+    </ul>
+  </div>
+  {% endblock %}
+
 Inserting a banner section::
 
   {% block banner-section %}
   <div class="banner-section">
-    <h3>Generic website banner text</h3>
+    <h3>Your banner text goes here</h3>
   </div>
   {% endblock banner-section %}
 
@@ -105,28 +120,13 @@ Adding custom CSS::
   .page-layout .logo-section a.logo {
     background: darkred;
   }
-  ...
   {% endblock %}
 
 Adding CSS/JS files::
 
   {% block head_append %}
   <link rel="stylesheet" href="http://www.yoursite.com/stylesheet.css" type="text/css">
-  ...
   {% endblock %}
-
-Adding tabs::
-
-  {% block tabs-section %}
-  <div class="tabs-section">
-    <ul class="nav nav-tabs">
-      <li {% ifequal full_path "/welcome" %}class="active"{% endifequal %}><a href="/welcome">Welcome</a></li>
-      ...
-    </ul>
-  </div>
-  {% endblock %}
-
-Notice the linked address (in this example "/welcome") is included twice to allow the tab to properly display.
 
 Editing the sidebar::
 
@@ -137,14 +137,14 @@ Editing the sidebar::
         Resources
       </div>
       <ul>
-          <li><a href="#">PDF Link Goes Here</a></li>
+          <li><a href="...">Link Goes Here</a></li>
           <li>...</li>
       </ul>
     </div>
   </div>
   {% endblock %}
 
-Showing a different footer to non-admins::
+Showing a different footer to users who aren't the Admin::
 
   {% block footer %}
     {% if cur_agent.is_admin %}
@@ -153,6 +153,24 @@ Showing a different footer to non-admins::
       This is the footer you see when you're not the admin.
     {% endif %}
   {% endblock footer %}
+
+Showing a log in form to visitors who aren't logged in::
+
+  {% block body_wrap %}
+    {% if cur_agent.is_anonymous %}
+      {% include "demeaccount/required_login_include.html" %}
+    {% else %}
+      {{ block.super }}
+    {% endif %}
+  {% endblock body_wrap %}
+
+Hiding chat::
+
+  {% block chat %}{% endblock %}
+
+To show site-wide chat, you'd simply delete that line from a layout.
+
+
 
 Using a DjangoTemplateDocument as the Home Page (Advanced)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
