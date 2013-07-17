@@ -171,7 +171,6 @@ Hiding chat::
 To show site-wide chat, you'd simply delete that line from a layout.
 
 
-
 Using a DjangoTemplateDocument as the Home Page (Advanced)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -181,3 +180,11 @@ Assuming you've created a DjangoTemplateDocument item you'd like to use as your 
 2. Edit ``Aliased item`` to be the desired item. Change ``Viewer`` to "djangotemplatedocument" and ``Action`` to "render".
 
 Using a DjangoTemplateDocument instead of an HtmlDocument allows editing of nearly all elements on a page instead of only the contents of the main content area.
+
+
+Using a single Deme installation with multiple domains/subdomains
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you have multiple domains or subdomains that point to your Deme installation, you can show different sites for each by using different Site objects.
+
+To see your sites, while logged in as Admin, click Admin in the footer, then All Sites. By default, you'll have one default site. From here, **Create a new site**, then change the ``Hostname`` to whatever domain or subdomain you'd like. This is where you can assign different layouts to your different sites.
