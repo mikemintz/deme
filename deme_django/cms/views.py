@@ -889,6 +889,20 @@ class ItemViewer(Viewer):
         template = loader.get_template('help_text/_getting_started.html')
         return HttpResponse(template.render(self.context))
 
+    def type_glossaryhelp_html(self):
+        self.context['action_title'] = 'Deme Glossary'
+        self.context['metabar_contents'] = u''
+        # Loop through all item types in alpha order
+        sorted_item_types = sorted(all_item_types(), key=lambda x: x._meta.verbose_name_plural.lower())
+        all_item_types_arr = [{'item_type': x, 'item_name_lower': x.__name__.lower(), 'url': reverse('item_type_url', kwargs={'viewer': x.__name__.lower()})} for x in sorted_item_types ]
+        self.context['all_item_types_arr'] = all_item_types_arr
+
+          # See if they have content
+          # Exclude if content is identical to Item content, or have it set to some other thing
+
+        template = loader.get_template('help_text/_glossary.html')
+        return HttpResponse(template.render(self.context))
+
     def item_diff_html(self):
         self.context['action_title'] = 'Changes'
         self.context['reference_version_number'] = self.request.GET.get('reference_version', '')

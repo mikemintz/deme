@@ -1,0 +1,20 @@
+{% extends layout %}
+{% load item_tags %}
+
+{% block content %}
+<p>Items represent most of the content on a Deme site. Click on each item type to learn more.</p>
+<div class="accordion">
+  {% for x in all_item_types_arr %}
+  <div class="accordion-group">
+    <div class="accordion-heading">
+      <a class="accordion-toggle capitalize" data-toggle="collapse" href="#item_{{ x.item_name_lower }}"><img src="{{x.item_type|icon_url:16}}" /> {% item_type_verbose_name x.item_type %}</a>
+    </div>
+    <div class="accordion-body collapse" id="item_{{ x.item_name_lower }}">
+      <div class="accordion-inner">
+      {% display_item_type_help_text x.item_name_lower %}
+      <a href="{{ x.url }}">See all {% item_type_verbose_name_plural x.item_type %}</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+{% endblock %}

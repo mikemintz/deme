@@ -8,7 +8,7 @@
 <h3>General</h3>
 <ul>
   <li>Switch between Basic and Advanced Mode by clicking the <i class="glyphicon glyphicon-cog"></i> <b>Gear icon</b> at the top left of the page.</li>
-  <li><a href="{% url 'item_type_url' viewer='item' %}">Items</a> represent most of the content on a Deme site. While in Advanced Mode, create a new item by clicking on the Actions menu, then <i class="glyphicon glyphicon-file"></i> <b>Create</b>. This is the way to make new users, groups, documents, and more.</li>
+  <li><a href="{% url 'item_type_url' viewer='item' %}">Items</a> represent most of the content on a Deme site. While in Advanced Mode, create a new item by clicking on the Actions menu, then <i class="glyphicon glyphicon-file"></i> <b>Create</b>. This is the way to make new users, groups, documents, and more. The <a href="{% url 'item_type_url' viewer='item' action='glossaryhelp' %}">Deme Item Glossary</a> collects information about all available item type.</li>
   <li>Other actions like Copying, Commenting, and Modifying Permissions are also found on the Actions menu.</li>
   <li>Click the <i class="glyphicon glyphicon-info-sign"></i> <b>Metadata icon</b> to show and hide the Metadata pane. When viewing an item, the Metadata pane contains useful information about that particular item.
 </ul>
@@ -40,5 +40,13 @@
 
 <h3>Uploading Files</h3>
 <p>Create either <a href="{% url 'item_type_url' viewer='filedocument' %}">file documents</a> or <a href="{% url 'item_type_url' viewer='imagedocument' %}">image documents</a> depending on what type of file you're trying to upload.</p>
+
+<h3>More Resources</h3>
+<ul>
+  <li><a href="http://www.youtube.com/watch?v=QDxpfJl8GXE">Setting Up Deme Video</a></li>
+  <li><a href="http://deme.stanford.edu/docs">Technical Deme Guide</a></li>
+  <li><a href="{% url 'item_type_url' viewer='item' action='permissionshelp' %}">Permissions Guide</a></li>
+  <li><a href="{% url 'item_type_url' viewer='item' action='glossaryhelp' %}">Deme Item Glossary</a></li>
+</ul>
 
 {% endblock %}

@@ -173,6 +173,14 @@ def item_type_verbose_name(item_type):
     return item_type._meta.verbose_name
 
 @register.simple_tag
+def item_type_verbose_name_plural(item_type):
+    if isinstance(item_type, basestring):
+        item_type = get_item_type_with_name(item_type)
+    elif isinstance(item_type, Item):
+        item_type = item_type.actual_item_type()
+    return item_type._meta.verbose_name_plural
+
+@register.simple_tag
 def media_url(path):
     fs_path = os.path.join(settings.MEDIA_ROOT, path)
     if os.path.exists(fs_path):
