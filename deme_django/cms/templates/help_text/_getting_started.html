@@ -26,7 +26,14 @@
 <p>Permissions control what groups and particular users can see and do on the site.</p>
 <p>There are both permissions on specific items (accessed from the Actions menu when viewing that item) as well as general permissions (found under the <a href="{% url 'item_type_url' viewer='item' action="admin" %}">Admin link</a> in the footer). <a href="{% url 'item_type_url' viewer='item' action='permissionshelp' %}">Learn how to use Permissions</a>.</p>
 
-<h3>Preparing for Launch</h3>
+<h3>Creating User Accounts</h3>
+<p>After <a href="{% url 'item_type_url' viewer='person' action="new" %}">creating a user</a>, you'll need to give them a login:</p>
+<ol>
+  <li>From the Actions menu, select Create, then Person. </li>
+
+</ol>
+
+<h3>Preparing for Launch: Restricting the Admin Account</h3>
 <p>When Deme is first installed, anyone can login as Admin. After you've set up user accounts that you can log into, you should change this:</p>
 <ol>
   <li>Open the <a href="{% url 'item_type_url' viewer='item' action="globalpermissions" %}">Global permissions</a>.</li>
@@ -37,6 +44,17 @@
   <li>Click the <b>- Minus sign</b> to make it a negative permission. This will prevent anonymous users from logging in as Admin.</li>
   <li>Save the permissions.</li>
 </ol>
+<p>Now only those who login can use the Admin.</p>
+
+<!--<h3>Preparing for Launch: Restricting Anonymous Actions</h3>
+<p>By default, Anonymous users can create files. To change this:</p>
+<ol>
+  <li>Open the <a href="{% url 'item_type_url' viewer='item' action="globalpermissions" %}">Global permissions</a>.</li>
+  <li>Click <i class="glyphicon glyphicon-profile"></i> <b>Assign a Permission to a User</b>.</li>
+  <li>In the popup, find "Anonymous" and add.</li>
+  <li>Under "Anonymous", create a <i class="glyphicon glyphicon-edit"></i> <b>New Permission</b>.</li>
+  <li>From the new permission's dropdown menu, choose the "Login As" permission.</li>
+</ol>-->
 
 <h3>Uploading Files</h3>
 <p>Create either <a href="{% url 'item_type_url' viewer='filedocument' %}">file documents</a> or <a href="{% url 'item_type_url' viewer='imagedocument' %}">image documents</a> depending on what type of file you're trying to upload.</p>

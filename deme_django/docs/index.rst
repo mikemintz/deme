@@ -12,6 +12,7 @@ Deme is a tool for making collaborative websites. Contents:
 
    installation
    usage
+   advancedscripts
    architecture
    code
 
