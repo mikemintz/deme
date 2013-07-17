@@ -27,6 +27,21 @@
             document.forms['real_password_form'].submit();
         }, "json");
     }
+    $(function(){
+        // if there is more than one password_form, delete the extras.
+        var forms = $('form[name="password_form"]');
+        if (forms.length > 1) {
+          for (var i = 1; i < forms.length; i++) {
+            $(forms[i]).remove();
+          }
+        }
+        var forms = $('form[name="real_password_form"]');
+        if (forms.length > 1) {
+          for (var i = 1; i < forms.length; i++) {
+            $(forms[i]).remove();
+          }
+        }
+    });
 </script>
 <form name="password_form" onsubmit="$('#login_dialog_password').dialog('hide'); encrypt_password(); return false;">
     <div>Username:</div>

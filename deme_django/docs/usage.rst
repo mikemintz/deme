@@ -185,7 +185,14 @@ Using a DjangoTemplateDocument instead of an HtmlDocument allows editing of near
 Using a single Deme installation with multiple domains/subdomains
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you have multiple domains or subdomains that point to your Deme installation, you can show different sites for each by using different Site objects.
+If you have multiple domains or subdomains that point to your Deme installation, you can show different sites for each by using different Site objects. For instance, let's say you are pointing both `domain1.com` and `domain2.com` to the same Deme installation. Let's also say that you've already set up domain1.com as desired but want `domain2.com` to appear differently.
 
-To see your sites, while logged in as Admin, click Admin in the footer, then All Sites. By default, you'll have one default site. From here, **Create a new site**, then change the ``Hostname`` to whatever domain or subdomain you'd like. This is where you can assign different layouts to your different sites.
+1. List all sites by, while logged in as Admin, clicking Admin in the footer, then All Sites. There should be one site, the default Site that shows whenever a subdomain doesn't match a particular Site.
+2. From here, click **Create a new site**.
+3. Set up the site to work with your domain. To do this, change the ``Hostname`` to "domain2.com".
+4. Now, the two sites should be using different Sites. Setting the ``Site title`` and ``Default layout`` are simple ways to check to make sure the sites are showing different content.
+
+Restricting a site to a single group
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 

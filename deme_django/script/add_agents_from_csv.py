@@ -14,10 +14,16 @@ filename = sys.argv[1]
 data = [x.strip().split(',') for x in open(filename)][1:]
 admin = Agent.objects.get(pk=1)
 for name, password, group_name in data:
-    agent = Agent(name=name)
-    agent.save_versioned(admin)
-    deme_account = DemeAccount(username=name, agent=agent)
-    deme_account.set_password(password)
-    deme_account.save_versioned(admin)
-    group = Group.objects.get(name=group_name)
-    Membership(item=agent, collection=group).save_versioned(admin)
+    try:
+        agent = Agent(name=name)
+        agent.save_versioned(admin)
+        deme_account = DemeAccount(username=name, agent=agent)
+        deme_account.set_password(password)
+        deme_account.save_versioned(admin)
+        try:
+            group = Group.objects.get(name=group_name)
+            Membership(item=agent, collection=group).save_versioned(admin)
+        except:
+            print sys.exc_info()[0]
+    except:
+        print sys.exc_info()[0]

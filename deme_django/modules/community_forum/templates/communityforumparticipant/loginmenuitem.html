@@ -44,6 +44,19 @@
 </div>
 <script type="text/javascript">
     $(document).ready(function () {
+        // if there is more than one password_form, delete the extras.
+        var forms = $('form[name="password_form"]');
+        if (forms.length > 1) {
+          for (var i = 1; i < forms.length; i++) {
+            $(forms[i]).remove();
+          }
+        }
+        var forms = $('form[name="real_password_form"]');
+        if (forms.length > 1) {
+          for (var i = 1; i < forms.length; i++) {
+            $(forms[i]).remove();
+          }
+        }
         $('#login_dialog_password').dialog({
             autoOpen: false,
             buttons: {"Login": function(){$(this).dialog('close'); document.forms['password_form'].onsubmit()}, "Cancel": function(){$(this).dialog("close")} },
