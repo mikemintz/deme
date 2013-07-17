@@ -3,7 +3,7 @@
 
 {% block content %}
 <p>Items represent most of the content on a Deme site. Click on each item type to learn more.</p>
-<div class="accordion">
+<div class="accordion" id="glossaryAccordion">
   {% for x in all_item_types_arr %}
   <div class="accordion-group">
     <div class="accordion-heading">
@@ -17,4 +17,31 @@
     </div>
   </div>
   {% endfor %}
+</div>
+
+<script>
+// change links to /viewer/itemtype to be local
+$(function(){
+  function openSection(name) {
+    var accordion = $('#item_' + name);
+    accordion.collapse('show');
+    $('html, body').animate({
+         scrollTop: accordion.offset().top - 50
+     }, 500);
+  }
+
+  var re = /^\/viewing\/(\w+)$/;
+  $('#glossaryAccordion a').each(function(){
+    var x = $(this);
+    var link = x.attr('href');
+    var matches = link.match(re);
+    if (matches) {
+      x.click(function(e){
+        e.preventDefault();
+        openSection(matches[1]);
+      });
+    }
+  });
+});
+</script>
 {% endblock %}

@@ -188,3 +188,4 @@ Using a single Deme installation with multiple domains/subdomains
 If you have multiple domains or subdomains that point to your Deme installation, you can show different sites for each by using different Site objects.
 
 To see your sites, while logged in as Admin, click Admin in the footer, then All Sites. By default, you'll have one default site. From here, **Create a new site**, then change the ``Hostname`` to whatever domain or subdomain you'd like. This is where you can assign different layouts to your different sites.
+
