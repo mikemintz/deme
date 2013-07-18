@@ -192,7 +192,12 @@ If you have multiple domains or subdomains that point to your Deme installation,
 3. Set up the site to work with your domain. To do this, change the ``Hostname`` to "domain2.com".
 4. Now, the two sites should be using different Sites. Setting the ``Site title`` and ``Default layout`` are simple ways to check to make sure the sites are showing different content.
 
-Restricting a site to a single group
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Restricting items to a single group
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+If you have a lot of different sites, you may wish to restrict certain items to certain groups. To do so:
 
+1. From the item you want restricted, go to the Actions menu, then Modify Permissions.
+2. Under `Everyone`, add a New Permission. Choose `View Anything` and click on the **[-]** negative permission. This make it so that no one can view the document.
+3. Click **Assign a Permission to a Group of Users**. Select the group you'd like to be able to see the document.
+4. Under your group, add a New Permission. Choose `View Anything` and click on the **[+]** positive permission. This makes it so that your group can view the document.
