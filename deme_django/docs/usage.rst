@@ -181,6 +181,8 @@ Assuming you've created a DjangoTemplateDocument item you'd like to use as your 
 
 Using a DjangoTemplateDocument instead of an HtmlDocument allows editing of nearly all elements on a page instead of only the contents of the main content area.
 
+Using Deme with Multiple Sites
+------------------------------
 
 Using a single Deme installation with multiple domains/subdomains
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
