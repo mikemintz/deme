@@ -87,7 +87,8 @@ Switching the Site Layout
 
 1. Go to your current site's settings. By default, your site will be ``Default Site``. Either look for ``Default Site`` using search or, in the footer, click ``Admin > Sites > Default Site``.
 2. The ``Default layout`` is used on all pages of the current site. By default, it should be ``Deme Layout``. Click on it to open it for editing.
-  * Deme also comes with some sample layouts. By default they are called "Sample Layout" and "Sample Forum Layout". Change the ``Default layout`` to one of them for a very different look and feel.
+
+  Deme also comes with some sample layouts. By default they are called "Sample Layout" and "Sample Forum Layout". Change the ``Default layout`` to one of them for a very different look and feel.
 
 Editing the Site Layout
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -208,6 +209,8 @@ If you have many items that you'd like to restrict, it's probably easiest to use
 
 1. Put the items you'd like to restrict into a collection. **Be sure to open the Advanced options and check `Permission Enabled` when doing so.** You can either create a new collection or use the Group's folio.
 2. From the collection you want restricted, go to the Actions menu, then Modify Permissions of Members.
-3. As with a single item, uner `Everyone`, add a New Permission. Choose `View Anything` and click on the **[-]** negative permission. This makes it so that by default users won't be able to see items in your collection.
+3. As with a single item, under `Everyone`, add a New Permission. Choose `View Anything` and click on the **[-]** negative permission. This makes it so that by default users won't be able to see items in your collection.
 4. Then click **Assign a Permission to a Group of Users**. Select the group you'd like to be able to see items in your collection.
 5. Under your group, add a New Permission, choose `View Anything` and click on the **[+]** positive permission. This makes it so that your group can view the items in the collection.
+
+If you added an item into a collection without checking `Permission Enabled` and want collection permissions to apply to that item, you'll need to change that item's Membership to the collection. To do this, open up the collection, open the Metadata panel, and select Related Data. Open up the list of Child Memberships and make sure all memberships have Permission Enabled checked.
