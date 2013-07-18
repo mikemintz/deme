@@ -231,6 +231,10 @@ $(function(){
 
   // set up permissions button
   $('.actions-wrap > li > a.permissions, .actions-menu a.permissions').click(function(e){
+  var $permissions = $("#metadata_content_permissions");
+    if ($permissions.hasClass('ajax-loaded') && !$permissions.hasClass('hide')) {
+      return true;
+    }
     e.preventDefault();
     // open metadata menu
     toggleMetabar('open');
