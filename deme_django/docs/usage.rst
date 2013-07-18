@@ -203,3 +203,11 @@ If you have a lot of different sites, you may wish to restrict certain items to 
 2. Under `Everyone`, add a New Permission. Choose `View Anything` and click on the **[-]** negative permission. This make it so that no one can view the document.
 3. Click **Assign a Permission to a Group of Users**. Select the group you'd like to be able to see the document.
 4. Under your group, add a New Permission. Choose `View Anything` and click on the **[+]** positive permission. This makes it so that your group can view the document.
+
+If you have many items that you'd like to restrict, it's probably easiest to use collection permissions:
+
+1. Put the items you'd like to restrict into a collection. **Be sure to open the Advanced options and check `Permission Enabled` when doing so.** You can either create a new collection or use the Group's folio.
+2. From the collection you want restricted, go to the Actions menu, then Modify Permissions of Members.
+3. As with a single item, uner `Everyone`, add a New Permission. Choose `View Anything` and click on the **[-]** negative permission. This makes it so that by default users won't be able to see items in your collection.
+4. Then click **Assign a Permission to a Group of Users**. Select the group you'd like to be able to see items in your collection.
+5. Under your group, add a New Permission, choose `View Anything` and click on the **[+]** positive permission. This makes it so that your group can view the items in the collection.
