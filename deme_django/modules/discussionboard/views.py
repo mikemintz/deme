@@ -21,7 +21,6 @@ class DiscussionViewer(ItemViewer):
                 last_posts[top_level_comment] = reply
             num_replies[top_level_comment] = all_replies.count()
         top_level_comments.sort(key=lambda x: last_posts.get(x, x).created_at)
-        top_level_comments.reverse()
         self.context['discussions'] = [{'comment':x, 'last_post':last_posts.get(x), 'num_replies':num_replies[x]} for x in top_level_comments]
         return HttpResponse(template.render(self.context))
 
