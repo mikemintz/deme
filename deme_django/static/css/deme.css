@@ -4786,14 +4786,17 @@ body.nonadmin #metabar {
 .adminbar .nav {
   white-space: nowrap;
 }
-.adminbar .nav > li > a {
+.adminbar .nav > li > a,
+.adminbar .nav > li > span {
+  padding: .6em;
+  line-height: 1.4285714285714286;
   color: #eeeeee;
   text-shadow: 0 -1px rgba(0, 0, 0, 0.25);
   font-size: 114.28571428571428%;
+}
+.adminbar .nav > li > a {
   border-right: 1px solid rgba(0, 0, 0, 0.15);
   border-left: 1px solid rgba(255, 255, 255, 0.15);
-  padding: .6em;
-  line-height: 1.4285714285714286;
 }
 .adminbar .nav > li > a:hover,
 .adminbar .nav > li > a:focus {
@@ -4891,7 +4894,7 @@ body.nonadmin #metabar {
 }
 .adminbar .nav.breadcrumbs > li > span {
   padding-right: 20px;
-  display: inline-block;
+  display: block;
   color: #eeeeee;
 }
 .adminbar .nav.breadcrumbs > li:last-child > a,
