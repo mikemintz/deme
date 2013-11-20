@@ -5571,6 +5571,9 @@ select[name$="time_meridiem"] {
   margin: 0;
   background: transparent;
 }
+.item-type-wrap .breadcrumb li {
+  margin-bottom: 0;
+}
 .item-type-wrap .item-type-container {
   border-top: 1px solid #e5e5e5;
   padding: 5px 10px;
@@ -5605,7 +5608,7 @@ html.embed .well .row {
   margin: 0 .25em .5em 0;
   display: inline-block;*/
 
-  margin-bottom: 5px;
+  padding: 5px;
 }
 .item-type-container span b {
   background: #ccc;
