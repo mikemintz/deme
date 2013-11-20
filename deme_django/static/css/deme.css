@@ -5000,7 +5000,7 @@ body.nonadmin #metabar {
   transition: width 0.15s;
   background: #f3fbfe;
   box-shadow: 3px 0 5px rgba(0, 0, 0, 0.05) inset;
-  border-left: 1px solid #999999;
+  border-left: 1px solid #cccccc;
 }
 #metabar .ui-resizable-w {
   cursor: col-resize;
