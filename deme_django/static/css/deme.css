@@ -211,7 +211,7 @@ table {
   img {
     max-width: 100% !important;
   }
-  @page  {
+  @page {
     margin: 2cm .5cm;
   }
   p,
@@ -466,10 +466,8 @@ dd {
 .dl-horizontal:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .dl-horizontal:after {
   clear: both;
@@ -478,10 +476,8 @@ dd {
 .dl-horizontal:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .dl-horizontal:after {
   clear: both;
@@ -617,10 +613,8 @@ pre code {
 .container:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .container:after {
   clear: both;
@@ -629,10 +623,8 @@ pre code {
 .container:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .container:after {
   clear: both;
@@ -641,10 +633,8 @@ pre code {
 .row:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .row:after {
   clear: both;
@@ -653,10 +643,8 @@ pre code {
 .row:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .row:after {
   clear: both;
@@ -1139,14 +1127,12 @@ input[type="checkbox"] {
   margin: 4px 0 0;
   margin-top: 1px \9;
   /* IE8-9 */
-
   line-height: normal;
 }
 select,
 input[type="file"] {
   height: 36px;
   /* In IE7, the height of the select element cannot be changed by height, only font-size. TODO: Check if this is still needed when dropping IE7 support */
-
   line-height: 36px;
 }
 select[multiple],
@@ -2614,10 +2600,8 @@ button.close {
 .nav:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .nav:after {
   clear: both;
@@ -2626,10 +2610,8 @@ button.close {
 .nav:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .nav:after {
   clear: both;
@@ -2776,10 +2758,8 @@ button.close {
 .tabbable:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .tabbable:after {
   clear: both;
@@ -2788,10 +2768,8 @@ button.close {
 .tabbable:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .tabbable:after {
   clear: both;
@@ -2829,10 +2807,8 @@ button.close {
 .navbar:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .navbar:after {
   clear: both;
@@ -2841,10 +2817,8 @@ button.close {
 .navbar:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .navbar:after {
   clear: both;
@@ -3131,10 +3105,8 @@ button.close {
 .btn-toolbar:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .btn-toolbar:after {
   clear: both;
@@ -3143,10 +3115,8 @@ button.close {
 .btn-toolbar:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .btn-toolbar:after {
   clear: both;
@@ -3362,10 +3332,8 @@ button.close {
 .pager:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .pager:after {
   clear: both;
@@ -3374,10 +3342,8 @@ button.close {
 .pager:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .pager:after {
   clear: both;
@@ -3504,10 +3470,8 @@ button.close {
 .modal-footer:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .modal-footer:after {
   clear: both;
@@ -3516,10 +3480,8 @@ button.close {
 .modal-footer:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .modal-footer:after {
   clear: both;
@@ -4290,10 +4252,8 @@ a.list-group-item.active > .badge,
 .clearfix:after {
   content: " ";
   /* 1 */
-
   display: table;
   /* 2 */
-
 }
 .clearfix:after {
   clear: both;
@@ -4624,7 +4584,6 @@ div.subcomments {
 div.subcomments_last {
   margin-left: 20px;
   /*border-left: 2px dotted #bbb;*/
-
 }
 div.comment_header {
   padding: 3px;
@@ -4656,10 +4615,8 @@ div.comment_body {
 }
 .ui-autocomplete {
   /* prevent horizontal scrollbar */
-
   overflow-x: hidden;
   /* add padding to account for vertical scrollbar */
-
   padding-right: 20px;
 }
 .ui-autocomplete.ui-menu .ui-menu-item {
@@ -4990,9 +4947,8 @@ body.nonadmin #metabar {
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff68a7bd', endColorstr='#ff29687e', GradientType=0);
     filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
     /*&:after {
-                content: " » ";
-              }*/
-  
+              content: " » ";
+            }*/
   }
   .adminbar .nav.breadcrumbs > li:last-child > a,
   .adminbar .nav.breadcrumbs > li:last-child > span {
@@ -5068,13 +5024,13 @@ body.nonadmin #metabar {
   padding: 0 10px;
   height: 2em;
   white-space: nowrap;
-  background-color: #49869c;
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#8ac9df), to(#49869c));
-  background-image: -webkit-linear-gradient(top, #8ac9df, #49869c);
-  background-image: -moz-linear-gradient(top, #8ac9df, #49869c);
-  background-image: linear-gradient(to bottom, #8ac9df, #49869c);
+  background-color: #123747;
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#17475b), to(#123747));
+  background-image: -webkit-linear-gradient(top, #17475b, #123747);
+  background-image: -moz-linear-gradient(top, #17475b, #123747);
+  background-image: linear-gradient(to bottom, #17475b, #123747);
   background-repeat: repeat-x;
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff8ac9df', endColorstr='#ff49869c', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff17475b', endColorstr='#ff123747', GradientType=0);
   filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
   text-align: left;
   line-height: 2.142857142857143;
@@ -5457,7 +5413,6 @@ body {
     padding: 1px;
   }
   */
-
 }
 .ui-jqgrid * {
   word-wrap: normal;
@@ -5610,7 +5565,6 @@ html.embed .well .row {
   padding: .1em .75em;
   margin: 0 .25em .5em 0;
   display: inline-block;*/
-
   padding: 5px;
 }
 .item-type-container span b {
