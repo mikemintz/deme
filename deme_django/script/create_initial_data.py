@@ -139,13 +139,12 @@ github_agent.save_versioned(action_agent=admin)
 github_email_contact_method = EmailContactMethod(email="noreply@github.com", agent=github_agent)
 github_email_contact_method.save_versioned(action_agent=admin)
 
-hello_page = DjangoTemplateDocument(name="Hello Page", body="""
-{% block content %}
-Hello World!
-{% endblock content %}
+hello_page = HtmlDocument(name="Sample Page", body="""
+<h2>Hello there!</h2>
+<p>Edit this page or delete it and create your own.</p>
 """)
 hello_page.save_versioned(action_agent=admin)
-hello_url = CustomUrl(parent_url=default_site, path="hello", viewer='djangotemplatedocument', action='render', aliased_item=hello_page)
+hello_url = CustomUrl(parent_url=default_site, path="hello", viewer='htmldocument', action='show', aliased_item=hello_page)
 hello_url.save_versioned(action_agent=admin)
 
 discuss_group = Group(name="Deme Dev Discussion")
