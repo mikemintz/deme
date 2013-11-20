@@ -5094,6 +5094,9 @@ body.nonadmin #metabar {
   padding: 0;
   border-radius: 5px;
 }
+#metabar .block .btn {
+  margin-bottom: 5px;
+}
 #metabar .metabar_contents {
   margin-bottom: 1em;
 }
