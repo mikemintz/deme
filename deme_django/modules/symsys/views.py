@@ -450,7 +450,8 @@ class SymsysCourseListViewer(TextDocumentViewer):
         replace = '<a href="#" title="Click to see course info including schedule and description." onclick="courseLink(\'%s\', \'%s\'); return false;">%s</a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px;"></div>'
         #Highlight 'show/hide info'
         #replace = '%s <a href="#" title="Click to see course info including schedule and description." style="font-weight:normal;" onclick="courseLink(\'%s\', \'%s\'); return false;"> show/hide info </a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px; font-weight:normal;"></div>'
-       
+               
+
         new_body = self.item.body
         for dept in depts:
             pattern = regex % dept
@@ -465,7 +466,10 @@ class SymsysCourseListViewer(TextDocumentViewer):
         query = self.request.GET['query']
         #Replace call below handles MS&E
         query = query.upper().replace(' ', '').replace('&', '%26')
-        url = 'http://explorecourses.stanford.edu/CourseSearch/search?view=xml-20120105&q=%s'
+        #url = 'http://explorecourses.stanford.edu/CourseSearch/search?view=xml-20120105&q=%s'
+
+        #NEW CODE 11/2013 (replaced above url variable with updated explorecourses API date)
+        url = 'http://explorecourses.stanford.edu/CourseSearch/search?view=xml-20130201&q=%s'
         url = url % query
         #Make ajax call for url data
         opener = urllib.FancyURLopener({})
