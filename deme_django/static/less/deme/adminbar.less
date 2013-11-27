@@ -41,14 +41,16 @@ body {
   }
   .nav {
     white-space: nowrap;
-    > li > a {
+    > li > a, > li > span {
+      padding: .6em;
+      line-height: 20 / @font-size-base-int;
       color: @gray-lighter;
       text-shadow: 0 -1px fade(@black, 25%);
       font-size: 16 / @font-size-base-int * 100%;
+    }
+    > li > a {
       border-right: 1px solid fade(@black, 15%);
       border-left:  1px solid fade(@white, 15%);
-      padding: .6em;
-      line-height: 20 / @font-size-base-int;
       &:hover, &:focus {
         color: @white;
         background: transparent;
@@ -116,7 +118,7 @@ body {
         > span {
           //padding: .65em;
           padding-right: 20px;
-          display: inline-block;
+          display: block;
           color: @grayLighter;
         }
         &:last-child > a, &:last-child > span {
