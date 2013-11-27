@@ -170,7 +170,7 @@ function courseInfoAjax(query, elementId) {
         var quarter = "";
         current.find("section").each(function() {
             //if($(this).find("component").text()=="LEC" || $(this).find("component").text()=="SEM" || $(this).find("component").text()=="RES" || $(this).find("component").text()=="WKS") {
-            //New code 11/2013
+            //NEW CODE 11/2013: replaced above ad-hoc condition with line below (leaving line above as a potential reference)
             if ($(this).find("component").text() != "DIS") {
                 //NEW CODE 11/2013: added "WKS" to above criteria. Note above is very ad hoc; possible solution = 'if($(this).find("component").text()!= "DIS"' 
                 var tempQuarter = $(this).find("term").text();
