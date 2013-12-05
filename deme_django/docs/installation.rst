@@ -18,7 +18,7 @@ To checkout Deme, type::
 Required Dependencies
 ---------------------
 
-We have tested deme on Mac OS X and various distributions of Linux. Our production servers currently run Ubuntu 12.04, which is currently our best supported platform. You will also need to install the dependencies listed below.
+We have tested Deme on Mac OS X and various distributions of Linux. Our production servers currently run Ubuntu 12.04, which is currently our best supported platform. You will also need to install the dependencies listed below.
 
 PostgreSQL
 ^^^^^^^^^^
