@@ -5,6 +5,7 @@ from cms.models import *
 from modules.symsys.models import *
 from django.db.models import Q
 from django.core.urlresolvers import reverse
+import datetime
 import re
 import urllib
 
@@ -267,7 +268,7 @@ class SymsysResumeViewer(TextDocumentViewer):
         template = loader.get_template('symsysresume/new.html')
 
         #ensure the user is a symsysaffiliate and then get the right info
-        if not issubclass(self.cur_agent.actual_item_type(), SymsysAffiliate):
+        if not (issubclass(self.cur_agent.actual_item_type(), SymsysAffiliate) or self.cur_agent.pk == 1):
             return self.render_error('Error', "You must be a SymsysAffiliate to post a resume")
 
         #check that this symsysaffiliate is a member of the Students group
@@ -279,12 +280,17 @@ class SymsysResumeViewer(TextDocumentViewer):
                 is_student = True
                 break
 
+        #admin can do everything
+        if self.cur_agent.pk == 1:
+            is_student = True
+
         if not is_student:
             return self.render_error('Error', "You must be a current student to post a resume")
             
 
         symsys_aff = self.cur_agent.downcast()
-        resume_name = ('%s %s Resume' % (symsys_aff.first_name, symsys_aff.last_name))
+        year = datetime.datetime.now().year
+        resume_name = ('%s %s %s Resume' % (symsys_aff.first_name, symsys_aff.last_name, year))
         #make sure this user hasn't already entered a resume
         resume = Document.objects.filter(name=resume_name)
         if resume:
@@ -293,7 +299,7 @@ class SymsysResumeViewer(TextDocumentViewer):
                 rpk = r.pk
                 break
 
-            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'htmldocument', 'noun': rpk}))
+            redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'htmldocument', 'noun': rpk, 'action': 'edit'}))
             return HttpResponseRedirect(redirect)
 
         self.context['resume_name'] = resume_name
