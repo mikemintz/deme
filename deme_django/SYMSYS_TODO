@@ -1,20 +1,35 @@
 * Symsys homepage
-* Webauth timing issue
-* Certificate transfer?
-* Figure out the group hierarchy to have for Symsys.
-  - We might need an after_modify_permissions callback
-* Make sure there is an interface to create new careers/students/whatever, confer them, and all of the permissions will be set by default here (or somehow in the model).
-* Make an interface to upload a thesis
+--adapt to new layout
+
+* Get Webauth working
+-- Timing issue
+-- SSL cert
+  
+* Make sure there is an interface to create new careers/students/whatever, confer them, and all of the permissions will set automatically
+* User who creates a new person can add ContactMethods and AuthenticationMethods to person's profile, but the person himslf cannot do so. Also, the created methods are not created with appropriate permissions for the user unless this is selected separately before creation. (Todd, 6/20/2011)
 
 * AF group gets permission to do things to careers, except confer them (only Bachelor and Minor careers), and they'll have a special declare view that does things automatically without giving them permission to change them later.
-* If a user makes something on their career private, then the AF just can't view it.
-* Everything I wrote above is wrong. AFs are automatically included in the default permissions with do_anything. Actually, nevermind: we can't let them view transcripts.
 
-* User who creates a new person can add ContactMethods and AuthenticationMethods to person's profile, but the person himself cannot do so. Also, the created methods are not created with appropriate permissions for the user unless this is selected separately before creation. (Todd, 6/20/2011)
+* Confirm that resumes or internships correctly inherit membership permissions from collection permissions
 
-* redesign logo so it includes "Symbolic Systems Program"
+* New version of logo
+
 * make links to Symsys internal pages work in static documents
+
 * Create concentration groups for faculty that they can join and leave at will.
+
 * Calendar with upcoming events to embed on home page
+--  Make viewer for feed
+
+* Fix bug that strips title from created internship prior to second editing
+
 * Blog-like viewer that views collections of arbitrary items, items can be in multiple collections (like categories)
   - Advertisements will be displayed in blog viewer, except blog viewer needs to check "expires_at" field
+  
+* Simplify editing/creation of events
+  
+* Bulk photo uploading
+
+* Add external calendar feeds to calendar viewer. The viewer or cron would periodically refresh and cache external calendar content.
+
+* Thumbnails 
