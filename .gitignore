@@ -9,3 +9,4 @@ deme_django/rundev.sh
 deme_django/script/reset_db_mh.sh
 deme_django/static/filedocument/
 deme_django/local_settings.py
+.idea
