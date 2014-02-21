@@ -1,135 +1,152 @@
 {% load item_tags %}
 {% if modal %}
-<h3 class="popup-title">Select {{item_type_name|an}} {{item_type_name}}</h3>
-{% ifagentcanglobal item_create_ability %}
-    <div class="top-button">
-        <a class="btn btn-primary btn-small" href="{% url 'item_type_url' viewer=item_type_lower action="new" %}?{{ query_string }}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
-    </div>
-{% endifagentcanglobal %}
+    <h3 class="popup-title">Select {{ item_type_name|an }} {{ item_type_name }}</h3>
+    {% ifagentcanglobal item_create_ability %}
+        <div class="top-button">
+            <a class="btn btn-primary btn-sm"
+               href="{% url 'item_type_url' viewer=item_type_lower action="new" %}?{{ query_string }}"><i
+                    class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
+        </div>
+    {% endifagentcanglobal %}
 {% endif %}
 <div class="well well-item-search">
-  <form method="get" name="list_filter_form" class="form-horizontal">
-    {% if modal %}<input type="hidden" name="modal" value="1">{% endif %}
-    {% if receiver_input_id %}<input type="hidden" name="id" value="{{ receiver_input_id }}">{% endif %}
-    {% if src %}<input type="hidden" name="src" value="{{ src }}">{% endif %}
-    {% if base_type %}<input type="hidden" name="base_type" value="{{ base_type }}">{% endif %}
-    <div class="row">
-      <label class="hidden-sm col col-lg-3 control-label" for="q">
-        Search term:
-      </label>
-      <div class="col col-lg-9 input-group">
-        <input type="text" name="q" value="{{ search_query }}" />
-        <span class="input-group-btn"><button type="submit" class="btn btn-info"><i class="glyphicon glyphicon-search"></i> Search</button></span>
-      </div>
-    </div>
-    <div class="row">
-      <label class="hidden-sm col col-lg-3 control-label">
-        Item Type Filter:
-      </label>
-      <div class="col col-lg-9">
-        <div class="item-type-wrap">
-          <ul class="breadcrumb">
-          {% for item_type in breadcrumbs reversed %}
-            <li{% ifequal item_type.item_type accepted_item_type %} class="active"{% endifequal %}>
-              {% if item_type.item_type != accepted_item_type %}
-              <a href="{% url 'item_type_url' viewer=item_type.viewer %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a>
-              {% else %}
-              {{ item_type.name_plural|capfirst }}
-              {% endif %}
-            </li>
-          {% endfor %}
-          </ul>
-          {% if item_types|length > 1 %}
-          <div class="item-type-container">
-            {% for item_type in item_types %}
-            {% ifequal item_type.item_type accepted_item_type %}
-            {% else %}
-            <span><a class="btn btn-small btn-link" href="{% url 'item_type_url' viewer=item_type.viewer %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a></span>
-            {% endifequal %}
-            {% endfor %}
-          </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col col-lg-9 col-offset-3">
+    <form method="get" name="list_filter_form" class="form-horizontal" role="form">
+        {% if modal %}<input type="hidden" name="modal" value="1">{% endif %}
+        {% if receiver_input_id %}<input type="hidden" name="id" value="{{ receiver_input_id }}">{% endif %}
+        {% if src %}<input type="hidden" name="src" value="{{ src }}">{% endif %}
+        {% if base_type %}<input type="hidden" name="base_type" value="{{ base_type }}">{% endif %}
+        <div class="form-group">
+            <label class="hidden-xs col-sm-3 control-label" for="q">
+                Search term:
+            </label>
 
-        <div class="accordion" style="margin-bottom:0">
-          <div class="accordion-group">
-            <div class="accordion-heading">
-              <a href="#list-advanced" class="accordion-toggle" data-toggle="collapse"><i class="glyphicon glyphicon-cog"></i> Advanced</a>
+            <div class="col-sm-9">
+                <div class=" input-group">
+                    <input type="text" name="q" value="{{ search_query }}" class="form-control">
+                    <span class="input-group-btn"><button type="submit" class="btn btn-info"><i
+                            class="glyphicon glyphicon-search"></i> Search
+                    </button></span>
+                </div>
             </div>
-            <div id="list-advanced" class="accordion-body collapse {% if inactive or collection %}in{% endif %}">
-              <div class="accordion-inner">
-                <div class="row">
-                  <label class="col col-lg-3 control-label" for="collection">
-                    Filter on:
-                  </label>
-                  <div class="col col-lg-9">
-                    <select name="collection">
-                        {% if collection %}
-                        <option value="">[None]</option>
-                        {% else %}
-                        <option value="" selected="selected">[None]</option>
-                        {% endif %}
-                        {% for other_collection in all_collections %}
-                        {% ifequal other_collection.pk collection.pk %}
-                        <option value="{{ other_collection.pk }}" selected="selected">{% viewable_name other_collection %}</option>
-                        {% else %}
-                        <option value="{{ other_collection.pk }}">{% viewable_name other_collection %}</option>
-                        {% endifequal %}
+        </div>
+        <div class="form-group">
+            <label class="hidden-xs col-sm-3 control-label">
+                Item Type Filter:
+            </label>
+
+            <div class="col-sm-9">
+                <div class="item-type-wrap">
+                    <ul class="breadcrumb">
+                        {% for item_type in breadcrumbs reversed %}
+                            <li{% ifequal item_type.item_type accepted_item_type %} class="active"{% endifequal %}>
+                                {% if item_type.item_type != accepted_item_type %}
+                                    <a href="{% url 'item_type_url' viewer=item_type.viewer %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a>
+                                {% else %}
+                                    {{ item_type.name_plural|capfirst }}
+                                {% endif %}
+                            </li>
                         {% endfor %}
-                    </select>
-                  </div>
+                    </ul>
+                    {% if item_types|length > 1 %}
+                        <div class="item-type-container">
+                            {% for item_type in item_types %}
+                                {% ifequal item_type.item_type accepted_item_type %}
+                                {% else %}
+                                    <span><a class="btn btn-sm btn-link"
+                                             href="{% url 'item_type_url' viewer=item_type.viewer %}?{{ query_string }}">{{ item_type.name_plural|capfirst }}</a></span>
+                                {% endifequal %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
-                <div class="row">
-                  <div class="col col-lg-9">
-                    <label class="radio-inline">
-                      <input type="radio" name="inactive" value="0"{% if not inactive %} checked="checked"{% endif %}> Active Items
-                    </label>
-                    <label class="radio-inline">
-                      <input type="radio" name="inactive" value="1"{% if inactive %} checked="checked"{% endif %}> Deactivated Items
-                    </label>
-                  </div>
-                  <div class="col col-lg-3">
-                    <div class="pull-right">
-                      <p>
-                        <button type="submit" class="btn btn-info btn-small">Apply</button>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-  </form>
+        <div class="row">
+            <div class="col-sm-9 col-sm-offset-3">
 
-  <div class="row">
-    <div class="col col-lg-12">
-    {% if search_query %}
-    <h5>{{ item_type_name_plural|capfirst }} containing &ldquo;{{ search_query}}&rdquo;</h5>
-    {% endif %}
-    {% listgridbox accepted_item_type %}
-    </div>
-  </div>
-<br>
-    {% ifagentcanglobal item_create_ability %}
+                <div class="accordion" style="margin-bottom:0">
+                    <div class="accordion-group">
+                        <div class="accordion-heading">
+                            <a href="#list-advanced" class="accordion-toggle" data-toggle="collapse"><i
+                                    class="glyphicon glyphicon-cog"></i> Advanced</a>
+                        </div>
+                        <div id="list-advanced"
+                             class="accordion-body collapse {% if inactive or collection %}in{% endif %}">
+                            <div class="accordion-inner">
+                                <div class="row">
+                                    <label class="col-sm-3 control-label" for="collection">
+                                        Filter on:
+                                    </label>
+
+                                    <div class="col-sm-9">
+                                        <select name="collection">
+                                            {% if collection %}
+                                                <option value="">[None]</option>
+                                            {% else %}
+                                                <option value="" selected="selected">[None]</option>
+                                            {% endif %}
+                                            {% for other_collection in all_collections %}
+                                                {% ifequal other_collection.pk collection.pk %}
+                                                    <option value="{{ other_collection.pk }}"
+                                                            selected="selected">{% viewable_name other_collection %}</option>
+                                                {% else %}
+                                                    <option value="{{ other_collection.pk }}">{% viewable_name other_collection %}</option>
+                                                {% endifequal %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-9">
+                                        <label class="radio-inline">
+                                            <input type="radio" name="inactive" value="0"{% if not inactive %}
+                                                   checked="checked"{% endif %}> Active Items
+                                        </label>
+                                        <label class="radio-inline">
+                                            <input type="radio" name="inactive" value="1"{% if inactive %}
+                                                   checked="checked"{% endif %}> Deactivated Items
+                                        </label>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <div class="pull-right">
+                                            <p>
+                                                <button type="submit" class="btn btn-info btn-sm">Apply</button>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
     <div class="row">
-      <div class="col col-lg-12">
-        <a class="btn btn-primary" href="{% url 'item_type_url' viewer=item_type_lower action="new" %}?{{ query_string }}"><i class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
-      </div>
+        <div class="col-sm-12">
+            {% if search_query %}
+                <h5>{{ item_type_name_plural|capfirst }} containing &ldquo;{{ search_query }}&rdquo;</h5>
+            {% endif %}
+            {% listgridbox accepted_item_type %}
+        </div>
     </div>
+    <br>
+    {% ifagentcanglobal item_create_ability %}
+        <div class="row">
+            <div class="col-sm-12">
+                <a class="btn btn-primary"
+                   href="{% url 'item_type_url' viewer=item_type_lower action="new" %}?{{ query_string }}"><i
+                        class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
+            </div>
+        </div>
     {% endifagentcanglobal %}
 
 </div>
 
 
 <script>
-$(function(){
-  $('input[name="q"]').focus();
-});
+    $(function () {
+        $('input[name="q"]').focus();
+    });
 </script>

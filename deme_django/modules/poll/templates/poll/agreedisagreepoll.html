@@ -122,7 +122,7 @@ $(document).ready(function() {
 
     <div class="row">
       <!-- Start Propositions -->
-      <div class="col col-lg-12 propositions-container">
+      <div class="col-sm-12 propositions-container">
       {% if propositions %}
         <form method="post" enctype="multipart/form-data"
             	action="{% url 'item_url' viewer=viewer_name action="respondtopropositions" noun=item.pk %}?redirect={{ full_path|urlencode }}">
@@ -133,16 +133,16 @@ $(document).ready(function() {
      		 	    {% ifagentcan 'modify_membership' item %}
        		 	    <div class="proposition-actions">
                 {% ifagentcanglobal 'create Proposition' %}
-          			<a href="{% url 'item_url' viewer='proposition' action='edit' noun=proposition.pk %}?redirect={{ full_path|urlencode }}" class="btn btn-link btn-small"><i class="glyphicon glyphicon-edit"></i> Edit</a><br>
+          			<a href="{% url 'item_url' viewer='proposition' action='edit' noun=proposition.pk %}?redirect={{ full_path|urlencode }}" class="btn btn-link btn-sm"><i class="glyphicon glyphicon-edit"></i> Edit</a><br>
                 {% endifagentcanglobal %}
-        			<button class="btn btn-link btn-small" type="button" onclick="removeMember('{{ proposition.pk }}')"><i class="glyphicon glyphicon-trash"></i> Remove</button>
+        			<button class="btn btn-link btn-sm" type="button" onclick="removeMember('{{ proposition.pk }}')"><i class="glyphicon glyphicon-trash"></i> Remove</button>
 	    		      </div>
         		  {% endifagentcan %}
         		  <div class="proposition-inner">
       		      <h4>{% firstof proposition.name forloop.counter %}</h4>
       		      <p>{{proposition.summary_text|safe}}</p>
       		      {% if proposition.body %}
-        		      <button class="btn btn-info btn-small btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
+        		      <button class="btn btn-info btn-sm btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
       		      {% endif %}
 
 
@@ -185,7 +185,7 @@ $(document).ready(function() {
       	{% endifagentcan %}
       </p>
       {% endifagentcan %}
-      </div><!-- /.col-lg-12 -->
+      </div><!-- /.col-sm-12 -->
       <!-- End Propositions -->
 
     </div><!-- .row -->
@@ -200,7 +200,7 @@ $(document).ready(function() {
         <h4>{% firstof proposition.name forloop.counter %}</h4>
 	      <p>{{proposition.summary_text|safe}}</p>
 	      {% if proposition.body %}
-		      <button class="btn btn-info btn-small btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
+		      <button class="btn btn-info btn-sm btn-read-more">Read more</button><div class="hide"><p>{{proposition.body|safe}}</p></div>
 	      {% endif %}
 	      <div class="proposition_graph">
 	        <div class="position">
@@ -298,7 +298,7 @@ $(document).ready(function() {
             	  {% if value %}
                 	has responded
                 	{% if can_view_response_names_and_values %}
-                  <input type="button" class="pull-right btn btn-default btn-small"
+                  <input type="button" class="pull-right btn btn-default btn-sm"
                     value="Show Responses" id="hide{{ key.pk }}" onclick="toggleResponses('{{ key.pk }}')" />
                   <ul id="responses{{ key.pk }}" style="display: none">
                     {% for response in value %}

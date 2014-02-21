@@ -32,21 +32,27 @@ body {
   border-radius: 0;
   padding: 0;
   height: 41 / @font-size-base-int * 1em;
+  min-height: 41 / @font-size-base-int * 1em;
   margin: 0;
-  .left-wrap {
+  .left-wrap, .actions-wrap {
     position: absolute;
     left: 0;
+  }
+  .actions-wrap {
+    left: auto;
+    right: 0;
   }
   .navbar-nav {
   }
   .nav {
     white-space: nowrap;
     > li > a, > li > span {
-      padding: .6em;
-      line-height: 20 / @font-size-base-int;
+      height: 2.5em; //41 / @font-size-base-int * 1em;
+      line-height: 1;
       color: @gray-lighter;
       text-shadow: 0 -1px fade(@black, 25%);
       font-size: 16 / @font-size-base-int * 100%;
+      padding: .7em 10px;
     }
     > li > a {
       border-right: 1px solid fade(@black, 15%);
@@ -84,8 +90,6 @@ body {
     }
     &.actions-wrap {
       border-left: 1px solid fade(@black, 15%);
-      position: absolute;
-      right: 0;
       #gradient .vertical(@adminbar-top, @adminbar-bottom);
     }
     &.breadcrumbs {
@@ -93,7 +97,7 @@ body {
       border-right: 1px solid fade(@white, 15%);
       //max-width: 90%;
       padding-bottom: 2px;
-      > li{
+      > li {
         display: inline-block;
         float: none;
         #gradient .vertical(@adminbar-top-light, @adminbar-bottom-light);
@@ -112,7 +116,7 @@ body {
           background-position: right center;
           border: 0;
           font-size: 16 / @font-size-base-int * 100%;
-          padding: .6em;
+          // padding: .6em;
           padding-right: 20px;
         }
         > span {

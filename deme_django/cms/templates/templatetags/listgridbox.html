@@ -4,16 +4,16 @@
 <div id="jqgrid_pager{{identifier}}"></div>
 <div class="hide jqgrid_multitools" id="jqgrid_multitools{{identifier}}">
   {% ifagentcanglobal "create Membership" %}
-  <button class="btn btn-info btn-small action-add-to-collection" title="Add selected to a Collection"><i class="glyphicon glyphicon-plus-sign"></i> Add to a Collection</button>
+  <button class="btn btn-info btn-sm action-add-to-collection" title="Add selected to a Collection"><i class="glyphicon glyphicon-plus-sign"></i> Add to a Collection</button>
   {% endifagentcanglobal %}
   {% if collection_item %}
-  <button class="btn btn-warning btn-small action-remove-from-collection" title="Remove selected from this Collection"><i class="glyphicon glyphicon-remove"></i> Remove from Collection</button>
+  <button class="btn btn-warning btn-sm action-remove-from-collection" title="Remove selected from this Collection"><i class="glyphicon glyphicon-remove"></i> Remove from Collection</button>
   {% endif %}
   {% if inactive %}
-  <button class="btn btn-success btn-small action-reactivate" title="Reactivate selected items"><i class="glyphicon glyphicon-refresh"></i> Reactivate</button>
-  <button class="btn btn-danger btn-small action-destroy" title="Destroy selected items"><i class="glyphicon glyphicon-trash"></i> Destroy</button>
+  <button class="btn btn-success btn-sm action-reactivate" title="Reactivate selected items"><i class="glyphicon glyphicon-refresh"></i> Reactivate</button>
+  <button class="btn btn-danger btn-sm action-destroy" title="Destroy selected items"><i class="glyphicon glyphicon-trash"></i> Destroy</button>
   {% else %}
-  <button class="btn btn-warning btn-small action-deactivate" title="Deactivate selected items"><i class="glyphicon glyphicon-trash"></i> Deactivate</button>
+  <button class="btn btn-warning btn-sm action-deactivate" title="Deactivate selected items"><i class="glyphicon glyphicon-trash"></i> Deactivate</button>
   {% endif %}
 </div>
 <script type="text/javascript">
@@ -54,7 +54,7 @@ $(document).ready(function () {
       var ids = $("#jqgrid_list{{ identifier }}").getDataIDs();
       for (var i = 0; i < ids.length; i++) {
         var id = ids[i];
-        var deleteButton = '<button type="button" class="btn btn-small btn-warning" onclick="$(\'#removememberform{{identifier}}\')[0].elements[0].value = '+id+'; $(\'#removememberform{{identifier}}\')[0].submit();" title="Remove From Collection"><span class="glyphicon glyphicon-remove"></span></button>';
+        var deleteButton = '<button type="button" class="btn btn-sm btn-warning" onclick="$(\'#removememberform{{identifier}}\')[0].elements[0].value = '+id+'; $(\'#removememberform{{identifier}}\')[0].submit();" title="Remove From Collection"><span class="glyphicon glyphicon-remove"></span></button>';
 
         $("#jqgrid_list{{ identifier }}").setRowData(id, {actions: deleteButton});
       }

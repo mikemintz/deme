@@ -1090,7 +1090,7 @@ class CalculateRelationships(template.Node):
             new_modal_query_string = '?modal=1&src=metadata&populate_' + field.field.name + '=' + str(item.pk)
             new_modal_url = reverse('item_type_url', kwargs={'viewer': field.model.__name__.lower(), 'action': 'new'}) + new_modal_query_string
 
-            result.append('<div class="accordion-heading type type-related-item-add" data-new-modal-url="%(new_modal_url)s" data-count="%(count)s"><a href="#%(id)s" data-toggle="collapse" class="accordion-toggle">%(friendly_name)s <span class="badge">%(count)s</span></a><div class="action-wrap"><a href="%(list_url)s" class="detailbtn btn btn-info btn-small"><i class="glyphicon glyphicon-th"></i></a></div></div><div class="accordion-body collapse" id="%(id)s"><div class="accordion-inner">' % {
+            result.append('<div class="accordion-heading type type-related-item-add" data-new-modal-url="%(new_modal_url)s" data-count="%(count)s"><a href="#%(id)s" data-toggle="collapse" class="accordion-toggle">%(friendly_name)s <span class="badge">%(count)s</span></a><div class="action-wrap"><a href="%(list_url)s" class="detailbtn btn btn-info btn-sm"><i class="glyphicon glyphicon-th"></i></a></div></div><div class="accordion-body collapse" id="%(id)s"><div class="accordion-inner">' % {
               "list_url": list_url,
               "friendly_name": friendly_name,
               "new_modal_url": new_modal_url,

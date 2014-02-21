@@ -5,7 +5,7 @@
 {% block content %}
 <div class="agent-profile container vcard">
   <div class="row">
-    <div class="col col-lg-12">
+    <div class="col-sm-12">
       {% if item.photo %}
       {% ifagentcan 'view Agent.photo' item %}
       {% ifagentcan 'view FileDocument.datafile' item.photo %}
@@ -44,7 +44,7 @@
     </div>
   </div>
   <div class="row">
-    <div class="col col-lg-12">
+    <div class="col-sm-12">
 
       <div class="accordion groups">
         <div class="accordion-group">

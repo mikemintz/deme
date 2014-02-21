@@ -6042,6 +6042,72 @@ form.item_form > table {
 }
 form.item_form textarea {
   width: 100%;
+  min-height: 8em;
+}
+form.item_form input:not([type=checkbox]):not([type=radio]),
+form.item_form select,
+form.item_form textarea {
+  display: block;
+  width: 100%;
+  height: 34px;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.428571429;
+  color: #555555;
+  background-color: #ffffff;
+  background-image: none;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  -webkit-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+}
+form.item_form input:not([type=checkbox]):not([type=radio]):focus,
+form.item_form select:focus,
+form.item_form textarea:focus {
+  border-color: #66afe9;
+  outline: 0;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, 0.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, 0.6);
+}
+form.item_form input:not([type=checkbox]):not([type=radio])::-moz-placeholder,
+form.item_form select::-moz-placeholder,
+form.item_form textarea::-moz-placeholder {
+  color: #999999;
+  opacity: 1;
+}
+form.item_form input:not([type=checkbox]):not([type=radio]):-ms-input-placeholder,
+form.item_form select:-ms-input-placeholder,
+form.item_form textarea:-ms-input-placeholder {
+  color: #999999;
+}
+form.item_form input:not([type=checkbox]):not([type=radio])::-webkit-input-placeholder,
+form.item_form select::-webkit-input-placeholder,
+form.item_form textarea::-webkit-input-placeholder {
+  color: #999999;
+}
+form.item_form input:not([type=checkbox]):not([type=radio])[disabled],
+form.item_form select[disabled],
+form.item_form textarea[disabled],
+form.item_form input:not([type=checkbox]):not([type=radio])[readonly],
+form.item_form select[readonly],
+form.item_form textarea[readonly],
+fieldset[disabled] form.item_form input:not([type=checkbox]):not([type=radio]),
+fieldset[disabled] form.item_form select,
+fieldset[disabled] form.item_form textarea {
+  cursor: not-allowed;
+  background-color: #eeeeee;
+  opacity: 1;
+}
+textareaform.item_form input:not([type=checkbox]):not([type=radio]),
+textareaform.item_form select,
+textareaform.item_form textarea {
+  height: auto;
+}
+form.item_form input[type=checkbox],
+form.item_form input[type=radio] {
+  margin-right: 5px;
 }
 .well-item-search {
   padding: 10px;
@@ -6138,22 +6204,29 @@ body.nonadmin #metabar {
   border-radius: 0;
   padding: 0;
   height: 2.9285714285714284em;
+  min-height: 2.9285714285714284em;
   margin: 0;
 }
-.adminbar .left-wrap {
+.adminbar .left-wrap,
+.adminbar .actions-wrap {
   position: absolute;
   left: 0;
+}
+.adminbar .actions-wrap {
+  left: auto;
+  right: 0;
 }
 .adminbar .nav {
   white-space: nowrap;
 }
 .adminbar .nav > li > a,
 .adminbar .nav > li > span {
-  padding: .6em;
-  line-height: 1.4285714285714286;
+  height: 2.5em;
+  line-height: 1;
   color: #eeeeee;
   text-shadow: 0 -1px rgba(0, 0, 0, 0.25);
   font-size: 114.28571428571428%;
+  padding: .7em 10px;
 }
 .adminbar .nav > li > a {
   border-right: 1px solid rgba(0, 0, 0, 0.15);
@@ -6197,8 +6270,6 @@ body.nonadmin #metabar {
 }
 .adminbar .nav.actions-wrap {
   border-left: 1px solid rgba(0, 0, 0, 0.15);
-  position: absolute;
-  right: 0;
   background-image: -webkit-linear-gradient(top, #68a7bd 0%, #4a90a8 100%);
   background-image: linear-gradient(to bottom, #68a7bd 0%, #4a90a8 100%);
   background-repeat: repeat-x;
@@ -6234,7 +6305,6 @@ body.nonadmin #metabar {
   background-position: right center;
   border: 0;
   font-size: 114.28571428571428%;
-  padding: .6em;
   padding-right: 20px;
 }
 .adminbar .nav.breadcrumbs > li > span {
@@ -6364,6 +6434,9 @@ body.nonadmin #metabar {
 #overall {
   padding: 0 15px;
 }
+#overall .container {
+  max-width: 100%;
+}
 #metabar {
   position: absolute;
   top: 0;
@@ -6392,6 +6465,7 @@ body.nonadmin #metabar {
   overflow: hidden;
 }
 #metabar > .title {
+  float: none;
   margin-top: 0;
   padding: 0 10px;
   height: 2em;
