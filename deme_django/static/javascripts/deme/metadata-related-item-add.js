@@ -3,7 +3,7 @@ $(function(){
     // add toggle to top of section
     content_section = $(this);
     title = content_section.find('h3').first();
-    toggleButtons = $('<div class="btn-group btn-group-justified metadata_content_related_items_switcher_wrap" data-toggle="buttons-radio"><label class="btn btn-sm btn-info active"><input type="radio" name="metadata_content_related_items_switcher" value="existing" checked="checked"> Existing</label><label class="btn btn-sm btn-info"><input type="radio" name="metadata_content_related_items_switcher" value="all"> All</label></div>').insertAfter(title);
+    toggleButtons = $('<div class="btn-group btn-group-justified metadata_content_related_items_switcher_wrap" data-toggle="buttons"><label class="btn btn-sm btn-info active"><input type="radio" name="metadata_content_related_items_switcher" value="existing" checked="checked"> Existing</label><label class="btn btn-sm btn-info"><input type="radio" name="metadata_content_related_items_switcher" value="all"> All</label></div>').insertAfter(title);
 
     toggleButtons.find('input').change(function(e){
       toggleButtonChange();

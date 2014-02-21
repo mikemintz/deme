@@ -5,160 +5,210 @@
 
 
 {% block sidebar-section %}
-    <div class="sidebar-section">
-
-            <!----->
-            <div class="panel-group" id="symsysnav">
-                <div class="panel">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <a data-toggle="collapse" data-parent="#symsysnav" href="#about-group">
-                                About
-                            </a>
-                        </h4>
-                    </div>
-                    <div id="about-group" class="panel-collapse collapse in">
-                        <div class="panel-body">
-                            <ul>
-                                <li>
-                                    <a href="/">Welcome!</a>
-                                </li>
-                                <li>
-                                    <a href="/ssp_description">What is Sym Sys?</a>
-                                </li>
-                                <li>
-                                    <a href="/gen_info">Contact</a>
-                                </li>
-                                <li>
-                                    <a href="/admissions">Admissions</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-{#            #}
-{#                <h3><a href="/curriculum">Curriculum</a>#}
-{#                </h3>#}
-{##}
-{#                <div>#}
-{#                    <ul>#}
-{#                        <li>#}
-{#                            <a href="/undergraduate_programs">Undergraduate Programs</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/graduate_programs">Graduate Programs</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/courses">Courses</a>#}
-{#                        </li>#}
-{#                    </ul>#}
-{#                </div>#}
-{#                <h3><a#}
-{#                        href="/viewing/symsysaffiliate">People</a></h3>#}
-{##}
-{#                <div>#}
-{#                    <ul>#}
-{#                        <li>#}
-{#                            <a href="/students">Students</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/faculty">Faculty</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/admin">Administration</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/advising_fellows">Advising Fellows</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/alumni">Alumni</a>#}
-{#                        </li>#}
-{#                    </ul>#}
-{#                </div>#}
-{#                <h3><a#}
-{#                        href="/news_and_features">News/Features</a></h3>#}
-{##}
-{#                <div>#}
-{#                    <ul>#}
-{#                        <li>#}
-{#                            <a href="/viewing/newsroll/13917">Top Stories</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/viewing/newsroll/20499">Alumni Stories</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/viewing/newsroll/20626">Faculty/Staff Stories</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/viewing/newsroll/21162">Student Stories</a>#}
-{#                        </li>#}
-{#                    </ul>#}
-{#                </div>#}
-{#                <h3><a href="/events_page">Events</a>#}
-{#                </h3>#}
-{##}
-{#                <div>#}
-{#                    <ul>#}
-{#                        <li>#}
-{#                            <a href="/event_calendar">Calendar</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/viewing/htmldocument/13675">SSP Forum</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/events_page">Event Links</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/viewing/webpage/21277">Stanford Events</a>#}
-{#                        </li>#}
-{#                    </ul>#}
-{#                </div>#}
-{#                <h3><a#}
-{#                        href="/opportunities">Opportunities</a></h3>#}
-{##}
-{#                <div>#}
-{#                    <ul>#}
-{#                        <li>#}
-{#                            <a href="/research">Research</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/ssp_jobs">Jobs Database</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/other_resources">Career Resources</a>#}
-{#                        </li>#}
-{#                        <li{% ifequal full_path "/viewing/htmladvertisement/new" %}#}
-{#                            class="nav_selected"{% endifequal %}>#}
-{#                            <a href="/viewing/htmladvertisement/new?add_to_collection=12282&redirect=/viewing/newsroll/12282/show">Post#}
-{#                                a job</a>#}
-{#                        </li>#}
-{#                    </ul>#}
-{#                </div>#}
-{#                <h3><a#}
-{#                        href="/history">History</a></h3>#}
-{##}
-{#                <div>#}
-{#                    <ul>#}
-{#                        <li>#}
-{#                            <a href="/historical_roster">Historical Roster</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/viewing/newsroll/14097/show">Old Top Stories</a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="/archives">Past Sym Sys Websites</a>#}
-{#                        </li>#}
-{#                    </ul>#}
-{#                </div>#}
+<div class="sidebar-section">
+    <div class="panel-group" id="symsysnav">
+        <div class="panel">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#symsysnav" href="#about-group">
+                        About
+                    </a>
+                </h4>
             </div>
-            <!----->
-
+            <div id="about-group" class="panel-collapse collapse in">
+                <div class="panel-body">
+                    <ul>
+                        <li>
+                            <a href="/">Welcome!</a>
+                        </li>
+                        <li>
+                            <a href="/ssp_description">What is Sym Sys?</a>
+                        </li>
+                        <li>
+                            <a href="/gen_info">Contact</a>
+                        </li>
+                        <li>
+                            <a href="/admissions">Admissions</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div><!--.panel-->
+        <div class="panel">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#symsysnav" href="#curriculum-group">
+                        Curriculum
+                    </a>
+                </h4>
+            </div>
+            <div id="curriculum-group" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <ul>
+                        <li>
+                            <a href="/undergraduate_programs">Undergraduate Programs</a>
+                        </li>
+                        <li>
+                            <a href="/graduate_programs">Graduate Programs</a>
+                        </li>
+                        <li>
+                            <a href="/courses">Courses</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div><!--.panel-->
+        <div class="panel">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#symsysnav" href="#people-group">
+                        People
+                    </a>
+                </h4>
+            </div>
+            <div id="people-group" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <ul>
+                        <li>
+                            <a href="/students">Students</a>
+                        </li>
+                        <li>
+                            <a href="/faculty">Faculty</a>
+                        </li>
+                        <li>
+                            <a href="/admin">Administration</a>
+                        </li>
+                        <li>
+                            <a href="/advising_fellows">Advising Fellows</a>
+                        </li>
+                        <li>
+                            <a href="/alumni">Alumni</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div><!--.panel-->
+        <div class="panel">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#symsysnav" href="#news-group">
+                        News/Features
+                    </a>
+                </h4>
+            </div>
+            <div id="news-group" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <ul>
+                        <li>
+                            <a href="/viewing/newsroll/13917">Top Stories</a>
+                        </li>
+                        <li>
+                            <a href="/viewing/newsroll/20499">Alumni Stories</a>
+                        </li>
+                        <li>
+                            <a href="/viewing/newsroll/20626">Faculty/Staff Stories</a>
+                        </li>
+                        <li>
+                            <a href="/viewing/newsroll/21162">Student Stories</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div><!--.panel-->
+        <div class="panel">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#symsysnav" href="#events-group">
+                        Events
+                    </a>
+                </h4>
+            </div>
+            <div id="events-group" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <ul>
+                        <li>
+                            <a href="/event_calendar">Calendar</a>
+                        </li>
+                        <li>
+                            <a href="/viewing/htmldocument/13675">SSP Forum</a>
+                        </li>
+                        <li>
+                            <a href="/events_page">Event Links</a>
+                        </li>
+                        <li>
+                            <a href="/viewing/webpage/21277">Stanford Events</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div><!--.panel-->
+        <div class="panel">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#symsysnav" href="#opportunities-group">
+                        Opportunities
+                    </a>
+                </h4>
+            </div>
+            <div id="opportunities-group" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <ul>
+                        <li>
+                            <a href="/research">Research</a>
+                        </li>
+                        <li>
+                            <a href="/ssp_jobs">Jobs Database</a>
+                        </li>
+                        <li>
+                            <a href="/other_resources">Career Resources</a>
+                        </li>
+                        <li{% ifequal full_path "/viewing/htmladvertisement/new" %}
+                            class="nav_selected"{% endifequal %}>
+                            <a href="/viewing/htmladvertisement/new?add_to_collection=12282&redirect=/viewing/newsroll/12282/show">Post
+                                a job</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div><!--.panel-->
+        <div class="panel">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#symsysnav" href="#history-group">
+                        History
+                    </a>
+                </h4>
+            </div>
+            <div id="history-group" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <ul>
+                        <li>
+                            <a href="/historical_roster">Historical Roster</a>
+                        </li>
+                        <li>
+                            <a href="/viewing/newsroll/14097/show">Old Top Stories</a>
+                        </li>
+                        <li>
+                            <a href="/archives">Past Sym Sys Websites</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div><!--.panel-->
         <div class="panel recently-viewed">
             <div class="panel-heading">
-                Recently Viewed
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" href="#recent-group">
+                        Recently Viewed
+                    </a>
+                </h4>
             </div>
-            {% recently_viewed %}
+            <div id="recent-group" class="panel-collapse collapse">
+                <div class="panel-body">
+                {% recently_viewed %}
+                </div>
+            </div>
         </div>
     </div>
+</div>
 {% endblock sidebar-section %}

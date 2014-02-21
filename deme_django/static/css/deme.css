@@ -6350,6 +6350,8 @@ body.nonadmin #metabar {
 }
 @media (max-width: 767px) {
   .adminbar {
+    padding-left: 15px;
+    margin-right: -15px;
     margin-bottom: 0;
     height: auto;
   }
@@ -6448,6 +6450,7 @@ body.nonadmin #metabar {
   background: #f3fbfe;
   box-shadow: 3px 0 5px rgba(0, 0, 0, 0.05) inset;
   border-left: 1px solid #cccccc;
+  z-index: 999;
 }
 #metabar .ui-resizable-w {
   cursor: col-resize;
@@ -6783,6 +6786,9 @@ body {
 .page-layout * {
   word-wrap: break-word;
 }
+.page-layout .main-section {
+  padding-top: 10px;
+}
 .page-layout .logo-section {
   margin-bottom: 10px;
 }
@@ -6815,9 +6821,6 @@ body {
 }
 .page-layout h1.title a {
   text-decoration: none;
-}
-.page-layout li {
-  margin-bottom: .5em;
 }
 .page-layout .content_comment_tools {
   padding-top: 15px;
@@ -7017,6 +7020,14 @@ html.embed .well .row {
   padding: 5px;
   border-radius: 5px;
   background: #ffffff;
+}
+.panel-group .panel-body ul,
+.panel-group .panel-body ol {
+  padding-left: 15px;
+}
+.list-group .list-group-item .glyphicon-chevron-right {
+  float: right;
+  font-weight: normal;
 }
 @media (max-width: 767px) {
   #overall {

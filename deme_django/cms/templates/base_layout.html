@@ -1,25 +1,27 @@
 {% load item_tags %}<!DOCTYPE html>
 <html lang="en-us">
-  <head>
+<head>
     <title>
     {% block title %}
-    {% if item %}{% firstof cur_site.title "Deme" %} &raquo; {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
-    {% else %}{% firstof cur_site.title "Deme" %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
-    {% endif %}
+        {% if item %}{% firstof cur_site.title "Deme" %} &raquo;
+            {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
+            {% else %}{% firstof cur_site.title "Deme" %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
+        {% endif %}
     {% endblock title %}
     </title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="{% block favicon %}{% if item %}{{ item.actual_item_type|icon_url:24 }}{% else %}{{ accepted_item_type|icon_url:24 }}{% endif %}{% endblock favicon %}" type="image/x-icon" />
+    <link rel="shortcut icon" href="{% block favicon %}{% if item %}{{ item.actual_item_type|icon_url:24 }}{% else %}{{ accepted_item_type|icon_url:24 }}{% endif %}{% endblock favicon %}"
+          type="image/x-icon"/>
     {% universal_edit_button %}
     <link href="{% media_url "css/deme.css" %}" rel="stylesheet">
     <!--[if lte IE 8]>
         <link rel="stylesheet" href="{% media_url "css/deme-ie8.css" %}" type="text/css">
-    <![endif]-->
+    <!--[endif]-->
     <!--[if lte IE 9]>
         <link rel="stylesheet" href="{% media_url "css/deme-ie9.css" %}" type="text/css">
-    <![endif]-->
+    <!--[endif]-->
     <style>{% block custom_css %}{% endblock custom_css %}</style>
 
     <script type="text/javascript" src="{% media_url "javascripts/respond.min.js" %}"></script>
@@ -27,10 +29,11 @@
     <script type="text/javascript" src="{% media_url "javascripts/jquery.cookie.js" %}"></script>
     <script type="text/javascript" src="{% media_url "javascripts/jquery-ui-1.8.21.custom.min.js" %}"></script>
     <script type="text/javascript" src="{% media_url "javascripts/bootstrap.min.js" %}"></script>
-    <link href="{% media_url "stylesheets/smoothness/jquery-ui-1.8.21.custom.css" %}" media="all" rel="Stylesheet" type="text/css" />
+    <link href="{% media_url "stylesheets/smoothness/jquery-ui-1.8.21.custom.css" %}" media="all" rel="Stylesheet"
+          type="text/css"/>
     <script type="text/javascript" src="{% media_url "javascripts/grid.locale-en.js" %}"></script>
     <script type="text/javascript" src="{% media_url "javascripts/jquery.jqGrid.min.js" %}"></script>
-    <link href="{% media_url "stylesheets/ui.jqgrid.css" %}" media="all" rel="Stylesheet" type="text/css" />
+    <link href="{% media_url "stylesheets/ui.jqgrid.css" %}" media="all" rel="Stylesheet" type="text/css"/>
     <script type="text/javascript" src="{% media_url "javascripts/fg.menu.js" %}"></script>
     <script type="text/javascript" src="{% media_url "javascripts/deme/adminbar.js" %}"></script>
     <script type="text/javascript" src="{% media_url "javascripts/deme/metabar_swap.js" %}"></script>
@@ -40,37 +43,30 @@
     <script type="text/javascript" src="{% media_url "javascripts/deme/metadata-related-item-add.js" %}"></script>
 
     <script type="text/javascript">
-            $(document).ready(function () {
-                $('#showhidetarget').hide();
+        $(document).ready(function () {
+            $('#showhidetarget').hide();
 
-                $('a#showhidetrigger').click(function () {
-                    $('#showhidetarget').toggle(400);
+            $('a#showhidetrigger').click(function () {
+                $('#showhidetarget').toggle(400);
 
-                    if($.browser.safari)
-                    {
+                if ($.browser.safari) {
                     $("#showhidetarget").html("<p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>");
-                    }
-                    if($.browser.mozilla)
-                    {
+                }
+                if ($.browser.mozilla) {
                     $("#showhidetarget").html("<p>For Firefox user: Click on the View menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>");
-                    }
-                    if($.browser.msie)
-                    {
+                }
+                if ($.browser.msie) {
                     $("#showhidetarget").html("<p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>");
 
-                    }
-                    if(navigator.userAgent.toLowerCase().indexOf('chrome') > -1)
-                    {
+                }
+                if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
                     $("#showhidetarget").html("<p>For Chrome users: Click on the Chrome \"wrench\" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>");
-                    }
-                    return false;
-                });
+                }
+                return false;
             });
-        </script>
-
-
-        </script>
-    <link href="{% media_url "stylesheets/fg.menu.css" %}" media="screen" rel="stylesheet" type="text/css" />
+        });
+    </script>
+    <link href="{% media_url "stylesheets/fg.menu.css" %}" media="screen" rel="stylesheet">
     <!-- style exceptions for IE 6 -->
     <!--[if IE 6]>
     <style type="text/css">
@@ -78,243 +74,292 @@
         .fg-menu-ipod .ui-widget-content { border:0; }
     </style>
     <![endif]-->
-
     {% if item %}
-    <link rel="alternate" type="application/rss+xml" title="Action notice feed" href="{% url 'item_url' viewer=viewer_name action="show" noun=item.pk format="rss" %}" />
+        <link rel = "alternate" type = "application/rss+xml" title = "Action notice feed" href=
+        "{% url 'item_url' viewer=viewer_name action="show" noun=item.pk format="rss" %}" / >
     {% endif %}
     {% ifequal action 'list' %}
-    <link rel="alternate" type="application/rss+xml" title="Item feed" href="{% url 'item_type_url' viewer=viewer_name action="list" format="rss" %}" />
+        <link rel = "alternate" type = "application/rss+xml" title = "Item feed" href=
+        "{% url 'item_type_url' viewer=viewer_name action="list" format="rss" %}" / >
     {% endifequal %}
     <script type="text/javascript">
-        // from http://www.filamentgroup.com/examples/buttonFrameworkCSS/
-        $(function(){
-            //all hover and click logic for buttons
-            $(".fg-button:not(.ui-state-disabled)")
+    // from http://www.filamentgroup.com/examples/buttonFrameworkCSS/
+    $(function () {
+        //all hover and click logic for buttons
+        $(".fg-button:not(.ui-state-disabled)")
             .hover(
-                function(){
+                function () {
                     $(this).addClass("ui-state-hover");
                 },
-                function(){
+                function () {
                     $(this).removeClass("ui-state-hover");
                 }
             )
-            .mousedown(function(){
-                    $(this).parents('.fg-buttonset-single:first').find(".fg-button.ui-state-active").removeClass("ui-state-active");
-                    if( $(this).is('.ui-state-active.fg-button-toggleable, .fg-buttonset-multi .ui-state-active') ){ $(this).removeClass("ui-state-active"); }
-                    else { $(this).addClass("ui-state-active"); }
+            .mousedown(function () {
+                $(this).parents('.fg-buttonset-single:first').find(".fg-button.ui-state-active").removeClass("ui-state-active");
+                if ($(this).is('.ui-state-active.fg-button-toggleable, .fg-buttonset-multi .ui-state-active')) {
+                    $(this).removeClass("ui-state-active");
+                }
+                else {
+                    $(this).addClass("ui-state-active");
+                }
             })
-            .mouseup(function(){
-                if(! $(this).is('.fg-button-toggleable, .fg-buttonset-single .fg-button,  .fg-buttonset-multi .fg-button') ){
+            .mouseup(function () {
+                if (!$(this).is('.fg-button-toggleable, .fg-buttonset-single .fg-button,  .fg-buttonset-multi .fg-button')) {
                     $(this).removeClass("ui-state-active");
                 }
             });
-        });
-
-        // Attach autocomplete to search boxes
-        $(document).ready(function () {
-
-            var cache = {};
-            var last_xhr;
-            $('.search_box').autocomplete({
-                minLength: 0,
-                select: function(event, ui) {
-                    window.location.href = ui.item.url;
-                },
-                source: function(request, response) {
-                    var term = request.term;
-                    if (term in cache) {
-                        response(cache[term]);
-                        return;
-                    }
-                    last_xhr = $.getJSON('{% url 'item_type_url' viewer="item" action="grid" format="json" %}', {rows:10, page:1, sidx:"name", sord:"asc", fields:"name", searchOper:"cn", searchField:"name", searchString:term}, function(data, status, xhr) {
-                        var normalized_data = $.map(data["rows"], function(x){ var cell = $(x["cell"][0]); return {value: cell.text(), url: cell[0].href} });
-                        cache[term] = normalized_data;
-                        response(normalized_data);
+    });
+    // Attach autocomplete to search boxes
+    $(document).ready(function () {
+        var cache = {};
+        var last_xhr;
+        $('.search_box').autocomplete({
+            minLength: 0,
+            select: function (event, ui) {
+                window.location.href = ui.item.url;
+            },
+            source: function (request, response) {
+                var term = request.term;
+                if (term in cache) {
+                    response(cache[term]);
+                    return;
+                }
+                last_xhr = $.getJSON('{% url 'item_type_url' viewer="item" action="grid" format="json" %}', {rows: 10, page: 1, sidx: "name", sord: "asc", fields: "name", searchOper: "cn", searchField: "name", searchString: term}, function (data, status, xhr) {
+                    var normalized_data = $.map(data["rows"], function (x) {
+                        var cell = $(x["cell"][0]);
+                        return {value: cell.text(), url: cell[0].href}
                     });
-                },
-            });
+                    cache[term] = normalized_data;
+                    response(normalized_data);
+                });
+            },
         });
+    });
     </script>
-
     <script type="text/javascript">
-     function unhide(divID) {
-     var item = document.getElementById(divID);
-     if (item) {
-     item.className=(item.className=='hidden')?'unhidden':'hidden';
-     }
-     }
-     </script>
-     <script type="text/javascript">
-    function toggleNewItemMenu(className){
-        var menu = "#" + className;
-        if ($(menu).is(":hidden")) {
-            $(menu).slideDown("slow");
-        } else {
-            $(menu).slideUp("slow");
+        function unhide(divID) {
+            var item = document.getElementById(divID);
+            if (item) {
+                item.className = (item.className == 'hidden') ? 'unhidden' : 'hidden';
+            }
         }
-    };
+    </script>
+    <script type="text/javascript">
+        function toggleNewItemMenu(className) {
+            var menu = "#" + className;
+            if ($(menu).is(":hidden")) {
+                $(menu).slideDown("slow");
+            } else {
+                $(menu).slideUp("slow");
+            }
+        }
     </script>
     {% block head_append %}
     {% endblock %}
-  </head>
+</head>
 
-  <body class="nonadmin nomobilesidebar">
-  {% block body_wrap %}
+<body class="nonadmin nomobilesidebar">
+{% block body_wrap %}
     {% include "includes/nonadminbar.html" %}
     {% ifagentcan 'advanced_layout' cur_site %}
-      {% include "includes/adminbar.html" %}
+        {% include "includes/adminbar.html" %}
     {% endifagentcan %}
 
     <div id="overall-wrap">
-      <div id="overall">
-        {% block page-layout %}
-        <div class="container page-layout">
-          <div class="row">
-            <div class="col-sm-3 sidebar-wrap">
-              <div class="visible-xs sidebar-toggle-wrap"><a href="#" class="sidebar-toggle"><i class="glyphicon glyphicon-align-justify"></i></a></div>
-              {% block logo-section %}
-              <div class="logo-section">
-                <a href="/" class="logo {% if cur_site.logo %}img-logo{% endif %}">
-                  {% if cur_site.logo %}
-                  <h1><img src="{{ cur_site.logo.datafile.url }}" alt="{% firstof cur_site.title "Deme" %}"></h1>
-                  {% else %}
-                  <h1>{% firstof cur_site.title "Deme" %}</h1>
-                  {% endif %}
-                </a>
-              </div>
-              {% endblock logo-section %}
-              {% block sidebar-section %}
-              <div class="sidebar-section">
-                <div class="panel">
-                  <div class="panel-heading">
-                    Side Menu
-                  </div>
-                  <ul>
-                      <li{% ifequal full_path "/" %} style="font-weight: bold;"{% endifequal %}><a href="/">Home</a></li>
-                      <li{% ifequal action "list" %}{% ifequal viewer_name "item" %} style="font-weight: bold;"{% endifequal %}{% endifequal %}><a href="{% url 'item_type_url' viewer="item" %}">Items</a></li>
-                  </ul>
-                </div>
-                <div class="panel recently-viewed">
-                  <div class="panel-heading">
-                    Recently Viewed
-                  </div>
-                  {% recently_viewed %}
-                </div>
-              </div>
-              {% endblock sidebar-section %}
-            </div>
-            <div class="col-sm-9 main-section">
+        <div id="overall">
+            {% block page-layout %}
+                <div class="container page-layout">
+                    <div class="row">
+                        <div class="col-sm-3 sidebar-wrap">
+                            <div class="visible-xs sidebar-toggle-wrap"><a href="#" class="sidebar-toggle"><i
+                                    class="glyphicon glyphicon-align-justify"></i></a></div>
+                            {% block logo-section %}
+                                <div class="logo-section">
+                                    <a href="/" class="logo {% if cur_site.logo %}img-logo{% endif %}">
+                                        {% if cur_site.logo %}
+                                            <h1><img src="{{ cur_site.logo.datafile.url }}"
+                                                     alt="{% firstof cur_site.title "Deme" %}"></h1>
+                                        {% else %}
+                                            <h1>{% firstof cur_site.title "Deme" %}</h1>
+                                        {% endif %}
+                                    </a>
+                                </div>
+                            {% endblock logo-section %}
+                            {% block sidebar-section %}
+                                <div class="sidebar-section">
+                                    <div class="panel">
+                                        <div class="panel-heading">
+                                            <h4 class="panel-title">
+                                                Side Menu
+                                            </h4>
+                                        </div>
+                                        <div class="panel-body">
+                                            <ul>
+                                                <li{% ifequal full_path "/" %} style="font-weight: bold;"{% endifequal %}><a
+                                                        href="/">Home</a></li>
+                                                <li{% ifequal action "list" %}{% ifequal viewer_name "item" %}
+                                                    style="font-weight: bold;"{% endifequal %}{% endifequal %}><a
+                                                        href="{% url 'item_type_url' viewer="item" %}">Items</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="panel recently-viewed">
+                                        <div class="panel-heading">
+                                            <h4 class="panel-title">
+                                                Recently Viewed
+                                            </h4>
+                                        </div>
+                                        <div class="panel-body">
+                                        {% recently_viewed %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endblock sidebar-section %}
+                        </div>
+                        <div class="col-sm-9 main-section">
 
-              {% block banner-section %}
-              <div class="banner-section">
-              </div>
-              {% endblock banner-section %}
+                            {% block banner-section %}
+                                <div class="banner-section">
+                                </div>
+                            {% endblock banner-section %}
 
-              {% block tabs-section %}
-              <div class="tabs-section">
-              </div>
-              {% endblock tabs-section %}
+                            {% block tabs-section %}
+                                <div class="tabs-section">
+                                </div>
+                            {% endblock tabs-section %}
 
-              {% block item-view-section %}
-              <div class="item-view-section">
-                {% if layout_permissions_problem %}
-                <div class="alert alert-block">
-                    <h4>Permissions Error</h4>
-                    <p>You are not authorized to view the layout, so this page is being displayed in the default layout.</p>
-                </div>
-                {% endif %}
+                            {% block item-view-section %}
+                                <div class="item-view-section">
+                                    {% if layout_permissions_problem %}
+                                        <div class="alert alert-block">
+                                            <h4>Permissions Error</h4>
 
-                {% if layout_syntax_problem %}
-                <div class="alert alert-block">
-                    <h4>Template Syntax Error</h4>
-                    <p>There is an error in the site layout, so this page is being displayed in the default layout.</p>
-                    {% if layout_syntax_problem_text %}
-                    <p><b>Error:</b> {{layout_syntax_problem_text}}</p>
-                    {% endif %}
-                </div>
-                {% endif %}
+                                            <p>You are not authorized to view the layout, so this page is being
+                                                displayed in the default layout.</p>
+                                        </div>
+                                    {% endif %}
 
-                {% block title-section %}
-                  <h1 class="title">
-                  {% if item %}
-                  <img src="{{ item.actual_item_type|icon_url:24 }}" title="{% item_type_verbose_name item %}" /> {% viewable_name item %}{% if action_title %} &raquo; {{ action_title }}{% endif %}
-                  {% else %}
-                  <img src="{{ accepted_item_type|icon_url:24 }}" title="{% item_type_verbose_name accepted_item_type %}" /> {% if action_title %}{{ action_title }}{% else %}{{ accepted_item_type_name_plural|capfirst }}{% endif %}
-                  {% endif %}
-                  </h1>
-                  {% if item and not item.destroyed and not item.active %}
-                  <div class="alert">This item has been deactivated.</div>
-                  {% endif %}
-                {% endblock title-section %}
+                                    {% if layout_syntax_problem %}
+                                        <div class="alert alert-block">
+                                            <h4>Template Syntax Error</h4>
 
-                <div class="content">
-                {% block content-wrap %}
-                  {% block content %}
-                  {% endblock %}
-                {% endblock %}
-                </div>
-              </div>
-              {% endblock item-view-section %}
-            </div>
-          </div>
-        </div>
-        {% endblock page-layout %}
+                                            <p>There is an error in the site layout, so this page is being displayed in
+                                                the default layout.</p>
+                                            {% if layout_syntax_problem_text %}
+                                                <p><b>Error:</b> {{ layout_syntax_problem_text }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
 
-        <div class="footer">
-          {% block footer %}
-            <p>
-                <b>Desktop Browser</b>
-                {% if item %}
-                |
-                <a href="{% url 'item_url' viewer=viewer_name action="show" noun=item.pk format="rss" %}">RSS</a>
-                {% endif %}
-                {% ifequal action 'list' %}
-                |
-                <a href="{% url 'item_type_url' viewer=viewer_name action="list" format="rss" %}?{{ query_string }}">RSS</a>
-                {% endifequal %}
-                |
-                <a href="#" id="showhidetrigger">Fullscreen</a>
-                |
-                <a href="javascript:function Sel(w){var s = '',i=0; try{if (w.getSelection) s = w.getSelection(); else s = w.document.getSelection(); i=w.frames.length; }catch(e){} while (((s == '')||(s == null)) && i--){s=Sel(w.frames[i]);}if (s == null) s='';return ''+s;};function Pop(url,title){win=window.open(url,title,'toolbar=no,width=800,height=600,scrollbars=yes,resizable=yes'); win.focus();};var s=Sel(this);if (s=='') void(s=prompt('Type a word for look up',''));if(s!=null) void(Pop('http://www.wordsmyth.net/?level=3&m=wn&ent='+escape(s), 'w_mini'));" class="wedt"><span>Dictionary/Thesaurus</span></a>
-                |
-                <a href="#" onclick="$('#google_translate_dialog').dialog({close: function(event, ui) {$('#google_translate_dialog').dialog('destroy')}}); return false;">Translate</a>
-                <div id="google_translate_dialog" title="Translate" style="display: none;">
-                    <div id="google_translate_element">
+                                    {% block title-section %}
+                                        <h1 class="title">
+                                            {% if item %}
+                                                <img src="{{ item.actual_item_type|icon_url:24 }}"
+                                                     title="{% item_type_verbose_name item %}"/>
+                                                {% viewable_name item %}{% if action_title %} &raquo;
+                                                    {{ action_title }}{% endif %}
+                                            {% else %}
+                                                <img src="{{ accepted_item_type|icon_url:24 }}"
+                                                     title="{% item_type_verbose_name accepted_item_type %}"/>
+                                                {% if action_title %}{{ action_title }}{% else %}
+                                                    {{ accepted_item_type_name_plural|capfirst }}{% endif %}
+                                            {% endif %}
+                                        </h1>
+                                        {% if item and not item.destroyed and not item.active %}
+                                            <div class="alert">This item has been deactivated.</div>
+                                        {% endif %}
+                                    {% endblock title-section %}
+
+                                    <div class="content">
+                                        {% block content-wrap %}
+                                            {% block content %}
+                                            {% endblock %}
+                                        {% endblock %}
+                                    </div>
+                                </div>
+                            {% endblock item-view-section %}
+                        </div>
                     </div>
                 </div>
-                <script>
-                function googleTranslateElementInit() {
-                  new google.translate.TranslateElement({
-                    pageLanguage: 'en',
-                    layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-                  }, 'google_translate_element');
-                }
-                </script><script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async="true"></script>
-            </p>
-            <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a href="http://github.com/mikemintz/deme/tree/master">Source Code</a> | <a href="http://deme.stanford.edu/viewing/group/23">Authors</a> | {% ifagentcanglobal 'do_anything' %}<a href="{% url 'item_type_url' viewer="item" action="admin" %}">Admin</a> | {% endifagentcanglobal %}<a href="{% url 'item_type_url' viewer="item" action="recentchanges" %}">Recent Changes</a></p>
-          {% endblock footer %}
-        </div><!-- /.footer -->
+            {% endblock page-layout %}
 
-        <div id="showhidetarget">
+            <div class="footer">
+                {% block footer %}
+                    <p>
+                        <b>Desktop Browser</b>
+                        {% if item %}
+                            |
+                            <a href="{% url 'item_url' viewer=viewer_name action="show" noun=item.pk format="rss" %}">RSS</a>
+                        {% endif %}
+                        {% ifequal action 'list' %}
+                            |
+                            <a href="{% url 'item_type_url' viewer=viewer_name action="list" format="rss" %}?{{ query_string }}">RSS</a>
+                        {% endifequal %}
+                        |
+                        <a href="#" id="showhidetrigger">Fullscreen</a>
+                        |
+                        <a href="javascript:function Sel(w){var s = '',i=0; try{if (w.getSelection) s = w.getSelection(); else s = w.document.getSelection(); i=w.frames.length; }catch(e){} while (((s == '')||(s == null)) && i--){s=Sel(w.frames[i]);}if (s == null) s='';return ''+s;};function Pop(url,title){win=window.open(url,title,'toolbar=no,width=800,height=600,scrollbars=yes,resizable=yes'); win.focus();};var s=Sel(this);if (s=='') void(s=prompt('Type a word for look up',''));if(s!=null) void(Pop('http://www.wordsmyth.net/?level=3&m=wn&ent='+escape(s), 'w_mini'));"
+                           class="wedt"><span>Dictionary/Thesaurus</span></a>
+                        |
+                        <a href="#"
+                           onclick="$('#google_translate_dialog').dialog({close: function(event, ui) {$('#google_translate_dialog').dialog('destroy')}}); return false;">Translate</a>
+                    <div id="google_translate_dialog" title="Translate" style="display: none;">
+                        <div id="google_translate_element">
+                        </div>
+                    </div>
+                    <script>
+                        function googleTranslateElementInit() {
+                            new google.translate.TranslateElement({
+                                pageLanguage: 'en',
+                                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+                            }, 'google_translate_element');
+                        }
+                    </script>
+                    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+                            async="true"></script>
+                    </p>
+                    <p>Copyright &copy;2008-{% now "Y" %} to Deme | <a
+                            href="http://github.com/mikemintz/deme/tree/master">Source Code</a> | <a
+                            href="http://deme.stanford.edu/viewing/group/23">Authors</a> |
+                        {% ifagentcanglobal 'do_anything' %}
+                            <a href="{% url 'item_type_url' viewer="item" action="admin" %}">Admin</a>
+                            | {% endifagentcanglobal %}<a
+                                href="{% url 'item_type_url' viewer="item" action="recentchanges" %}">Recent Changes</a>
+                    </p>
+                {% endblock footer %}
+            </div>
+            <!-- /.footer -->
 
-          <p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When the drop-down menu appears, select the option      labeled Full Screen.</p>
-          <p>For Chrome users:Click on the Chrome "wrench" icon, located in the upper right hand corner of your browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>
-          <p>For Firefox user:Click on the View menu, located at the top of your browser window. When the drop-down menu appears, select the option labeled Full Screen.</p>
-          <p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>
+            <div id="showhidetarget">
+
+                <p>For Internet Explorer users: Click on the Tools menu, located at the top of your browser window. When
+                    the drop-down menu appears, select the option labeled Full Screen.</p>
+
+                <p>For Chrome users:Click on the Chrome "wrench" icon, located in the upper right hand corner of your
+                    browser window. When the drop-down menu appears, select the choice labeled Full Screen.</p>
+
+                <p>For Firefox user:Click on the View menu, located at the top of your browser window. When the
+                    drop-down menu appears, select the option labeled Full Screen.</p>
+
+                <p>For Safari users: Safari currently does not support the ability to go fullscreen.</p>
+            </div>
+
         </div>
+        <!-- /#overall -->
 
-      </div><!-- /#overall -->
-
-      {% ifagentcan 'advanced_layout' cur_site %}
-        {% include "includes/metabar_swap.html" %}
-      {% endifagentcan %}
+        {% ifagentcan 'advanced_layout' cur_site %}
+            {% include "includes/metabar_swap.html" %}
+        {% endifagentcan %}
 
     </div><!-- /#overall-wrap -->
-  {% endblock body_wrap %}
-  {% if cur_site.default_layout %}
-  {% ifagentcanglobal 'do_anything' %}
-  <small class="reset-layout"><a href="{% url 'item_type_url' viewer='site' action="resetgloballayout" %}" onclick="return confirm('Are you sure you wish to reset your site\'s layout? This will set the default layout to None.')"><span class="glyphicon glyphicon-warning-sign"></span> Reset layout</a></small>
-  {% endifagentcanglobal %}
-  {% endif %}
-  </body>
+{% endblock body_wrap %}
+{% if cur_site.default_layout %}
+    {% ifagentcanglobal 'do_anything' %}
+        <small class="reset-layout"><a href="{% url 'item_type_url' viewer='site' action="resetgloballayout" %}"
+                                       onclick="return confirm('Are you sure you wish to reset your site\'s layout? This will set the default layout to None.')"><span
+                class="glyphicon glyphicon-warning-sign"></span> Reset layout</a></small>
+    {% endifagentcanglobal %}
+{% endif %}
+</body>
 </html>
