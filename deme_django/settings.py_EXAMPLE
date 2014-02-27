@@ -94,6 +94,7 @@ INSTALLED_APPS = (
     'south',
     'pure_pagination',
     'deme_django.cms',
+    'easy_thumbnails',
 )
 
 MODULE_NAMES = ['imagedocument', 'demeaccount']
@@ -101,3 +102,9 @@ MODULE_NAMES = ['imagedocument', 'demeaccount']
 MODULES_DIR = os.path.join(ROOT_DIR, 'modules')
 for module_name in MODULE_NAMES:
     INSTALLED_APPS += ('deme_django.modules.%s' % module_name,)
+
+THUMBNAIL_ALIASES = {
+    '': {
+        '200': {'size': (200, 200), 'crop': True }
+    },
+}

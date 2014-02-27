@@ -6737,10 +6737,6 @@ body.nonadmin #metabar {
   background-image: url('../img/empty-profile-pic.jpg');
   float: left;
 }
-.agent-profile .thumb img,
-.group-profile .thumb img {
-  display: none;
-}
 .agent-profile .activity-inner h3,
 .group-profile .activity-inner h3 {
   display: none;

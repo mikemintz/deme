@@ -66,6 +66,18 @@ Once you've installed virtualenv, you can install the python dependencies as fol
   $ pip install psycopg2
   $ pip install django-pure-pagination
 
+Pillow
+^^^^^^
+We use Pillow to create thumbnails and perform other image alteration tasks. Pillow requires certain imaging libraries to be installed.
+
+* On Ubuntu (12.04 LTS/Raspian): ``sudo apt-get install libtiff4-dev libjpeg8-dev zlib1g-dev \
+                                       libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev``
+* On Mac OS X (assuming Homebrew): ``brew install libtiff libjpeg webp littlecms``
+
+For full details please see http://pillow.readthedocs.org/en/latest/installation.html
+
+
+
 TinyMCE
 ^^^^^^^
 We use TinyMCE for WYSIWYG editing in the browser. To install, download the latest package at:

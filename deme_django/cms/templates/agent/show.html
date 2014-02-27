@@ -1,85 +1,96 @@
 {% extends layout %}
 {% load item_tags %}
-
+{% load thumbnail %}
 
 {% block content %}
-<div class="agent-profile container vcard">
-  <div class="row">
-    <div class="col-sm-12">
-      {% if item.photo %}
-      {% ifagentcan 'view Agent.photo' item %}
-      {% ifagentcan 'view FileDocument.datafile' item.photo %}
-      <div class="thumb" style="background-image:url('{{ item.photo.datafile.url }}')">
-        <img src="{{ item.photo.datafile.url }}" alt="{% viewable_name item %}" class="photo">
-      </div>
-      {% endifagentcan %}
-      {% endifagentcan %}
-      {% else %}
-      <div class="thumb"></div>
-      {% endif %}
+    <div class="agent-profile container vcard">
+        <div class="row">
+            <div class="col-sm-12">
+                {% if item.photo %}
+                    {% ifagentcan 'view Agent.photo' item %}
+                        {% ifagentcan 'view FileDocument.datafile' item.photo %}
+                            <div class="thumb">
+                                <a href="{{ item.photo.get_absolute_url }}">
+                                    <img src="{{ item.photo.datafile|thumbnail_url:'200' }}" alt="{% viewable_name item %}" class="photo">
+                                </a>
+                            </div>
+                        {% endifagentcan %}
+                    {% endifagentcan %}
+                {% else %}
+                    <div class="thumb"></div>
+                {% endif %}
 
-      <div class="profile">
+                <div class="profile">
 
-        {% ifagentcan 'view Person.first_name' item %}
-        {% ifagentcan 'view Person.last_name' item %}
-        {% ifagentcan 'view Person.middle_names' item %}
-        {% ifagentcan 'view Person.suffix' item %}
-        {% if item.full_name != '' and item.full_name != item.name %}
-        <p class="full-name"><b>Full name:</b> <span class="fn">{{ item.full_name }}</span></p>
-        {% else %}
-        <p class="fn hide">{{ item.full_name }}</p>
-        {% endif %}
-        {% endifagentcan %}
-        {% endifagentcan %}
-        {% endifagentcan %}
-        {% endifagentcan %}
-        <!--h1 title="title">{% viewable_name item %}</h1-->
-        <h4>Contact Methods</h4>
-        <ul class="contact-methods">
-          {% for contact_method in contact_methods %}
-          <li>{{ contact_method }}</li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-sm-12">
-
-      <div class="accordion groups">
-        <div class="accordion-group">
-          <div class="accordion-heading">
-            <a href="#groups" class="accordion-toggle" data-toggle="collapse"><i class="glyphicon glyphicon-user"></i> Groups</a>
-          </div>
-          <div id="groups" class="accordion-body collapse in">
-            <div class="accordion-inner">
-              {% for membership in item.memberships.all %}
-                {% ifagentcan 'view Membership.collection' membership %}
-                <li><a href="{{ membership.collection.get_absolute_url }}">{{ membership.collection.name }}</a></li>
-                {% endifagentcan %}
-              {% empty %}
-                <li>No groups</li>
-              {% endfor %}
+                    {% ifagentcan 'view Person.first_name' item %}
+                        {% ifagentcan 'view Person.last_name' item %}
+                            {% ifagentcan 'view Person.middle_names' item %}
+                                {% ifagentcan 'view Person.suffix' item %}
+                                    {% if item.full_name != '' and item.full_name != item.name %}
+                                        <p class="full-name"><b>Full name:</b> <span
+                                                class="fn">{{ item.full_name }}</span></p>
+                                    {% else %}
+                                        <p class="fn hide">{{ item.full_name }}</p>
+                                    {% endif %}
+                                {% endifagentcan %}
+                            {% endifagentcan %}
+                        {% endifagentcan %}
+                    {% endifagentcan %}
+                    <!--h1 title="title">{% viewable_name item %}</h1-->
+                    <h4>Contact Methods</h4>
+                    <ul class="contact-methods">
+                        {% for contact_method in contact_methods %}
+                            <li>{{ contact_method }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
+        <div class="row">
+            <div class="col-sm-12">
 
-      <div class="accordion activity">
-        <div class="accordion-group">
-          <div class="accordion-heading">
-            <a href="#recent-activity" class="accordion-toggle" data-toggle="collapse"><i class="glyphicon glyphicon-time"></i> Recent Activity</a>
-          </div>
-          <div id="recent-activity" class="accordion-body collapse in">
-            <div class="accordion-inner activity-inner">
-              {% metadata_action_notices %}
+                <div class="groups">
+                    <div class="panel-group">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a href="#groups" data-toggle="collapse"><i
+                                    class="glyphicon glyphicon-user"></i> Groups</a>
+                            </h4>
+                        </div>
+                        <div id="groups" class="panel-collapse collapse in">
+                            <div class="panel-body">
+                                {% for membership in item.memberships.all %}
+                                    {% ifagentcan 'view Membership.collection' membership %}
+                                        <li>
+                                            <a href="{{ membership.collection.get_absolute_url }}">{{ membership.collection.name }}</a>
+                                        </li>
+                                    {% endifagentcan %}
+                                {% empty %}
+                                    <li>No groups</li>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="activity">
+                    <div class="panel-group">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a href="#recent-activity" data-toggle="collapse"><i
+                                    class="glyphicon glyphicon-time"></i> Recent Activity</a>
+                            </h4>
+                        </div>
+                        <div id="recent-activity" class="panel-collapse collapse in">
+                            <div class="panel-body activity-inner">
+                                {% metadata_action_notices %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-          </div>
         </div>
-      </div>
-
     </div>
-  </div>
-</div>
 {% endblock content %}
 
