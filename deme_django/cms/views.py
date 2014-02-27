@@ -1386,6 +1386,14 @@ class TextDocumentViewer(DocumentViewer):
     accepted_item_type = TextDocument
     viewer_name = 'textdocument'
 
+    def item_show_css(self):
+        self.require_ability('view ', self.item, wildcard_suffix=True)
+        return HttpResponse(self.item.body, content_type='text/css');
+
+    def item_show_js(self):
+        self.require_ability('view ', self.item, wildcard_suffix=True)
+        return HttpResponse(self.item.body, content_type='application/javascript');
+
     def item_show_html(self):
         self.context['action_title'] = ''
         self.context['in_textdocument_show'] = True

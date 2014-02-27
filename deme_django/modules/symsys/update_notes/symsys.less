@@ -1,0 +1,75 @@
+@import "../../../static/less/bootstrap/variables.less";
+@import "../../../static/less/deme/variables.less";
+@import "../../../static/less/bootstrap/mixins.less";
+
+@su-cardinal-red: #8C1515;
+@su-dark-red: #820000;
+
+@su-black: #2e2d29;
+@su-black-80: #585754;
+
+@su-gray:   #3f3c30;
+@su-gray-90: #565347;
+@su-gray-60: #8a887d;
+
+@su-sand: #ddcf99;
+@su-sand-50: #eee6cb;
+@su-sand-35: #f3efd8;
+@su-sand-25: #f6f3e5;
+@su-sand-20: #f8f6ea;
+
+@su-beige: #9d9573;
+@su-beige-85: #aca68d;
+@su-beige-60: #c4bfa9;
+@su-beige-40: #d5d0c0;
+@su-beige-30: #e3dfd5;
+@su-beige-20: #e9e6df;
+@su-beige-10: #f2f1eb;
+@su-beige-05: #fbfbf9;
+
+///////
+
+@adminbar-top: @su-cardinal-red; //#68a7bd;
+@adminbar-bottom: darken(@adminbar-top,10);//#29687e;
+@adminbar-top-active: @su-dark-red; //#5c95ad;
+@adminbar-bottom-active: darken(@adminbar-top-active,10);//#17475b;
+@adminbar-top-light: lighten(@su-cardinal-red,10); //#8ac9df;
+@adminbar-bottom-light: darken(@adminbar-top-light,10);//#49869c;
+
+@navbar-inverse-bg:                         @adminbar-top;
+
+@metabar-background: @su-sand-20; //#eefafe;
+@navbar-inverse-link-active-color:          @navbar-inverse-link-hover-color;
+
+@import "../../../static/less/deme/adminbar-theme.less";
+@import "../../../static/less/deme/metabar-theme.less";
+
+
+.navbar-inverse {
+  border-color: @su-cardinal-red;
+}
+
+//
+//.adminbar {
+//  background: @su-cardinal-red;
+//  .nav {
+//    > li > a {
+//      &:active, &.active, &:hover.active {
+//        background: @su-dark-red;
+//      }
+//    }
+//    .dropdown.open {
+//      > a {
+//        background: @su-dark-red;
+//      }
+//    }
+//    &.actions-wrap {
+//      background: @su-cardinal-red;
+//    }
+//    &.breadcrumbs {
+//      > li {
+//        background: @su-dark-red;
+//      }
+//    }
+//  }
+//}

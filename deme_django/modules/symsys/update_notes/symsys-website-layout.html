@@ -1,3 +1,10 @@
+{% block custom_css %}
+
+{% endblock custom_css %}
+{% block head_append %}
+    <link rel="stylesheet" type="text/css" media="screen" href="/viewing/textdocument/23808/raw">
+{% endblock %}
+
 {% load item_tags %}
 
 {% block tabs-section %}
@@ -212,3 +219,7 @@
     </div>
 </div>
 {% endblock sidebar-section %}
+
+{% block footer %}
+    {{ block.super }}
+{% endblock footer %}
