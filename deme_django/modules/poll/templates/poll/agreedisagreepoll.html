@@ -282,15 +282,14 @@ $(document).ready(function() {
     </div><!--/.panel-->
   {% endif %}<!--(cur_agent_has_voted or can_view_response_names_and_values)-->
 
+  <div class="panel-group">
   {% if can_view_response_names %}
-
-  <div class="accordion groups">
-    <div class="accordion-group">
-      <div class="accordion-heading">
+    <div class="panel panel-default">
+      <div class="panel-heading">
         <a href="#poll-participants" class="accordion-toggle" data-toggle="collapse"><i class="glyphicon glyphicon-user"></i> Participants</a>
       </div>
-      <div id="poll-participants" class="accordion-body collapse">
-        <div class="accordion-inner">
+      <div id="poll-participants" class="panel-collapse collapse">
+        <div class="panel-body">
           <div class="responses-container">
             {% for key, value in responses.items %}
             	<div class="response {% if value %}has-responded{% endif %}">
@@ -352,13 +351,13 @@ $(document).ready(function() {
 
 
 {% ifagentcan 'modify_membership' item %}
-<div class="accordion">
-  <div class="accordion-group">
-    <div class="accordion-heading">
+<div class="panel-group">
+  <div class="panel panel-default">
+    <div class="panel-heading">
       <a href="#collection-view" class="accordion-toggle" data-toggle="collapse"><i class="glyphicon glyphicon-th"></i> View Poll as Collection</a>
     </div>
-    <div id="collection-view" class="accordion-body collapse">
-      <div class="accordion-inner">
+    <div id="collection-view" class="panel-collapse collapse">
+      <div class="panel-body">
         {% embed 'collection' item %}
       </div>
     </div>
