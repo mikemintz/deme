@@ -3,16 +3,16 @@
 
 {% block content %}
 <p>Items represent most of the content on a Deme site. Click on each item type to learn more.</p>
-<div class="accordion" id="glossaryAccordion">
+<div class="panel-group" id="glossaryAccordion">
   {% for x in all_item_types_arr %}
-  <div class="accordion-group">
-    <div class="accordion-heading">
-      <a class="accordion-toggle capitalize" data-toggle="collapse" href="#item_{{ x.item_name_lower }}"><img src="{{x.item_type|icon_url:16}}" /> {% item_type_verbose_name x.item_type %}</a>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <a class="capitalize" data-toggle="collapse" href="#item_{{ x.item_name_lower }}"><img src="{{x.item_type|icon_url:16}}" /> {% item_type_verbose_name x.item_type %}</a>
     </div>
-    <div class="accordion-body collapse" id="item_{{ x.item_name_lower }}">
-      <div class="accordion-inner">
+    <div class="panel-collapse collapse" id="item_{{ x.item_name_lower }}">
+      <div class="panel-body">
       {% display_item_type_help_text x.item_name_lower %}
-      <a href="{{ x.url }}">See all {% item_type_verbose_name_plural x.item_type %}</a>
+      <a href="{{ x.url }}" class="see-all">See all {% item_type_verbose_name_plural x.item_type %}</a>
       </div>
     </div>
   </div>
@@ -33,13 +33,15 @@ $(function(){
   var re = /^\/viewing\/(\w+)$/;
   $('#glossaryAccordion a').each(function(){
     var x = $(this);
-    var link = x.attr('href');
-    var matches = link.match(re);
-    if (matches) {
-      x.click(function(e){
-        e.preventDefault();
-        openSection(matches[1]);
-      });
+    if (!x.hasClass('see-all')) {
+        var link = x.attr('href');
+        var matches = link.match(re);
+        if (matches) {
+            x.click(function(e){
+                e.preventDefault();
+                openSection(matches[1]);
+            });
+        }
     }
   });
 });
