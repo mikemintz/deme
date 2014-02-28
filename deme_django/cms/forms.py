@@ -55,9 +55,9 @@ class AjaxModelChoiceWidget(forms.Widget):
         new_modal_url = reverse('item_type_url', kwargs={'viewer': base_type, 'action': 'new'}) + new_modal_query_string
         list_modal_url = reverse('item_type_url', kwargs={'viewer': base_type, 'action': 'list'}) + new_modal_query_string
         result = """
-        <div class="input-group">
+        <div class="input-group ajax-model-choice-widget-group">
           <input type="hidden" name="%(name)s" value="%(value)s" data-model-name="%(model_name)s" data-input-id="%(id)s" data-ajax-url="%(ajax_url)s" data-new-modal-url="%(new_modal_url)s" data-list-modal-url="%(list_modal_url)s" class="ajax-model-choice-widget">
-          <input type="text" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" placeholder="Select an item...">
+          <input type="text" class="text-field" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" placeholder="Select an item...">
         </div>
         """ % {
           'base_type': base_type,

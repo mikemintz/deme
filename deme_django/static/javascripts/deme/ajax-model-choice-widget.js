@@ -35,7 +35,7 @@ $(function() {
         }
     });
 
-    // set up new button
+    // set up new item (...) button
     var newbtn = $('<span class="input-group-btn"><a href="#" class="btn btn-default newbtn" title="Add/Find Item">&bull;&bull;&bull;</a></span>').insertAfter(search_input);
     newbtn.find('a').click(function(e){
       e.preventDefault();

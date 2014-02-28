@@ -6109,6 +6109,10 @@ form.item_form input[type=checkbox],
 form.item_form input[type=radio] {
   margin-right: 5px;
 }
+form.item_form .ajax-model-choice-widget-group input.text-field {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
 .well-item-search {
   padding: 10px;
 }
