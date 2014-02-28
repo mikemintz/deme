@@ -64,45 +64,46 @@
         <div class="row">
             <div class="col-sm-9 col-sm-offset-3">
 
-                <div class="accordion" style="margin-bottom:0">
-                    <div class="accordion-group">
-                        <div class="accordion-heading">
-                            <a href="#list-advanced" class="accordion-toggle" data-toggle="collapse"><i
+                <div class="panel-group" style="margin-bottom:0">
+                    <div class="panel">
+                        <div class="panel-heading">
+                            <a href="#list-advanced" data-toggle="collapse"><i
                                     class="glyphicon glyphicon-cog"></i> Advanced</a>
                         </div>
                         <div id="list-advanced"
-                             class="accordion-body collapse {% if inactive or collection %}in{% endif %}">
-                            <div class="accordion-inner">
+                             class="panel-collapse collapse {% if inactive or collection %}in{% endif %}">
+                            <div class="panel-body">
                                 <div class="row">
-                                    <label class="col-sm-3 control-label" for="collection">
-                                        Filter on:
-                                    </label>
-
-                                    <div class="col-sm-9">
-                                        <select name="collection">
-                                            {% if collection %}
-                                                <option value="">[None]</option>
-                                            {% else %}
-                                                <option value="" selected="selected">[None]</option>
-                                            {% endif %}
-                                            {% for other_collection in all_collections %}
-                                                {% ifequal other_collection.pk collection.pk %}
-                                                    <option value="{{ other_collection.pk }}"
-                                                            selected="selected">{% viewable_name other_collection %}</option>
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label" for="collection">
+                                            Filter on:
+                                        </label>
+                                        <div class="col-sm-9">
+                                            <select name="collection" class="form-control">
+                                                {% if collection %}
+                                                    <option value="">[None]</option>
                                                 {% else %}
-                                                    <option value="{{ other_collection.pk }}">{% viewable_name other_collection %}</option>
-                                                {% endifequal %}
-                                            {% endfor %}
-                                        </select>
+                                                    <option value="" selected="selected">[None]</option>
+                                                {% endif %}
+                                                {% for other_collection in all_collections %}
+                                                    {% ifequal other_collection.pk collection.pk %}
+                                                        <option value="{{ other_collection.pk }}"
+                                                                selected="selected">{% viewable_name other_collection %}</option>
+                                                    {% else %}
+                                                        <option value="{{ other_collection.pk }}">{% viewable_name other_collection %}</option>
+                                                    {% endifequal %}
+                                                {% endfor %}
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="form-inline">
                                     <div class="col-sm-9">
-                                        <label class="radio-inline">
+                                        <label class="radio">
                                             <input type="radio" name="inactive" value="0"{% if not inactive %}
                                                    checked="checked"{% endif %}> Active Items
                                         </label>
-                                        <label class="radio-inline">
+                                        <label class="radio">
                                             <input type="radio" name="inactive" value="1"{% if inactive %}
                                                    checked="checked"{% endif %}> Deactivated Items
                                         </label>
