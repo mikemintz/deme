@@ -232,13 +232,13 @@
 
 {% block content_comment_tools %}
   {% ifagentcan 'view TextDocument.body' item %}
-  <div class="accordion groups content_comment_tools">
-    <div class="accordion-group">
-      <div class="accordion-heading">
-        <a href="#comments" class="accordion-toggle" data-toggle="collapse"><i class="glyphicon glyphicon-comment"></i> Comment Tools</a>
+  <div class="panel-group groups content_comment_tools">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <a href="#comments" data-toggle="collapse"><i class="glyphicon glyphicon-comment"></i> Comment Tools</a>
       </div>
-      <div id="comments" class="accordion-body collapse">
-        <div class="accordion-inner">
+      <div id="comments" class="panel-collapse collapse">
+        <div class="panel-body">
 
           {% ifagentcan 'comment_on' item %}
           <div><a href="#" onclick="add_comment(); return false;">Add Comment</a></div>
