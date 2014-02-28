@@ -57,7 +57,7 @@ class AjaxModelChoiceWidget(forms.Widget):
         result = """
         <div class="input-group ajax-model-choice-widget-group">
           <input type="hidden" name="%(name)s" value="%(value)s" data-model-name="%(model_name)s" data-input-id="%(id)s" data-ajax-url="%(ajax_url)s" data-new-modal-url="%(new_modal_url)s" data-list-modal-url="%(list_modal_url)s" class="ajax-model-choice-widget">
-          <input type="text" class="text-field" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" placeholder="Select an item...">
+          <input type="text" class="form-control text-field" id="%(id)s" name="%(name)s_search" value="%(initial_search)s" placeholder="Select an item...">
         </div>
         """ % {
           'base_type': base_type,
