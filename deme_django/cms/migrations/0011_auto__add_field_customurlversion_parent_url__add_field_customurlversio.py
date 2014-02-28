@@ -3,6 +3,8 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
+from cms.models import AllToAllPermission, CustomUrl
+from cms.permissions import all_possible_permission_models
 
 
 class Migration(SchemaMigration):
@@ -10,13 +12,24 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'CustomUrlVersion.parent_url'
         db.add_column(u'cms_customurlversion', 'parent_url',
-                      self.gf('django.db.models.ForeignKey')(default=1, related_name='version_child_urls', null=True, db_index=False, to=orm['cms.ViewerRequest']),
+                      self.gf('django.db.models.ForeignKey')(default=None, related_name='version_child_urls', null=True, db_index=False, to=orm['cms.ViewerRequest']),
                       keep_default=False)
 
         # Adding field 'CustomUrlVersion.path'
         db.add_column(u'cms_customurlversion', 'path',
                       self.gf('django.db.models.fields.CharField')(default='', max_length=255, null=True),
                       keep_default=False)
+
+        # Set the values for parent_url and path in the versions
+        for custom_url in CustomUrl.objects.all():
+            for version in custom_url.versions.all():
+                version.parent_url = custom_url.parent_url
+                version.path = custom_url.path
+                version.save()
+
+        # Adding default permissions
+        AllToAllPermission(ability='edit CustomUrl.parent_url', is_allowed=False).save()
+        AllToAllPermission(ability='edit CustomUrl.path', is_allowed=False).save()
 
 
     def backwards(self, orm):
@@ -26,6 +39,10 @@ class Migration(SchemaMigration):
         # Deleting field 'CustomUrlVersion.path'
         db.delete_column(u'cms_customurlversion', 'path')
 
+        # Deleting permissions
+        for permission_model in all_possible_permission_models():
+            permission_model.objects.filter(ability='edit CustomUrl.parent_url').delete()
+            permission_model.objects.filter(ability='edit CustomUrl.path').delete()
 
     models = {
         u'cms.actionnotice': {
