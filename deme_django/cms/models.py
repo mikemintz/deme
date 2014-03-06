@@ -2271,8 +2271,9 @@ class ActionNotice(models.Model):
             headers['Reply-To'] = headers['To']
         def messageid(x):
             prefix = 'notice' if isinstance(x, ActionNotice) else 'item'
-            date = (x.action_time if isinstance(x, ActionNotice) else x.created_at).strftime("%Y%m%d%H%M%S")
-            return '<%s-%s-%s@%s>' % (prefix, x.pk, date, settings.NOTIFICATION_EMAIL_HOSTNAME)
+            date = x.action_time if isinstance(x, ActionNotice) else x.created_at
+            date_str = "n" if date is None else date.strftime("%Y%m%d%H%M%S")
+            return '<%s-%s-%s@%s>' % (prefix, x.pk, date_str, settings.NOTIFICATION_EMAIL_HOSTNAME)
         if reply_item == item:
             headers['Message-ID'] = messageid(self)
         else:
