@@ -1,22 +1,27 @@
 
 .adminbar {
+  background: @adminbar-top;
   #gradient .vertical(@adminbar-top, @adminbar-bottom);
   .nav {
     > li > a {
       &:active, &.active, &:hover.active {
+        background: @adminbar-top-active;
         #gradient .vertical(@adminbar-top-active, @adminbar-bottom-active);
       }
     }
     .dropdown.open {
       > a {
+        background: @adminbar-top-active;
         #gradient .vertical(@adminbar-top-active, @adminbar-bottom-active);
       }
     }
     &.actions-wrap {
+      background: @adminbar-top;
       #gradient .vertical(@adminbar-top, @adminbar-bottom);
     }
     &.breadcrumbs {
       > li {
+        background: @adminbar-top-light;
         #gradient .vertical(@adminbar-top-light, @adminbar-bottom-light);
       }
     }
@@ -27,16 +32,19 @@
   .adminbar {
     .nav {
       &.search {
+        background: @adminbar-top;
         #gradient .vertical(@adminbar-top, @adminbar-bottom);
       }
     }
     &.breadcrumbs {
       > li {
         > a, > span {
+          background: @adminbar-top;
           #gradient .vertical(@adminbar-top, @adminbar-bottom);
         }
         &:last-child {
           > a, > span {
+            background: @adminbar-top;
             #gradient .vertical(@adminbar-top, @adminbar-bottom);
           }
         }

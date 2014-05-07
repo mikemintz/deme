@@ -4,8 +4,13 @@
 * Get Webauth working
 -- Timing issue
 -- SSL cert
-  
+
+* Fix permissions on news roll showing story titles even when user isn't allowed to see
 * Make sure there is an interface to create new careers/students/whatever, confer them, and all of the permissions will set automatically
+  - a new viewer.
+  - needs to give permissions to edit own profile, to be able to reset own concentration, advisor, but not reset year they graduate.
+  - happens in background when the person is created, should change permissions based on settings of various parameters. if someone is already graduated, shouldn't be able to change year graduated. could change expected date of graduation if before. 
+
 * User who creates a new person can add ContactMethods and AuthenticationMethods to person's profile, but the person himslf cannot do so. Also, the created methods are not created with appropriate permissions for the user unless this is selected separately before creation. (Todd, 6/20/2011)
 
 * AF group gets permission to do things to careers, except confer them (only Bachelor and Minor careers), and they'll have a special declare view that does things automatically without giving them permission to change them later.
@@ -25,11 +30,11 @@
 
 * Blog-like viewer that views collections of arbitrary items, items can be in multiple collections (like categories)
   - Advertisements will be displayed in blog viewer, except blog viewer needs to check "expires_at" field
-  
+
 * Simplify editing/creation of events
-  
+
 * Bulk photo uploading
 
 * Add external calendar feeds to calendar viewer. The viewer or cron would periodically refresh and cache external calendar content.
 
-* Thumbnails 
+* Thumbnails

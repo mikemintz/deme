@@ -3,9 +3,11 @@
   box-shadow: 3px 0 5px fade(@black, 5%) inset;
   border-left: 1px solid lighten(@gray-light,20);
   > .title {
+    background: @adminbar-bottom-active;
     #gradient .vertical(@adminbar-bottom-active, darken(@adminbar-bottom-active,5));
   }
   .btn-metadata {
+    background: @adminbar-bottom-light;
     #gradient .vertical(@adminbar-bottom-light, @adminbar-top-light);
   }
 }

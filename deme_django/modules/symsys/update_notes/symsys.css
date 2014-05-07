@@ -1,4 +1,5 @@
 .adminbar {
+  background: #8c1515;
   background-image: -webkit-linear-gradient(top, #8c1515 0%, #600e0e 100%);
   background-image: linear-gradient(to bottom, #8c1515 0%, #600e0e 100%);
   background-repeat: repeat-x;
@@ -7,24 +8,28 @@
 .adminbar .nav > li > a:active,
 .adminbar .nav > li > a.active,
 .adminbar .nav > li > a:hover.active {
+  background: #820000;
   background-image: -webkit-linear-gradient(top, #820000 0%, #4f0000 100%);
   background-image: linear-gradient(to bottom, #820000 0%, #4f0000 100%);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff820000', endColorstr='#ff4f0000', GradientType=0);
 }
 .adminbar .nav .dropdown.open > a {
+  background: #820000;
   background-image: -webkit-linear-gradient(top, #820000 0%, #4f0000 100%);
   background-image: linear-gradient(to bottom, #820000 0%, #4f0000 100%);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff820000', endColorstr='#ff4f0000', GradientType=0);
 }
 .adminbar .nav.actions-wrap {
+  background: #8c1515;
   background-image: -webkit-linear-gradient(top, #8c1515 0%, #600e0e 100%);
   background-image: linear-gradient(to bottom, #8c1515 0%, #600e0e 100%);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff8c1515', endColorstr='#ff600e0e', GradientType=0);
 }
 .adminbar .nav.breadcrumbs > li {
+  background: #b81c1c;
   background-image: -webkit-linear-gradient(top, #b81c1c 0%, #8c1515 100%);
   background-image: linear-gradient(to bottom, #b81c1c 0%, #8c1515 100%);
   background-repeat: repeat-x;
@@ -32,6 +37,7 @@
 }
 @media (max-width: 767px) {
   .adminbar .nav.search {
+    background: #8c1515;
     background-image: -webkit-linear-gradient(top, #8c1515 0%, #600e0e 100%);
     background-image: linear-gradient(to bottom, #8c1515 0%, #600e0e 100%);
     background-repeat: repeat-x;
@@ -39,6 +45,7 @@
   }
   .adminbar.breadcrumbs > li > a,
   .adminbar.breadcrumbs > li > span {
+    background: #8c1515;
     background-image: -webkit-linear-gradient(top, #8c1515 0%, #600e0e 100%);
     background-image: linear-gradient(to bottom, #8c1515 0%, #600e0e 100%);
     background-repeat: repeat-x;
@@ -46,6 +53,7 @@
   }
   .adminbar.breadcrumbs > li:last-child > a,
   .adminbar.breadcrumbs > li:last-child > span {
+    background: #8c1515;
     background-image: -webkit-linear-gradient(top, #8c1515 0%, #600e0e 100%);
     background-image: linear-gradient(to bottom, #8c1515 0%, #600e0e 100%);
     background-repeat: repeat-x;
@@ -58,12 +66,14 @@
   border-left: 1px solid #cccccc;
 }
 #metabar > .title {
+  background: #4f0000;
   background-image: -webkit-linear-gradient(top, #4f0000 0%, #350000 100%);
   background-image: linear-gradient(to bottom, #4f0000 0%, #350000 100%);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff4f0000', endColorstr='#ff350000', GradientType=0);
 }
 #metabar .btn-metadata {
+  background: #8c1515;
   background-image: -webkit-linear-gradient(top, #8c1515 0%, #b81c1c 100%);
   background-image: linear-gradient(to bottom, #8c1515 0%, #b81c1c 100%);
   background-repeat: repeat-x;
