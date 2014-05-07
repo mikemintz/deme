@@ -69,6 +69,9 @@
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff8c1515', endColorstr='#ffb81c1c', GradientType=0);
 }
-.navbar-inverse {
+.navbar-inverse,
+.navbar-inverse .navbar-nav > .open > a,
+.navbar-inverse .navbar-nav > .open > a:hover,
+.navbar-inverse .navbar-nav > .open > a:focus {
   border-color: #8c1515;
 }
