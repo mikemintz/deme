@@ -11,6 +11,7 @@ Django bugs
 
 Legitimate bugs
 ---------------
+* Destroying a filedocument item should delete the file from the server! Right now it stays and continues to be accessible via Google search results
 * Diff functionality can break on complicated formatting changes of HTML documents
 + All links need to use default_viewer, not item_type.lower()
 --- can't reproduce (Michael 6/1/2013) + When you deactivate a membership from a collection and try to reactivate it, the membership creator doesn't check to see if a deactivated membership exists and creates a new one. This leads to a server error. (Jimmy 8/19/11)
