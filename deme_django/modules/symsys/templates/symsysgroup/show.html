@@ -1,7 +1,6 @@
 {% extends layout %}
 {% load newsroll_extras %}
 {% load item_tags %}
-{% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 {% comment %}
 <script type="text/javascript">
@@ -32,7 +31,7 @@
             <a href="{{ member.item.get_absolute_url }}">{% viewable_name member.item %}</a>
         </td>
         <td>
-            <b>Academic Title: </b>{{ member.academic_title }} 
+            <b>Academic Title: </b>{{ member.academic_title }}
         </td>
     </tr>
     <tr>
@@ -44,7 +43,7 @@
         <td>
             {% if member.item.publications %}
             {% ifagentcan 'view SymsysAffiliate.publications' member.item %}
-                <b>Publications: </b>{{ member.item.publications }} 
+                <b>Publications: </b>{{ member.item.publications }}
                 <br>
             {% endifagentcan %}
             {% endif %}
@@ -77,8 +76,8 @@
     </tr>
 </table>
 <hr>
-{% comment %}
 </div>
+{% comment %}
 <div id="bigstaff{{ member.item.pk }}" style="display: none;">
     <a href="#" onclick="$('#bigstaff{{ member.item.pk }}').hide(); $('#staff{{ member.item.pk }}').show(); return false;">Hide all details</a>
 </div>
@@ -149,13 +148,13 @@
 <a href="?page={{ members.previous_page_number }}"> ~ Prev |</a>
 {% endif %}
     {% for page in page_range %}
-        {% ifequal page members.number %} 
+        {% ifequal page members.number %}
             {{ members.number }}
         {% endifequal %}
 
         {% ifnotequal page members.number %}
             <a href="?page={{ page }}">{{ page }}</a>
-        {% endifnotequal %}    
+        {% endifnotequal %}
     {% endfor %}
 {% if members.has_next %}
 <a href="?page={{ members.next_page_number }}">| Next ~</a>

@@ -1,0 +1,9 @@
+.newsroll-wrap .item {
+  border: thin #ccc solid;
+  background: #eee;
+  -moz-border-radius: 8px;
+  padding: 2px;
+}
+.newsroll-wrap .title {
+  font-weight: bold;
+}

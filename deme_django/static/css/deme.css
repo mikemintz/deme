@@ -6865,6 +6865,9 @@ body {
   text-overflow: ellipsis;
   overflow: hidden;
 }
+.sidebar-section a.active {
+  font-weight: bold;
+}
 .sidebar-section .recently-viewed div {
   padding-bottom: 10px;
 }
@@ -7044,6 +7047,16 @@ html.embed .well .row {
   padding: 5px;
   border-radius: 5px;
   background: #ffffff;
+}
+.newsroll-wrap {
+  background: #eeeeee;
+}
+.newsroll-wrap .item {
+  border-bottom: 3px solid #ffffff;
+  padding: 15px;
+}
+.newsroll-wrap .title {
+  font-weight: bold;
 }
 .panel-group .panel-body ul,
 .panel-group .panel-body ol {
