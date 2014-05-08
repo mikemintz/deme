@@ -380,7 +380,8 @@ class ItemViewer(Viewer):
                 return item.get_absolute_url()
             def item_pubdate(self, item):
                 return item.created_at
-        return django.contrib.syndication.views.feed(self.request, 'item_list', {'item_list': ItemListFeed})
+        feed = ItemListFeed()
+        return feed(self.request)
 
     def type_newother_html(self):
         self.context['action_title'] = u'New'
@@ -542,6 +543,7 @@ class ItemViewer(Viewer):
                         if not viewer.cur_agent_can('view %s.%s' % (action_notice.from_field_model, action_notice.from_field_name), action_notice.from_item):
                             continue
                     item = {}
+                    item['action_notice'] = action_notice
                     item['action_time'] = action_notice.action_time
                     item['action_agent_name'] = get_viewable_name(viewer.context, action_notice.action_agent)
                     item['action_agent_link'] = action_notice.action_agent.get_absolute_url()
@@ -561,7 +563,8 @@ class ItemViewer(Viewer):
                 return item['link']
             def item_pubdate(self, item):
                 return item['action_time']
-        return django.contrib.syndication.views.feed(self.request, 'item_show', {'item_show': ItemShowFeed})
+        feed = ItemShowFeed()
+        return feed(self.request)
 
     def item_copy_html(self):
         self.context['action_title'] = 'Copy'
