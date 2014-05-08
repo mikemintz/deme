@@ -4,13 +4,13 @@
 {% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
 {% block content %}
 
+<div class="newsroll-wrap">
 {% for details in members %}
-
-    <div style="border: thin #ccc solid; background: #eee; -moz-border-radius: 8px; padding: 2px">
-        <div style="font-weight: bold;">
-            <a href="{{ details.url }}">{{ details.name }}</a> 
+    <div class="item">
+        <div class="title">
+            <a href="{{ details.url }}">{{ details.name }}</a>
         </div>
-        
+
         {% if details.display_body %}
             {% ifagentcan 'view TextDocument.body' details.member %}
                 {% if details.is_html %}
@@ -18,18 +18,18 @@
 
                 {% else %}
                     <div>
-                        {{ details.body|truncatewords:entry_length }} 
+                        {{ details.body|truncatewords:entry_length }}
                     </div>
                 {% endif %}
-                
+
                 <br><a href="{{ details.url }}"> Full Article </a>
-           {% endifagentcan %}    
+           {% endifagentcan %}
         {% endif %}
-        
+
         <div>
             Posted
             {% ifagentcan 'view Item.creator' details.member %}
-                by <a href="{{ details.creator_url }}">{{ details.creator }}</a> 
+                by <a href="{{ details.creator_url }}">{{ details.creator }}</a>
             {% endifagentcan %}
 
             {% ifagentcan 'view Item.created_at' details.member %}
@@ -38,25 +38,23 @@
                 </span>
             {% endifagentcan %}
         </div>
-
     </div>
-
-    <div style="border: 1px solid #aaa; margin-bottom: 8px; margin-top: 8px;"></div>
-
 {% endfor %}
+</div>
+
 {% if is_not_one_page %}
 <div style="border-bottom: 2px solid #aaa; margin-bottom: 8px; padding-bottom: 8px; text-align: center;">
 {% if entries.has_previous %}
 <a href="{{ redirect }}?page={{ entries.previous_page_number }}"> ~ Prev |</a>
 {% endif %}
     {% for page in page_range %}
-        {% ifequal page entries.number %} 
+        {% ifequal page entries.number %}
             {{ entries.number }}
         {% endifequal %}
 
         {% ifnotequal page entries.number %}
         <a href="{{ redirect }}?page={{ page }}">{{ page }}</a>
-        {% endifnotequal %}    
+        {% endifnotequal %}
     {% endfor %}
 {% if entries.has_next %}
 <a href="{{ redirect }}?page={{ entries.next_page_number }}">| Next ~</a>
@@ -65,7 +63,7 @@
 {% endif %}
 <div style="text-align: center; padding-left: 35px; padding-bottom: 8px;">
     {% ifagentcan 'modify_membership' collection %}
-        <a href="{% url 'item_type_url' viewer="htmldocument" action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Create A New Entry ||</a> 
+        <a href="{% url 'item_type_url' viewer="htmldocument" action="new" %}?add_to_collection={{ collection.pk }}&redirect={{ redirect|urlencode }}">Create A New Entry ||</a>
     {% endifagentcan %}
 
     <a href="{% url 'item_type_url' viewer="item" action="list.rss" %}?collection={{ collection.pk }}"> View this Listing's RSS Feed</a>
@@ -75,4 +73,3 @@
 </div>
 
 {% endblock content %}
-
