@@ -17,9 +17,27 @@ if (checker.android) {
 // check tab areas to see if is current page.
 $(function(){
   var pathname = window.location.pathname;
-  $('.page-layout').find('a[href="' + pathname + '"],a[href="' + window.location + '"]').each(function(){
-    $(this).closest('li').addClass('active');
+
+  // collapse and open panels as necessary
+  $(".panel-group").each(function(){
+    var group = $(this);
+    group.find(".panel-collapse a").each(function(){
+      var me = $(this);
+      if (me.attr('href') == pathname) {
+        $('#symsysnav .panel-collapse').removeClass("in");
+        // open up the section
+        me.closest(".panel-collapse").addClass("in");
+        return false;
+      }
+    });
   });
+
+  // highlight active links
+  $('.page-layout').find('a[href="' + pathname + '"],a[href="' + window.location + '"]').each(function(){
+    $(this).addClass('active');
+  });
+
+
 });
 
 

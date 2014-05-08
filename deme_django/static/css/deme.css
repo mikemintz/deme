@@ -6865,6 +6865,9 @@ body {
   text-overflow: ellipsis;
   overflow: hidden;
 }
+.sidebar-section a.active {
+  font-weight: bold;
+}
 .sidebar-section .recently-viewed div {
   padding-bottom: 10px;
 }
@@ -7045,14 +7048,12 @@ html.embed .well .row {
   border-radius: 5px;
   background: #ffffff;
 }
-.newsroll-wrap .item {
-  border-bottom: 1px solid #eeeeee;
-  margin-bottom: 15px;
-  padding-bottom: 15px;
+.newsroll-wrap {
+  background: #eeeeee;
 }
-.newsroll-wrap .item:first-child {
-  border-top: 1px solid #eeeeee;
-  padding-top: 15px;
+.newsroll-wrap .item {
+  border-bottom: 3px solid #ffffff;
+  padding: 15px;
 }
 .newsroll-wrap .title {
   font-weight: bold;
