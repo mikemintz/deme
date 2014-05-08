@@ -12,33 +12,6 @@
 
 
 {% block sidebar-section %}
-<script>
-// $(function(){
-// $('#navigation_menu').accordion();
-// var active_sections = $("#navigation_menu").find("li.nav_selected").parent();
-// var all_sections = $("#navigation_menu").find("ul");
-// active_sections.each(function(i, s){
-// var index = $.inArray(s, all_sections);
-// $('#navigation_menu').accordion('activate', index);
-// });
-// });
-
-
-$(function(){
-  // set current page to active
-  var pathname = window.location.pathname;
-  // look in #symsysnav
-  $("#symsysnav a").each(function(){
-    var me = $(this);
-    if (me.attr('href') == pathname) {
-      $('#symsysnav .panel-collapse').removeClass("in");
-      // open up the section
-      me.closest(".panel-collapse").addClass("in");
-      return false;
-    }
-  });
-});
-</script>
 <div class="sidebar-section">
     <div class="panel-group" id="symsysnav">
         <div class="panel">
