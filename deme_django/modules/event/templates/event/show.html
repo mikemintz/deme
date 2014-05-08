@@ -2,53 +2,51 @@
 {% load item_tags %}
 {% block content %}
 
-
+<div class="event-wrap">
 <style type="text/css">
 
-div {
+.event-wrap div {
  margin-right: 5px;
 }
 
-div p {
+.event-wrap div p {
   font-size: 16px;
   margin-top: 0;
   margin-bottom: 0;
 }
 
-#label {
+.event-wrap #label {
   font-size: 12px;
   color: blue;
   margin: 0;
 }
 
-div.date {
+.event-wrap div.date {
   float:left;
   margin-bottom: 1em;
   margin-top: 2em;
   margin-left: 1em;
 }
 
-#Start_Date {
+.event-wrap #Start_Date {
 	margin-left: 0;
 }
 
-
-
-div#to {
+.event-wrap div#to {
   margin-right: .5em;
   margin-left: 0;
   font-size: 16px;
-  bottom: 9px; 
+  bottom: 9px;
   position: relative;
-  
+
 }
 
-div.location {
+.event-wrap div.location {
   clear:both;
   margin-bottom: 1em;
 }
 
-#No_Permission {
+.event-wrap #No_Permission {
 	font-size: 12px;
 }
 </style>
@@ -57,7 +55,7 @@ div.location {
 
 {% ifequal event.start_date event.end_date %}
 <div class="date" id="Start_Date">
- {% ifagentcan 'view Event.start_date' event %}	
+ {% ifagentcan 'view Event.start_date' event %}
   <p>{{event.start_date}}</p>
  {% else %}
   <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
@@ -66,7 +64,7 @@ div.location {
   <p id="label">&amp; End Date<p>
 </div>
 <div class="date" id="Start_Time">
-  {% ifagentcan 'view Event.start_time' event %}	
+  {% ifagentcan 'view Event.start_time' event %}
     <p>{{event.start_time}}</p>
   {% else %}
     <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
@@ -84,7 +82,7 @@ div.location {
 </div>
 {% else %}
 <div class="date" id="Start_Date">
-  {% ifagentcan 'view Event.start_date' event %}	
+  {% ifagentcan 'view Event.start_date' event %}
     <p>{{event.start_date}}</p>
   {% else %}
     <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
@@ -108,7 +106,7 @@ div.location {
   {% endifagentcan %}
   <p id="label">End Date</p>
 </div>
-<div class="date" id="End_Time"> 
+<div class="date" id="End_Time">
   {% ifagentcan 'view Event.end_time' event %}
     <p>{{event.end_time}}</p>
   {% else %}
@@ -118,7 +116,7 @@ div.location {
 </div>
 {% endifequal %}
 <div class="location">
-  {% ifagentcan 'view Event.location' event %}	
+  {% ifagentcan 'view Event.location' event %}
     <p>at {{event.location}}</p>
   {% else %}
     <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
@@ -131,4 +129,5 @@ div.location {
   <p id="No_Permission">YOU CANNOT VIEW THIS FIELD</p>
 {% endifagentcan %}
 <p id="label"> Description </p>
+</div>
 {% endblock content %}
