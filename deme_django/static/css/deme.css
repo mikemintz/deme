@@ -6383,6 +6383,7 @@ body.nonadmin #metabar {
   .adminbar .nav.actions-wrap {
     position: relative;
     float: left;
+    margin-right: 15px;
   }
   .adminbar .nav.actions-wrap > li > .dropdown-menu {
     left: 0;
