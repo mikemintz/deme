@@ -12,8 +12,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="{% block favicon %}{% if item %}{{ item.actual_item_type|icon_url:24 }}{% else %}{{ accepted_item_type|icon_url:24 }}{% endif %}{% endblock favicon %}"
-          type="image/x-icon"/>
+    <link rel="shortcut icon" href="{% block favicon %}{% if cur_site.favicon %}{{cur_site.favicon.datafile.url}}{% else %}{% if item %}{{ item.actual_item_type|icon_url:24 }}{% else %}{{ accepted_item_type|icon_url:24 }}{% endif %}{% endif %}{% endblock favicon %}">
     {% universal_edit_button %}
     <link href="{% media_url "css/deme.css" %}" rel="stylesheet">
     <!--[if lte IE 8]>
@@ -155,8 +154,10 @@
             }
         }
     </script>
+    <!-- start head_append -->
     {% block head_append %}
     {% endblock %}
+    <!-- end head_append -->
 </head>
 
 <body class="nonadmin nomobilesidebar">

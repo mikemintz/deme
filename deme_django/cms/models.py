@@ -1952,7 +1952,7 @@ class Site(ViewerRequest):
 
     # Setup
     introduced_immutable_fields = frozenset()
-    introduced_abilities = frozenset(['view Site.hostname', 'edit Site.hostname', 'view Site.default_layout', 'edit Site.default_layout', 'advanced_layout', 'view Site.title', 'edit Site.title', 'view Site.logo', 'edit Site.logo', ])
+    introduced_abilities = frozenset(['view Site.hostname', 'edit Site.hostname', 'view Site.default_layout', 'edit Site.default_layout', 'advanced_layout', 'view Site.title', 'edit Site.title', 'view Site.logo', 'edit Site.logo', 'view Site.favicon', 'edit Site.favicon', ])
     introduced_global_abilities = frozenset(['create Site'])
     dyadic_relations = {}
     class Meta:
@@ -1962,6 +1962,7 @@ class Site(ViewerRequest):
     # Fields
     title = models.CharField(_('site title'), null=True, blank=True, max_length=255, help_text=_("Displayed in the title bar and on the top left by default."))
     logo = FixedForeignKey('ImageDocument', related_name='sites_with_logo', null=True, blank=True, default=None, verbose_name=_('site logo'), help_text=_("Replaces the site title on the top left of the page by default"))
+    favicon = FixedForeignKey('ImageDocument', related_name='sites_with_favicon', null=True, blank=True, default=None, verbose_name=_('site favicon'), help_text=_("Replaces the favicon across all site pages"))
     hostname = models.CharField(_('hostname'), max_length=255, unique=True, help_text=_("Used for multi-site installations, for example `one.domain.com`, `two.domain.com`"))
     default_layout = FixedForeignKey(DjangoTemplateDocument, related_name='sites_with_layout', null=True, blank=True, default=None, verbose_name=_('default layout'), help_text=_("A DjangoTemplateDocument used as the base layout throughout the entire site"))
 
