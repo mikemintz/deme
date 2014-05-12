@@ -43,11 +43,17 @@
         }
     });
 </script>
-<form name="password_form" onsubmit="$('#login_dialog_password').dialog('hide'); encrypt_password(); return false;">
-    <div>Username:</div>
-    <div><input type="text" name="username" /></div>
-    <div>Password:</div>
-    <div><input type="password" name="password" /></div>
+<form name="password_form" role="form" onsubmit="$('#login_dialog_password').dialog('close'); encrypt_password(); return false;">
+    <div class="form-group">
+      <label for="username">Username:</label>
+      <input type="text" name="username" class="form-control">
+    </div>
+    <div class="form-group">
+      <label for="password">Password:</label>
+      <input type="password" name="password" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+    <button class="btn btn-link" onclick="$('#login_dialog_password').dialog('close'); return false">Cancel</button>
 </form>
 <form name="real_password_form" action="{% url 'item_type_url' viewer="demeaccount" action="login" %}?redirect={{ redirect|urlencode }}" method="post">
     <input type="hidden" name="username" />

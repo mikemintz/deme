@@ -9,9 +9,9 @@
     $(document).ready(function () {
         $('#login_dialog_password').dialog({
             autoOpen: false,
-            buttons: {"Login": function(){$(this).dialog('close'); document.forms['password_form'].onsubmit()}, "Cancel": function(){$(this).dialog("close")} },
             modal: true,
             bgiframe: true,
+            resizable: false
         });
     });
 </script>

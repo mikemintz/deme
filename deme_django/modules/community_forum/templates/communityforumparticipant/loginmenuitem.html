@@ -61,7 +61,7 @@
             autoOpen: false,
             buttons: {"Login": function(){$(this).dialog('close'); document.forms['password_form'].onsubmit()}, "Cancel": function(){$(this).dialog("close")} },
             modal: true,
-            bgiframe: true,
+            bgiframe: true
         });
     });
 </script>
@@ -71,4 +71,3 @@
 <li class="loginmenuitem"><a href="#" onclick="$('form[name=logout_form]').submit(); return false;">Logout</a></li>
 <li><form name="logout_form" style="display: inline;" method="post" action="{% url 'item_type_url' viewer="authenticationmethod" action="logout" %}?redirect={{ redirect|urlencode }}"></form></li>
 {% endif %}
-
