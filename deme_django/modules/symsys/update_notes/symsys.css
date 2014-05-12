@@ -85,3 +85,14 @@
 .navbar-inverse .navbar-nav > .open > a:focus {
   border-color: #8c1515;
 }
+.recently-viewed {
+  margin: 40px 15px 0;
+  font-size: 95%;
+}
+.recently-viewed div {
+  padding-bottom: 5px;
+}
+.recently-viewed .title {
+  color: $grayLight;
+  font-weight: bold;
+}
