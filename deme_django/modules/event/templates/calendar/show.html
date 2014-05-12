@@ -90,11 +90,16 @@
     </tbody>
 
 </table>
-<form onsubmit="return false" action="" style="text-align: center; margin-right: 25px;">
-    <b>Jump to a Month: </b>
-    Month: <input type="text" id="month_selector" size=1 />
-    Year: <input type="text" id="year_selector" size=2 value={{ this_month.year }} />
-    <input type="submit" value="Go!" onclick="GoToMonth();" />
+<form onsubmit="return false" action="" style="text-align: center;" class="form-inline">
+    <div class="form-group">
+      <label for="month_selector">Month: </label>
+      <input type="text" id="month_selector" class="form-control" size="2" value="{{ this_month.month }}">
+    </div>
+    <div class="form-group">
+      <label for="year_selector">Year: </label>
+      <input type="text" id="year_selector" class="form-control" size="4" value="{{ this_month.year }}">
+    </div>
+    <input type="submit" value="Go" class="btn btn-default" onclick="GoToMonth();" />
 </form>
 <div style="text-align: center; font-size: 90%; margin-top: 3px;">
     The month must be a number between 1 and 12, and the year must be a 4 digit number
