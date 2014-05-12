@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load symsys_extras %}
 {% load item_tags %}
-{% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
+{% block title %}{% viewable_name item %}{% endblock %}
 {% block content %}
 
 <ul style="list-style-type: none; margin-bottom: 20px; margin-top: 5px; padding: 0;">
@@ -11,7 +11,7 @@
     {% ifagentcan 'view SymsysCareer.original_last_name' item %}
     {% ifagentcan 'view SymsysCareer.original_suffix' item %}
     <li class="outerlist">
-    <b>Original Full Name: </b> 
+    <b>Original Full Name: </b>
     {% if item.original_first_name %}
         {{ item.original_first_name }}
     {% endif %}
@@ -160,7 +160,7 @@
     {% endif %}
     </li>
     {% endifagentcan %}
-    
+
 </ul>
 
 {% endblock content %}

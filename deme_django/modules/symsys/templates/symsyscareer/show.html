@@ -1,7 +1,7 @@
 {% extends layout %}
 {% load symsys_extras %}
 {% load item_tags %}
-{% block title %}<img src="{{ item|icon_url:24 }}" /> {% viewable_name item %}{% endblock %}
+{% block title %}{% viewable_name item %}{% endblock %}
 {% block content %}
 
 
