@@ -6338,6 +6338,7 @@ body.nonadmin #metabar {
   }
   .adminbar .left-wrap .pull-left {
     float: left;
+    clear: both;
   }
   .adminbar .nav {
     margin-top: 0;
@@ -6354,15 +6355,16 @@ body.nonadmin #metabar {
     padding: 0;
     overflow-x: scroll;
     border: 0;
+    line-height: 0;
   }
   .adminbar .nav.breadcrumbs > li {
     background: none;
-    display: inline;
+    display: inline-block;
   }
   .adminbar .nav.breadcrumbs > li > a,
   .adminbar .nav.breadcrumbs > li > span {
     background: none;
-    display: inline-block;
+    display: block;
     padding: 9px 10px;
     border-left: 1px solid rgba(255, 255, 255, 0.15);
     border-right: 1px solid rgba(0, 0, 0, 0.15);

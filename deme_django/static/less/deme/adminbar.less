@@ -178,6 +178,7 @@ body {
       position: relative;
       .pull-left {
         float: left;
+        clear: both;
       }
     }
     .nav {
@@ -200,12 +201,13 @@ body {
         padding: 0;
         overflow-x: scroll;
         border: 0;
+        line-height: 0;
         > li {
           background: none;
-          display: inline;
+          display: inline-block;
           > a, > span {
             background: none;
-            display: inline-block;
+            display: block;
             padding: 9px 10px;
             border-left: 1px solid fade(@white, 15%);
             border-right: 1px solid fade(@black, 15%);
