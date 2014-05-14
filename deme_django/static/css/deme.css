@@ -7086,7 +7086,7 @@ html.embed .well .row {
   background: #eeeeee;
 }
 .newsroll-wrap .item {
-  border-bottom: 3px solid #ffffff;
+  border-bottom: 10px solid #ffffff;
   padding: 15px;
 }
 .newsroll-wrap .title {
