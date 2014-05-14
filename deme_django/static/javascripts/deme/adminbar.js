@@ -209,5 +209,20 @@ $(function(){
   });
 
   // set up datepicker
-  $("#id_start_date, #id_end_date").datepicker();
+  $('.item-type-event').each(function(){
+    var me = $(this);
+    var start = me.find('#id_start_date');
+    var end = me.find('#id_end_date');
+    start.datepicker();
+    end.datepicker();
+    // update end on change start if not set
+    start.on("change", function(){
+      var start_date = new Date(start.val());
+      var end_date = new Date(end.val());
+      if (!end.val() || end_date < start_date) {
+        end.val(start.val());
+      }
+    });
+  });
+
 });
