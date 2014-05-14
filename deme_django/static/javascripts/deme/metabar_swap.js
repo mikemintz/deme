@@ -135,6 +135,12 @@ $(function(){
     // set open/close state on cookie
     if ($.cookie('METABAR_VISIBLE')) {
       toggleMetabar('open');
+      var initial_section = $.cookie('METABAR_SECTION');
+      if (initial_section) {
+        metabar_show_section($('#' + initial_section));
+      } else {
+        //metabar_show_section($('#metadata_content_item_details'));
+      }
     } else {
       toggleMetabar('close');
     }
@@ -168,13 +174,6 @@ $(function(){
     });
   }
   window.metabar_show_section = metabar_show_section;
-
-  var initial_section = $.cookie('METABAR_SECTION');
-  if (initial_section) {
-    metabar_show_section($('#' + initial_section));
-  } else {
-    //metabar_show_section($('#metadata_content_item_details'));
-  }
 
   function metabar_load_section(collapse, cb) {
     if (collapse.length == 0) return;
