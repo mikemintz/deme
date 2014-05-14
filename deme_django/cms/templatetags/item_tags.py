@@ -1896,13 +1896,6 @@ class LoginMenu(template.Node):
                 authentication_method_viewer_classes_with_loginmenuitem.append(viewer_class)
         result = []
 
-        if viewer.cur_agent.is_anonymous():
-            login_menu_text = 'Login'
-        else:
-            login_menu_text = u'%s' % get_viewable_name(context, viewer.cur_agent)
-
-        result.append("<li><span class='current-user'>%s</span></li>" % login_menu_text)
-        result.append("<li class='divider'></li>")
         for viewer_class in authentication_method_viewer_classes_with_loginmenuitem:
             viewer2 = viewer_class()
             if viewer.request.method == 'GET':
