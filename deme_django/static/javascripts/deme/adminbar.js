@@ -208,4 +208,6 @@ $(function(){
     }
   });
 
+  // set up datepicker
+  $("#id_start_date, #id_end_date").datepicker();
 });

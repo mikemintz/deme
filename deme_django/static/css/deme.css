@@ -6113,6 +6113,13 @@ form.item_form .ajax-model-choice-widget-group input.text-field {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
+form.item_form select[name$="_hour"],
+form.item_form select[name$="_minute"],
+form.item_form select[name$="_second"],
+form.item_form select[name$="_meridiem"] {
+  width: 5em;
+  display: inline-block;
+}
 .well-item-search {
   padding: 10px;
 }
