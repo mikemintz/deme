@@ -6207,6 +6207,10 @@ body.nonadmin #metabar {
   min-height: 2.9285714285714284em;
   margin: 0;
 }
+.adminbar #adminBarActionsLabel,
+.adminbar #adminBarLoginLabel {
+  font-weight: bold;
+}
 .adminbar .left-wrap,
 .adminbar .actions-wrap {
   position: absolute;
