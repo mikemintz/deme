@@ -2,9 +2,6 @@
 <div class="adminbar nonadminbar navbar navbar-inverse">
   <div class="left-wrap">
     <ul class="nav navbar-nav pull-left search">
-      {% ifagentcan 'advanced_layout' cur_site %}
-      <li><a href="#" class="advanced" title="Show advanced tools and actions"><i class="glyphicon glyphicon-cog"></i> Tools</a></li>
-      {% endifagentcan %}
       {% include 'includes/adminbar_widgets/text-resize.html' %}
       {% include 'includes/adminbar_widgets/search.html' %}
     </ul>
@@ -12,5 +9,9 @@
 
   <ul class="nav navbar-nav pull-right actions-wrap">
     {% include 'includes/adminbar_widgets/account.html' %}
+    {% ifagentcan 'advanced_layout' cur_site %}
+    <li><a href="#" class="advanced" title="Show advanced tools and actions"><i class="glyphicon glyphicon-cog"></i></a></li>
+    {% endifagentcan %}
+
   </ul>
 </div>
