@@ -20,6 +20,10 @@ import copy
 import html2text
 import re
 
+from easy_thumbnails.alias import aliases
+if not aliases.get('thumb'):
+  aliases.set('thumb', {'size': (150, 150), 'crop': True})
+
 __all__ = ['AIMContactMethod', 'AddressContactMethod', 'Agent',
         'AnonymousAgent', 'AuthenticationMethod',
         'Collection', 'Comment', 'ContactMethod',

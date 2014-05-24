@@ -1,6 +1,6 @@
 {% extends layout %}
 {% load item_tags %}
-{% comment %}{% block title-section %}{% endblock %}{% endcomment %}
+{% load thumbnail %}
 
 {% block content %}
 <div class="group-profile container">
@@ -19,10 +19,15 @@
   {% for member in members %}
     <div id="member{{ member.item.pk }}" class="member col">
       <a href="{{ member.item.get_absolute_url }}">
-      <div class="thumb profile-pic"
-        {% if member.photo %}{% ifagentcan 'view Agent.photo' member.item %}
-      {% ifagentcan 'view FileDocument.datafile' member.photo %} style="background-image: url('{{ member.photo.datafile.url }}')"{% endifagentcan %}{% endifagentcan %}{% endif %}
-      ></div>
+        <div class="thumb profile-pic">
+        {% if member.photo %}{% ifagentcan 'view Agent.photo' member.item %}{% ifagentcan 'view FileDocument.datafile' member.photo %}
+        {% with photo=member.photo.datafile|thumbnailer %}
+        {% if photo %}
+          <img src="{{ photo.thumb.url }}">
+        {% endif %}
+        {% endwith %}
+        {% endifagentcan %}{% endifagentcan %}{% endif %}
+        </div>
       </a>
       <p class="name"><a href="{{ member.item.get_absolute_url }}">{% viewable_name member.item %}</a></p>
     </div>
@@ -69,4 +74,3 @@
 
 </div>
 {% endblock content %}
-
