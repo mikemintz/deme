@@ -213,8 +213,9 @@ $(function(){
     var me = $(this);
     var start = me.find('#id_start_date');
     var end = me.find('#id_end_date');
-    start.datepicker();
-    end.datepicker();
+    var format = {dateFormat: 'yy-mm-dd'};
+    start.datepicker(format);
+    end.datepicker(format);
     // update end on change start if not set
     start.on("change", function(){
       var start_date = new Date(start.val());

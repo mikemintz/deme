@@ -36,7 +36,7 @@ $(document).ready(function () {
 });
 </script>
 
-<div>
+<div class="item-type-edit-container item-type-{{ viewer_name }}">
     <form method="post" enctype="multipart/form-data" action="{% url 'item_url' viewer=viewer_name noun=item.pk action="update" %}?version={{ item.version_number }}{% if redirect %}&redirect={{ redirect|urlencode }}{% endif %}" class="item_form">
         <table cellspacing="0">
             {{ form.as_table }}
