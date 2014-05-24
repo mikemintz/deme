@@ -33,7 +33,7 @@ $(function() {
                 response(normalized_data);
             });
         }
-    });
+    }).zIndex(2000);
 
     // set up new item (...) button
     var newbtn = $('<span class="input-group-btn"><a href="#" class="btn btn-default newbtn" title="Add/Find Item">&bull;&bull;&bull;</a></span>').insertAfter(search_input);
