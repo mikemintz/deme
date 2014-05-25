@@ -160,26 +160,35 @@
     margin-bottom: 10px;
   }
   .relationship {
-  margin-bottom: 15px;
+    margin-bottom: 15px;
+    .panel-body {
+      padding-bottom: 5px;
+      padding-top: 10px;
+    }
+    .grid-wrap {
+      padding-top: 10px;
+    }
     .type {
-      //border-top: 1px solid @gray-lighter;
-      //background: @gray-lighter;//darken(@metabar-background, 5%);
-      //margin: 0 -10px 0;
-      //padding: 0 10px;
       position: relative;
+      overflow: hidden;
+      padding: 0 41px 0 0;
+      a[data-toggle="collapse"] {
+        padding: 8px 0 8px 15px;
+        display: block;
+      }
       a {
         vertical-align: middle;
         b {
           color: @gray;
         }
       }
+      .detailbtn {
+        margin-right: 3px;
+      }
       .action-wrap {
         position: absolute;
         top: 3px;
         right: 3px;
-      }
-      .detailbtn {
-        margin-right: 3px;
       }
     }
     &.empty {

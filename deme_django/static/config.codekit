@@ -87534,6 +87534,17 @@
 		"outputPathIsSetByUser": 0,
 		"processed": 0
 		},
+	"\/filedocument\/2014\/02\/22\/Screen_Shot_2014-01-28_at_10.43.31_AM.png.150x150_q85_crop.jpg": {
+		"fileType": 16384,
+		"ignore": 0,
+		"ignoreWasSetByUser": 0,
+		"initialSize": 14685,
+		"inputAbbreviatedPath": "\/filedocument\/2014\/02\/22\/Screen_Shot_2014-01-28_at_10.43.31_AM.png.150x150_q85_crop.jpg",
+		"outputAbbreviatedPath": "\/filedocument\/2014\/02\/22\/Screen_Shot_2014-01-28_at_10.43.31_AM.png.150x150_q85_crop.jpg",
+		"outputPathIsOutsideProject": 0,
+		"outputPathIsSetByUser": 0,
+		"processed": 0
+		},
 	"\/filedocument\/2014\/02\/22\/Screen_Shot_2014-01-28_at_10.43.31_AM.png.200x200_q85_crop.jpg": {
 		"fileType": 16384,
 		"ignore": 0,
@@ -87815,6 +87826,17 @@
 		"ignoreWasSetByUser": 0,
 		"inputAbbreviatedPath": "\/javascripts\/deme\/metadata-related-item-add.js",
 		"outputAbbreviatedPath": "\/javascripts\/deme\/min\/metadata-related-item-add-ck.js",
+		"outputPathIsOutsideProject": 0,
+		"outputPathIsSetByUser": 0,
+		"outputStyle": 1,
+		"syntaxCheckerStyle": 1
+		},
+	"\/javascripts\/deme\/min\/adminbar-ck.js": {
+		"fileType": 64,
+		"ignore": 1,
+		"ignoreWasSetByUser": 0,
+		"inputAbbreviatedPath": "\/javascripts\/deme\/min\/adminbar-ck.js",
+		"outputAbbreviatedPath": "\/javascripts\/deme\/min\/min\/adminbar-ck-ck.js",
 		"outputPathIsOutsideProject": 0,
 		"outputPathIsSetByUser": 0,
 		"outputStyle": 1,
@@ -91975,7 +91997,7 @@
 	"iconImageName": "meme-fry"
 	},
 "projectSettings": {
-	"alwaysUseExternalServer": 0,
+	"alwaysUseExternalServer": 1,
 	"animateCSSInjections": 1,
 	"autoApplyPSLanguageSettingsStyle": 0,
 	"autoprefixerBrowserString": "> 1%, last 2 versions, ff 17, opera 12.1",
@@ -92103,7 +92125,7 @@
 	"coffeeMinifyOutput": 1,
 	"coffeeOutputStyle": 0,
 	"coffeeSyntaxCheckerStyle": 1,
-	"externalServerAddress": "http:\/\/localhost:8888",
+	"externalServerAddress": "http:\/\/localhost:8005",
 	"externalServerPreviewPathAddition": "",
 	"genericWebpageFileExtensionsString": "html, htm, shtml, shtm, xhtml, php, jsp, asp, aspx, erb, ctp",
 	"hamlAutoOutputPathRelativePath": "",
