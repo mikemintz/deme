@@ -234,7 +234,6 @@ $(function(){
     if ($permissions.hasClass('ajax-loaded') && !$permissions.hasClass('hide')) {
       return true;
     }
-    e.preventDefault();
     // open metadata menu
     toggleMetabar('open');
     // load and open comments in metadata
