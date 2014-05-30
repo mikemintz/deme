@@ -46,6 +46,16 @@ We require Python 2.5, 2.6, or 2.7. Python 3 will not work.
 * On Mac OS X: You probably have it already, but if you don't, try http://python.org/ftp/python/2.6.2/python-2.6.2-macosx2009-04-16.dmg
 * Other OS: Find out at http://python.org/download/
 
+Pillow
+^^^^^^
+We use Pillow to create thumbnails and perform other image alteration tasks. Pillow requires certain imaging libraries to be installed.
+
+* On Ubuntu (12.04 LTS/Raspian): ``sudo apt-get install libtiff4-dev libjpeg8-dev zlib1g-dev \
+                                       libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev``
+* On Mac OS X (assuming Homebrew): ``brew install libtiff libjpeg webp littlecms``
+
+For full details please see http://pillow.readthedocs.org/en/latest/installation.html
+
 Virtualenv
 ^^^^^^^^^^
 We use virtualenv to manage Python libraries.
@@ -61,20 +71,7 @@ Once you've installed virtualenv, you can install the python dependencies as fol
   $ mkdir venv
   $ virtualenv venv
   $ source venv/bin/activate
-  $ pip install Django==1.5.1
-  $ pip install South==0.8
-  $ pip install psycopg2
-  $ pip install django-pure-pagination
-
-Pillow
-^^^^^^
-We use Pillow to create thumbnails and perform other image alteration tasks. Pillow requires certain imaging libraries to be installed.
-
-* On Ubuntu (12.04 LTS/Raspian): ``sudo apt-get install libtiff4-dev libjpeg8-dev zlib1g-dev \
-                                       libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev``
-* On Mac OS X (assuming Homebrew): ``brew install libtiff libjpeg webp littlecms``
-
-For full details please see http://pillow.readthedocs.org/en/latest/installation.html
+  $ pip install Django==1.5.1 South==0.8 psycopg2 django-pure-pagination pillow
 
 
 
