@@ -87853,6 +87853,17 @@
 		"outputStyle": 1,
 		"syntaxCheckerStyle": 1
 		},
+	"\/javascripts\/deme\/min\/metabar_swap-ck.js": {
+		"fileType": 64,
+		"ignore": 1,
+		"ignoreWasSetByUser": 0,
+		"inputAbbreviatedPath": "\/javascripts\/deme\/min\/metabar_swap-ck.js",
+		"outputAbbreviatedPath": "\/javascripts\/deme\/min\/min\/metabar_swap-ck-ck.js",
+		"outputPathIsOutsideProject": 0,
+		"outputPathIsSetByUser": 0,
+		"outputStyle": 1,
+		"syntaxCheckerStyle": 1
+		},
 	"\/javascripts\/deme\/sidebar-ck.js": {
 		"fileType": 64,
 		"ignore": 0,
