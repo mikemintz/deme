@@ -1070,6 +1070,7 @@ class CalculateRelationships(template.Node):
                 viewable_items = target_model.objects.filter(**filter_dict)
                 relationship_set['name'] = relation_name
                 #TODO set relationship_set['field'] (or just set list_url) so it's correct for this dyadic relation
+            viewable_items = viewable_items[:500] # to avoid very expensive queries, don't look through too many items
             for related_item in viewable_items:
                 all_pks.append(item.pk)
             relationship_set['items'] = viewable_items

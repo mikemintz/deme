@@ -47,7 +47,8 @@ def get_logged_in_agent(request):
             cur_agent = AnonymousAgent.objects.filter(active=True)[0:1].get()
         except ObjectDoesNotExist:
             raise Exception("You must create an anonymous agent")
-    Agent.objects.filter(pk=cur_agent.pk).update(last_online_at=datetime.now())
+    else:
+        Agent.objects.filter(pk=cur_agent.pk).update(last_online_at=datetime.now())
     return cur_agent
 
 
