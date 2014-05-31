@@ -109,6 +109,18 @@
                 }
             });
     });
+    // http://stackoverflow.com/questions/1584370/how-to-merge-two-arrays-in-javascript-and-de-duplicate-items
+    function arrayUnique(array) {
+        var a = array.concat();
+        for(var i=0; i<a.length; ++i) {
+            for(var j=i+1; j<a.length; ++j) {
+                if(a[i] === a[j])
+                    a.splice(j--, 1);
+            }
+        }
+        return a;
+    };
+
     // Attach autocomplete to search boxes
     $(document).ready(function () {
         var cache = {};
@@ -124,13 +136,27 @@
                     response(cache[term]);
                     return;
                 }
-                last_xhr = $.getJSON('{% url 'item_type_url' viewer="item" action="grid" format="json" %}', {rows: 10, page: 1, sidx: "name", sord: "asc", fields: "name", searchOper: "cn", searchField: "name", searchString: term}, function (data, status, xhr) {
+                // first attempt to get starting with
+                last_xhr = $.getJSON('{% url 'item_type_url' viewer="item" action="grid" format="json" %}', {rows: 10, page: 1, sidx: "name", sord: "asc", fields: "name", searchOper: "bw", searchField: "name", searchString: term}, function (data, status, xhr) {
                     var normalized_data = $.map(data["rows"], function (x) {
                         var cell = $(x["cell"][0]);
                         return {value: cell.text(), url: cell[0].href}
                     });
-                    cache[term] = normalized_data;
-                    response(normalized_data);
+                    // if not enough, then do contains
+                    if (normalized_data.length < 10) {
+                        $.getJSON('{% url 'item_type_url' viewer="item" action="grid" format="json" %}', {rows: 10, page: 1, sidx: "name", sord: "asc", fields: "name", searchOper: "cn", searchField: "name", searchString: term}, function (data, status, xhr) {
+                            var normalized_data_2 = $.map(data["rows"], function (x) {
+                                var cell = $(x["cell"][0]);
+                                return {value: cell.text(), url: cell[0].href}
+                            });
+                            var mixed_data = arrayUnique(normalized_data.concat(normalized_data_2));
+                            cache[term] = mixed_data;
+                            response(mixed_data);
+                        });
+                    } else {
+                        cache[term] = normalized_data;
+                        response(normalized_data);
+                    }
                 });
             },
         });
