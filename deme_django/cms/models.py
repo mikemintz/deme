@@ -1657,13 +1657,6 @@ class FileDocument(Document):
         self.datafile.delete()
     _before_destroy.alters_data = True
 
-    # @receiver(file_uploaded, sender=AjaxFileUploader)
-    # def create_on_upload(sender, backend, request, **kwargs):
-    #     print(request)
-    #     cur_agent = kwargs['cur_agent']
-    #     new_item = FileDocument(datafile=backend.path)
-    #     new_item.save_versioned(action_agent=cur_agent) # TODO: permissions
-
 
 class ImageDocument(FileDocument):
     """
