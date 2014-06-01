@@ -143,6 +143,7 @@ class ItemViewer(Viewer):
         self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         self.context['item_create_ability'] = "create %s" % (self.accepted_item_type.__name__)
         self.context['search_query'] = self.request.GET.get('q', '')
+        self.context['display_multiupload'] = self.accepted_item_type in (FileDocument, ImageDocument,)
         inactive = self.request.GET.get('inactive', '0') == '1'
         self.context['inactive'] = inactive
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
@@ -737,13 +738,16 @@ class ItemViewer(Viewer):
         template = loader.get_template('item/justdestroyed.html')
         return HttpResponse(template.render(self.context))
 
-    def _get_permissions_from_post_data(self, item_type, target_level):
+    def _get_permissions_from_post_data(self, item_type, target_level, post=True):
         if target_level == 'one':
             possible_abilities = all_possible_item_abilities(item_type)
         else:
             possible_abilities = all_possible_item_and_global_abilities()
         permission_data = {}
-        for key, value in self.request.POST.iteritems():
+        iteritems = self.request.POST.iteritems()
+        if not post:
+          iteritems = self.request.GET.iteritems()
+        for key, value in iteritems:
             if key.startswith('newpermission'):
                 permission_counter, name = key.split('_', 1)
                 permission_datum = permission_data.setdefault(permission_counter, {})
@@ -1522,15 +1526,17 @@ class FileDocumentViewer(DocumentViewer):
         from deme_django.cms.backends import FileDocumentLocalUploadBackend
 
         import_uploader = AjaxFileUploader(backend=FileDocumentLocalUploadBackend)
+        permissions = self._get_permissions_from_post_data(self.accepted_item_type, 'one', False)
         kwargs = {
-            'cur_agent': self.cur_agent
+            'cur_agent': self.cur_agent,
+            'permissions': permissions,
         }
         return import_uploader.__call__(self.request, **kwargs)
 
     def type_multiupload_html(self):
         from django.middleware.csrf import get_token
 
-        self.context['action_title'] = 'Upload Multiple'
+        self.context['action_title'] = 'Upload Multiple Files'
         csrf_token = get_token(self.request)
         self.context['csrf_token'] = csrf_token
         self.context['is_img'] = issubclass(self.accepted_item_type, ImageDocument)

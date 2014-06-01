@@ -27,6 +27,7 @@ class FileDocumentLocalUploadBackend(LocalUploadBackend):
 
     def upload_complete(self, request, filename, *args, **kwargs):
         cur_agent = kwargs['cur_agent']
+        permissions = kwargs['permissions']
         relative_path = self.upload_to() + "/" + filename
         full_path = settings.MEDIA_URL + relative_path
         name = filename
@@ -39,7 +40,7 @@ class FileDocumentLocalUploadBackend(LocalUploadBackend):
             new_item = FileDocument(name=name, datafile=relative_path)
 
         # link to item
-        new_item.save_versioned(action_agent=cur_agent) # TODO: permissions
+        new_item.save_versioned(action_agent=cur_agent, initial_permissions=permissions)
         self._dest.close()
         return {
             "path": full_path,
