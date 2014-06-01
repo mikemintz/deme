@@ -19,6 +19,10 @@ from django.conf import settings
 import copy
 import html2text
 import re
+from django.dispatch import receiver
+
+from ajaxuploader.views import AjaxFileUploader
+from ajaxuploader.signals import file_uploaded
 
 from easy_thumbnails.alias import aliases
 if not aliases.get('thumb'):
@@ -1652,6 +1656,13 @@ class FileDocument(Document):
             version.datafile.delete()
         self.datafile.delete()
     _before_destroy.alters_data = True
+
+    # @receiver(file_uploaded, sender=AjaxFileUploader)
+    # def create_on_upload(sender, backend, request, **kwargs):
+    #     print(request)
+    #     cur_agent = kwargs['cur_agent']
+    #     new_item = FileDocument(datafile=backend.path)
+    #     new_item.save_versioned(action_agent=cur_agent) # TODO: permissions
 
 
 class ImageDocument(FileDocument):

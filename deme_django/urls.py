@@ -1,6 +1,7 @@
 from django.conf.urls.defaults import *
 from django.conf import settings
 import os
+from deme_django.cms import base_viewer
 
 urlpatterns = patterns('')
 
@@ -25,4 +26,3 @@ for module_name in settings.MODULE_NAMES:
 
 # Everything else goes to cms/urls.py, which includes a catch-all for aliases
 urlpatterns += patterns('', (r'', include('deme_django.cms.urls')))
-

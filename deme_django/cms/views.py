@@ -25,6 +25,7 @@ from cms.forms import *
 from cms.base_viewer import DemePermissionDenied, Viewer
 from cms.permissions import all_possible_item_abilities, all_possible_item_and_global_abilities
 
+
 class ItemViewer(Viewer):
     accepted_item_type = Item
     viewer_name = 'item'
@@ -1510,9 +1511,31 @@ class HtmlDocumentViewer(TextDocumentViewer):
     viewer_name = 'htmldocument'
 
 
+
+
 class FileDocumentViewer(DocumentViewer):
     accepted_item_type = FileDocument
     viewer_name = 'filedocument'
+
+    def type_multiuploadajax_html(self):
+        from ajaxuploader.views import AjaxFileUploader
+        from deme_django.cms.backends import FileDocumentLocalUploadBackend
+
+        import_uploader = AjaxFileUploader(backend=FileDocumentLocalUploadBackend)
+        kwargs = {
+            'cur_agent': self.cur_agent
+        }
+        return import_uploader.__call__(self.request, **kwargs)
+
+    def type_multiupload_html(self):
+        from django.middleware.csrf import get_token
+
+        self.context['action_title'] = 'Upload Multiple'
+        csrf_token = get_token(self.request)
+        self.context['csrf_token'] = csrf_token
+        self.context['is_img'] = issubclass(self.accepted_item_type, ImageDocument)
+        template = loader.get_template('filedocument/multiupload.html')
+        return HttpResponse(template.render(self.context))
 
 
 class ImageDocumentViewer(FileDocumentViewer):
@@ -1751,4 +1774,3 @@ class DemeSettingViewer(ItemViewer):
         DemeSetting.set(key, value, self.cur_agent)
         redirect = self.request.GET.get('redirect', reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'modify'}))
         return HttpResponseRedirect(redirect)
-

@@ -4,3 +4,4 @@ psycopg2
 django-pure-pagination
 pillow
 easy-thumbnails
+ajaxuploader
