@@ -87598,6 +87598,28 @@
 		"outputPathIsSetByUser": 0,
 		"processed": 0
 		},
+	"\/filedocument\/2014\/05\/31\/pitching01a4.png": {
+		"fileType": 32768,
+		"ignore": 0,
+		"ignoreWasSetByUser": 0,
+		"initialSize": 516252,
+		"inputAbbreviatedPath": "\/filedocument\/2014\/05\/31\/pitching01a4.png",
+		"outputAbbreviatedPath": "\/filedocument\/2014\/05\/31\/pitching01a4.png",
+		"outputPathIsOutsideProject": 0,
+		"outputPathIsSetByUser": 0,
+		"processed": 0
+		},
+	"\/filedocument\/2014\/05\/31\/pitching01c10.png": {
+		"fileType": 32768,
+		"ignore": 0,
+		"ignoreWasSetByUser": 0,
+		"initialSize": 495690,
+		"inputAbbreviatedPath": "\/filedocument\/2014\/05\/31\/pitching01c10.png",
+		"outputAbbreviatedPath": "\/filedocument\/2014\/05\/31\/pitching01c10.png",
+		"outputPathIsOutsideProject": 0,
+		"outputPathIsSetByUser": 0,
+		"processed": 0
+		},
 	"\/gradients\/button_gradient.png": {
 		"fileType": 32768,
 		"ignore": 0,
@@ -92014,127 +92036,6 @@
 		"outputAbbreviatedPath": "No Output Path",
 		"outputPathIsOutsideProject": 0,
 		"outputPathIsSetByUser": 0
-		},
-	"\/uploads\/pitching01-email.png": {
-		"fileType": 32768,
-		"ignore": 0,
-		"ignoreWasSetByUser": 0,
-		"initialSize": 495114,
-		"inputAbbreviatedPath": "\/uploads\/pitching01-email.png",
-		"outputAbbreviatedPath": "\/uploads\/pitching01-email.png",
-		"outputPathIsOutsideProject": 0,
-		"outputPathIsSetByUser": 0,
-		"processed": 0
-		},
-	"\/uploads\/pitching01a.png": {
-		"fileType": 32768,
-		"ignore": 0,
-		"ignoreWasSetByUser": 0,
-		"initialSize": 516252,
-		"inputAbbreviatedPath": "\/uploads\/pitching01a.png",
-		"outputAbbreviatedPath": "\/uploads\/pitching01a.png",
-		"outputPathIsOutsideProject": 0,
-		"outputPathIsSetByUser": 0,
-		"processed": 0
-		},
-	"\/uploads\/pitching01b.png": {
-		"fileType": 32768,
-		"ignore": 0,
-		"ignoreWasSetByUser": 0,
-		"initialSize": 496884,
-		"inputAbbreviatedPath": "\/uploads\/pitching01b.png",
-		"outputAbbreviatedPath": "\/uploads\/pitching01b.png",
-		"outputPathIsOutsideProject": 0,
-		"outputPathIsSetByUser": 0,
-		"processed": 0
-		},
-	"\/uploads\/pitching01c.png": {
-		"fileType": 32768,
-		"ignore": 0,
-		"ignoreWasSetByUser": 0,
-		"initialSize": 495690,
-		"inputAbbreviatedPath": "\/uploads\/pitching01c.png",
-		"outputAbbreviatedPath": "\/uploads\/pitching01c.png",
-		"outputPathIsOutsideProject": 0,
-		"outputPathIsSetByUser": 0,
-		"processed": 0
-		},
-	"\/uploads\/pitching01c1.png": {
-		"fileType": 32768,
-		"ignore": 0,
-		"ignoreWasSetByUser": 0,
-		"initialSize": 495690,
-		"inputAbbreviatedPath": "\/uploads\/pitching01c1.png",
-		"outputAbbreviatedPath": "\/uploads\/pitching01c1.png",
-		"outputPathIsOutsideProject": 0,
-		"outputPathIsSetByUser": 0,
-		"processed": 0
-		},
-	"\/uploads\/pitching01c2.png": {
-		"fileType": 32768,
-		"ignore": 0,
-		"ignoreWasSetByUser": 0,
-		"initialSize": 495690,
-		"inputAbbreviatedPath": "\/uploads\/pitching01c2.png",
-		"outputAbbreviatedPath": "\/uploads\/pitching01c2.png",
-		"outputPathIsOutsideProject": 0,
-		"outputPathIsSetByUser": 0,
-		"processed": 0
-		},
-	"\/uploads\/pitching01c3.png": {
-		"fileType": 32768,
-		"ignore": 0,
-		"ignoreWasSetByUser": 0,
-		"initialSize": 495690,
-		"inputAbbreviatedPath": "\/uploads\/pitching01c3.png",
-		"outputAbbreviatedPath": "\/uploads\/pitching01c3.png",
-		"outputPathIsOutsideProject": 0,
-		"outputPathIsSetByUser": 0,
-		"processed": 0
-		},
-	"\/uploads\/pitching01c4.png": {
-		"fileType": 32768,
-		"ignore": 0,
-		"ignoreWasSetByUser": 0,
-		"initialSize": 495690,
-		"inputAbbreviatedPath": "\/uploads\/pitching01c4.png",
-		"outputAbbreviatedPath": "\/uploads\/pitching01c4.png",
-		"outputPathIsOutsideProject": 0,
-		"outputPathIsSetByUser": 0,
-		"processed": 0
-		},
-	"\/uploads\/pitching01c5.png": {
-		"fileType": 32768,
-		"ignore": 0,
-		"ignoreWasSetByUser": 0,
-		"initialSize": 495690,
-		"inputAbbreviatedPath": "\/uploads\/pitching01c5.png",
-		"outputAbbreviatedPath": "\/uploads\/pitching01c5.png",
-		"outputPathIsOutsideProject": 0,
-		"outputPathIsSetByUser": 0,
-		"processed": 0
-		},
-	"\/uploads\/pitching01c6.png": {
-		"fileType": 32768,
-		"ignore": 0,
-		"ignoreWasSetByUser": 0,
-		"initialSize": 495690,
-		"inputAbbreviatedPath": "\/uploads\/pitching01c6.png",
-		"outputAbbreviatedPath": "\/uploads\/pitching01c6.png",
-		"outputPathIsOutsideProject": 0,
-		"outputPathIsSetByUser": 0,
-		"processed": 0
-		},
-	"\/uploads\/pitching01c7.png": {
-		"fileType": 32768,
-		"ignore": 0,
-		"ignoreWasSetByUser": 0,
-		"initialSize": 495690,
-		"inputAbbreviatedPath": "\/uploads\/pitching01c7.png",
-		"outputAbbreviatedPath": "\/uploads\/pitching01c7.png",
-		"outputPathIsOutsideProject": 0,
-		"outputPathIsSetByUser": 0,
-		"processed": 0
 		}
 	},
 "hooks": [
@@ -92714,7 +92615,7 @@
 	"sassUseLibsass": 0,
 	"shouldRunAutoprefixer": 0,
 	"shouldRunBless": 0,
-	"skippedItemsString": ".svn, .git, .hg, log, _logs, _cache, cache, logs",
+	"skippedItemsString": "_cache, logs, _logs, cache, \/uploads, \/filedocument, .git, log, .svn, .hg",
 	"slimAutoOutputPathRelativePath": "",
 	"slimAutoOutputPathReplace1": "",
 	"slimAutoOutputPathReplace2": "",

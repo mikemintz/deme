@@ -30,10 +30,19 @@ class FileDocumentLocalUploadBackend(LocalUploadBackend):
         relative_path = self.upload_to() + "/" + filename
         full_path = settings.MEDIA_URL + relative_path
         name = filename
-        new_item = FileDocument(name=name, datafile=relative_path)
 
-        # TODO: auto categorize images
-        # TODO: make images links
+        # auto categorize images
+        image_extensions = ('.jpg', '.jpeg', '.png', '.gif',)
+        if filename.endswith(image_extensions):
+            new_item = ImageDocument(name=name, datafile=relative_path)
+        else:
+            new_item = FileDocument(name=name, datafile=relative_path)
+
+        # link to item
         new_item.save_versioned(action_agent=cur_agent) # TODO: permissions
         self._dest.close()
-        return {"path": full_path}
+        return {
+            "path": full_path,
+            "url": new_item.get_absolute_url(),
+            "name": new_item.name,
+        }

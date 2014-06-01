@@ -10,16 +10,21 @@
             element: $('#file-uploader')[0],
             multiple: true,
             onComplete: function(id, fileName, responseJSON) {
-                if(responseJSON.success) {
-                    alert("success!");
+                if (responseJSON.success) {
+                    var li = $('#file-uploader .qq-upload-list li:nth-child(' + (id + 1) + ')');
+                    li.addClass('link');
+                    li.on('click', function(){
+                        window.location = responseJSON['url'];
+                    });
+                    //alert("success!");
                 } else {
-                    alert("upload failed!");
+                    //alert("upload failed");
                 }
             },
             onAllComplete: function(uploads) {
                 // uploads is an array of maps
                 // the maps look like this: {file: FileObject, response: JSONServerResponse}
-                alert("All complete!");
+                // alert("All complete!");
             },
             params: {
                 'csrf_token': '{{ csrf_token }}',
