@@ -526,6 +526,14 @@ class SymsysAffiliate(Person):
                                       'edit SymsysAffiliate.about', 'edit SymsysAffiliate.photo'])
     introduced_global_abilities = frozenset(['create SymsysAffiliate'])
     dyadic_relations = {}
+    special_creation_viewers = [
+      {
+        'viewer': 'symsysaffiliate',
+        'action': 'wizard',
+        'title': 'Create through wizard'
+      }
+    ]
+
     class Meta:
         verbose_name = _('Symsys affiliate')
         verbose_name_plural = _('Symsys affiliates')
@@ -596,4 +604,3 @@ class HtmlAdvertisement(HtmlDocument, Advertisement):
     class Meta:
         verbose_name = _('HTML advertisement')
         verbose_name_plural = _('HTML advertisements')
-

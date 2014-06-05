@@ -143,7 +143,6 @@ class ItemViewer(Viewer):
         self.context['item_type_lower'] = self.accepted_item_type.__name__.lower()
         self.context['item_create_ability'] = "create %s" % (self.accepted_item_type.__name__)
         self.context['search_query'] = self.request.GET.get('q', '')
-        self.context['display_multiupload'] = self.accepted_item_type in (FileDocument, ImageDocument,)
         inactive = self.request.GET.get('inactive', '0') == '1'
         self.context['inactive'] = inactive
         item_types = [{'viewer': x.__name__.lower(), 'name': x._meta.verbose_name, 'name_plural': x._meta.verbose_name_plural, 'item_type': x} for x in all_item_types() if self.accepted_item_type in x.__bases__ + (x,)]
@@ -178,6 +177,9 @@ class ItemViewer(Viewer):
           template = loader.get_template('item/list_embed.html')
         else:
           template = loader.get_template('item/list.html')
+
+        self.context['special_creation_viewers'] = self.accepted_item_type.special_creation_viewers
+        self.context['display_multiupload'] = self.accepted_item_type in (FileDocument, ImageDocument,)
         return HttpResponse(template.render(self.context))
 
     def type_list_json(self):

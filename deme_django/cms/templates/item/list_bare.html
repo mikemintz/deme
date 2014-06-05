@@ -139,6 +139,10 @@
                 <a class="btn btn-primary"
                    href="{% url 'item_type_url' viewer=item_type_lower action="new" %}?{{ query_string }}"><i
                         class="glyphicon glyphicon-plus-sign"></i> Create a new {{ item_type_name }}</a>
+                {% for special in special_creation_viewers %}
+                <a class="btn btn-default"
+                   href="{% url 'item_type_url' viewer=special.viewer action=special.action %}"> {{special.title}}</a>
+                {% endfor %}
                 {% if display_multiupload %}
                 <a class="btn btn-default"
                    href="{% url 'item_type_url' viewer='filedocument' action="multiupload" %}"> Upload multiple files</a>
