@@ -1,0 +1,13 @@
+{% extends layout %}
+{% load symsys_extras %}
+{% load item_tags %}
+{% load bootstrap_tags %}
+
+{% block content %}
+<form action="" method="post">{% csrf_token %}
+{{ form|as_bootstrap }}
+<div class="form-actions">
+  <button type="submit" class="btn btn-primary">Submit</button>
+</div>
+</form>
+{% endblock content %}

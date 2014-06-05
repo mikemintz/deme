@@ -111,6 +111,7 @@ INSTALLED_APPS = (
     'deme_django.cms',
     'easy_thumbnails',
     'ajaxuploader',
+    'django_forms_bootstrap',
 )
 
 MODULE_NAMES = ['imagedocument', 'demeaccount']

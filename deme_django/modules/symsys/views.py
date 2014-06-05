@@ -69,15 +69,15 @@ class SymsysGroupViewer(CollectionViewer):
                     if issubclass(career.actual_item_type(), FacultySymsysCareer):
                         career = career.downcast()
                         member_details['is_staff'] = True
-                        member_details['academic_title'] = career.academic_title 
+                        member_details['academic_title'] = career.academic_title
                         member_details['publications'] = member.publications
                         member_details['interests'] = member.interests
                     if issubclass(career.actual_item_type(), ProgramStaffSymsysCareer):
                         career = career.downcast()
                         #member_details['is_staff'] = True
-                        member_details['academic_title'] = career.admin_title 
-                        
-                
+                        member_details['academic_title'] = career.admin_title
+
+
                 members.append(member_details)
 
         page_ranges = p.page_range
@@ -146,7 +146,7 @@ class StudentSymsysCareerViewer(SymsysCareerViewer):
         if issubclass(self.item.actual_item_type(), MastersSymsysCareer):
             self.item = self.item.downcast()
             self.context['track'] = self.item.track
-            self.context['indiv_designed_track'] = self.item.indivdesignedtrack 
+            self.context['indiv_designed_track'] = self.item.indivdesignedtrack
             self.context['thesis'] = self.item.thesis
             self.context['thesis_title'] = self.item.thesis_title
             self.context['second_reader'] = self.item.second_reader
@@ -192,6 +192,59 @@ class SymsysAffiliateViewer(PersonViewer):
     accepted_item_type = SymsysAffiliate
     viewer_name = 'symsysaffiliate'
 
+    def type_wizard_html(self):
+        from modules.symsys.forms import SymsysAffiliateWizardForm
+        from modules.demeaccount.models import DemeAccount
+
+        self.require_global_ability('create %s' % self.accepted_item_type.__name__)
+        template = loader.get_template("symsysaffiliate/wizard.html")
+        self.context['action_title'] = 'New Symsys Affiliate'
+        if self.request.method == "POST":
+            form = SymsysAffiliateWizardForm(self.request.POST)
+            if form.is_valid():
+                first_name = form.cleaned_data['first_name']
+                middle_names = form.cleaned_data['middle_names']
+                last_name = form.cleaned_data['last_name']
+                email = form.cleaned_data['email']
+                password = form.cleaned_data['password']
+                concentration = form.cleaned_data['concentration']
+                suid = form.cleaned_data['suid']
+                declaration_date = form.cleaned_data['declaration_date']
+                class_year = form.cleaned_data['class_year']
+                # create Symsys affiliate
+                person = SymsysAffiliate(first_name=first_name, middle_names=middle_names, last_name=last_name, name=" ".join([first_name, last_name]))
+                person.save_versioned(action_agent=self.cur_agent)
+                OneToOnePermission(ability="do_anything", is_allowed=True, source=person, target=person).save()
+
+                # create authentication method
+                account = DemeAccount(agent=person, username=email)
+                account.set_password(password)
+                permissions = [OneToOnePermission(ability="do_anything", is_allowed=True, source=person)]
+                account.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
+
+                # create contact method
+                contact = EmailContactMethod(agent=person, email=email)
+                permissions = [OneToOnePermission(ability="do_anything", is_allowed=True, source=person)]
+                contact.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
+
+                # create career
+                career = BachelorsSymsysCareer(concentration=concentration, symsys_affiliate=person, suid=suid, original_first_name=first_name, original_middle_names=middle_names, original_last_name=last_name, start_date=declaration_date, class_year=class_year)
+                permissions = [
+                    OneToOnePermission(ability="edit_class_year", is_allowed=True, source=person),
+                    OneToOnePermission(ability="edit_concentration", is_allowed=True, source=person),
+                    OneToOnePermission(ability="edit_advisor", is_allowed=True, source=person),
+                ]
+                career.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
+
+                redirect = person.get_absolute_url()
+                return HttpResponseRedirect(redirect)
+        else:
+            form = SymsysAffiliateWizardForm()
+
+        self.context['form'] = form
+        return HttpResponse(template.render(self.context))
+
+
     def item_show_html(self):
         from django.utils.safestring import mark_safe
         self.context['action_title'] = ''
@@ -203,7 +256,7 @@ class SymsysAffiliateViewer(PersonViewer):
             visible_memberships = self.permission_cache.filter_items('view Membership.item', Membership.objects)
             recursive_filter = Q(child_memberships__in=visible_memberships.values('pk').query)
         self.context['containing_collections'] = self.item.ancestor_collections(recursive_filter)
-    
+
         contact_method_fields = []
         contact_methods = self.permission_cache.filter_items('view ContactMethod.agent', self.item.contact_methods).filter(active=True)
         for contact_method in contact_methods:
@@ -286,7 +339,7 @@ class SymsysResumeViewer(TextDocumentViewer):
 
         if not is_student:
             return self.render_error('Error', "You must be a current student to post a resume")
-            
+
 
         symsys_aff = self.cur_agent.downcast()
         year = datetime.datetime.now().year
@@ -303,13 +356,13 @@ class SymsysResumeViewer(TextDocumentViewer):
             return HttpResponseRedirect(redirect)
 
         self.context['resume_name'] = resume_name
-        
+
         #you need to specify the collection of resumes to add this resume to
         add_coll = self.request.GET.get('add_to_collection')
         if not add_coll:
             return self.render_error('Error', "Bad link to the resume uploader")
 
-        self.context['add_to_collection'] = add_coll 
+        self.context['add_to_collection'] = add_coll
         self.context['create_url'] = reverse('item_type_url', kwargs={'viewer':'symsysresume', 'action':'resumecreate'})
 
 
@@ -318,7 +371,7 @@ class SymsysResumeViewer(TextDocumentViewer):
 
     def type_resumecreate_html(self):
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
-        
+
         #check and make sure everything is there
         resume = self.request.POST.get('resume')
         if resume == '':
@@ -332,13 +385,13 @@ class SymsysResumeViewer(TextDocumentViewer):
 
 
         new_res = HtmlDocument(body=resume, name=resume_name)
-        permissions = [AllToOnePermission(ability='do_anything', is_allowed=False), 
+        permissions = [AllToOnePermission(ability='do_anything', is_allowed=False),
                 OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
         new_res.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
 
         new_membership = Membership(item=new_res, collection=Collection.objects.get(pk=add_to_collection), permission_enabled=True)
         membership_permissions = [AllToOnePermission(ability='do_anything', is_allowed=False)]
-        new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions) 
+        new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions)
 
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'htmldocument', 'noun': new_res.pk}))
         return HttpResponseRedirect(redirect)
@@ -379,7 +432,7 @@ class SymsysInternshipViewer(HtmlDocumentViewer, AdvertisementViewer):
         if not add_coll:
             return self.render_error('Error', "Bad link to the internship uploader")
 
-        self.context['add_to_collection'] = add_coll 
+        self.context['add_to_collection'] = add_coll
         self.context['create_url'] = reverse('item_type_url', kwargs={'viewer':'symsysinternship', 'action':'internshipcreate'})
 
 
@@ -388,7 +441,7 @@ class SymsysInternshipViewer(HtmlDocumentViewer, AdvertisementViewer):
 
     def type_internshipcreate_html(self):
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
-        
+
         #check and make sure everything is there
         body = self.request.POST.get('body')
         if body == '':
@@ -407,13 +460,13 @@ class SymsysInternshipViewer(HtmlDocumentViewer, AdvertisementViewer):
 
 
         new_ad = HtmlAdvertisement(body=body, name=ad_name, contact_info=contact_info)
-        permissions = [AllToOnePermission(ability='do_anything', is_allowed=False), 
+        permissions = [AllToOnePermission(ability='do_anything', is_allowed=False),
                 OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
         new_ad.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
 
         new_membership = Membership(item=new_ad, collection=Collection.objects.get(pk=add_to_collection), permission_enabled=True)
         membership_permissions = [AllToOnePermission(ability='do_anything', is_allowed=False)]
-        new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions) 
+        new_membership.save_versioned(action_agent=self.cur_agent, initial_permissions=membership_permissions)
 
         redirect = self.request.GET.get('redirect', reverse('item_url', kwargs={'viewer': 'htmladvertisement', 'noun': new_ad.pk}))
         return HttpResponseRedirect(redirect)
@@ -435,7 +488,7 @@ class SymsysCourseListViewer(TextDocumentViewer):
         #Replace basic markup with clickable markup for each class listed
             #depts list is alphabetized!
         depts = ['ANTHRO', '(?<!N)(?<!HUM)BIO', 'BIOE', 'BIOMEDIN', 'CEE', 'CME', 'COMM', 'CS', 'ECON', 'EDUC', '(?<!C)EE', 'ENGR', 'ETHICSOC', 'GENE', 'HRP', 'HUMBIO', 'IHUM', 'IPS', 'LAW', 'LINGUIST', 'MATH', '(?<!C)ME', 'MED', 'MS&amp;E', 'MUSIC', 'NBIO', 'NENS', 'PHIL', 'POLISCI', 'PSYCH', 'PUBLPOL', 'SLE', '(?<!ETHIC)SOC', 'STATS', 'STS', 'SYMSYS', 'THINK', 'URBANST']
-        regex = '(%s [0-9]+[A-Z]*\.[^</*]+)' 
+        regex = '(%s [0-9]+[A-Z]*\.[^</*]+)'
         #index must be a list because integers are not mutable (see its use in replFunc for more info)
         index = [0]
 
@@ -444,19 +497,19 @@ class SymsysCourseListViewer(TextDocumentViewer):
             index[0] += 1
             temp = "a"+str(index[0])
             classEx = '(%s [0-9]+[A-Z]*)' % dept
-            className = re.search(classEx, matchobj.group(0)).group(0) 
+            className = re.search(classEx, matchobj.group(0)).group(0)
             #Click '+' or 'show/hide info'
             #return replace % (matchobj.group(1), className, temp, re.sub(' ', '', className), temp)
             #Click whole course name etc.
             return replace % (className, temp, matchobj.group(1), re.sub(' ', '', className), temp)
 
-        #Highlight '+'   
+        #Highlight '+'
         #replace = '%s <a href="#" title="Click to see course info including schedule and description." onclick="courseLink(\'%s\', \'%s\'); return false;"> + </a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px;"></div>'
         #Highlight whole course name
         replace = '<a href="#" title="Click to see course info including schedule and description." onclick="courseLink(\'%s\', \'%s\'); return false;">%s</a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px;"></div>'
         #Highlight 'show/hide info'
         #replace = '%s <a href="#" title="Click to see course info including schedule and description." style="font-weight:normal;" onclick="courseLink(\'%s\', \'%s\'); return false;"> show/hide info </a><div class="courselink %s" id="%s" style="display:none; border:5px solid; padding:5px; font-weight:normal;"></div>'
-               
+
 
         new_body = self.item.body
         for dept in depts:
@@ -481,4 +534,3 @@ class SymsysCourseListViewer(TextDocumentViewer):
         opener = urllib.FancyURLopener({})
         f = opener.open(url)
         return HttpResponse(f)
-        
