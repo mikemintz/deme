@@ -1,13 +1,20 @@
 #!/usr/bin/env python
 
 # Set up the Django Enviroment
-from django.core.management import setup_environ
 import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'deme_django.settings'
+
+project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+venv_lib_dir = os.path.join(project_dir, 'venv/lib')
+for python_version_dir in os.listdir(venv_lib_dir):
+    venv_site_package_dir = os.path.join(venv_lib_dir, python_version_dir, 'site-packages')
+    sys.path.insert(0, venv_site_package_dir)
+sys.path.insert(0, project_dir)
+sys.path.insert(0, os.path.dirname(project_dir))
+
 from deme_django import settings
-setup_environ(settings)
 
 from cms.models import *
 from cms.permissions import MultiAgentPermissionCache
