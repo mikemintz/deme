@@ -1642,6 +1642,14 @@ class FileDocument(Document):
     introduced_abilities = frozenset(['view FileDocument.datafile', 'edit FileDocument.datafile'])
     introduced_global_abilities = frozenset(['create FileDocument'])
     dyadic_relations = {}
+    special_creation_viewers = [
+      {
+        'viewer': 'filedocument',
+        'action': 'multiupload',
+        'title': '<i class="glyphicon glyphicon-plus-sign"></i> Upload multiple files',
+        'addl_class': 'btn-success',
+      }
+    ]
     class Meta:
         verbose_name = _('file document')
         verbose_name_plural = _('file documents')
@@ -1672,6 +1680,14 @@ class ImageDocument(FileDocument):
     introduced_abilities = frozenset()
     introduced_global_abilities = frozenset(['create ImageDocument'])
     dyadic_relations = {}
+    special_creation_viewers = [
+      {
+        'viewer': 'filedocument',
+        'action': 'multiupload',
+        'title': '<i class="glyphicon glyphicon-plus-sign"></i> Upload multiple images',
+        'addl_class': 'btn-success',
+      }
+    ]
     class Meta:
         verbose_name = _('image document')
         verbose_name_plural = _('image documents')

@@ -178,8 +178,8 @@ class ItemViewer(Viewer):
         else:
           template = loader.get_template('item/list.html')
 
-        self.context['special_creation_viewers'] = self.accepted_item_type.special_creation_viewers
-        self.context['display_multiupload'] = self.accepted_item_type in (FileDocument, ImageDocument,)
+        if hasattr(self.accepted_item_type, 'special_creation_viewers'):
+          self.context['special_creation_viewers'] = self.accepted_item_type.special_creation_viewers
         return HttpResponse(template.render(self.context))
 
     def type_list_json(self):

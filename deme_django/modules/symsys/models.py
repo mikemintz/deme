@@ -530,7 +530,8 @@ class SymsysAffiliate(Person):
       {
         'viewer': 'symsysaffiliate',
         'action': 'wizard',
-        'title': 'Create through wizard'
+        'title': '<i class="glyphicon glyphicon-plus-sign"></i> Symsys affiliate wizard',
+        'addl_class': 'btn-success',
       }
     ]
 
