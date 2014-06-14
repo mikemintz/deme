@@ -1185,7 +1185,7 @@ class CalculateActionNotices(template.Node):
         result.append('<div>')
         if agentcan_helper(context, 'view Item.action_notices', item):
             #TODO include recursive threads (comment replies, and items in this collection) of action notices
-            action_notices = ActionNotice.objects.filter(Q(action_item=item) | Q(action_agent=item)).order_by('-action_time')
+            action_notices = ActionNotice.objects.filter(Q(action_item=item) | Q(action_agent=item)).order_by('-action_time')[:500] # to avoid very expensive queries, don't look through too many items
             action_notice_pk_to_object_map = {}
             for action_notice_subclass in [RelationActionNotice, DeactivateActionNotice, ReactivateActionNotice, DestroyActionNotice, CreateActionNotice, EditActionNotice]:
                 select_related_fields = ['action_agent__name', 'action_item__name']
