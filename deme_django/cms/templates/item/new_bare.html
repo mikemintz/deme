@@ -63,6 +63,17 @@ $(document).ready(function () {
 </div>
 {% endif %}
 
+{% if special_creation_viewers %}
+<div class="row" style="padding-bottom: 15px;">
+  <div class="col-sm-12">
+  {% for special in special_creation_viewers %}
+    <a class="btn btn-default {{special.addl_class}}"
+     href="{% url 'item_type_url' viewer=special.viewer action=special.action %}"> {{special.title|safe}}</a>
+  {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 <div class="item-type-new-container item-type-{{ viewer_name }}">
 {% if form %}
     <form method="post" enctype="multipart/form-data" action="{% url 'item_type_url' viewer=viewer_name action="create" %}?{% if add_to_collection %}add_to_collection={{ add_to_collection|urlencode }}&{% endif %}{% if redirect %}redirect={{ redirect|urlencode }}{% endif %}{% if modal %}&modal=1{% endif %}{% if receiver_input_id %}&id={{ receiver_input_id }}{% endif %}{% if src %}&src={{ src }}{% endif %}" class="item_form">

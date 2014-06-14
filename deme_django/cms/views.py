@@ -437,6 +437,8 @@ class ItemViewer(Viewer):
           template = loader.get_template('item/new_embed.html')
         else:
           template = loader.get_template('item/new.html')
+        if hasattr(self.accepted_item_type, 'special_creation_viewers'):
+          self.context['special_creation_viewers'] = self.accepted_item_type.special_creation_viewers
         return HttpResponse(template.render(self.context))
 
     @require_POST

@@ -8,6 +8,8 @@ from django.core.urlresolvers import reverse
 import datetime
 import re
 import urllib
+from modules.symsys.forms import *
+from modules.demeaccount.models import DemeAccount
 
 
 #class SymsysFacultyGroupViewer(SymsysGroupViewer):
@@ -193,24 +195,44 @@ class SymsysAffiliateViewer(PersonViewer):
     viewer_name = 'symsysaffiliate'
 
     def type_wizard_html(self):
-        from modules.symsys.forms import SymsysAffiliateWizardForm
-        from modules.demeaccount.models import DemeAccount
+        styles = [
+          ('', "Basic", ),
+          ('minor', "Minor"),
+          ('bachelors', "Bachelors"),
+          ('masters', "Masters"),
+          ('faculty', "Faculty"),
+          ('researcher', "Researcher"),
+          ('staff', "Staff"),
+        ]
+        self.context['styles'] = styles
+        style = self.request.GET.get('style')
+        self.context['style'] = style
+        form_type = SymsysAffiliateWizardForm
+        if style == "bachelors":
+            form_type = BachelorsSymsysAffiliateWizardForm
+        if style == "masters":
+            form_type = MastersSymsysAffiliateWizardForm
+        if style == "minor":
+            form_type = StudentSymsysAffiliateWizardForm
+        if style == "staff":
+            form_type = StaffSymsysAffiliateWizardForm
+        if style == "faculty" or style == "researcher":
+            form_type = FacultySymsysAffiliateWizardForm
+
 
         self.require_global_ability('create %s' % self.accepted_item_type.__name__)
         template = loader.get_template("symsysaffiliate/wizard.html")
         self.context['action_title'] = 'New Symsys Affiliate'
         if self.request.method == "POST":
-            form = SymsysAffiliateWizardForm(self.request.POST)
+            form = form_type(self.request.POST)
             if form.is_valid():
                 first_name = form.cleaned_data['first_name']
                 middle_names = form.cleaned_data['middle_names']
                 last_name = form.cleaned_data['last_name']
                 email = form.cleaned_data['email']
                 password = form.cleaned_data['password']
-                concentration = form.cleaned_data['concentration']
                 suid = form.cleaned_data['suid']
-                declaration_date = form.cleaned_data['declaration_date']
-                class_year = form.cleaned_data['class_year']
+                start_date = form.cleaned_data['start_date']
                 # create Symsys affiliate
                 person = SymsysAffiliate(first_name=first_name, middle_names=middle_names, last_name=last_name, name=" ".join([first_name, last_name]))
                 person.save_versioned(action_agent=self.cur_agent)
@@ -227,19 +249,66 @@ class SymsysAffiliateViewer(PersonViewer):
                 permissions = [OneToOnePermission(ability="do_anything", is_allowed=True, source=person)]
                 contact.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
 
-                # create career
-                career = BachelorsSymsysCareer(concentration=concentration, symsys_affiliate=person, suid=suid, original_first_name=first_name, original_middle_names=middle_names, original_last_name=last_name, start_date=declaration_date, class_year=class_year)
-                permissions = [
-                    OneToOnePermission(ability="edit_class_year", is_allowed=True, source=person),
-                    OneToOnePermission(ability="edit_concentration", is_allowed=True, source=person),
-                    OneToOnePermission(ability="edit_advisor", is_allowed=True, source=person),
-                ]
-                career.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
+                career_model = None
+                career_data = {
+                    'symsys_affiliate': person,
+                    'original_first_name': first_name,
+                    'original_middle_names': middle_names,
+                    'original_last_name': last_name,
+                    'suid': suid,
+                }
+                permissions = []
+                if style == "staff":
+                    career_data['admin_title'] = form.cleaned_data['admin_title']
+                    permission = [
+                        OneToOnePermission(ability="edit_admin_title", is_allowed=True, source=person),
+                    ]
+                    career_model = ProgramStaffSymsysCareer
+
+
+                if style == "researcher" or style == "faculty":
+                    career_data['academic_title'] = form.cleaned_data['academic_title']
+                    permission = [
+                        OneToOnePermission(ability="edit_academic_title", is_allowed=True, source=person),
+                    ]
+                    career_model = FacultySymsysCareer
+                    if style == "researcher":
+                        career_model = ResearcherSymsysCareer
+
+                if style == "bachelors" or style == "minor" or style == "masters":
+                    class_year = form.cleaned_data['class_year']
+                    career_model = MinorSymsysCareer
+
+                    permissions = [
+                        OneToOnePermission(ability="edit_class_year", is_allowed=True, source=person),
+                        OneToOnePermission(ability="edit_advisor", is_allowed=True, source=person),
+                    ]
+
+                    if style == "bachelors":
+                        career_model = BachelorsSymsysCareer
+                        career_data['concentration'] = form.cleaned_data['concentration']
+                        career_data['indivdesignedconc'] = form.cleaned_data['custom_concentration']
+                        permissions.append(OneToOnePermission(ability="edit_concentration", is_allowed=True, source=person))
+                        permissions.append(OneToOnePermission(ability="edit_indivdesignedconcentration", is_allowed=True, source=person))
+
+                    if style == "masters":
+                        career_model = MastersSymsysCareer
+                        career_data['track'] = form.cleaned_data['track']
+                        career_data['indivdesignedtrack'] = form.cleaned_data['custom_track']
+                        permissions.append(OneToOnePermission(ability="edit_track", is_allowed=True, source=person))
+                        permissions.append(OneToOnePermission(ability="edit_indivdesignedtrack", is_allowed=True, source=person))
+
+                if career_model:
+                    # create career
+                    career = career_model(**career_data)
+                    career.start_date = start_date  # moved here due to weird thing where it didn't get set otherwise
+                    career.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
+
 
                 redirect = person.get_absolute_url()
                 return HttpResponseRedirect(redirect)
         else:
-            form = SymsysAffiliateWizardForm()
+            form = form_type()
 
         self.context['form'] = form
         return HttpResponse(template.render(self.context))

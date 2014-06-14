@@ -5,9 +5,22 @@
 
 {% block content %}
 <form action="" method="post">{% csrf_token %}
+  <div class="row">
+    <div class="col-sm-12">
+      {% for key, value in styles %}
+      <a href="?style={{key}}" class="btn btn-sm btn-default {% if key == style %}active{% endif %}">{{value}}</a>
+      {% endfor %}
+    </div>
+  </div>
 {{ form|as_bootstrap }}
 <div class="form-actions">
   <button type="submit" class="btn btn-primary">Submit</button>
 </div>
 </form>
+<script>
+$(function(){
+  var format = {dateFormat: 'yy-mm-dd'};
+  $('#id_start_date').datepicker(format);
+});
+</script>
 {% endblock content %}
