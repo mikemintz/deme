@@ -271,6 +271,9 @@ class SelectTimeWidget(Widget):
             elif meridiem.lower().startswith('a') and int(h) == 12:
                 h = 0
 
+        if not self.show_seconds:
+            s = '00'
+
         if (int(h) == 0 or h) and m and s:
             return '%s:%s:%s' % (h, m, s)
 
