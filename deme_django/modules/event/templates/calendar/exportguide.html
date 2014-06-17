@@ -1,12 +1,12 @@
 {% extends layout %}
 {% load event_extras %}
 {% load item_tags %}
-{% block title %}<img src="{{ collection|icon_url:24 }}" /> Export {% viewable_name collection %}
+{% block title %}Export {% viewable_name collection %}
 {% endblock %}
 {% block content %}
 
 <div>
-  Instructions for: 
+  Instructions for:
   <a href="#gcal">Google Calendar</a>
   |
   <a href="#ical">iCal</a>

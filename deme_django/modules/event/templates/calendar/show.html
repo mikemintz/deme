@@ -1,8 +1,7 @@
 {% extends layout %}
 {% load event_extras %}
 {% load item_tags %}
-{% block title %}<img src="{{ collection|icon_url:24 }}" /> {% viewable_name collection %}
-{% endblock %}
+{% block title %}{% viewable_name collection %}{% endblock %}
 {% block content %}
 
 
