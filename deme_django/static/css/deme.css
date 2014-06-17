@@ -6902,6 +6902,14 @@ body.nonadmin #metabar {
 .agent-profile .contact-methods li {
   margin-bottom: 10px;
 }
+.person-listing .photo {
+  padding-right: 10px;
+  vertical-align: top;
+}
+.person-listing .details {
+  text-align: left;
+  vertical-align: top;
+}
 .HiddenMenu {
   z-index: 1;
 }

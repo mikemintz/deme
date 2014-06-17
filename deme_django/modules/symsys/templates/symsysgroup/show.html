@@ -25,7 +25,7 @@
 
 {% for member in members %}
 {% if member.is_staff %}
-<div id="staff{{ member.item.pk }}">
+<div id="staff{{ member.item.pk }}" class="person-listing staff">
 <table>
     <tr>
         <td>
@@ -37,21 +37,21 @@
     </tr>
     <tr>
         {% if member.photo %}
-        <td>
+        <td class="photo">
             <a href="{{ member.photo.get_absolute_url }}">
               <div class="thumb profile-pic">
-              {% if member.photo %}{% ifagentcan 'view Agent.photo' member.item %}{% ifagentcan 'view FileDocument.datafile' member.photo %}
+              {% ifagentcan 'view Agent.photo' member.item %}{% ifagentcan 'view FileDocument.datafile' member.photo %}
               {% with photo=member.photo.datafile|thumbnailer %}
               {% if photo %}
                 <img src="{{ photo.thumb.url }}">
               {% endif %}
               {% endwith %}
-              {% endifagentcan %}{% endifagentcan %}{% endif %}
+              {% endifagentcan %}{% endifagentcan %}
               </div>
             </a>
         </td>
         {% endif %}
-        <td>
+        <td class="details">>
             {% if member.item.publications %}
             {% ifagentcan 'view SymsysAffiliate.publications' member.item %}
                 <b>Publications: </b>{{ member.item.publications }}
@@ -96,7 +96,7 @@
 {% endcomment %}
 
 {% else %}
-<div id="person{{ member.item.pk }}">
+<div id="person{{ member.item.pk }}" class="person-listing person">
 <table>
     <tr>
         <td>
@@ -115,21 +115,21 @@
     </tr>
     <tr>
         {% if member.photo %}
-        <td>
+        <td class="photo">
             <a href="{{ member.photo.get_absolute_url }}">
               <div class="thumb profile-pic">
-              {% if member.photo %}{% ifagentcan 'view Agent.photo' member.item %}{% ifagentcan 'view FileDocument.datafile' member.photo %}
+              {% ifagentcan 'view Agent.photo' member.item %}{% ifagentcan 'view FileDocument.datafile' member.photo %}
               {% with photo=member.photo.datafile|thumbnailer %}
               {% if photo %}
                 <img src="{{ photo.thumb.url }}">
               {% endif %}
               {% endwith %}
-              {% endifagentcan %}{% endifagentcan %}{% endif %}
+              {% endifagentcan %}{% endifagentcan %}
               </div>
             </a>
         </td>
         {% endif %}
-        <td colspan=2 style="text-align: left;">
+        <td colspan=2 class="details">
             {% if member.item.about %}
             {% ifagentcan 'view SymsysAffiliate.about' member.item %}
             <b>About: </b>
