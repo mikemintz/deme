@@ -116,16 +116,13 @@ $(document).ready(function () {
 
   multi.on('click', '.action-deactivate', function(e){
     e.preventDefault();
-    var reason = prompt("Please give a reason for deactivating these items:",' ');
-    if (reason != null && $.trim(reason) != '') {
-      var sel = jqgrid_list.jqGrid('getGridParam','selarrrow');
-      var form = $('#deactivatemultiform{{identifier}}');
-      form.find('[name="items"]').val(sel);
-      form.find('[name="action_summary"]').val(reason);
-      form.submit();
-    } else if (reason == ' ') {
-      alert('No reason was given so these items have NOT been deactivated.');
-    }
+    var reason = prompt("Please give a reason for deactivating these items:",'');
+    var sel = jqgrid_list.jqGrid('getGridParam','selarrrow');
+    var form = $('#deactivatemultiform{{identifier}}');
+    form.find('[name="items"]').val(sel);
+    form.find('[name="action_summary"]').val(reason);
+    form.submit();
+
   });
 
   multi.on('click', '.action-destroy', function(e){
