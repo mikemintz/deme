@@ -26,7 +26,7 @@ class BlogPostViewer(ItemViewer):
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('blogpost/show.html')
-        
+
         if self.cur_agent_can_global('do_anything'):
             recursive_filter = None
         else:
@@ -41,13 +41,13 @@ class BlogPostViewer(ItemViewer):
                 details = {}
                 details["member"] = member
                 details["name"] = member.display_name()
-                details["url"] = member.get_absolute_url() 
+                details["url"] = member.get_absolute_url()
                 member_details.append(details)
-                
+
         self.context['entries'] = member_details
         return HttpResponse(template.render(self.context))
 
-#This class is for displaying "BlogRolls", i.e. collections of links 
+#This class is for displaying "BlogRolls", i.e. collections of links
 #on the side of a blog
 class BlogRollViewer(ItemViewer):
     accepted_item_type = Collection
@@ -57,7 +57,7 @@ class BlogRollViewer(ItemViewer):
         self.context['action_title'] = ''
         self.require_ability('view ', self.item, wildcard_suffix=True)
         template = loader.get_template('blogroll/show.html')
-        
+
         if self.cur_agent_can_global('do_anything'):
             recursive_filter = None
         else:
@@ -74,7 +74,7 @@ class BlogRollViewer(ItemViewer):
                 details["name"] = member.display_name()
                 details["url"] = member.url
                 member_details.append(details)
-            
+
         self.context['webpages'] = member_details
         return HttpResponse(template.render(self.context))
 
@@ -114,7 +114,7 @@ class NewsRollViewer(ItemViewer):
             details = {}
             details["member"] = member
             details["name"] = member.name
-            details["url"] = member.get_absolute_url() 
+            details["url"] = member.get_absolute_url()
             details["creator"] = member.creator.display_name()
             details["created_at"] = member.created_at
             details["creator_url"] = member.creator.get_absolute_url()
@@ -140,11 +140,11 @@ class NewsRollViewer(ItemViewer):
         if len(page_ranges) == 1:
             is_not_one_page = False
 
-        self.context['redirect'] = reverse('item_url', kwargs={'viewer': 'newsroll', 'action': 'show', 'noun': collection.pk}) 
+        self.context['redirect'] = reverse('item_url', kwargs={'viewer': 'newsroll', 'action': 'show', 'noun': collection.pk})
         self.context['members'] = member_details
         self.context['entries'] = entries
         self.context['entry_length'] = self.request.GET.get('entry_length', '50')
         self.context['page_range'] = displayed_page_range
         self.context['is_not_one_page'] = is_not_one_page
+        raise Exception
         return HttpResponse(template.render(self.context))
-

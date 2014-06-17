@@ -8,14 +8,15 @@
 {% for details in members %}
     <div class="item">
         <div class="title">
-            <a href="{{ details.url }}">{{ details.name }}</a>
+            <a href="{{ details.url }}">
+              {% viewable_name details.member %}
+            </a>
         </div>
 
         {% if details.display_body %}
             {% ifagentcan 'view TextDocument.body' details.member %}
                 {% if details.is_html %}
                     {{ details.body|safe|truncatewords_html:entry_length }}
-
                 {% else %}
                     <div>
                         {{ details.body|truncatewords:entry_length }}
