@@ -6857,6 +6857,7 @@ body.nonadmin #metabar {
   border: 1px solid #eee;
   height: 150px;
   width: 150px;
+  margin-right: 15px;
 }
 .agent-profile .thumb,
 .group-profile .thumb {
