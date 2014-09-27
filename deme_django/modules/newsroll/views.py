@@ -146,5 +146,5 @@ class NewsRollViewer(ItemViewer):
         self.context['entry_length'] = self.request.GET.get('entry_length', '50')
         self.context['page_range'] = displayed_page_range
         self.context['is_not_one_page'] = is_not_one_page
-        raise Exception
+
         return HttpResponse(template.render(self.context))
