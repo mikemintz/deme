@@ -529,6 +529,7 @@ class SymsysInternshipViewer(HtmlDocumentViewer, AdvertisementViewer):
 
 
         new_ad = HtmlAdvertisement(body=body, name=ad_name, contact_info=contact_info)
+        new_ad.name = ad_name #TODO this is a hack due to multiple inheritance bug in Django. remove it when bug is fixed
         permissions = [AllToOnePermission(ability='do_anything', is_allowed=False),
                 OneToOnePermission(source=self.cur_agent, ability='do_anything', is_allowed=True)]
         new_ad.save_versioned(action_agent=self.cur_agent, initial_permissions=permissions)
