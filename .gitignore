@@ -11,3 +11,4 @@ deme_django/static/filedocument/
 deme_django/static/uploads/
 deme_django/local_settings.py
 .idea
+*.sublime-*

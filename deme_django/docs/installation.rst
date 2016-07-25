@@ -52,7 +52,7 @@ We use Pillow to create thumbnails and perform other image alteration tasks. Pil
 
 * On Ubuntu (12.04 LTS/Raspian): ``sudo apt-get install libtiff4-dev libjpeg8-dev zlib1g-dev \
                                        libfreetype6-dev liblcms2-dev libwebp-dev tcl8.5-dev tk8.5-dev``
-* On Mac OS X (assuming Homebrew): ``brew install libtiff libjpeg webp littlecms``
+* On Mac OS X using Homebrew (http://brew.sh): ``brew install libtiff libjpeg webp littlecms``
 
 For full details please see http://pillow.readthedocs.org/en/latest/installation.html
 

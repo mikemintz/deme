@@ -6102,7 +6102,7 @@ div.comment_body {
  * we use height instead, but this forces the menu to always be this tall
  */
 .ui-autocomplete-loading {
-  background: #ffffff url('/static/ui-anim_basic_16x16.gif') right center no-repeat;
+  background: white url('/static/ui-anim_basic_16x16.gif') right center no-repeat;
 }
 form.item_form > table {
   width: 100%;
@@ -6866,6 +6866,9 @@ body.nonadmin #metabar {
   width: 200px;
   display: block;
   float: left;
+  border: 1px solid #eee;
+  color: #ccc;
+  text-align: center;
 }
 .agent-profile .activity-inner h3,
 .group-profile .activity-inner h3 {

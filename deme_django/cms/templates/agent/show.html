@@ -17,7 +17,9 @@
                         {% endifagentcan %}
                     {% endifagentcan %}
                 {% else %}
-                    <div class="thumb"></div>
+                    <div class="thumb">
+                        Photo Not Available
+                    </div>
                 {% endif %}
 
                 <div class="profile">
@@ -38,11 +40,17 @@
                     {% endifagentcan %}
                     <!--h1 title="title">{% viewable_name item %}</h1-->
                     <h4>Contact Methods</h4>
+
                     <ul class="contact-methods">
                         {% for contact_method in contact_methods %}
                             <li>{{ contact_method }}</li>
                         {% endfor %}
+
+                        {% ifagentcan 'add_contact_method' item %}
+                            <li><a href="{% url 'item_type_url' viewer='contactmethod' action='new' %}?populate_agent={{item.pk}}" tabindex="-1" class="add-contact-method"><span class="ui-icon ui-icon-circle-plus" style="float: left"></span>Add contact method</a></li>
+                        {% endifagentcan %}
                     </ul>
+
                 </div>
             </div>
         </div>
