@@ -182,6 +182,24 @@ Assuming you've created a DjangoTemplateDocument item you'd like to use as your 
 
 Using a DjangoTemplateDocument instead of an HtmlDocument allows editing of nearly all elements on a page instead of only the contents of the main content area.
 
+
+Using Deme specific Django template tags
+----------------------------------------
+
+ifincollection
+^^^^^^^^^^^^^^
+
+The ``{% ifincollection %}`` tag checks to see if an item is in a particular collection:
+
+  {% ifincollection item "COLLECTION_NAME" %}
+    Shown if item is in the designated collection
+  {% else %}
+    Shown if item is not in the designated collection
+  {% endif %}
+
+Collections are identified by either name or numerical id. The ``{% else %}`` clause is optional.
+
+
 Using Deme with Multiple Sites
 ------------------------------
 

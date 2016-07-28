@@ -226,6 +226,61 @@ def universal_edit_button(parser, token):
         raise template.TemplateSyntaxError, "%r takes no arguments" % bits[0]
     return UniversalEditButton()
 
+
+class IfInCollection(template.Node):
+    def __init__(self, item, collection, nodelist_true, nodelist_false):
+        self.item = template.Variable(item)
+        self.collection = template.Variable(collection)
+        self.nodelist_true, self.nodelist_false = nodelist_true, nodelist_false
+
+    def __repr__(self):
+        return "<IfInCollectionNode>"
+
+    def render(self, context):
+        try:
+            item = self.item.resolve(context)
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve item variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+
+        try:
+            collection = self.collection.resolve(context)
+        except template.VariableDoesNotExist:
+            if settings.DEBUG:
+                return "[Couldn't resolve collection variable]"
+            else:
+                return '' # Fail silently for invalid variables.
+
+        # Find collections with name
+        if item and collection:
+            if isinstance(collection, int):
+                item_collections = item.ancestor_collections(Q(parent__pk=collection))
+            else:
+                item_collections = item.ancestor_collections(Q(parent__name=collection))
+            if item_collections.exists():
+                return self.nodelist_true.render(context)
+
+        return self.nodelist_false.render(context)
+
+
+@register.tag
+def ifincollection(parser, token):
+    bits = list(token.split_contents())
+    if len(bits) != 3:
+        raise template.TemplateSyntaxError, "%r takes two arguments" % bits[0]
+    end_tag = 'end' + bits[0]
+    nodelist_true = parser.parse(('else', end_tag))
+    token = parser.next_token()
+    if token.contents == 'else':
+        nodelist_false = parser.parse((end_tag,))
+        parser.delete_first_token()
+    else:
+        nodelist_false = template.NodeList()
+    return IfInCollection(bits[1], bits[2], nodelist_true, nodelist_false)
+
+
 class IfAgentCan(template.Node):
     def __init__(self, ability, item, nodelist_true, nodelist_false):
         self.ability = template.Variable(ability)
