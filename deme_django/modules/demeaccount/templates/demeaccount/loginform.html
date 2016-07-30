@@ -54,6 +54,9 @@
     </div>
     <button type="submit" class="btn btn-primary">Login</button>
     <button class="btn btn-link" onclick="$('#login_dialog_password').dialog('close'); return false">Cancel</button>
+    <div>
+        <small><a href="{% url 'item_type_url' viewer="demeaccount" action="forgot" %}">Forgot your password?</a></small>
+    </div>
 </form>
 <form name="real_password_form" action="{% url 'item_type_url' viewer="demeaccount" action="login" %}?redirect={{ redirect|urlencode }}" method="post">
     <input type="hidden" name="username" />

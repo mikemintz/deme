@@ -1,6 +1,10 @@
 from cms.models import AuthenticationMethod
 from django.db import models
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
+from django.utils.http import int_to_base36, base36_to_int
+from django.utils.crypto import constant_time_compare, salted_hmac
+from django.utils import six
 import hashlib
 import random
 from django import forms
@@ -11,7 +15,7 @@ class DemeAccount(AuthenticationMethod):
     """
     This is an AuthenticationMethod that allows a user to log on with a
     username and a password.
-    
+
     The username must be unique across the entire Deme installation. The
     password field is formatted the same as in the User model of the Django
     admin app (algo$salt$hash), and is thus not stored in plain text.
@@ -35,6 +39,66 @@ class DemeAccount(AuthenticationMethod):
     password_question = models.CharField(_('password question'), max_length=255, blank=True)
     password_answer   = models.CharField(_('password answer'), max_length=255, blank=True)
 
+    def make_token(self):
+        """
+        Returns a token that can be used once to do a password reset
+        for the given account. Based on the default Django token generator
+        """
+        return self._make_token_with_timestamp(self._num_days(self._today()))
+
+    def check_token(self, token):
+        """
+        Check that a password reset token is correct for a given user.
+        """
+        # Parse the token
+        try:
+            ts_b36, hash = token.split("-")
+        except ValueError:
+            return False
+
+        try:
+            ts = base36_to_int(ts_b36)
+        except ValueError:
+            return False
+
+        # Check that the timestamp/uid has not been tampered with
+        if not constant_time_compare(self._make_token_with_timestamp(ts), token):
+            return False
+
+        # Check the timestamp is within limit
+        if (self._num_days(self._today()) - ts) > settings.PASSWORD_RESET_TIMEOUT_DAYS:
+            return False
+
+        return True
+
+    def _make_token_with_timestamp(self, timestamp):
+        # timestamp is number of days since 2001-1-1.  Converted to
+        # base 36, this gives us a 3 digit string until about 2121
+        ts_b36 = int_to_base36(timestamp)
+
+        # By hashing on the internal state of the user and using state
+        # that is sure to change (the password salt will change as soon as
+        # the password is set, at least for current Django auth, and
+        # last_login will also change), we produce a hash that will be
+        # invalid as soon as it is used.
+        # We limit the hash to 20 chars to keep URL short
+        key_salt = "deme_django.modules.demeaccount.models.DemeAccount"
+
+        # Ensure results are consistent across DB backends
+        # TODO: integrate login_timestamp if we ever track this field
+        # login_timestamp = user.last_login.replace(microsecond=0, tzinfo=None)
+
+        value = (six.text_type(self.pk) + self.password + six.text_type(timestamp))
+        hash = salted_hmac(key_salt, value).hexdigest()[::2]
+        return "%s-%s" % (ts_b36, hash)
+
+    def _num_days(self, dt):
+        return (dt - date(2001, 1, 1)).days
+
+    def _today(self):
+        # Used for mocking in tests
+        return date.today()
+
     def set_password(self, raw_password):
         """
         Set the password field by generating a salt and hashing the raw
@@ -57,12 +121,12 @@ class DemeAccount(AuthenticationMethod):
     def check_nonced_password(self, hashed_password, nonce):
         """
         Return True if the specified nonced password matches the password field.
-        
+
         This method is here to allow a browser to login over an insecure
         connection. The browser is given the algorithm, the salt, and a random
         nonce, and is supposed to generate the following string, which this
         method generates and compares against:
-        
+
             sha1(nonce, algo(salt, raw_password))
         """
         algo, salt, hsh = self.password.split('$')
@@ -73,7 +137,7 @@ class DemeAccount(AuthenticationMethod):
         """
         Encrypt a password using the same algorithm MySQL used for PASSWORD()
         prior to 4.1.
-        
+
         This method is here to support migrations of account/password data
         from websites that encrypted passwords this way.
         """

@@ -1,0 +1,28 @@
+{% extends layout %}
+{% load item_tags %}
+{% load bootstrap_tags %}
+
+{% block content %}
+
+{% if form_success %}
+  <div class="alert alert-success">{{form_success}}</div>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+  <div class="row">
+    <div class="col-sm-6">
+      <p>Please provide the email address or username that you used when you signed up for your Deme account.</p>
+      <p>We will send you an email that will allow you to reset your password.</p>
+    </div>
+    <div class="col-sm-6">
+      <div class="well">
+        {{ form|as_bootstrap }}
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Send vertification email</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock content %}

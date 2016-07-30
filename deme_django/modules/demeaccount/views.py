@@ -3,17 +3,63 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from cms.views import AuthenticationMethodViewer
 from modules.demeaccount.models import DemeAccount
-from django.template import loader
+from django.template import loader, Context
 from django.core.urlresolvers import reverse
 from django.utils.http import urlquote
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.utils import simplejson
 from django.views.decorators.http import require_POST
+from .forms import DemeAccountForgotForm
+import html2text
+from django.utils.text import wrap
+from django.core.mail import EmailMultiAlternatives
+from cms.base_viewer import get_current_site
 
 class DemeAccountViewer(AuthenticationMethodViewer):
     accepted_item_type = DemeAccount
     viewer_name = 'demeaccount'
+
+    def send_reset_password_email(self, emails, demeaccounts):
+        if len(emails) > 0 or len(demeaccounts) > 0:
+            site = get_current_site(self.request)
+            title = site.title
+            if not title:
+                title = "Deme account"
+            subject = "Reset your %s password" % (title) # TODO: customize the site name
+            headers = {}
+            context = Context({
+                "emails": emails,
+                "demeaccounts": demeaccounts,
+            })
+            template = loader.get_template("demeaccount/notification/forgot_email.html")
+            body_html = template.render(context)
+            body_text = html2text.html2text_file(body_html, None)
+            body_text = wrap(body_text, 78)
+            from_email = '%s@%s' % ('noreply', settings.NOTIFICATION_EMAIL_HOSTNAME)
+            email_message = EmailMultiAlternatives(subject, body_text, from_email, bcc=emails, headers=headers)
+            email_message.attach_alternative(body_html, 'text/html')
+            email_message.send()
+
+        pass
+
+    def type_forgot_html(self):
+        self.context['action_title'] = 'Reset your password?'
+        if self.request.method == "POST":
+            form = DemeAccountForgotForm(self.request.POST)
+            if form.is_valid():
+                to = form.cleaned_data['to']
+                demeaccounts = form.cleaned_data['demeaccounts']
+
+                self.send_reset_password_email(to, demeaccounts)
+                self.context['form_success'] = 'If you have a valid account and email, you should soon be receiving a password reset code.'
+
+        else:
+            form = DemeAccountForgotForm()
+
+        template = loader.get_template('demeaccount/forgot.html')
+        self.context['form'] = form
+        return HttpResponse(template.render(self.context))
 
     @require_POST
     def type_login_html(self):
@@ -51,7 +97,7 @@ class DemeAccountViewer(AuthenticationMethodViewer):
             response_data = {'nonce':nonce, 'algo':'sha1', 'salt':salt}
         json_data = simplejson.dumps(response_data, separators=(',',':'))
         return HttpResponse(json_data, mimetype='application/json')
-        
+
     def type_loginmenuitem_html(self):
         self.context['redirect'] = self.request.GET.get('redirect', '')
         template = loader.get_template('demeaccount/loginmenuitem.html')
