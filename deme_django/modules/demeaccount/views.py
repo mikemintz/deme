@@ -50,8 +50,7 @@ class DemeAccountViewer(AuthenticationMethodViewer):
         demeaccount.last_login = timezone.now()
         demeaccount.save(update_fields=['last_login'])
         self.request.session['cur_agent_id'] = demeaccount.agent.pk
-        full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
-        return HttpResponseRedirect(full_redirect)
+        return HttpResponseRedirect(redirect)
 
     def type_forgot_html(self):
         self.context['action_title'] = 'Reset your password?'
@@ -102,7 +101,8 @@ class DemeAccountViewer(AuthenticationMethodViewer):
         try:
             demeaccount = DemeAccount.objects.get(username=username, active=True, agent__active=True)
             if demeaccount.check_nonced_password(hashed_password, nonce):
-                return self.login_user(demeaccount, redirect)
+                full_redirect = '%s?redirect=%s' % (reverse('item_type_url', kwargs={'viewer': self.viewer_name, 'action': 'loggedinorout'}), urlquote(redirect))
+                return self.login_user(demeaccount, full_redirect)
         except ObjectDoesNotExist:
             # No active DemeAccount has this username.
             pass
