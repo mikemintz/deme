@@ -20,6 +20,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from urllib import urlencode
 from cms.models import Item, Agent, Site, AnonymousAgent, DemeSetting, friendly_name_for_ability
+from django.contrib.messages import get_messages
 
 
 ###############################################################################
@@ -292,6 +293,7 @@ class Viewer(object):
         self.context['cur_agent'] = self.cur_agent
         self.context['cur_site'] = self.cur_site
         self.context['_viewer'] = self
+        self.context['messages'] = get_messages(request)
         self.context['default_metadata_menu_option'] = self.default_metadata_menu_option()
         self._set_default_layout()
 

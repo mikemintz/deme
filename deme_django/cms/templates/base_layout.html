@@ -197,6 +197,13 @@
         <div id="overall">
             {% block page-layout %}
                 <div class="container page-layout">
+                    {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                        <div class="alert {% if message.tags %} alert-{{ message.tags }}{% endif %}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     <div class="row">
                         <div class="col-sm-3 sidebar-wrap">
                             <div class="visible-xs sidebar-toggle-wrap"><a href="#" class="sidebar-toggle"><i

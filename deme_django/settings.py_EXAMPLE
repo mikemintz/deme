@@ -73,6 +73,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
   "django.core.context_processors.static",
   "django.core.context_processors.tz",
   "django.contrib.messages.context_processors.messages",
+  'multiuploader.context_processors.booleans',
 )
 
 # List of callables that know how to import templates from various sources.
@@ -85,6 +86,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
 )
 
 ROOT_URLCONF = 'deme_django.urls'
@@ -106,6 +108,7 @@ ENABLE_PERMISSION_CHECKING = True
 
 INSTALLED_APPS = (
     'django.contrib.sessions',
+    'django.contrib.messages',
     'south',
     'pure_pagination',
     'deme_django.cms',

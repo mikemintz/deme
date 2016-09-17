@@ -1,8 +1,15 @@
 {% load item_tags %}
 {% block content %}
 
+{% for account in demeaccounts %}
+{% with token=account.make_token uid=account.make_uid %}
 <p>
-
+Please click on the link to reset your password for username {{account.username}}
 </p>
+<p>
+<a href="{{url_prefix}}{% url 'item_type_url' viewer='demeaccount' action='reset' %}?token={{token}}&uid={{uid}}">{{url_prefix}}{% url 'item_type_url' viewer='demeaccount' action='reset' %}?token={{token}}&uid={{uid}}</a>
+</p>
+{% endwith %}
+{% endfor %}
 
 {% endblock content %}
