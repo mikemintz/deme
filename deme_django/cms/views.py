@@ -763,7 +763,7 @@ class ItemViewer(Viewer):
         for permission_datum in permission_data.itervalues():
             ability = permission_datum['ability']
             if ability not in possible_abilities:
-                return self.render_error('Form Error', "Invalid ability")
+                raise Exception("Invalid ability %s" % (ability))
             try:
                 is_allowed = (permission_datum.get('is_allowed') == 'on')
                 permission_type = permission_datum['permission_type']
@@ -798,7 +798,7 @@ class ItemViewer(Viewer):
                     else:
                         assert False
                 else:
-                    return self.render_error('Form Error', "Invalid permission_type")
+                    raise Exception("Invalid permission_type %s" % (permission_type))
                 permission.ability = ability
                 permission.is_allowed = is_allowed
                 # Make sure we don't add duplicates
