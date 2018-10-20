@@ -16,7 +16,7 @@ class WebauthAccountViewer(AuthenticationMethodViewer):
             return HttpResponseRedirect('https://%s%s' % (self.request.get_host(), self.request.get_full_path()))
 
         # Assert that the proper environment variables are set
-        if self.request.META.get('AUTH_TYPE') != 'WebAuth' or not self.request.META.get('REMOTE_USER'):
+        if self.request.META.get('AUTH_TYPE') not in ['WebAuth', 'shibboleth'] or not self.request.META.get('REMOTE_USER'):
             return self.render_error("WebAuth Error", "WebAuth is not supported in this installation")
 
         # Find the WebauthAccount
