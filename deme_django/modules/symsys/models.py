@@ -59,6 +59,7 @@ ADMIN_TITLES = [
     "Director Emeritus",
     "Graduate Studies Director",
     "Program Director",
+    "Student Services Manager",
     "Student Services Officer",
     "Webmaster",
 ]
