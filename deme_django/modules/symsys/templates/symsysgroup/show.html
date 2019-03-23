@@ -32,7 +32,16 @@
             <a href="{{ member.item.get_absolute_url }}">{% viewable_name member.item %}</a>
         </td>
         <td>
-            <b>Academic Title: </b>{{ member.academic_title }}
+            {% if member.academic_title %}
+            <div>
+                <b>Title: </b>{{ member.academic_title }}
+            </div>
+            {% endif %}
+            {% if member.admin_title %}
+            <div>
+                <b>Title: </b>{{ member.admin_title }}
+            </div>
+            {% endif %}
         </td>
     </tr>
     <tr>
@@ -51,25 +60,12 @@
             </a>
         </td>
         {% endif %}
-        <td class="details">>
-            {% if member.item.publications %}
-            {% ifagentcan 'view SymsysAffiliate.publications' member.item %}
-                <b>Publications: </b>{{ member.item.publications }}
-                <br>
+        <td class="details">
+            {% if member.item.about %}
+            {% ifagentcan 'view SymsysAffiliate.about' member.item %}
+            <b>About: </b>{{ member.item.about }}
+            <br>
             {% endifagentcan %}
-            {% endif %}
-            {% if member.item.interests %}
-            {% ifagentcan 'view SymsysAffiliate.interests' member.item %}
-                <b>Interests: </b>{{ member.item.interests }}
-                <br>
-            {% endifagentcan %}
-            {% else %}
-                {% if member.item.about %}
-                {% ifagentcan 'view SymsysAffiliate.about' member.item %}
-                <b>About: </b>{{ member.item.about }}
-                <br>
-                {% endifagentcan %}
-                {% endif %}
             {% endif %}
             {% if member.item.office_hours %}
             {% ifagentcan 'view SymsysAffiliate.office_hours' member.item %}
@@ -102,6 +98,21 @@
         <td>
             <a href="{{ member.item.get_absolute_url }}">{% viewable_name member.item %}</a>
         </td>
+        <td>
+            {% if member.academic_title %}
+            <div>
+                <b>Title: </b>{{ member.academic_title }}
+            </div>
+            {% endif %}
+            {% if member.admin_title %}
+            <div>
+                <b>Title: </b>{{ member.admin_title }}
+            </div>
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td></td>
         {% if member.class_year %}
         <td style="text-align: left;">
             <b>Class Year: </b>{{ member.class_year }}

@@ -77,7 +77,7 @@ class SymsysGroupViewer(CollectionViewer):
                     if issubclass(career.actual_item_type(), ProgramStaffSymsysCareer):
                         career = career.downcast()
                         #member_details['is_staff'] = True
-                        member_details['academic_title'] = career.admin_title
+                        member_details['admin_title'] = career.admin_title
 
 
                 members.append(member_details)
