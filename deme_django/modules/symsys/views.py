@@ -557,7 +557,7 @@ class SymsysCourseListViewer(TextDocumentViewer):
         self.require_ability('view ', self.item, wildcard_suffix=True)
         #Replace basic markup with clickable markup for each class listed
             #depts list is alphabetized!
-        depts = ['ANTHRO', 'APPPHYS', '(?<!N)(?<!HUM)BIO', 'BIOE', 'BIOMEDIN', 'CEE', 'CME', 'COMM', 'CS', 'ECON', 'EDUC', '(?<!C)EE', 'ENGR', 'ESF', 'ETHICSOC', 'GENE', 'GSBGEN', 'HRP', 'HUMBIO', 'IHUM', 'IPS', 'LAW', 'LINGUIST', 'MATH', '(?<!C)ME', 'MED', 'MGTECON', 'MS&amp;E', 'MUSIC', 'NBIO', 'NENS', 'OSPOXFRD', 'PHIL', 'POLISCI', 'PSYCH', 'PUBLPOL', 'SLE', '(?<!ETHIC)SOC', 'STATS', 'STS', 'SYMSYS', 'THINK', 'URBANST']
+        depts = ['ANTHRO', 'APPPHYS', '(?<!N)(?<!HUM)BIO', 'BIOE', 'BIOMEDIN', 'CEE', 'CME', 'COMM', 'CS', 'ECON', 'EDUC', '(?<!C)EE', 'ENGR', 'ESF', 'ETHICSOC', 'GENE', 'GSBGEN', 'HRP', 'HUMBIO', 'IHUM', 'IPS', 'LAW', 'LINGUIST', 'MATH', '(?<!C)ME', 'MED', 'MGTECON', 'MS&amp;E', 'MUSIC', 'NBIO', 'NENS', 'OSPOXFRD', 'PHIL', 'POLISCI', 'PSYC', 'PSYCH', 'PUBLPOL', 'SLE', '(?<!ETHIC)SOC', 'STATS', 'STS', 'SYMSYS', 'THINK', 'URBANST']
         regex = '(%s [0-9]+[A-Z]*\.[^</*]+)'
         #index must be a list because integers are not mutable (see its use in replFunc for more info)
         index = [0]
